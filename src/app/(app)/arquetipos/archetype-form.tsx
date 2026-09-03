@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Plus } from "lucide-react";
 
+import { PLANTILLAS_PERSONA } from "@/lib/plantillas-persona";
 import { crearArquetipo } from "@/app/actions/archetypes";
 import { PALETTE } from "@/lib/constants";
 import { cn, readableOn } from "@/lib/utils";
@@ -117,7 +118,7 @@ export function EnergyPicker({
 
 /** Botón "Nuevo arquetipo" con el alta rápida en un modal. */
 export function ArchetypeCreateButton({
-  label = "Nuevo arquetipo",
+  label = "Añadir persona",
 }: {
   label?: string;
 }) {
@@ -133,17 +134,65 @@ export function ArchetypeCreateButton({
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title="Nuevo arquetipo"
-        description="Describe cómo es la persona frente a cámara. Luego podrás afinar el tono, el branding y la compatibilidad con cada estructura."
+        title="Nueva persona"
+        description="Elige el arquetipo al que más se parezca y ajusta lo que haga falta. Su marca personal queda rellena desde el primer momento."
         width={640}
       >
         <form action={crearArquetipo} className="space-y-4">
+          {/*
+            Elegir una plantilla rellena la marca personal entera —tono de voz,
+            vocabulario, lo que nunca diría, paleta—, no solo el perfil. Sin eso
+            la persona nace a medias y la IA le escribe guiones que no suenan a
+            nadie, que es justo lo que este sistema existe para evitar.
+          */}
+          <div>
+            <label className="label">¿A cuál se parece más?</label>
+            <p className="hint mb-2">
+              Rellena su marca personal para que puedas empezar corrigiendo en vez de
+              escribiendo. Todo queda editable después.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {PLANTILLAS_PERSONA.map((pl) => (
+                <label
+                  key={pl.id}
+                  className="border-line hover:bg-surface2 has-[:checked]:border-brand has-[:checked]:bg-brandsoft/50 flex cursor-pointer gap-2.5 rounded-lg border p-2.5 transition-colors"
+                >
+                  <input
+                    type="radio"
+                    name="plantilla"
+                    value={pl.id}
+                    className="mt-0.5 shrink-0"
+                    defaultChecked={pl.id === "gobernante"}
+                  />
+                  <span className="min-w-0">
+                    <span
+                      className="block text-[12.5px] leading-tight font-bold"
+                      style={{ color: pl.color }}
+                    >
+                      {pl.etiqueta}
+                    </span>
+                    <span className="text-inksoft mt-0.5 block text-[11.5px] leading-snug">
+                      {pl.gancho}
+                    </span>
+                    <span className="text-inkmuted mt-1 block text-[11px] leading-snug">
+                      {pl.paraQuien}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <label className="text-inkmuted mt-2 flex cursor-pointer items-center gap-2 text-[12px]">
+              <input type="radio" name="plantilla" value="" />
+              Empezar en blanco, sin plantilla
+            </label>
+          </div>
+
           <div className="grid gap-3.5 sm:grid-cols-[1.4fr_1fr]">
-            <Field label="Nombre del arquetipo" required>
+            <Field label="Nombre de la persona" required>
               <input
                 name="name"
                 className="input"
-                placeholder="Ej. Cercano y divertido"
+                placeholder="Ej. Eru"
                 required
                 autoFocus
                 maxLength={80}

@@ -9,7 +9,9 @@ import { getFeedToken } from "@/lib/ical";
 import { rotarTokenCalendario } from "@/app/actions/calendar-feed";
 import { Callout, Card, CardHeader, EmptyState, Field, PageHeader } from "@/components/ui";
 import { CopyButton, SubmitButton } from "@/components/forms";
+import { contarDatosDeEjemplo } from "@/app/actions/datos-de-ejemplo";
 import { SettingsForm } from "./settings-form";
+import { VaciarEjemplo } from "./vaciar-ejemplo";
 
 export const dynamic = "force-dynamic";
 
@@ -87,6 +89,7 @@ export default async function AjustesPage() {
 
   const secretoDebil = authSecretIsWeak();
   const motor = motorDeBaseDeDatos();
+  const recuentoEjemplo = await contarDatosDeEjemplo();
 
   return (
     <>
@@ -262,6 +265,8 @@ export default async function AjustesPage() {
               </div>
             </div>
           </Card>
+
+          <VaciarEjemplo recuento={recuentoEjemplo} />
         </div>
       </div>
     </>

@@ -8,6 +8,7 @@ import { borrarAssetsDe } from "@/lib/assets-cleanup";
 import { requireLevel, LEVEL } from "@/lib/auth";
 import { logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
 import { FIT_SCORES } from "@/lib/constants";
+import { PLANTILLA_POR_ID } from "@/lib/plantillas-persona";
 import {
   boolField,
   clamp,
@@ -67,6 +68,9 @@ const ARCHETYPE_LABELS: Record<string, string> = {
   visualAvoid: "Visualmente no",
 };
 
+/** Atajo para guardar listas como JSON, que es como viaja todo aqui. */
+const J = (v: unknown) => JSON.stringify(v);
+
 const DEFAULT_COLOR = "#0ea5e9";
 
 /** Busca un slug libre a partir del nombre. */
@@ -114,8 +118,59 @@ export async function crearArquetipo(formData: FormData) {
   const datos = leerCampos(formData);
   if (!datos.name) return;
 
+  /**
+   * La plantilla rellena la marca personal ENTERA, no solo el perfil.
+   *
+   * Sin esto, una persona nueva nace a medias: con nombre y fortalezas, pero
+   * sin tono de voz ni vocabulario. Y una ficha sin voz hace que la IA escriba
+   * un guion correcto que no suena a nadie, que es justo lo que este sistema
+   * existe para evitar. Lo que se escribe aquí es un punto de partida: todo
+   * queda editable desde la pestaña Marca personal.
+   */
+  const plantilla = PLANTILLA_POR_ID[field(formData, "plantilla")];
+  const desdePlantilla = plantilla
+    ? {
+        // Lo que el formulario deja vacío lo pone la plantilla; lo que el
+        // usuario escribió siempre manda.
+        summary: datos.summary ?? plantilla.summary,
+        personality: datos.personality ?? plantilla.personality,
+        color: field(formData, "color") || plantilla.color,
+        energyLevel: formData.get("energyLevel")
+          ? datos.energyLevel
+          : plantilla.energyLevel,
+        strengths: datos.strengths === "[]" ? J(plantilla.strengths) : datos.strengths,
+        avoid: datos.avoid === "[]" ? J(plantilla.avoid) : datos.avoid,
+        toneKeywords:
+          datos.toneKeywords === "[]" ? J(plantilla.toneKeywords) : datos.toneKeywords,
+
+        archetypePrimary: plantilla.archetypePrimary,
+        archetypeSecondary: plantilla.archetypeSecondary,
+        archetypeSummary: plantilla.archetypeSummary,
+        coreDesire: plantilla.coreDesire,
+        coreFear: plantilla.coreFear,
+        coreTalent: plantilla.coreTalent,
+        coreTrap: plantilla.coreTrap,
+
+        voiceTone: plantilla.voiceTone,
+        messageStructure: plantilla.messageStructure,
+        vocabulary: J(plantilla.vocabulary),
+        avoidInVoice: J(plantilla.avoidInVoice),
+        soundsLike: plantilla.soundsLike,
+
+        aesthetics: plantilla.aesthetics,
+        visualAvoid: plantilla.visualAvoid,
+        palette: J(plantilla.palette),
+      }
+    : {};
+
   const creado = await prisma.archetype.create({
-    data: { ...datos, slug: await slugUnico(datos.name), active: true },
+    data: {
+      ...datos,
+      ...desdePlantilla,
+      slug: await slugUnico(datos.name),
+      active: true,
+      isPerson: true,
+    },
   });
 
   await logAudit({

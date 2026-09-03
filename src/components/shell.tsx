@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity,
   CalendarDays,
+  GraduationCap,
   ChevronDown,
   Film,
   LayoutDashboard,
@@ -53,6 +54,10 @@ const NAV: NavGroup[] = [
   {
     section: "Análisis",
     items: [{ href: "/metricas", label: "Métricas", icon: TrendingUp }],
+  },
+  {
+    section: "Ayuda",
+    items: [{ href: "/tutorial", label: "Cómo se usa", icon: GraduationCap }],
   },
   {
     section: "Equipo",

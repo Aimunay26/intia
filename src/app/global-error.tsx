@@ -38,10 +38,34 @@ export default function ErrorGlobal({
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
             La aplicación no pudo arrancar
           </h1>
+          {/*
+            Son dos causas, no una, y hay que nombrar las dos: nombrar solo la
+            base de datos manda a revisar el sitio equivocado la mitad de las
+            veces. Al publicar por primera vez suelen faltar ambas.
+          */}
           <p style={{ fontSize: 13.5, lineHeight: 1.7, color: "#b4b6c4", marginTop: 10 }}>
-            Suele ser un problema de conexión con la base de datos. Revisa que el servidor
-            esté corriendo y que <code>DATABASE_URL</code> apunte al sitio correcto.
+            Casi siempre es una variable de entorno que falta en el servidor.
           </p>
+          <ul
+            style={{
+              fontSize: 13,
+              lineHeight: 1.65,
+              color: "#b4b6c4",
+              marginTop: 12,
+              textAlign: "left",
+              paddingLeft: 18,
+            }}
+          >
+            <li>
+              <code>DATABASE_URL</code> — tiene que apuntar a una base PostgreSQL
+              accesible, y el esquema tiene que estar creado ahí.
+            </li>
+            <li style={{ marginTop: 6 }}>
+              <code>AUTH_SECRET</code> — obligatoria en producción. Sin ella la
+              aplicación se niega a arrancar a propósito, para no firmar las sesiones
+              con una clave que está escrita en el código.
+            </li>
+          </ul>
           <button
             onClick={reset}
             style={{

@@ -1,0 +1,670 @@
+// ============================================================================
+//  MARKETING OS - Esquema de base de datos
+//  Portable entre SQLite (dev) y PostgreSQL (produccion).
+//  Por eso: sin enums, sin listas escalares y sin tipos nativos.
+//  Los campos que guardan estructuras se almacenan como String con JSON.
+//  Cambia de motor con:  npm run use:postgres  /  npm run use:sqlite
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- USUARIOS --
+
+model User {
+  id           String  @id @default(cuid())
+  name         String
+  email        String  @unique
+  passwordHash String
+  role         String  @default("MEMBER") // OWNER (dueño) | MEMBER (equipo)
+  color        String  @default("#6366f1")
+  phone        String?
+  bio          String?
+  active       Boolean @default(true)
+
+  /// Identificador de Google, para entrar con Gmail sin contraseña.
+  /// Se rellena la primera vez que la persona entra con su cuenta de Google.
+  googleId  String? @unique
+  avatarUrl String?
+
+  // Un miembro del equipo puede tener un arquetipo de actuacion asignado.
+  archetypeId String?
+  archetype   Archetype? @relation(fields: [archetypeId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments    Assignment[]
+  auditLogs      AuditLog[]
+  scripts        Script[]        @relation("ScriptAuthor")
+  checkedItems   ChecklistItem[] @relation("CheckedBy")
+  createdContent ContentItem[]   @relation("ContentCreatedBy")
+  comments       Comment[]
+  events         CalendarEvent[] @relation("EventCreatedBy")
+
+  @@index([role])
+  @@index([archetypeId])
+}
+
+// -------------------------------------------------------- EVENTOS AGENDA --
+
+/// Todo lo que ocupa un hueco en el calendario y no es un video:
+/// reuniones, pendientes, dias de grabacion, recordatorios.
+/// Junto con los videos, es lo que se publica en el feed para Google Calendar.
+model CalendarEvent {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  kind        String  @default("REUNION") // REUNION | PENDIENTE | GRABACION | RECORDATORIO | OTRO
+
+  startAt  DateTime
+  endAt    DateTime?
+  allDay   Boolean   @default(true)
+  location String?
+
+  brandId String?
+  brand   Brand?  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
+  /// Si el evento nace de un video concreto (por ejemplo, su dia de grabacion).
+  contentItemId String?
+
+  createdById String?
+  createdBy   User?   @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startAt])
+  @@index([brandId])
+}
+
+// ------------------------------------------------------------------ MARCAS --
+
+model Brand {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String  @unique
+  tagline  String?
+  active   Boolean @default(true)
+  archived Boolean @default(false)
+
+  // Identidad
+  description String? // Que es la marca
+  identity    String? // Identidad / personalidad de marca
+  brief       String? // Brief operativo permanente
+  toneOfVoice String?
+  audience    String? // Publico objetivo / avatar
+  valueProps  String? @default("[]") // JSON: string[]
+  doNots      String? @default("[]") // JSON: string[]
+  keywords    String? @default("[]") // JSON: string[]
+
+  // Colores de marca
+  colorPrimary   String  @default("#ec4899")
+  colorSecondary String  @default("#8b5cf6")
+  colorAccent    String  @default("#f59e0b")
+  logoUrl        String?
+
+  // Enlaces
+  website   String?
+  instagram String?
+  tiktok    String?
+  whatsapp  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  objectives BrandObjective[]
+  content    ContentItem[]
+  scripts    Script[]
+  events     CalendarEvent[]
+
+  @@index([active])
+}
+
+/// Objetivo medible de una marca: numero actual vs numero meta.
+model BrandObjective {
+  id      String @id @default(cuid())
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+  metricKey     String? // views | followers | leads | ventas | roas | ...
+  unit          String    @default("") // %, S/, seguidores, videos...
+  currentValue  Float     @default(0)
+  targetValue   Float     @default(0)
+  baselineValue Float     @default(0)
+  period        String    @default("MENSUAL") // SEMANAL | MENSUAL | TRIMESTRAL | ANUAL
+  deadline      DateTime?
+  status        String    @default("EN_CURSO") // EN_CURSO | LOGRADO | EN_RIESGO | PAUSADO
+  higherIsBetter Boolean  @default(true)
+  sortOrder     Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([brandId])
+}
+
+// ------------------------------------------------------------ ESTRUCTURAS --
+
+/// Una "estructura" es un formato de guion ganador y reutilizable.
+/// Es GLOBAL: se puede usar en cualquier marca.
+model Structure {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String  @unique
+  category String  @default("VENDE") // VENDE | ENTRETIENE
+  family   String? // UGC, PAS, Camaleon, Testimonio, Sketch...
+  summary  String?
+  active   Boolean @default(true)
+
+  /// Los beats o pasos del formato, en orden.
+  /// JSON: [{ name, goal, seconds, notes }]
+  beats String @default("[]")
+
+  /// Prompt del sistema con el que se afina la IA para ESTA estructura.
+  systemPrompt String @default("")
+
+  /// Ejemplos ganadores en texto (referencias de guiones que funcionaron).
+  /// JSON: [{ title, text }]
+  examples String @default("[]")
+
+  /// Reglas duras que la IA no puede romper (JSON: string[])
+  rules String @default("[]")
+
+  defaultDurationSec Int    @default(45)
+  defaultProvider    String @default("anthropic") // anthropic | google
+  defaultModel       String @default("")
+  temperature        Float  @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scripts Script[]
+  content ContentItem[]
+  fits    ArchetypeFit[]
+
+  @@index([category])
+  @@index([active])
+}
+
+// ------------------------------------------------------------- ARQUETIPOS --
+
+/// Una PERSONA del equipo que sale en camara, con su arquetipo y su marca
+/// personal. No es un perfil abstracto: es Eru, es Yoryo.
+///
+/// Lo de arriba (personalidad, fortalezas, energia) es como actua.
+/// Lo de abajo sale de su informe de branding y es lo que hace que un guion
+/// suene a ella y no a cualquiera.
+model Archetype {
+  id      String  @id @default(cuid())
+  name    String
+  slug    String  @unique
+  summary String?
+  active  Boolean @default(true)
+
+  /// Falso solo para los perfiles genericos de ejemplo que no son nadie real.
+  isPerson Boolean @default(true)
+  photoUrl String?
+
+  personality   String? // Como es
+  strengths     String  @default("[]") // JSON: string[] - lo que le sale natural
+  avoid         String  @default("[]") // JSON: string[] - lo que NO le queda
+  toneKeywords  String  @default("[]") // JSON: string[]
+  brandingNotes String?
+  ageRange      String?
+  energyLevel   Int     @default(3) // 1 (calmado) - 5 (explosivo)
+  color         String  @default("#0ea5e9")
+
+  // ---------------------------------------------- INFORME DE BRANDING --
+  // Los doce arquetipos junguianos: Gobernante, Forajido, Heroe, Bufon,
+  // Mago, Creador, Cuidador, Explorador, Sabio, Inocente, Amante, Hombre
+  // corriente. Se guardan como texto para no atarse a una lista cerrada.
+  archetypePrimary   String?
+  archetypeSecondary String?
+  archetypeTertiary  String?
+  /// El parrafo que resume que representa esta persona.
+  archetypeSummary String?
+
+  coreDesire   String? // Deseo central
+  coreFear     String? // Miedo central
+  coreTalent   String? // Su talento
+  coreTrap     String? // Su trampa
+  evolveToward String? // Hacia donde evolucionar
+  /// Lo que el informe marca como incoherencia entre lo que dice y lo que hace.
+  watchOut String?
+  /// Indice de coherencia del informe (0-10).
+  coherenceIndex Float?
+
+  // ------------------------------------ COMUNICACION (lo que usa la IA) --
+  /// Como suena en prosa: "Sobrio, seguro, afirmativo. Habla poco y con peso."
+  voiceTone String?
+  /// El esqueleto de su mensaje: "Verdad incomoda -> giro comico -> ..."
+  messageStructure String?
+  /// Palabras que usa. JSON: string[]
+  vocabulary String @default("[]")
+  /// Lo que NO dice ni hace al hablar. JSON: string[]
+  avoidInVoice String @default("[]")
+  /// Una frase de ejemplo en su voz exacta.
+  soundsLike String?
+  /// Iconos y marcas del mismo arquetipo, para orientar el tono. JSON: string[]
+  /// Esto lo trae su informe de branding: no lo elige el equipo.
+  sameArchetypeIcons String @default("[]")
+  /// Los referentes que ELIGE el equipo: gente cuyo tono de comunicacion
+  /// queremos que suene parecido. Va aparte de sameArchetypeIcons a proposito.
+  /// Una linea por referente, con nota opcional. JSON: string[]
+  toneReferences String @default("[]")
+  /// El gesto que la hace reconocible.
+  signatureGesture String?
+
+  // ------------------------------------------------------------ VISUAL --
+  /// Su paleta. JSON: [{ name, hex }]
+  palette     String  @default("[]")
+  typography  String?
+  aesthetics  String?
+  visualAvoid String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  fits      ArchetypeFit[]
+  matchRows MatchRow[]
+
+  @@index([active])
+  @@index([isPerson])
+}
+
+/// Compatibilidad Arquetipo <-> Estructura. Este es el match que evita
+/// que un actor haga un formato que no va con su branding.
+model ArchetypeFit {
+  id          String    @id @default(cuid())
+  archetypeId String
+  archetype   Archetype @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+  structureId String
+  structure   Structure @relation(fields: [structureId], references: [id], onDelete: Cascade)
+
+  /// 0 = no encaja, 1 = flojo, 2 = sirve, 3 = encaja perfecto
+  score Int     @default(2)
+  notes String?
+
+  /// De donde salio este numero. Importa porque el prompt de generacion lee
+  /// esta fila: solo el criterio humano tiene derecho a hablar ahi.
+  /// MANO = lo puso el dueno | SEED = lo sembro el script | AUTO = fijado desde un match
+  source         String   @default("MANO")
+  /// Desde que guion se fijo, cuando source es AUTO.
+  sourceScriptId String?
+  /// El default es imprescindible: sin el, anadir un DateTime no nulo a filas
+  /// que ya existen revienta el db push.
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  @@unique([archetypeId, structureId])
+  @@index([structureId])
+}
+
+// ----------------------------------------------------------------- ASSETS --
+
+/// PDFs y archivos de referencia. Polimorfico: se cuelga de cualquier entidad.
+/// Guardamos los bytes en la base de datos para que funcione igual en local
+/// y en hosting serverless (Vercel) sin necesitar un bucket externo.
+model Asset {
+  id        String @id @default(cuid())
+  ownerType String // structure | archetype | brand | user | content
+  ownerId   String
+
+  filename String
+  mimeType String @default("application/pdf")
+  size     Int    @default(0)
+  data     Bytes
+
+  label String?
+  /// Texto extraido del PDF: esto es lo que se le inyecta a la IA.
+  extractedText String?
+  /// Si es true, el texto se manda a la IA como referencia.
+  useForAi Boolean @default(true)
+
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  @@index([ownerType, ownerId])
+}
+
+// ---------------------------------------------------------------- GUIONES --
+
+model Script {
+  id      String  @id @default(cuid())
+  title   String
+  brandId String?
+  brand   Brand?  @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
+  structureId String?
+  structure   Structure? @relation(fields: [structureId], references: [id], onDelete: SetNull)
+
+  archetypeId String?
+
+  avatar       String? // A quien le habla
+  focus        String? // Enfoque de venta
+  hook         String?
+  cta          String?
+  totalSeconds Int     @default(0)
+  status       String  @default("BORRADOR") // BORRADOR | REVISION | APROBADO | GRABADO | ARCHIVADO
+  version      Int     @default(1)
+  notes        String?
+
+  // Trazabilidad de la generacion con IA
+  provider    String? // anthropic | google | manual
+  model       String?
+  promptUsed  String?
+  rawResponse String?
+  briefInput  String? // lo que pidio el usuario
+  generatedAt DateTime?
+
+  authorId String?
+  author   User?   @relation("ScriptAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  scenes    ScriptScene[]
+  content   ContentItem[]
+  matchRuns MatchRun[]
+
+  @@index([brandId])
+  @@index([structureId])
+  @@index([status])
+}
+
+/// Una escena del guion: aqui vive el desglose interactivo.
+model ScriptScene {
+  id       String @id @default(cuid())
+  scriptId String
+  script   Script @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+
+  order    Int    @default(0)
+  beat     String @default("") // Golpe visual, Tension, Plot twist, CTA...
+  startSec Int    @default(0)
+  endSec   Int    @default(0)
+
+  voice        String? // Lo que se dice / voz en off
+  voiceType    String? @default("EN_CAMARA") // EN_CAMARA | VOZ_EN_OFF | DIALOGO | TEXTO
+  shot         String? // Encuadre / movimiento de camara
+  action       String? // Que pasa en escena
+  actors       String  @default("[]") // JSON: [{ role, archetype, notes }]
+  emotion      String? // Emocion que deben transmitir
+  props        String  @default("[]") // JSON: string[] - elementos necesarios
+  lighting     String? // Iluminacion para dar esa emocion
+  sound        String? // Musica / SFX / ambiente
+  onScreenText String?
+  location     String?
+  notes        String?
+
+  @@index([scriptId, order])
+}
+
+// ------------------------------------------------------- CALENDARIO/VIDEOS --
+
+model ContentItem {
+  id      String @id @default(cuid())
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  status      String  @default("IDEA") // IDEA|GUION|APROBADO|GRABACION|EDICION|PROGRAMADO|PUBLICADO|PAUSADO|CANCELADO
+  priority    String  @default("MEDIA") // BAJA | MEDIA | ALTA
+
+  /// Un mismo video puede ir a varias redes a la vez.
+  /// JSON: string[] con valores TIKTOK|INSTAGRAM|FACEBOOK|YOUTUBE|WHATSAPP|OTRO
+  platforms String @default("[\"TIKTOK\"]")
+
+  scheduledDate DateTime // Dia del calendario
+  shootDate     DateTime?
+  publishedAt   DateTime?
+
+  structureId String?
+  structure   Structure? @relation(fields: [structureId], references: [id], onDelete: SetNull)
+  scriptId    String?
+  script      Script?    @relation(fields: [scriptId], references: [id], onDelete: SetNull)
+
+  hook         String?
+  cta          String?
+  publishedUrl String?
+  thumbnailUrl String?
+  tags         String  @default("[]") // JSON: string[]
+  notes        String?
+
+  createdById String?
+  createdBy   User?   @relation("ContentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments Assignment[]
+  checklist   ChecklistItem[]
+  metrics     Metric[]
+  comments    Comment[]
+
+  @@index([brandId, scheduledDate])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+/// Quien hizo que en cada video: guionista, actor, camara, editor, voz.
+model Assignment {
+  id            String      @id @default(cuid())
+  contentItemId String
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role  String // GUIONISTA | ACTOR | CAMARA | EDITOR | VOZ | PRODUCCION | DISENO
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([contentItemId, userId, role])
+  @@index([userId])
+  @@index([role])
+}
+
+model ChecklistItem {
+  id            String      @id @default(cuid())
+  contentItemId String
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  label     String
+  stage     String  @default("GENERAL") // PREPRODUCCION | GRABACION | POSTPRODUCCION | PUBLICACION | GENERAL
+  done      Boolean @default(false)
+  required  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  doneById String?
+  doneBy   User?     @relation("CheckedBy", fields: [doneById], references: [id], onDelete: SetNull)
+  doneAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([contentItemId, sortOrder])
+}
+
+model Metric {
+  id            String      @id @default(cuid())
+  contentItemId String
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  date DateTime
+
+  views        Int   @default(0)
+  likes        Int   @default(0)
+  comments     Int   @default(0)
+  shares       Int   @default(0)
+  saves        Int   @default(0)
+  reach        Int   @default(0)
+  clicks       Int   @default(0)
+  leads        Int   @default(0)
+  orders       Int   @default(0)
+  spend        Float @default(0)
+  revenue      Float @default(0)
+  watchTimeSec Float @default(0)
+  retention3s  Float @default(0) // % que pasa de 3 segundos
+
+  source String  @default("MANUAL") // MANUAL | IMPORT
+  notes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([contentItemId, date])
+  @@index([date])
+}
+
+model Comment {
+  id            String      @id @default(cuid())
+  contentItemId String
+  contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body          String
+  createdAt     DateTime    @default(now())
+
+  @@index([contentItemId])
+}
+
+// --------------------------------------------------------------- AUDITORIA --
+
+/// Log de TODO lo que pasa: quien lo hizo, sobre que, cuando y que cambio.
+model AuditLog {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  userName String? // se guarda en texto por si el usuario se borra
+  action   String // CREAR | EDITAR | ELIMINAR | COMPLETAR | ASIGNAR | GENERAR | LOGIN | ...
+  entity   String // Brand | ContentItem | Script | ChecklistItem | ...
+  entityId String?
+  summary  String // frase legible
+
+  /// JSON con los campos que cambiaron: { campo: { antes, despues } }
+  changes String?
+
+  brandId String?
+  ip      String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([brandId])
+}
+
+// ---------------------------------------------------------------- AJUSTES --
+
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ------------------------------------------------------------ MATCH IA --
+
+/// Una corrida del motor automatico: la IA leyo un guion y dijo quien puede
+/// actuarlo. Se guarda entera porque abrir la pantalla NO puede volver a
+/// llamar a la IA: eso seria pagar cada vez que alguien mira.
+model MatchRun {
+  id String @id @default(cuid())
+
+  scriptId String
+  script   Script @relation(fields: [scriptId], references: [id], onDelete: Cascade)
+  /// Copia, no relacion: el guion puede quedarse sin estructura despues.
+  structureId String?
+  /// Para que /actividad pueda filtrar las corridas por marca.
+  brandId String?
+
+  status String  @default("CORRIENDO") /// CORRIENDO | OK | ERROR
+  error  String?
+  detail String?
+
+  provider         String?
+  model            String?
+  inputTokens      Int     @default(0)
+  outputTokens     Int     @default(0)
+  /// Separados a proposito: la escritura de cache se factura ~1.25x y la
+  /// lectura ~0.1x. Con una sola columna, la primera corrida de cada hora
+  /// (la mas cara) se mostraria como si fuera la mas barata.
+  cacheWriteTokens Int     @default(0)
+  cacheReadTokens  Int     @default(0)
+  costUsd          Float   @default(0)
+  /// false = no hay tarifa cargada para ese modelo. No significa "es gratis".
+  costKnown        Boolean @default(false)
+  durationMs       Int     @default(0)
+  candidates       Int     @default(0)
+  /// Escenas que hubo que recortar por tamano.
+  truncated        Int     @default(0)
+
+  resumen String @default("")
+  /// Los papeles que pide el guion. JSON: string[]
+  reparto String @default("[]")
+
+  /// Se lee ANTES de escribir nada: es el detector de caducidad.
+  basedOnScriptUpdatedAt DateTime
+  promptFingerprint      String   @default("")
+
+  /// Recortados a 20.000 caracteres. Nunca se seleccionan para pintar la pantalla.
+  systemPrompt String?
+  userPrompt   String?
+  rawResponse  String?
+
+  userId     String?
+  /// Texto suelto, mismo criterio que AuditLog: si borran al usuario, el
+  /// historial sigue diciendo quien lo lanzo.
+  userName   String?
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  rows MatchRow[]
+
+  @@index([scriptId, createdAt])
+  @@index([status, startedAt])
+}
+
+/// El veredicto sobre UNA persona dentro de una corrida.
+model MatchRow {
+  id String @id @default(cuid())
+
+  runId       String
+  run         MatchRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  archetypeId String
+  archetype   Archetype @relation(fields: [archetypeId], references: [id], onDelete: Cascade)
+
+  /// 0..3, la escala oficial de FIT_SCORES.
+  fit       Int    @default(0)
+  /// 0..100. Solo sirve para ordenar sin empates.
+  puntos    Int    @default(50)
+  confianza Float  @default(0.5)
+  motivo    String @default("")
+  /// Citas TEXTUALES del guion, ya verificadas contra el. JSON: string[]
+  evidencia String @default("[]")
+  /// Papeles del guion que puede hacer, literales. JSON: string[]
+  papeles   String @default("[]")
+  riesgos   String @default("[]") /// JSON: string[]
+  mejores   String @default("[]") /// JSON: number[] - escenas donde brilla
+  dificiles String @default("[]") /// JSON: number[] - escenas que le van a costar
+  /// auto = lo dijo la IA | formato = lo completo el motor por tipo de video
+  origin    String @default("auto")
+  rank      Int    @default(0)
+
+  /// Blinda contra el modelo repitiendo a la misma persona.
+  @@unique([runId, archetypeId])
+  @@index([archetypeId])
+}

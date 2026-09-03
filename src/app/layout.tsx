@@ -1,0 +1,43 @@
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Marketing OS",
+  description:
+    "Calendario de contenido, guiones con IA y métricas para múltiples marcas.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0d" },
+  ],
+};
+
+/**
+ * Se aplica el tema antes de pintar para que no haya parpadeo blanco
+ * al entrar con el tema oscuro activo.
+ */
+const themeScript = `
+(function(){
+  try {
+    var saved = localStorage.getItem('mos-theme');
+    var dark = saved ? saved === 'dark'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (dark) document.documentElement.classList.add('dark');
+  } catch (e) {}
+})();
+`;
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}

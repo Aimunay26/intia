@@ -1,0 +1,32 @@
+import { NextResponse } from "next/server";
+
+import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
+
+/** Descarga de un archivo de referencia. Requiere sesión. */
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const asset = await prisma.asset.findUnique({ where: { id } });
+  if (!asset) {
+    return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });
+  }
+
+  const body = new Uint8Array(asset.data);
+
+  return new NextResponse(body, {
+    headers: {
+      "Content-Type": asset.mimeType || "application/octet-stream",
+      "Content-Length": String(body.byteLength),
+      "Content-Disposition": `inline; filename="${encodeURIComponent(asset.filename)}"`,
+      "Cache-Control": "private, max-age=3600",
+    },
+  });
+}

@@ -1,0 +1,53 @@
+{
+  "name": "marketing-os",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:personas": "tsx prisma/seed-personas-run.ts",
+    "ver:prompt": "tsx scripts/ver-prompt.ts",
+    "test:motores": "tsx scripts/calibrar-motor.ts",
+    "db:reset": "prisma db push --force-reset && npm run db:seed",
+    "setup": "prisma generate && prisma db push && npm run db:seed",
+    "use:postgres": "node scripts/switch-db.mjs postgresql",
+    "use:sqlite": "node scripts/switch-db.mjs sqlite",
+    "test:humo": "node scripts/smoke-test.mjs",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
+    "@google/genai": "^1.30.0",
+    "@prisma/client": "^6.7.0",
+    "bcryptjs": "^3.0.2",
+    "date-fns": "^4.1.0",
+    "jose": "^6.1.0",
+    "lucide-react": "^0.460.0",
+    "next": "^15.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "unpdf": "^1.3.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "prisma": "^6.7.0",
+    "tailwindcss": "^4.1.13",
+    "tsx": "^4.20.0",
+    "typescript": "^5.7.3"
+  }
+}
+

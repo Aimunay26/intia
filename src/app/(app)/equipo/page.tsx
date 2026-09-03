@@ -1,0 +1,350 @@
+import { Mail, Phone, ShieldCheck, UserCog, Users, UserSquare2 } from "lucide-react";
+
+import { prisma } from "@/lib/prisma";
+import { requireUser, can, LEVEL } from "@/lib/auth";
+import {
+  ACCOUNT_STATUS_MAP,
+  ASSIGNMENT_ROLES,
+  USER_ROLES,
+  USER_ROLE_MAP,
+} from "@/lib/constants";
+import { cn, formatDate } from "@/lib/utils";
+import {
+  Avatar,
+  Badge,
+  Card,
+  CardHeader,
+  ColorChip,
+  EmptyState,
+  PageHeader,
+  Stat,
+} from "@/components/ui";
+import { FilterBar, FilterSelect, SearchInput } from "@/components/filters";
+import {
+  EditUserButton,
+  InviteUserButton,
+  type ArchetypeOption,
+  type TeamMember,
+} from "./user-form";
+
+export const dynamic = "force-dynamic";
+
+const ESTADOS = [
+  { value: "activo", label: "Solo activas" },
+  { value: "inactivo", label: "Solo desactivadas" },
+];
+
+export default async function EquipoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ rol?: string; estado?: string; q?: string }>;
+}) {
+  const user = await requireUser();
+  const sp = await searchParams;
+  const canManage = can(user.role, LEVEL.OWNER);
+
+  const [personas, archetypes, assignments] = await Promise.all([
+    prisma.user.findMany({
+      orderBy: [{ active: "desc" }, { name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        color: true,
+        phone: true,
+        bio: true,
+        active: true,
+        archetypeId: true,
+        createdAt: true,
+        archetype: { select: { id: true, name: true, color: true } },
+      },
+    }),
+    prisma.archetype.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.assignment.findMany({
+      select: { userId: true, role: true, contentItemId: true },
+    }),
+  ]);
+
+  /* Participación: cuántos videos y en qué papeles. */
+  const participacion = new Map<string, { videos: Set<string>; roles: Map<string, number> }>();
+  for (const a of assignments) {
+    let entry = participacion.get(a.userId);
+    if (!entry) {
+      entry = { videos: new Set<string>(), roles: new Map<string, number>() };
+      participacion.set(a.userId, entry);
+    }
+    entry.videos.add(a.contentItemId);
+    entry.roles.set(a.role, (entry.roles.get(a.role) ?? 0) + 1);
+  }
+
+  const adminsActivos = personas.filter((p) => p.role === "OWNER" && p.active).length;
+
+  /* ------------------------------------------------------------- filtros -- */
+
+  const q = (sp.q ?? "").trim().toLowerCase();
+  const lista = personas.filter((p) => {
+    if (sp.rol && p.role !== sp.rol) return false;
+    if (sp.estado === "activo" && !p.active) return false;
+    if (sp.estado === "inactivo" && p.active) return false;
+    if (q) {
+      const heno = `${p.name} ${p.email} ${p.phone ?? ""} ${p.archetype?.name ?? ""}`.toLowerCase();
+      if (!heno.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const opcionesArquetipo: ArchetypeOption[] = archetypes;
+  const yo = personas.find((p) => p.id === user.id);
+  const hayFiltros = Boolean(sp.rol || sp.estado || q);
+
+  const toMember = (p: (typeof personas)[number]): TeamMember => ({
+    id: p.id,
+    name: p.name,
+    email: p.email,
+    role: p.role,
+    color: p.color,
+    phone: p.phone,
+    bio: p.bio,
+    active: p.active,
+    archetypeId: p.archetypeId,
+  });
+
+  return (
+    <>
+      <PageHeader
+        title="Equipo"
+        subtitle="Quién es quién, qué puede hacer dentro de la aplicación y en cuántos videos ha participado."
+        icon={<Users size={19} />}
+        actions={
+          <>
+            {yo ? (
+              <EditUserButton
+                member={toMember(yo)}
+                archetypes={opcionesArquetipo}
+                canManage={canManage}
+                isSelf
+                puedeDesactivar={false}
+                puedeEliminar={false}
+                className="btn"
+                label="Mi perfil y contraseña"
+              />
+            ) : null}
+            {canManage ? <InviteUserButton archetypes={opcionesArquetipo} /> : null}
+          </>
+        }
+      />
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat
+          label="Personas activas"
+          value={personas.filter((p) => p.active).length}
+          sub={`${personas.length} en total, contando las desactivadas`}
+          icon={<Users size={15} />}
+        />
+        <Stat
+          label="Dueños"
+          value={adminsActivos}
+          sub="Pueden tocar equipo, ajustes y borrados"
+          icon={<ShieldCheck size={15} />}
+          accent={USER_ROLE_MAP.OWNER.hex}
+        />
+        <Stat
+          label="Con arquetipo"
+          value={personas.filter((p) => p.archetypeId).length}
+          sub="Listas para repartir papeles frente a cámara"
+          icon={<UserSquare2 size={15} />}
+          accent="#0ea5e9"
+        />
+        <Stat
+          label="Participan en videos"
+          value={participacion.size}
+          sub={`${assignments.length} asignaciones registradas`}
+          icon={<UserCog size={15} />}
+          accent="#10b981"
+        />
+      </div>
+
+      <FilterBar>
+        <SearchInput param="q" placeholder="Buscar por nombre, correo…" width={250} />
+        <FilterSelect
+          param="rol"
+          allLabel="Todos los roles"
+          options={USER_ROLES.map((r) => ({ value: r.value, label: r.label }))}
+        />
+        <FilterSelect param="estado" allLabel="Activas y desactivadas" options={ESTADOS} />
+        <span className="text-inkmuted ml-auto pr-1 text-[12.5px]">
+          {lista.length} {lista.length === 1 ? "persona" : "personas"}
+        </span>
+      </FilterBar>
+
+      <Card>
+        <CardHeader
+          title="Personas"
+          subtitle="El número de videos cuenta cada video una sola vez, aunque haya hecho varios papeles en él."
+        />
+
+        {lista.length === 0 ? (
+          <EmptyState
+            icon={<Users size={19} />}
+            title={hayFiltros ? "Nadie coincide con ese filtro" : "Todavía no hay equipo"}
+            description={
+              hayFiltros
+                ? "Prueba con otro rol o limpia la búsqueda."
+                : "Invita a la primera persona: define su contraseña inicial y comunícasela en privado."
+            }
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Persona</th>
+                  <th>Rol</th>
+                  <th>Arquetipo</th>
+                  <th className="text-right">Videos</th>
+                  <th>En qué participó</th>
+                  <th>Estado</th>
+                  <th className="text-right">Alta</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {lista.map((p) => {
+                  const datos = participacion.get(p.id);
+                  const videos = datos?.videos.size ?? 0;
+                  const papeles = ASSIGNMENT_ROLES.map((r) => ({
+                    option: r,
+                    count: datos?.roles.get(r.value) ?? 0,
+                  })).filter((r) => r.count > 0);
+
+                  const isSelf = p.id === user.id;
+                  const esUltimoAdmin =
+                    p.role === "OWNER" && p.active && adminsActivos <= 1;
+
+                  return (
+                    <tr key={p.id} className={cn(!p.active && "opacity-60")}>
+                      <td>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={p.name} color={p.color} size={30} />
+                          <div className="min-w-0">
+                            <div className="text-ink flex items-center gap-1.5 text-[13px] font-semibold">
+                              <span className="truncate">{p.name}</span>
+                              {isSelf ? (
+                                <span className="chip chip-plain">Tú</span>
+                              ) : null}
+                            </div>
+                            <div className="text-inkmuted mt-0.5 flex items-center gap-2 text-[11.5px]">
+                              <span className="inline-flex items-center gap-1">
+                                <Mail size={11} />
+                                <span className="truncate">{p.email}</span>
+                              </span>
+                              {p.phone ? (
+                                <span className="inline-flex items-center gap-1">
+                                  <Phone size={11} />
+                                  {p.phone}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td>
+                        <Badge option={USER_ROLE_MAP[p.role]} fallback={p.role} />
+                      </td>
+
+                      <td>
+                        {p.archetype ? (
+                          <ColorChip
+                            color={p.archetype.color}
+                            href={`/arquetipos/${p.archetype.id}`}
+                          >
+                            {p.archetype.name}
+                          </ColorChip>
+                        ) : (
+                          <span className="text-inkmuted">—</span>
+                        )}
+                      </td>
+
+                      <td className="text-right">
+                        <span
+                          className={cn(
+                            "text-[13px] font-semibold tabular-nums",
+                            videos ? "text-ink" : "text-inkmuted"
+                          )}
+                        >
+                          {videos || "—"}
+                        </span>
+                      </td>
+
+                      <td>
+                        {papeles.length ? (
+                          <div className="flex flex-wrap gap-1">
+                            {papeles.map((r) => (
+                              <span
+                                key={r.option.value}
+                                className={cn("chip", r.option.chip)}
+                                title={r.option.description}
+                              >
+                                {r.option.label} · {r.count}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-inkmuted text-[12px]">
+                            Sin asignaciones todavía
+                          </span>
+                        )}
+                      </td>
+
+                      <td>
+                        <Badge
+                          option={
+                            ACCOUNT_STATUS_MAP[p.active ? "ACTIVA" : "DESACTIVADA"]
+                          }
+                        />
+                      </td>
+
+                      <td className="text-inkmuted text-right text-[12px] whitespace-nowrap">
+                        {formatDate(p.createdAt)}
+                      </td>
+
+                      <td className="text-right">
+                        {canManage || isSelf ? (
+                          <EditUserButton
+                            member={toMember(p)}
+                            archetypes={opcionesArquetipo}
+                            canManage={canManage}
+                            isSelf={isSelf}
+                            puedeDesactivar={canManage && !isSelf}
+                            puedeEliminar={canManage && !isSelf && !esUltimoAdmin}
+                            className="btn btn-sm"
+                            label={isSelf ? "Mi perfil" : "Editar"}
+                          />
+                        ) : (
+                          <span className="text-inkmuted text-[12px]">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {!canManage ? (
+        <p className="text-inkmuted mt-3 text-[12.5px] leading-relaxed">
+          Puedes cambiar tu nombre, tu color y tu contraseña. Para invitar personas o cambiar
+          roles hace falta ser el dueño.
+        </p>
+      ) : null}
+    </>
+  );
+}

@@ -9,7 +9,32 @@ import { ROLE_LEVEL } from "@/lib/constants";
 export const SESSION_COOKIE = "mos_session";
 const DAYS = 30;
 
-function secret() {
+/**
+ * Describe lo que el servidor ve en AUTH_SECRET, SIN revelar el valor.
+ *
+ * Existe porque el mensaje "falta AUTH_SECRET" es ambiguo: no distingue entre
+ * la variable ausente, vacía, con espacios pegados o demasiado corta, y cada
+ * una se arregla de forma distinta. Solo se emiten longitudes y booleanos.
+ */
+function diagnosticoDelSecreto(donde: string): string {
+  const raw = process.env.AUTH_SECRET;
+  const partes = [
+    `origen=${donde}`,
+    `definida=${raw !== undefined}`,
+    `longitud=${raw?.length ?? 0}`,
+    `soloEspacios=${raw !== undefined && raw.trim().length === 0}`,
+    `espaciosAlBorde=${raw !== undefined && raw !== raw.trim()}`,
+    `entorno=${process.env.NODE_ENV}`,
+    `vercelEnv=${process.env.VERCEL_ENV ?? "(ninguno)"}`,
+    // Si estas dos faltan también, el problema no es AUTH_SECRET en concreto:
+    // es que a esta función no le está llegando NINGUNA variable del proyecto.
+    `hayDatabaseUrl=${Boolean(process.env.DATABASE_URL)}`,
+    `numeroDeVariables=${Object.keys(process.env).length}`,
+  ];
+  return partes.join(" ");
+}
+
+function secret(donde = "sin-especificar") {
   const raw = process.env.AUTH_SECRET;
 
   if (!raw || raw.length < 16) {
@@ -17,10 +42,13 @@ function secret() {
     // código, así que cualquiera podría falsificar la sesión del dueño. Vale
     // más que la aplicación no arranque y se vea el error en el despliegue.
     if (process.env.NODE_ENV === "production") {
+      // Al log del servidor, para poder diagnosticarlo sin adivinar.
+      console.error("[auth] AUTH_SECRET no utilizable —", diagnosticoDelSecreto(donde));
       throw new Error(
         "Falta AUTH_SECRET. Define esa variable de entorno con una cadena larga " +
           "y aleatoria (32 caracteres o más) antes de publicar. Sin ella, las " +
-          "sesiones se firmarían con una clave pública."
+          "sesiones se firmarían con una clave pública. " +
+          `[${diagnosticoDelSecreto(donde)}]`
       );
     }
     // En desarrollo sí se deja arrancar, y Ajustes avisa en rojo.
@@ -67,7 +95,7 @@ export async function createSession(userId: string) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${DAYS}d`)
-    .sign(secret());
+    .sign(secret("crear-sesion"));
 
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
@@ -95,7 +123,7 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, secret());
+    const { payload } = await jwtVerify(token, secret("leer-sesion"));
     const id = typeof payload.sub === "string" ? payload.sub : null;
     if (!id) return null;
 

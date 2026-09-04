@@ -127,7 +127,7 @@ export default async function TutorialPage() {
   await requireUser();
 
   // El tutorial mira la base para saber en qué paso estás de verdad.
-  const [marcas, personas, conVoz, estructuras, videos, guiones, metricas, equipo] =
+  const [marcas, personas, conVoz, estructuras, videos, guiones, unidos, metricas, equipo] =
     await Promise.all([
       prisma.brand.count({ where: { archived: false } }),
       prisma.archetype.count({ where: { isPerson: true, active: true } }),
@@ -137,6 +137,10 @@ export default async function TutorialPage() {
       prisma.structure.count({ where: { active: true } }),
       prisma.contentItem.count(),
       prisma.script.count(),
+      // Un guion UNIDO a su video. No vale contar guiones: el paso 6 es
+      // justamente unirlos, y usar el mismo número que el paso 5 lo pintaba
+      // en verde sin que nadie hubiera unido nada.
+      prisma.contentItem.count({ where: { NOT: { scriptId: null } } }),
       prisma.metric.count(),
       prisma.user.count({ where: { active: true } }),
     ]);
@@ -268,7 +272,7 @@ export default async function TutorialPage() {
                 titulo="Une el guion al video"
                 donde="Guiones"
                 href="/guiones"
-                hecho={guiones > 0}
+                hecho={unidos > 0}
               >
                 <p>
                   Abre el guion y asígnalo a su tarjeta. El video hereda el formato y pasa de{" "}

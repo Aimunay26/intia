@@ -99,6 +99,96 @@ export const ANGULOS_CREATIVOS: CreativeAngle[] = [
 - Utiliza datos concretos, contrastes visuales de evolución y conclusiones contundentes.`,
     hookExample: "«Decidí probar esto durante 7 días seguidos y el día 4 casi me arrepiento…»",
   },
+  {
+    id: "storytime_confesion",
+    name: "Storytime / Confesión («Casi pierdo todo por esto» / Vulnerabilidad real)",
+    shortLabel: "Storytime",
+    icon: "📖",
+    badge: "Vulnerabilidad",
+    description:
+      "Narrativa personal de un error, momento crítico o revelación íntima. Conecta desde la vulnerabilidad humana antes de presentar la lección y la solución.",
+    promptInstructions: `ÁNGULO OBLIGATORIO: "STORYTIME / CONFESIÓN HONESTA".
+- El guion debe estructurarse como una historia personal verídica narrada en primera persona.
+- Empieza en el momento de mayor quiebre o incertidumbre: un error cometido, un cliente difícil, un día que casi se pierde todo.
+- Muestra la lección aprendida y cómo esa experiencia dio origen a la solución o producto actual.
+- Cero presunción ni tono corporativo: tono íntimo, sincero y cercano.`,
+    hookExample: "«Nunca conté esto públicamente, pero el año pasado casi pierdo todo por este error…»",
+  },
+  {
+    id: "parodia_sketch",
+    name: "Parodia Cotidiana / Humor Absurdo (Escalada cómica)",
+    shortLabel: "Parodia / Humor",
+    icon: "😂",
+    badge: "Humor Absurdo",
+    description:
+      "Caricaturiza una situación de la vida diaria exagerando las reacciones hasta el límite. El producto entra como el cómplice del remate.",
+    promptInstructions: `ÁNGULO OBLIGATORIO: "PARODIA COTIDIANA Y ESCALADA CÓMICA".
+- Plantea un dilema o situación hiper-reconocible de la vida diaria (la pareja, el trabajo, las compras, el dinero).
+- Aplica la ley de la comedia en tres tiempos: Planteamiento -> Escalada exagerada -> Remate absurdo.
+- Las indicaciones de actuación deben especificar gestos, pausas dramáticas y miradas cómplices a cámara.
+- El producto entra como parte del remate cómico o la salvación inesperada.`,
+    hookExample: "«Yo jurando que este mes sí iba a ahorrar vs yo en el primer día de quincena…»",
+  },
+  {
+    id: "hater_critica",
+    name: "Respondiendo Crítica / Cara a Cara con el Escéptico",
+    shortLabel: "Frente al Hater",
+    icon: "💬",
+    badge: "Objeción en Vivo",
+    description:
+      "Toma la objeción más ácida («Eso es una estafa», «Por qué tan caro») y la desmantela en vivo con una demostración visual irrefutable y tono sereno.",
+    promptInstructions: `ÁNGULO OBLIGATORIO: "RESPONDIENDO AL ESCÉPTICO / CRÍTICA EN VIVO".
+- Abre con el comentario o la objeción más dura puesta en pantalla.
+- La reacción inicial NO puede ser enojada ni a la defensiva: debe ser tranquila, segura y sonriente.
+- Responde ejecutando una prueba física en tiempo real en cámara (romper, medir, abrir, comparar).
+- El cierre desafía con simpatía a que sigan dejando sus dudas más difíciles en los comentarios.`,
+    hookExample: "«Alguien me puso en los comentarios que esto era una estafa china… miren lo que pasa cuando lo pongo a prueba.»",
+  },
+  {
+    id: "hack_tutorial",
+    name: "Hack Oculto / El Atajo que Nadie Enseña (Utilidad inmediata)",
+    shortLabel: "Hack Oculto",
+    icon: "🛠️",
+    badge: "Atajo Secreto",
+    description:
+      "Revela un truco práctico o atajo que ahorra tiempo o dinero. Entrega el 'cómo se hace' en 3 pasos rápidos sin rodeos.",
+    promptInstructions: `ÁNGULO OBLIGATORIO: "HACK OCULTO Y ATAJO PRÁCTICO".
+- Muestra el resultado asombroso en los primeros 3 segundos: «Mira cómo queda esto en 10 segundos».
+- Desglosa la solución en exactamente 3 pasos sencillos numerados en pantalla.
+- Advierte el error común que el 90% de la gente comete para generar el momento de '¡ah, con razón!'.
+- El producto o servicio es el componente clave que hace que el truco funcione sin esfuerzo.`,
+    hookExample: "«El 99% de las personas hace esto mal todos los días… aquí está el truco de 10 segundos que lo arregla.»",
+  },
+  {
+    id: "unboxing_asmr",
+    name: "Unboxing Sensorial / ASMR Táctil (Experiencia de empaque)",
+    shortLabel: "ASMR / Unboxing",
+    icon: "📦",
+    badge: "Sensorial ASMR",
+    description:
+      "Experiencia táctil y acústica del producto: el sonido crujiente del corte, textura de los materiales, aroma y detalles cuidados que despiertan el deseo de recibirlo.",
+    promptInstructions: `ÁNGULO OBLIGATORIO: "UNBOXING SENSORIAL Y ASMR TÁCTIL".
+- Las indicaciones de sonido ('sound') y plano ('shot') son prioritarias: sonido crujiente del precinto, el rasgar del papel, el chasquido del cierre.
+- Planos primerísimos de textura, brillo, aroma y detalles grabados con cuidado.
+- Diálogo pausado, íntimo y susurrado o en voz baja que no tape los sonidos reales del producto.
+- Enfatiza la emoción sensorial de abrir un paquete pensado para uno.`,
+    hookExample: "(Sonido crujiente de cinta adhesiva y empaque en primerísimo plano) «Miren la sorpresa que preparamos para este pedido especial…»",
+  },
+  {
+    id: "detras_de_camaras",
+    name: "Detrás de Cámaras / La Verdad del Taller (Transparencia con imprevisto)",
+    shortLabel: "Detrás de Cámaras",
+    icon: "🏭",
+    badge: "Taller Real",
+    description:
+      "Muestra el proceso de producción real sin poses, incluyendo un imprevisto o reto del día que humaniza al equipo y demuestra el amor por el detalle.",
+    promptInstructions: `ÁNGULO OBLIGATORIO: "DETRÁS DE CÁMARAS Y LA VERDAD DEL TALLER".
+- Graba en el lugar de trabajo real (taller, oficina, almacén) con luz de trabajo y ambiente auténtico.
+- OBLIGATORIO incluir un imprevisto real del día: una máquina que se trabó, un color que no salía, un paquete que casi no llega a tiempo.
+- Muestra la dedicación humana y el trabajo manual que hay detrás de cada entrega.
+- Genera empatía y respeto por el trabajo artesanal o profesional antes de cualquier llamado a la acción.`,
+    hookExample: "«Son las 7:00 AM en el taller y tuvimos una emergencia con este pedido que sale en dos horas…»",
+  },
 ];
 
 /* --------------------------------------------------- GATILLOS DE CTA (HORMOZI) -- */

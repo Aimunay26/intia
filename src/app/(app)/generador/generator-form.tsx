@@ -41,6 +41,7 @@ import {
 } from "@/lib/constants";
 import { cn, formatSeconds, withAlpha } from "@/lib/utils";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
+import { getStructureReference } from "@/lib/structure-references";
 import { Callout, Card, CardHeader, Field, SectionTitle } from "@/components/ui";
 
 /* ------------------------------------------------------------------ TIPOS -- */
@@ -523,8 +524,7 @@ export function GeneratorForm({
               <div className="grid gap-2 sm:grid-cols-2 max-h-[380px] overflow-y-auto pr-1 no-scrollbar">
                 {structuresFiltradas.map((s) => {
                   const activa = s.id === structureId;
-                  const esCamaleon = s.name.toLowerCase().includes("camaleón") || s.name.toLowerCase().includes("camaleon") || s.family === "Nativo";
-                  const esEllos = s.name.toLowerCase().includes("ellos") || s.family === "Comparativo";
+                  const ref = getStructureReference(s.name);
 
                   return (
                     <button
@@ -552,16 +552,9 @@ export function GeneratorForm({
                         {s.family ? <span className="chip chip-plain text-[10px]">{s.family}</span> : null}
                         <span className="text-inkmuted text-[10.5px]">{s.beats.length} beats</span>
 
-                        {esCamaleon && (
-                          <span className="chip chip-brand text-[9.5px] font-semibold bg-brand/10 text-brand">
-                            🦎 90% Nativo / 10% Venta
-                          </span>
-                        )}
-                        {esEllos && (
-                          <span className="chip chip-brand text-[9.5px] font-semibold bg-brand/10 text-brand">
-                            👫 Choque de visiones
-                          </span>
-                        )}
+                        <span className="chip chip-brand text-[9.5px] font-semibold bg-brand/10 text-brand">
+                          {ref.badge}
+                        </span>
                       </div>
 
                       {s.summary ? (
@@ -579,6 +572,49 @@ export function GeneratorForm({
                   );
                 })}
               </div>
+
+              {/* Ficha de Referencia Enriquecida del Formato Seleccionado */}
+              {structure && (() => {
+                const ref = getStructureReference(structure.name);
+                return (
+                  <div className="rounded-xl border border-brand/40 bg-brandsoft/30 p-3.5 space-y-2.5 transition-all">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-brand">{ref.badge}</span>
+                        <span className="text-[13px] font-bold text-ink">Referencia: {structure.name}</span>
+                        <span className="chip chip-plain text-[10px] uppercase font-semibold">
+                          {structure.category === "VENDE" ? "💰 Vende" : "🎭 Entretiene"}
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-mono text-inkmuted font-semibold">
+                        {structure.beats.length} beats · ~{formatSeconds(structure.defaultDurationSec)}
+                      </span>
+                    </div>
+
+                    <p className="text-[12px] text-ink leading-relaxed">
+                      <strong>Modelo Mental:</strong> {ref.mentalModel}
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11.5px]">
+                      <div className="rounded-lg bg-surface/80 border border-line p-2.5 space-y-1">
+                        <span className="text-brand font-bold block">🎣 Gancho (Segundos 0-3):</span>
+                        <p className="text-inkmuted leading-snug">{ref.hookStrategy}</p>
+                        <p className="text-ink font-medium italic text-[11px] mt-1 bg-surface2/60 p-1.5 rounded">
+                          {ref.hookExample}
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-surface/80 border border-line p-2.5 space-y-1">
+                        <span className="text-ink font-bold block">🔒 Regla de Oro y Retención:</span>
+                        <p className="text-inkmuted leading-snug">{ref.keyRule}</p>
+                        <p className="text-brand font-medium text-[11px] mt-1">
+                          💡 Retención: {ref.retentionSecret}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Botón de Validación para Continuar al Paso 2 */}
               <div className="flex items-center justify-between pt-3 border-t border-line mt-2">

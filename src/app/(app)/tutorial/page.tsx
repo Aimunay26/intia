@@ -240,14 +240,10 @@ export default async function TutorialPage() {
                 hecho={estructuras > 0}
               >
                 <p>
-                  Vienen {estructuras} formatos cargados, cada uno con sus golpes en orden y
-                  sus reglas duras. No hace falta que los toques para empezar.
+                  Vienen <strong>21 formatos ganadores enriquecidos</strong> (18 que venden y 3 que entretienen), cada uno con su modelo mental, gancho en segundos 0 a 3, regla de oro, esqueleto de beats y <strong>ejemplos reales completos de guion</strong> para alimentar el aprendizaje de la IA.
                 </p>
                 <p>
-                  Cuando uno te funcione de verdad, entra y{" "}
-                  <strong>pega ese guion en sus ejemplos</strong>. A partir de ahí la IA
-                  reproduce lo que a ti te funcionó, no lo que funciona en general. Es la
-                  diferencia entre una herramienta genérica y la tuya.
+                  Entre ellos: <em>🌪️ Giro 180°</em>, <em>🦎 Camaleón 90/10</em>, <em>👫 Ellos vs Nosotros</em>, <em>🩹 PAS</em>, <em>🤳 UGC</em>, <em>📖 Historia de Fundador</em>, <em>📦 ASMR Sensorial</em>, <em>🛠️ Hack en 3 pasos</em>, <em>💬 Respondiendo Comentarios</em> y más.
                 </p>
               </Paso>
 
@@ -277,14 +273,14 @@ export default async function TutorialPage() {
                 hecho={guiones > 0}
               >
                 <p>
-                  El generador te guía paso a paso como un asistente inteligente en <strong>5 etapas progresivas</strong>:
+                  El generador te guía paso a paso como un asistente inteligente en <strong>5 etapas progresivas</strong> con validación ("rellena primero para continuar"):
                 </p>
                 <ul className="list-disc pl-4 space-y-1 text-[12.5px] text-inksoft mt-1">
-                  <li><strong>1 · Formato de guion:</strong> Eliges la estructura ganadora (ej. <em>Camaleón</em> con 90% de contenido y venta al final, o <em>Ellos vs Nosotros</em> con choque de hábitos).</li>
-                  <li><strong>2 · Identidad y producto:</strong> Seleccionas marca, actor y detallas el producto a fondo (la IA lo asimila completo aunque el formato solo lo mencione al final).</li>
-                  <li><strong>3 · Ángulo e idea:</strong> Eliges el giro psicológico (Impacto Visual, POV, Anti-Consejo, etc.) y la historia del video.</li>
-                  <li><strong>4 · Cierre y CTA (Hormozi):</strong> Configuras el gatillo de alta conversión (escasez de cupos, urgencia temporal, motivo o incentivo).</li>
-                  <li><strong>5 · Motor y generación:</strong> Revisas el checklist y generas el guion desglosado escena por escena, con encuadre, emoción, sonido y utilería listo para rodar.</li>
+                  <li><strong>1 · Formato de guion (21 estructuras):</strong> Eliges la estructura ganadora con su ficha de referencia enriquecida (modelo mental, gancho 0-3s y retención).</li>
+                  <li><strong>2 · Identidad y producto:</strong> Seleccionas marca, actor y detallas el producto a fondo (la IA lo asimila completo en su pre-prompt aunque el formato no lo mencione de inmediato).</li>
+                  <li><strong>3 · Ángulo e idea (12 enfoques creativos):</strong> Seleccionas el giro psicológico exacto: <em>Camaleón</em>, <em>Ellos vs Nosotros</em>, <em>Impacto Visual</em>, <em>POV Real</em>, <em>Anti-Consejo</em>, <em>Experimento</em>, <em>Storytime</em>, <em>Parodia Cotidiana</em>, <em>Frente al Hater</em>, <em>Hack Oculto</em>, <em>ASMR Unboxing</em> o <em>Detrás de Cámaras</em>.</li>
+                  <li><strong>4 · Cierre y CTA (Gatillos de Hormozi):</strong> Escasez ética de cupos, urgencia temporal, motivo de celebración, regalo o impacto visual en cámara.</li>
+                  <li><strong>5 · Motor y generación:</strong> Checklist ejecutivo de confirmación y generación con Claude o Gemini escena por escena listo para rodar.</li>
                 </ul>
               </Paso>
 

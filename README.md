@@ -219,9 +219,9 @@ envenena en silencio todos los guiones que se generen después con ese formato.
 
 En vez de un formulario con scroll vertical largo, el generador organiza la creación de guiones en **5 etapas progresivas e interactivas**:
 
-1. **Formato (Estructura ganadora):** Filtra por objetivo (*Vende* vs *Entretiene*) o busca por nombre. Incluye referencias clave destacadas, como **Camaleón** (90% contenido nativo de la red y 10% venta al final) y **Ellos vs Nosotros** (choque de hábitos y visiones de géneros o escuelas).
+1. **Formato (21 Estructuras Ganadoras Enriquecidas):** Filtra por objetivo (*Vende* vs *Entretiene*) o busca por nombre. Cada formato cuenta con su **ficha de referencia enriquecida**: modelo mental, gancho en segundos 0 a 3, regla de oro, secreto de retención y ejemplos ganadores reales cargados en el pre-prompt de la IA (incluye *Giro 180°*, *Camaleón 90/10*, *Ellos vs Nosotros*, *PAS*, *UGC*, *Historia de Fundador*, *ASMR Unboxing*, *Hack en 3 pasos*, *Respondiendo Comentarios* y más).
 2. **Identidad & Producto:** Elige la marca, la persona frente a cámara (con su indicador de encaje o fit con el formato) y detalla a fondo el **producto o servicio a grabar** (la IA asimila todas las características, beneficios y objeciones aunque el guion solo lo mencione sutilmente al final).
-3. **Ángulo creativo e idea central:** Botones de ángulos (*Camaleón*, *Ellos vs Nosotros*, *Impacto Visual*, *POV*, *Anti-Consejo*, *Experimento*) que definen el giro psicológico, más la petición o historia del video.
+3. **Ángulo creativo e idea central (12 Enfoques Virales):** Botones de ángulos (*Camaleón 90/10*, *Ellos vs Nosotros*, *Impacto Visual*, *POV Real*, *Anti-Consejo*, *Experimento*, *Storytime / Confesión*, *Parodia Cotidiana*, *Frente al Hater*, *Hack Oculto*, *ASMR Unboxing*, *Detrás de Cámaras*) que definen el giro psicológico exacto, más la petición o historia del video.
 4. **Cierre CTA (Alex Hormozi):** Gatillos de alta conversión (*$100M Offers* y *$100M Leads*: escasez ética de cupos, urgencia temporal, motivo "porque...", incentivo/regalo, demostración visual en cámara) con fórmulas reactivas y ensamblado automático.
 5. **Motor de IA y generación:** Selector de proveedor (Claude / Gemini), modelo, duración y checklist ejecutivo de ideación.
 

@@ -86,15 +86,35 @@ export function GuiaProvider({ children }: { children: ReactNode }) {
   const moduloActual = MODULOS_GUIA[state.moduloIndex] ?? MODULOS_GUIA[0];
   const pasoActual = moduloActual.pasos[state.pasoIndex] ?? moduloActual.pasos[0];
 
-  const iniciarGuia = useCallback((moduloIdx = 0, pasoIdx = 0) => {
-    setState((prev) => ({
-      ...prev,
-      activo: true,
-      minimizado: false,
-      moduloIndex: Math.min(Math.max(0, moduloIdx), MODULOS_GUIA.length - 1),
-      pasoIndex: pasoIdx,
-    }));
-  }, []);
+  const navegarSiEsNecesario = useCallback(
+    (paso: GuiaPaso | undefined) => {
+      if (!paso?.url || typeof window === "undefined") return;
+      // Si el elemento objetivo ya existe en el DOM actual (ej. estamos en /marcas/[id] y el paso busca la pestaña), no redirigir
+      const el = document.querySelector(`[data-guia="${paso.target}"]`);
+      if (el) return;
+      if (pathname !== paso.url) {
+        router.push(paso.url);
+      }
+    },
+    [pathname, router]
+  );
+
+  const iniciarGuia = useCallback(
+    (moduloIdx = 0, pasoIdx = 0) => {
+      const validMod = Math.min(Math.max(0, moduloIdx), MODULOS_GUIA.length - 1);
+      const mod = MODULOS_GUIA[validMod];
+      const validPaso = Math.min(Math.max(0, pasoIdx), (mod?.pasos.length ?? 1) - 1);
+      setState((prev) => ({
+        ...prev,
+        activo: true,
+        minimizado: false,
+        moduloIndex: validMod,
+        pasoIndex: validPaso,
+      }));
+      navegarSiEsNecesario(mod?.pasos[validPaso]);
+    },
+    [navegarSiEsNecesario]
+  );
 
   const cerrarGuia = useCallback(() => {
     setState((prev) => ({ ...prev, activo: false }));
@@ -108,16 +128,20 @@ export function GuiaProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, minimizado: false }));
   }, []);
 
-  const irAModulo = useCallback((index: number) => {
-    const validIdx = Math.min(Math.max(0, index), MODULOS_GUIA.length - 1);
-    setState((prev) => ({
-      ...prev,
-      activo: true,
-      minimizado: false,
-      moduloIndex: validIdx,
-      pasoIndex: 0,
-    }));
-  }, []);
+  const irAModulo = useCallback(
+    (index: number) => {
+      const validIdx = Math.min(Math.max(0, index), MODULOS_GUIA.length - 1);
+      setState((prev) => ({
+        ...prev,
+        activo: true,
+        minimizado: false,
+        moduloIndex: validIdx,
+        pasoIndex: 0,
+      }));
+      navegarSiEsNecesario(MODULOS_GUIA[validIdx]?.pasos[0]);
+    },
+    [navegarSiEsNecesario]
+  );
 
   const siguientePaso = useCallback(() => {
     setState((prev) => {
@@ -126,6 +150,8 @@ export function GuiaProvider({ children }: { children: ReactNode }) {
 
       // Si aún hay pasos en este módulo
       if (prev.pasoIndex < mod.pasos.length - 1) {
+        const nextPaso = mod.pasos[prev.pasoIndex + 1];
+        navegarSiEsNecesario(nextPaso);
         return { ...prev, pasoIndex: prev.pasoIndex + 1 };
       }
 
@@ -136,6 +162,8 @@ export function GuiaProvider({ children }: { children: ReactNode }) {
 
       // Si hay un siguiente módulo
       if (prev.moduloIndex < MODULOS_GUIA.length - 1) {
+        const siguienteModulo = MODULOS_GUIA[prev.moduloIndex + 1];
+        navegarSiEsNecesario(siguienteModulo?.pasos[0]);
         return {
           ...prev,
           moduloIndex: prev.moduloIndex + 1,
@@ -151,24 +179,28 @@ export function GuiaProvider({ children }: { children: ReactNode }) {
         completados: nuevosCompletados,
       };
     });
-  }, []);
+  }, [navegarSiEsNecesario]);
 
   const pasoAnterior = useCallback(() => {
     setState((prev) => {
       if (prev.pasoIndex > 0) {
+        const prevPaso = MODULOS_GUIA[prev.moduloIndex]?.pasos[prev.pasoIndex - 1];
+        navegarSiEsNecesario(prevPaso);
         return { ...prev, pasoIndex: prev.pasoIndex - 1 };
       }
       if (prev.moduloIndex > 0) {
         const anteriorModulo = MODULOS_GUIA[prev.moduloIndex - 1];
+        const lastPasoIdx = anteriorModulo.pasos.length - 1;
+        navegarSiEsNecesario(anteriorModulo.pasos[lastPasoIdx]);
         return {
           ...prev,
           moduloIndex: prev.moduloIndex - 1,
-          pasoIndex: anteriorModulo.pasos.length - 1,
+          pasoIndex: lastPasoIdx,
         };
       }
       return prev;
     });
-  }, []);
+  }, [navegarSiEsNecesario]);
 
   const reiniciarGuia = useCallback(() => {
     setState({
@@ -178,14 +210,15 @@ export function GuiaProvider({ children }: { children: ReactNode }) {
       minimizado: false,
       completados: [],
     });
-  }, []);
+    navegarSiEsNecesario(MODULOS_GUIA[0]?.pasos[0]);
+  }, [navegarSiEsNecesario]);
 
   const navegarAPasoActual = useCallback(() => {
     if (!pasoActual?.url) return;
-    if (pathname !== pasoActual.url && !pathname.startsWith(pasoActual.url + "/")) {
-      router.push(pasoActual.url);
-    }
-  }, [pasoActual, pathname, router]);
+    const el = document.querySelector(`[data-guia="${pasoActual.target}"]`);
+    if (el) return;
+    router.push(pasoActual.url);
+  }, [pasoActual, router]);
 
   return (
     <GuiaContext.Provider

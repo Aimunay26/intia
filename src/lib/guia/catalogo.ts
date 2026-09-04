@@ -65,7 +65,8 @@ export const GUIA_TARGETS = {
   BOTONES_GENERADOR_CTA: "botones-generador-cta",
   BTN_GENERAR_GUION_SUBMIT: "btn-generar-guion-submit",
 
-  // --- MÓDULO 7: Asignar Guion a Video (/guiones/[id]) ---
+  // --- MÓDULO 7: Asignar Guion a Video (/guiones / /guiones/[id]) ---
+  GUION_PRIMERA_FILA: "guion-primera-fila",
   SELECT_ASIGNAR_VIDEO: "select-asignar-video",
   BTN_ASIGNAR_GUION: "btn-asignar-guion",
   VIDEO_VINCULADO_CARD: "video-vinculado-card",

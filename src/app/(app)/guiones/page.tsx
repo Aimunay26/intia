@@ -13,6 +13,7 @@ import {
 import { formatDate, formatSeconds, truncate } from "@/lib/utils";
 import { Avatar, Badge, Card, ColorChip, EmptyState, PageHeader } from "@/components/ui";
 import { ActiveFilters, FilterBar, FilterSelect, SearchInput } from "@/components/filters";
+import { GUIA_TARGETS } from "@/components/guia";
 
 /** Biblioteca de guiones: todo lo escrito, filtrable por lo que sea. */
 export default async function GuionesPage({
@@ -170,11 +171,12 @@ export default async function GuionesPage({
                 </tr>
               </thead>
               <tbody>
-                {scripts.map((script) => (
+                {scripts.map((script, i) => (
                   <tr key={script.id}>
                     <td className="max-w-[320px]">
                       <Link
                         href={`/guiones/${script.id}`}
+                        data-guia={i === 0 ? GUIA_TARGETS.GUION_PRIMERA_FILA : undefined}
                         className="text-ink hover:text-brand text-[13px] font-semibold transition-colors"
                       >
                         {script.title}

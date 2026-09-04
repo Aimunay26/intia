@@ -383,13 +383,33 @@ export const MODULOS_GUIA: GuiaModulo[] = [
     duracionMin: 3,
     pasos: [
       {
+        id: "m7-nav",
+        titulo: "Entra en la sección de Guiones",
+        instruccion: "Haz clic en «Guiones» en el menú lateral.",
+        detalle: "Aquí verás todos los guiones creados, desglosados y listos para asignar al calendario.",
+        target: GUIA_TARGETS.NAV_GUIONES,
+        url: "/guiones",
+        fallbackTexto: "Enlace «Guiones» en el menú de navegación.",
+        posicionPreferida: "right",
+      },
+      {
+        id: "m7-abrir-guion",
+        titulo: "Abre la ficha del guion",
+        instruccion: "Haz clic en tu guion en la lista para ver su desglose completo.",
+        detalle: "Dentro de la ficha del guion podrás asignarlo a la tarjeta de video que ideaste en el Módulo 4.",
+        target: GUIA_TARGETS.GUION_PRIMERA_FILA,
+        url: "/guiones",
+        fallbackTexto: "Haz clic en la fila o título de tu guion en la tabla.",
+        posicionPreferida: "bottom",
+      },
+      {
         id: "m7-select",
         titulo: "Elige la tarjeta de video",
         instruccion: "Selecciona la idea de video que creaste en el Módulo 4.",
         detalle: "Al vincularlos, el video hereda la estructura del guion y pasa automáticamente de estado «Idea» a «Guion».",
         target: GUIA_TARGETS.SELECT_ASIGNAR_VIDEO,
         url: "/guiones",
-        fallbackTexto: "Selector «Asignar a un video» dentro de la ficha del guion.",
+        fallbackTexto: "Abre la ficha del guion para ver el selector «Asignar a un video».",
         posicionPreferida: "top",
       },
       {
@@ -399,7 +419,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         detalle: "¡Listo! Ya tienes el ciclo completo: marca definida, video programado y guion profesional asignado.",
         target: GUIA_TARGETS.BTN_ASIGNAR_GUION,
         url: "/guiones",
-        fallbackTexto: "Botón «Asignar» junto al selector de tarjeta.",
+        fallbackTexto: "Botón «Asignar» junto al selector de tarjeta dentro del guion.",
         posicionPreferida: "left",
       },
       {

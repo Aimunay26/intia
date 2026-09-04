@@ -53,9 +53,16 @@ export const GUIA_TARGETS = {
   BTN_GUARDAR_AJUSTES: "btn-guardar-ajustes",
 
   // --- MÓDULO 6: Generador de Guiones (/generador) ---
+  GENERADOR_STEPPER_BAR: "generador-stepper-bar",
+  GENERADOR_BTN_SIGUIENTE: "generador-btn-siguiente",
   SELECT_GENERADOR_ESTRUCTURA: "select-generador-estructura",
   SELECT_GENERADOR_MARCA: "select-generador-marca",
   SELECT_GENERADOR_ARQUETIPO: "select-generador-arquetipo",
+  INPUT_GENERADOR_PRODUCTO: "input-generador-producto",
+  INPUT_GENERADOR_PRODUCTO_DESC: "input-generador-producto-desc",
+  BOTONES_GENERADOR_ANGULOS: "botones-generador-angulos",
+  INPUT_GENERADOR_PETICION: "input-generador-peticion",
+  BOTONES_GENERADOR_CTA: "botones-generador-cta",
   BTN_GENERAR_GUION_SUBMIT: "btn-generar-guion-submit",
 
   // --- MÓDULO 7: Asignar Guion a Video (/guiones/[id]) ---

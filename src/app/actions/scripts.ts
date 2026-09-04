@@ -101,7 +101,14 @@ export async function generarGuion(
   const brandId = fieldOrNull(formData, "marca");
   const archetypeId = fieldOrNull(formData, "arquetipo");
   const request = field(formData, "peticion");
-  const productFocus = field(formData, "producto");
+  const productName = field(formData, "producto");
+  const productDetail = field(formData, "productoDetalle");
+  const productFocus = [
+    productName ? `Producto/Servicio: ${productName}` : "",
+    productDetail ? `Detalle y descripción profunda:\n${productDetail}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   const variantHint = field(formData, "variante");
   const durationSec = intField(formData, "duracion", 0);
   const provider = field(formData, "proveedor") || "anthropic";

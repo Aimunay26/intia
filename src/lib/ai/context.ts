@@ -388,6 +388,20 @@ debería interpretarla, para que producción elija bien.`);
     if (contacto.length) parts.push(section("Canales para el CTA", bullets(contacto)));
   }
 
+  // ---- 3.1 EL PRODUCTO O SERVICIO A GRABAR (CONTEXTO EXHAUSTIVO) --------
+  if (input.productFocus?.trim()) {
+    parts.push(`
+# 3.1 EL PRODUCTO O SERVICIO A GRABAR (CONTEXTO PROFUNDO)
+Detalle y descripción completa del producto o servicio:
+"${input.productFocus.trim()}"
+
+DIRECTIVA CRÍTICA DE INTEGRACIÓN DEL PRODUCTO:
+- Asimila toda la descripción, beneficios, problemas que resuelve y características de este producto.
+- Si el ángulo es "Camaleón" o un formato nativo/entretenimiento: NO vendas al inicio; el 90% del guion debe ser contenido puro de la red, y este producto entrará de forma natural, justificada y creíble en el 10% final.
+- Si el ángulo es "Ellos vs Nosotros": usa este producto como la prueba tangible donde chocan las mentalidades y hábitos opuestos.
+- Aunque por la naturaleza del guion no se reciten todas las especificaciones técnicas en voz alta, los diálogos, la utilería, las reacciones y la escena final deben estar ancladas en la realidad exacta de este producto.`);
+  }
+
   // ---- 4. REFERENCIAS (PDFs) -------------------------------------------
   if (references.length) {
     let used = 0;

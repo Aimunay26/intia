@@ -17,44 +17,47 @@ export type CreativeAngle = {
 
 export const ANGULOS_CREATIVOS: CreativeAngle[] = [
   {
-    id: "ella_vs_ellos",
-    name: "Ella vs Ellos (Guerra de perspectivas / Choque de géneros)",
-    shortLabel: "Ella vs Ellos",
-    icon: "👫",
-    badge: "Contraste",
-    description:
-      "Contrapone cómicamente o con realismo cómo vive ella el problema/producto frente a cómo lo vive él. Genera debate masivo en comentarios.",
-    promptInstructions: `ÁNGULO OBLIGATORIO: "ELLA VS ELLOS" (Contraste de perspectivas femenina vs masculina).
-- El guion debe estructurarse mostrando las dos caras de la moneda: cómo reacciona o actúa una mujer frente a la situación vs cómo reacciona o actúa un hombre.
-- Usa diálogos contrapuestos, expectativas rotas y situaciones reconocibles de pareja, amigos o trabajo donde ambos géneros tienen enfoques diametralmente opuestos.
-- El producto/mensaje debe ser el punto de resolución o el objeto que expone esa diferencia de forma entretenida y relatable.`,
-    hookExample: "«Por qué las mujeres tardan 40 minutos en elegir esto y los hombres 3 segundos…»",
-  },
-  {
     id: "camaleon",
-    name: "Camaleón (Mimetización con la subcultura / Jerga del nicho)",
+    name: "Camaleón (90% Contenido / 10% Venta al final)",
     shortLabel: "Camaleón",
     icon: "🦎",
-    badge: "Tribu",
+    badge: "90% Nativo",
     description:
-      "Usa la jerga exacta, códigos internos y mentalidad de una tribu específica. Hace que el espectador sienta 'este es 100% de los nuestros'.",
-    promptInstructions: `ÁNGULO OBLIGATORIO: "CAMALEÓN" (Mimetización cultural con el nicho).
-- El guion debe adoptar al 100% el lenguaje, modismos técnicos, chistes internos y dolores cotidianos de la tribu específica (ej. programadores, dueños de agencia, mamás primerizas, médicos, atletas).
-- PROHIBIDO sonar corporativo o generalista. Cada frase debe destilar autenticidad de nicho. Quien lo escuche debe decir: "esta persona vive exactamente lo mismo que yo todos los días".`,
-    hookExample: "«Si eres de los que todavía hace esto a mano a las 2 AM, tenemos que hablar…»",
+      "El 90% del tiempo parece contenido orgánico de valor, entretenimiento o tutorial de la red. Recién al final vende de forma natural y justificada.",
+    promptInstructions: `ÁNGULO OBLIGATORIO: "CAMALEÓN" (90% Contenido nativo de valor / 10% Venta al final).
+- REGLA ESTRICTA 90/10: El 90% de la duración del guion DEBE ser contenido 100% nativo de la plataforma (un tutorial práctico, un storytime auténtico, una receta, un tip o una curiosidad de la subcultura).
+- El espectador DEBE quedarse viendo el video pensando genuinamente que es un contenido de valor de su feed, sin sospechar que es un video con intención comercial.
+- PROHIBIDO sonar a comercial o meter la marca en los primeros segundos.
+- Solo en el último 10% del guion (en el remate y la última escena), el producto o servicio entra de forma lógica, justificada y natural como la herramienta o solución que resuelve lo expuesto, culminando en el llamado a la acción.`,
+    hookExample: "«Si te pasa esto todos los días al organizar tus cosas, este truco te va a salvar la vida…»",
+  },
+  {
+    id: "ella_vs_ellos",
+    name: "Ellos vs Nosotros / Ella vs Ellos (Choque de perspectivas y hábitos)",
+    shortLabel: "Ellos vs Nosotros",
+    icon: "👫",
+    badge: "Choque de visiones",
+    description:
+      "Un tema o producto es usado de una manera por un grupo (ej. mujeres) y de otra manera completamente distinta por los hombres u otros. Expone cómo piensan y actúan.",
+    promptInstructions: `ÁNGULO OBLIGATORIO: "ELLOS VS NOSOTROS / ELLA VS ELLOS" (Contraste de perspectivas, hábitos y mentalidad).
+- El guion debe estructurarse mostrando las dos caras de la moneda: cómo un bando/grupo (ej. mujeres, o la vieja escuela) piensa y usa el producto/situación, frente a cómo el otro bando (ej. hombres, o la nueva forma) lo piensa y lo aborda de manera totalmente diferente.
+- Muestra el choque cómico o revelador de pensamientos: los diálogos internos, las expectativas exageradas, los pasos innecesarios de un lado vs la practicidad o visión del otro.
+- Utiliza situaciones reconocibles de la vida real donde ambos lados quedan retratados con empatía y humor.
+- El producto o servicio actúa como el punto de contraste evidente que demuestra la diferencia de mentalidades.`,
+    hookExample: "«Cómo usan esto las mujeres vs cómo creemos los hombres que se usa…»",
   },
   {
     id: "impacto_visual",
     name: "Impacto Visual / Rompimiento de patrón (Hook físico de choque)",
     shortLabel: "Impacto Visual",
     icon: "💥",
-    badge: "Retención",
+    badge: "Retención pura",
     description:
-      "Arranca en el segundo cero con una acción física chocante, un elemento roto, un zoom inesperado o una demostración visual sin anestesia.",
+      "Arranca en el segundo cero con una acción física chocante, un objeto que se rompe o cae, zoom macro o demostración visual sin anestesia.",
     promptInstructions: `ÁNGULO OBLIGATORIO: "IMPACTO VISUAL Y ROMPIMIENTO DE PATRÓN".
 - La primera escena NO PUEDE empezar con una persona hablando estática frente a cámara.
-- DEBE arrancar en el segundo 0 con un estímulo visual disruptivo: algo que se cae, se rompe, un plano macro extremo, un gesto físico inesperado o una transformación antes/después inmediata.
-- Las indicaciones de cámara ('shot'), acción física ('action') y utilería ('props') deben ser muy cinematográficas y dinámicas en todo el guion.`,
+- DEBE arrancar en el segundo 0 con un estímulo visual disruptivo: algo que se cae, se rompe, un plano macro extremo, un gesto físico inesperado o una transformación antes/después instantánea.
+- Las indicaciones de cámara ('shot'), acción física ('action') y utilería ('props') deben ser muy cinematográficas, dinámicas y detalladas en todo el guion.`,
     hookExample: "(Corte seco: objeto cayendo o rompiéndose) «Antes de que digas que esto no funciona, mira esto…»",
   },
   {

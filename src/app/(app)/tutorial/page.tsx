@@ -271,20 +271,21 @@ export default async function TutorialPage() {
 
               <Paso
                 numero={5}
-                titulo="Escribe el guion"
+                titulo="Escribe el guion por etapas de ideación"
                 donde="Generador IA"
                 href="/generador"
                 hecho={guiones > 0}
               >
                 <p>
-                  Ahora sí eliges formato y quién actúa. La IA recibe las tres cosas juntas: el
-                  formato con sus golpes, la marca con sus prohibiciones, y la voz de esa
-                  persona.
+                  El generador te guía paso a paso como un asistente inteligente en <strong>5 etapas progresivas</strong>:
                 </p>
-                <p>
-                  Sale desglosado escena por escena, con tiempos, encuadre, qué se dice palabra
-                  por palabra, emoción, iluminación, sonido y utilería. Listo para grabar.
-                </p>
+                <ul className="list-disc pl-4 space-y-1 text-[12.5px] text-inksoft mt-1">
+                  <li><strong>1 · Formato de guion:</strong> Eliges la estructura ganadora (ej. <em>Camaleón</em> con 90% de contenido y venta al final, o <em>Ellos vs Nosotros</em> con choque de hábitos).</li>
+                  <li><strong>2 · Identidad y producto:</strong> Seleccionas marca, actor y detallas el producto a fondo (la IA lo asimila completo aunque el formato solo lo mencione al final).</li>
+                  <li><strong>3 · Ángulo e idea:</strong> Eliges el giro psicológico (Impacto Visual, POV, Anti-Consejo, etc.) y la historia del video.</li>
+                  <li><strong>4 · Cierre y CTA (Hormozi):</strong> Configuras el gatillo de alta conversión (escasez de cupos, urgencia temporal, motivo o incentivo).</li>
+                  <li><strong>5 · Motor y generación:</strong> Revisas el checklist y generas el guion desglosado escena por escena, con encuadre, emoción, sonido y utilería listo para rodar.</li>
+                </ul>
               </Paso>
 
               <Paso

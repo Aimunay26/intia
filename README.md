@@ -215,6 +215,16 @@ el prompt de generación lee esa fila: solo el criterio humano tiene derecho a h
 motor escribe solo en la matriz — una puntuación automática mala no se queda en una tabla fea,
 envenena en silencio todos los guiones que se generen después con ese formato.
 
+### El Generador IA: Asistente de Ideación por Etapas (Gemini-Style)
+
+En vez de un formulario con scroll vertical largo, el generador organiza la creación de guiones en **5 etapas progresivas e interactivas**:
+
+1. **Formato (Estructura ganadora):** Filtra por objetivo (*Vende* vs *Entretiene*) o busca por nombre. Incluye referencias clave destacadas, como **Camaleón** (90% contenido nativo de la red y 10% venta al final) y **Ellos vs Nosotros** (choque de hábitos y visiones de géneros o escuelas).
+2. **Identidad & Producto:** Elige la marca, la persona frente a cámara (con su indicador de encaje o fit con el formato) y detalla a fondo el **producto o servicio a grabar** (la IA asimila todas las características, beneficios y objeciones aunque el guion solo lo mencione sutilmente al final).
+3. **Ángulo creativo e idea central:** Botones de ángulos (*Camaleón*, *Ellos vs Nosotros*, *Impacto Visual*, *POV*, *Anti-Consejo*, *Experimento*) que definen el giro psicológico, más la petición o historia del video.
+4. **Cierre CTA (Alex Hormozi):** Gatillos de alta conversión (*$100M Offers* y *$100M Leads*: escasez ética de cupos, urgencia temporal, motivo "porque...", incentivo/regalo, demostración visual en cámara) con fórmulas reactivas y ensamblado automático.
+5. **Motor de IA y generación:** Selector de proveedor (Claude / Gemini), modelo, duración y checklist ejecutivo de ideación.
+
 ### Lo que devuelve
 
 Un guion desglosado escena por escena, listo para grabar, con: **voz** (el texto exacto),

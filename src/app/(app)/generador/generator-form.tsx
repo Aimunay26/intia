@@ -4,8 +4,12 @@ import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
+  ArrowRight,
   Bot,
   Check,
+  CheckCircle2,
+  ChevronRight,
   Clock,
   FileText,
   Film,
@@ -13,6 +17,7 @@ import {
   Loader2,
   Package,
   RotateCcw,
+  Search,
   Sparkles,
   Tags,
   Target,
@@ -178,6 +183,15 @@ export function GeneratorForm({
     return disponible?.value ?? preferido;
   })();
 
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [maxStepReached, setMaxStepReached] = useState<number>(initialStructureId ? 2 : 1);
+  const [categoryFilter, setCategoryFilter] = useState<string>("TODOS");
+  const [searchStructure, setSearchStructure] = useState<string>("");
+  const [producto, setProducto] = useState<string>(initialProduct ?? "");
+  const [productoDetalle, setProductoDetalle] = useState<string>("");
+  const [peticion, setPeticion] = useState<string>(initialRequest ?? "");
+  const [variante, setVariante] = useState<string>("");
+
   const [structureId, setStructureId] = useState(primeraEstructura?.id ?? "");
   const [brandId, setBrandId] = useState(initialBrandId);
   const [archetypeId, setArchetypeId] = useState(initialArchetypeId ?? "");
@@ -253,377 +267,698 @@ export function GeneratorForm({
 
   const modelosSugeridos = AI_MODELS[provider] ?? [];
 
+  // --- PASOS DEL ASISTENTE DE IDEACIÓN (GEMINI-STYLE) ---
+  const PASOS = [
+    {
+      id: 1,
+      numero: 1,
+      titulo: "Formato",
+      descripcion: "Tipo de guion",
+      icono: <Layers size={13} />,
+      resumen: structure ? structure.name : "Sin elegir",
+      completo: Boolean(structureId),
+    },
+    {
+      id: 2,
+      numero: 2,
+      titulo: "Identidad & Producto",
+      descripcion: "Marca, actor y producto",
+      icono: <Package size={13} />,
+      resumen: producto.trim() ? (producto.length > 18 ? producto.slice(0, 18) + "…" : producto) : "Pendiente",
+      completo: Boolean(producto.trim()),
+    },
+    {
+      id: 3,
+      numero: 3,
+      titulo: "Ángulo & Idea",
+      descripcion: "Enfoque e historia",
+      icono: <Sparkles size={13} />,
+      resumen: creativeAngle
+        ? (ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle)?.shortLabel ?? "Ángulo")
+        : "Estándar",
+      completo: peticion.trim().length >= 5,
+    },
+    {
+      id: 4,
+      numero: 4,
+      titulo: "Cierre CTA",
+      descripcion: "Gatillos Hormozi",
+      icono: <Target size={13} />,
+      resumen: CTA_TRIGGERS.find((t) => t.id === ctaTrigger)?.shortLabel ?? "Hormozi",
+      completo: cta.trim().length > 0,
+    },
+    {
+      id: 5,
+      numero: 5,
+      titulo: "Generar IA",
+      descripcion: "Checklist y motor",
+      icono: <Bot size={13} />,
+      resumen: providersReady[provider] ? "Listo" : "Sin clave",
+      completo: Boolean(structureId && providersReady[provider]),
+    },
+  ];
+
+  const puedeAvanzarPaso1 = Boolean(structureId);
+  const puedeAvanzarPaso2 = Boolean(producto.trim().length > 0);
+  const puedeAvanzarPaso3 = Boolean(peticion.trim().length >= 5);
+  const puedeAvanzarPaso4 = Boolean(cta.trim().length > 0);
+
+  const irAlPaso = (paso: number) => {
+    if (paso <= maxStepReached) {
+      setCurrentStep(paso);
+    }
+  };
+
+  const avanzarPaso = (proximo: number) => {
+    setCurrentStep(proximo);
+    setMaxStepReached((prev) => Math.max(prev, proximo));
+  };
+
+  const structuresFiltradas = useMemo(() => {
+    return structures.filter((s) => {
+      if (categoryFilter !== "TODOS" && s.category !== categoryFilter) return false;
+      if (searchStructure.trim()) {
+        const q = searchStructure.toLowerCase();
+        return (
+          s.name.toLowerCase().includes(q) ||
+          (s.family && s.family.toLowerCase().includes(q)) ||
+          (s.summary && s.summary.toLowerCase().includes(q))
+        );
+      }
+      return true;
+    });
+  }, [structures, categoryFilter, searchStructure]);
+
+  const countVende = structures.filter((s) => s.category === "VENDE").length;
+  const countEntretiene = structures.filter((s) => s.category === "ENTRETIENE").length;
+
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_368px]">
       {/* ------------------------------------------------- COLUMNA IZQUIERDA */}
       <form action={formAction} className="min-w-0 space-y-4">
+        {/* CAMPOS OCULTOS PARA CONSERVAR EL BRIEFING COMPLETO EN TODAS LAS ETAPAS */}
         <input type="hidden" name="estructura" value={structureId} />
         <input type="hidden" name="marca" value={brandId} />
         <input type="hidden" name="arquetipo" value={archetypeId} />
+        <input type="hidden" name="producto" value={producto} />
+        <input type="hidden" name="productoDetalle" value={productoDetalle} />
+        <input type="hidden" name="anguloCreativo" value={creativeAngle} />
+        <input type="hidden" name="peticion" value={peticion} />
+        <input type="hidden" name="variante" value={variante} />
+        <input type="hidden" name="ctaGatillo" value={ctaTrigger} />
+        <input type="hidden" name="ctaAccion" value={ctaAction} />
+        <input type="hidden" name="ctaDetalle" value={ctaDetail} />
+        <input type="hidden" name="cta" value={cta} />
+        <input type="hidden" name="duracion" value={duracion} />
+        <input type="hidden" name="proveedor" value={provider} />
+        <input type="hidden" name="modelo" value={model} />
 
-        {/* 1. ESTRUCTURA */}
-        <Card>
-          <CardHeader
-            title="1 · Estructura"
-            subtitle="El formato ganador que la IA va a reproducir con contenido nuevo."
-            icon={<Layers size={15} />}
-            actions={
-              structure ? (
-                <span className="chip chip-plain">{structure.beats.length} beats</span>
-              ) : null
-            }
-          />
-          <div className="space-y-4 p-4" data-guia={GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA}>
-            {STRUCTURE_CATEGORIES.map((cat) => {
-              const grupo = structures.filter((s) => s.category === cat.value);
-              if (!grupo.length) return null;
+        {/* BARRA SUPERIOR DE ETAPAS (STEPPER GEMINI-STYLE) */}
+        <div
+          className="card overflow-hidden p-3"
+          data-guia={GUIA_TARGETS.GENERADOR_STEPPER_BAR}
+        >
+          <div className="flex items-center justify-between gap-2 mb-2 px-1">
+            <div className="flex items-center gap-2">
+              <span className="chip chip-brand text-[11px] font-bold">
+                Etapa {currentStep} de 5
+              </span>
+              <span className="text-ink font-semibold text-[13px] hidden sm:inline">
+                {PASOS[currentStep - 1]?.titulo}
+              </span>
+            </div>
+            <span className="text-inkmuted text-[11px]">
+              {Math.round((currentStep / 5) * 100)}% del proceso
+            </span>
+          </div>
+
+          {/* Barra de progreso interactiva */}
+          <div className="w-full bg-surface2 h-1.5 rounded-full overflow-hidden mb-3">
+            <div
+              className="bg-brand h-full transition-all duration-300 rounded-full"
+              style={{ width: `${(currentStep / 5) * 100}%` }}
+            />
+          </div>
+
+          {/* Botones de navegación directa de etapas */}
+          <div className="grid grid-cols-5 gap-1 sm:gap-2">
+            {PASOS.map((p) => {
+              const esActivo = p.id === currentStep;
+              const esCompletado = p.id < currentStep || (p.completo && p.id !== currentStep);
+              const estaDesbloqueado = p.id <= maxStepReached;
+
               return (
-                <div key={cat.value}>
-                  <SectionTitle>
-                    <span className="flex items-center gap-2 normal-case">
-                      <span className={cn("chip", cat.chip)}>{cat.label}</span>
-                      <span className="text-inkmuted font-medium normal-case">
-                        {cat.description}
-                      </span>
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={!estaDesbloqueado}
+                  onClick={() => irAlPaso(p.id)}
+                  className={cn(
+                    "flex flex-col items-start p-2 rounded-lg text-left transition-all border relative",
+                    esActivo
+                      ? "border-brand bg-brandsoft/70 ring-1 ring-brand shadow-sm"
+                      : esCompletado
+                        ? "border-line bg-surface hover:bg-surface2 cursor-pointer"
+                        : "border-line/50 bg-surface/30 opacity-50 cursor-not-allowed"
+                  )}
+                  title={estaDesbloqueado ? `Ir a ${p.titulo}` : "Completa la etapa actual para desbloquear"}
+                >
+                  <div className="flex items-center gap-1.5 w-full">
+                    <span
+                      className={cn(
+                        "w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0",
+                        esActivo
+                          ? "bg-brand text-white"
+                          : esCompletado
+                            ? "bg-ok text-white"
+                            : "bg-surface2 text-inkmuted"
+                      )}
+                    >
+                      {esCompletado && !esActivo ? <Check size={10} /> : p.numero}
                     </span>
-                  </SectionTitle>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {grupo.map((s) => {
-                      const activa = s.id === structureId;
-                      return (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => elegirEstructura(s)}
-                          className={cn(
-                            "card-flat hover:border-linestrong w-full p-3 text-left transition-all",
-                            activa && "border-brand bg-brandsoft/50"
-                          )}
-                          style={activa ? { boxShadow: "0 0 0 1px var(--brand)" } : undefined}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="text-ink text-[13px] leading-snug font-semibold">
-                              {s.name}
-                            </span>
-                            <span className="text-inkmuted shrink-0 text-[11px] font-semibold">
-                              {formatSeconds(s.defaultDurationSec)}
-                            </span>
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            {s.family ? (
-                              <span className="chip chip-plain">{s.family}</span>
-                            ) : null}
-                            <span className="text-inkmuted text-[11px]">
-                              {s.beats.length} beats
-                            </span>
-                            {s.docs > 0 ? (
-                              <span className="text-inkmuted inline-flex items-center gap-1 text-[11px]">
-                                <FileText size={10} />
-                                {s.docs}
-                              </span>
-                            ) : null}
-                          </div>
-                          {s.beats.length ? (
-                            <div className="text-inkmuted mt-1.5 line-clamp-2 text-[11.5px] leading-relaxed">
-                              {s.beats.map((b) => b.name).join(" → ")}
-                            </div>
-                          ) : null}
-                        </button>
-                      );
-                    })}
+                    <span
+                      className={cn(
+                        "text-[11px] font-semibold truncate flex-1",
+                        esActivo ? "text-ink" : "text-inkmuted"
+                      )}
+                    >
+                      {p.titulo}
+                    </span>
                   </div>
-                </div>
+                  <div className="text-[9.5px] text-inkmuted truncate w-full mt-1 hidden md:block">
+                    {p.resumen}
+                  </div>
+                </button>
               );
             })}
           </div>
-        </Card>
+        </div>
 
-        {/* 2. CONTEXTO */}
-        <Card>
-          <CardHeader
-            title="2 · Marca y arquetipo"
-            subtitle="La identidad de la marca y el perfil de quien va a actuar."
-            icon={<Tags size={15} />}
-          />
-          <div className="space-y-4 p-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field
-                label="Marca"
-                hint="Opcional, pero muy recomendado: sin marca la IA escribe genérico."
-              >
-                <select
-                  className="select"
-                  value={brandId}
-                  onChange={(e) => setBrandId(e.target.value)}
-                  data-guia={GUIA_TARGETS.SELECT_GENERADOR_MARCA}
-                >
-                  <option value="">Sin marca</option>
-                  {brands.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-
-              <Field
-                label="Producto o servicio del video"
-                hint="Lo concreto que se muestra o se vende."
-              >
-                <input
-                  name="producto"
-                  className="input"
-                  defaultValue={initialProduct ?? ""}
-                  placeholder="Ej. Ramo de rosas rojas con caja de chocolates"
-                />
-              </Field>
-            </div>
-
-            <div>
-              <label className="label">Quién actúa</label>
-              {archetypes.length === 0 ? (
-                <div className="text-inkmuted text-[12.5px]">
-                  Todavía no hay nadie cargado.{" "}
-                  <Link href="/arquetipos" className="text-brand font-semibold">
-                    Añade a la primera persona
-                  </Link>
-                  .
-                </div>
-              ) : (
-                <div
-                  className="border-line no-scrollbar max-h-[210px] overflow-y-auto rounded-xl border"
-                  data-guia={GUIA_TARGETS.SELECT_GENERADOR_ARQUETIPO}
-                >
+        {/* ------------------------------------------------------------------ */}
+        {/* ETAPA 1: FORMATO / TIPO DE GUIÓN                                   */}
+        {/* ------------------------------------------------------------------ */}
+        {currentStep === 1 && (
+          <Card>
+            <CardHeader
+              title="1 · Elige el tipo de guion (Estructura ganadora)"
+              subtitle="El formato ganador que la IA va a reproducir con contenido nuevo."
+              icon={<Layers size={15} />}
+              actions={
+                structure ? (
+                  <span className="chip chip-brand font-semibold text-[11px]">
+                    ✓ {structure.name} ({structure.beats.length} beats)
+                  </span>
+                ) : null
+              }
+            />
+            <div className="space-y-3.5 p-4" data-guia={GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA}>
+              {/* Filtros de Categoría y Búsqueda */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => setArchetypeId("")}
+                    onClick={() => setCategoryFilter("TODOS")}
                     className={cn(
-                      "hover:bg-surface2 border-line flex w-full items-center gap-2.5 border-b px-3 py-2 text-left transition-colors",
-                      !archetypeId && "bg-brandsoft/60"
+                      "chip cursor-pointer text-[11px] transition-all",
+                      categoryFilter === "TODOS" ? "chip-brand font-bold" : "chip-plain hover:bg-surface2"
                     )}
                   >
-                    <UserSquare2 size={14} className="text-inkmuted shrink-0" />
-                    <span className="text-ink text-[12.5px] font-semibold">
-                      Sin asignar
-                    </span>
-                    <span className="text-inkmuted text-[11.5px]">
-                      La IA describirá qué perfil necesita cada escena
-                    </span>
+                    Todos ({structures.length})
                   </button>
-
-                  {arquetiposOrdenados.map((a, i) => {
-                    const score = structure ? (a.fits[structure.id]?.score ?? null) : null;
-                    const activo = a.id === archetypeId;
-                    // El primer perfil generico abre la seccion de plantillas.
-                    const abreGenericos =
-                      !a.isPerson && (i === 0 || arquetiposOrdenados[i - 1].isPerson);
-                    return (
-                      <Fragment key={a.id}>
-                        {abreGenericos ? (
-                          <div className="border-line bg-surface2 text-inkmuted border-b px-3 py-1.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                            Plantillas genéricas · no llevan la voz de nadie
-                          </div>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => setArchetypeId(a.id)}
-                          className={cn(
-                            "hover:bg-surface2 border-line flex w-full items-center gap-2.5 border-b px-3 py-2 text-left transition-colors last:border-b-0",
-                            activo && "bg-brandsoft/60"
-                          )}
-                        >
-                          <span
-                            className="dot shrink-0"
-                            style={{ background: a.color }}
-                            aria-hidden
-                          />
-                          <span className="text-ink min-w-0 flex-1 truncate text-[12.5px] font-semibold">
-                            {a.name}
-                            {a.arquetipo || a.summary ? (
-                              <span className="text-inkmuted ml-1.5 font-normal">
-                                {a.arquetipo || a.summary}
-                              </span>
-                            ) : null}
-                          </span>
-                          {a.isPerson && !a.tieneVoz ? (
-                            <span
-                              className="text-inkmuted shrink-0 text-[11px]"
-                              title="No tiene tono de voz cargado: el guion no sonará a esta persona"
-                            >
-                              sin voz
-                            </span>
-                          ) : (
-                            <span className="text-inkmuted shrink-0 text-[11px]">
-                              energía {a.energyLevel}/5
-                            </span>
-                          )}
-                          {structure ? <FitBadge score={score} /> : null}
-                        </button>
-                      </Fragment>
-                    );
-                  })}
-                </div>
-              )}
-
-              {archetype && structure && fitActual !== null && fitActual <= 1 ? (
-                <div className="mt-2.5">
-                  <Callout tone="danger" title="Este arquetipo no encaja con este formato">
-                    El video se va a ver forzado. {archetype.name} está marcado como{" "}
-                    <strong>{FIT_SCORES[fitActual].label}</strong> para «{structure.name}».
-                    {notaFit ? ` ${notaFit}` : ""} Elige otro arquetipo o cambia de estructura.
-                  </Callout>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </Card>
-
-        {/* 3. EL VIDEO */}
-        <Card>
-          <CardHeader
-            title="3 · Qué quieres en este video"
-            subtitle="Mientras más concreto seas, menos tendrás que corregir después."
-            icon={<Target size={15} />}
-          />
-          <div className="space-y-4 p-4">
-            <Field
-              label="Petición central (Idea o historia del video)"
-              required
-              hint="Habla como le hablarías a tu guionista: qué pasa, qué sensación buscas, qué tiene que quedar claro."
-            >
-              <textarea
-                name="peticion"
-                className="textarea"
-                rows={4}
-                required
-                defaultValue={initialRequest ?? ""}
-                placeholder={
-                  "Ej. Quiero un video para vender nuestro servicio de mentoría. Que arranque con algo que incomode, que se sienta real, y que termine llamando a la acción."
-                }
-              />
-            </Field>
-
-            {/* --- BOTONES DE ÁNGULOS CREATIVOS (Misma idea, diferentes versiones) --- */}
-            <div className="space-y-2.5 rounded-xl border border-line bg-surface2/40 p-3.5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="label mb-0 flex items-center gap-1.5 font-bold text-[13px]">
-                    <Sparkles size={14} className="text-brand" />
-                    Ángulo creativo (Versión de guion)
-                  </label>
-                  <p className="text-inkmuted text-[11.5px] mt-0.5">
-                    De una misma idea y producto, presiona un botón para que la IA arme una versión específica con ese enfoque.
-                  </p>
-                </div>
-                {creativeAngle && (
                   <button
                     type="button"
-                    onClick={() => setCreativeAngle("")}
-                    className="text-inkmuted hover:text-ink text-[11px] underline shrink-0 ml-2"
+                    onClick={() => setCategoryFilter("VENDE")}
+                    className={cn(
+                      "chip cursor-pointer text-[11px] transition-all",
+                      categoryFilter === "VENDE" ? "chip-brand font-bold" : "chip-plain hover:bg-surface2"
+                    )}
                   >
-                    Quitar ángulo
+                    💰 Vende ({countVende})
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setCategoryFilter("ENTRETIENE")}
+                    className={cn(
+                      "chip cursor-pointer text-[11px] transition-all",
+                      categoryFilter === "ENTRETIENE" ? "chip-brand font-bold" : "chip-plain hover:bg-surface2"
+                    )}
+                  >
+                    🎭 Entretiene ({countEntretiene})
+                  </button>
+                </div>
+
+                <div className="relative min-w-[200px]">
+                  <Search size={13} className="text-inkmuted absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchStructure}
+                    onChange={(e) => setSearchStructure(e.target.value)}
+                    placeholder="Buscar formato (ej. Camaleón, PAS)..."
+                    className="input pl-8 py-1 text-[11.5px]"
+                  />
+                </div>
               </div>
 
-              <input type="hidden" name="anguloCreativo" value={creativeAngle} />
+              {/* Grid de Formatos */}
+              <div className="grid gap-2 sm:grid-cols-2 max-h-[380px] overflow-y-auto pr-1 no-scrollbar">
+                {structuresFiltradas.map((s) => {
+                  const activa = s.id === structureId;
+                  const esCamaleon = s.name.toLowerCase().includes("camaleón") || s.name.toLowerCase().includes("camaleon") || s.family === "Nativo";
+                  const esEllos = s.name.toLowerCase().includes("ellos") || s.family === "Comparativo";
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {ANGULOS_CREATIVOS.map((ang) => {
-                  const activo = creativeAngle === ang.id;
                   return (
                     <button
-                      key={ang.id}
+                      key={s.id}
                       type="button"
-                      onClick={() => setCreativeAngle(activo ? "" : ang.id)}
+                      onClick={() => elegirEstructura(s)}
                       className={cn(
-                        "card-flat flex flex-col items-start p-2.5 text-left transition-all relative overflow-hidden",
-                        activo
-                          ? "border-brand bg-brandsoft/70 shadow-sm ring-1 ring-brand"
-                          : "hover:bg-surface2 hover:border-brand/40"
+                        "card-flat hover:border-linestrong w-full p-3 text-left transition-all relative overflow-hidden",
+                        activa ? "border-brand bg-brandsoft/60 ring-1 ring-brand shadow-sm" : "hover:bg-surface2/60"
                       )}
                     >
-                      <div className="flex items-center gap-1.5 w-full">
-                        <span className="text-base">{ang.icon}</span>
-                        <span className="text-ink text-[12px] font-bold truncate flex-1">
-                          {ang.shortLabel}
-                        </span>
-                        <span className="chip chip-plain text-[9px] px-1 py-0 shrink-0">
-                          {ang.badge}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                          <span className="text-ink text-[13px] leading-snug font-bold truncate">
+                            {s.name}
+                          </span>
+                          {activa && <CheckCircle2 size={13} className="text-brand shrink-0" />}
+                        </div>
+                        <span className="text-inkmuted shrink-0 text-[11px] font-semibold font-mono">
+                          {formatSeconds(s.defaultDurationSec)}
                         </span>
                       </div>
-                      <p className="text-inkmuted text-[10.5px] line-clamp-2 mt-1 leading-snug">
-                        {ang.description}
-                      </p>
+
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        {s.family ? <span className="chip chip-plain text-[10px]">{s.family}</span> : null}
+                        <span className="text-inkmuted text-[10.5px]">{s.beats.length} beats</span>
+
+                        {esCamaleon && (
+                          <span className="chip chip-brand text-[9.5px] font-semibold bg-brand/10 text-brand">
+                            🦎 90% Nativo / 10% Venta
+                          </span>
+                        )}
+                        {esEllos && (
+                          <span className="chip chip-brand text-[9.5px] font-semibold bg-brand/10 text-brand">
+                            👫 Choque de visiones
+                          </span>
+                        )}
+                      </div>
+
+                      {s.summary ? (
+                        <p className="text-inkmuted text-[11px] mt-1.5 line-clamp-2 leading-relaxed">
+                          {s.summary}
+                        </p>
+                      ) : null}
+
+                      {s.beats.length ? (
+                        <div className="text-inkmuted mt-1.5 text-[10.5px] truncate font-mono">
+                          {s.beats.map((b) => b.name).join(" → ")}
+                        </div>
+                      ) : null}
                     </button>
                   );
                 })}
               </div>
 
-              {creativeAngle && (() => {
-                const sel = ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle);
-                if (!sel) return null;
-                return (
-                  <div className="border border-brand/30 bg-brand/5 rounded-xl p-3 text-[12px] flex items-start gap-2.5">
-                    <span className="text-base shrink-0 mt-0.5">{sel.icon}</span>
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="text-ink font-semibold flex items-center gap-2">
-                        <span>Versión activa: {sel.name}</span>
-                        <span className="chip chip-brand text-[10px]">{sel.badge}</span>
-                      </div>
-                      <p className="text-inkmuted text-[11.5px] leading-relaxed">
-                        {sel.description}
-                      </p>
-                      <div className="text-brand font-mono text-[11px] bg-surface2/80 rounded px-2 py-1 border border-brand/20">
-                        {sel.hookExample}
+              {/* Botón de Validación para Continuar al Paso 2 */}
+              <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
+                <div className="text-[12px] text-inkmuted">
+                  {structure ? (
+                    <span className="text-ink font-semibold">
+                      ✓ Seleccionado: {structure.name}
+                    </span>
+                  ) : (
+                    <span className="text-warn font-medium">
+                      Elige una estructura para poder continuar.
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={!puedeAvanzarPaso1}
+                  onClick={() => avanzarPaso(2)}
+                  className="btn btn-primary"
+                  data-guia={GUIA_TARGETS.GENERADOR_BTN_SIGUIENTE}
+                >
+                  Continuar: Identidad y Producto
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* ------------------------------------------------------------------ */}
+        {/* ETAPA 2: IDENTIDAD, ACTOR Y PRODUCTO A GRABAR                      */}
+        {/* ------------------------------------------------------------------ */}
+        {currentStep === 2 && (
+          <Card>
+            <CardHeader
+              title="2 · Marca, arquetipo y producto a grabar"
+              subtitle="Define la identidad, quién saldrá en cámara y la descripción exhaustiva del producto."
+              icon={<Package size={15} />}
+            />
+            <div className="space-y-4 p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field
+                  label="Marca"
+                  hint="Opcional, pero muy recomendado: sin marca la IA escribe genérico."
+                >
+                  <select
+                    className="select"
+                    value={brandId}
+                    onChange={(e) => setBrandId(e.target.value)}
+                    data-guia={GUIA_TARGETS.SELECT_GENERADOR_MARCA}
+                  >
+                    <option value="">Sin marca (generalista)</option>
+                    {brands.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
+                <Field
+                  label="Producto o servicio del video"
+                  required
+                  hint="El nombre o título concreto de lo que se muestra o se vende."
+                >
+                  <input
+                    name="producto"
+                    className="input font-semibold"
+                    value={producto}
+                    onChange={(e) => setProducto(e.target.value)}
+                    placeholder="Ej. Ramo de rosas rojas con chocolates / App de gestión"
+                    data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO}
+                  />
+                </Field>
+              </div>
+
+              {/* Descripción profunda del producto */}
+              <Field
+                label="Descripción exhaustiva del producto o servicio (Contexto profundo)"
+                hint="Describe a fondo características, beneficios, precio, para qué sirve y objeciones que resuelve. Aunque por el tipo de guión (como Camaleón) el producto solo se mencione en los últimos 5 segundos, la IA necesita conocerlo a fondo para fundamentar todo el video con veracidad."
+              >
+                <textarea
+                  name="productoDetalle"
+                  rows={3}
+                  className="textarea text-[12px]"
+                  value={productoDetalle}
+                  onChange={(e) => setProductoDetalle(e.target.value)}
+                  placeholder="Ej. Producto elaborado 100% a mano con materiales premium. Resuelve el dolor de entregas a última hora con envío garantizado en 90 minutos. Incluye empaque de regalo y tarjeta personalizada. Precio regular S/ 120, pero en promoción solo por esta semana..."
+                  data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO_DESC}
+                />
+              </Field>
+
+              {/* Quién actúa */}
+              <div>
+                <label className="label">Quién actúa frente a cámara</label>
+                {archetypes.length === 0 ? (
+                  <div className="text-inkmuted text-[12.5px]">
+                    Todavía no hay nadie cargado.{" "}
+                    <Link href="/arquetipos" className="text-brand font-semibold">
+                      Añade a la primera persona
+                    </Link>
+                    .
+                  </div>
+                ) : (
+                  <div
+                    className="border-line no-scrollbar max-h-[190px] overflow-y-auto rounded-xl border"
+                    data-guia={GUIA_TARGETS.SELECT_GENERADOR_ARQUETIPO}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setArchetypeId("")}
+                      className={cn(
+                        "hover:bg-surface2 border-line flex w-full items-center gap-2.5 border-b px-3 py-2 text-left transition-colors",
+                        !archetypeId && "bg-brandsoft/60"
+                      )}
+                    >
+                      <UserSquare2 size={14} className="text-inkmuted shrink-0" />
+                      <span className="text-ink text-[12.5px] font-semibold">
+                        Sin asignar
+                      </span>
+                      <span className="text-inkmuted text-[11.5px]">
+                        La IA describirá qué perfil necesita cada escena
+                      </span>
+                    </button>
+
+                    {arquetiposOrdenados.map((a, i) => {
+                      const score = structure ? (a.fits[structure.id]?.score ?? null) : null;
+                      const activo = a.id === archetypeId;
+                      const abreGenericos =
+                        !a.isPerson && (i === 0 || arquetiposOrdenados[i - 1].isPerson);
+                      return (
+                        <Fragment key={a.id}>
+                          {abreGenericos ? (
+                            <div className="border-line bg-surface2 text-inkmuted border-b px-3 py-1 text-[10px] font-bold tracking-[0.08em] uppercase">
+                              Plantillas genéricas · no llevan la voz de nadie
+                            </div>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => setArchetypeId(a.id)}
+                            className={cn(
+                              "hover:bg-surface2 border-line flex w-full items-center gap-2.5 border-b px-3 py-2 text-left transition-colors last:border-b-0",
+                              activo && "bg-brandsoft/60"
+                            )}
+                          >
+                            <span
+                              className="dot shrink-0"
+                              style={{ background: a.color }}
+                              aria-hidden
+                            />
+                            <span className="text-ink min-w-0 flex-1 truncate text-[12.5px] font-semibold">
+                              {a.name}
+                              {a.arquetipo || a.summary ? (
+                                <span className="text-inkmuted ml-1.5 font-normal">
+                                  {a.arquetipo || a.summary}
+                                </span>
+                              ) : null}
+                            </span>
+                            {a.isPerson && !a.tieneVoz ? (
+                              <span className="text-inkmuted shrink-0 text-[11px]">sin voz</span>
+                            ) : (
+                              <span className="text-inkmuted shrink-0 text-[11px]">
+                                energía {a.energyLevel}/5
+                              </span>
+                            )}
+                            {structure ? <FitBadge score={score} /> : null}
+                          </button>
+                        </Fragment>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {archetype && structure && fitActual !== null && fitActual <= 1 ? (
+                  <div className="mt-2.5">
+                    <Callout tone="danger" title="Este arquetipo no encaja con este formato">
+                      El video se va a ver forzado. {archetype.name} está marcado como{" "}
+                      <strong>{FIT_SCORES[fitActual].label}</strong> para «{structure.name}».
+                      {notaFit ? ` ${notaFit}` : ""} Elige otro arquetipo o cambia de estructura.
+                    </Callout>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Botones de navegación de la Etapa 2 */}
+              <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(1)}
+                  className="btn btn-plain"
+                >
+                  <ArrowLeft size={14} /> Volver a Formato
+                </button>
+
+                <div className="flex items-center gap-2">
+                  {!puedeAvanzarPaso2 && (
+                    <span className="text-warn text-[11px] font-medium hidden sm:inline">
+                      Escribe el producto o servicio a grabar.
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    disabled={!puedeAvanzarPaso2}
+                    onClick={() => avanzarPaso(3)}
+                    className="btn btn-primary"
+                    data-guia={GUIA_TARGETS.GENERADOR_BTN_SIGUIENTE}
+                  >
+                    Continuar: Ángulo e Idea
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* ------------------------------------------------------------------ */}
+        {/* ETAPA 3: ÁNGULO CREATIVO E IDEA CENTRAL                             */}
+        {/* ------------------------------------------------------------------ */}
+        {currentStep === 3 && (
+          <Card>
+            <CardHeader
+              title="3 · Ángulo creativo e idea central del video"
+              subtitle="De una misma idea y producto, este ángulo define el giro psicológico que atrapará al espectador."
+              icon={<Sparkles size={15} />}
+            />
+            <div className="space-y-4 p-4">
+              {/* Selector de Ángulos Creativos */}
+              <div className="space-y-2.5 rounded-xl border border-line bg-surface2/40 p-3.5" data-guia={GUIA_TARGETS.BOTONES_GENERADOR_ANGULOS}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="label mb-0 flex items-center gap-1.5 font-bold text-[13px]">
+                      <Sparkles size={14} className="text-brand" />
+                      Ángulo creativo (Versión de guion)
+                    </label>
+                    <p className="text-inkmuted text-[11.5px] mt-0.5">
+                      Presiona un botón para que la IA arme una versión específica con ese enfoque psicológico.
+                    </p>
+                  </div>
+                  {creativeAngle && (
+                    <button
+                      type="button"
+                      onClick={() => setCreativeAngle("")}
+                      className="text-inkmuted hover:text-ink text-[11px] underline shrink-0 ml-2"
+                    >
+                      Quitar ángulo (estándar)
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {ANGULOS_CREATIVOS.map((ang) => {
+                    const activo = creativeAngle === ang.id;
+                    return (
+                      <button
+                        key={ang.id}
+                        type="button"
+                        onClick={() => setCreativeAngle(activo ? "" : ang.id)}
+                        className={cn(
+                          "card-flat flex flex-col items-start p-2.5 text-left transition-all relative overflow-hidden",
+                          activo
+                            ? "border-brand bg-brandsoft/70 shadow-sm ring-1 ring-brand"
+                            : "hover:bg-surface2 hover:border-brand/40"
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5 w-full">
+                          <span className="text-base">{ang.icon}</span>
+                          <span className="text-ink text-[12px] font-bold truncate flex-1">
+                            {ang.shortLabel}
+                          </span>
+                          <span className="chip chip-plain text-[9px] px-1 py-0 shrink-0">
+                            {ang.badge}
+                          </span>
+                        </div>
+                        <p className="text-inkmuted text-[10.5px] line-clamp-2 mt-1 leading-snug">
+                          {ang.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {creativeAngle && (() => {
+                  const sel = ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle);
+                  if (!sel) return null;
+                  return (
+                    <div className="border border-brand/30 bg-brand/5 rounded-xl p-3 text-[12px] flex items-start gap-2.5">
+                      <span className="text-base shrink-0 mt-0.5">{sel.icon}</span>
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="text-ink font-semibold flex items-center gap-2">
+                          <span>Versión activa: {sel.name}</span>
+                          <span className="chip chip-brand text-[10px]">{sel.badge}</span>
+                        </div>
+                        <p className="text-inkmuted text-[11.5px] leading-relaxed">
+                          {sel.description}
+                        </p>
+                        <div className="text-brand font-mono text-[11px] bg-surface2/80 rounded px-2 py-1 border border-brand/20">
+                          {sel.hookExample}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })()}
-            </div>
+                  );
+                })()}
+              </div>
 
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px]">
+              {/* Petición Central */}
               <Field
-                label="Variante o nota adicional"
-                hint="Un giro concreto. Ej: «que sea de noche», «que el protagonista sea el hermano menor»."
+                label="Petición central (Idea o historia del video)"
+                required
+                hint="Habla como le hablarías a tu guionista: qué pasa, qué sensación buscas, qué tiene que quedar claro."
+              >
+                <textarea
+                  name="peticion"
+                  className="textarea"
+                  rows={4}
+                  required
+                  value={peticion}
+                  onChange={(e) => setPeticion(e.target.value)}
+                  placeholder="Ej. Quiero un video para vender nuestro servicio de mentoría. Que arranque con una escena que incomode a quien lo ve, que se sienta real, y que termine llamando a la acción."
+                  data-guia={GUIA_TARGETS.INPUT_GENERADOR_PETICION}
+                />
+              </Field>
+
+              <Field
+                label="Variante o nota adicional (Opcional)"
+                hint="Un giro concreto. Ej: «que sea de noche», «que el conflicto sea al pagar la cuenta»."
               >
                 <input
                   name="variante"
                   className="input"
+                  value={variante}
+                  onChange={(e) => setVariante(e.target.value)}
                   placeholder="Ej. que el golpe visual sea que se rompió algo"
                 />
               </Field>
 
-              <Field label="Duración objetivo" hint="En segundos.">
-                <input
-                  name="duracion"
-                  type="number"
-                  min={10}
-                  max={300}
-                  className="input"
-                  value={duracion}
-                  onChange={(e) => setDuracion(e.target.value)}
-                />
-              </Field>
-            </div>
+              {/* Botones de navegación de la Etapa 3 */}
+              <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(2)}
+                  className="btn btn-plain"
+                >
+                  <ArrowLeft size={14} /> Volver a Identidad
+                </button>
 
-            {/* --- CONSTRUCTOR DE CTA CON GATILLOS PSICOLÓGICOS (HORMOZI) --- */}
-            <div className="space-y-3 pt-3 border-t border-line">
-              <div>
-                <label className="label mb-0 flex items-center gap-1.5 font-bold text-[13px]">
-                  <Target size={14} className="text-brand" />
-                  Llamado a la acción (CTA) con Gatillos de Alex Hormozi
-                </label>
-                <p className="text-inkmuted text-[11.5px] mt-0.5">
-                  No es solo pedir un clic: es darle al espectador una razón psicológica de escasez, urgencia, motivo o recompensa para actuar ahora mismo.
-                </p>
+                <div className="flex items-center gap-2">
+                  {!puedeAvanzarPaso3 && (
+                    <span className="text-warn text-[11px] font-medium hidden sm:inline">
+                      Escribe la idea central del video.
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    disabled={!puedeAvanzarPaso3}
+                    onClick={() => avanzarPaso(4)}
+                    className="btn btn-primary"
+                    data-guia={GUIA_TARGETS.GENERADOR_BTN_SIGUIENTE}
+                  >
+                    Continuar: Cierre y CTA (Hormozi)
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
               </div>
+            </div>
+          </Card>
+        )}
 
-              <input type="hidden" name="ctaGatillo" value={ctaTrigger} />
-              <input type="hidden" name="ctaAccion" value={ctaAction} />
-              <input type="hidden" name="ctaDetalle" value={ctaDetail} />
-
+        {/* ------------------------------------------------------------------ */}
+        {/* ETAPA 4: CIERRE Y CTA CON GATILLOS DE ALEX HORMOZI                */}
+        {/* ------------------------------------------------------------------ */}
+        {currentStep === 4 && (
+          <Card>
+            <CardHeader
+              title="4 · Cierre y llamado a la acción (Alex Hormozi)"
+              subtitle="Aplica los principios de $100M Offers y $100M Leads para que el espectador actúe ahora mismo."
+              icon={<Target size={15} />}
+            />
+            <div className="space-y-4 p-4" data-guia={GUIA_TARGETS.BOTONES_GENERADOR_CTA}>
               {/* 1. Selector de Gatillo */}
               <div>
                 <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
@@ -763,7 +1098,7 @@ export function GeneratorForm({
                     rows={3}
                     value={cta}
                     onChange={(e) => setCta(e.target.value)}
-                    placeholder="Ej. Si no me compras ahora solo puedo atender a 9 clientes y ya tengo 5 clientes..."
+                    placeholder="Ej. Si no me compras ahora solo puedo atender a 9 clientes..."
                   />
                   <div className="flex items-center justify-between text-[11px] text-inkmuted">
                     <span>Este texto exacto se inyectará en el pre-prompt de la IA para el cierre.</span>
@@ -777,104 +1112,198 @@ export function GeneratorForm({
                   </div>
                 </div>
               </Field>
+
+              {/* Botones de navegación de la Etapa 4 */}
+              <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(3)}
+                  className="btn btn-plain"
+                >
+                  <ArrowLeft size={14} /> Volver a Ángulo
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => avanzarPaso(5)}
+                  className="btn btn-primary"
+                  data-guia={GUIA_TARGETS.GENERADOR_BTN_SIGUIENTE}
+                >
+                  Continuar: Motor y Generación
+                  <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
-        {/* 4. MOTOR */}
-        <Card>
-          <CardHeader
-            title="4 · Motor"
-            subtitle="Con qué modelo se escribe el guion."
-            icon={<Bot size={15} />}
-          />
-          <div className="space-y-3 p-4">
-            <input type="hidden" name="proveedor" value={provider} />
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="label">Proveedor</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {AI_PROVIDERS.map((p) => {
-                    const listo = Boolean(providersReady[p.value]);
-                    const activo = provider === p.value;
-                    return (
-                      <button
-                        key={p.value}
-                        type="button"
-                        disabled={!listo}
-                        onClick={() => {
-                          setProvider(p.value);
-                          setModel("");
-                        }}
-                        className={cn(
-                          "card-flat flex flex-col gap-1 p-2.5 text-left transition-all",
-                          activo && "border-brand bg-brandsoft/50",
-                          !listo && "cursor-not-allowed opacity-55"
-                        )}
-                        style={activo ? { boxShadow: "0 0 0 1px var(--brand)" } : undefined}
-                      >
-                        <span className="text-ink text-[12.5px] font-semibold">
-                          {p.label}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-[11px] font-medium",
-                            listo ? "text-ok" : "text-warn"
-                          )}
-                        >
-                          {listo ? "Clave configurada" : "Sin clave"}
-                        </span>
-                      </button>
-                    );
-                  })}
+        {/* ------------------------------------------------------------------ */}
+        {/* ETAPA 5: MOTOR DE IA, DURACIÓN Y GENERACIÓN FINAL                   */}
+        {/* ------------------------------------------------------------------ */}
+        {currentStep === 5 && (
+          <Card>
+            <CardHeader
+              title="5 · Motor de IA y resumen de generación"
+              subtitle="Revisa el checklist final de ideación y genera el guion escena por escena."
+              icon={<Bot size={15} />}
+            />
+            <div className="space-y-4 p-4">
+              {/* Resumen Ejecutivo tipo Checklist Gemini */}
+              <div className="rounded-xl border border-line bg-surface2/40 p-3.5 space-y-2.5">
+                <div className="text-[11px] font-bold text-ink uppercase tracking-wider">
+                  Checklist de ideación completo
                 </div>
-                {!providersReady[provider] ? (
-                  <div className="hint">
-                    Falta la clave de este proveedor.{" "}
-                    <Link href="/ajustes" className="text-brand font-semibold">
-                      Configúrala en Ajustes
-                    </Link>
-                    .
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
+                  <div className="p-2 rounded bg-surface border border-line">
+                    <span className="text-inkmuted text-[10px] uppercase font-bold block">1 · Formato:</span>
+                    <span className="text-ink font-semibold">{structure?.name ?? "No seleccionado"}</span>
+                    <span className="text-inkmuted block text-[11px]">{structure?.beats.length ?? 0} beats · ~{duracion}s</span>
                   </div>
-                ) : null}
+                  <div className="p-2 rounded bg-surface border border-line">
+                    <span className="text-inkmuted text-[10px] uppercase font-bold block">2 · Identidad y Actor:</span>
+                    <span className="text-ink font-semibold">{brand?.name ?? "Sin marca"}</span>
+                    <span className="text-inkmuted block text-[11px]">{archetype?.name ?? "Sin actor asignado"}</span>
+                  </div>
+                  <div className="p-2 rounded bg-surface border border-line">
+                    <span className="text-inkmuted text-[10px] uppercase font-bold block">3 · Producto:</span>
+                    <span className="text-ink font-semibold truncate block">{producto || "No especificado"}</span>
+                    {productoDetalle ? (
+                      <span className="chip chip-brand text-[9.5px] mt-1">✓ Descripción profunda incluida</span>
+                    ) : null}
+                  </div>
+                  <div className="p-2 rounded bg-surface border border-line">
+                    <span className="text-inkmuted text-[10px] uppercase font-bold block">4 · Ángulo y CTA:</span>
+                    <span className="text-ink font-semibold">{creativeAngle ? ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle)?.shortLabel : "Estándar"}</span>
+                    <span className="text-inkmuted block text-[11px]">Gatillo: {CTA_TRIGGERS.find((t) => t.id === ctaTrigger)?.shortLabel}</span>
+                  </div>
+                </div>
               </div>
 
-              <Field
-                label="Modelo"
-                hint="Texto libre: si sale un modelo nuevo, escríbelo aquí sin esperar a nadie."
-              >
-                <input
-                  name="modelo"
-                  className="input input-mono"
-                  list="modelos-ia"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  placeholder={modelosSugeridos[0]?.value ?? "claude-opus-5"}
-                />
-                <datalist id="modelos-ia">
-                  {modelosSugeridos.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </datalist>
-              </Field>
+              {/* Ajustes de Motor y Duración */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="label">Proveedor de IA</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {AI_PROVIDERS.map((p) => {
+                      const listo = Boolean(providersReady[p.value]);
+                      const activo = provider === p.value;
+                      return (
+                        <button
+                          key={p.value}
+                          type="button"
+                          disabled={!listo}
+                          onClick={() => {
+                            setProvider(p.value);
+                            setModel("");
+                          }}
+                          className={cn(
+                            "card-flat flex flex-col gap-1 p-2.5 text-left transition-all",
+                            activo && "border-brand bg-brandsoft/50",
+                            !listo && "cursor-not-allowed opacity-55"
+                          )}
+                          style={activo ? { boxShadow: "0 0 0 1px var(--brand)" } : undefined}
+                        >
+                          <span className="text-ink text-[12.5px] font-semibold">
+                            {p.label}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-[11px] font-medium",
+                              listo ? "text-ok" : "text-warn"
+                            )}
+                          >
+                            {listo ? "Clave configurada" : "Sin clave"}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!providersReady[provider] ? (
+                    <div className="hint mt-1">
+                      Falta la clave de este proveedor.{" "}
+                      <Link href="/ajustes" className="text-brand font-semibold">
+                        Configúrala en Ajustes
+                      </Link>
+                      .
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="space-y-3">
+                  <Field
+                    label="Modelo"
+                    hint="Texto libre o selecciona uno recomendado."
+                  >
+                    <input
+                      name="modelo"
+                      className="input input-mono"
+                      list="modelos-ia"
+                      value={model}
+                      onChange={(e) => setModel(e.target.value)}
+                      placeholder={modelosSugeridos[0]?.value ?? "claude-opus-5"}
+                    />
+                    <datalist id="modelos-ia">
+                      {modelosSugeridos.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </datalist>
+                  </Field>
+
+                  <Field label="Duración objetivo (segundos)" hint="Recomendado 30 a 60s.">
+                    <input
+                      name="duracion"
+                      type="number"
+                      min={10}
+                      max={300}
+                      className="input"
+                      value={duracion}
+                      onChange={(e) => setDuracion(e.target.value)}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {sinClaves ? (
+                <Callout tone="warn" title="No hay ninguna clave de IA configurada">
+                  Para generar guiones necesitas cargar la clave de Claude o la de Gemini en{" "}
+                  <Link href="/ajustes" className="text-brand font-semibold">
+                    Ajustes
+                  </Link>
+                  .
+                </Callout>
+              ) : null}
+
+              {/* Botón de Lanzamiento */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-line mt-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(4)}
+                  className="btn btn-plain order-2 sm:order-1"
+                >
+                  <ArrowLeft size={14} /> Volver a Cierre CTA
+                </button>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary btn-lg shrink-0 order-1 sm:order-2 w-full sm:w-auto"
+                  disabled={!puedeGenerar}
+                  data-guia={GUIA_TARGETS.BTN_GENERAR_GUION_SUBMIT}
+                >
+                  {pending ? (
+                    <Loader2 size={16} className="spin" />
+                  ) : (
+                    <Wand2 size={16} />
+                  )}
+                  {pending ? "Generando guion con IA…" : "✨ Generar guion con IA"}
+                </button>
+              </div>
             </div>
+          </Card>
+        )}
 
-            {sinClaves ? (
-              <Callout tone="warn" title="No hay ninguna clave de IA configurada">
-                Para generar guiones necesitas cargar la clave de Claude o la de Gemini en{" "}
-                <Link href="/ajustes" className="text-brand font-semibold">
-                  Ajustes
-                </Link>
-                .
-              </Callout>
-            ) : null}
-          </div>
-        </Card>
-
-        {/* GENERAR */}
+        {/* ALERTA DE ERROR SI FALLA */}
         {state?.error ? (
           <Callout tone="danger" title={state.error}>
             {state.detail ? <span className="block">{state.detail}</span> : null}
@@ -883,43 +1312,6 @@ export function GeneratorForm({
             </span>
           </Callout>
         ) : null}
-
-        <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-inkmuted min-w-0 text-[12.5px] leading-relaxed">
-            {pending ? (
-              <span className="text-ink flex items-center gap-2 font-semibold">
-                <Loader2 size={15} className="spin text-brand" />
-                Escribiendo el guion… llevan {segundos}s
-              </span>
-            ) : (
-              <>
-                Se enviarán <strong className="text-ink">{docsTotal}</strong>{" "}
-                {docsTotal === 1 ? "documento" : "documentos"} de referencia y{" "}
-                <strong className="text-ink">{structure?.beats.length ?? 0}</strong> beats
-                obligatorios.
-              </>
-            )}
-            {pending ? (
-              <span className="mt-1 block">
-                Esto puede tardar entre 30 y 90 segundos. No cierres esta pestaña.
-              </span>
-            ) : null}
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg shrink-0"
-            disabled={!puedeGenerar}
-            data-guia={GUIA_TARGETS.BTN_GENERAR_GUION_SUBMIT}
-          >
-            {pending ? (
-              <Loader2 size={16} className="spin" />
-            ) : (
-              <Wand2 size={16} />
-            )}
-            {pending ? "Generando guion…" : "Generar guion"}
-          </button>
-        </div>
       </form>
 
       {/* --------------------------------------------------- COLUMNA DERECHA */}

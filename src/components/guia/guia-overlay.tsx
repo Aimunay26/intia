@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import {
+  AlertCircle,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
@@ -64,7 +65,28 @@ export function GuiaOverlay() {
     dir: "top" | "bottom" | "left" | "right";
   } | null>(null);
 
+  const [alertaRoja, setAlertaRoja] = useState<string | null>(null);
+  const [accionRealizada, setAccionRealizada] = useState(false);
+
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Escuchar clic en el elemento objetivo para marcar la acción como realizada
+  useEffect(() => {
+    setAlertaRoja(null);
+    setAccionRealizada(false);
+
+    if (!pasoActual?.target) return;
+    const el = document.querySelector(`[data-guia="${pasoActual.target}"]`);
+    if (!el) return;
+
+    const onAction = () => {
+      setAccionRealizada(true);
+      setAlertaRoja(null);
+    };
+
+    el.addEventListener("click", onAction);
+    return () => el.removeEventListener("click", onAction);
+  }, [pasoActual?.target]);
 
   // Búsqueda y seguimiento continuo del elemento objetivo visible en el DOM
   useEffect(() => {
@@ -264,19 +286,33 @@ export function GuiaOverlay() {
           70% { box-shadow: 0 0 0 12px rgba(91, 83, 232, 0); }
           100% { box-shadow: 0 0 0 0 rgba(91, 83, 232, 0); }
         }
-        @keyframes floatCard {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-4px); }
+        @keyframes pulseRedRing {
+          0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85); }
+          70% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        @keyframes shakeCard {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-7px); }
+          40%, 80% { transform: translateX(7px); }
         }
         .guia-card-float {
           animation: floatCard 3s ease-in-out infinite;
         }
+        .guia-shake-red {
+          animation: shakeCard 0.4s ease-in-out !important;
+        }
         .guia-spotlight {
           animation: pulseRing 2s infinite;
+        }
+        .guia-spotlight-red {
+          animation: pulseRedRing 1s infinite !important;
         }
         @media (prefers-reduced-motion: reduce) {
           .guia-card-float,
           .guia-spotlight,
+          .guia-spotlight-red,
+          .guia-shake-red,
           .guia-arrow-animated {
             animation: none !important;
             transform: none !important;
@@ -287,14 +323,17 @@ export function GuiaOverlay() {
       {/* 1. Spotlight / Aro pulsante sobre el elemento objetivo */}
       {encontrado && targetRect && (
         <div
-          className="guia-spotlight pointer-events-none fixed z-[9991] rounded-lg transition-all duration-300"
+          className={cn(
+            "pointer-events-none fixed z-[9991] rounded-lg transition-all duration-300",
+            alertaRoja ? "guia-spotlight-red" : "guia-spotlight"
+          )}
           style={{
             top: targetRect.top - 4,
             left: targetRect.left - 4,
             width: targetRect.width + 8,
             height: targetRect.height + 8,
-            border: "2px solid var(--brand)",
-            backgroundColor: "rgba(91, 83, 232, 0.08)",
+            border: alertaRoja ? "3px solid #ef4444" : "2px solid var(--brand)",
+            backgroundColor: alertaRoja ? "rgba(239, 68, 68, 0.16)" : "rgba(91, 83, 232, 0.08)",
           }}
         />
       )}
@@ -340,7 +379,8 @@ export function GuiaOverlay() {
         ref={cardRef}
         className={cn(
           "pointer-events-auto fixed z-[9995] w-[380px] max-w-[calc(100vw-32px)] transition-all duration-200 ease-out",
-          encontrado && "guia-card-float"
+          encontrado && !alertaRoja && "guia-card-float",
+          alertaRoja && "guia-shake-red"
         )}
         style={{
           top: cardPos.top,
@@ -349,7 +389,14 @@ export function GuiaOverlay() {
         role="dialog"
         aria-label="Paso guiado"
       >
-        <div className="border-brand/40 bg-surface text-ink rounded-2xl border-2 p-4.5 shadow-[0_12px_48px_-10px_rgba(0,0,0,0.25)] dark:shadow-[0_12px_48px_-10px_rgba(0,0,0,0.7)] backdrop-blur-md">
+        <div
+          className={cn(
+            "bg-surface text-ink rounded-2xl border-2 p-4.5 shadow-2xl backdrop-blur-md transition-colors",
+            alertaRoja
+              ? "border-red-500 shadow-red-500/25"
+              : "border-brand/40 shadow-[0_12px_48px_-10px_rgba(0,0,0,0.25)] dark:shadow-[0_12px_48px_-10px_rgba(0,0,0,0.7)]"
+          )}
+        >
           {/* Cabecera de la tarjeta */}
           <div className="flex items-center justify-between gap-2 border-b border-line pb-2.5">
             <div className="flex items-center gap-2">
@@ -405,8 +452,20 @@ export function GuiaOverlay() {
 
           {/* Degradación elegante cuando el elemento no está en pantalla */}
           {!encontrado && (
-            <div className="bg-brandsoft border-brand/20 text-ink mt-3 rounded-lg border p-3 text-[12.5px]">
-              <div className="font-semibold text-brand flex items-center gap-1.5">
+            <div
+              className={cn(
+                "mt-3 rounded-lg border p-3 text-[12.5px] transition-colors",
+                alertaRoja
+                  ? "border-red-500/60 bg-red-500/10 text-red-500"
+                  : "bg-brandsoft border-brand/20 text-ink"
+              )}
+            >
+              <div
+                className={cn(
+                  "font-semibold flex items-center gap-1.5",
+                  alertaRoja ? "text-red-500" : "text-brand"
+                )}
+              >
                 <Compass size={14} /> Elemento en otra sección
               </div>
               <p className="mt-1 text-inksoft text-[12px]">
@@ -414,11 +473,28 @@ export function GuiaOverlay() {
               </p>
               <button
                 type="button"
-                onClick={navegarAPasoActual}
-                className="btn btn-primary btn-sm mt-2 w-full justify-center"
+                onClick={() => {
+                  setAlertaRoja(null);
+                  setAccionRealizada(true);
+                  navegarAPasoActual();
+                }}
+                className={cn(
+                  "btn btn-sm mt-2 w-full justify-center font-bold transition-all",
+                  alertaRoja
+                    ? "bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/40 animate-bounce"
+                    : "btn-primary"
+                )}
               >
                 <ExternalLink size={13} /> Llévame allí ({pasoActual.url})
               </button>
+            </div>
+          )}
+
+          {/* Banner de alerta roja si se intenta avanzar sin presionar el botón */}
+          {alertaRoja && (
+            <div className="mt-2.5 rounded-lg border border-red-500/50 bg-red-500/15 p-2.5 text-[12px] font-semibold text-red-600 dark:text-red-400 flex items-center gap-2 animate-pulse">
+              <AlertCircle size={15} className="shrink-0 text-red-500" />
+              <span>{alertaRoja}</span>
             </div>
           )}
 
@@ -430,7 +506,9 @@ export function GuiaOverlay() {
                 className={cn(
                   "h-1.5 flex-1 rounded-full transition-all",
                   idx === pasoIndex
-                    ? "bg-brand"
+                    ? alertaRoja
+                      ? "bg-red-500"
+                      : "bg-brand"
                     : idx < pasoIndex
                       ? "bg-ok"
                       : "bg-surface3"
@@ -458,8 +536,32 @@ export function GuiaOverlay() {
 
               <button
                 type="button"
-                onClick={siguientePaso}
-                className="btn btn-primary btn-sm text-[12px] font-semibold"
+                onClick={() => {
+                  if (!encontrado) {
+                    setAlertaRoja("Debes presionar «Llévame allí» para ir a la sección indicada.");
+                    return;
+                  }
+
+                  const esPasoDeAccion =
+                    pasoActual?.target?.startsWith("btn-") ||
+                    pasoActual?.target?.endsWith("-card") ||
+                    pasoActual?.target?.includes("tab");
+
+                  if (esPasoDeAccion && !accionRealizada) {
+                    setAlertaRoja("Debes presionar el botón indicado en pantalla para continuar.");
+                    return;
+                  }
+
+                  setAlertaRoja(null);
+                  setAccionRealizada(false);
+                  siguientePaso();
+                }}
+                className={cn(
+                  "btn btn-sm text-[12px] font-semibold transition-all",
+                  alertaRoja
+                    ? "border-red-500 bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30"
+                    : "btn-primary"
+                )}
               >
                 {pasoIndex < totalPasosModulo - 1 ? (
                   <>

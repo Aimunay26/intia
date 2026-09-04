@@ -37,6 +37,7 @@ import {
 import { ColorPicker, EnergyPicker } from "../archetype-form";
 import { FitMatrix, type FitRow } from "./fit-matrix";
 import { BrandingForm, BrandingLectura } from "./branding";
+import { BotonCargarBranding } from "@/components/cargador-branding";
 
 export const dynamic = "force-dynamic";
 
@@ -184,6 +185,13 @@ export default async function ArquetipoPage({
         }
         actions={
           <>
+            {editable ? (
+              <BotonCargarBranding
+                archetypeId={arquetipo.id}
+                className="btn btn-primary btn-sm"
+                label="Cargar PDF branding"
+              />
+            ) : null}
             <span
               className="chip chip-plain"
               title={`${perfectos} estructuras marcadas como "${FIT_TOP?.label ?? ""}"`}

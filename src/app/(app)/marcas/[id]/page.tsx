@@ -47,6 +47,7 @@ import {
 import { SegmentedControl } from "@/components/filters";
 import { DeleteButton, SubmitButton } from "@/components/forms";
 import { AssetManager, type AssetRow } from "@/components/assets";
+import { BotonCargarBranding } from "@/components/cargador-branding";
 import {
   actualizarMarca,
   archivarMarca,
@@ -254,6 +255,13 @@ export default async function MarcaPage({
                 {l.label}
               </a>
             ))}
+            {puedeGestionar ? (
+              <BotonCargarBranding
+                brandId={brand.id}
+                className="btn btn-primary btn-sm"
+                label="Cargar PDF branding"
+              />
+            ) : null}
             {puedeGestionar ? (
               <form action={archivarMarca}>
                 <input type="hidden" name="id" value={brand.id} />

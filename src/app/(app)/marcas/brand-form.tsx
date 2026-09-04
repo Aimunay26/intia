@@ -8,6 +8,7 @@ import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { cn } from "@/lib/utils";
 import { Callout, Divider, Field } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
+import { BotonCargarBranding } from "@/components/cargador-branding";
 
 /**
  * Formulario de marca. El mismo componente sirve para el alta rapida
@@ -134,6 +135,17 @@ export function BrandForm({
   const [secondary, setSecondary] = useState(brand.colorSecondary);
   const [accent, setAccent] = useState(brand.colorAccent);
 
+  const [tagline, setTagline] = useState(brand.tagline);
+  const [description, setDescription] = useState(brand.description);
+  const [identity, setIdentity] = useState(brand.identity);
+  const [brief, setBrief] = useState(brand.brief);
+  const [toneOfVoice, setToneOfVoice] = useState(brand.toneOfVoice);
+  const [audience, setAudience] = useState(brand.audience);
+  const [valueProps, setValueProps] = useState(brand.valueProps);
+  const [doNots, setDoNots] = useState(brand.doNots);
+  const [keywords, setKeywords] = useState(brand.keywords);
+  const [camposIluminados, setCamposIluminados] = useState(false);
+
   const disabled = !canEdit;
   const full = mode === "editar";
 
@@ -146,6 +158,40 @@ export function BrandForm({
           Necesitas ser del equipo para editar la identidad de la marca.
         </Callout>
       ) : null}
+
+      {/* Banner de Carga Rápida desde PDF */}
+      {full && canEdit && (
+        <div className="rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="space-y-0.5">
+            <div className="font-bold text-ink text-[13.5px] flex items-center gap-2">
+              <Sparkles size={16} className="text-brand" />
+              ¿Tienes un informe de branding en PDF?
+            </div>
+            <p className="text-inkmuted text-[12px] leading-relaxed">
+              Sube tu PDF (Yoryo, Piero, Eru o empresa) para auto-rellenar tono, público, reglas y colores automáticamente.
+            </p>
+          </div>
+          <BotonCargarBranding
+            brandId={brand.id}
+            className="btn btn-primary btn-sm shrink-0"
+            label="Cargar PDF de branding"
+            onSuccess={(res) => {
+              if (res.parsed.tagline) setTagline(res.parsed.tagline);
+              if (res.parsed.identity) setIdentity(res.parsed.identity);
+              if (res.parsed.brief) setBrief(res.parsed.brief);
+              if (res.parsed.toneOfVoice) setToneOfVoice(res.parsed.toneOfVoice);
+              if (res.parsed.audience) setAudience(res.parsed.audience);
+              if (res.parsed.valueProps.length) setValueProps(res.parsed.valueProps.join("\n"));
+              if (res.parsed.doNots.length) setDoNots(res.parsed.doNots.join("\n"));
+              if (res.parsed.keywords.length) setKeywords(res.parsed.keywords.join("\n"));
+              if (res.parsed.colorPrimary) setPrimary(res.parsed.colorPrimary);
+              if (res.parsed.colorSecondary) setSecondary(res.parsed.colorSecondary);
+              if (res.parsed.colorAccent) setAccent(res.parsed.colorAccent);
+              setCamposIluminados(true);
+            }}
+          />
+        </div>
+      )}
 
       {/* ---------------------------------------------------------- BASICO -- */}
       <div className="grid gap-3 sm:grid-cols-2">
@@ -164,9 +210,10 @@ export function BrandForm({
         <Field label="Lema" hint="Una línea que resuma la promesa de la marca.">
           <input
             name="tagline"
-            className="input"
+            className={cn("input transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
             disabled={disabled}
-            defaultValue={brand.tagline}
+            value={tagline}
+            onChange={(e) => setTagline(e.target.value)}
             placeholder="Ej. Regalos que dicen lo que sientes"
             data-guia={GUIA_TARGETS.INPUT_MARCA_LEMA}
           />
@@ -179,7 +226,8 @@ export function BrandForm({
           className="textarea"
           rows={3}
           disabled={disabled}
-          defaultValue={brand.description}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           placeholder="Qué es la marca y qué problema resuelve…"
         />
       </Field>
@@ -191,51 +239,55 @@ export function BrandForm({
           <div className="grid gap-3 lg:grid-cols-2">
             <Field
               label="Identidad y personalidad"
-              hint="Cómo se comporta la marca si fuera una persona."
+              hint="En tu informe: ARQUETIPOS (Quién es, qué representa y arquetipos dominante y secundario)."
             >
               <textarea
                 name="identity"
-                className="textarea"
+                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
                 rows={5}
                 disabled={disabled}
-                defaultValue={brand.identity}
+                value={identity}
+                onChange={(e) => setIdentity(e.target.value)}
                 placeholder="Cercana, divertida, directa…"
               />
             </Field>
             <Field
               label="Brief permanente"
-              hint="Lo que la IA debe tener siempre presente al escribir para esta marca."
+              hint="En tu informe: Deseo central, talento diferencial y frase insignia fija."
             >
               <textarea
                 name="brief"
-                className="textarea"
+                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
                 rows={5}
                 disabled={disabled}
-                defaultValue={brand.brief}
+                value={brief}
+                onChange={(e) => setBrief(e.target.value)}
                 placeholder="Contexto fijo: catálogo, precios, promesas, garantías…"
               />
             </Field>
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <Field label="Tono de voz" hint="Cómo habla: tuteo, jerga, ritmo, emojis.">
+            <Field label="Tono de voz" hint="En tu informe: sección COMUNICACIÓN → TONO (cómo suena al hablar).">
               <textarea
                 name="toneOfVoice"
-                className="textarea"
+                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
                 rows={4}
                 disabled={disabled}
-                defaultValue={brand.toneOfVoice}
+                value={toneOfVoice}
+                onChange={(e) => setToneOfVoice(e.target.value)}
                 placeholder="Tuteo peruano, frases cortas, humor amable…"
                 data-guia={GUIA_TARGETS.INPUT_MARCA_TONO}
               />
             </Field>
-            <Field label="Público objetivo" hint="A quién le hablamos de verdad.">
+            <Field label="Público objetivo" hint="En tu informe: Audiencia y público que conecta con este arquetipo.">
               <textarea
                 name="audience"
-                className="textarea"
+                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
                 rows={4}
                 disabled={disabled}
-                defaultValue={brand.audience}
+                value={audience}
+                onChange={(e) => setAudience(e.target.value)}
                 placeholder="Mujeres de 25 a 40 en Lima que buscan un detalle rápido…"
                 data-guia={GUIA_TARGETS.INPUT_MARCA_PUBLICO}
               />
@@ -245,34 +297,37 @@ export function BrandForm({
           <Divider label="Reglas de la marca" />
 
           <div className="grid gap-3 lg:grid-cols-3">
-            <Field label="Propuestas de valor" hint="Una por línea.">
+            <Field label="Propuestas de valor" hint="En tu informe: Talentos diferenciales y fortalezas. Una por línea.">
               <textarea
                 name="valueProps"
-                className="textarea"
+                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
                 rows={6}
                 disabled={disabled}
-                defaultValue={brand.valueProps}
+                value={valueProps}
+                onChange={(e) => setValueProps(e.target.value)}
                 placeholder={"Entrega el mismo día\nEnvoltura incluida\nPago contra entrega"}
               />
             </Field>
-            <Field label="Prohibiciones" hint="Lo que nunca se dice ni se hace. Una por línea.">
+            <Field label="Prohibiciones" hint="En tu informe: sección COMUNICACIÓN → EVITA (lo que nunca dice ni hace).">
               <textarea
                 name="doNots"
-                className="textarea"
+                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
                 rows={6}
                 disabled={disabled}
-                defaultValue={brand.doNots}
+                value={doNots}
+                onChange={(e) => setDoNots(e.target.value)}
                 placeholder={"No prometer descuentos sin aprobar\nNo comparar con la competencia"}
                 data-guia={GUIA_TARGETS.INPUT_MARCA_PROHIBICIONES}
               />
             </Field>
-            <Field label="Palabras clave" hint="Vocabulario propio de la marca. Una por línea.">
+            <Field label="Palabras clave" hint="En tu informe: sección COMUNICACIÓN → VOCABULARIO. Una por línea.">
               <textarea
                 name="keywords"
-                className="textarea"
+                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
                 rows={6}
                 disabled={disabled}
-                defaultValue={brand.keywords}
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
                 placeholder={"detalle\nsorpresa\nregalo express"}
               />
             </Field>

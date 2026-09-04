@@ -1,10 +1,11 @@
 import type { Archetype } from "@prisma/client";
-import { BadgeCheck, Eye, MessageSquareQuote, Palette, TriangleAlert } from "lucide-react";
+import { BadgeCheck, Eye, MessageSquareQuote, Palette, Sparkles, TriangleAlert } from "lucide-react";
 
 import { jsonToLines, parseJson, parseList } from "@/lib/utils";
 import { Callout, Card, CardHeader, Field } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
 import { actualizarMarcaPersonal } from "@/app/actions/archetypes";
+import { BotonCargarBranding } from "@/components/cargador-branding";
 
 /**
  * El informe de marca personal de la persona.
@@ -78,10 +79,28 @@ export function BrandingLectura({ a }: { a: Archetype }) {
 
   if (vacio) {
     return (
-      <Callout tone="warn" title="Sin marca personal cargada">
-        La IA sabe cómo actúa {a.name}, pero no cómo habla. Rellena al menos el tono de voz y
-        el vocabulario: es lo que hace que un guion suene a esta persona y no a cualquiera.
-      </Callout>
+      <div className="space-y-4">
+        <div className="border border-brand/30 bg-brand/5 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h4 className="text-[14px] font-bold text-ink flex items-center gap-2">
+              <Sparkles size={16} className="text-brand" />
+              ¿Tienes el informe de branding en PDF?
+            </h4>
+            <p className="text-[12px] text-inkmuted max-w-xl">
+              Sube el PDF del informe de {a.name} (arquetipos, valores, tono de voz, colores y vocabulario) y el sistema lo extraerá y rellenará todo automáticamente.
+            </p>
+          </div>
+          <BotonCargarBranding
+            archetypeId={a.id}
+            className="btn btn-primary btn-sm shrink-0"
+            label="Subir informe PDF"
+          />
+        </div>
+        <Callout tone="warn" title="Sin marca personal cargada">
+          La IA sabe cómo actúa {a.name}, pero no cómo habla. Rellena al menos el tono de voz y
+          el vocabulario: es lo que hace que un guion suene a esta persona y no a cualquiera.
+        </Callout>
+      </div>
     );
   }
 
@@ -217,6 +236,20 @@ export function BrandingForm({ a }: { a: Archetype }) {
           icon={<Eye size={15} />}
         />
         <div className="space-y-5 p-4">
+          <div className="border border-brand/20 bg-brand/5 rounded-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="text-[12px] text-inkmuted">
+              <span className="font-semibold text-ink text-[12.5px] flex items-center gap-1.5">
+                <Sparkles size={14} className="text-brand" /> Cargar informe de branding automáticamente
+              </span>
+              Sube el PDF para rellenar arquetipos, tono, paleta y vocabulario de este actor en un clic.
+            </div>
+            <BotonCargarBranding
+              archetypeId={a.id}
+              className="btn btn-sm btn-subtle shrink-0"
+              label="Cargar PDF"
+            />
+          </div>
+
           <label className="border-line hover:bg-surface2 flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors">
             <input
               type="checkbox"

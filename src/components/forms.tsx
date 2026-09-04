@@ -14,16 +14,17 @@ export function SubmitButton({
   icon,
   pendingLabel,
   disabled,
+  ...props
 }: {
   children: React.ReactNode;
   className?: string;
   icon?: React.ReactNode;
   pendingLabel?: string;
   disabled?: boolean;
-}) {
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className={className} disabled={pending || disabled}>
+    <button type="submit" className={className} disabled={pending || disabled} {...props}>
       {pending ? <Loader2 size={14} className="spin" /> : icon}
       {pending ? (pendingLabel ?? children) : children}
     </button>

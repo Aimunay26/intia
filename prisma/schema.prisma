@@ -47,6 +47,7 @@ model User {
   createdContent ContentItem[]   @relation("ContentCreatedBy")
   comments       Comment[]
   events         CalendarEvent[] @relation("EventCreatedBy")
+  tasks          Task[]          @relation("TaskAssignee")
 
   @@index([role])
   @@index([archetypeId])
@@ -123,6 +124,8 @@ model Brand {
   content    ContentItem[]
   scripts    Script[]
   events     CalendarEvent[]
+  tasks      Task[]
+  taskColumns TaskColumn[]
 
   @@index([active])
 }
@@ -668,3 +671,57 @@ model MatchRow {
   @@unique([runId, archetypeId])
   @@index([archetypeId])
 }
+
+// ------------------------------------------------------------------ TAREAS --
+
+/// Columna o etapa del pipeline tipo Trello / Kanban para tareas.
+/// Los nombres y colores son completamente editables por el usuario.
+model TaskColumn {
+  id      String  @id @default(cuid())
+  name    String
+  color   String  @default("#8b5cf6")
+  order   Int     @default(0)
+
+  brandId String?
+  brand   Brand?  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  tasks   Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([brandId])
+  @@index([order])
+}
+
+/// Tarea suelta dentro del pipeline Kanban.
+/// Puede ser clasificada como IDEA o ACCION, asignarse a un miembro,
+/// tener fecha limite, prioridad y asociarse a una marca.
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  kind        String    @default("ACCION") // IDEA | ACCION
+  priority    String    @default("NORMAL") // BAJA | NORMAL | ALTA | URGENTE
+  dueDate     DateTime?
+  order       Int       @default(0)
+
+  columnId    String
+  column      TaskColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  assigneeId  String?
+  assignee    User?      @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  brandId     String?
+  brand       Brand?     @relation(fields: [brandId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([columnId])
+  @@index([assigneeId])
+  @@index([brandId])
+  @@index([kind])
+  @@index([order])
+}
+

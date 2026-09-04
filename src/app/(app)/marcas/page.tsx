@@ -14,6 +14,7 @@ import { EmptyState, PageHeader } from "@/components/ui";
 import { FilterBar, SearchInput, SegmentedControl } from "@/components/filters";
 import { ModalForm } from "@/components/forms";
 import { crearMarca } from "@/app/actions/brands";
+import { GUIA_TARGETS, GuiaBienvenidaBanner } from "@/components/guia";
 import { BrandColors, BrandForm } from "./brand-form";
 
 type Objetivo = {
@@ -112,21 +113,22 @@ export default async function MarcasPage({
 
   const totalArchivadas = await prisma.brand.count({ where: { archived: true } });
 
-  const nuevaMarca = puedeGestionar ? (
-    <ModalForm
-      className="btn btn-primary"
-      trigger={
-        <>
-          <Plus size={14} /> Nueva marca
-        </>
-      }
-      title="Nueva marca"
-      description="Lo básico para empezar. La identidad completa se edita después en la ficha."
-      width={620}
-    >
-      <BrandForm action={crearMarca} mode="crear" />
-    </ModalForm>
-  ) : null;
+  const renderNuevaMarca = (targetKey?: string) =>
+    puedeGestionar ? (
+      <ModalForm
+        className="btn btn-primary"
+        trigger={
+          <span data-guia={targetKey} className="inline-flex items-center gap-1.5">
+            <Plus size={14} /> Nueva marca
+          </span>
+        }
+        title="Nueva marca"
+        description="Lo básico para empezar. La identidad completa se edita después en la ficha."
+        width={620}
+      >
+        <BrandForm action={crearMarca} mode="crear" />
+      </ModalForm>
+    ) : null;
 
   return (
     <>
@@ -134,8 +136,10 @@ export default async function MarcasPage({
         title="Marcas"
         subtitle="Identidad, brief y objetivos de cada marca. Todo lo que la IA usa para escribir como ellas."
         icon={<Tags size={19} />}
-        actions={nuevaMarca}
+        actions={renderNuevaMarca(GUIA_TARGETS.BTN_NUEVA_MARCA_HEADER)}
       />
+
+      {brands.length === 0 && !q && !archivadas ? <GuiaBienvenidaBanner /> : null}
 
       <FilterBar>
         <SearchInput param="q" placeholder="Buscar marca…" width={260} />
@@ -174,12 +178,12 @@ export default async function MarcasPage({
                   ? "Cuando archives una marca aparecerá aquí, sin borrarse."
                   : "Crea la primera marca para empezar a planificar contenido y objetivos."
             }
-            action={!q && !archivadas ? nuevaMarca : undefined}
+            action={!q && !archivadas ? renderNuevaMarca(GUIA_TARGETS.BTN_NUEVA_MARCA_EMPTY) : undefined}
           />
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {brands.map((brand) => {
+          {brands.map((brand, i) => {
             const riesgo = brand.objectives.filter(enRiesgo).length;
             const publicados = publicadosPorMarca.get(brand.id) ?? 0;
 
@@ -187,6 +191,7 @@ export default async function MarcasPage({
               <Link
                 key={brand.id}
                 href={`/marcas/${brand.id}`}
+                data-guia={i === 0 ? GUIA_TARGETS.MARCA_PRIMERA_CARD : undefined}
                 className="card brand-strip block p-4 pl-5 transition-shadow hover:shadow-[var(--shadow-2)]"
                 style={{ ["--strip" as string]: brand.colorPrimary }}
               >

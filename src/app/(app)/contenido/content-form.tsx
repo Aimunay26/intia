@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Field } from "@/components/ui";
 import { ModalForm, SubmitButton } from "@/components/forms";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 
 /**
  * Formularios de creacion y edicion de un video.
@@ -132,9 +133,9 @@ export function NuevoVideoBoton({
     <ModalForm
       className={className}
       trigger={
-        <>
+        <span data-guia={GUIA_TARGETS.BTN_NUEVO_VIDEO} className="inline-flex items-center gap-1.5">
           <Plus size={14} /> {label}
-        </>
+        </span>
       }
       title="Nuevo video"
       description="Se crea con el checklist de producción completo para que nada se pierda."
@@ -143,7 +144,13 @@ export function NuevoVideoBoton({
       <form action={crearVideo} className="space-y-3.5">
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Marca" required>
-            <select name="brandId" className="select" defaultValue={defaultBrandId ?? ""} required>
+            <select
+              name="brandId"
+              className="select"
+              defaultValue={defaultBrandId ?? ""}
+              required
+              data-guia={GUIA_TARGETS.SELECT_VIDEO_MARCA}
+            >
               <option value="" disabled>
                 Elige una marca…
               </option>
@@ -166,11 +173,17 @@ export function NuevoVideoBoton({
             placeholder="Ej. 3 errores al comprar un regalo de aniversario"
             required
             autoFocus
+            data-guia={GUIA_TARGETS.INPUT_VIDEO_TITULO}
           />
         </Field>
 
         <Field label="Hook" hint="La primera frase, la que decide si se quedan o pasan de largo.">
-          <input name="hook" className="input" placeholder="Ej. Si le regalas esto, mejor no le regales nada…" />
+          <input
+            name="hook"
+            className="input"
+            placeholder="Ej. Si le regalas esto, mejor no le regales nada…"
+            data-guia={GUIA_TARGETS.INPUT_VIDEO_HOOK}
+          />
         </Field>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -226,7 +239,12 @@ export function NuevoVideoBoton({
         </div>
 
         <div className="flex justify-end gap-2 pt-1">
-          <SubmitButton className="btn btn-primary" icon={<Plus size={14} />} pendingLabel="Creando…">
+          <SubmitButton
+            className="btn btn-primary"
+            icon={<Plus size={14} />}
+            pendingLabel="Creando…"
+            data-guia={GUIA_TARGETS.BTN_SUBMIT_VIDEO}
+          >
             Crear video
           </SubmitButton>
         </div>

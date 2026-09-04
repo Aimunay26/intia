@@ -6,6 +6,7 @@ import { Trash2, TriangleAlert } from "lucide-react";
 import { vaciarDatosDeEjemplo, type Recuento, type VaciarState } from "@/app/actions/datos-de-ejemplo";
 import { Callout, Card, CardHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
+import { GuiaLauncherBoton, GUIA_TARGETS } from "@/components/guia";
 
 /**
  * El botón de vaciar los datos de ejemplo.
@@ -30,10 +31,16 @@ export function VaciarEjemplo({ recuento }: { recuento: Recuento }) {
     return (
       <Card>
         <CardHeader title="Datos de ejemplo" icon={<Trash2 size={15} />} />
-        <div className="p-4">
+        <div className="space-y-4 p-4">
           <Callout tone="info" title="Ya está limpio">
             {state.ok}
           </Callout>
+          <div className="flex flex-wrap items-center gap-3">
+            <GuiaLauncherBoton
+              label="Comenzar con el tutorial guiado de tu primera marca →"
+              className="btn btn-primary"
+            />
+          </div>
         </div>
       </Card>
     );
@@ -46,6 +53,12 @@ export function VaciarEjemplo({ recuento }: { recuento: Recuento }) {
           title="Datos de ejemplo"
           subtitle="No queda ninguno: lo que hay en la app es tuyo."
           icon={<Trash2 size={15} />}
+          actions={
+            <GuiaLauncherBoton
+              label="Iniciar guía interactiva"
+              className="btn btn-primary btn-sm"
+            />
+          }
         />
       </Card>
     );

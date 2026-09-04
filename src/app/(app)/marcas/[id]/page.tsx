@@ -17,6 +17,7 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { requireUser, can, LEVEL } from "@/lib/auth";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import {
   ACTIVE_STATUSES,
   CONTENT_STATUS_MAP,
@@ -324,7 +325,12 @@ export default async function MarcaPage({
           param="vista"
           defaultValue="identidad"
           options={[
-            { value: "identidad", label: "Identidad", icon: <Palette size={13} /> },
+            {
+              value: "identidad",
+              label: "Identidad",
+              icon: <Palette size={13} />,
+              guia: GUIA_TARGETS.MARCA_TAB_IDENTIDAD,
+            },
             { value: "objetivos", label: "Objetivos", icon: <Target size={13} /> },
             { value: "contenido", label: "Contenido", icon: <Film size={13} /> },
             { value: "documentos", label: "Documentos", icon: <FileText size={13} /> },

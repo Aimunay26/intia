@@ -17,6 +17,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { Callout, Card, CardHeader, PageHeader } from "@/components/ui";
+import { GuiaLauncherBoton } from "@/components/guia";
 
 export const dynamic = "force-dynamic";
 
@@ -151,7 +152,26 @@ export default async function TutorialPage() {
         title="Cómo se usa esto"
         subtitle="El recorrido completo, de la idea al video publicado, y cómo se reparte el trabajo cuando sois un equipo."
         icon={<GraduationCap size={19} />}
+        actions={
+          <GuiaLauncherBoton
+            label="Iniciar guía interactiva"
+            className="btn btn-primary"
+          />
+        }
       />
+
+      <div className="mb-5 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="text-[14px] font-bold text-ink flex items-center gap-2">
+            <Sparkles size={16} className="text-brand" />
+            ¿Prefieres que te guiemos paso a paso en directo?
+          </div>
+          <p className="text-[13px] text-inkmuted">
+            Inicia el asistente interactivo con punteros y animaciones que te llevará por cada pantalla mientras configuras tu primera marca, tu equipo y tu primer guion.
+          </p>
+        </div>
+        <GuiaLauncherBoton label="Comenzar tutorial guiado" className="btn btn-primary shrink-0" />
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-4">

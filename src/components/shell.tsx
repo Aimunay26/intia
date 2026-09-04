@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity,
   CalendarDays,
+  CheckSquare,
   GraduationCap,
   ChevronDown,
   Film,
@@ -29,6 +30,19 @@ import { USER_ROLE_MAP } from "@/lib/constants";
 import { Avatar } from "@/components/ui";
 import { BrandSwitcher } from "@/components/brand-switcher";
 import type { BrandChoice } from "@/lib/brand-shared";
+import { GuiaProvider, GuiaOverlay, GUIA_TARGETS } from "@/components/guia";
+
+const NAV_GUIA_MAP: Record<string, string> = {
+  "/marcas": GUIA_TARGETS.NAV_MARCAS,
+  "/contenido": GUIA_TARGETS.NAV_CONTENIDO,
+  "/generador": GUIA_TARGETS.NAV_GENERADOR,
+  "/guiones": GUIA_TARGETS.NAV_GUIONES,
+  "/estructuras": GUIA_TARGETS.NAV_ESTRUCTURAS,
+  "/arquetipos": GUIA_TARGETS.NAV_ARQUETIPOS,
+  "/ajustes": GUIA_TARGETS.NAV_AJUSTES,
+  "/equipo": GUIA_TARGETS.NAV_EQUIPO,
+  "/tutorial": GUIA_TARGETS.NAV_TUTORIAL,
+};
 
 type NavItem = { href: string; label: string; icon: React.ElementType; minLevel?: number };
 type NavGroup = { section?: string; items: NavItem[] };
@@ -39,6 +53,7 @@ const NAV: NavGroup[] = [
       { href: "/", label: "Panel", icon: LayoutDashboard },
       { href: "/calendario", label: "Calendario", icon: CalendarDays },
       { href: "/contenido", label: "Videos", icon: Film },
+      { href: "/tareas", label: "Tareas", icon: CheckSquare },
       { href: "/marcas", label: "Marcas", icon: Tags },
     ],
   },
@@ -148,6 +163,7 @@ export function Shell({
                       href={item.href}
                       className="nav-link"
                       data-active={isActive(item.href)}
+                      data-guia={NAV_GUIA_MAP[item.href]}
                     >
                       <Icon size={15.5} strokeWidth={2} className="shrink-0" />
                       <span className="truncate">{item.label}</span>
@@ -165,45 +181,48 @@ export function Shell({
   );
 
   return (
-    <div className="flex min-h-screen">
-      {/* Barra lateral fija en escritorio */}
-      <aside className="bg-surface border-line no-print hidden w-[236px] shrink-0 flex-col border-r lg:flex">
-        <div className="sticky top-0 flex h-screen flex-col">{nav}</div>
-      </aside>
+    <GuiaProvider>
+      <div className="flex min-h-screen">
+        {/* Barra lateral fija en escritorio */}
+        <aside className="bg-surface border-line no-print hidden w-[236px] shrink-0 flex-col border-r lg:flex">
+          <div className="sticky top-0 flex h-screen flex-col">{nav}</div>
+        </aside>
 
-      {/* Cajon en movil */}
-      {mobileOpen ? (
-        <div className="no-print fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="bg-surface border-line absolute inset-y-0 left-0 flex w-[260px] flex-col border-r shadow-2xl">
-            {nav}
-          </aside>
-        </div>
-      ) : null}
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="bg-canvas/85 border-line no-print sticky top-0 z-30 flex h-14 items-center gap-3 border-b px-4 backdrop-blur-md lg:hidden">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="btn btn-ghost btn-icon"
-            aria-label="Abrir menú"
-          >
-            <Menu size={18} />
-          </button>
-          <span className="text-ink text-sm font-bold">{orgName}</span>
-          <div className="ml-auto">
-            <ThemeToggle />
+        {/* Cajon en movil */}
+        {mobileOpen ? (
+          <div className="no-print fixed inset-0 z-50 lg:hidden">
+            <div
+              className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+              onClick={() => setMobileOpen(false)}
+            />
+            <aside className="bg-surface border-line absolute inset-y-0 left-0 flex w-[260px] flex-col border-r shadow-2xl">
+              {nav}
+            </aside>
           </div>
-        </header>
+        ) : null}
 
-        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
-          <div className="mx-auto w-full max-w-[1400px]">{children}</div>
-        </main>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="bg-canvas/85 border-line no-print sticky top-0 z-30 flex h-14 items-center gap-3 border-b px-4 backdrop-blur-md lg:hidden">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="btn btn-ghost btn-icon"
+              aria-label="Abrir menú"
+            >
+              <Menu size={18} />
+            </button>
+            <span className="text-ink text-sm font-bold">{orgName}</span>
+            <div className="ml-auto">
+              <ThemeToggle />
+            </div>
+          </header>
+
+          <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+            <div className="mx-auto w-full max-w-[1400px]">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+      <GuiaOverlay />
+    </GuiaProvider>
   );
 }
 

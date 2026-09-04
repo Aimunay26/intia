@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
-import { AlertCircle, CheckCircle2, KeyRound, Loader2, LogIn, Save } from "lucide-react";
+import { useState, useActionState } from "react";
+import { AlertCircle, CheckCircle2, KeyRound, Loader2, LogIn, Play, Save, Sparkles } from "lucide-react";
 
 import { guardarAjustes, type SettingsState } from "@/app/actions/app-settings";
+import { probarClaveIA, type TestKeyResult } from "@/app/actions/probar-clave";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { AI_MODELS, AI_PROVIDERS, DEFAULT_MODEL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Callout, Card, CardHeader, Divider, Field, SectionTitle } from "@/components/ui";
@@ -76,8 +78,29 @@ function BloqueProveedor({
   campoQuitar: string;
   placeholder: string;
 }) {
+  const [claveInput, setClaveInput] = useState("");
+  const [probando, setProbando] = useState(false);
+  const [resultadoPrueba, setResultadoPrueba] = useState<TestKeyResult | null>(null);
+
   const sugerencias = AI_MODELS[id] ?? [];
   const listId = `modelos-${id}`;
+
+  const guiaTargetInput =
+    id === "google" ? GUIA_TARGETS.INPUT_API_KEY_GOOGLE : GUIA_TARGETS.INPUT_API_KEY_ANTHROPIC;
+
+  const handleProbar = async () => {
+    if (!claveInput.trim()) return;
+    setProbando(true);
+    setResultadoPrueba(null);
+    try {
+      const res = await probarClaveIA({ provider: id, apiKey: claveInput, model: modelo });
+      setResultadoPrueba(res);
+    } catch {
+      setResultadoPrueba({ ok: false, error: "Error al comunicar con el servidor." });
+    } finally {
+      setProbando(false);
+    }
+  };
 
   return (
     <div className="border-line rounded-xl border p-3.5">
@@ -99,14 +122,55 @@ function BloqueProveedor({
         label="Pegar una clave nueva"
         hint="Si lo dejas en blanco, la clave que ya existe se queda como está."
       >
-        <input
-          name={campoClave}
-          type="password"
-          className="input input-mono"
-          placeholder={status.masked ?? placeholder}
-          autoComplete="off"
-          spellCheck={false}
-        />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            name={campoClave}
+            type="password"
+            className="input input-mono flex-1"
+            placeholder={status.masked ?? placeholder}
+            autoComplete="off"
+            spellCheck={false}
+            value={claveInput}
+            onChange={(e) => {
+              setClaveInput(e.target.value);
+              setResultadoPrueba(null);
+            }}
+            data-guia={guiaTargetInput}
+          />
+          <button
+            type="button"
+            onClick={handleProbar}
+            disabled={probando || !claveInput.trim()}
+            className="btn btn-sm shrink-0 self-start sm:self-center"
+            data-guia={id === "google" ? GUIA_TARGETS.BTN_PROBAR_CLAVE_AI : undefined}
+            title="Verificar validez y saldo de la clave en vivo con llamada real"
+          >
+            {probando ? (
+              <Loader2 size={13} className="spin" />
+            ) : (
+              <Play size={13} fill="currentColor" />
+            )}
+            {probando ? "Probando…" : "Probar clave"}
+          </button>
+        </div>
+
+        {resultadoPrueba ? (
+          <div
+            className={cn(
+              "mt-2 flex items-start gap-2 rounded-lg p-2.5 text-[12px] leading-relaxed",
+              resultadoPrueba.ok
+                ? "bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/25 dark:text-emerald-300"
+                : "bg-red-500/10 text-red-600 ring-1 ring-red-500/25 dark:text-red-300"
+            )}
+          >
+            {resultadoPrueba.ok ? (
+              <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-500" />
+            ) : (
+              <AlertCircle size={14} className="mt-0.5 shrink-0 text-red-500" />
+            )}
+            <span>{resultadoPrueba.ok ? resultadoPrueba.mensaje : resultadoPrueba.error}</span>
+          </div>
+        ) : null}
       </Field>
 
       {guardada ? (
@@ -356,7 +420,12 @@ export function SettingsForm({
         <span className="text-inkmuted text-[12px]">
           Las claves nunca se muestran completas ni se escriben en el log de actividad.
         </span>
-        <button type="submit" className="btn btn-primary" disabled={pending}>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={pending}
+          data-guia={GUIA_TARGETS.BTN_GUARDAR_AJUSTES}
+        >
           {pending ? <Loader2 size={14} className="spin" /> : <Save size={14} />}
           {pending ? "Guardando…" : "Guardar ajustes"}
         </button>

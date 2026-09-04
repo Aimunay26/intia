@@ -194,7 +194,7 @@ export function SegmentedControl({
   defaultValue,
 }: {
   param: string;
-  options: { value: string; label: string; icon?: React.ReactNode }[];
+  options: { value: string; label: string; icon?: React.ReactNode; guia?: string }[];
   defaultValue: string;
 }) {
   const { setParam, searchParams } = useSetParam();
@@ -208,6 +208,7 @@ export function SegmentedControl({
           <button
             key={o.value}
             type="button"
+            data-guia={o.guia}
             onClick={() => setParam({ [param]: o.value === defaultValue ? null : o.value })}
             className={cn(
               "flex items-center gap-1.5 rounded-md px-2.5 py-[5px] text-[12px] font-semibold transition-all",

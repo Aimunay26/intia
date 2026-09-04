@@ -5,6 +5,7 @@ import { Check, Plus } from "lucide-react";
 
 import { PLANTILLAS_PERSONA } from "@/lib/plantillas-persona";
 import { crearArquetipo } from "@/app/actions/archetypes";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { PALETTE } from "@/lib/constants";
 import { cn, readableOn } from "@/lib/utils";
 import { Field } from "@/components/ui";
@@ -126,7 +127,12 @@ export function ArchetypeCreateButton({
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="btn btn-primary">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="btn btn-primary"
+        data-guia={GUIA_TARGETS.BTN_NUEVA_PERSONA}
+      >
         <Plus size={14} />
         {label}
       </button>
@@ -196,6 +202,7 @@ export function ArchetypeCreateButton({
                 required
                 autoFocus
                 maxLength={80}
+                data-guia={GUIA_TARGETS.INPUT_PERSONA_NOMBRE}
               />
             </Field>
             <Field label="Rango de edad" hint="Ej. 22-30">
@@ -255,7 +262,11 @@ export function ArchetypeCreateButton({
             <button type="button" onClick={() => setOpen(false)} className="btn">
               Cancelar
             </button>
-            <SubmitButton className="btn btn-primary" pendingLabel="Creando…">
+            <SubmitButton
+              className="btn btn-primary"
+              pendingLabel="Creando…"
+              data-guia={GUIA_TARGETS.BTN_SUBMIT_PERSONA}
+            >
               Crear arquetipo
             </SubmitButton>
           </div>

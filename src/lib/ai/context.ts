@@ -110,6 +110,8 @@ export type BuildPromptInput = {
   /** Cuantas variantes distintas del mismo formato quiere ver. Siempre 1 guion por llamada. */
   variantHint?: string;
   productFocus?: string;
+  /** Llamado a la acción explícito deseado por el usuario. */
+  cta?: string;
 };
 
 const MAX_CHARS_PER_DOC = 18_000;
@@ -415,7 +417,11 @@ Reglas de tiempo:
 - startSec y endSec deben ser continuos: el endSec de una escena es el startSec de la siguiente.
 
 ${
-  esVenta
+  input.cta?.trim()
+    ? `Llamado a la acción (CTA) OBLIGATORIO especificado por el usuario:
+El guion DEBE culminar con este llamado a la acción exacto o adaptado directamente al tono del video: "${input.cta.trim()}".
+El campo "cta" del JSON de salida debe reflejar esta llamada a la acción.`
+    : esVenta
     ? `Como esta estructura VENDE, el guion TERMINA en un llamado a la acción claro y concreto,
 usando los canales de la marca. El CTA no puede ser generico.`
     : `Como esta estructura solo ENTRETIENE, NO vendas nada y deja "cta" en "".
@@ -450,6 +456,10 @@ export function buildUserPrompt(input: BuildPromptInput): string {
 
   if (input.request?.trim()) {
     parts.push(`\nLo que pide el equipo para este video:\n${input.request.trim()}`);
+  }
+
+  if (input.cta?.trim()) {
+    parts.push(`\nLlamado a la acción (CTA) deseado: ${input.cta.trim()}`);
   }
 
   if (input.variantHint?.trim()) {

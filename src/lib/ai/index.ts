@@ -22,6 +22,7 @@ export type GenerateInput = {
   durationSec?: number;
   provider?: string;
   model?: string;
+  cta?: string;
 };
 
 export type GenerateOutput = GenerationResult & {
@@ -162,6 +163,7 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
     request: input.request,
     productFocus: input.productFocus,
     variantHint: input.variantHint,
+    cta: input.cta,
     durationSec,
   };
 

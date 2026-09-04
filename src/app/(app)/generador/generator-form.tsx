@@ -28,6 +28,7 @@ import {
   STRUCTURE_CATEGORY_MAP,
 } from "@/lib/constants";
 import { cn, formatSeconds, withAlpha } from "@/lib/utils";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { Callout, Card, CardHeader, Field, SectionTitle } from "@/components/ui";
 
 /* ------------------------------------------------------------------ TIPOS -- */
@@ -170,6 +171,7 @@ export function GeneratorForm({
   );
   const [provider, setProvider] = useState(proveedorInicial);
   const [model, setModel] = useState(primeraEstructura?.defaultModel ?? "");
+  const [cta, setCta] = useState("");
   const [segundos, setSegundos] = useState(0);
 
   const structure = structures.find((s) => s.id === structureId) ?? null;
@@ -248,7 +250,7 @@ export function GeneratorForm({
               ) : null
             }
           />
-          <div className="space-y-4 p-4">
+          <div className="space-y-4 p-4" data-guia={GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA}>
             {STRUCTURE_CATEGORIES.map((cat) => {
               const grupo = structures.filter((s) => s.category === cat.value);
               if (!grupo.length) return null;
@@ -330,6 +332,7 @@ export function GeneratorForm({
                   className="select"
                   value={brandId}
                   onChange={(e) => setBrandId(e.target.value)}
+                  data-guia={GUIA_TARGETS.SELECT_GENERADOR_MARCA}
                 >
                   <option value="">Sin marca</option>
                   {brands.map((b) => (
@@ -363,7 +366,10 @@ export function GeneratorForm({
                   .
                 </div>
               ) : (
-                <div className="border-line no-scrollbar max-h-[210px] overflow-y-auto rounded-xl border">
+                <div
+                  className="border-line no-scrollbar max-h-[210px] overflow-y-auto rounded-xl border"
+                  data-guia={GUIA_TARGETS.SELECT_GENERADOR_ARQUETIPO}
+                >
                   <button
                     type="button"
                     onClick={() => setArchetypeId("")}
@@ -496,6 +502,47 @@ export function GeneratorForm({
                 />
               </Field>
             </div>
+
+            <Field
+              label="Llamado a la acción (CTA)"
+              hint="El cierre y la instrucción final que dirá el video. Elige una fórmula probada o escribe la tuya."
+            >
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {[
+                  "Comenta una palabra clave (ej: GUIA / RETO)",
+                  "Visita el enlace en mi perfil / biografía",
+                  "Escríbeme por mensaje directo (DM)",
+                  "Haz clic en el enlace para registrarte",
+                  "Comparte este video con un amigo",
+                  "Sin CTA (Solo entretener)",
+                ].map((preset) => {
+                  const esSinCta = preset.startsWith("Sin CTA");
+                  const activo = esSinCta ? cta === "" : cta === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCta(esSinCta ? "" : preset)}
+                      className={cn(
+                        "chip transition-colors cursor-pointer text-[11.5px]",
+                        activo
+                          ? "chip-brand font-semibold"
+                          : "chip-plain hover:border-brand/40"
+                      )}
+                    >
+                      {preset}
+                    </button>
+                  );
+                })}
+              </div>
+              <input
+                name="cta"
+                className="input"
+                value={cta}
+                onChange={(e) => setCta(e.target.value)}
+                placeholder="Ej. Comenta la palabra «RETO» para enviarte el plan completo al DM."
+              />
+            </Field>
           </div>
         </Card>
 
@@ -628,6 +675,7 @@ export function GeneratorForm({
             type="submit"
             className="btn btn-primary btn-lg shrink-0"
             disabled={!puedeGenerar}
+            data-guia={GUIA_TARGETS.BTN_GENERAR_GUION_SUBMIT}
           >
             {pending ? (
               <Loader2 size={16} className="spin" />
@@ -766,6 +814,16 @@ export function GeneratorForm({
                     ) : (
                       <span className="text-inkmuted">
                         Sin marca: el guion no llevará identidad ni canales para el CTA.
+                      </span>
+                    )}
+                  </PanelRow>
+
+                  <PanelRow icon={<Target size={13} />} label="Llamado a la acción (CTA)">
+                    {cta ? (
+                      <span className="text-ink font-medium">{cta}</span>
+                    ) : (
+                      <span className="text-inkmuted">
+                        Automático según la estructura ({structure?.category === "VENDE" ? "Venta directa" : "Sin CTA"})
                       </span>
                     )}
                   </PanelRow>

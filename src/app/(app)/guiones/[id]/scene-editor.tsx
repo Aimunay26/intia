@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -82,6 +82,11 @@ export function ScriptSheetEditor({
   structures: { id: string; name: string }[];
 }) {
   const [open, setOpen] = useState(false);
+  const [cta, setCta] = useState(script.cta ?? "");
+
+  useEffect(() => {
+    setCta(script.cta ?? "");
+  }, [script.cta]);
 
   return (
     <>
@@ -143,8 +148,31 @@ export function ScriptSheetEditor({
             <Field label="Gancho (primeros 3 segundos)">
               <textarea name="hook" className="textarea" rows={2} defaultValue={script.hook} />
             </Field>
-            <Field label="Llamado a la acción">
-              <textarea name="cta" className="textarea" rows={2} defaultValue={script.cta} />
+            <Field label="Llamado a la acción (CTA)">
+              <div className="mb-1.5 flex flex-wrap gap-1">
+                {[
+                  "Comenta una palabra clave",
+                  "Visita el link en bio",
+                  "Escríbenos por DM",
+                  "Regístrate gratis",
+                ].map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setCta(p)}
+                    className="chip chip-plain hover:border-brand/40 text-[10.5px] cursor-pointer"
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                name="cta"
+                className="textarea"
+                rows={2}
+                value={cta}
+                onChange={(e) => setCta(e.target.value)}
+              />
             </Field>
           </div>
 

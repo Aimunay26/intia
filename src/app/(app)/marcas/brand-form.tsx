@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Lock, Save, Sparkles } from "lucide-react";
 
 import { PALETTE } from "@/lib/constants";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { cn } from "@/lib/utils";
 import { Callout, Divider, Field } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
@@ -157,6 +158,7 @@ export function BrandForm({
             defaultValue={brand.name}
             placeholder="Ej. Con Amor"
             autoFocus={mode === "crear"}
+            data-guia={GUIA_TARGETS.INPUT_MARCA_NOMBRE}
           />
         </Field>
         <Field label="Lema" hint="Una línea que resuma la promesa de la marca.">
@@ -166,6 +168,7 @@ export function BrandForm({
             disabled={disabled}
             defaultValue={brand.tagline}
             placeholder="Ej. Regalos que dicen lo que sientes"
+            data-guia={GUIA_TARGETS.INPUT_MARCA_LEMA}
           />
         </Field>
       </div>
@@ -223,6 +226,7 @@ export function BrandForm({
                 disabled={disabled}
                 defaultValue={brand.toneOfVoice}
                 placeholder="Tuteo peruano, frases cortas, humor amable…"
+                data-guia={GUIA_TARGETS.INPUT_MARCA_TONO}
               />
             </Field>
             <Field label="Público objetivo" hint="A quién le hablamos de verdad.">
@@ -233,6 +237,7 @@ export function BrandForm({
                 disabled={disabled}
                 defaultValue={brand.audience}
                 placeholder="Mujeres de 25 a 40 en Lima que buscan un detalle rápido…"
+                data-guia={GUIA_TARGETS.INPUT_MARCA_PUBLICO}
               />
             </Field>
           </div>
@@ -258,6 +263,7 @@ export function BrandForm({
                 disabled={disabled}
                 defaultValue={brand.doNots}
                 placeholder={"No prometer descuentos sin aprobar\nNo comparar con la competencia"}
+                data-guia={GUIA_TARGETS.INPUT_MARCA_PROHIBICIONES}
               />
             </Field>
             <Field label="Palabras clave" hint="Vocabulario propio de la marca. Una por línea.">
@@ -365,6 +371,7 @@ export function BrandForm({
             className="btn btn-primary"
             icon={mode === "crear" ? <Sparkles size={14} /> : <Save size={14} />}
             pendingLabel="Guardando…"
+            data-guia={mode === "crear" ? GUIA_TARGETS.BTN_SUBMIT_MARCA : GUIA_TARGETS.BTN_GUARDAR_IDENTIDAD}
           >
             {mode === "crear" ? "Crear marca" : "Guardar cambios"}
           </SubmitButton>

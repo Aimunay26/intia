@@ -23,6 +23,7 @@ import { PALETTE, USER_ROLES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Divider, Field, SectionTitle } from "@/components/ui";
 import { DeleteButton, Modal } from "@/components/forms";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 
 /* ------------------------------------------------------------------ TIPOS -- */
 
@@ -217,7 +218,12 @@ export function InviteUserButton({ archetypes }: { archetypes: ArchetypeOption[]
 
   return (
     <>
-      <button type="button" className="btn btn-primary" onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className="btn btn-primary"
+        data-guia={GUIA_TARGETS.BTN_INVITAR_EQUIPO}
+        onClick={() => setOpen(true)}
+      >
         <UserPlus size={14} />
         Invitar persona
       </button>

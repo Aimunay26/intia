@@ -106,6 +106,7 @@ export async function generarGuion(
   const durationSec = intField(formData, "duracion", 0);
   const provider = field(formData, "proveedor") || "anthropic";
   const model = field(formData, "modelo");
+  const cta = field(formData, "cta");
 
   if (!structureId) {
     return { error: "Elige una estructura antes de generar." };
@@ -137,6 +138,7 @@ export async function generarGuion(
       durationSec: durationSec > 0 ? durationSec : undefined,
       provider,
       model: model || undefined,
+      cta: cta || undefined,
     });
   } catch (error) {
     if (error instanceof AiError) {
@@ -171,6 +173,7 @@ export async function generarGuion(
     productFocus ? `Producto o servicio: ${productFocus}` : "",
     request ? `Petición del equipo:\n${request}` : "",
     variantHint ? `Variante pedida: ${variantHint}` : "",
+    cta ? `CTA solicitado: ${cta}` : "",
     `Duración objetivo: ${objetivo} segundos`,
     result.referencesUsed.length
       ? `Documentos inyectados:\n${result.referencesUsed.map((r) => `· ${r}`).join("\n")}`
@@ -188,7 +191,7 @@ export async function generarGuion(
       avatar: generated.avatar?.trim() || null,
       focus: generated.focus?.trim() || null,
       hook: generated.hook?.trim() || null,
-      cta: generated.cta?.trim() || null,
+      cta: generated.cta?.trim() || cta?.trim() || null,
       totalSeconds,
       status: "BORRADOR",
       notes: generated.castNotes?.trim() || null,

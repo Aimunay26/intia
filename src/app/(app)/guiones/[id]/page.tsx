@@ -23,6 +23,7 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { requireUser, can, LEVEL } from "@/lib/auth";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import {
   actualizarGuion,
   anadirEscena,
@@ -461,11 +462,12 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
         <div className="p-4">
           {script.content.length ? (
             <ul className="mb-3 space-y-1.5">
-              {script.content.map((video) => {
+              {script.content.map((video, i) => {
                 const estadoVideo = CONTENT_STATUS_MAP[video.status];
                 return (
                   <li
                     key={video.id}
+                    data-guia={i === 0 ? GUIA_TARGETS.VIDEO_VINCULADO_CARD : undefined}
                     className="bg-surface2 flex flex-wrap items-center gap-2.5 rounded-lg px-3 py-2"
                   >
                     <Link
@@ -512,7 +514,13 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
                       : "Solo se listan las tarjetas que aún no tienen guion."
                   }
                 >
-                  <select name="contentItemId" className="select" defaultValue="" required>
+                  <select
+                    name="contentItemId"
+                    className="select"
+                    defaultValue=""
+                    required
+                    data-guia={GUIA_TARGETS.SELECT_ASIGNAR_VIDEO}
+                  >
                     <option value="" disabled>
                       Elige la tarjeta…
                     </option>
@@ -523,7 +531,11 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
                     ))}
                   </select>
                 </Field>
-                <SubmitButton className="btn btn-primary" pendingLabel="Asignando…">
+                <SubmitButton
+                  className="btn btn-primary"
+                  pendingLabel="Asignando…"
+                  data-guia={GUIA_TARGETS.BTN_ASIGNAR_GUION}
+                >
                   <LinkIcon size={14} /> Asignar
                 </SubmitButton>
               </form>

@@ -7,6 +7,7 @@ import { FIT_SCORES } from "@/lib/constants";
 import { parseList, truncate } from "@/lib/utils";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { FilterBar, SearchInput } from "@/components/filters";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { ArchetypeCreateButton } from "./archetype-form";
 
 export const dynamic = "force-dynamic";
@@ -88,7 +89,7 @@ async function cargar() {
   });
 }
 
-function Tarjeta({ a }: { a: Ficha }) {
+function Tarjeta({ a, isFirst }: { a: Ficha; isFirst?: boolean }) {
   const fortalezas = parseList(a.strengths).slice(0, 3);
   const perfectos = a.fits.filter((f) => f.score === ENCAJA_PERFECTO).length;
   const evaluadas = a.fits.length;
@@ -97,7 +98,11 @@ function Tarjeta({ a }: { a: Ficha }) {
     .join(" · ");
 
   return (
-    <Link href={`/arquetipos/${a.id}`} className="block">
+    <Link
+      href={`/arquetipos/${a.id}`}
+      data-guia={isFirst ? GUIA_TARGETS.PERSONA_PRIMERA_CARD : undefined}
+      className="block"
+    >
       <Card
         className="brand-strip h-full p-4 pl-5 transition-shadow hover:shadow-[var(--shadow-2)]"
         style={{ ["--strip" as string]: a.color }}
@@ -265,8 +270,8 @@ export default async function ArquetiposPage({
         <>
           {personas.length ? (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {personas.map((a) => (
-                <Tarjeta key={a.id} a={a} />
+              {personas.map((a, i) => (
+                <Tarjeta key={a.id} a={a} isFirst={i === 0} />
               ))}
             </div>
           ) : null}

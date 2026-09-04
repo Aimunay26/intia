@@ -107,6 +107,10 @@ export async function generarGuion(
   const provider = field(formData, "proveedor") || "anthropic";
   const model = field(formData, "modelo");
   const cta = field(formData, "cta");
+  const creativeAngle = field(formData, "anguloCreativo");
+  const ctaTrigger = field(formData, "ctaGatillo");
+  const ctaActionType = field(formData, "ctaAccion");
+  const ctaDetail = field(formData, "ctaDetalle");
 
   if (!structureId) {
     return { error: "Elige una estructura antes de generar." };
@@ -139,6 +143,10 @@ export async function generarGuion(
       provider,
       model: model || undefined,
       cta: cta || undefined,
+      creativeAngle: creativeAngle || undefined,
+      ctaTrigger: ctaTrigger || undefined,
+      ctaActionType: ctaActionType || undefined,
+      ctaDetail: ctaDetail || undefined,
     });
   } catch (error) {
     if (error instanceof AiError) {
@@ -172,7 +180,11 @@ export async function generarGuion(
   const briefInput = [
     productFocus ? `Producto o servicio: ${productFocus}` : "",
     request ? `Petición del equipo:\n${request}` : "",
+    creativeAngle ? `Ángulo creativo: ${creativeAngle}` : "",
     variantHint ? `Variante pedida: ${variantHint}` : "",
+    ctaTrigger ? `Gatillo CTA (Hormozi): ${ctaTrigger}` : "",
+    ctaActionType ? `Acción de CTA: ${ctaActionType}` : "",
+    ctaDetail ? `Detalle CTA: ${ctaDetail}` : "",
     cta ? `CTA solicitado: ${cta}` : "",
     `Duración objetivo: ${objetivo} segundos`,
     result.referencesUsed.length

@@ -1,5 +1,6 @@
 import { parseJson, parseList } from "@/lib/utils";
 import { OUTPUT_CONTRACT_TEXT } from "@/lib/ai/schema";
+import { ANGULOS_CREATIVOS, CTA_TRIGGERS } from "@/lib/script-angles";
 
 /**
  * Aquí se arma el "fine tuning" de cada generación.
@@ -112,6 +113,14 @@ export type BuildPromptInput = {
   productFocus?: string;
   /** Llamado a la acción explícito deseado por el usuario. */
   cta?: string;
+  /** Ángulo creativo de la versión (ej: ella_vs_ellos, camaleon, impacto_visual, pov_situacion, anti_consejo, experimento) */
+  creativeAngle?: string;
+  /** Gatillo psicológico de cierre (Hormozi: escasez, urgencia, motivo_fraternidad, incentivo_regalo, impacto_visual, directo) */
+  ctaTrigger?: string;
+  /** Tipo de acción del CTA (comentar, seguir, bio, dm, compra) */
+  ctaActionType?: string;
+  /** Detalle del límite, fecha, regalo o motivo del CTA */
+  ctaDetail?: string;
 };
 
 const MAX_CHARS_PER_DOC = 18_000;
@@ -293,6 +302,23 @@ esqueleto emocional, situacion y objetos distintos.
 ${examples}`);
   }
 
+  // ---- 1.1 EL ÁNGULO CREATIVO OBLIGATORIO -----------------------------
+  if (input.creativeAngle) {
+    const angulo = ANGULOS_CREATIVOS.find((a) => a.id === input.creativeAngle);
+    if (angulo) {
+      parts.push(`
+# 1.1 ÁNGULO CREATIVO OBLIGATORIO: ${angulo.name.toUpperCase()}
+
+${angulo.promptInstructions}
+
+Ejemplo de gancho / inicio bajo este ángulo:
+${angulo.hookExample}
+
+DIRECTIVA ESTRICTA DE ESTA VERSIÓN:
+No escribas un guion genérico o neutral. Este guion DEBE abordar la idea y el producto estrictamente bajo la perspectiva de "${angulo.shortLabel}".`);
+    }
+  }
+
   // ---- 2. EL ARQUETIPO DEL ACTOR ---------------------------------------
   if (archetype) {
     const strengths = parseList(archetype.strengths);
@@ -416,17 +442,43 @@ Reglas de tiempo:
 - Los primeros 3 segundos deciden todo: el primer beat tiene que entrar sin introduccion.
 - startSec y endSec deben ser continuos: el endSec de una escena es el startSec de la siguiente.
 
-${
-  input.cta?.trim()
-    ? `Llamado a la acción (CTA) OBLIGATORIO especificado por el usuario:
+${(() => {
+  const gatilloHormozi = input.ctaTrigger
+    ? CTA_TRIGGERS.find((g) => g.id === input.ctaTrigger)
+    : null;
+
+  if (gatilloHormozi || input.cta?.trim() || input.ctaDetail?.trim()) {
+    const bloquesCta: string[] = [];
+    bloquesCta.push(`### ESTRATEGIA DE CIERRE Y CONVERSIÓN (GATILLOS DE ALEX HORMOZI)`);
+    if (gatilloHormozi) {
+      bloquesCta.push(`- **Gatillo Psicológico**: ${gatilloHormozi.name} (${gatilloHormozi.badge})`);
+      bloquesCta.push(`- **Fundamento**: ${gatilloHormozi.explanation}`);
+      bloquesCta.push(`- **Directiva**: ${gatilloHormozi.promptGuidance}`);
+    }
+    if (input.ctaActionType) {
+      bloquesCta.push(`- **Acción solicitada al espectador**: ${input.ctaActionType}`);
+    }
+    if (input.ctaDetail?.trim()) {
+      bloquesCta.push(`- **Detalle de la escasez, urgencia, motivo o regalo**: "${input.ctaDetail.trim()}"`);
+    }
+    if (input.cta?.trim()) {
+      bloquesCta.push(`- **Texto acordado para el cierre**: "${input.cta.trim()}"`);
+    }
+    bloquesCta.push(`El guion DEBE culminar con este cierre. La última escena debe reflejar esta llamada a la acción en 'voice'. Si el gatillo es "Impacto Visual", describe en 'shot', 'action' y 'props' qué sostiene o muestra en cámara el actor mientras dice el CTA.`);
+    bloquesCta.push(`El campo "cta" del JSON de salida debe reflejar esta llamada a la acción.`);
+    return bloquesCta.join("\n");
+  }
+
+  if (input.cta?.trim()) {
+    return `Llamado a la acción (CTA) OBLIGATORIO especificado por el usuario:
 El guion DEBE culminar con este llamado a la acción exacto o adaptado directamente al tono del video: "${input.cta.trim()}".
-El campo "cta" del JSON de salida debe reflejar esta llamada a la acción.`
-    : esVenta
-    ? `Como esta estructura VENDE, el guion TERMINA en un llamado a la acción claro y concreto,
-usando los canales de la marca. El CTA no puede ser generico.`
-    : `Como esta estructura solo ENTRETIENE, NO vendas nada y deja "cta" en "".
-No menciones precios, ofertas ni "escribenos".`
-}
+El campo "cta" del JSON de salida debe reflejar esta llamada a la acción.`;
+  }
+
+  return esVenta
+    ? `Como esta estructura VENDE, el guion TERMINA en un llamado a la acción claro y concreto, usando los canales de la marca. El CTA no puede ser genérico.`
+    : `Como esta estructura solo ENTRETIENE, NO vendas nada y deja "cta" en "". No menciones precios, ofertas ni "escribenos".`;
+})()}
 
 Prohibido:
 - Frases de relleno de IA ("en el mundo actual", "descubre como", "no es solo X, es Y").
@@ -450,6 +502,13 @@ export function buildUserPrompt(input: BuildPromptInput): string {
     }.`
   );
 
+  if (input.creativeAngle) {
+    const angulo = ANGULOS_CREATIVOS.find((a) => a.id === input.creativeAngle);
+    if (angulo) {
+      parts.push(`\nÁngulo creativo obligatorio: ${angulo.name.toUpperCase()} (${angulo.shortLabel}).`);
+    }
+  }
+
   if (input.productFocus?.trim()) {
     parts.push(`\nProducto o servicio del video: ${input.productFocus.trim()}`);
   }
@@ -458,13 +517,18 @@ export function buildUserPrompt(input: BuildPromptInput): string {
     parts.push(`\nLo que pide el equipo para este video:\n${input.request.trim()}`);
   }
 
-  if (input.cta?.trim()) {
-    parts.push(`\nLlamado a la acción (CTA) deseado: ${input.cta.trim()}`);
+  if (input.ctaTrigger || input.cta?.trim()) {
+    const gatillo = CTA_TRIGGERS.find((g) => g.id === input.ctaTrigger);
+    parts.push(
+      `\nEstrategia de CTA: [${gatillo?.shortLabel ?? "Cierre"}] ${
+        input.cta?.trim() || input.ctaDetail?.trim() || ""
+      }`
+    );
   }
 
   if (input.variantHint?.trim()) {
     parts.push(
-      `\nVariante: ${input.variantHint.trim()}\nMisma estructura, situacion y objetos completamente distintos a los ejemplos.`
+      `\nVariante adicional: ${input.variantHint.trim()}\nMisma estructura, situacion y objetos completamente distintos a los ejemplos.`
     );
   }
 

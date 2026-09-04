@@ -12,6 +12,7 @@ import {
   Layers,
   Loader2,
   Package,
+  RotateCcw,
   Sparkles,
   Tags,
   Target,
@@ -20,6 +21,12 @@ import {
 } from "lucide-react";
 
 import { generarGuion, type GenerateState } from "@/app/actions/scripts";
+import {
+  ANGULOS_CREATIVOS,
+  CTA_TRIGGERS,
+  CTA_ACTIONS,
+  armarCtaTexto,
+} from "@/lib/script-angles";
 import {
   AI_MODELS,
   AI_PROVIDERS,
@@ -139,6 +146,10 @@ export function GeneratorForm({
   providersReady,
   initialStructureId,
   initialBrandId,
+  initialArchetypeId,
+  initialProduct,
+  initialRequest,
+  initialAngle,
 }: {
   structures: GeneratorStructure[];
   brands: GeneratorBrand[];
@@ -146,6 +157,10 @@ export function GeneratorForm({
   providersReady: Record<string, boolean>;
   initialStructureId: string;
   initialBrandId: string;
+  initialArchetypeId?: string;
+  initialProduct?: string;
+  initialRequest?: string;
+  initialAngle?: string;
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<GenerateState, FormData>(
@@ -165,13 +180,21 @@ export function GeneratorForm({
 
   const [structureId, setStructureId] = useState(primeraEstructura?.id ?? "");
   const [brandId, setBrandId] = useState(initialBrandId);
-  const [archetypeId, setArchetypeId] = useState("");
+  const [archetypeId, setArchetypeId] = useState(initialArchetypeId ?? "");
   const [duracion, setDuracion] = useState(
     String(primeraEstructura?.defaultDurationSec ?? 45)
   );
   const [provider, setProvider] = useState(proveedorInicial);
   const [model, setModel] = useState(primeraEstructura?.defaultModel ?? "");
-  const [cta, setCta] = useState("");
+  const [creativeAngle, setCreativeAngle] = useState(initialAngle ?? "");
+  const [ctaTrigger, setCtaTrigger] = useState("escasez");
+  const [ctaAction, setCtaAction] = useState("compra");
+  const [ctaDetail, setCtaDetail] = useState(
+    "Solo puedo atender a 9 clientes y ya tengo 5, las plazas de atención se llenan"
+  );
+  const [cta, setCta] = useState(
+    "Si no me compras ahora solo puedo atender a 9 clientes y ya tengo 5 clientes, así que ya lo sabes: las plazas de atención se llenan y conmigo vas a conseguir los resultados que quieres."
+  );
   const [segundos, setSegundos] = useState(0);
 
   const structure = structures.find((s) => s.id === structureId) ?? null;
@@ -350,6 +373,7 @@ export function GeneratorForm({
                 <input
                   name="producto"
                   className="input"
+                  defaultValue={initialProduct ?? ""}
                   placeholder="Ej. Ramo de rosas rojas con caja de chocolates"
                 />
               </Field>
@@ -461,27 +485,108 @@ export function GeneratorForm({
             subtitle="Mientras más concreto seas, menos tendrás que corregir después."
             icon={<Target size={15} />}
           />
-          <div className="space-y-3 p-4">
+          <div className="space-y-4 p-4">
             <Field
-              label="Petición"
+              label="Petición central (Idea o historia del video)"
               required
               hint="Habla como le hablarías a tu guionista: qué pasa, qué sensación buscas, qué tiene que quedar claro."
             >
               <textarea
                 name="peticion"
                 className="textarea"
-                rows={5}
+                rows={4}
                 required
+                defaultValue={initialRequest ?? ""}
                 placeholder={
-                  "Ej. Quiero un video para el Día de la Madre. Que arranque con algo que incomode, que se sienta real, y que termine mostrando el arreglo grande. Nada cursi."
+                  "Ej. Quiero un video para vender nuestro servicio de mentoría. Que arranque con algo que incomode, que se sienta real, y que termine llamando a la acción."
                 }
               />
             </Field>
 
+            {/* --- BOTONES DE ÁNGULOS CREATIVOS (Misma idea, diferentes versiones) --- */}
+            <div className="space-y-2.5 rounded-xl border border-line bg-surface2/40 p-3.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="label mb-0 flex items-center gap-1.5 font-bold text-[13px]">
+                    <Sparkles size={14} className="text-brand" />
+                    Ángulo creativo (Versión de guion)
+                  </label>
+                  <p className="text-inkmuted text-[11.5px] mt-0.5">
+                    De una misma idea y producto, presiona un botón para que la IA arme una versión específica con ese enfoque.
+                  </p>
+                </div>
+                {creativeAngle && (
+                  <button
+                    type="button"
+                    onClick={() => setCreativeAngle("")}
+                    className="text-inkmuted hover:text-ink text-[11px] underline shrink-0 ml-2"
+                  >
+                    Quitar ángulo
+                  </button>
+                )}
+              </div>
+
+              <input type="hidden" name="anguloCreativo" value={creativeAngle} />
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {ANGULOS_CREATIVOS.map((ang) => {
+                  const activo = creativeAngle === ang.id;
+                  return (
+                    <button
+                      key={ang.id}
+                      type="button"
+                      onClick={() => setCreativeAngle(activo ? "" : ang.id)}
+                      className={cn(
+                        "card-flat flex flex-col items-start p-2.5 text-left transition-all relative overflow-hidden",
+                        activo
+                          ? "border-brand bg-brandsoft/70 shadow-sm ring-1 ring-brand"
+                          : "hover:bg-surface2 hover:border-brand/40"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 w-full">
+                        <span className="text-base">{ang.icon}</span>
+                        <span className="text-ink text-[12px] font-bold truncate flex-1">
+                          {ang.shortLabel}
+                        </span>
+                        <span className="chip chip-plain text-[9px] px-1 py-0 shrink-0">
+                          {ang.badge}
+                        </span>
+                      </div>
+                      <p className="text-inkmuted text-[10.5px] line-clamp-2 mt-1 leading-snug">
+                        {ang.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {creativeAngle && (() => {
+                const sel = ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle);
+                if (!sel) return null;
+                return (
+                  <div className="border border-brand/30 bg-brand/5 rounded-xl p-3 text-[12px] flex items-start gap-2.5">
+                    <span className="text-base shrink-0 mt-0.5">{sel.icon}</span>
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="text-ink font-semibold flex items-center gap-2">
+                        <span>Versión activa: {sel.name}</span>
+                        <span className="chip chip-brand text-[10px]">{sel.badge}</span>
+                      </div>
+                      <p className="text-inkmuted text-[11.5px] leading-relaxed">
+                        {sel.description}
+                      </p>
+                      <div className="text-brand font-mono text-[11px] bg-surface2/80 rounded px-2 py-1 border border-brand/20">
+                        {sel.hookExample}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px]">
               <Field
-                label="Variante"
-                hint="Un giro concreto para que no salga igual a los anteriores. Ej. «que el golpe visual sea que se rompió algo», «que sea de noche», «que el protagonista sea el hermano menor»."
+                label="Variante o nota adicional"
+                hint="Un giro concreto. Ej: «que sea de noche», «que el protagonista sea el hermano menor»."
               >
                 <input
                   name="variante"
@@ -503,46 +608,176 @@ export function GeneratorForm({
               </Field>
             </div>
 
-            <Field
-              label="Llamado a la acción (CTA)"
-              hint="El cierre y la instrucción final que dirá el video. Elige una fórmula probada o escribe la tuya."
-            >
-              <div className="mb-2 flex flex-wrap gap-1.5">
-                {[
-                  "Comenta una palabra clave (ej: GUIA / RETO)",
-                  "Visita el enlace en mi perfil / biografía",
-                  "Escríbeme por mensaje directo (DM)",
-                  "Haz clic en el enlace para registrarte",
-                  "Comparte este video con un amigo",
-                  "Sin CTA (Solo entretener)",
-                ].map((preset) => {
-                  const esSinCta = preset.startsWith("Sin CTA");
-                  const activo = esSinCta ? cta === "" : cta === preset;
-                  return (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setCta(esSinCta ? "" : preset)}
-                      className={cn(
-                        "chip transition-colors cursor-pointer text-[11.5px]",
-                        activo
-                          ? "chip-brand font-semibold"
-                          : "chip-plain hover:border-brand/40"
-                      )}
-                    >
-                      {preset}
-                    </button>
-                  );
-                })}
+            {/* --- CONSTRUCTOR DE CTA CON GATILLOS PSICOLÓGICOS (HORMOZI) --- */}
+            <div className="space-y-3 pt-3 border-t border-line">
+              <div>
+                <label className="label mb-0 flex items-center gap-1.5 font-bold text-[13px]">
+                  <Target size={14} className="text-brand" />
+                  Llamado a la acción (CTA) con Gatillos de Alex Hormozi
+                </label>
+                <p className="text-inkmuted text-[11.5px] mt-0.5">
+                  No es solo pedir un clic: es darle al espectador una razón psicológica de escasez, urgencia, motivo o recompensa para actuar ahora mismo.
+                </p>
               </div>
-              <input
-                name="cta"
-                className="input"
-                value={cta}
-                onChange={(e) => setCta(e.target.value)}
-                placeholder="Ej. Comenta la palabra «RETO» para enviarte el plan completo al DM."
-              />
-            </Field>
+
+              <input type="hidden" name="ctaGatillo" value={ctaTrigger} />
+              <input type="hidden" name="ctaAccion" value={ctaAction} />
+              <input type="hidden" name="ctaDetalle" value={ctaDetail} />
+
+              {/* 1. Selector de Gatillo */}
+              <div>
+                <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
+                  1 · Elige el gatillo psicológico de cierre
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                  {CTA_TRIGGERS.map((gat) => {
+                    const activo = ctaTrigger === gat.id;
+                    return (
+                      <button
+                        key={gat.id}
+                        type="button"
+                        onClick={() => {
+                          setCtaTrigger(gat.id);
+                          const preset = gat.presets[0];
+                          if (preset) {
+                            setCtaAction(preset.accion);
+                            setCtaDetail(preset.detalle);
+                            setCta(preset.textoCompleto);
+                          }
+                        }}
+                        className={cn(
+                          "p-2 rounded-lg border text-left transition-all flex items-start gap-2",
+                          activo
+                            ? "border-brand bg-brandsoft/70 ring-1 ring-brand font-semibold text-ink shadow-sm"
+                            : "border-line bg-surface hover:bg-surface2 text-inksoft"
+                        )}
+                      >
+                        <span className="text-base shrink-0 mt-0.5">{gat.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11.5px] font-bold truncate leading-tight">
+                            {gat.shortLabel}
+                          </div>
+                          <div className="text-[9.5px] text-inkmuted truncate">
+                            {gat.badge}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. Selector de Acción */}
+              <div>
+                <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
+                  2 · Qué acción pides en redes
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {CTA_ACTIONS.map((acc) => {
+                    const activo = ctaAction === acc.id;
+                    return (
+                      <button
+                        key={acc.id}
+                        type="button"
+                        onClick={() => {
+                          setCtaAction(acc.id);
+                          const nuevoTexto = armarCtaTexto(ctaTrigger, acc.id, ctaDetail);
+                          setCta(nuevoTexto);
+                        }}
+                        className={cn(
+                          "chip cursor-pointer text-[11px] transition-all",
+                          activo
+                            ? "chip-brand font-semibold ring-1 ring-brand"
+                            : "chip-plain hover:border-brand/40"
+                        )}
+                      >
+                        <span>{acc.icon}</span>
+                        <span>{acc.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. Presets y detalle específico */}
+              {(() => {
+                const gat = CTA_TRIGGERS.find((g) => g.id === ctaTrigger);
+                if (!gat) return null;
+                return (
+                  <div className="space-y-2 rounded-lg border border-line bg-surface2/30 p-2.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                      <span className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider">
+                        3 · Fórmulas probadas ({gat.shortLabel})
+                      </span>
+                      <span className="text-[10px] text-inkmuted italic">
+                        {gat.explanation}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {gat.presets.map((p, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setCtaAction(p.accion);
+                            setCtaDetail(p.detalle);
+                            setCta(p.textoCompleto);
+                          }}
+                          className="chip chip-plain hover:border-brand/50 hover:bg-brandsoft/30 text-[10.5px] cursor-pointer transition-all"
+                          title={p.textoCompleto}
+                        >
+                          ✨ {p.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <Field
+                      label="Incentivo, límite o detalle específico"
+                      hint="Personaliza los números o la razón exacta: cupos disponibles, fecha límite o guía a regalar."
+                    >
+                      <input
+                        className="input text-[12px]"
+                        value={ctaDetail}
+                        placeholder={gat.defaultDetailPlaceholder}
+                        onChange={(e) => {
+                          const nuevoDet = e.target.value;
+                          setCtaDetail(nuevoDet);
+                          setCta(armarCtaTexto(ctaTrigger, ctaAction, nuevoDet));
+                        }}
+                      />
+                    </Field>
+                  </div>
+                );
+              })()}
+
+              {/* 4. Texto final del CTA */}
+              <Field
+                label="Texto final del llamado a la acción (lo que dirá la última escena)"
+                hint="Puedes editarlo libremente si deseas cambiar alguna palabra."
+              >
+                <div className="space-y-1.5">
+                  <textarea
+                    name="cta"
+                    className="textarea font-medium text-[12px]"
+                    rows={3}
+                    value={cta}
+                    onChange={(e) => setCta(e.target.value)}
+                    placeholder="Ej. Si no me compras ahora solo puedo atender a 9 clientes y ya tengo 5 clientes..."
+                  />
+                  <div className="flex items-center justify-between text-[11px] text-inkmuted">
+                    <span>Este texto exacto se inyectará en el pre-prompt de la IA para el cierre.</span>
+                    <button
+                      type="button"
+                      onClick={() => setCta(armarCtaTexto(ctaTrigger, ctaAction, ctaDetail))}
+                      className="text-brand hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <RotateCcw size={11} /> Re-ensamblar fórmula
+                    </button>
+                  </div>
+                </div>
+              </Field>
+            </div>
           </div>
         </Card>
 
@@ -818,9 +1053,37 @@ export function GeneratorForm({
                     )}
                   </PanelRow>
 
-                  <PanelRow icon={<Target size={13} />} label="Llamado a la acción (CTA)">
+                  <PanelRow icon={<Sparkles size={13} />} label="Ángulo creativo (Versión)">
+                    {creativeAngle ? (
+                      (() => {
+                        const ang = ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle);
+                        return (
+                          <div>
+                            <span className="text-ink font-bold text-[12px]">{ang?.name ?? creativeAngle}</span>
+                            <span className="chip chip-brand ml-1.5 text-[9.5px]">{ang?.badge}</span>
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <span className="text-inkmuted">Formato estándar · Sin forzar ángulo</span>
+                    )}
+                  </PanelRow>
+
+                  <PanelRow icon={<Target size={13} />} label="Cierre y CTA (Hormozi)">
                     {cta ? (
-                      <span className="text-ink font-medium">{cta}</span>
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="chip chip-plain text-[10px] font-semibold">
+                            {CTA_TRIGGERS.find((g) => g.id === ctaTrigger)?.shortLabel ?? "Gatillo"}
+                          </span>
+                          <span className="chip chip-plain text-[10px]">
+                            {CTA_ACTIONS.find((a) => a.id === ctaAction)?.label ?? ctaAction}
+                          </span>
+                        </div>
+                        <span className="text-ink font-medium text-[12px] leading-snug block line-clamp-3">
+                          {cta}
+                        </span>
+                      </div>
                     ) : (
                       <span className="text-inkmuted">
                         Automático según la estructura ({structure?.category === "VENDE" ? "Venta directa" : "Sin CTA"})

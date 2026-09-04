@@ -21,6 +21,7 @@ import { VOICE_TYPES } from "@/lib/constants";
 import { formatSeconds } from "@/lib/utils";
 import { Field } from "@/components/ui";
 import { DeleteButton, Modal, SubmitButton } from "@/components/forms";
+import { CTA_TRIGGERS } from "@/lib/script-angles";
 
 /* ------------------------------------------------------------------ TIPOS -- */
 
@@ -148,30 +149,27 @@ export function ScriptSheetEditor({
             <Field label="Gancho (primeros 3 segundos)">
               <textarea name="hook" className="textarea" rows={2} defaultValue={script.hook} />
             </Field>
-            <Field label="Llamado a la acción (CTA)">
-              <div className="mb-1.5 flex flex-wrap gap-1">
-                {[
-                  "Comenta una palabra clave",
-                  "Visita el link en bio",
-                  "Escríbenos por DM",
-                  "Regístrate gratis",
-                ].map((p) => (
+            <Field label="Llamado a la acción (CTA) con Gatillo Hormozi">
+              <div className="mb-2 flex flex-wrap gap-1">
+                {CTA_TRIGGERS.flatMap((t) => t.presets.slice(0, 1)).map((preset, idx) => (
                   <button
-                    key={p}
+                    key={idx}
                     type="button"
-                    onClick={() => setCta(p)}
-                    className="chip chip-plain hover:border-brand/40 text-[10.5px] cursor-pointer"
+                    onClick={() => setCta(preset.textoCompleto)}
+                    className="chip chip-plain hover:border-brand/40 text-[10px] cursor-pointer"
+                    title={preset.textoCompleto}
                   >
-                    {p}
+                    ✨ {preset.label}
                   </button>
                 ))}
               </div>
               <textarea
                 name="cta"
-                className="textarea"
-                rows={2}
+                className="textarea text-[12px]"
+                rows={3}
                 value={cta}
                 onChange={(e) => setCta(e.target.value)}
+                placeholder="Ej. Si no me compras ahora solo puedo atender a 9 clientes y ya tengo 5..."
               />
             </Field>
           </div>

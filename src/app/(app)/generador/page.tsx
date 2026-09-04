@@ -33,7 +33,14 @@ import {
 export default async function GeneradorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ estructura?: string; marca?: string }>;
+  searchParams: Promise<{
+    estructura?: string;
+    marca?: string;
+    producto?: string;
+    peticion?: string;
+    angulo?: string;
+    arquetipo?: string;
+  }>;
 }) {
   const user = await requireUser();
   const sp = await searchParams;
@@ -220,6 +227,10 @@ export default async function GeneradorPage({
           }}
           initialStructureId={preseleccion}
           initialBrandId={marcaInicial}
+          initialArchetypeId={sp.arquetipo}
+          initialProduct={sp.producto}
+          initialRequest={sp.peticion}
+          initialAngle={sp.angulo}
         />
       )}
     </>

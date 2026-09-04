@@ -13,6 +13,7 @@ import {
   Package,
   Plus,
   Smile,
+  Sparkles,
   StickyNote,
   Trash2,
   Type,
@@ -394,6 +395,15 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
                 brands={brands}
                 structures={structures}
               />
+
+              <Link
+                href={`/generador?estructura=${script.structureId ?? ""}&marca=${script.brandId ?? ""}&producto=${encodeURIComponent(script.focus ?? "")}&peticion=${encodeURIComponent(script.hook ? `Misma idea: ${script.hook}` : script.title)}`}
+                className="btn btn-sm btn-subtle text-brand font-semibold"
+                title="Generar otra versión de esta misma idea probando diferentes ángulos (Ella vs Ellos, Camaleón, Impacto Visual...)"
+              >
+                <Sparkles size={13} />
+                Variar ángulo
+              </Link>
 
               <form action={duplicarGuion}>
                 <input type="hidden" name="id" value={script.id} />

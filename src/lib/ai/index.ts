@@ -23,6 +23,10 @@ export type GenerateInput = {
   provider?: string;
   model?: string;
   cta?: string;
+  creativeAngle?: string;
+  ctaTrigger?: string;
+  ctaActionType?: string;
+  ctaDetail?: string;
 };
 
 export type GenerateOutput = GenerationResult & {
@@ -164,6 +168,10 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
     productFocus: input.productFocus,
     variantHint: input.variantHint,
     cta: input.cta,
+    creativeAngle: input.creativeAngle,
+    ctaTrigger: input.ctaTrigger,
+    ctaActionType: input.ctaActionType,
+    ctaDetail: input.ctaDetail,
     durationSec,
   };
 

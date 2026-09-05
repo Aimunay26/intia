@@ -175,6 +175,7 @@ export function BrandForm({
             brandId={brand.id}
             className="btn btn-primary btn-sm shrink-0"
             label="Cargar PDF de branding"
+            data-guia={GUIA_TARGETS.BTN_CARGAR_BRANDING_PDF}
             onSuccess={(res) => {
               if (res.parsed.tagline) setTagline(res.parsed.tagline);
               if (res.parsed.identity) setIdentity(res.parsed.identity);

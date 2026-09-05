@@ -193,7 +193,14 @@ export function GeneratorForm({
   const [peticion, setPeticion] = useState<string>(initialRequest ?? "");
   const [variante, setVariante] = useState<string>("");
 
-  const [structureId, setStructureId] = useState(primeraEstructura?.id ?? "");
+  const [selectedStructureIds, setSelectedStructureIds] = useState<string[]>(() => {
+    if (initialStructureId) return [initialStructureId];
+    if (primeraEstructura) return [primeraEstructura.id];
+    return structures.length ? [structures[0].id] : [];
+  });
+  const [previewStructureId, setPreviewStructureId] = useState<string>(
+    initialStructureId || (primeraEstructura?.id ?? (structures[0]?.id ?? ""))
+  );
   const [brandId, setBrandId] = useState(initialBrandId);
   const [archetypeId, setArchetypeId] = useState(initialArchetypeId ?? "");
   const [duracion, setDuracion] = useState(
@@ -212,7 +219,11 @@ export function GeneratorForm({
   );
   const [segundos, setSegundos] = useState(0);
 
-  const structure = structures.find((s) => s.id === structureId) ?? null;
+  const structure =
+    structures.find((s) => s.id === previewStructureId) ??
+    structures.find((s) => selectedStructureIds.includes(s.id)) ??
+    structures[0] ??
+    null;
   const brand = brands.find((b) => b.id === brandId) ?? null;
   const archetype = archetypes.find((a) => a.id === archetypeId) ?? null;
 
@@ -236,13 +247,45 @@ export function GeneratorForm({
     return () => clearInterval(t);
   }, [pending]);
 
-  const elegirEstructura = (s: GeneratorStructure) => {
-    setStructureId(s.id);
+  const toggleEstructura = (s: GeneratorStructure) => {
+    setSelectedStructureIds((prev) => {
+      const exists = prev.includes(s.id);
+      if (exists) {
+        const next = prev.filter((id) => id !== s.id);
+        if (next.length > 0 && previewStructureId === s.id) {
+          setPreviewStructureId(next[0]);
+        }
+        return next;
+      } else {
+        setPreviewStructureId(s.id);
+        return [...prev, s.id];
+      }
+    });
     setDuracion(String(s.defaultDurationSec || 45));
-    setModel(s.defaultModel || "");
+    if (s.defaultModel) setModel(s.defaultModel);
     if (s.defaultProvider && providersReady[s.defaultProvider]) {
       setProvider(s.defaultProvider);
     }
+  };
+
+  const seleccionarSoloEsta = (s: GeneratorStructure, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setSelectedStructureIds([s.id]);
+    setPreviewStructureId(s.id);
+    setDuracion(String(s.defaultDurationSec || 45));
+    if (s.defaultModel) setModel(s.defaultModel);
+    if (s.defaultProvider && providersReady[s.defaultProvider]) {
+      setProvider(s.defaultProvider);
+    }
+  };
+
+  const seleccionarTodasFiltradas = () => {
+    const ids = structuresFiltradas.map((s) => s.id);
+    setSelectedStructureIds((prev) => Array.from(new Set([...prev, ...ids])));
+  };
+
+  const deseleccionarTodas = () => {
+    setSelectedStructureIds([]);
   };
 
   // La gente del equipo primero; dentro de cada grupo, quien mejor encaje.
@@ -264,7 +307,9 @@ export function GeneratorForm({
   const docsTotal = docsEstructura + docsArquetipo + docsMarca;
 
   const sinClaves = !AI_PROVIDERS.some((p) => providersReady[p.value]);
-  const puedeGenerar = Boolean(structureId && providersReady[provider] && !pending);
+  const puedeGenerar = Boolean(
+    selectedStructureIds.length > 0 && providersReady[provider] && !pending
+  );
 
   const modelosSugeridos = AI_MODELS[provider] ?? [];
 
@@ -276,8 +321,13 @@ export function GeneratorForm({
       titulo: "Formato",
       descripcion: "Tipo de guion",
       icono: <Layers size={13} />,
-      resumen: structure ? structure.name : "Sin elegir",
-      completo: Boolean(structureId),
+      resumen:
+        selectedStructureIds.length === 0
+          ? "Sin elegir"
+          : selectedStructureIds.length === 1
+            ? (structures.find((s) => s.id === selectedStructureIds[0])?.name ?? "1 formato")
+            : `${selectedStructureIds.length} formatos (Lote)`,
+      completo: selectedStructureIds.length > 0,
     },
     {
       id: 2,
@@ -315,11 +365,11 @@ export function GeneratorForm({
       descripcion: "Checklist y motor",
       icono: <Bot size={13} />,
       resumen: providersReady[provider] ? "Listo" : "Sin clave",
-      completo: Boolean(structureId && providersReady[provider]),
+      completo: Boolean(selectedStructureIds.length > 0 && providersReady[provider]),
     },
   ];
 
-  const puedeAvanzarPaso1 = Boolean(structureId);
+  const puedeAvanzarPaso1 = selectedStructureIds.length > 0;
   const puedeAvanzarPaso2 = Boolean(producto.trim().length > 0);
   const puedeAvanzarPaso3 = Boolean(peticion.trim().length >= 5);
   const puedeAvanzarPaso4 = Boolean(cta.trim().length > 0);
@@ -358,7 +408,16 @@ export function GeneratorForm({
       {/* ------------------------------------------------- COLUMNA IZQUIERDA */}
       <form action={formAction} className="min-w-0 space-y-4">
         {/* CAMPOS OCULTOS PARA CONSERVAR EL BRIEFING COMPLETO EN TODAS LAS ETAPAS */}
-        <input type="hidden" name="estructura" value={structureId} />
+        <input
+          type="hidden"
+          name="estructura"
+          value={previewStructureId || selectedStructureIds[0] || ""}
+        />
+        <input
+          type="hidden"
+          name="estructuras"
+          value={selectedStructureIds.join(",")}
+        />
         <input type="hidden" name="marca" value={brandId} />
         <input type="hidden" name="arquetipo" value={archetypeId} />
         <input type="hidden" name="producto" value={producto} />
@@ -461,14 +520,21 @@ export function GeneratorForm({
         {currentStep === 1 && (
           <Card>
             <CardHeader
-              title="1 · Elige el tipo de guion (Estructura ganadora)"
-              subtitle="El formato ganador que la IA va a reproducir con contenido nuevo."
+              title="1 · Elige el tipo de guion (Estructuras ganadoras)"
+              subtitle="Selecciona una o varias estructuras para generar versiones de tu idea en paralelo."
               icon={<Layers size={15} />}
               actions={
-                structure ? (
-                  <span className="chip chip-brand font-semibold text-[11px]">
-                    ✓ {structure.name} ({structure.beats.length} beats)
-                  </span>
+                selectedStructureIds.length > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="chip chip-brand font-semibold text-[11px]">
+                      ✓ {selectedStructureIds.length} formato{selectedStructureIds.length > 1 ? "s" : ""}
+                    </span>
+                    {selectedStructureIds.length > 1 ? (
+                      <span className="chip chip-plain text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10">
+                        Lote activo
+                      </span>
+                    ) : null}
+                  </div>
                 ) : null
               }
             />
@@ -520,60 +586,144 @@ export function GeneratorForm({
                 </div>
               </div>
 
-              {/* Grid de Formatos */}
+              {/* Barra de Acciones Rápidas de Selección Múltiple */}
+              <div className="flex items-center justify-between gap-2 pt-1 border-b border-line/60 pb-2 text-[11.5px]">
+                <div className="flex items-center gap-2">
+                  <span className="text-ink font-semibold">
+                    {selectedStructureIds.length} de {structures.length} seleccionados
+                  </span>
+                  {selectedStructureIds.length > 1 && (
+                    <span className="text-inkmuted hidden sm:inline">
+                      · Se generará un guion independiente para cada formato
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={seleccionarTodasFiltradas}
+                    className="btn btn-ghost btn-xs text-[11px]"
+                  >
+                    Seleccionar visibles ({structuresFiltradas.length})
+                  </button>
+                  {selectedStructureIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={deseleccionarTodas}
+                      className="btn btn-ghost btn-xs text-[11px] text-inkmuted hover:text-danger"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Grid de Formatos con Checkboxes Interactivos */}
               <div className="grid gap-2 sm:grid-cols-2 max-h-[380px] overflow-y-auto pr-1 no-scrollbar">
                 {structuresFiltradas.map((s) => {
-                  const activa = s.id === structureId;
+                  const isSelected = selectedStructureIds.includes(s.id);
+                  const isInspecting = previewStructureId === s.id;
                   const ref = getStructureReference(s.name);
 
                   return (
-                    <button
+                    <div
                       key={s.id}
-                      type="button"
-                      onClick={() => elegirEstructura(s)}
+                      onClick={() => toggleEstructura(s)}
                       className={cn(
-                        "card-flat hover:border-linestrong w-full p-3 text-left transition-all relative overflow-hidden",
-                        activa ? "border-brand bg-brandsoft/60 ring-1 ring-brand shadow-sm" : "hover:bg-surface2/60"
+                        "card-flat w-full p-3 text-left transition-all relative overflow-hidden cursor-pointer group",
+                        isSelected
+                          ? "border-brand bg-brandsoft/60 ring-1 ring-brand shadow-sm"
+                          : "hover:border-linestrong hover:bg-surface2/60",
+                        isInspecting && !isSelected && "ring-1 ring-brand/40"
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div
+                            className={cn(
+                              "w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 mt-0.5",
+                              isSelected
+                                ? "bg-brand border-brand text-white"
+                                : "border-line bg-surface text-transparent group-hover:border-brand/60"
+                            )}
+                          >
+                            <Check size={11} className={isSelected ? "stroke-[3]" : "opacity-0"} />
+                          </div>
                           <span className="text-ink text-[13px] leading-snug font-bold truncate">
                             {s.name}
                           </span>
-                          {activa && <CheckCircle2 size={13} className="text-brand shrink-0" />}
                         </div>
-                        <span className="text-inkmuted shrink-0 text-[11px] font-semibold font-mono">
-                          {formatSeconds(s.defaultDurationSec)}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-inkmuted text-[11px] font-semibold font-mono">
+                            {formatSeconds(s.defaultDurationSec)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => seleccionarSoloEsta(s, e)}
+                            className="chip chip-plain hover:chip-brand text-[9.5px] px-1.5 py-0.5 opacity-60 hover:opacity-100 transition-opacity"
+                            title="Seleccionar únicamente este formato"
+                          >
+                            Solo este
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 pl-6">
                         {s.family ? <span className="chip chip-plain text-[10px]">{s.family}</span> : null}
                         <span className="text-inkmuted text-[10.5px]">{s.beats.length} beats</span>
 
                         <span className="chip chip-brand text-[9.5px] font-semibold bg-brand/10 text-brand">
                           {ref.badge}
                         </span>
+                        {isInspecting && (
+                          <span className="text-[9.5px] text-brand font-medium">
+                            · Viendo referencia ↓
+                          </span>
+                        )}
                       </div>
 
                       {s.summary ? (
-                        <p className="text-inkmuted text-[11px] mt-1.5 line-clamp-2 leading-relaxed">
+                        <p className="text-inkmuted text-[11px] mt-1.5 pl-6 line-clamp-2 leading-relaxed">
                           {s.summary}
                         </p>
                       ) : null}
 
                       {s.beats.length ? (
-                        <div className="text-inkmuted mt-1.5 text-[10.5px] truncate font-mono">
+                        <div className="text-inkmuted mt-1.5 pl-6 text-[10.5px] truncate font-mono">
                           {s.beats.map((b) => b.name).join(" → ")}
                         </div>
                       ) : null}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
 
-              {/* Ficha de Referencia Enriquecida del Formato Seleccionado */}
+              {/* Selector de referencia para inspección cuando hay múltiples seleccionados */}
+              {selectedStructureIds.length > 1 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar border-t border-line/50">
+                  <span className="text-[11px] font-bold text-inkmuted shrink-0">Inspeccionar referencia:</span>
+                  {selectedStructureIds.map((id) => {
+                    const est = structures.find((x) => x.id === id);
+                    if (!est) return null;
+                    const inspecting = est.id === previewStructureId;
+                    return (
+                      <button
+                        key={est.id}
+                        type="button"
+                        onClick={() => setPreviewStructureId(est.id)}
+                        className={cn(
+                          "chip text-[10.5px] shrink-0 transition-all",
+                          inspecting ? "chip-brand font-bold" : "chip-plain hover:bg-surface2"
+                        )}
+                      >
+                        {est.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Ficha de Referencia Enriquecida del Formato en Inspección */}
               {structure && (() => {
                 const ref = getStructureReference(structure.name);
                 return (
@@ -619,13 +769,15 @@ export function GeneratorForm({
               {/* Botón de Validación para Continuar al Paso 2 */}
               <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
                 <div className="text-[12px] text-inkmuted">
-                  {structure ? (
+                  {selectedStructureIds.length > 0 ? (
                     <span className="text-ink font-semibold">
-                      ✓ Seleccionado: {structure.name}
+                      ✓ {selectedStructureIds.length === 1
+                        ? `Seleccionado: ${structure?.name}`
+                        : `${selectedStructureIds.length} formatos seleccionados (generación por lote)`}
                     </span>
                   ) : (
                     <span className="text-warn font-medium">
-                      Elige una estructura para poder continuar.
+                      Elige al menos una estructura para poder continuar.
                     </span>
                   )}
                 </div>
@@ -1332,7 +1484,13 @@ export function GeneratorForm({
                   ) : (
                     <Wand2 size={16} />
                   )}
-                  {pending ? "Generando guion con IA…" : "✨ Generar guion con IA"}
+                  {pending
+                    ? selectedStructureIds.length > 1
+                      ? `Generando ${selectedStructureIds.length} guiones con IA…`
+                      : "Generando guion con IA…"
+                    : selectedStructureIds.length > 1
+                      ? `✨ Generar ${selectedStructureIds.length} guiones con IA (Lote)`
+                      : "✨ Generar guion con IA"}
                 </button>
               </div>
             </div>
@@ -1360,6 +1518,40 @@ export function GeneratorForm({
               icon={<Sparkles size={15} />}
             />
             <div className="space-y-3.5 p-4">
+              {selectedStructureIds.length > 1 && (
+                <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-[12px] text-ink space-y-1.5">
+                  <div className="font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                    <Sparkles size={14} />
+                    Lote activo: {selectedStructureIds.length} guiones simultáneos
+                  </div>
+                  <p className="text-inksoft leading-relaxed text-[11.5px]">
+                    Se generará un guion independiente para cada formato elegido, manteniendo el mismo producto, briefing y gatillos de conversión.
+                  </p>
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {selectedStructureIds.map((id) => {
+                      const est = structures.find((x) => x.id === id);
+                      const inspecting = est?.id === previewStructureId;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => est && setPreviewStructureId(est.id)}
+                          className={cn(
+                            "chip text-[10px] transition-all",
+                            inspecting
+                              ? "chip-brand font-bold ring-1 ring-brand"
+                              : "chip-plain hover:bg-surface2"
+                          )}
+                          title="Ver beats de esta estructura en el panel"
+                        >
+                          {est?.name ?? id}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {!structure ? (
                 <div className="text-inkmuted text-[12.5px] leading-relaxed">
                   Elige una estructura para ver exactamente qué contexto se le va a
@@ -1561,10 +1753,14 @@ export function GeneratorForm({
             <Loader2 size={17} className="spin text-brand shrink-0" />
             <div className="text-[12.5px] leading-snug">
               <div className="text-ink font-semibold">
-                Generando el guion con {model || provider} · {segundos}s
+                {selectedStructureIds.length > 1
+                  ? `Generando lote de ${selectedStructureIds.length} guiones con ${model || provider} · ${segundos}s`
+                  : `Generando el guion con ${model || provider} · ${segundos}s`}
               </div>
               <div className="text-inkmuted">
-                Suele tardar entre 30 y 90 segundos. Cuando termine se abre solo.
+                {selectedStructureIds.length > 1
+                  ? "Creando cada formato con su modelo mental y beats. Al terminar se abrirá el primer guion generado."
+                  : "Suele tardar entre 30 y 90 segundos. Cuando termine se abre solo."}
               </div>
             </div>
           </div>
@@ -1576,7 +1772,9 @@ export function GeneratorForm({
           <div className="card fade-in flex items-center gap-3 px-4 py-3 shadow-[var(--shadow-3)]">
             <Check size={16} className="text-ok shrink-0" />
             <span className="text-[12.5px] font-semibold">
-              Guion listo. Abriendo el visualizador…
+              {state.totalGenerados && state.totalGenerados > 1
+                ? `¡${state.totalGenerados} guiones listos! Abriendo el primero…`
+                : "Guion listo. Abriendo el visualizador…"}
             </span>
           </div>
         </div>

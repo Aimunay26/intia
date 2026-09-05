@@ -83,13 +83,15 @@ async function resecuenciar(scriptId: string): Promise<number> {
 
 export type GenerateState = {
   scriptId?: string;
+  scriptIds?: string[];
+  totalGenerados?: number;
   error?: string;
   detail?: string;
 } | null;
 
 /**
  * El corazon del producto: arma el contexto, llama al modelo y guarda
- * el guion con todas sus escenas.
+ * el guion (o lote de guiones) con todas sus escenas.
  */
 export async function generarGuion(
   _prev: GenerateState,
@@ -97,7 +99,16 @@ export async function generarGuion(
 ): Promise<GenerateState> {
   const user = await requireLevel(LEVEL.MEMBER);
 
-  const structureId = field(formData, "estructura");
+  const rawEstructuras = field(formData, "estructuras") || field(formData, "estructura");
+  const structureIds = Array.from(
+    new Set(
+      (rawEstructuras || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    )
+  );
+
   const brandId = fieldOrNull(formData, "marca");
   const archetypeId = fieldOrNull(formData, "arquetipo");
   const request = field(formData, "peticion");
@@ -119,8 +130,8 @@ export async function generarGuion(
   const ctaActionType = field(formData, "ctaAccion");
   const ctaDetail = field(formData, "ctaDetalle");
 
-  if (!structureId) {
-    return { error: "Elige una estructura antes de generar." };
+  if (!structureIds.length) {
+    return { error: "Elige al menos una estructura antes de generar." };
   }
   if (!request) {
     return {
@@ -129,153 +140,168 @@ export async function generarGuion(
     };
   }
 
-  const structure = await prisma.structure.findUnique({
-    where: { id: structureId },
-    select: { id: true, name: true, defaultDurationSec: true },
-  });
-  if (!structure) {
-    return { error: "Esa estructura ya no existe. Recarga la página y elige otra." };
-  }
+  const createdScriptIds: string[] = [];
+  let primerError: { error: string; detail?: string } | null = null;
 
-  let result;
-  try {
-    result = await generateScript({
-      structureId,
-      brandId,
-      archetypeId,
-      request,
-      productFocus: productFocus || undefined,
-      variantHint: variantHint || undefined,
-      durationSec: durationSec > 0 ? durationSec : undefined,
-      provider,
-      model: model || undefined,
-      cta: cta || undefined,
-      creativeAngle: creativeAngle || undefined,
-      ctaTrigger: ctaTrigger || undefined,
-      ctaActionType: ctaActionType || undefined,
-      ctaDetail: ctaDetail || undefined,
+  for (const structureId of structureIds) {
+    const structure = await prisma.structure.findUnique({
+      where: { id: structureId },
+      select: { id: true, name: true, defaultDurationSec: true },
     });
-  } catch (error) {
-    if (error instanceof AiError) {
-      return { error: error.message, detail: error.detail };
+    if (!structure) continue;
+
+    let result;
+    try {
+      result = await generateScript({
+        structureId,
+        brandId,
+        archetypeId,
+        request,
+        productFocus: productFocus || undefined,
+        variantHint: variantHint || undefined,
+        durationSec: durationSec > 0 ? durationSec : undefined,
+        provider,
+        model: model || undefined,
+        cta: cta || undefined,
+        creativeAngle: creativeAngle || undefined,
+        ctaTrigger: ctaTrigger || undefined,
+        ctaActionType: ctaActionType || undefined,
+        ctaDetail: ctaDetail || undefined,
+      });
+    } catch (error) {
+      if (!primerError) {
+        if (error instanceof AiError) {
+          primerError = { error: error.message, detail: error.detail };
+        } else {
+          primerError = {
+            error: `No se pudo generar el formato «${structure.name}».`,
+            detail: error instanceof Error ? error.message : String(error),
+          };
+        }
+      }
+      continue;
     }
-    return {
-      error: "No se pudo generar el guion.",
-      detail: error instanceof Error ? error.message : String(error),
-    };
-  }
 
-  const generated = result.script;
-  const scenes = Array.isArray(generated.scenes) ? generated.scenes : [];
+    const generated = result.script;
+    const scenes = Array.isArray(generated.scenes) ? generated.scenes : [];
+    if (!scenes.length) continue;
 
-  if (!scenes.length) {
-    return {
-      error: "El modelo devolvió un guion sin escenas.",
-      detail: "Vuelve a intentar, o prueba con otro modelo o proveedor.",
-    };
-  }
+    const times = normalizeSceneTimes(
+      scenes.map((scene) => ({
+        startSec: Number.isFinite(scene.startSec) ? scene.startSec : 0,
+        endSec: Number.isFinite(scene.endSec) ? scene.endSec : 0,
+      }))
+    );
+    const totalSeconds = times.length ? times[times.length - 1].endSec : 0;
 
-  const times = normalizeSceneTimes(
-    scenes.map((scene) => ({
-      startSec: Number.isFinite(scene.startSec) ? scene.startSec : 0,
-      endSec: Number.isFinite(scene.endSec) ? scene.endSec : 0,
-    }))
-  );
-  const totalSeconds = times.length ? times[times.length - 1].endSec : 0;
+    const objetivo = durationSec > 0 ? durationSec : structure.defaultDurationSec;
+    const briefInput = [
+      productFocus ? `Producto o servicio: ${productFocus}` : "",
+      request ? `Petición del equipo:\n${request}` : "",
+      creativeAngle ? `Ángulo creativo: ${creativeAngle}` : "",
+      variantHint ? `Variante pedida: ${variantHint}` : "",
+      ctaTrigger ? `Gatillo CTA (Hormozi): ${ctaTrigger}` : "",
+      ctaActionType ? `Acción de CTA: ${ctaActionType}` : "",
+      ctaDetail ? `Detalle CTA: ${ctaDetail}` : "",
+      cta ? `CTA solicitado: ${cta}` : "",
+      `Duración objetivo: ${objetivo} segundos`,
+      result.referencesUsed.length
+        ? `Documentos inyectados:\n${result.referencesUsed.map((r) => `· ${r}`).join("\n")}`
+        : "Sin documentos de referencia cargados.",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
 
-  const objetivo = durationSec > 0 ? durationSec : structure.defaultDurationSec;
-  const briefInput = [
-    productFocus ? `Producto o servicio: ${productFocus}` : "",
-    request ? `Petición del equipo:\n${request}` : "",
-    creativeAngle ? `Ángulo creativo: ${creativeAngle}` : "",
-    variantHint ? `Variante pedida: ${variantHint}` : "",
-    ctaTrigger ? `Gatillo CTA (Hormozi): ${ctaTrigger}` : "",
-    ctaActionType ? `Acción de CTA: ${ctaActionType}` : "",
-    ctaDetail ? `Detalle CTA: ${ctaDetail}` : "",
-    cta ? `CTA solicitado: ${cta}` : "",
-    `Duración objetivo: ${objetivo} segundos`,
-    result.referencesUsed.length
-      ? `Documentos inyectados:\n${result.referencesUsed.map((r) => `· ${r}`).join("\n")}`
-      : "Sin documentos de referencia cargados.",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-
-  const script = await prisma.script.create({
-    data: {
-      title: generated.title?.trim() || "Guion sin título",
-      brandId,
-      structureId,
-      archetypeId,
-      avatar: generated.avatar?.trim() || null,
-      focus: generated.focus?.trim() || null,
-      hook: generated.hook?.trim() || null,
-      cta: generated.cta?.trim() || cta?.trim() || null,
-      totalSeconds,
-      status: "BORRADOR",
-      notes: generated.castNotes?.trim() || null,
-      provider: result.provider,
-      model: result.model,
-      promptUsed: result.systemPrompt,
-      rawResponse: result.raw,
-      briefInput,
-      generatedAt: new Date(),
-      authorId: user.id,
-      scenes: {
-        create: scenes.map((scene, i) => ({
-          order: i,
-          beat: scene.beat?.trim() || `Escena ${i + 1}`,
-          startSec: times[i]?.startSec ?? 0,
-          endSec: times[i]?.endSec ?? 0,
-          voice: scene.voice?.trim() || null,
-          voiceType: VOICE_TYPE_MAP[scene.voiceType] ? scene.voiceType : "EN_CAMARA",
-          shot: scene.shot?.trim() || null,
-          action: scene.action?.trim() || null,
-          actors: JSON.stringify(
-            (Array.isArray(scene.actors) ? scene.actors : []).map((actor) => ({
-              role: actor.role ?? "",
-              archetype: actor.archetype ?? "",
-              notes: actor.notes ?? "",
-            }))
-          ),
-          emotion: scene.emotion?.trim() || null,
-          props: JSON.stringify(
-            (Array.isArray(scene.props) ? scene.props : [])
-              .map((p) => String(p).trim())
-              .filter(Boolean)
-          ),
-          lighting: scene.lighting?.trim() || null,
-          sound: scene.sound?.trim() || null,
-          onScreenText: scene.onScreenText?.trim() || null,
-          location: scene.location?.trim() || null,
-          notes: scene.notes?.trim() || null,
-        })),
+    const script = await prisma.script.create({
+      data: {
+        title: generated.title?.trim() || `Guion ${structure.name}`,
+        brandId,
+        structureId,
+        archetypeId,
+        avatar: generated.avatar?.trim() || null,
+        focus: generated.focus?.trim() || null,
+        hook: generated.hook?.trim() || null,
+        cta: generated.cta?.trim() || cta?.trim() || null,
+        totalSeconds,
+        status: "BORRADOR",
+        notes: generated.castNotes?.trim() || null,
+        provider: result.provider,
+        model: result.model,
+        promptUsed: result.systemPrompt,
+        rawResponse: result.raw,
+        briefInput,
+        generatedAt: new Date(),
+        authorId: user.id,
+        scenes: {
+          create: scenes.map((scene, i) => ({
+            order: i,
+            beat: scene.beat?.trim() || `Escena ${i + 1}`,
+            startSec: times[i]?.startSec ?? 0,
+            endSec: times[i]?.endSec ?? 0,
+            voice: scene.voice?.trim() || null,
+            voiceType: VOICE_TYPE_MAP[scene.voiceType] ? scene.voiceType : "EN_CAMARA",
+            shot: scene.shot?.trim() || null,
+            action: scene.action?.trim() || null,
+            actors: JSON.stringify(
+              (Array.isArray(scene.actors) ? scene.actors : []).map((actor) => ({
+                role: actor.role ?? "",
+                archetype: actor.archetype ?? "",
+                notes: actor.notes ?? "",
+              }))
+            ),
+            emotion: scene.emotion?.trim() || null,
+            props: JSON.stringify(
+              (Array.isArray(scene.props) ? scene.props : [])
+                .map((p) => String(p).trim())
+                .filter(Boolean)
+            ),
+            lighting: scene.lighting?.trim() || null,
+            sound: scene.sound?.trim() || null,
+            onScreenText: scene.onScreenText?.trim() || null,
+            location: scene.location?.trim() || null,
+            notes: scene.notes?.trim() || null,
+          })),
+        },
       },
-    },
-    select: { id: true, title: true, brandId: true },
-  });
+      select: { id: true, title: true, brandId: true },
+    });
 
-  await logAudit({
-    user,
-    action: "GENERAR",
-    entity: "Script",
-    entityId: script.id,
-    brandId: script.brandId,
-    summary: `Generó el guion "${script.title}" con ${nombreModelo(
-      result.provider,
-      result.model
-    )} usando la estructura "${structure.name}"`,
-    // Es una creación, no una edición: el "antes" es que no existía.
-    changes: {
-      escenas: { etiqueta: "Escenas", antes: 0, despues: scenes.length },
-      totalSeconds: { etiqueta: "Duración", antes: 0, despues: `${totalSeconds} s` },
-    },
-  });
+    await logAudit({
+      user,
+      action: "GENERAR",
+      entity: "Script",
+      entityId: script.id,
+      brandId: script.brandId,
+      summary: `Generó el guion "${script.title}" con ${nombreModelo(
+        result.provider,
+        result.model
+      )} usando la estructura "${structure.name}"`,
+      changes: {
+        escenas: { etiqueta: "Escenas", antes: 0, despues: scenes.length },
+        totalSeconds: { etiqueta: "Duración", antes: 0, despues: `${totalSeconds} s` },
+      },
+    });
 
-  refrescar(script.id);
+    createdScriptIds.push(script.id);
+  }
+
+  if (!createdScriptIds.length) {
+    return (
+      primerError || {
+        error: "No se pudo generar ningún guion.",
+        detail: "Vuelve a intentar con otro modelo o revisa tu clave de API.",
+      }
+    );
+  }
+
+  refrescar(createdScriptIds[0]);
   revalidatePath("/");
 
-  return { scriptId: script.id };
+  return {
+    scriptId: createdScriptIds[0],
+    scriptIds: createdScriptIds,
+    totalGenerados: createdScriptIds.length,
+  };
 }
 
 /* ------------------------------------------------------------- ACTUALIZAR -- */

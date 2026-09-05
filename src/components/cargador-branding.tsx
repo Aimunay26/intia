@@ -318,12 +318,16 @@ export function BotonCargarBranding({
   className = "btn btn-sm",
   label = "Cargar branding desde PDF",
   onSuccess,
+  dataGuia,
+  ...props
 }: {
   brandId?: string;
   archetypeId?: string;
   className?: string;
   label?: string;
   onSuccess?: (result: ProcessBrandingResult) => void;
+  dataGuia?: string;
+  "data-guia"?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -331,6 +335,7 @@ export function BotonCargarBranding({
     <>
       <button
         type="button"
+        data-guia={dataGuia ?? props["data-guia"]}
         onClick={() => setOpen(true)}
         className={cn("inline-flex items-center gap-1.5", className)}
         title="Subir informe de branding en PDF para autocompletar"

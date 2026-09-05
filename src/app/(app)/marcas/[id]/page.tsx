@@ -260,6 +260,7 @@ export default async function MarcaPage({
                 brandId={brand.id}
                 className="btn btn-primary btn-sm"
                 label="Cargar PDF branding"
+                data-guia={GUIA_TARGETS.BTN_CARGAR_BRANDING_PDF}
               />
             ) : null}
             {puedeGestionar ? (

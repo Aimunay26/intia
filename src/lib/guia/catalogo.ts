@@ -18,15 +18,14 @@ export const GUIA_TARGETS = {
   NAV_AJUSTES: "nav-ajustes",
   NAV_TUTORIAL: "nav-tutorial",
 
-  // --- MÓDULO 1: Primera Marca (/marcas) ---
+  // --- MÓDULO 1: Primera Marca y Branding (/marcas / /marcas/[id]) ---
   BTN_NUEVA_MARCA_HEADER: "btn-nueva-marca-header",
   BTN_NUEVA_MARCA_EMPTY: "btn-nueva-marca-empty",
   INPUT_MARCA_NOMBRE: "input-marca-nombre",
   INPUT_MARCA_LEMA: "input-marca-lema",
   BTN_SUBMIT_MARCA: "btn-submit-marca",
   MARCA_PRIMERA_CARD: "marca-primera-card",
-
-  // --- MÓDULO 2: ADN y Branding (/marcas/[id]) ---
+  BTN_CARGAR_BRANDING_PDF: "btn-cargar-branding-pdf",
   MARCA_TAB_IDENTIDAD: "marca-tab-identidad",
   INPUT_MARCA_TONO: "input-marca-tono",
   INPUT_MARCA_PUBLICO: "input-marca-publico",

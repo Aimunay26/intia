@@ -7,7 +7,7 @@ import { LoaderCircle } from "lucide-react";
 export function NavigationPending() {
   const { pending } = useLinkStatus();
   return (
-    <span className="ml-auto flex w-3.5 shrink-0 items-center" role="status" aria-live="polite">
+    <span className="ml-auto flex w-3.5 shrink-0 items-center" role="status" aria-live="polite" data-navigation-pending={pending}>
       {pending ? (
         <>
           <LoaderCircle size={14} className="spin navigation-spinner" aria-hidden="true" />

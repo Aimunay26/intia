@@ -1,3 +1,4 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser } from "@/lib/render-context";
 import Link from "next/link";
 import {
@@ -51,6 +52,7 @@ export default async function EstructurasPage({
 }: {
   searchParams: Promise<{ q?: string; categoria?: string; aviso?: string; guiones?: string }>;
 }) {
+  return measurePagePhase("page:/estructuras", async () => {
   const user = await requireUser();
   const sp = await searchParams;
   const puedeEditar = can(user.role, LEVEL.MEMBER);
@@ -267,6 +269,8 @@ export default async function EstructurasPage({
       )}
     </>
   );
+
+  });
 }
 
 /* ---------------------------------------------------------------- TARJETA -- */

@@ -19,7 +19,10 @@
     "use:postgres": "node scripts/switch-db.mjs postgresql",
     "use:sqlite": "node scripts/switch-db.mjs sqlite",
     "test:humo": "node scripts/smoke-test.mjs",
-    "test:navegacion": "node --disable-warning=ExperimentalWarning --test tests/navigation.test.mjs",
+    "test:navegacion": "node --disable-warning=ExperimentalWarning --test tests/navigation.test.mjs tests/performance.test.mjs",
+    "test:navegacion:postgres": "node --test tests/postgres-navigation.test.mjs",
+    "perf:resumen": "node scripts/summarize-navigation.mjs",
+    "perf:db": "tsx scripts/diagnose-database.ts",
     "postinstall": "prisma generate",
     "guardia": "node scripts/proteger-produccion.mjs"
   },

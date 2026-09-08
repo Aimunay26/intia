@@ -31,7 +31,7 @@ export default function ErrorDeLaApp({
       : "Algo falló al cargar esta pantalla.";
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center px-4">
+    <div className="flex min-h-[60vh] items-center justify-center px-4" data-navigation-error>
       <div className="card max-w-[440px] p-6 text-center">
         <span
           className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl"

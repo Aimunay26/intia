@@ -1,3 +1,5 @@
+import { getStructureChoices } from "@/lib/structure-choices";
+import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import { loadPage } from "@/lib/list-pagination";
@@ -29,6 +31,7 @@ export default async function GuionesPage({
     proveedor?: string;
   }>;
 }) {
+  return measurePagePhase("page:/guiones", async () => {
   const user = await requireUser();
   const sp = await searchParams;
 
@@ -76,10 +79,7 @@ export default async function GuionesPage({
         _count: { select: { scenes: true, content: true } },
       },
     })),
-    prisma.structure.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
+    getStructureChoices(true),
   ]);
 
   const { items: scripts, total, page, pageCount } = listing;
@@ -280,4 +280,6 @@ export default async function GuionesPage({
       <Pagination page={page} pageCount={pageCount} total={total} />
     </>
   );
+
+  });
 }

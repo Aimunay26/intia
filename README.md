@@ -5,8 +5,9 @@ su identidad y sus objetivos, checklist por video, asignación de quién actuó 
 métricas, log de auditoría, y un generador de guiones con IA afinado por formato y por la
 marca personal de quien actúa.
 
-Funciona con base de datos real. En local usa SQLite (un archivo, cero configuración) y
-para publicarlo en internet se cambia a PostgreSQL con un comando.
+Funciona con PostgreSQL tanto en desarrollo como en producción. La instalación publicada
+usa Neon en Vercel. Las consultas analíticas y la paginación requieren PostgreSQL;
+el antiguo modo SQLite ya no es compatible.
 
 **Índice**
 
@@ -34,7 +35,8 @@ Abre http://localhost:3000
 > Si `npm` sigue sin reconocerse, cierra sesión de Windows y vuelve a entrar, o usa la ruta
 > completa: `& "C:\Program Files\nodejs\npm.cmd" run dev`
 
-Si es la primera vez, o si borraste la base de datos:
+En una instalación nueva, copia `.env.example` a `.env` y configura `DATABASE_URL`
+para una base PostgreSQL de desarrollo vacía. Después:
 
 ```bash
 npm run setup
@@ -332,22 +334,22 @@ desplegada sin tablas.
 **1. Crea la base de datos** en Neon, Supabase o quien prefieras, y copia su cadena de
 conexión.
 
-**2. Cambia el motor del esquema a PostgreSQL:**
+**2. Verifica que el motor del esquema sea PostgreSQL** (ya es el valor del repositorio):
 
 ```bash
 npm run use:postgres
 ```
 
-**3. Confirma ese cambio en Git.** Este comando **edita `prisma/schema.prisma`**. Si subes el
-proyecto sin confirmarlo, Vercel construye contra SQLite y la aplicación arranca sin poder
-leer nada.
+**3. Revisa y confirma cualquier cambio de esquema en Git.** No cambies de motor entre
+desarrollo y producción.
 
 ```bash
 git add prisma/schema.prisma && git commit -m "Cambia el motor a PostgreSQL"
 ```
 
-**4. Crea las tablas** en la base nueva. Pon primero su cadena en `DATABASE_URL` dentro de
-`.env`:
+**4. Crea las tablas** solo en una base nueva y vacía. Pon primero su cadena en `DATABASE_URL`
+dentro de `.env`. Para una base existente, revisa y aplica operaciones SQL específicas;
+no uses `db push` como procedimiento de actualización de producción.
 
 ```bash
 npx prisma db push
@@ -371,7 +373,8 @@ entrada con Gmail, `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`.
 npm run db:seed
 ```
 
-Para volver a SQLite en local: `npm run use:sqlite` (y vuelve a confirmarlo si lo subes).
+Para desarrollo usa otra base PostgreSQL; `npm run use:sqlite` termina con un mensaje
+explicativo y conserva el esquema actual.
 
 ### Dos límites de Vercel que conviene conocer
 
@@ -459,7 +462,7 @@ Dos cosas que conviene saber:
 | `npm run db:reset` | **Borra todo** y vuelve a sembrar |
 | `npm run db:studio` | Abre Prisma Studio para ver la base de datos |
 | `npm run use:postgres` | Cambia el esquema a PostgreSQL |
-| `npm run use:sqlite` | Vuelve a SQLite |
+| `npm run use:sqlite` | Informa que SQLite ya no es compatible; no modifica el esquema |
 | `npm run db:personas` | Carga o actualiza a las personas del equipo desde su informe |
 | `npm run ver:prompt -- eru` | Imprime el prompt exacto que se le manda a la IA por esa persona |
 | `npm run test:motores` | Calibra el motor de match contra la matriz de compatibilidad |
@@ -507,8 +510,8 @@ CONTRACT.md              Reglas internas de desarrollo
 
 Dos detalles del código que conviene saber si vas a tocarlo:
 
-- **Los campos JSON se guardan como texto.** El esquema funciona igual en SQLite y en
-  PostgreSQL, y para eso no usa enums ni listas. Las redes de un video, los beats de una
+- **Los campos JSON se guardan como texto.** Se conserva el modelo heredado sin enums ni
+  listas escalares en PostgreSQL. Las redes de un video, los beats de una
   estructura o las fortalezas de un arquetipo son `String` con JSON dentro, y se leen siempre
   con los ayudantes de `lib/utils.ts`, nunca con `JSON.parse` a pelo.
 - **La hora de las reuniones se fija en `America/Lima`**, no en la del servidor. Está en
@@ -519,6 +522,8 @@ Dos detalles del código que conviene saber si vas a tocarlo:
 
 ## Evaluaciones técnicas
 
+- [Implementación O01–O07](reports/implementacion-o01-o07-2026-09-08.md): estado actual, pruebas con PostgreSQL, diagnóstico de Vercel/Neon y procedimiento de medición.
+- [Diagnóstico directo de Neon/Vercel](reports/diagnostico-neon-2026-09-08.md): región, pooling, suspensión, volumen e índices contrastados en producción mediante consultas de solo lectura.
 - [Mejoras de navegación implementadas](reports/mejoras-navegacion-implementadas-2026-09-08.md): cambios locales, pruebas y pendientes de despliegue. Regresiones: `npm run test:navegacion` (Node 24).
 
 - [Auditoría de arquitectura, backend, DB y multitenancy](reports/auditoria-arquitectura-multitenant-2026-09-07.md): hallazgos con evidencia, reproducciones y plan de evolución.
@@ -534,7 +539,7 @@ La auditoría y el plan describen la copia revisada el 7 de septiembre de 2026; 
 - [ ] Pon las claves de IA como variables de entorno, no en la base de datos.
 - [ ] Revisa quién tiene la posición de **Dueño**: es la única que puede eliminar.
 - [ ] Cambia la dirección del calendario si la compartiste durante las pruebas.
-- [ ] Cambia a PostgreSQL: SQLite es un archivo local y no sirve para varios usuarios a la vez.
+- [ ] Verifica PostgreSQL y los respaldos del proveedor antes de usar datos reales.
 
 ## Lo que NO hace todavía
 
@@ -544,8 +549,8 @@ Para que no haya sorpresas:
   no vuelve. La sincronización en los dos sentidos es otro trabajo.
 - **No hay recuperación de contraseña.** Si alguien la olvida, se la cambia el dueño desde
   **Equipo**.
-- **No hay copias de seguridad automáticas.** En SQLite, la base entera es el archivo
-  `prisma/dev.db`: cópialo. En PostgreSQL, depende de lo que ofrezca tu proveedor.
+- **La aplicación no gestiona copias de seguridad automáticas.** La retención y restauración
+  de PostgreSQL dependen del proveedor y deben verificarse en su panel.
 - **Eliminar una marca elimina en cascada** todos sus videos, guiones, métricas y checklists.
   Por eso solo puede hacerlo el dueño. Si dudas, usa **Archivar**.
 - **Las métricas se cargan a mano** o pegando un CSV. No hay conexión automática con TikTok,

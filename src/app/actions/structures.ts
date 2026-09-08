@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
+import { invalidateStructureCatalog } from "@/lib/catalog-cache";
 import { borrarAssetsDe } from "@/lib/assets-cleanup";
 import { requireLevel, LEVEL } from "@/lib/auth";
 import { logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
@@ -62,6 +63,7 @@ async function uniqueSlug(base: string, ignoreId?: string) {
 }
 
 function revalidateStructure(id?: string) {
+  invalidateStructureCatalog();
   revalidatePath("/estructuras");
   if (id) revalidatePath(`/estructuras/${id}`);
   revalidatePath("/generador");

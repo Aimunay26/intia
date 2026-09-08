@@ -8,7 +8,7 @@ export function PageLoading({
   variant?: "table" | "cards" | "calendar" | "board";
 }) {
   return (
-    <section aria-busy="true" aria-label={title}>
+    <section aria-busy="true" aria-label={title} data-page-loading>
       <PageHeader title={title} subtitle="Cargando datos…" />
       <p className="sr-only" role="status">Cargando sección…</p>
       <div aria-hidden="true" className="space-y-4">

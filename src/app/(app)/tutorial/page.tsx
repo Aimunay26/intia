@@ -1,3 +1,4 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser } from "@/lib/render-context";
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -125,6 +126,7 @@ function Rol({
 /* ------------------------------------------------------------ PANTALLA -- */
 
 export default async function TutorialPage() {
+  return measurePagePhase("page:/tutorial", async () => {
   await requireUser();
 
   // El tutorial mira la base para saber en qué paso estás de verdad.
@@ -507,4 +509,6 @@ export default async function TutorialPage() {
       </div>
     </>
   );
+
+  });
 }

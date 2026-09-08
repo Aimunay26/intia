@@ -15,6 +15,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       orgName={orgName || "Mi agencia"}
       brands={brandCtx.brands}
       activeBrandId={brandCtx.activeId}
+      performanceEnabled={process.env.PERFORMANCE_LOGS === "1"}
+      release={process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ?? "local"}
       user={{
         id: user.id,
         name: user.name,

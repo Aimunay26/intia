@@ -1,3 +1,7 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
+import { cache, Suspense } from "react";
+import { SectionLoading } from "@/components/section-loading";
+import { measurePhase } from "@/lib/performance";
 import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
@@ -82,7 +86,7 @@ function etiquetaPlazo(dias: number) {
   return `En ${dias} días`;
 }
 
-export default async function PanelGeneral() {
+const getPanelContext = cache(async () => {
   const user = await requireUser();
   const brandCtx = await getBrandContext();
   const soloMarca = brandWhere(brandCtx.activeId);
@@ -113,149 +117,21 @@ export default async function PanelGeneral() {
     status: { notIn: CERRADOS },
   };
 
-  const [
-    publicados,
-    enProduccion,
-    atrasados,
-    vistasMes,
-    pendientes,
-    objetivos,
-    porEstado,
-    actividad,
-    marcas,
-    videosPorMarca,
-    publicadosPorMarca,
-    guionesPorMarca,
-  ] = await Promise.all([
-    prisma.contentItem.count({ where: publicadoEsteMes }),
-    prisma.contentItem.count({ where: { ...soloMarca, status: { in: ACTIVE_STATUSES } } }),
-    prisma.contentItem.count({ where: atrasadosWhere }),
-    prisma.metric.aggregate({
-      _sum: { views: true },
-      where: {
-        date: { gte: inicioMes, lte: finMes },
-        ...(brandCtx.activeId ? { contentItem: { brandId: brandCtx.activeId } } : {}),
-      },
-    }),
-    prisma.contentItem.findMany({
-      where: {
-        ...soloMarca,
-        status: { notIn: CERRADOS },
-        scheduledDate: { lte: limite7 },
-      },
-      orderBy: [{ scheduledDate: "asc" }, { title: "asc" }],
-      take: 14,
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        platforms: true,
-        scheduledDate: true,
-        brand: { select: { id: true, name: true, colorPrimary: true } },
-        assignments: {
-          select: { role: true, user: { select: { name: true, color: true } } },
-        },
-        checklist: { select: { done: true } },
-      },
-    }),
-    prisma.brandObjective.findMany({
-      where: { ...soloMarca, status: { in: ["EN_CURSO", "EN_RIESGO"] } },
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        unit: true,
-        currentValue: true,
-        targetValue: true,
-        baselineValue: true,
-        higherIsBetter: true,
-        status: true,
-        deadline: true,
-        brand: { select: { id: true, name: true, colorPrimary: true } },
-      },
-    }),
-    prisma.contentItem.groupBy({ by: ["status"], _count: { _all: true }, where: soloMarca }),
-    prisma.auditLog.findMany({
-      where: brandCtx.activeId ? { brandId: brandCtx.activeId } : {},
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: {
-        id: true,
-        summary: true,
-        createdAt: true,
-        userName: true,
-        user: { select: { name: true, color: true } },
-      },
-    }),
-    prisma.brand.findMany({
-      where: {
-        active: true,
-        archived: false,
-        ...(brandCtx.activeId ? { id: brandCtx.activeId } : {}),
-      },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, tagline: true, colorPrimary: true },
-    }),
-    prisma.contentItem.groupBy({
-      by: ["brandId"],
-      _count: { _all: true },
-      where: { ...soloMarca, scheduledDate: { gte: inicioMes, lte: finMes } },
-    }),
-    prisma.contentItem.groupBy({
-      by: ["brandId"],
-      _count: { _all: true },
-      where: publicadoEsteMes,
-    }),
-    prisma.script.groupBy({ by: ["brandId"], _count: { _all: true }, where: soloMarca }),
-  ]);
 
-  const vistas = vistasMes._sum.views ?? 0;
+  return { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere };
+});
 
-  const conteoEstado = new Map<string, number>(
-    porEstado.map((r) => [r.status, r._count._all] as const)
-  );
-  const embudo = CONTENT_STATUSES.map((estado) => ({
-    label: estado.label,
-    value: conteoEstado.get(estado.value) ?? 0,
-    color: estado.hex,
-  }));
-
-  const videosMarca = new Map<string, number>(
-    videosPorMarca.map((r) => [r.brandId, r._count._all] as const)
-  );
-  const publicadosMarca = new Map<string, number>(
-    publicadosPorMarca.map((r) => [r.brandId, r._count._all] as const)
-  );
-  const guionesMarca = new Map<string, number>(
-    guionesPorMarca
-      .filter((r): r is typeof r & { brandId: string } => r.brandId !== null)
-      .map((r) => [r.brandId, r._count._all] as const)
-  );
-
-  // Objetivos ordenados por avance, separados en tres bandas de lectura.
-  const objetivosConAvance = objetivos
-    .map((o) => ({
-      ...o,
-      avance: objectiveProgress(
-        o.currentValue,
-        o.targetValue,
-        o.baselineValue,
-        o.higherIsBetter
-      ),
-    }))
-    .sort((a, b) => b.avance - a.avance);
-
-  const logrando = objetivosConAvance.filter((o) => o.avance >= 80);
-  const enCamino = objetivosConAvance.filter((o) => o.avance >= 50 && o.avance < 80);
-  const fallando = objetivosConAvance.filter((o) => o.avance < 50);
-
+export default async function PanelGeneral() {
+  return measurePagePhase("page:/", async () => {
+  const { user, ahora, brandCtx } = await getPanelContext();
+  const scope = brandCtx.activeId ?? "all";
   const nombreCorto = user.name.trim().split(/\s+/)[0] ?? user.name;
   const fechaLarga = formatDateLong(ahora);
   const fechaTitulo = fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1);
 
-  return (
-    <>
-      <PageHeader
+
+  return <>
+    <PageHeader
         title={`Hola, ${nombreCorto}`}
         subtitle={fechaTitulo}
         icon={<Sparkles size={19} />}
@@ -270,9 +146,33 @@ export default async function PanelGeneral() {
           </>
         }
       />
+    <Suspense key={scope + "stats"} fallback={<SectionLoading label="indicadores" />}><PanelStats /></Suspense>
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="min-w-0 space-y-5"><Suspense key={scope + "pending"} fallback={<SectionLoading label="pendientes" />}><PanelPending /></Suspense><Suspense key={scope + "objectives"} fallback={<SectionLoading label="objetivos" />}><PanelObjectives /></Suspense></div>
+      <div className="min-w-0 space-y-5"><Suspense key={scope + "funnel"} fallback={<SectionLoading label="producción" />}><PanelFunnel /></Suspense><Suspense key={scope + "activity"} fallback={<SectionLoading label="actividad" />}><PanelActivity /></Suspense></div>
+    </div>
+    <Suspense key={scope + "brands"} fallback={<SectionLoading label="marcas" />}><PanelBrands /></Suspense>
+  </>;
 
-      {/* ------------------------------------------------------------ CIFRAS */}
-      <div className="mb-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+  });
+}
+
+async function PanelStats() {
+  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const [publicados, enProduccion, atrasados, vistasMes] = await measurePhase("panel.stats", () => Promise.all([
+    prisma.contentItem.count({ where: publicadoEsteMes }),
+    prisma.contentItem.count({ where: { ...soloMarca, status: { in: ACTIVE_STATUSES } } }),
+    prisma.contentItem.count({ where: atrasadosWhere }),
+    prisma.metric.aggregate({
+      _sum: { views: true },
+      where: {
+        date: { gte: inicioMes, lte: finMes },
+        ...(brandCtx.activeId ? { contentItem: { brandId: brandCtx.activeId } } : {}),
+      },
+    })
+  ]));
+  const vistas = vistasMes._sum.views ?? 0;
+  return <section data-ready-block="panel.stats"><div className="mb-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="Publicados este mes"
           value={formatNumber(publicados)}
@@ -305,13 +205,36 @@ export default async function PanelGeneral() {
           accent="#0ea5e9"
           href={`/metricas?desde=${dateKey(inicioMes)}&hasta=${dateKey(finMes)}`}
         />
-      </div>
+      </div></section>;
+}
 
-      {/* ------------------------------------------ PRINCIPAL + PANEL LATERAL */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="min-w-0 space-y-5">
-          {/* ------------------------------------------ QUE FALTA POR HACER */}
-          <Card>
+async function PanelPending() {
+  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const [pendientes] = await measurePhase("panel.pending", () => Promise.all([
+    prisma.contentItem.findMany({
+      where: {
+        ...soloMarca,
+        status: { notIn: CERRADOS },
+        scheduledDate: { lte: limite7 },
+      },
+      orderBy: [{ scheduledDate: "asc" }, { title: "asc" }],
+      take: 14,
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        platforms: true,
+        scheduledDate: true,
+        brand: { select: { id: true, name: true, colorPrimary: true } },
+        assignments: {
+          select: { role: true, user: { select: { name: true, color: true } } },
+        },
+        checklist: { select: { done: true } },
+      },
+    })
+  ]));
+
+  return <section data-ready-block="panel.pending"><Card>
             <CardHeader
               title="Qué falta por hacer"
               subtitle="Atrasados y lo que vence en los próximos 7 días"
@@ -437,10 +360,47 @@ export default async function PanelGeneral() {
                 </table>
               </div>
             )}
-          </Card>
+          </Card></section>;
+}
 
-          {/* ------------------------------------------ OBJETIVOS DE MARCAS */}
-          <Card>
+async function PanelObjectives() {
+  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const [objetivos] = await measurePhase("panel.objectives", () => Promise.all([
+    prisma.brandObjective.findMany({
+      where: { ...soloMarca, status: { in: ["EN_CURSO", "EN_RIESGO"] } },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        unit: true,
+        currentValue: true,
+        targetValue: true,
+        baselineValue: true,
+        higherIsBetter: true,
+        status: true,
+        deadline: true,
+        brand: { select: { id: true, name: true, colorPrimary: true } },
+      },
+    })
+  ]));
+  const objetivosConAvance = objetivos
+    .map((o) => ({
+      ...o,
+      avance: objectiveProgress(
+        o.currentValue,
+        o.targetValue,
+        o.baselineValue,
+        o.higherIsBetter
+      ),
+    }))
+    .sort((a, b) => b.avance - a.avance);
+
+  const logrando = objetivosConAvance.filter((o) => o.avance >= 80);
+  const enCamino = objetivosConAvance.filter((o) => o.avance >= 50 && o.avance < 80);
+  const fallando = objetivosConAvance.filter((o) => o.avance < 50);
+
+
+  return <section data-ready-block="panel.objectives"><Card>
             <CardHeader
               title="Objetivos de las marcas"
               subtitle="Lo que cada marca prometió mover este período"
@@ -479,12 +439,25 @@ export default async function PanelGeneral() {
                 />
               </div>
             )}
-          </Card>
-        </div>
+          </Card></section>;
+}
 
-        {/* ---------------------------------------------------- PANEL LATERAL */}
-        <div className="min-w-0 space-y-5">
-          <Card>
+async function PanelFunnel() {
+  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const [porEstado] = await measurePhase("panel.funnel", () => Promise.all([
+    prisma.contentItem.groupBy({ by: ["status"], _count: { _all: true }, where: soloMarca })
+  ]));
+  const conteoEstado = new Map<string, number>(
+    porEstado.map((r) => [r.status, r._count._all] as const)
+  );
+  const embudo = CONTENT_STATUSES.map((estado) => ({
+    label: estado.label,
+    value: conteoEstado.get(estado.value) ?? 0,
+    color: estado.hex,
+  }));
+
+
+  return <section data-ready-block="panel.funnel"><Card>
             <CardHeader
               title="Embudo de producción"
               subtitle="Videos en cada etapa"
@@ -493,9 +466,27 @@ export default async function PanelGeneral() {
             <div className="p-4">
               <FunnelBars data={embudo} />
             </div>
-          </Card>
+          </Card></section>;
+}
 
-          <Card>
+async function PanelActivity() {
+  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const [actividad] = await measurePhase("panel.activity", () => Promise.all([
+    prisma.auditLog.findMany({
+      where: brandCtx.activeId ? { brandId: brandCtx.activeId } : {},
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: {
+        id: true,
+        summary: true,
+        createdAt: true,
+        userName: true,
+        user: { select: { name: true, color: true } },
+      },
+    })
+  ]));
+
+  return <section data-ready-block="panel.activity"><Card>
             <CardHeader
               title="Última actividad"
               icon={<Activity size={16} />}
@@ -535,12 +526,47 @@ export default async function PanelGeneral() {
                 })}
               </ul>
             )}
-          </Card>
-        </div>
-      </div>
+          </Card></section>;
+}
 
-      {/* -------------------------------------------------------------- MARCAS */}
-      <div className="mt-6">
+async function PanelBrands() {
+  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const [marcas, videosPorMarca, publicadosPorMarca, guionesPorMarca] = await measurePhase("panel.brands", () => Promise.all([
+    prisma.brand.findMany({
+      where: {
+        active: true,
+        archived: false,
+        ...(brandCtx.activeId ? { id: brandCtx.activeId } : {}),
+      },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, tagline: true, colorPrimary: true },
+    }),
+    prisma.contentItem.groupBy({
+      by: ["brandId"],
+      _count: { _all: true },
+      where: { ...soloMarca, scheduledDate: { gte: inicioMes, lte: finMes } },
+    }),
+    prisma.contentItem.groupBy({
+      by: ["brandId"],
+      _count: { _all: true },
+      where: publicadoEsteMes,
+    }),
+    prisma.script.groupBy({ by: ["brandId"], _count: { _all: true }, where: soloMarca })
+  ]));
+  const videosMarca = new Map<string, number>(
+    videosPorMarca.map((r) => [r.brandId, r._count._all] as const)
+  );
+  const publicadosMarca = new Map<string, number>(
+    publicadosPorMarca.map((r) => [r.brandId, r._count._all] as const)
+  );
+  const guionesMarca = new Map<string, number>(
+    guionesPorMarca
+      .filter((r): r is typeof r & { brandId: string } => r.brandId !== null)
+      .map((r) => [r.brandId, r._count._all] as const)
+  );
+
+
+  return <section data-ready-block="panel.brands"><div className="mt-6">
         <SectionTitle
           action={
             <Link href="/marcas" className="btn btn-sm btn-ghost">
@@ -591,9 +617,7 @@ export default async function PanelGeneral() {
             })}
           </div>
         )}
-      </div>
-    </>
-  );
+      </div></section>;
 }
 
 /* --------------------------------------------------------------- AUXILIARES */

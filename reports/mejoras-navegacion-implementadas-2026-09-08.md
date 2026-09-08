@@ -2,7 +2,7 @@
 
 Fecha: 8 de septiembre de 2026. Seguimiento del [plan de optimización](./plan-optimizacion-navegacion-2026-09-07.md) y de la [auditoría general](./auditoria-arquitectura-multitenant-2026-09-07.md).
 
-**Estado: implementadas y comprobadas en la copia local. No desplegadas en Vercel.** La verificación de la web publicada del día anterior describe la versión anterior; sus tiempos no son resultados después de estos cambios.
+**Registro del primer lote, commit `051a957`.** El panel de Vercel confirmó el 8 de septiembre que este commit está en producción con estado Ready. Las pruebas descritas aquí fueron locales y no son un benchmark posterior al despliegue. El estado de la segunda entrega está en [Implementación O01–O07](./implementacion-o01-o07-2026-09-08.md).
 
 ## Qué cambia
 
@@ -65,7 +65,7 @@ Las fixtures y copias previas están bajo `.audit/`, excluida de control de vers
 
 ## Límites y trabajo siguiente
 
-Esta entrega cubre O02/O03/O04 del plan, parte de O01 y parte de O05. No convierte el sistema en multitenant ni resuelve todos los hallazgos H01–H19.
+Este primer lote cubrió O03/O04 y partes de O01/O02/O05; O02 aún requería bloques independientes en Panel y Métricas. Los pendientes siguientes son el registro histórico de ese lote; consultar el informe O01–O07 para el estado actual. Ninguna de estas mejoras convierte el sistema en multitenant ni resuelve todos los hallazgos H01–H19.
 
 - Métricas todavía carga el detalle del periodo actual. Se conservó deliberadamente su semántica existente de retención positiva; H08, la atribución por plataforma y las fechas requieren corrección de dominio antes de materializar nuevos agregados.
 - Equipo reduce el historial de asignaciones, pero todavía carga el catálogo de personas. Arquetipos conserva su listado completo. Su paginación y los agregados del periodo actual quedan pendientes.

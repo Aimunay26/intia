@@ -30,6 +30,7 @@ import { USER_ROLE_MAP } from "@/lib/constants";
 import { Avatar } from "@/components/ui";
 import { BrandSwitcher } from "@/components/brand-switcher";
 import { NavigationPending } from "@/components/navigation-pending";
+import { NavigationMeasurements } from "@/components/navigation-measurements";
 import type { BrandChoice } from "@/lib/brand-shared";
 import { GuiaProvider, GuiaOverlay, GUIA_TARGETS } from "@/components/guia";
 
@@ -99,12 +100,16 @@ export function Shell({
   orgName,
   brands,
   activeBrandId,
+  performanceEnabled = false,
+  release = "local",
   children,
 }: {
   user: ShellUser;
   orgName: string;
   brands: BrandChoice[];
   activeBrandId: string | null;
+  performanceEnabled?: boolean;
+  release?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -220,6 +225,7 @@ export function Shell({
           </header>
 
           <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+            <NavigationMeasurements enabled={performanceEnabled} release={release} />
             <div className="mx-auto w-full max-w-[1400px]">{children}</div>
           </main>
         </div>

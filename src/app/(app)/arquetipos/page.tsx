@@ -1,3 +1,6 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
+import { getArchetypeList } from "@/lib/archetype-list";
+import { Pagination } from "@/components/filters";
 import { requirePageUser as requireUser } from "@/lib/render-context";
 import Link from "next/link";
 import { Search, Sparkles, UserSquare2, Users } from "lucide-react";
@@ -15,14 +18,6 @@ export const dynamic = "force-dynamic";
 
 const ENCAJA_PERFECTO = 3;
 const FIT_TOP = FIT_SCORES.find((f) => f.value === ENCAJA_PERFECTO);
-
-/** Quita tildes y mayúsculas para que el buscador sea tolerante. */
-function normalizar(texto: string) {
-  return texto
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-}
 
 /** Cinco puntitos: cuántos se rellenan según el nivel de energía. */
 function EnergyDots({ level, color }: { level: number; color: string }) {
@@ -78,22 +73,12 @@ function Avatar({
   );
 }
 
-type Ficha = Awaited<ReturnType<typeof cargar>>[number];
-
-async function cargar() {
-  return prisma.archetype.findMany({
-    orderBy: [{ active: "desc" }, { name: "asc" }],
-    include: {
-      fits: { select: { score: true } },
-      _count: { select: { users: true } },
-    },
-  });
-}
+type Ficha = Awaited<ReturnType<typeof getArchetypeList>>["items"][number];
 
 function Tarjeta({ a, isFirst }: { a: Ficha; isFirst?: boolean }) {
   const fortalezas = parseList(a.strengths).slice(0, 3);
-  const perfectos = a.fits.filter((f) => f.score === ENCAJA_PERFECTO).length;
-  const evaluadas = a.fits.length;
+  const perfectos = a.fits.length;
+  const evaluadas = a._count.fits;
   const trio = [a.archetypePrimary, a.archetypeSecondary, a.archetypeTertiary]
     .filter(Boolean)
     .join(" · ");
@@ -199,40 +184,20 @@ function Tarjeta({ a, isFirst }: { a: Ficha; isFirst?: boolean }) {
 export default async function ArquetiposPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; pagina?: string }>;
 }) {
+  return measurePagePhase("page:/arquetipos", async () => {
   const user = await requireUser();
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
 
   const editable = can(user.role, LEVEL.MEMBER);
-  const todos = await cargar();
-
-  const buscado = normalizar(q);
-  const filtrados = buscado
-    ? todos.filter((a) =>
-        normalizar(
-          [
-            a.name,
-            a.summary ?? "",
-            a.personality ?? "",
-            a.ageRange ?? "",
-            a.strengths,
-            a.archetypePrimary ?? "",
-            a.archetypeSecondary ?? "",
-            a.archetypeTertiary ?? "",
-            a.voiceTone ?? "",
-            a.soundsLike ?? "",
-            a.vocabulary,
-          ].join(" ")
-        ).includes(buscado)
-      )
-    : todos;
-
-  const personas = filtrados.filter((a) => a.isPerson);
-  const genericos = filtrados.filter((a) => !a.isPerson);
-  const totalPersonas = todos.filter((a) => a.isPerson).length;
-  const conVoz = personas.filter((a) => a.voiceTone).length;
+  const page = await getArchetypeList(q, sp.pagina);
+  const filtrados = page.items;
+  const personas = filtrados.filter(a => a.isPerson);
+  const genericos = filtrados.filter(a => !a.isPerson);
+  const totalPersonas = page.stats.people;
+  const conVoz = page.stats.voices;
 
   return (
     <>
@@ -295,6 +260,9 @@ export default async function ArquetiposPage({
           ) : null}
         </>
       )}
+      <Pagination page={page.page} pageCount={page.pageCount} total={page.total} />
     </>
   );
+
+  });
 }

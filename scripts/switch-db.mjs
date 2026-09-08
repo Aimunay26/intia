@@ -2,6 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 const target = process.argv[2];
+if (target === "sqlite") {
+  console.error("SQLite ya no es compatible con las consultas analíticas y la paginación del sistema. Usa PostgreSQL también en desarrollo; no se modificó el esquema.");
+  process.exit(1);
+}
 if (!["sqlite", "postgresql"].includes(target)) {
   console.error("Uso: node scripts/switch-db.mjs <sqlite|postgresql>");
   process.exit(1);

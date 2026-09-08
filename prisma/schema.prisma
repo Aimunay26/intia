@@ -1,9 +1,9 @@
 // ============================================================================
 //  MARKETING OS - Esquema de base de datos
-//  Portable entre SQLite (dev) y PostgreSQL (produccion).
-//  Por eso: sin enums, sin listas escalares y sin tipos nativos.
+//  PostgreSQL en desarrollo y produccion (consultas analiticas especificas).
+//  Se conserva el modelo existente sin enums ni listas escalares.
 //  Los campos que guardan estructuras se almacenan como String con JSON.
-//  Cambia de motor con:  npm run use:postgres  /  npm run use:sqlite
+//  DATABASE_URL debe apuntar a una base PostgreSQL del entorno correspondiente.
 // ============================================================================
 
 generator client {
@@ -719,9 +719,10 @@ model Task {
   updatedAt   DateTime   @updatedAt
 
   @@index([columnId])
+  @@index([columnId, order, id])
+  @@index([columnId, brandId, order, id])
   @@index([assigneeId])
   @@index([brandId])
   @@index([kind])
   @@index([order])
 }
-

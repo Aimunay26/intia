@@ -1,3 +1,4 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser } from "@/lib/render-context";
 import Link from "next/link";
 import { Archive, Film, Plus, Tags, Target, TrendingUp } from "lucide-react";
@@ -57,6 +58,7 @@ export default async function MarcasPage({
 }: {
   searchParams: Promise<{ q?: string; estado?: string }>;
 }) {
+  return measurePagePhase("page:/marcas", async () => {
   const user = await requireUser();
   const sp = await searchParams;
 
@@ -253,4 +255,6 @@ export default async function MarcasPage({
       )}
     </>
   );
+
+  });
 }

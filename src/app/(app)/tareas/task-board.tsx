@@ -1,6 +1,9 @@
 "use client";
+import { cargarTareasColumna } from "@/app/actions/task-pages";
+import type { TaskFilters } from "@/lib/task-list";
 
-import { useActionState, useId, useEffect, useState, useTransition } from "react";
+
+import { useActionState, useRef, useId, useEffect, useState, useTransition } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -74,6 +77,7 @@ export type BoardColumn = {
   brandId: string | null;
   tasks: BoardTask[];
   hasMore?: boolean;
+  nextCursor?: string | null;
 };
 
 const COLOR_PRESETS = [
@@ -95,16 +99,41 @@ export function TaskBoard({
   users,
   brands,
   activeBrandId,
-  loadMoreHref,
+  filters,
 }: {
   initialColumns: BoardColumn[];
   users: BoardUser[];
   brands: BoardBrand[];
   activeBrandId?: string | null;
-  loadMoreHref: string | null;
+  filters: TaskFilters;
 }) {
   const [columns, setColumns] = useState<BoardColumn[]>(initialColumns);
   const [isPending, startTransition] = useTransition();
+
+  const generation = useRef(0);
+  const loading = useRef(new Set<string>());
+  const [loadingColumns, setLoadingColumns] = useState<string[]>([]);
+  const [loadErrors, setLoadErrors] = useState<Record<string, string>>({});
+  const loadMore = async (column: BoardColumn) => {
+    if (!column.nextCursor || loading.current.has(column.id) || isPending) return;
+    const epoch = generation.current;
+    loading.current.add(column.id);
+    setLoadingColumns([...loading.current]);
+    setLoadErrors(previous => ({ ...previous, [column.id]: "" }));
+    try {
+      const result = await cargarTareasColumna({ columnId: column.id, brandId: activeBrandId ?? null, filters, cursor: column.nextCursor });
+      if (generation.current !== epoch) return;
+      setColumns(previous => previous.map(current => {
+        if (current.id !== column.id || current.nextCursor !== column.nextCursor) return current;
+        const ids = new Set(current.tasks.map(task => task.id));
+        return { ...current, ...result, tasks: [...current.tasks, ...result.tasks.filter(task => !ids.has(task.id))] };
+      }));
+    } catch (error) {
+      if (generation.current === epoch) setLoadErrors(previous => ({ ...previous, [column.id]: error instanceof Error ? error.message : "No se pudieron cargar las tareas." }));
+    } finally {
+      if (generation.current === epoch) { loading.current.delete(column.id); setLoadingColumns([...loading.current]); }
+    }
+  };
 
   // Estados de modales
   const [creatingInColumnId, setCreatingInColumnId] = useState<string | null>(null);
@@ -114,6 +143,10 @@ export function TaskBoard({
 
   // Sincronizar columnas iniciales si el servidor actualiza
   useEffect(() => {
+    generation.current++;
+    loading.current.clear();
+    setLoadingColumns([]);
+    setLoadErrors({});
     setColumns(initialColumns);
   }, [initialColumns]);
 
@@ -402,6 +435,12 @@ export function TaskBoard({
               )}
             </div>
 
+            {column.hasMore ? <div className="px-2 pb-2">
+              <button type="button" className="btn btn-sm w-full" disabled={isPending || loadingColumns.includes(column.id)} onClick={() => void loadMore(column)}>
+                {loadingColumns.includes(column.id) ? "Cargando tareas…" : "Cargar 50 tareas más"}
+              </button>
+              {loadErrors[column.id] ? <p role="alert" className="text-danger mt-2 text-xs">{loadErrors[column.id]}</p> : null}
+            </div> : null}
             {/* Pie de columna: Añadir rápido */}
             <div className="p-2 border-t border-[var(--line)]/50">
               <button
@@ -416,12 +455,6 @@ export function TaskBoard({
           </div>
         ))}
       </div>
-
-      {loadMoreHref ? (
-        <div className="flex justify-center py-3">
-          <Link href={loadMoreHref} prefetch={false} scroll={false} className="btn">Mostrar 50 tareas más por columna</Link>
-        </div>
-      ) : null}
 
       {/* ------------------------------------------------ MODAL NUEVA TAREA -- */}
       {creatingInColumnId && (

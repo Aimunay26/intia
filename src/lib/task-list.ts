@@ -2,6 +2,16 @@ import type { Prisma } from "@prisma/client";
 
 export type TaskFilters = { q?: string; tipo?: string; responsable?: string; sin_marca?: string; pagina?: string };
 
+/** El render inicial y las siguientes páginas deben usar exactamente los mismos filtros. */
+export function normalizeTaskFilters(filters: TaskFilters): TaskFilters {
+  return {
+    q: typeof filters.q === "string" ? filters.q.trim().slice(0, 200) : undefined,
+    tipo: ["IDEA", "ACCION"].includes(filters.tipo ?? "") ? filters.tipo : undefined,
+    responsable: typeof filters.responsable === "string" ? filters.responsable.slice(0, 128) : undefined,
+    sin_marca: filters.sin_marca === "1" ? "1" : undefined,
+  };
+}
+
 export function taskListOptions(activeBrandId: string | null, filters: TaskFilters) {
   const q = filters.q?.trim();
   const where: Prisma.TaskWhereInput = {
@@ -13,12 +23,5 @@ export function taskListOptions(activeBrandId: string | null, filters: TaskFilte
       { description: { contains: q, mode: "insensitive" } },
     ] } : {}),
   };
-  const requested = Number(filters.pagina);
-  const page = Number.isSafeInteger(requested) && requested > 0 && requested < 1_000_000 ? requested : 1;
-  const params = new URLSearchParams();
-  for (const key of ["q", "tipo", "responsable", "sin_marca"] as const) {
-    if (filters[key]) params.set(key, filters[key]);
-  }
-  params.set("pagina", String(page + 1));
-  return { where, limit: page * 50, loadMoreHref: `/tareas?${params}` };
+  return { where };
 }

@@ -1,3 +1,4 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
@@ -61,6 +62,7 @@ export default async function CalendarioPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  return measurePagePhase("page:/calendario", async () => {
   const user = await requireUser();
   const sp = await searchParams;
 
@@ -489,4 +491,6 @@ export default async function CalendarioPage({
       </div>
     </>
   );
+
+  });
 }

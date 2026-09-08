@@ -118,16 +118,18 @@ test("Equipo cuenta un video una vez aunque haya dos funciones: SQL real sobre f
 });
 
 test("Tareas conserva el alcance de marca y los filtros al cargar más", () => {
-  const { taskListOptions } = load("src/lib/task-list.ts");
+  const { taskListOptions, normalizeTaskFilters } = load("src/lib/task-list.ts");
   const options = taskListOptions("A", { q: " buscar ", tipo: "IDEA", responsable: "UNASSIGNED", sin_marca: "1", pagina: "2" });
   assert.equal(options.where.brandId, "A");
   assert.equal(options.where.assigneeId, null);
-  assert.equal(options.limit, 100);
-  const next = new URL(options.loadMoreHref, "https://example.test");
-  assert.equal(next.searchParams.get("pagina"), "3");
-  assert.equal(next.searchParams.get("tipo"), "IDEA");
+  assert.equal(options.where.kind, "IDEA");
+  assert.equal(options.where.OR[0].title.contains, "buscar");
   assert.equal(taskListOptions(null, { sin_marca: "1" }).where.brandId, null);
-  assert.equal(taskListOptions(null, { pagina: "Infinity" }).limit, 50);
+  assert.deepEqual(taskListOptions(null, { pagina: "Infinity" }).where, {});
+  const normalized = normalizeTaskFilters({ q: "x".repeat(300), tipo: "INVALID", sin_marca: "no" });
+  assert.equal(normalized.q.length, 200);
+  assert.equal(normalized.tipo, undefined);
+  assert.equal(normalized.sin_marca, undefined);
 });
 
 test("el inicializador rechaza una sesión ausente antes de tocar DB", async () => {

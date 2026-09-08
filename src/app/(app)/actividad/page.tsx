@@ -1,3 +1,4 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import type { Prisma } from "@prisma/client";
 import { Activity, Clock, Users, Zap } from "lucide-react";
@@ -94,6 +95,7 @@ export default async function ActividadPage({
     pagina?: string;
   }>;
 }) {
+  return measurePagePhase("page:/actividad", async () => {
   await requireUser();
   const sp = await searchParams;
 
@@ -389,4 +391,6 @@ export default async function ActividadPage({
       ) : null}
     </>
   );
+
+  });
 }

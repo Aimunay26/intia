@@ -1,4 +1,6 @@
 import { PrismaClient } from "@prisma/client";
+import { databaseUrl } from "@/lib/database-url";
+import { measureQuery } from "@/lib/query-performance";
 
 /**
  * El cliente de base de datos.
@@ -24,25 +26,25 @@ import { PrismaClient } from "@prisma/client";
  * cualquier cosa que se le anada a mano se pierde en la siguiente conexion.
  */
 function conexion(): string | undefined {
-  const url = process.env.DATABASE_URL;
-  if (!url || !url.startsWith("postgres")) return undefined;
-  if (!url.includes("-pooler")) return undefined;
-  if (url.includes("pgbouncer=true")) return undefined;
-
-  return url + (url.includes("?") ? "&" : "?") + "pgbouncer=true";
+  return databaseUrl();
 }
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
-};
-
-const urlCorregida = conexion();
-
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createClient() {
+  const urlCorregida = conexion();
+  return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     ...(urlCorregida ? { datasourceUrl: urlCorregida } : {}),
+  }).$extends({
+    name: "navigation-measurements",
+    query: {
+      $allOperations({ model, operation, args, query }) {
+        return measureQuery(model, operation, () => query(args));
+      },
+    },
   });
+}
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+const globalForPrisma = globalThis as unknown as { navigationPrisma?: ReturnType<typeof createClient> };
+// Un cliente/pool por proceso, también con recarga de módulos en desarrollo.
+export const prisma = globalForPrisma.navigationPrisma ?? createClient();
+globalForPrisma.navigationPrisma = prisma;

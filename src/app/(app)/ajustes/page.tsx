@@ -1,3 +1,4 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser } from "@/lib/render-context";
 import { headers } from "next/headers";
 import { CalendarDays, Database, Lock, RefreshCw, Settings, ShieldAlert } from "lucide-react";
@@ -44,6 +45,7 @@ function motorDeBaseDeDatos(): { nombre: string; detalle: string } {
 }
 
 export default async function AjustesPage() {
+  return measurePagePhase("page:/ajustes", async () => {
   const user = await requireUser();
 
   if (!can(user.role, LEVEL.OWNER)) {
@@ -278,4 +280,6 @@ export default async function AjustesPage() {
       </div>
     </>
   );
+
+  });
 }

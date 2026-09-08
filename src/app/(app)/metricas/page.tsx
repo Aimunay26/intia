@@ -1,6 +1,14 @@
+import { getStructureChoices } from "@/lib/structure-choices";
+import { measurePhase as measurePagePhase } from "@/lib/performance";
+import { Suspense } from "react";
+import { SectionLoading } from "@/components/section-loading";
+import { measurePhase } from "@/lib/performance";
+import { getMetricTotals, getMetricSeries, getMetricBreakdowns, getMetricRanking, type MetricFilters } from "@/lib/metric-dashboard";
+import { metricDateRange, shiftReportDay } from "@/lib/report-dates";
+import { Pagination } from "@/components/filters";
 import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
-import { getMetricSummary } from "@/lib/metric-summary";
+
 import {
   ArrowDown,
   ArrowDownRight,
@@ -61,81 +69,8 @@ type SearchParams = {
   desde?: string;
   hasta?: string;
   orden?: string;
+  pagina?: string;
 };
-
-/** Lo que sumamos de cada fila de métricas. */
-type Sumable = {
-  views: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  saves: number;
-  reach: number;
-  spend: number;
-  revenue: number;
-  retention3s: number;
-};
-
-type Totales = {
-  views: number;
-  interactions: number;
-  reach: number;
-  retention: number;
-  spend: number;
-  revenue: number;
-  roas: number;
-};
-
-type VideoAgg = {
-  id: string;
-  title: string;
-  platforms: string[];
-  fecha: Date;
-  brandName: string;
-  brandColor: string;
-  structureId: string | null;
-  structureName: string | null;
-  views: number;
-  interactions: number;
-  reach: number;
-  spend: number;
-  revenue: number;
-  retSum: number;
-  retCount: number;
-};
-
-/* -------------------------------------------------------------- AUXILIARES -- */
-
-const ISO = /^\d{4}-\d{2}-\d{2}$/;
-
-function sumar(rows: Sumable[]): Totales {
-  const t = { views: 0, interactions: 0, reach: 0, spend: 0, revenue: 0 };
-  let retSum = 0;
-  let retCount = 0;
-
-  for (const r of rows) {
-    t.views += r.views;
-    t.interactions += r.likes + r.comments + r.shares + r.saves;
-    t.reach += r.reach;
-    t.spend += r.spend;
-    t.revenue += r.revenue;
-    if (r.retention3s > 0) {
-      retSum += r.retention3s;
-      retCount++;
-    }
-  }
-
-  return {
-    ...t,
-    retention: safeDivide(retSum, retCount),
-    roas: safeDivide(t.revenue, t.spend),
-  };
-}
-
-/** Etiqueta corta para el eje del gráfico de línea: "14/8". */
-function etiquetaDia(d: Date) {
-  return `${d.getDate()}/${d.getMonth() + 1}`;
-}
 
 function construirHref(sp: SearchParams, patch: Record<string, string | null>) {
   const params = new URLSearchParams();
@@ -183,213 +118,36 @@ function Delta({ actual, anterior }: { actual: number; anterior: number }) {
 
 /* ------------------------------------------------------------------ PAGINA -- */
 
-export default async function MetricasPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
+type MetricsSectionProps = { filters: MetricFilters; range: ReturnType<typeof metricDateRange>; sp: SearchParams };
+
+export default async function MetricasPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  return measurePagePhase("page:/metricas", async () => {
   const user = await requireUser();
-  const sp = await searchParams;
-  const puedeImportar = can(user.role, LEVEL.MEMBER);
-  const brandCtx = await getBrandContext();
+  const [brandCtx, sp] = await Promise.all([getBrandContext(), searchParams]);
+  const range = metricDateRange(sp.desde, sp.hasta);
+  const filters: MetricFilters = { brandId: brandCtx.activeId, desde: range.desde, hasta: range.hasta, plataforma: sp.plataforma, estructura: sp.estructura, persona: sp.persona };
+  const scope = JSON.stringify([filters, sp.orden, sp.pagina]);
+  return <>
+    <PageHeader title="Métricas" subtitle={`${formatDate(fromDateKey(range.desde))} — ${formatDate(fromDateKey(range.hasta))} · ${range.days} días`} icon={<TrendingUp size={19} />} />
+    <Suspense key={scope + "MetricsFilters"} fallback={<SectionLoading label="filtros" />}><MetricsFilters filters={filters} range={range} sp={sp} /></Suspense>
+    <div className="space-y-4">
+      <Suspense key={scope + "MetricsOverview"} fallback={<SectionLoading label="resumen" />}><MetricsOverview filters={filters} range={range} sp={sp} /></Suspense>
+      <Suspense key={scope + "MetricsTrend"} fallback={<SectionLoading label="tendencia diaria" />}><MetricsTrend filters={filters} range={range} sp={sp} /></Suspense>
+      <Suspense key={scope + "MetricsBreakdowns"} fallback={<SectionLoading label="comparaciones" />}><MetricsBreakdowns filters={filters} range={range} sp={sp} /></Suspense>
+      <Suspense key={scope + "MetricsRanking"} fallback={<SectionLoading label="ranking de videos" />}><MetricsRanking filters={filters} range={range} sp={sp} /></Suspense>
+    </div>
+    {can(user.role, LEVEL.MEMBER) ? <><SectionTitle>Cargar más datos</SectionTitle><Card className="overflow-hidden"><ImportForm /></Card></> : null}
+  </>;
 
-  /* --- Rango de fechas: por defecto los últimos 30 días --- */
-  const hoyKey = dateKey(new Date());
-  let hastaKey = sp.hasta && ISO.test(sp.hasta) ? sp.hasta : hoyKey;
-  let desdeKey =
-    sp.desde && ISO.test(sp.desde) ? sp.desde : dateKey(addDays(fromDateKey(hastaKey), -29));
-  if (desdeKey > hastaKey) [desdeKey, hastaKey] = [hastaKey, desdeKey];
-
-  let dias = Math.max(
-    1,
-    Math.round((fromDateKey(hastaKey).getTime() - fromDateKey(desdeKey).getTime()) / 86400000) + 1
-  );
-  // Tope de un año: más que eso no se lee en un gráfico y hace la consulta pesada.
-  if (dias > 366) {
-    desdeKey = dateKey(addDays(fromDateKey(hastaKey), -365));
-    dias = 366;
-  }
-
-  const inicio = fromDateKey(desdeKey);
-  inicio.setHours(0, 0, 0, 0);
-  const fin = fromDateKey(hastaKey);
-  fin.setHours(23, 59, 59, 999);
-
-  const prevFin = addDays(inicio, -1);
-  prevFin.setHours(23, 59, 59, 999);
-  const prevInicio = addDays(inicio, -dias);
-  prevInicio.setHours(0, 0, 0, 0);
-
-  /* --- Filtros --- */
-  const filtroContenido = {
-    ...brandWhere(brandCtx.activeId),
-    ...(sp.plataforma ? { platforms: platformFilter(sp.plataforma) } : {}),
-    ...(sp.estructura ? { structureId: sp.estructura } : {}),
-    ...(sp.persona ? { assignments: { some: { userId: sp.persona } } } : {}),
-  };
-
-  const [filas, antes, estructuras, personas, totalEnBase] = await Promise.all([
-    prisma.metric.findMany({
-      where: { date: { gte: inicio, lte: fin }, contentItem: filtroContenido },
-      select: {
-        id: true,
-        date: true,
-        views: true,
-        likes: true,
-        comments: true,
-        shares: true,
-        saves: true,
-        reach: true,
-        spend: true,
-        revenue: true,
-        retention3s: true,
-        contentItem: {
-          select: {
-            id: true,
-            title: true,
-            platforms: true,
-            scheduledDate: true,
-            publishedAt: true,
-            brand: { select: { id: true, name: true, colorPrimary: true } },
-            structure: { select: { id: true, name: true } },
-          },
-        },
-      },
-      orderBy: { date: "asc" },
-    }),
-    getMetricSummary({ date: { gte: prevInicio, lte: prevFin }, contentItem: filtroContenido }),
-    prisma.structure.findMany({
-      where: { active: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.user.findMany({
-      where: { active: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    // Cuenta solo lo de la marca activa: si no, dentro de una marca sin métricas
-    // se ocultaría el estado vacío porque otras marcas sí tienen.
-    prisma.metric.count({ where: { contentItem: brandWhere(brandCtx.activeId) } }),
-  ]);
-
-  const hoy = sumar(filas);
-
-  /* --- Serie diaria de vistas --- */
-  const vistasPorDia = new Map<string, number>();
-  for (const f of filas) {
-    const key = dateKey(f.date);
-    vistasPorDia.set(key, (vistasPorDia.get(key) ?? 0) + f.views);
-  }
-  const serie: Point[] = Array.from({ length: dias }, (_, i) => {
-    const d = addDays(fromDateKey(desdeKey), i);
-    return { label: etiquetaDia(d), value: vistasPorDia.get(dateKey(d)) ?? 0 };
   });
+}
 
-  /* --- Agregado por video --- */
-  const porVideo = new Map<string, VideoAgg>();
-  for (const f of filas) {
-    const ci = f.contentItem;
-    let agg = porVideo.get(ci.id);
-    if (!agg) {
-      agg = {
-        id: ci.id,
-        title: ci.title,
-        platforms: parseList(ci.platforms),
-        fecha: ci.publishedAt ?? ci.scheduledDate,
-        brandName: ci.brand.name,
-        brandColor: ci.brand.colorPrimary,
-        structureId: ci.structure?.id ?? null,
-        structureName: ci.structure?.name ?? null,
-        views: 0,
-        interactions: 0,
-        reach: 0,
-        spend: 0,
-        revenue: 0,
-        retSum: 0,
-        retCount: 0,
-      };
-      porVideo.set(ci.id, agg);
-    }
-    agg.views += f.views;
-    agg.interactions += f.likes + f.comments + f.shares + f.saves;
-    agg.reach += f.reach;
-    agg.spend += f.spend;
-    agg.revenue += f.revenue;
-    if (f.retention3s > 0) {
-      agg.retSum += f.retention3s;
-      agg.retCount++;
-    }
-  }
-  const videos = [...porVideo.values()];
-
-  /* --- Vistas por plataforma y por marca --- */
-  const vistasPlataforma = new Map<string, number>();
-  const vistasMarca = new Map<string, { name: string; color: string; value: number }>();
-  for (const f of filas) {
-    const ci = f.contentItem;
-    // Las vistas se guardan por video y por día, no por red. Si un video salió
-    // en varias redes, se suma en todas: por eso esto va en barras y no en una
-    // dona, que daría a entender que son porciones de un mismo total.
-    for (const red of parseList(ci.platforms)) {
-      vistasPlataforma.set(red, (vistasPlataforma.get(red) ?? 0) + f.views);
-    }
-    const m = vistasMarca.get(ci.brand.id) ?? {
-      name: ci.brand.name,
-      color: ci.brand.colorPrimary,
-      value: 0,
-    };
-    m.value += f.views;
-    vistasMarca.set(ci.brand.id, m);
-  }
-
-  const barrasPlataformas: Point[] = [...vistasPlataforma.entries()]
-    .filter(([, v]) => v > 0)
-    .sort((a, b) => b[1] - a[1])
-    .map(([value, total]) => ({
-      label: PLATFORM_MAP[value]?.label ?? value,
-      value: total,
-      color: PLATFORM_MAP[value]?.hex ?? "#64748b",
-    }));
-
-  const donutMarcas: Point[] = [...vistasMarca.values()]
-    .filter((m) => m.value > 0)
-    .sort((a, b) => b.value - a.value)
-    .map((m) => ({ label: m.name, value: m.value, color: m.color }));
-
-  /* --- Media de vistas por estructura: qué formato conviene repetir --- */
-  const porEstructura = new Map<string, { name: string; total: number; videos: number }>();
-  for (const v of videos) {
-    const key = v.structureId ?? "__sin__";
-    const grupo = porEstructura.get(key) ?? {
-      name: v.structureName ?? "Sin estructura asignada",
-      total: 0,
-      videos: 0,
-    };
-    grupo.total += v.views;
-    grupo.videos++;
-    porEstructura.set(key, grupo);
-  }
-
-  const rankingEstructuras: Point[] = [...porEstructura.values()]
-    .map((g) => ({
-      label: `${g.name} · ${g.videos} ${g.videos === 1 ? "video" : "videos"}`,
-      value: Math.round(safeDivide(g.total, g.videos)),
-    }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
-
-  /* --- Ranking de videos --- */
-  const ordenParam = sp.orden ?? "";
-  const orden: Orden = ORDENES.includes(ordenParam as Orden) ? (ordenParam as Orden) : "vistas";
-
-  const ranking = [...videos].sort((a, b) => {
-    if (orden === "interacciones") return b.interactions - a.interactions;
-    if (orden === "roas") return safeDivide(b.revenue, b.spend) - safeDivide(a.revenue, a.spend);
-    return b.views - a.views;
-  });
-
-  /* --- Etiquetas de los filtros activos --- */
+async function MetricsFilters({ filters, range, sp }: MetricsSectionProps) {
+  const [estructuras, personas] = await measurePhase("metrics.catalogs", () => Promise.all([
+    getStructureChoices(false),
+    prisma.user.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+  ]));
+  const desdeKey = range.desde, hastaKey = range.hasta;
   const etiquetasFiltro: Record<string, string> = {
     plataforma: PLATFORM_MAP[sp.plataforma ?? ""]?.label ?? "Plataforma",
     estructura: estructuras.find((e) => e.id === sp.estructura)?.name ?? "Estructura",
@@ -398,47 +156,8 @@ export default async function MetricasPage({
     hasta: `Hasta ${formatDate(fromDateKey(hastaKey))}`,
   };
 
-  const bloqueImportacion = puedeImportar ? (
-    <Card className="overflow-hidden">
-      <ImportForm />
-    </Card>
-  ) : null;
 
-  /* --- Nada cargado todavía en toda la base --- */
-  if (totalEnBase === 0) {
-    return (
-      <>
-        <PageHeader
-          title="Métricas"
-          subtitle="Qué vistas, interacciones y dinero está trayendo cada video."
-          icon={<TrendingUp size={19} />}
-        />
-        <Card className="mb-4">
-          <EmptyState
-            icon={<BarChart3 size={19} />}
-            title="Todavía no hay ninguna métrica cargada"
-            description="Hay dos maneras de llenar esto: entrar a la ficha de un video y anotar los números del día a mano, o pegar aquí abajo el CSV que exportas de la plataforma. En cuanto haya datos, aparecen las tendencias, el ranking de videos y qué estructura está funcionando mejor."
-            action={
-              <Link href="/contenido" className="btn btn-primary">
-                Ir a los videos
-              </Link>
-            }
-          />
-        </Card>
-        {bloqueImportacion}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <PageHeader
-        title="Métricas"
-        subtitle={`${formatDate(fromDateKey(desdeKey))} — ${formatDate(fromDateKey(hastaKey))} · ${dias} ${dias === 1 ? "día" : "días"} · ${formatNumber(videos.length)} ${videos.length === 1 ? "video con datos" : "videos con datos"} · ${formatNumber(filas.length)} ${filas.length === 1 ? "registro" : "registros"}`}
-        icon={<TrendingUp size={19} />}
-      />
-
-      <FilterBar>
+  return <FilterBar>
         <FilterSelect
           param="plataforma"
           allLabel="Todas las plataformas"
@@ -464,25 +183,17 @@ export default async function MetricasPage({
         <div className="ml-auto">
           <ActiveFilters labels={etiquetasFiltro} />
         </div>
-      </FilterBar>
+      </FilterBar>;
+}
 
-      {filas.length === 0 ? (
-        <Card className="mb-4">
-          <EmptyState
-            icon={<BarChart3 size={19} />}
-            title="No hay métricas en este rango"
-            description="Con los filtros y las fechas que elegiste no aparece ningún registro. Prueba a ampliar el rango de fechas o a quitar algún filtro."
-            action={
-              <Link href="/metricas" className="btn">
-                Volver a los últimos 30 días
-              </Link>
-            }
-          />
-        </Card>
-      ) : (
-        <>
-          {/* 1 · Resumen del periodo -------------------------------------- */}
-          <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+async function MetricsOverview({ filters, range }: MetricsSectionProps) {
+  const [hoy, antes, totalEnBase] = await measurePhase("metrics.summary", () => Promise.all([
+    getMetricTotals(filters), getMetricTotals({ ...filters, desde: range.previousFrom, hasta: range.previousTo }),
+    prisma.metric.count({ where: { contentItem: brandWhere(filters.brandId) } }),
+  ]));
+  return <section data-ready-block="metrics.summary">
+    <p className="text-inkmuted mb-3 text-xs">{formatNumber(hoy.videos)} videos con datos · {formatNumber(hoy.records)} registros</p>
+    {hoy.records ? <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
             <Stat
               label="Vistas"
               value={compactNumber(hoy.views)}
@@ -538,13 +249,22 @@ export default async function MetricasPage({
               icon={<TrendingUp size={15} />}
               accent="#14b8a6"
             />
-          </div>
+          </div> : <Card><EmptyState title={totalEnBase ? "No hay métricas en este rango" : "Todavía no hay ninguna métrica cargada"} description="Amplía las fechas o los filtros, o carga las métricas desde un video o mediante el formulario de importación." /></Card>}
+  </section>;
+}
 
-          {/* 2 · Vistas por día ------------------------------------------- */}
-          <Card className="mb-4">
+async function MetricsTrend({ filters, range }: MetricsSectionProps) {
+  const rows = await measurePhase("metrics.series", () => getMetricSeries(filters));
+  const days = new Map(rows.map(row => [row.day, row.views]));
+  const views = rows.reduce((sum, row) => sum + row.views, 0);
+  const serie: Point[] = Array.from({ length: range.days }, (_, index) => {
+    const day = shiftReportDay(range.desde, index);
+    return { label: day.slice(8) + "/" + day.slice(5,7), value: days.get(day) ?? 0 };
+  });
+  return <section data-ready-block="metrics.series"><Card className="mb-4">
             <CardHeader
               title="Vistas por día"
-              subtitle={`Total del periodo: ${formatNumber(hoy.views)} vistas`}
+              subtitle={`Total del periodo: ${formatNumber(views)} vistas`}
               icon={<BarChart3 size={14} />}
             />
             <div className="p-4">
@@ -554,10 +274,17 @@ export default async function MetricasPage({
                 emptyLabel="Hacen falta al menos dos días con datos para dibujar la tendencia."
               />
             </div>
-          </Card>
+          </Card></section>;
+}
 
-          {/* 3 · Reparto por plataforma y por marca ------------------------ */}
-          <div className="mb-4 grid gap-4 lg:grid-cols-2">
+async function MetricsBreakdowns({ filters }: MetricsSectionProps) {
+  const data = await measurePhase("metrics.breakdowns", () => getMetricBreakdowns(filters));
+  const byPlatform = new Map<string, number>();
+  for (const row of data.platforms) for (const platform of parseList(row.platforms)) byPlatform.set(platform, (byPlatform.get(platform) ?? 0) + row.views);
+  const barrasPlataformas: Point[] = [...byPlatform].filter(([, value]) => value > 0).sort((a,b)=>b[1]-a[1]).map(([key,value])=>({label:PLATFORM_MAP[key]?.label??key,value,color:PLATFORM_MAP[key]?.hex}));
+  const donutMarcas: Point[] = data.brands.filter(row=>row.value>0).map(row=>({label:row.name,value:row.value,color:row.color}));
+  const rankingEstructuras: Point[] = data.structures.map(row=>({label:row.name + " · " + row.videos + " videos", value:Math.round(row.average)}));
+  return <section data-ready-block="metrics.breakdowns"><div className="mb-4 grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader
                 title="Vistas por red"
@@ -593,9 +320,7 @@ export default async function MetricasPage({
               </div>
             </Card>
           </div>
-
-          {/* 4 · Qué estructura funciona ---------------------------------- */}
-          <Card className="mb-4">
+<Card className="mb-4">
             <CardHeader
               title="Qué estructura está funcionando"
               subtitle="Media de vistas por video de cada formato. Al lado va cuántos videos tiene la muestra: con uno o dos videos el dato todavía no dice mucho."
@@ -608,13 +333,17 @@ export default async function MetricasPage({
                 emptyLabel="Ningún video del rango tiene estructura asignada todavía."
               />
             </div>
-          </Card>
+          </Card></section>;
+}
 
-          {/* 5 · Ranking de videos ---------------------------------------- */}
-          <Card className="mb-4 overflow-hidden">
+async function MetricsRanking({ filters, sp }: MetricsSectionProps) {
+  const orden = ORDENES.includes(sp.orden as Orden) ? sp.orden : "vistas";
+  const result = await measurePhase("metrics.ranking", () => getMetricRanking(filters, orden, sp.pagina));
+  const ranking = result.items;
+  return <section data-ready-block="metrics.ranking"><Card className="mb-4 overflow-hidden">
             <CardHeader
               title="Ranking de videos"
-              subtitle={`${formatNumber(ranking.length)} ${ranking.length === 1 ? "video" : "videos"} con métricas en el rango. Toca Vistas, Interacciones o ROAS para reordenar.`}
+              subtitle={`${formatNumber(result.total)} ${result.total === 1 ? "video" : "videos"} con métricas en el rango. Toca Vistas, Interacciones o ROAS para reordenar.`}
             />
             <div className="overflow-x-auto">
               <table className="tbl">
@@ -629,14 +358,14 @@ export default async function MetricasPage({
                       <SortHeader
                         label="Vistas"
                         activo={orden === "vistas"}
-                        href={construirHref(sp, { orden: null })}
+                        href={construirHref(sp, { orden: null, pagina: null })}
                       />
                     </th>
                     <th style={{ textAlign: "right" }}>
                       <SortHeader
                         label="Interacciones"
                         activo={orden === "interacciones"}
-                        href={construirHref(sp, { orden: "interacciones" })}
+                        href={construirHref(sp, { orden: "interacciones", pagina: null })}
                       />
                     </th>
                     <th style={{ textAlign: "right" }}>Ret. 3s</th>
@@ -646,7 +375,7 @@ export default async function MetricasPage({
                       <SortHeader
                         label="ROAS"
                         activo={orden === "roas"}
-                        href={construirHref(sp, { orden: "roas" })}
+                        href={construirHref(sp, { orden: "roas", pagina: null })}
                       />
                     </th>
                   </tr>
@@ -658,7 +387,7 @@ export default async function MetricasPage({
                     return (
                       <tr key={v.id}>
                         <td className="tabular-nums">
-                          <span className="text-inkmuted">{i + 1}</span>
+                          <span className="text-inkmuted">{(result.page - 1) * 50 + i + 1}</span>
                         </td>
                         <td>
                           <ColorChip color={v.brandColor}>{v.brandName}</ColorChip>
@@ -675,7 +404,7 @@ export default async function MetricasPage({
                           <span className="text-inkmuted">{formatDate(v.fecha)}</span>
                         </td>
                         <td>
-                          <PlatformBadges platforms={v.platforms} max={2} />
+                          <PlatformBadges platforms={parseList(v.platforms)} max={2} />
                         </td>
                         <td className="text-right tabular-nums">
                           <span className="text-ink font-semibold">{formatNumber(v.views)}</span>
@@ -706,18 +435,8 @@ export default async function MetricasPage({
               </table>
             </div>
           </Card>
-        </>
-      )}
-
-      {/* 6 · Importación ----------------------------------------------- */}
-      {bloqueImportacion ? (
-        <>
-          <SectionTitle>Cargar más datos</SectionTitle>
-          {bloqueImportacion}
-        </>
-      ) : null}
-    </>
-  );
+    <Pagination page={result.page} pageCount={result.pageCount} total={result.total} />
+  </section>;
 }
 
 /* --------------------------------------------------------- ENCABEZADO ORD -- */

@@ -1,3 +1,5 @@
+import { getStructureChoices } from "@/lib/structure-choices";
+import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
@@ -68,6 +70,7 @@ export default async function ContenidoPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  return measurePagePhase("page:/contenido", async () => {
   const user = await requireUser();
   const sp = await searchParams;
 
@@ -124,9 +127,7 @@ export default async function ContenidoPage({
     prisma.user.findMany({
       where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" },
     }),
-    prisma.structure.findMany({
-      where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" },
-    }),
+    getStructureChoices(false),
   ]);
   const { items, total, page, pageCount } = listing;
   const brands = brandCtx.brands;
@@ -328,4 +329,6 @@ export default async function ContenidoPage({
       <Pagination page={page} pageCount={pageCount} total={total} />
     </>
   );
+
+  });
 }

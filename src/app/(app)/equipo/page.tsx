@@ -1,3 +1,6 @@
+import { measurePhase as measurePagePhase } from "@/lib/performance";
+import { getTeamList, getTeamStats, teamMemberSelect, type TeamFilters } from "@/lib/team-list";
+import { Pagination } from "@/components/filters";
 import { requirePageUser as requireUser } from "@/lib/render-context";
 import { Mail, Phone, ShieldCheck, UserCog, Users, UserSquare2 } from "lucide-react";
 
@@ -39,57 +42,25 @@ const ESTADOS = [
 export default async function EquipoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ rol?: string; estado?: string; q?: string }>;
+  searchParams: Promise<TeamFilters>;
 }) {
+  return measurePagePhase("page:/equipo", async () => {
   const user = await requireUser();
   const sp = await searchParams;
   const canManage = can(user.role, LEVEL.OWNER);
 
-  const [personas, archetypes, { participation: participacion, totalAssignments }] = await Promise.all([
-    prisma.user.findMany({
-      orderBy: [{ active: "desc" }, { name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        color: true,
-        phone: true,
-        bio: true,
-        active: true,
-        archetypeId: true,
-        createdAt: true,
-        archetype: { select: { id: true, name: true, color: true } },
-      },
-    }),
-    prisma.archetype.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-    getTeamParticipation(),
+  const [page, archetypes, stats, yo] = await Promise.all([
+    getTeamList(sp),
+    prisma.archetype.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    getTeamStats(),
+    prisma.user.findUnique({ where: { id: user.id }, select: teamMemberSelect }),
   ]);
-
-
-  const adminsActivos = personas.filter((p) => p.role === "OWNER" && p.active).length;
-
-  /* ------------------------------------------------------------- filtros -- */
-
-  const q = (sp.q ?? "").trim().toLowerCase();
-  const lista = personas.filter((p) => {
-    if (sp.rol && p.role !== sp.rol) return false;
-    if (sp.estado === "activo" && !p.active) return false;
-    if (sp.estado === "inactivo" && p.active) return false;
-    if (q) {
-      const heno = `${p.name} ${p.email} ${p.phone ?? ""} ${p.archetype?.name ?? ""}`.toLowerCase();
-      if (!heno.includes(q)) return false;
-    }
-    return true;
-  });
-
+  const personas = page.items;
+  const lista = personas;
+  const { participation: participacion } = await getTeamParticipation(lista.map(persona => persona.id));
+  const adminsActivos = stats.owners;
   const opcionesArquetipo: ArchetypeOption[] = archetypes;
-  const yo = personas.find((p) => p.id === user.id);
-  const hayFiltros = Boolean(sp.rol || sp.estado || q);
+  const hayFiltros = Boolean(sp.rol || sp.estado || sp.q?.trim());
 
   const toMember = (p: (typeof personas)[number]): TeamMember => ({
     id: p.id,
@@ -131,8 +102,8 @@ export default async function EquipoPage({
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat
           label="Personas activas"
-          value={personas.filter((p) => p.active).length}
-          sub={`${personas.length} en total, contando las desactivadas`}
+          value={stats.active}
+          sub={`${stats.total} en total, contando las desactivadas`}
           icon={<Users size={15} />}
         />
         <Stat
@@ -144,15 +115,15 @@ export default async function EquipoPage({
         />
         <Stat
           label="Con arquetipo"
-          value={personas.filter((p) => p.archetypeId).length}
+          value={stats.archetypes}
           sub="Listas para repartir papeles frente a cámara"
           icon={<UserSquare2 size={15} />}
           accent="#0ea5e9"
         />
         <Stat
           label="Participan en videos"
-          value={participacion.size}
-          sub={`${totalAssignments} asignaciones registradas`}
+          value={stats.participants}
+          sub={`${stats.assignments} asignaciones registradas`}
           icon={<UserCog size={15} />}
           accent="#10b981"
         />
@@ -167,7 +138,7 @@ export default async function EquipoPage({
         />
         <FilterSelect param="estado" allLabel="Activas y desactivadas" options={ESTADOS} />
         <span className="text-inkmuted ml-auto pr-1 text-[12.5px]">
-          {lista.length} {lista.length === 1 ? "persona" : "personas"}
+          {page.total} {page.total === 1 ? "persona" : "personas"}
         </span>
       </FilterBar>
 
@@ -328,6 +299,8 @@ export default async function EquipoPage({
         )}
       </Card>
 
+      <Pagination page={page.page} pageCount={page.pageCount} total={page.total} />
+
       {!canManage ? (
         <p className="text-inkmuted mt-3 text-[12.5px] leading-relaxed">
           Puedes cambiar tu nombre, tu color y tu contraseña. Para invitar personas o cambiar
@@ -336,4 +309,6 @@ export default async function EquipoPage({
       ) : null}
     </>
   );
+
+  });
 }

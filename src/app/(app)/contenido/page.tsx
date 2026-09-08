@@ -1,10 +1,13 @@
+import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { Clapperboard, Film, Shapes, User as UserIcon } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { brandWhere, getBrandContext } from "@/lib/brand-context";
-import { can, LEVEL, requireUser } from "@/lib/auth";
+import { getContentList } from "@/lib/content-list";
+import { measurePhase } from "@/lib/performance";
+import { brandWhere } from "@/lib/brand-context";
+import { can, LEVEL } from "@/lib/auth";
 import {
   ACTIVE_STATUSES,
   ASSIGNMENT_ROLE_MAP,
@@ -17,7 +20,6 @@ import {
   platformFilter,
 } from "@/lib/constants";
 import {
-  clamp,
   compactNumber,
   dateKey,
   formatDate,
@@ -60,7 +62,6 @@ type SearchParams = {
   pagina?: string;
 };
 
-const POR_PAGINA = 50;
 
 export default async function ContenidoPage({
   searchParams,
@@ -118,49 +119,17 @@ export default async function ContenidoPage({
     where.scheduledDate = { ...(where.scheduledDate as object), lt: inicioHoy };
   }
 
-  const [total, brands, people, structures] = await Promise.all([
-    prisma.contentItem.count({ where }),
-    prisma.brand.findMany({
-      where: { archived: false },
-      select: { id: true, name: true, colorPrimary: true },
-      orderBy: { name: "asc" },
-    }),
+  const [listing, people, structures] = await Promise.all([
+    measurePhase("content.list", () => getContentList(where, sp.pagina)),
     prisma.user.findMany({
-      where: { active: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
+      where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" },
     }),
     prisma.structure.findMany({
-      where: { active: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
+      where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" },
     }),
   ]);
-
-  const pageCount = Math.max(1, Math.ceil(total / POR_PAGINA));
-  const page = clamp(Number(sp.pagina) || 1, 1, pageCount);
-
-  const items = await prisma.contentItem.findMany({
-    where,
-    orderBy: [{ scheduledDate: "desc" }, { createdAt: "desc" }],
-    skip: (page - 1) * POR_PAGINA,
-    take: POR_PAGINA,
-    select: {
-      id: true,
-      title: true,
-      hook: true,
-      status: true,
-      platforms: true,
-      scheduledDate: true,
-      brand: { select: { id: true, name: true, colorPrimary: true } },
-      structure: { select: { id: true, name: true } },
-      assignments: {
-        select: { id: true, role: true, user: { select: { name: true, color: true } } },
-      },
-      checklist: { select: { done: true } },
-      metrics: { select: { views: true } },
-    },
-  });
+  const { items, total, page, pageCount } = listing;
+  const brands = brandCtx.brands;
 
   const personaMap = new Map(people.map((p) => [p.id, p.name]));
   const estructuraMap = new Map(structures.map((s) => [s.id, s.name]));
@@ -272,7 +241,7 @@ export default async function ContenidoPage({
                   const hechos = item.checklist.filter((c) => c.done).length;
                   const totalChecks = item.checklist.length;
                   const avance = totalChecks ? (hechos / totalChecks) * 100 : 0;
-                  const vistas = item.metrics.reduce((acc, m) => acc + m.views, 0);
+                  const vistas = item.metricViews;
                   const estado = CONTENT_STATUS_MAP[item.status];
 
                   return (
@@ -345,7 +314,7 @@ export default async function ContenidoPage({
                         )}
                       </td>
                       <td className="text-ink text-right font-semibold tabular-nums">
-                        {item.metrics.length ? compactNumber(vistas) : "—"}
+                        {vistas !== null ? compactNumber(vistas) : "—"}
                       </td>
                     </tr>
                   );

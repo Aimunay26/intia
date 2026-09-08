@@ -1,3 +1,4 @@
+import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import {
@@ -16,8 +17,7 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { brandWhere, getBrandContext } from "@/lib/brand-context";
-import { requireUser } from "@/lib/auth";
+import { brandWhere } from "@/lib/brand-context";
 import {
   ACTIVE_STATUSES,
   ASSIGNMENT_ROLE_MAP,

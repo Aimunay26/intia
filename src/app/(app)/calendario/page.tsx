@@ -1,3 +1,4 @@
+import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import {
@@ -13,8 +14,8 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { brandWhere, getBrandContext } from "@/lib/brand-context";
-import { can, LEVEL, requireUser } from "@/lib/auth";
+import { brandWhere } from "@/lib/brand-context";
+import { can, LEVEL } from "@/lib/auth";
 import {
   ACTIVE_STATUSES,
   CONTENT_STATUSES,
@@ -132,11 +133,7 @@ export default async function CalendarioPage({
       },
       orderBy: [{ scheduledDate: "asc" }, { title: "asc" }],
     }),
-    prisma.brand.findMany({
-      where: { archived: false },
-      select: { id: true, name: true, colorPrimary: true },
-      orderBy: { name: "asc" },
-    }),
+    brandCtx.brands,
     prisma.user.findMany({
       where: { active: true },
       select: { id: true, name: true },

@@ -1,6 +1,5 @@
-import { requireUser } from "@/lib/auth";
+import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { ROLE_LEVEL } from "@/lib/constants";
-import { getBrandContext } from "@/lib/brand-context";
 import { getSetting, SETTING_KEYS } from "@/lib/settings";
 import { Shell } from "@/components/shell";
 

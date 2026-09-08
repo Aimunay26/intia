@@ -17,13 +17,11 @@ import { getSetting, setSetting } from "@/lib/settings";
 
 const FEED_TOKEN_KEY = "calendar.feedToken";
 
-export async function getFeedToken(): Promise<string> {
+export async function getFeedToken(): Promise<string | null> {
   const existente = await getSetting(FEED_TOKEN_KEY);
   if (existente && existente.length >= 24) return existente;
 
-  const nuevo = randomBytes(24).toString("base64url");
-  await setSetting(FEED_TOKEN_KEY, nuevo);
-  return nuevo;
+  return null;
 }
 
 export async function rotarFeedToken(): Promise<string> {

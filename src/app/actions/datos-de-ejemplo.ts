@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { borrarAssetsDe } from "@/lib/assets-cleanup";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { requireUser, requireLevel, can, LEVEL } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { CORREOS_DE_EJEMPLO, MARCA_DE_EJEMPLO } from "@/lib/datos-de-ejemplo";
 
@@ -38,7 +38,7 @@ export type Recuento = {
 
 /** Cuenta lo que se iría. No borra nada. */
 export async function contarDatosDeEjemplo(): Promise<Recuento> {
-  await requireUser();
+  await requireLevel(LEVEL.OWNER);
 
   const marca = await prisma.brand.findUnique({
     where: { slug: MARCA_DE_EJEMPLO },

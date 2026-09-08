@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/lib/audit";
 import { LEVEL, requireLevel } from "@/lib/auth";
 import { dateField, field, fieldOrNull } from "@/lib/utils";
 
@@ -18,33 +19,32 @@ function refrescar() {
  * Asegura que existan las columnas base del pipeline.
  * Si la base está vacía, siembra las 5 columnas por defecto.
  */
-export async function asegurarColumnasIniciales(brandId?: string | null) {
-  const existing = await prisma.taskColumn.findMany({
-    where: brandId ? { brandId } : {},
-    orderBy: { order: "asc" },
-  });
-
-  if (existing.length > 0) return existing;
-
-  // Si no hay columnas específicas para esta marca ni globales, creamos las iniciales
-  const count = await prisma.taskColumn.count();
-  if (count === 0) {
-    for (const col of DEFAULT_TASK_COLUMNS) {
-      await prisma.taskColumn.create({
-        data: {
-          name: col.name,
-          color: col.color,
-          order: col.order,
-          brandId: null,
-        },
-      });
+export async function asegurarColumnasIniciales() {
+  const user = await requireLevel(LEVEL.MEMBER);
+  let created = false;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      created = await prisma.$transaction(async (tx) => {
+        if (await tx.taskColumn.count()) return false;
+        for (const col of DEFAULT_TASK_COLUMNS) {
+          const id = `initial-task-column-${col.order}`;
+          await tx.taskColumn.upsert({
+            where: { id },
+            update: {},
+            create: { id, name: col.name, color: col.color, order: col.order, brandId: null },
+          });
+        }
+        return true;
+      }, { isolationLevel: "Serializable" });
+      break;
+    } catch (error) {
+      const code = error && typeof error === "object" && "code" in error ? error.code : null;
+      if (attempt === 2 || (code !== "P2034" && code !== "P2002")) throw error;
     }
   }
-
-  return prisma.taskColumn.findMany({
-    where: brandId ? { OR: [{ brandId }, { brandId: null }] } : {},
-    orderBy: { order: "asc" },
-  });
+  if (created) await logAudit({ user, action: "CREAR", entity: "TaskColumn", summary: "Creó las columnas iniciales del tablero de tareas." });
+  refrescar();
+  return { ok: true };
 }
 
 /* ---------------------------------------------------- ACCIONES DE TAREAS -- */

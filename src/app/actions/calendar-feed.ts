@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { LEVEL, requireLevel } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
-import { rotarFeedToken } from "@/lib/ical";
+import { getFeedToken, rotarFeedToken } from "@/lib/ical";
 
 /**
  * Cambia el token del feed de calendario.
@@ -15,14 +15,16 @@ import { rotarFeedToken } from "@/lib/ical";
  */
 export async function rotarTokenCalendario() {
   const user = await requireLevel(LEVEL.OWNER);
+  const existed = await getFeedToken();
   await rotarFeedToken();
 
   await logAudit({
     user,
     action: "EDITAR",
     entity: "AppSetting",
-    summary:
-      "Cambió la dirección secreta del calendario. Las suscripciones antiguas dejaron de funcionar.",
+    summary: existed
+      ? "Cambió la dirección secreta del calendario. Las suscripciones antiguas dejaron de funcionar."
+      : "Activó la dirección de suscripción al calendario.",
   });
 
   revalidatePath("/ajustes");

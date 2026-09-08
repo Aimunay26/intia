@@ -1,9 +1,8 @@
+import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import type { Prisma } from "@prisma/client";
 import { Activity, Clock, Users, Zap } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { getBrandContext } from "@/lib/brand-context";
-import { requireUser } from "@/lib/auth";
 import {
   AUDIT_ACTIONS,
   AUDIT_ACTION_MAP,
@@ -101,16 +100,12 @@ export default async function ActividadPage({
   const q = (sp.q ?? "").trim();
   const pagina = Math.max(1, Number(sp.pagina) || 1);
 
-  const [personas, marcas] = await Promise.all([
+  const [personas, brandCtx] = await Promise.all([
     prisma.user.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true, color: true, active: true },
     }),
-    prisma.brand.findMany({
-      where: { archived: false },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, colorPrimary: true },
-    }),
+    getBrandContext(),
   ]);
 
   /* -------------------------------------------------------------- filtros -- */
@@ -119,7 +114,7 @@ export default async function ActividadPage({
   if (sp.persona) where.userId = sp.persona;
   if (sp.accion && AUDIT_ACTION_MAP[sp.accion]) where.action = sp.accion;
   if (sp.entidad && AUDIT_ENTITIES.includes(sp.entidad)) where.entity = sp.entidad;
-  const brandCtx = await getBrandContext();
+  const marcas = brandCtx.brands;
   if (brandCtx.activeId) where.brandId = brandCtx.activeId;
   if (sp.desde || sp.hasta) {
     where.createdAt = {

@@ -1,3 +1,4 @@
+import { requirePageUser as requireUser } from "@/lib/render-context";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { can, LEVEL } from "@/lib/auth";
 import {
   AI_MODELS,
   AI_PROVIDERS,

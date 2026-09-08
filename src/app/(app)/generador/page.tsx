@@ -1,3 +1,4 @@
+import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import { Layers, Lock, Sparkles } from "lucide-react";
 
@@ -13,8 +14,7 @@ import { Layers, Lock, Sparkles } from "lucide-react";
 export const maxDuration = 300;
 
 import { prisma } from "@/lib/prisma";
-import { getBrandContext } from "@/lib/brand-context";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { can, LEVEL } from "@/lib/auth";
 import { aiStatus } from "@/lib/settings";
 import { parseJson, parseList } from "@/lib/utils";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
@@ -45,7 +45,7 @@ export default async function GeneradorPage({
   const user = await requireUser();
   const sp = await searchParams;
 
-  const [structures, brands, archetypes, fits, refRows, ai] = await Promise.all([
+  const [structures, brands, archetypes, fits, refRows, ai, brandCtx] = await Promise.all([
     prisma.structure.findMany({
       where: { active: true },
       orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -101,6 +101,7 @@ export default async function GeneradorPage({
       _count: { _all: true },
     }),
     aiStatus(),
+    getBrandContext(),
   ]);
 
   if (!can(user.role, LEVEL.MEMBER)) {
@@ -184,7 +185,6 @@ export default async function GeneradorPage({
     : (structureOptions[0]?.id ?? "");
 
   // La marca activa manda; el parametro de la URL solo sirve si no hay ninguna.
-  const brandCtx = await getBrandContext();
   const marcaPedida = brandCtx.activeId ?? sp.marca;
   const marcaInicial = brandOptions.some((b) => b.id === marcaPedida)
     ? (marcaPedida as string)

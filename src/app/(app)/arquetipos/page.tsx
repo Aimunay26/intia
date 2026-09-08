@@ -1,8 +1,9 @@
+import { requirePageUser as requireUser } from "@/lib/render-context";
 import Link from "next/link";
 import { Search, Sparkles, UserSquare2, Users } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { can, LEVEL } from "@/lib/auth";
 import { FIT_SCORES } from "@/lib/constants";
 import { parseList, truncate } from "@/lib/utils";
 import { Card, EmptyState, PageHeader } from "@/components/ui";

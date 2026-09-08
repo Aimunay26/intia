@@ -635,6 +635,7 @@ export const AUDIT_ACTIONS: Option[] = [
 export const AUDIT_ACTION_MAP = byValue(AUDIT_ACTIONS);
 
 export const AUDIT_ENTITIES = [
+  "TaskColumn",
   "Brand",
   "BrandObjective",
   "CalendarEvent",
@@ -655,6 +656,7 @@ export const AUDIT_ENTITIES = [
 ];
 
 export const ENTITY_LABELS: Record<string, string> = {
+  TaskColumn: "Columna de tareas",
   Brand: "Marca",
   BrandObjective: "Objetivo",
   CalendarEvent: "Agenda",

@@ -1,8 +1,9 @@
+import { requirePageUser as requireUser } from "@/lib/render-context";
 import Link from "next/link";
 import { Archive, Film, Plus, Tags, Target, TrendingUp } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { can, LEVEL } from "@/lib/auth";
 import {
   endOfMonth,
   formatNumber,
@@ -63,55 +64,56 @@ export default async function MarcasPage({
   const archivadas = sp.estado === "archivadas";
   const puedeGestionar = can(user.role, LEVEL.MEMBER);
 
-  const brands = await prisma.brand.findMany({
-    where: {
-      archived: archivadas,
-      ...(q ? { name: { contains: q } } : {}),
-    },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      tagline: true,
-      colorPrimary: true,
-      colorSecondary: true,
-      colorAccent: true,
-      _count: { select: { content: true, objectives: true } },
-      objectives: {
-        select: {
-          currentValue: true,
-          targetValue: true,
-          baselineValue: true,
-          higherIsBetter: true,
-          deadline: true,
-          status: true,
-          createdAt: true,
-        },
-      },
-    },
-  });
-
   const hoy = new Date();
   const desde = startOfMonth(hoy.getFullYear(), hoy.getMonth());
   const hasta = endOfMonth(hoy.getFullYear(), hoy.getMonth());
 
-  const publicadosMes = await prisma.contentItem.groupBy({
-    by: ["brandId"],
-    where: {
-      status: "PUBLICADO",
-      OR: [
-        { publishedAt: { gte: desde, lte: hasta } },
-        { AND: [{ publishedAt: null }, { scheduledDate: { gte: desde, lte: hasta } }] },
-      ],
-    },
-    _count: { _all: true },
-  });
+  const [brands, publicadosMes, totalArchivadas] = await Promise.all([
+    prisma.brand.findMany({
+      where: {
+        archived: archivadas,
+        ...(q ? { name: { contains: q } } : {}),
+      },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        tagline: true,
+        colorPrimary: true,
+        colorSecondary: true,
+        colorAccent: true,
+        _count: { select: { content: true, objectives: true } },
+        objectives: {
+          select: {
+            currentValue: true,
+            targetValue: true,
+            baselineValue: true,
+            higherIsBetter: true,
+            deadline: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    }),
+    prisma.contentItem.groupBy({
+      by: ["brandId"],
+      where: {
+        status: "PUBLICADO",
+        OR: [
+          { publishedAt: { gte: desde, lte: hasta } },
+          { AND: [{ publishedAt: null }, { scheduledDate: { gte: desde, lte: hasta } }] },
+        ],
+      },
+      _count: { _all: true },
+    }),
+    prisma.brand.count({ where: { archived: true } }),
+  ]);
   const publicadosPorMarca = new Map(
     publicadosMes.map((row) => [row.brandId, row._count._all])
   );
 
-  const totalArchivadas = await prisma.brand.count({ where: { archived: true } });
 
   const renderNuevaMarca = (targetKey?: string) =>
     puedeGestionar ? (

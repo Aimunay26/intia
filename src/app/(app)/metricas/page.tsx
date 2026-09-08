@@ -1,4 +1,6 @@
+import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
+import { getMetricSummary } from "@/lib/metric-summary";
 import {
   ArrowDown,
   ArrowDownRight,
@@ -15,9 +17,9 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { can, LEVEL } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { brandWhere, getBrandContext } from "@/lib/brand-context";
+import { brandWhere } from "@/lib/brand-context";
 import { PLATFORMS, PLATFORM_MAP, platformFilter } from "@/lib/constants";
 import {
   addDays,
@@ -226,7 +228,7 @@ export default async function MetricasPage({
     ...(sp.persona ? { assignments: { some: { userId: sp.persona } } } : {}),
   };
 
-  const [filas, filasPrevias, estructuras, personas, totalEnBase] = await Promise.all([
+  const [filas, antes, estructuras, personas, totalEnBase] = await Promise.all([
     prisma.metric.findMany({
       where: { date: { gte: inicio, lte: fin }, contentItem: filtroContenido },
       select: {
@@ -255,20 +257,7 @@ export default async function MetricasPage({
       },
       orderBy: { date: "asc" },
     }),
-    prisma.metric.findMany({
-      where: { date: { gte: prevInicio, lte: prevFin }, contentItem: filtroContenido },
-      select: {
-        views: true,
-        likes: true,
-        comments: true,
-        shares: true,
-        saves: true,
-        reach: true,
-        spend: true,
-        revenue: true,
-        retention3s: true,
-      },
-    }),
+    getMetricSummary({ date: { gte: prevInicio, lte: prevFin }, contentItem: filtroContenido }),
     prisma.structure.findMany({
       where: { active: true },
       select: { id: true, name: true },
@@ -285,7 +274,6 @@ export default async function MetricasPage({
   ]);
 
   const hoy = sumar(filas);
-  const antes = sumar(filasPrevias);
 
   /* --- Serie diaria de vistas --- */
   const vistasPorDia = new Map<string, number>();

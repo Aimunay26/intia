@@ -1,3 +1,4 @@
+import { requirePageUser as requireUser } from "@/lib/render-context";
 import Link from "next/link";
 import {
   Clock3,
@@ -10,7 +11,7 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { can, LEVEL } from "@/lib/auth";
 import {
   AI_PROVIDER_MAP,
   STRUCTURE_CATEGORIES,

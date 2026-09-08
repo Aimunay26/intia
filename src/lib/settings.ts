@@ -40,18 +40,19 @@ export async function setSetting(key: string, value: string) {
 
 /** Devuelve la clave del proveedor, y de donde salio. */
 export async function resolveApiKey(
-  provider: string
+  provider: string,
+  settings?: Record<string, string>,
 ): Promise<{ key: string | null; source: "env" | "db" | null }> {
   if (provider === "anthropic") {
     const env = process.env.ANTHROPIC_API_KEY?.trim();
     if (env) return { key: env, source: "env" };
-    const db = (await getSetting(SETTING_KEYS.anthropicKey))?.trim();
+    const db = (settings ? settings[SETTING_KEYS.anthropicKey] : await getSetting(SETTING_KEYS.anthropicKey))?.trim();
     return db ? { key: db, source: "db" } : { key: null, source: null };
   }
   if (provider === "google") {
     const env = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY)?.trim();
     if (env) return { key: env, source: "env" };
-    const db = (await getSetting(SETTING_KEYS.googleKey))?.trim();
+    const db = (settings ? settings[SETTING_KEYS.googleKey] : await getSetting(SETTING_KEYS.googleKey))?.trim();
     return db ? { key: db, source: "db" } : { key: null, source: null };
   }
   return { key: null, source: null };
@@ -64,10 +65,10 @@ export function maskKey(key: string | null) {
   return `${key.slice(0, 6)}${"•".repeat(12)}${key.slice(-4)}`;
 }
 
-export async function aiStatus() {
+export async function aiStatus(settings?: Record<string, string>) {
   const [anthropic, google] = await Promise.all([
-    resolveApiKey("anthropic"),
-    resolveApiKey("google"),
+    resolveApiKey("anthropic", settings),
+    resolveApiKey("google", settings),
   ]);
   return {
     anthropic: {

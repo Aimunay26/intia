@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { USER_ROLE_MAP } from "@/lib/constants";
 import { Avatar } from "@/components/ui";
 import { BrandSwitcher } from "@/components/brand-switcher";
+import { NavigationPending } from "@/components/navigation-pending";
 import type { BrandChoice } from "@/lib/brand-shared";
 import { GuiaProvider, GuiaOverlay, GUIA_TARGETS } from "@/components/guia";
 
@@ -163,10 +164,12 @@ export function Shell({
                       href={item.href}
                       className="nav-link"
                       data-active={isActive(item.href)}
+                      aria-current={isActive(item.href) ? "page" : undefined}
                       data-guia={NAV_GUIA_MAP[item.href]}
                     >
                       <Icon size={15.5} strokeWidth={2} className="shrink-0" />
                       <span className="truncate">{item.label}</span>
+                      <NavigationPending />
                     </Link>
                   );
                 })}

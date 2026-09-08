@@ -530,6 +530,12 @@ body {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .skel, .navigation-spinner {
+    animation: none;
+  }
+}
+
 /* Franja de color de marca a la izquierda de una tarjeta */
 .brand-strip {
   position: relative;

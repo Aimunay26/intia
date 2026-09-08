@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useMemo, useState, useTransition } from "react";
+import { useActionState, useId, useEffect, useState, useTransition } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -28,6 +28,8 @@ import {
   eliminarTarea,
   moverTarea,
 } from "@/app/actions/tasks";
+import Link from "next/link";
+import { FilterSelect, SearchInput } from "@/components/filters";
 import { TASK_KINDS, TASK_PRIORITIES } from "@/lib/tasks-constants";
 import { Modal, SubmitButton } from "@/components/forms";
 import { Avatar, Field } from "@/components/ui";
@@ -71,6 +73,7 @@ export type BoardColumn = {
   order: number;
   brandId: string | null;
   tasks: BoardTask[];
+  hasMore?: boolean;
 };
 
 const COLOR_PRESETS = [
@@ -92,20 +95,16 @@ export function TaskBoard({
   users,
   brands,
   activeBrandId,
+  loadMoreHref,
 }: {
   initialColumns: BoardColumn[];
   users: BoardUser[];
   brands: BoardBrand[];
   activeBrandId?: string | null;
+  loadMoreHref: string | null;
 }) {
   const [columns, setColumns] = useState<BoardColumn[]>(initialColumns);
   const [isPending, startTransition] = useTransition();
-
-  // Filtros
-  const [search, setSearch] = useState("");
-  const [filterKind, setFilterKind] = useState<"TODAS" | "IDEA" | "ACCION">("TODAS");
-  const [filterAssignee, setFilterAssignee] = useState<string>("TODOS");
-  const [filterBrand, setFilterBrand] = useState<string>(activeBrandId || "TODAS");
 
   // Estados de modales
   const [creatingInColumnId, setCreatingInColumnId] = useState<string | null>(null);
@@ -114,34 +113,9 @@ export function TaskBoard({
   const [isCreatingColumn, setIsCreatingColumn] = useState(false);
 
   // Sincronizar columnas iniciales si el servidor actualiza
-  useMemo(() => {
+  useEffect(() => {
     setColumns(initialColumns);
   }, [initialColumns]);
-
-  // Filtrado de tareas
-  const filteredColumns = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return columns.map((col) => ({
-      ...col,
-      tasks: col.tasks.filter((task) => {
-        if (filterKind !== "TODAS" && task.kind !== filterKind) return false;
-        if (filterAssignee !== "TODOS") {
-          if (filterAssignee === "UNASSIGNED" && task.assigneeId) return false;
-          if (filterAssignee !== "UNASSIGNED" && task.assigneeId !== filterAssignee) return false;
-        }
-        if (filterBrand !== "TODAS") {
-          if (filterBrand === "NO_BRAND" && task.brandId) return false;
-          if (filterBrand !== "NO_BRAND" && task.brandId !== filterBrand) return false;
-        }
-        if (q) {
-          const matchTitle = task.title.toLowerCase().includes(q);
-          const matchDesc = task.description?.toLowerCase().includes(q) ?? false;
-          if (!matchTitle && !matchDesc) return false;
-        }
-        return true;
-      }),
-    }));
-  }, [columns, search, filterKind, filterAssignee, filterBrand]);
 
   /* ---------------------------------------------------- DRAG AND DROP -- */
 
@@ -210,101 +184,11 @@ export function TaskBoard({
       {/* ------------------------------------------------ FILTROS SUPERIORES -- */}
       <div className="card-flat flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
         <div className="flex flex-wrap items-center gap-2.5 min-w-0 flex-1">
-          {/* Buscador */}
-          <div className="relative min-w-[200px] flex-1 sm:max-w-[260px]">
-            <Search
-              size={14}
-              className="text-inkmuted absolute left-3 top-1/2 -translate-y-1/2"
-            />
-            <input
-              type="text"
-              className="input pl-8 py-1.5 text-[13px]"
-              placeholder="Buscar tareas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button
-                type="button"
-                onClick={() => setSearch("")}
-                className="text-inkmuted hover:text-ink absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px]"
-              >
-                ×
-              </button>
-            )}
-          </div>
+          <SearchInput placeholder="Buscar tareas…" param="q" width={250} />
+          <FilterSelect param="tipo" allLabel="Ideas y acciones" options={[{ value: "IDEA", label: "Ideas" }, { value: "ACCION", label: "Acciones" }]} />
+          <FilterSelect param="responsable" allLabel="Todos los encargados" options={[{ value: "UNASSIGNED", label: "Sin asignar" }, ...users.map((u) => ({ value: u.id, label: u.name }))]} />
+          {!activeBrandId ? <FilterSelect param="sin_marca" allLabel="Con y sin marca" options={[{ value: "1", label: "Sin marca" }]} /> : null}
 
-          {/* Tipo: Idea vs Acción */}
-          <div className="flex items-center rounded-lg border border-[var(--line)] bg-[var(--surface-2)] p-0.5 text-[12px]">
-            <button
-              type="button"
-              onClick={() => setFilterKind("TODAS")}
-              className={cn(
-                "rounded px-2.5 py-1 font-medium transition-colors",
-                filterKind === "TODAS"
-                  ? "bg-[var(--surface)] text-ink shadow-xs"
-                  : "text-inkmuted hover:text-ink"
-              )}
-            >
-              Todas
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterKind("IDEA")}
-              className={cn(
-                "flex items-center gap-1 rounded px-2 py-1 font-medium transition-colors",
-                filterKind === "IDEA"
-                  ? "bg-[var(--surface)] text-ink shadow-xs"
-                  : "text-inkmuted hover:text-ink"
-              )}
-            >
-              <Lightbulb size={12} className="text-amber-500" />
-              Ideas
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterKind("ACCION")}
-              className={cn(
-                "flex items-center gap-1 rounded px-2 py-1 font-medium transition-colors",
-                filterKind === "ACCION"
-                  ? "bg-[var(--surface)] text-ink shadow-xs"
-                  : "text-inkmuted hover:text-ink"
-              )}
-            >
-              <Zap size={12} className="text-blue-500" />
-              Acciones
-            </button>
-          </div>
-
-          {/* Encargado */}
-          <select
-            className="select py-1.5 text-[12.5px] max-w-[160px]"
-            value={filterAssignee}
-            onChange={(e) => setFilterAssignee(e.target.value)}
-          >
-            <option value="TODOS">Todos los encargados</option>
-            <option value="UNASSIGNED">Sin asignar</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Marca */}
-          <select
-            className="select py-1.5 text-[12.5px] max-w-[150px]"
-            value={filterBrand}
-            onChange={(e) => setFilterBrand(e.target.value)}
-          >
-            <option value="TODAS">Todas las marcas</option>
-            <option value="NO_BRAND">Sin marca</option>
-            {brands.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Acciones principales */}
@@ -330,7 +214,7 @@ export function TaskBoard({
 
       {/* ------------------------------------------------ TABLERO KANBAN -- */}
       <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start min-h-[calc(100vh-250px)]">
-        {filteredColumns.map((column, colIdx) => (
+        {columns.map((column, colIdx) => (
           <div
             key={column.id}
             onDragOver={handleDragOver}
@@ -348,7 +232,7 @@ export function TaskBoard({
                   {column.name}
                 </h3>
                 <span className="text-[11px] font-bold text-inkmuted bg-[var(--surface-3)] px-1.5 py-0.5 rounded-full">
-                  {column.tasks.length}
+                  {column.tasks.length}{column.hasMore ? "+" : ""}
                 </span>
               </div>
 
@@ -532,6 +416,12 @@ export function TaskBoard({
           </div>
         ))}
       </div>
+
+      {loadMoreHref ? (
+        <div className="flex justify-center py-3">
+          <Link href={loadMoreHref} prefetch={false} scroll={false} className="btn">Mostrar 50 tareas más por columna</Link>
+        </div>
+      ) : null}
 
       {/* ------------------------------------------------ MODAL NUEVA TAREA -- */}
       {creatingInColumnId && (

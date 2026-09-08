@@ -1,0 +1,47 @@
+{
+  "site": "https://intia-lovat.vercel.app/",
+  "recordedAtUtc": "2026-09-08T00:44:21Z",
+  "localDate": "2026-09-07",
+  "timezone": "America/Lima",
+  "environment": {
+    "browser": "Codex In-app Browser",
+    "viewport": "Default, responsive menu observed",
+    "authenticatedBy": "User signed in directly in browser",
+    "role": "OWNER",
+    "brandScope": "Todas las marcas",
+    "contentListDisplayedCount": 15,
+    "deploymentMatchesLocalSource": "Not verified"
+  },
+  "method": {
+    "clock": "Date.now in automation runtime, not browser Performance API",
+    "start": "Immediately before calling the link click API, after opening the menu",
+    "urlEnd": "After waitForURL resolved for the known destination",
+    "earlyRead": "Read main h1 text and role=status after the click API returned",
+    "verification": "Destination h1 verified after each navigation",
+    "includesAutomationOverhead": true,
+    "serverTimingMeasured": false,
+    "networkTimingMeasured": false,
+    "paintTimingMeasured": false,
+    "sqlTimingMeasured": false,
+    "warning": "Exploratory observations, not route latency percentiles. Do not subtract a fixed automation overhead or attribute these intervals to database execution."
+  },
+  "samples": [
+    { "from": "/", "to": "/contenido", "repeat": false, "clickCallMs": 286, "earlyReadMs": 298, "previousHeadingPresent": true, "urlConfirmedMs": 535 },
+    { "from": "/contenido", "to": "/calendario", "repeat": false, "clickCallMs": 269, "earlyReadMs": 280, "previousHeadingPresent": true, "urlConfirmedMs": 896 },
+    { "from": "/calendario", "to": "/marcas", "repeat": false, "clickCallMs": 288, "earlyReadMs": 296, "previousHeadingPresent": true, "urlConfirmedMs": 740 },
+    { "from": "/marcas", "to": "/metricas", "repeat": false, "clickCallMs": 308, "earlyReadMs": 318, "previousHeadingPresent": true, "urlConfirmedMs": 1231 },
+    { "from": "/metricas", "to": "/contenido", "repeat": true, "clickCallMs": 289, "earlyReadMs": 298, "previousHeadingPresent": true, "urlConfirmedMs": 640, "headingConfirmedMs": 653 },
+    { "from": "/contenido", "to": "/calendario", "repeat": true, "clickCallMs": 275, "earlyReadMs": 284, "previousHeadingPresent": true, "urlConfirmedMs": 465, "headingConfirmedMs": 476 },
+    { "from": "/calendario", "to": "/marcas", "repeat": true, "clickCallMs": 287, "earlyReadMs": 296, "previousHeadingPresent": true, "urlConfirmedMs": 607, "headingConfirmedMs": 617 },
+    { "from": "/marcas", "to": "/metricas", "repeat": true, "clickCallMs": 302, "earlyReadMs": 323, "previousHeadingPresent": false, "urlConfirmedMs": 334, "headingConfirmedMs": 343 }
+  ],
+  "observations": {
+    "allDestinationHeadingsVerified": true,
+    "earlyReadsWithPreviousHeading": 7,
+    "earlyReadsWithRoleStatusElement": 0,
+    "capturedConsoleErrorsOrWarningsAtEnd": 0,
+    "applicationDataMutatedByAgent": false,
+    "coldStartProven": false,
+    "causeOfServerLatencyEstablished": false
+  }
+}

@@ -1,3 +1,4 @@
+import { requirePageUser as requireUser } from "@/lib/render-context";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
@@ -15,7 +16,6 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth";
 import { Callout, Card, CardHeader, PageHeader } from "@/components/ui";
 import { GuiaLauncherBoton } from "@/components/guia";
 

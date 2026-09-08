@@ -517,6 +517,15 @@ Dos detalles del código que conviene saber si vas a tocarlo:
 
 ---
 
+## Evaluaciones técnicas
+
+- [Mejoras de navegación implementadas](reports/mejoras-navegacion-implementadas-2026-09-08.md): cambios locales, pruebas y pendientes de despliegue. Regresiones: `npm run test:navegacion` (Node 24).
+
+- [Auditoría de arquitectura, backend, DB y multitenancy](reports/auditoria-arquitectura-multitenant-2026-09-07.md): hallazgos con evidencia, reproducciones y plan de evolución.
+- [Plan de optimización de la navegación](reports/plan-optimizacion-navegacion-2026-09-07.md): análisis de la espera al cambiar de sección, mejoras propuestas y criterios de medición.
+
+La auditoría y el plan describen la copia revisada el 7 de septiembre de 2026; el informe de implementación registra los cambios del día 8. Ninguno acredita por sí mismo la configuración o versión publicada en producción.
+
 ## Antes de abrirlo al equipo
 
 - [ ] Define `AUTH_SECRET` con una cadena larga y aleatoria. Sin esto, las sesiones se firman

@@ -1,3 +1,4 @@
+import { requirePageUser as requireUser } from "@/lib/render-context";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { can, LEVEL } from "@/lib/auth";
 import { FIT_SCORES, USER_ROLE_MAP } from "@/lib/constants";
 import { cn, jsonToLines, parseList } from "@/lib/utils";
 import {

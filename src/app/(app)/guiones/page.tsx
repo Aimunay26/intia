@@ -1,9 +1,11 @@
+import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
+import { loadPage } from "@/lib/list-pagination";
 import { Clapperboard, Film, Search, Sparkles } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { brandWhere, getBrandContext } from "@/lib/brand-context";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { brandWhere } from "@/lib/brand-context";
+import { can, LEVEL } from "@/lib/auth";
 import {
   AI_PROVIDER_MAP,
   AI_PROVIDERS,
@@ -12,7 +14,7 @@ import {
 } from "@/lib/constants";
 import { formatDate, formatSeconds, truncate } from "@/lib/utils";
 import { Avatar, Badge, Card, ColorChip, EmptyState, PageHeader } from "@/components/ui";
-import { ActiveFilters, FilterBar, FilterSelect, SearchInput } from "@/components/filters";
+import { ActiveFilters, FilterBar, FilterSelect, Pagination, SearchInput } from "@/components/filters";
 import { GUIA_TARGETS } from "@/components/guia";
 
 /** Biblioteca de guiones: todo lo escrito, filtrable por lo que sea. */
@@ -21,6 +23,7 @@ export default async function GuionesPage({
 }: {
   searchParams: Promise<{
     q?: string;
+    pagina?: string;
     estructura?: string;
     estado?: string;
     proveedor?: string;
@@ -53,11 +56,11 @@ export default async function GuionesPage({
     ...(proveedor ? { provider: proveedor } : {}),
   };
 
-  const [scripts, total, structures] = await Promise.all([
-    prisma.script.findMany({
+  const [listing, structures] = await Promise.all([
+    loadPage(sp.pagina, 50, () => prisma.script.count({ where }), (range) => prisma.script.findMany({
       where,
-      orderBy: { updatedAt: "desc" },
-      take: 200,
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      ...range,
       select: {
         id: true,
         title: true,
@@ -72,13 +75,14 @@ export default async function GuionesPage({
         author: { select: { name: true, color: true } },
         _count: { select: { scenes: true, content: true } },
       },
-    }),
-    prisma.script.count({ where }),
+    })),
     prisma.structure.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
   ]);
+
+  const { items: scripts, total, page, pageCount } = listing;
 
   const hayFiltros = Boolean(q || estructura || estado || proveedor);
   const puedeCrear = can(user.role, LEVEL.MEMBER);
@@ -273,11 +277,7 @@ export default async function GuionesPage({
         )}
       </Card>
 
-      {scripts.length >= 200 ? (
-        <p className="text-inkmuted mt-3 text-[12px]">
-          Se muestran los 200 guiones más recientes. Filtra para acotar la lista.
-        </p>
-      ) : null}
+      <Pagination page={page} pageCount={pageCount} total={total} />
     </>
   );
 }

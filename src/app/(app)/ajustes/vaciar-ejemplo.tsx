@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { Trash2, TriangleAlert } from "lucide-react";
 
-import { vaciarDatosDeEjemplo, type Recuento, type VaciarState } from "@/app/actions/datos-de-ejemplo";
+import { contarDatosDeEjemplo, vaciarDatosDeEjemplo, type Recuento, type VaciarState } from "@/app/actions/datos-de-ejemplo";
 import { Callout, Card, CardHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
 import { GuiaLauncherBoton, GUIA_TARGETS } from "@/components/guia";
@@ -15,7 +15,29 @@ import { GuiaLauncherBoton, GUIA_TARGETS } from "@/components/guia";
  * solo después, escribiendo la palabra, borra. Es la única acción de la app que
  * borra muchas filas de golpe, y un clic accidental aquí no tiene vuelta atrás.
  */
-export function VaciarEjemplo({ recuento }: { recuento: Recuento }) {
+export function VaciarEjemplo() {
+  const [recuento, setRecuento] = useState<Recuento | null>(null);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  if (recuento) return <VaciarEjemploDetalle recuento={recuento} />;
+  return (
+    <Card>
+      <CardHeader title="Datos de ejemplo" subtitle="Revisa qué datos se podrían limpiar antes de decidir." icon={<Trash2 size={15} />} />
+      <div className="space-y-3 p-4">
+        {error ? <p role="alert" className="text-danger text-sm">{error}</p> : null}
+        <button className="btn btn-sm" disabled={pending} onClick={() => {
+          setError(null);
+          startTransition(async () => {
+            try { setRecuento(await contarDatosDeEjemplo()); }
+            catch { setError("No se pudo obtener el recuento. Vuelve a intentarlo."); }
+          });
+        }}>{pending ? "Revisando…" : "Revisar datos de ejemplo"}</button>
+      </div>
+    </Card>
+  );
+}
+
+function VaciarEjemploDetalle({ recuento }: { recuento: Recuento }) {
   const [state, formAction] = useActionState<VaciarState, FormData>(vaciarDatosDeEjemplo, null);
   const [abierto, setAbierto] = useState(false);
 

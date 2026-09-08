@@ -1,7 +1,9 @@
+import { requirePageUser as requireUser } from "@/lib/render-context";
 import { Mail, Phone, ShieldCheck, UserCog, Users, UserSquare2 } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, can, LEVEL } from "@/lib/auth";
+import { getTeamParticipation } from "@/lib/team-participation";
+import { can, LEVEL } from "@/lib/auth";
 import {
   ACCOUNT_STATUS_MAP,
   ASSIGNMENT_ROLES,
@@ -43,7 +45,7 @@ export default async function EquipoPage({
   const sp = await searchParams;
   const canManage = can(user.role, LEVEL.OWNER);
 
-  const [personas, archetypes, assignments] = await Promise.all([
+  const [personas, archetypes, { participation: participacion, totalAssignments }] = await Promise.all([
     prisma.user.findMany({
       orderBy: [{ active: "desc" }, { name: "asc" }],
       select: {
@@ -65,22 +67,9 @@ export default async function EquipoPage({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
-    prisma.assignment.findMany({
-      select: { userId: true, role: true, contentItemId: true },
-    }),
+    getTeamParticipation(),
   ]);
 
-  /* Participación: cuántos videos y en qué papeles. */
-  const participacion = new Map<string, { videos: Set<string>; roles: Map<string, number> }>();
-  for (const a of assignments) {
-    let entry = participacion.get(a.userId);
-    if (!entry) {
-      entry = { videos: new Set<string>(), roles: new Map<string, number>() };
-      participacion.set(a.userId, entry);
-    }
-    entry.videos.add(a.contentItemId);
-    entry.roles.set(a.role, (entry.roles.get(a.role) ?? 0) + 1);
-  }
 
   const adminsActivos = personas.filter((p) => p.role === "OWNER" && p.active).length;
 
@@ -163,7 +152,7 @@ export default async function EquipoPage({
         <Stat
           label="Participan en videos"
           value={participacion.size}
-          sub={`${assignments.length} asignaciones registradas`}
+          sub={`${totalAssignments} asignaciones registradas`}
           icon={<UserCog size={15} />}
           accent="#10b981"
         />
@@ -216,7 +205,7 @@ export default async function EquipoPage({
               <tbody>
                 {lista.map((p) => {
                   const datos = participacion.get(p.id);
-                  const videos = datos?.videos.size ?? 0;
+                  const videos = datos?.videos ?? 0;
                   const papeles = ASSIGNMENT_ROLES.map((r) => ({
                     option: r,
                     count: datos?.roles.get(r.value) ?? 0,

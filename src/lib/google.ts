@@ -29,7 +29,7 @@ export type GoogleConfig = {
 };
 
 /** Devuelve la configuración de Google, o null si todavía no está puesta. */
-export async function getGoogleConfig(): Promise<GoogleConfig | null> {
+export async function getGoogleConfig(settings?: Record<string, string>): Promise<GoogleConfig | null> {
   const envId = process.env.GOOGLE_CLIENT_ID?.trim();
   const envSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
   if (envId && envSecret) {
@@ -37,8 +37,8 @@ export async function getGoogleConfig(): Promise<GoogleConfig | null> {
   }
 
   const [dbId, dbSecret] = await Promise.all([
-    getSetting(GOOGLE_SETTING_KEYS.clientId),
-    getSetting(GOOGLE_SETTING_KEYS.clientSecret),
+    settings ? settings[GOOGLE_SETTING_KEYS.clientId] : getSetting(GOOGLE_SETTING_KEYS.clientId),
+    settings ? settings[GOOGLE_SETTING_KEYS.clientSecret] : getSetting(GOOGLE_SETTING_KEYS.clientSecret),
   ]);
   if (dbId?.trim() && dbSecret?.trim()) {
     return { clientId: dbId.trim(), clientSecret: dbSecret.trim(), source: "db" };

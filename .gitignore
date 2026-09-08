@@ -18,3 +18,4 @@ dev-server-error.log
 dev-log.txt
 
 .vercel
+.audit/

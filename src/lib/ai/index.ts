@@ -178,6 +178,8 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
   const systemPrompt = buildSystemPrompt(promptInput);
   const userPrompt = buildUserPrompt(promptInput);
 
+  if (Buffer.byteLength(systemPrompt) + Buffer.byteLength(userPrompt) > 200000) throw new AiError("Las referencias exceden el límite de contexto. Reduce los documentos seleccionados.");
+
   const provider = input.provider || structure.defaultProvider || "anthropic";
   const model =
     input.model?.trim() ||

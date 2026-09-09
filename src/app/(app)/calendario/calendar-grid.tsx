@@ -1,7 +1,8 @@
+import { timeKey } from "@/lib/utils";
 import Link from "next/link";
 
 import { CONTENT_STATUS_MAP, EVENT_KIND_MAP, platformLabels } from "@/lib/constants";
-import { cn, DIAS_CORTOS, dateKey, isToday, monthGrid, withAlpha } from "@/lib/utils";
+import { cn, dateKey, DIAS_CORTOS, isToday, monthGrid, withAlpha } from "@/lib/utils";
 
 /**
  * Rejilla mensual del calendario de contenido.
@@ -70,13 +71,12 @@ export function CalendarGrid({
       const lista = eventosPorDia.get(key);
       if (lista) lista.push(e);
       else eventosPorDia.set(key, [e]);
-      dia = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() + 1, 12, 0, 0, 0);
+      dia = new Date(dia.getTime() + 86_400_000);
       vueltas++;
     }
   }
 
-  const hora = (d: Date) =>
-    `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const hora = timeKey;
 
   return (
     <div className="card overflow-hidden">
@@ -94,7 +94,7 @@ export function CalendarGrid({
       <div className="grid grid-cols-7">
         {grid.map((day, i) => {
           const key = dateKey(day);
-          const delMes = day.getMonth() === month;
+          const delMes = day.getUTCMonth() === month;
           const hoy = isToday(day);
           const lista = porDia.get(key) ?? [];
           const agendaDia = eventosPorDia.get(key) ?? [];
@@ -128,7 +128,7 @@ export function CalendarGrid({
                         : "text-inkmuted opacity-55"
                   )}
                 >
-                  {day.getDate()}
+                  {day.getUTCDate()}
                 </span>
                 {total > 1 ? (
                   <span className="text-inkmuted text-[10px] font-semibold">{total}</span>

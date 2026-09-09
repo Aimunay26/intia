@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-09-09T20:06:37.623Z",
+  "environment": "local-fixture",
+  "baselineMatchesNeon": true,
+  "invalidPreflightRolledBack": true,
+  "decimalPreflightRolledBack": true,
+  "exactMoneyPreserved": true,
+  "legacyValuesPreserved": true,
+  "restoreRowsAndSchemaMatch": true,
+  "tables": 29,
+  "backupBytes": 91884
+}

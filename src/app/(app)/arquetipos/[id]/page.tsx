@@ -1,44 +1,45 @@
+import { EditForm, RevisionField } from "@/components/edit-form";
 import { requirePageUser as requireUser } from "@/lib/render-context";
-import type { ReactNode } from "react";
+import {
+	FileText,
+	MessageSquareQuote,
+	Plus,
+	Shapes,
+	Sparkles,
+	Trash2,
+	Users,
+	UserSquare2,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  FileText,
-  MessageSquareQuote,
-  Plus,
-  Shapes,
-  Sparkles,
-  Trash2,
-  UserSquare2,
-  Users,
-} from "lucide-react";
+import type { ReactNode } from "react";
 
-import { prisma } from "@/lib/prisma";
+import {
+	actualizarArquetipo,
+	asignarArquetipoAUsuario,
+	eliminarArquetipo,
+} from "@/app/actions/archetypes";
+import { AssetManager, type AssetRow } from "@/components/assets";
+import { BotonCargarBranding } from "@/components/cargador-branding";
+import { DeleteButton, SubmitButton } from "@/components/forms";
+import {
+	Avatar,
+	Badge,
+	Breadcrumb,
+	Callout,
+	Card,
+	CardHeader,
+	EmptyState,
+	Field,
+	PageHeader,
+} from "@/components/ui";
 import { can, LEVEL } from "@/lib/auth";
 import { FIT_SCORES, USER_ROLE_MAP } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 import { cn, jsonToLines, parseList } from "@/lib/utils";
-import {
-  Avatar,
-  Badge,
-  Breadcrumb,
-  Callout,
-  Card,
-  CardHeader,
-  EmptyState,
-  Field,
-  PageHeader,
-} from "@/components/ui";
-import { DeleteButton, SubmitButton } from "@/components/forms";
-import { AssetManager, type AssetRow } from "@/components/assets";
-import {
-  actualizarArquetipo,
-  asignarArquetipoAUsuario,
-  eliminarArquetipo,
-} from "@/app/actions/archetypes";
 import { ColorPicker, EnergyPicker } from "../archetype-form";
-import { FitMatrix, type FitRow } from "./fit-matrix";
 import { BrandingForm, BrandingLectura } from "./branding";
-import { BotonCargarBranding } from "@/components/cargador-branding";
+import { FitMatrix, type FitRow } from "./fit-matrix";
 
 export const dynamic = "force-dynamic";
 
@@ -251,7 +252,8 @@ export default async function ArquetipoPage({
               icon={<UserSquare2 size={15} />}
             />
             {editable ? (
-              <form action={actualizarArquetipo.bind(null, arquetipo.id)} className="space-y-4 p-5">
+              <EditForm action={actualizarArquetipo.bind(null, arquetipo.id)} className="space-y-4 p-5">
+<RevisionField value={arquetipo.updatedAt} />
                 <div className="grid gap-3.5 sm:grid-cols-[1.4fr_1fr]">
                   <Field label="Nombre" required>
                     <input
@@ -380,7 +382,7 @@ export default async function ArquetipoPage({
                     Guardar cambios
                   </SubmitButton>
                 </div>
-              </form>
+              </EditForm>
             ) : (
               <div className="space-y-4 p-5">
                 <Callout tone="info" title="Solo lectura">

@@ -1,5 +1,5 @@
+import { renderRequestId } from "@/lib/performance-context";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { randomUUID } from "node:crypto";
 
 export type QueryTrace = { requestId: string; phase: string; operations: number; queryMs: number };
 export const queryTrace = new AsyncLocalStorage<QueryTrace>();
@@ -46,9 +46,10 @@ export async function measureQuery<T>(model: string | undefined, operation: stri
     const durationMs = Math.round(((finished ?? performance.now()) - started) * 100) / 100;
     if (trace) { trace.operations++; trace.queryMs += durationMs; }
     console.info("[performance]", JSON.stringify({
-      kind: "query", requestId: trace?.requestId ?? randomUUID(), phase: trace?.phase ?? "unscoped",
+      kind: "query", requestId: trace?.requestId ?? renderRequestId(), phase: trace?.phase ?? "unscoped",
       model: model ?? "raw", operation, durationMs, ok, result: size,
-      release: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12), region: process.env.VERCEL_REGION,
+      environment: process.env.VERCEL_ENV ?? process.env.PERFORMANCE_ENVIRONMENT ?? "local",
+      release: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ?? process.env.PERFORMANCE_RELEASE ?? "local", region: process.env.VERCEL_REGION,
     }));
   }
 }

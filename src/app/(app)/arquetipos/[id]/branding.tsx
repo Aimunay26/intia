@@ -1,11 +1,12 @@
+import { EditForm, RevisionField } from "@/components/edit-form";
 import type { Archetype } from "@prisma/client";
 import { BadgeCheck, Eye, MessageSquareQuote, Palette, Sparkles, TriangleAlert } from "lucide-react";
 
-import { jsonToLines, parseJson, parseList } from "@/lib/utils";
-import { Callout, Card, CardHeader, Field } from "@/components/ui";
-import { SubmitButton } from "@/components/forms";
 import { actualizarMarcaPersonal } from "@/app/actions/archetypes";
 import { BotonCargarBranding } from "@/components/cargador-branding";
+import { SubmitButton } from "@/components/forms";
+import { Callout, Card, CardHeader, Field } from "@/components/ui";
+import { jsonToLines, parseJson, parseList } from "@/lib/utils";
 
 /**
  * El informe de marca personal de la persona.
@@ -228,7 +229,8 @@ export function BrandingForm({ a }: { a: Archetype }) {
   const guardar = actualizarMarcaPersonal.bind(null, a.id);
 
   return (
-    <form action={guardar}>
+    <EditForm action={guardar}>
+<RevisionField value={a.updatedAt} />
       <Card>
         <CardHeader
           title="Editar marca personal"
@@ -529,6 +531,6 @@ export function BrandingForm({ a }: { a: Archetype }) {
           </SubmitButton>
         </div>
       </Card>
-    </form>
+    </EditForm>
   );
 }

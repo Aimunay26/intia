@@ -30,7 +30,7 @@ test("O01: resultados grandes se estiman con recorrido limitado y percentiles se
   const size=resultSize(Array.from({length:10000},()=>({text:"x".repeat(20)})));
   assert.equal(size.rows,10000); assert.equal(size.sampled,true); assert.ok(size.bytesApprox<10000);
   const records=parseRecords('[navigation] {"release":"a","to":"/","status":"complete","readyMs":100}\n[navigation] {"release":"b","to":"/","status":"complete","readyMs":900}\n[navigation] {"release":"a","to":"/","status":"cancelled","readyMs":1}');
-  const groups=summarize(records);assert.equal(groups.length,2);assert.equal(groups[0].timings.readyMs.p95,100);assert.equal(groups[0].failures,1);
+  const groups=summarize(records);assert.equal(groups.length,2);assert.equal(groups[0].timings.readyMs.p95,null);assert.equal(groups[0].timings.readyMs.p50,100);assert.equal(groups[0].failures,0);assert.equal(groups[0].cancelled,1);
 });
 
 test("O05: fechas inválidas, años bisiestos y límites no dependen de la zona del servidor", () => {

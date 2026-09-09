@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withWorkflow } from "workflow/next";
 
 const nextConfig: NextConfig = {
   // Desarrollo y produccion escriben en carpetas distintas. Si comparten `.next`,
@@ -14,7 +15,6 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ["@prisma/client", "bcryptjs", "unpdf"],
-  eslint: { ignoreDuringBuilds: true },
 };
 
-export default nextConfig;
+export default withWorkflow(nextConfig);

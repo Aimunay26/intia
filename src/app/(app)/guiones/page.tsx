@@ -1,23 +1,22 @@
-import { getStructureChoices } from "@/lib/structure-choices";
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
-import Link from "next/link";
 import { loadPage } from "@/lib/list-pagination";
+import { measurePagePhase } from "@/lib/performance-page";
+import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getStructureChoices } from "@/lib/structure-choices";
 import { Clapperboard, Film, Search, Sparkles } from "lucide-react";
+import Link from "next/link";
 
-import { prisma } from "@/lib/prisma";
-import { brandWhere } from "@/lib/brand-context";
-import { can, LEVEL } from "@/lib/auth";
-import {
-  AI_PROVIDER_MAP,
-  AI_PROVIDERS,
-  SCRIPT_STATUSES,
-  SCRIPT_STATUS_MAP,
-} from "@/lib/constants";
-import { formatDate, formatSeconds, truncate } from "@/lib/utils";
-import { Avatar, Badge, Card, ColorChip, EmptyState, PageHeader } from "@/components/ui";
 import { ActiveFilters, FilterBar, FilterSelect, Pagination, SearchInput } from "@/components/filters";
 import { GUIA_TARGETS } from "@/components/guia";
+import { Avatar, Badge, Card, ColorChip, EmptyState, PageHeader } from "@/components/ui";
+import { can, LEVEL } from "@/lib/auth";
+import {
+	AI_PROVIDER_MAP,
+	AI_PROVIDERS,
+	SCRIPT_STATUS_MAP,
+	SCRIPT_STATUSES,
+} from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import { formatDate, formatSeconds, truncate } from "@/lib/utils";
 
 /** Biblioteca de guiones: todo lo escrito, filtrable por lo que sea. */
 export default async function GuionesPage({

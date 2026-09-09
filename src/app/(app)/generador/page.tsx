@@ -1,30 +1,23 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
-import Link from "next/link";
+import { measurePagePhase } from "@/lib/performance-page";
+import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
 import { Layers, Lock, Sparkles } from "lucide-react";
+import Link from "next/link";
 
-/**
- * Generar un guion con Claude Opus puede tardar entre 30 y 90 segundos, y las
- * Server Actions se ejecutan dentro del segmento de esta página. Sin esto, en
- * producción la petición se cortaría antes de terminar y el guion se perdería.
- *
- * En Vercel el tope real depende del plan: Hobby corta a los 60 s, Pro llega a
- * 300 s. Si en Hobby se corta, hay que bajar la duración objetivo del guion o
- * usar un modelo más rápido (Sonnet 5 o Gemini Flash).
- */
-export const maxDuration = 300;
+/** La acción sólo registra y despacha; las llamadas largas pertenecen a Workflow. */
+export const maxDuration = 60;
 
-import { prisma } from "@/lib/prisma";
-import { can, LEVEL } from "@/lib/auth";
-import { aiStatus } from "@/lib/settings";
-import { parseJson, parseList } from "@/lib/utils";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { can, LEVEL } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { aiStatus } from "@/lib/settings";
+import { resourceLimit } from "@/lib/resource-limits";
+import { parseJson, parseList } from "@/lib/utils";
 import {
-  GeneratorForm,
-  type GeneratorArchetype,
-  type GeneratorBeat,
-  type GeneratorBrand,
-  type GeneratorStructure,
+	GeneratorForm,
+	type GeneratorArchetype,
+	type GeneratorBeat,
+	type GeneratorBrand,
+	type GeneratorStructure,
 } from "./generator-form";
 
 /**
@@ -45,6 +38,8 @@ export default async function GeneradorPage({
 }) {
   return measurePagePhase("page:/generador", async () => {
   const user = await requireUser();
+  const maxBatch = resourceLimit("AI_MAX_BATCH", 3);
+  const jobsEnabled = process.env.AI_JOBS_ENABLED === "true" && maxBatch > 0;
   const sp = await searchParams;
 
   const [structures, brands, archetypes, fits, refRows, ai, brandCtx] = await Promise.all([
@@ -205,7 +200,7 @@ export default async function GeneradorPage({
         }
       />
 
-      {structureOptions.length === 0 ? (
+      {!jobsEnabled ? <Card><div className="space-y-3 p-5"><p>La generación está deshabilitada. El dueño puede activarla cuando termine la configuración del servicio.</p><Link href="/generador/trabajos" className="text-brand">Mis generaciones →</Link></div></Card> : structureOptions.length === 0 ? (
         <Card>
           <EmptyState
             icon={<Layers size={19} />}
@@ -219,7 +214,9 @@ export default async function GeneradorPage({
           />
         </Card>
       ) : (
-        <GeneratorForm
+        <><div className="mb-4"><Link href="/generador/trabajos" className="text-brand font-semibold">Mis generaciones →</Link><p className="text-sm text-inkmuted">Hasta {maxBatch} estructuras por solicitud. Las llamadas a tu proveedor de IA conservan su tarifa.</p></div>
+      <GeneratorForm
+          maxBatch={maxBatch}
           structures={structureOptions}
           brands={brandOptions}
           archetypes={archetypeOptions}
@@ -233,7 +230,7 @@ export default async function GeneradorPage({
           initialProduct={sp.producto}
           initialRequest={sp.peticion}
           initialAngle={sp.angulo}
-        />
+        /></>
       )}
     </>
   );

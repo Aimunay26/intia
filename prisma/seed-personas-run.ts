@@ -8,6 +8,7 @@
  * Se puede correr las veces que haga falta: actualiza por slug, no duplica.
  */
 
+import "../scripts/local-database-only.mjs";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 

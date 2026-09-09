@@ -1,0 +1,11 @@
+{
+  "checkedOn": "2026-09-09",
+  "environment": "production",
+  "method": "SELECT de solo lectura en Neon SQL Editor, rama main y base neondb",
+  "missingArchetypes": 0,
+  "missingVideos": 0,
+  "inconsistentLinks": 0,
+  "orphanAssets": 0,
+  "baselineRegisteredByThisDelivery": false,
+  "weeklyMigrationAppliedByThisDelivery": false
+}

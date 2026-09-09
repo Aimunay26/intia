@@ -1,35 +1,35 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { getTeamList, getTeamStats, teamMemberSelect, type TeamFilters } from "@/lib/team-list";
 import { Pagination } from "@/components/filters";
+import { measurePagePhase } from "@/lib/performance-page";
 import { requirePageUser as requireUser } from "@/lib/render-context";
+import { getTeamList, getTeamStats, teamMemberSelect, type TeamFilters } from "@/lib/team-list";
 import { Mail, Phone, ShieldCheck, UserCog, Users, UserSquare2 } from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
-import { getTeamParticipation } from "@/lib/team-participation";
-import { can, LEVEL } from "@/lib/auth";
-import {
-  ACCOUNT_STATUS_MAP,
-  ASSIGNMENT_ROLES,
-  USER_ROLES,
-  USER_ROLE_MAP,
-} from "@/lib/constants";
-import { cn, formatDate } from "@/lib/utils";
-import {
-  Avatar,
-  Badge,
-  Card,
-  CardHeader,
-  ColorChip,
-  EmptyState,
-  PageHeader,
-  Stat,
-} from "@/components/ui";
 import { FilterBar, FilterSelect, SearchInput } from "@/components/filters";
 import {
-  EditUserButton,
-  InviteUserButton,
-  type ArchetypeOption,
-  type TeamMember,
+	Avatar,
+	Badge,
+	Card,
+	CardHeader,
+	ColorChip,
+	EmptyState,
+	PageHeader,
+	Stat,
+} from "@/components/ui";
+import { can, LEVEL } from "@/lib/auth";
+import {
+	ACCOUNT_STATUS_MAP,
+	ASSIGNMENT_ROLES,
+	USER_ROLE_MAP,
+	USER_ROLES,
+} from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import { getTeamParticipation } from "@/lib/team-participation";
+import { cn, formatDate } from "@/lib/utils";
+import {
+	EditUserButton,
+	InviteUserButton,
+	type ArchetypeOption,
+	type TeamMember,
 } from "./user-form";
 
 export const dynamic = "force-dynamic";

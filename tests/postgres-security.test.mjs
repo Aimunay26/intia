@@ -70,19 +70,19 @@ test("seguridad sobre PostgreSQL real y sesiones firmadas", async t => {
       await assert.rejects(run(ownerJar, () => tasks.eliminarColumna(spare.id)), /única/);
     });
     const video = await prisma.contentItem.create({ data:{brandId:brand.id,title:"Métricas protegidas",scheduledDate:new Date("2026-09-09T12:00:00Z")} });
-    const oldMetric = await prisma.metric.create({ data:{contentItemId:video.id,date:new Date("2026-09-09T12:00:00Z"),views:100,likes:25,spend:100,revenue:500,notes:"Conservar"} });
+    const oldMetric = await prisma.metric.create({ data:{contentItemId:video.id,date:new Date("2026-09-07T12:00:00Z"),platform:"TIKTOK",period:"WEEKLY",views:100,likes:25,spend:100,revenue:500,notes:"Conservar"} });
     await t.test("CSV parcial/vacío conserva columnas; cero explícito actualiza y registra valores anteriores", async () => {
-      const result = await run(memberJar, () => metrics.importarMetricasCsv(null,form({csv:`video,fecha,vistas,likes\n${video.id},2026-09-09,200,`})));
+      const result = await run(memberJar, () => metrics.importarMetricasCsv(null,form({csv:`video,fecha,plataforma,vistas,likes\n${video.id},2026-09-07,TIKTOK,200,`})));
       assert.equal(result.updated,1);
       const after = await prisma.metric.findUniqueOrThrow({where:{id:oldMetric.id}});
-      assert.equal(after.views,200); assert.equal(after.likes,25); assert.equal(after.spend,100); assert.equal(after.revenue,500); assert.equal(after.notes,"Conservar");
-      await run(memberJar, () => metrics.importarMetricasCsv(null,form({csv:`video,fecha,likes\n${video.id},2026-09-09,0`})));
+      assert.equal(after.views,200); assert.equal(after.likes,25); assert.equal(after.spend.toString(),"100"); assert.equal(after.revenue.toString(),"500"); assert.equal(after.notes,"Conservar");
+      await run(memberJar, () => metrics.importarMetricasCsv(null,form({csv:`video,fecha,plataforma,likes\n${video.id},2026-09-07,TIKTOK,0`})));
       assert.equal((await prisma.metric.findUniqueOrThrow({where:{id:oldMetric.id}})).likes,0);
       const audits = await prisma.auditLog.findMany({where:{entity:"Metric",entityId:oldMetric.id}});
       assert.ok(audits.some(row=>JSON.parse(row.changes).likes?.antes===25 && JSON.parse(row.changes).likes?.despues===0));
     });
     await t.test("CSV inválido no altera filas: fechas inexistentes, negativos, texto, cabeceras duplicadas", async () => {
-      for (const csv of [`video,fecha,vistas\n${video.id},2026-02-31,10`,`video,fecha,vistas\n${video.id},2026-09-09,-1`,`video,fecha,vistas\n${video.id},2026-09-09,abc12`,`video,fecha,vistas,views\n${video.id},2026-09-09,1,2`,`video,fecha,vistas\n${video.id},2026-09-09,2147483648`,`video,fecha,vistas\n${video.id},2026-09-09,1.2.3`,`video,fecha,vistas\n${video.id},2026-09-09,"12`,`video,fecha,vistas\n${video.id},2026-09-09,1"2"`,`video,fecha,vistas\n${video.id},2026-09-09,50%`]) {
+      for (const csv of [`video,fecha,plataforma,vistas\n${video.id},2026-02-31,TIKTOK,10`,`video,fecha,plataforma,vistas\n${video.id},2026-09-07,TIKTOK,-1`,`video,fecha,plataforma,vistas\n${video.id},2026-09-07,TIKTOK,abc12`,`video,fecha,plataforma,vistas,views\n${video.id},2026-09-07,TIKTOK,1,2`,`video,fecha,plataforma,vistas\n${video.id},2026-09-07,TIKTOK,2147483648`,`video,fecha,plataforma,vistas\n${video.id},2026-09-07,TIKTOK,1.2.3`,`video,fecha,plataforma,vistas\n${video.id},2026-09-07,TIKTOK,"12`,`video,fecha,plataforma,vistas\n${video.id},2026-09-07,TIKTOK,1"2"`,`video,fecha,plataforma,vistas\n${video.id},2026-09-07,TIKTOK,50%`]) {
         const result=await run(memberJar,()=>metrics.importarMetricasCsv(null,form({csv}))); assert.ok(result.error || result.ignored.length);
       }
       assert.equal((await prisma.metric.findUniqueOrThrow({where:{id:oldMetric.id}})).views,200);

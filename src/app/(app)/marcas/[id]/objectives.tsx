@@ -1,29 +1,31 @@
 "use client";
+import { EditForm, RevisionField } from "@/components/edit-form";
 
-import { useState } from "react";
 import { AlertTriangle, Pencil, Plus, Target, Trash2, X } from "lucide-react";
+import { useState } from "react";
 
 import {
-  OBJECTIVE_PERIODS,
-  OBJECTIVE_STATUSES,
-  OBJECTIVE_STATUS_MAP,
+	actualizarObjetivo,
+	crearObjetivo,
+	eliminarObjetivo,
+} from "@/app/actions/brands";
+import { DeleteButton, SubmitButton } from "@/components/forms";
+import { Badge, EmptyState, Field, ProgressBar } from "@/components/ui";
+import {
+	OBJECTIVE_PERIODS,
+	OBJECTIVE_STATUSES,
+	OBJECTIVE_STATUS_MAP,
 } from "@/lib/constants";
 import {
-  clamp,
-  formatDate,
-  formatNumber,
-  fromDateKey,
-  objectiveProgress,
+	clamp,
+	formatDate,
+	formatNumber,
+	fromDateKey,
+	objectiveProgress,
 } from "@/lib/utils";
-import { Badge, EmptyState, Field, ProgressBar } from "@/components/ui";
-import { DeleteButton, SubmitButton } from "@/components/forms";
-import {
-  actualizarObjetivo,
-  crearObjetivo,
-  eliminarObjetivo,
-} from "@/app/actions/brands";
 
 export type ObjectiveRow = {
+  updatedAt: string;
   id: string;
   name: string;
   description: string | null;
@@ -308,11 +310,12 @@ export function ObjectivesPanel({
                   return (
                     <tr key={o.id}>
                       <td colSpan={canEdit ? 8 : 7} className="bg-surface2 p-4">
-                        <form
+                        <EditForm
                           action={actualizarObjetivo}
-                          onSubmit={() => setEditingId(null)}
+                          onSuccess={() => setEditingId(null)}
                           className="fade-in"
                         >
+<RevisionField value={o.updatedAt} />
                           <input type="hidden" name="id" value={o.id} />
                           <ObjectiveFields value={o} />
                           <div className="mt-3 flex justify-end gap-2">
@@ -330,7 +333,7 @@ export function ObjectivesPanel({
                               Guardar objetivo
                             </SubmitButton>
                           </div>
-                        </form>
+                        </EditForm>
                       </td>
                     </tr>
                   );

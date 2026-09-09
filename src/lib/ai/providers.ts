@@ -1,3 +1,4 @@
+import { resourceLimit } from "@/lib/resource-limits";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { GoogleGenAI } from "@google/genai";
@@ -30,7 +31,8 @@ export type ProviderCall = {
 export class AiError extends Error {
   constructor(
     message: string,
-    readonly detail?: string
+    readonly detail?: string,
+    readonly retryable = false
   ) {
     super(message);
     this.name = "AiError";
@@ -40,7 +42,7 @@ export class AiError extends Error {
 /* ---------------------------------------------------------------- CLAUDE -- */
 
 export async function generateWithClaude(call: ProviderCall): Promise<GenerationResult> {
-  const client = new Anthropic({ apiKey: call.apiKey, maxRetries: 2 });
+  const client = new Anthropic({ apiKey: call.apiKey, maxRetries: 0, timeout: 240000 });
 
   let message;
   try {
@@ -48,13 +50,13 @@ export async function generateWithClaude(call: ProviderCall): Promise<Generation
     // peticion muera por timeout HTTP en guiones largos.
     const stream = client.messages.stream({
       model: call.model,
-      max_tokens: 32000,
+      max_tokens: resourceLimit("AI_MAX_OUTPUT_TOKENS", 32000),
       system: call.system,
       messages: [{ role: "user", content: call.user }],
       output_config: {
         format: zodOutputFormat(GeneratedScriptSchema),
       },
-    });
+    }, { signal: AbortSignal.timeout(240000) });
     message = await stream.finalMessage();
   } catch (error) {
     throw toAiError(error, "Claude");
@@ -127,13 +129,13 @@ function geminiSchema(): unknown {
 }
 
 export async function generateWithGemini(call: ProviderCall): Promise<GenerationResult> {
-  const ai = new GoogleGenAI({ apiKey: call.apiKey });
+  const ai = new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: 240000, retryOptions: { attempts: 1 } } });
 
   const baseConfig = {
     systemInstruction: call.system,
     responseMimeType: "application/json",
     temperature: call.temperature ?? 1,
-    maxOutputTokens: 32000,
+    maxOutputTokens: resourceLimit("AI_MAX_OUTPUT_TOKENS", 32000),
   };
 
   let text = "";
@@ -150,23 +152,8 @@ export async function generateWithGemini(call: ProviderCall): Promise<Generation
       input: response.usageMetadata?.promptTokenCount,
       output: response.usageMetadata?.candidatesTokenCount,
     };
-  } catch (schemaError) {
-    // Si el modelo rechaza el esquema, se reintenta pidiendo solo JSON.
-    // El contrato exacto ya va escrito dentro del prompt del sistema.
-    try {
-      const response = await ai.models.generateContent({
-        model: call.model,
-        contents: call.user,
-        config: baseConfig,
-      });
-      text = response.text ?? "";
-      usage = {
-        input: response.usageMetadata?.promptTokenCount,
-        output: response.usageMetadata?.candidatesTokenCount,
-      };
-    } catch (error) {
-      throw toAiError(error ?? schemaError, "Gemini");
-    }
+  } catch (error) {
+    throw toAiError(error, "Gemini");
   }
 
   const script = parseScriptJson(text);
@@ -285,7 +272,7 @@ function toAiError(error: unknown, providerLabel: string): AiError {
   if (status === 429 || /rate|quota|resource[_ ]exhausted/i.test(message)) {
     return new AiError(
       `${providerLabel} está limitando las peticiones.`,
-      "Espera un momento y vuelve a intentar, o cambia de proveedor."
+      "Espera un momento y vuelve a intentar, o cambia de proveedor.", true
     );
   }
   if (status === 404 || /model|not found/i.test(message)) {
@@ -297,8 +284,8 @@ function toAiError(error: unknown, providerLabel: string): AiError {
   if (status && status >= 500) {
     return new AiError(
       `${providerLabel} tuvo un error de servidor.`,
-      "Es temporal. Intenta de nuevo en unos segundos."
+      "Es temporal. Intenta de nuevo en unos segundos.", true
     );
   }
-  return new AiError(`Falló la generación con ${providerLabel}.`, message);
+  return new AiError(`Falló la generación con ${providerLabel}.`, "Revisa el proveedor y vuelve a intentar.", /timeout|timed out|connection|network|fetch failed/i.test(message));
 }

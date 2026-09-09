@@ -1,18 +1,20 @@
 "use client";
 
-import { useActionState, useEffect, useId, useState } from "react";
+import { RevisionField } from "@/components/edit-form";
 import { Save } from "lucide-react";
+import { useActionState, useEffect, useId, useState } from "react";
 
 import {
-  actualizarEstructura,
-  crearEstructura,
-  type StructureState,
+	actualizarEstructura,
+	crearEstructura,
+	type StructureState,
 } from "@/app/actions/structures";
-import { AI_MODELS, AI_PROVIDERS, STRUCTURE_CATEGORIES } from "@/lib/constants";
-import { Callout, Field } from "@/components/ui";
 import { Modal, SubmitButton } from "@/components/forms";
+import { Callout, Field } from "@/components/ui";
+import { AI_MODELS, AI_PROVIDERS, STRUCTURE_CATEGORIES } from "@/lib/constants";
 
 export type StructureFormValues = {
+  updatedAt?: string;
   id: string;
   name: string;
   category: string;
@@ -94,6 +96,7 @@ export function StructureForm({
         width={620}
       >
         <form action={formAction} className="space-y-4">
+          {mode === "editar" && value.updatedAt ? <RevisionField value={value.updatedAt} /> : null}
           {mode === "editar" ? <input type="hidden" name="id" value={value.id} /> : null}
 
           <Field label="Nombre del formato" required>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
+import { Fragment, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -156,6 +156,7 @@ export function GeneratorForm({
   initialProduct,
   initialRequest,
   initialAngle,
+  maxBatch = 3,
 }: {
   structures: GeneratorStructure[];
   brands: GeneratorBrand[];
@@ -167,10 +168,17 @@ export function GeneratorForm({
   initialProduct?: string;
   initialRequest?: string;
   initialAngle?: string;
+  maxBatch?: number;
 }) {
   const router = useRouter();
+  const submission = useRef({ fingerprint: "", key: "" });
   const [state, formAction, pending] = useActionState<GenerateState, FormData>(
-    generarGuion,
+    async (previous, data) => {
+      const fingerprint = JSON.stringify(Array.from(data.entries()));
+      if (submission.current.fingerprint !== fingerprint) submission.current = { fingerprint, key: crypto.randomUUID() };
+      data.set("requestKey", submission.current.key);
+      return generarGuion(previous, data);
+    },
     null
   );
 
@@ -234,8 +242,8 @@ export function GeneratorForm({
 
   // Al terminar, el guion nuevo se abre solo.
   useEffect(() => {
-    if (state?.scriptId) router.push(`/guiones/${state.scriptId}`);
-  }, [state?.scriptId, router]);
+    if (state?.jobId) router.push(`/generador/trabajos/${state.jobId}`);
+  }, [state?.jobId, router]);
 
   // Contador honesto de lo que lleva esperando.
   useEffect(() => {
@@ -248,6 +256,7 @@ export function GeneratorForm({
   }, [pending]);
 
   const toggleEstructura = (s: GeneratorStructure) => {
+    if (!selectedStructureIds.includes(s.id) && selectedStructureIds.length >= maxBatch) return;
     setSelectedStructureIds((prev) => {
       const exists = prev.includes(s.id);
       if (exists) {
@@ -257,6 +266,7 @@ export function GeneratorForm({
         }
         return next;
       } else {
+        if (prev.length >= maxBatch) return prev;
         setPreviewStructureId(s.id);
         return [...prev, s.id];
       }
@@ -281,7 +291,7 @@ export function GeneratorForm({
 
   const seleccionarTodasFiltradas = () => {
     const ids = structuresFiltradas.map((s) => s.id);
-    setSelectedStructureIds((prev) => Array.from(new Set([...prev, ...ids])));
+    setSelectedStructureIds((prev) => Array.from(new Set([...prev, ...ids])).slice(0, maxBatch));
   };
 
   const deseleccionarTodas = () => {
@@ -521,7 +531,7 @@ export function GeneratorForm({
           <Card>
             <CardHeader
               title="1 · Elige el tipo de guion (Estructuras ganadoras)"
-              subtitle="Selecciona una o varias estructuras para generar versiones de tu idea en paralelo."
+              subtitle={`Selecciona hasta ${maxBatch} estructuras para obtener un guion por formato.`}
               icon={<Layers size={15} />}
               actions={
                 selectedStructureIds.length > 0 ? (
@@ -590,7 +600,7 @@ export function GeneratorForm({
               <div className="flex items-center justify-between gap-2 pt-1 border-b border-line/60 pb-2 text-[11.5px]">
                 <div className="flex items-center gap-2">
                   <span className="text-ink font-semibold">
-                    {selectedStructureIds.length} de {structures.length} seleccionados
+                    {selectedStructureIds.length} de {maxBatch} formatos permitidos por solicitud
                   </span>
                   {selectedStructureIds.length > 1 && (
                     <span className="text-inkmuted hidden sm:inline">
@@ -604,7 +614,7 @@ export function GeneratorForm({
                     onClick={seleccionarTodasFiltradas}
                     className="btn btn-ghost btn-xs text-[11px]"
                   >
-                    Seleccionar visibles ({structuresFiltradas.length})
+                    Seleccionar visibles (hasta {Math.min(maxBatch, structuresFiltradas.length)})
                   </button>
                   {selectedStructureIds.length > 0 && (
                     <button
@@ -1528,7 +1538,7 @@ export function GeneratorForm({
                 <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-[12px] text-ink space-y-1.5">
                   <div className="font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                     <Sparkles size={14} />
-                    Lote activo: {selectedStructureIds.length} guiones simultáneos
+                    Lote activo: {selectedStructureIds.length} guiones pendientes
                   </div>
                   <p className="text-inksoft leading-relaxed text-[11.5px]">
                     Se generará un guion independiente para cada formato elegido, manteniendo el mismo producto, briefing y gatillos de conversión.
@@ -1760,13 +1770,13 @@ export function GeneratorForm({
             <div className="text-[12.5px] leading-snug">
               <div className="text-ink font-semibold">
                 {selectedStructureIds.length > 1
-                  ? `Generando lote de ${selectedStructureIds.length} guiones con ${model || provider} · ${segundos}s`
-                  : `Generando el guion con ${model || provider} · ${segundos}s`}
+                  ? `Registrando ${selectedStructureIds.length} guiones · ${segundos}s`
+                  : `Registrando la solicitud · ${segundos}s`}
               </div>
               <div className="text-inkmuted">
                 {selectedStructureIds.length > 1
-                  ? "Creando cada formato con su modelo mental y beats. Al terminar se abrirá el primer guion generado."
-                  : "Suele tardar entre 30 y 90 segundos. Cuando termine se abre solo."}
+                  ? "El avance y los guiones aparecerán en Mis generaciones."
+                  : "La generación continuará en segundo plano."}
               </div>
             </div>
           </div>

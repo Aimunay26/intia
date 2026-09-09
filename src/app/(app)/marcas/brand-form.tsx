@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { EditForm, RevisionField } from "@/components/edit-form";
 import { Lock, Save, Sparkles } from "lucide-react";
+import { useState } from "react";
 
+import { BotonCargarBranding } from "@/components/cargador-branding";
+import { SubmitButton } from "@/components/forms";
+import { Callout, Divider, Field } from "@/components/ui";
 import { PALETTE } from "@/lib/constants";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { cn } from "@/lib/utils";
-import { Callout, Divider, Field } from "@/components/ui";
-import { SubmitButton } from "@/components/forms";
-import { BotonCargarBranding } from "@/components/cargador-branding";
 
 /**
  * Formulario de marca. El mismo componente sirve para el alta rapida
@@ -16,6 +17,7 @@ import { BotonCargarBranding } from "@/components/cargador-branding";
  */
 
 export type BrandFormValues = {
+  updatedAt?: string;
   id: string;
   name: string;
   tagline: string;
@@ -148,9 +150,11 @@ export function BrandForm({
 
   const disabled = !canEdit;
   const full = mode === "editar";
+  const Form = full ? EditForm : "form";
 
   return (
-    <form action={action} className="space-y-5">
+    <Form action={action} className="space-y-5">
+      {full && brand.updatedAt ? <RevisionField value={brand.updatedAt} /> : null}
       {brand.id ? <input type="hidden" name="id" value={brand.id} /> : null}
 
       {disabled ? (
@@ -437,7 +441,7 @@ export function BrandForm({
           <Lock size={13} /> Sin permisos de edición
         </div>
       )}
-    </form>
+    </Form>
   );
 }
 

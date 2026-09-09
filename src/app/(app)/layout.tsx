@@ -1,7 +1,7 @@
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
-import { ROLE_LEVEL } from "@/lib/constants";
-import { getSetting, SETTING_KEYS } from "@/lib/settings";
 import { Shell } from "@/components/shell";
+import { ROLE_LEVEL } from "@/lib/constants";
+import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getSetting, SETTING_KEYS } from "@/lib/settings";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
@@ -16,7 +16,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       brands={brandCtx.brands}
       activeBrandId={brandCtx.activeId}
       performanceEnabled={process.env.PERFORMANCE_LOGS === "1"}
-      release={process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ?? "local"}
+      release={process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ?? process.env.PERFORMANCE_RELEASE ?? "local"}
+      environment={process.env.VERCEL_ENV ?? process.env.PERFORMANCE_ENVIRONMENT ?? "local"}
       user={{
         id: user.id,
         name: user.name,

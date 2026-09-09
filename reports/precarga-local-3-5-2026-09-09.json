@@ -1,0 +1,27 @@
+{
+  "checkedAt": "2026-09-09T18:18:54.514Z",
+  "environment": "local-staging",
+  "mode": "Next Link default",
+  "method": "Listado recién abierto, caché de navegador conservada, clic en primera ficha visible. Final: formulario visible y dos frames. Solicitudes terminadas observadas en la ventana; no equivalen a lecturas de DB ni prueba de precarga completa.",
+  "samples": 60,
+  "groups": [
+    {
+      "section": "contenido",
+      "n": 30,
+      "formVisibleP50": 361.3,
+      "formVisibleP95": 844.5,
+      "observedTargetPrefetched": 4,
+      "observedBeforeClickRequests": 87,
+      "observedBeforeClickBytes": 15703
+    },
+    {
+      "section": "guiones",
+      "n": 30,
+      "formVisibleP50": 361.8,
+      "formVisibleP95": 845.5,
+      "observedTargetPrefetched": 2,
+      "observedBeforeClickRequests": 52,
+      "observedBeforeClickBytes": 9281
+    }
+  ]
+}

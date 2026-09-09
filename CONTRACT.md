@@ -6,9 +6,9 @@ Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pi
 
 - Next.js 15 App Router + React 19 + TypeScript estricto.
 - Tailwind CSS v4 (sin `tailwind.config`; los tokens viven en `src/app/globals.css`).
-- Prisma 6 + SQLite en local / PostgreSQL en producción.
+- Prisma 6 + PostgreSQL en local y producción, con migraciones versionadas.
 - **Server Components por defecto.** `"use client"` solo cuando hace falta estado o eventos.
-- **Server Actions** para todas las escrituras. No se crean rutas API salvo descarga de archivos.
+- **Server Actions** para escrituras del usuario. Los callbacks técnicos de autenticación, Workflow y mantenimiento usan rutas protegidas; no sustituyen los controles de sesión y permisos.
 - Iconos: `lucide-react`.
 
 ## Idioma
@@ -26,6 +26,7 @@ Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pi
 | `/contenido` · `/contenido/[id]` | Lista y ficha de cada video |
 | `/marcas` · `/marcas/[id]` | Marcas, identidad, brief, objetivos |
 | `/generador` | Generador de guiones con IA |
+| `/generador/trabajos` · `/generador/trabajos/[id]` | Historial, progreso y recuperación de generaciones |
 | `/guiones` · `/guiones/[id]` | Biblioteca y visualizador de guiones |
 | `/estructuras` · `/estructuras/[id]` | Formatos ganadores + prompt + PDFs |
 | `/arquetipos` · `/arquetipos/[id]` | Personas frente a cámara: perfil, marca personal y compatibilidad |
@@ -42,8 +43,22 @@ Rutas de API (las únicas que existen, y cada una por un motivo):
 | `/api/calendario.ics` | Google Calendar la pide desde sus servidores, sin sesión |
 | `/api/assets/[id]` | Devuelve los bytes de un archivo |
 | `/api/logout` | Borra la cookie y redirige |
+| `/api/maintenance` | Mantenimiento diario autenticado con CRON_SECRET |
+| `/.well-known/workflow/v1/*` | Rutas generadas por Workflow SDK; no se editan manualmente |
 
-Todas viven bajo el grupo `src/app/(app)/`, que ya aplica `requireUser()` y la carcasa.
+Las pantallas de negocio viven bajo `src/app/(app)/`, con `requireUser()` y carcasa. Las rutas técnicas están fuera y aplican su autenticación específica.
+
+## Generación durable, cuotas y almacenamiento
+
+- La acción de generar registra un trabajo y lo despacha a Workflow. Nunca mantiene una llamada de IA ligada a la pestaña del usuario.
+- Idempotencia por usuario/clave de envío; un guion por elemento de trabajo. Reclamar cada elemento con token y concesión temporal. Comprobar usuario activo y versión de acceso antes de llamar y antes de guardar.
+- No pasar prompts, documentos, claves ni respuestas a los argumentos/resultados del workflow. El ejecutor recibe sólo el ID; los datos se resuelven en el paso autorizado y quedan en PostgreSQL.
+- Tres intentos máximos por elemento, cuotas de llamadas atómicas y reintentos internos de proveedores desactivados. Una caída entre respuesta externa y persistencia puede consumir otra llamada: no prometer ejecución externa exactamente una vez.
+- Adjuntos nuevos en Blob privado al activar el flag. Inventario durable antes de subir, SHA-256 y tamaño verificados antes de adjuntar. Guardar `data` o `blobId`, nunca ambos ni ninguno. Los adjuntos antiguos siguen siendo descargables.
+- Borrar un adjunto en DB encola la limpieza del objeto, incluso al eliminar su entidad dueña. No eliminar objetos activos ni omitir la cola ante errores de red.
+- Importes `Decimal(24,6)`: parsear cadenas, validar hasta seis decimales y serializar cadenas hacia formularios. `Number` sólo para presentación, nunca como paso previo a persistir dinero.
+- `ContentItem.platforms` se conserva como entrada compatible; un trigger transaccional mantiene `ContentPlatform`, utilizada para filtrar con índice.
+- Mantener los recursos en Hobby/Free. Ninguna ampliación de plan ni gasto adicional automático. Los límites de la aplicación no representan el uso de otros proyectos de la cuenta.
 
 ## Autenticación y permisos
 
@@ -206,9 +221,9 @@ Un cambio de **orden** no se guarda como «de la 3 a la 4» sino como el array c
 antes y después. Las posiciones que ve una persona empiezan en 1 y la columna `order` empieza en
 0: un retroceso leyendo posiciones dejaría la escena descolocada y nada protestaría.
 
-23 de las 27 ediciones guardan el antes. Las 4 que no son las 4 que no deben: guardar una clave
-de API, quitarla, rotar el token del calendario y cambiar una contraseña. **Ningún secreto entra
-al log**, y eso no es un hueco que arreglar.
+La auditoría de ediciones conserva valores anteriores, excepto los secretos: guardar una clave
+de API, quitarla, rotar el token del calendario y cambiar una contraseña registran metadatos.
+**Ningún secreto entra al log**, y eso no es un hueco que arreglar.
 
 Acciones válidas: `CREAR`, `EDITAR`, `ELIMINAR`, `COMPLETAR`, `REABRIR`, `ASIGNAR`,
 `DESASIGNAR`, `GENERAR`, `SUBIR`, `LOGIN`, `LOGOUT`.
@@ -221,10 +236,33 @@ Al construir el motor automático de match hay que dar de alta `MatchRun` en `AU
 **y** en `ENTITY_LABELS`: la pantalla de actividad valida el filtro contra ese array y sin la
 etiqueta imprimiría el nombre técnico en inglés.
 
+## Consistencia de escritura y métricas semanales
+
+Las ediciones críticas y su auditoría se confirman en una sola transacción. La autorización
+se vuelve a comprobar dentro de ella y las invalidaciones ocurren después del commit.
+Los formularios con control de revisión envían el `updatedAt` que vio el editor; no deben
+sustituirlo por una revisión leída al enviar ni durante una actualización externa del formulario.
+Un conflicto conserva el borrador y exige revisar la versión actual.
+
+Por decisión del usuario del 09/09/2026, cada carga de métricas contiene **solo lo obtenido
+esa semana**. `WEEKLY` representa lunes a domingo en Lima y `date` identifica el lunes a
+las 12:00 UTC. La clave es video + lunes + plataforma + período. La retención es porcentaje
+0–100: cero es un dato válido y `null` significa desconocido. El promedio mostrado no es
+ponderado; sin denominadores compatibles no se debe inventar una ponderación.
+
+El alta manual no sobrescribe una semana existente; su edición usa revisión. El CSV permite
+actualizar las columnas enviadas de esa misma semana: vacío conserva, cero explícito reemplaza.
+Los registros anteriores quedan `LEGACY`/`UNATTRIBUTED`, preservan sus valores y se excluyen
+de los totales semanales. No reclasificarlos sin verificar período y plataforma con el usuario.
+
+La DB se actualiza con migraciones versionadas; la línea base de una DB existente se registra
+solo después de comparar su esquema. Demo, `db push` y reset son operaciones locales explícitas.
+Consultar `reports/operacion-migraciones.md` antes de actualizar producción.
+
 ## Campos JSON
 
-Varios campos son `String` que contienen JSON (para que el esquema funcione igual en SQLite y
-Postgres). **Nunca leerlos con `JSON.parse` directo.** Usar siempre:
+Varios campos son `String` que contienen JSON por compatibilidad histórica; el backend actual
+requiere PostgreSQL. Para leer datos almacenados tolerando formatos antiguos, usar:
 
 ```ts
 import { parseJson, parseList, linesToJson, jsonToLines } from "@/lib/utils";
@@ -234,6 +272,9 @@ parseJson<Beat[]>(structure.beats, []) // string -> objeto tipado
 linesToJson(textareaValue)           // textarea (una línea por ítem) -> JSON
 jsonToLines(brand.doNots)            // JSON -> textarea
 ```
+
+Al recibir JSON de un formulario, validar sintaxis, forma y límites antes de escribir.
+No convertir una entrada inválida en `[]` silenciosamente: podría borrar datos válidos.
 
 Campos JSON por modelo:
 - `Brand`: `valueProps`, `doNots`, `keywords` → `string[]`

@@ -1,28 +1,28 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
+import { measurePagePhase } from "@/lib/performance-page";
 import { requirePageUser as requireUser } from "@/lib/render-context";
-import Link from "next/link";
 import {
-  Clock3,
-  FileText,
-  Layers,
-  ListOrdered,
-  Plus,
-  Shapes,
-  Sparkles,
+	Clock3,
+	FileText,
+	Layers,
+	ListOrdered,
+	Plus,
+	Shapes,
+	Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 
-import { prisma } from "@/lib/prisma";
+import type { Beat } from "@/app/actions/structures";
+import { AssetSummary } from "@/components/assets";
+import { ActiveFilters, FilterBar, FilterSelect, SearchInput } from "@/components/filters";
+import { Badge, Callout, Card, EmptyState, PageHeader, Stat } from "@/components/ui";
 import { can, LEVEL } from "@/lib/auth";
 import {
-  AI_PROVIDER_MAP,
-  STRUCTURE_CATEGORIES,
-  STRUCTURE_CATEGORY_MAP,
+	AI_PROVIDER_MAP,
+	STRUCTURE_CATEGORIES,
+	STRUCTURE_CATEGORY_MAP,
 } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 import { formatNumber, formatSeconds, parseJson, truncate, withAlpha } from "@/lib/utils";
-import type { Beat } from "@/app/actions/structures";
-import { Badge, Callout, Card, EmptyState, PageHeader, Stat } from "@/components/ui";
-import { ActiveFilters, FilterBar, FilterSelect, SearchInput } from "@/components/filters";
-import { AssetSummary } from "@/components/assets";
 import { StructureForm } from "./structure-form";
 
 /** Títulos grandes de cada bloque de la lista. */

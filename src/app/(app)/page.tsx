@@ -1,67 +1,68 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { cache, Suspense } from "react";
 import { SectionLoading } from "@/components/section-loading";
 import { measurePhase } from "@/lib/performance";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
-import Link from "next/link";
+import { measurePagePhase } from "@/lib/performance-page";
+import { weeklyDateRange } from "@/lib/report-dates";
+import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { endOfDay, startOfDay } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 import {
-  Activity,
-  AlertTriangle,
-  CalendarClock,
-  CheckCircle2,
-  Eye,
-  Film,
-  ListChecks,
-  PartyPopper,
-  Plus,
-  Sparkles,
-  Tags,
-  Target,
+	Activity,
+	AlertTriangle,
+	CalendarClock,
+	CheckCircle2,
+	Eye,
+	Film,
+	ListChecks,
+	PartyPopper,
+	Plus,
+	Sparkles,
+	Tags,
+	Target,
 } from "lucide-react";
+import Link from "next/link";
+import { cache, Suspense } from "react";
 
-import { prisma } from "@/lib/prisma";
+import { FunnelBars } from "@/components/charts";
+import {
+	Avatar,
+	AvatarStack,
+	Badge,
+	Card,
+	CardHeader,
+	ColorChip,
+	EmptyState,
+	PageHeader,
+	ProgressBar,
+	SectionTitle,
+	Stat,
+} from "@/components/ui";
 import { brandWhere } from "@/lib/brand-context";
 import {
-  ACTIVE_STATUSES,
-  ASSIGNMENT_ROLE_MAP,
-  CONTENT_STATUSES,
-  DEAD_STATUSES,
-  DONE_STATUSES,
-  CONTENT_STATUS_MAP,
-  OBJECTIVE_STATUS_MAP,
-  PLATFORM_MAP,
-  platformLabels,
+	ACTIVE_STATUSES,
+	ASSIGNMENT_ROLE_MAP,
+	CONTENT_STATUS_MAP,
+	CONTENT_STATUSES,
+	DEAD_STATUSES,
+	DONE_STATUSES,
+	OBJECTIVE_STATUS_MAP,
+	platformLabels
 } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 import {
-  addDays,
-  compactNumber,
-  dateKey,
-  endOfMonth,
-  formatDate,
-  formatDateLong,
-  formatNumber,
-  fromDateKey,
-  objectiveProgress,
-  parseList,
-  relativeTime,
-  startOfMonth,
-  truncate,
+	addDays,
+	compactNumber,
+	dateKey,
+	endOfMonth,
+	formatDate,
+	formatDateLong,
+	formatNumber,
+	fromDateKey,
+	objectiveProgress,
+	parseList,
+	relativeTime,
+	startOfMonth,
+	truncate,
 } from "@/lib/utils";
-import {
-  Avatar,
-  AvatarStack,
-  Badge,
-  Card,
-  CardHeader,
-  ColorChip,
-  EmptyState,
-  PageHeader,
-  ProgressBar,
-  SectionTitle,
-  Stat,
-} from "@/components/ui";
-import { FunnelBars } from "@/components/charts";
 
 /**
  * Estados que ya no exigen trabajo: no cuentan como atraso ni como pendiente.
@@ -92,13 +93,15 @@ const getPanelContext = cache(async () => {
   const soloMarca = brandWhere(brandCtx.activeId);
 
   const ahora = new Date();
-  const anio = ahora.getFullYear();
-  const mes = ahora.getMonth();
+  const [businessYear, businessMonth] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(ahora).split("-").map(Number);
+  const anio = businessYear;
+  const mes = (businessMonth - 1);
   const inicioMes = startOfMonth(anio, mes);
   const finMes = endOfMonth(anio, mes);
+  const semanasMes = weeklyDateRange(dateKey(inicioMes), dateKey(finMes));
   const hoy = fromDateKey(dateKey(ahora));
-  const inicioHoy = new Date(anio, mes, ahora.getDate(), 0, 0, 0, 0);
-  const limite7 = addDays(new Date(anio, mes, ahora.getDate(), 23, 59, 59, 999), 7);
+  const inicioHoy = startOfDay(ahora);
+  const limite7 = addDays(endOfDay(ahora), 7);
 
   // Un video cuenta como publicado este mes por su fecha real de publicacion;
   // si nunca se registro, se usa la fecha en la que estaba programado.
@@ -118,7 +121,7 @@ const getPanelContext = cache(async () => {
   };
 
 
-  return { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere };
+  return { user, brandCtx, soloMarca, ahora, inicioMes, finMes, semanasMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere };
 });
 
 export default async function PanelGeneral() {
@@ -128,8 +131,11 @@ export default async function PanelGeneral() {
   const nombreCorto = user.name.trim().split(/\s+/)[0] ?? user.name;
   const fechaLarga = formatDateLong(ahora);
   const fechaTitulo = fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1);
-
-
+  // Permite comparar un solo límite de carga con el streaming de cada sección.
+  // Las consultas siguen siendo paralelas; no se agrega caché de datos ni permisos.
+  const sections = process.env.PANEL_RENDER_MODE !== "streaming"
+    ? await Promise.all([PanelStats(), PanelPending(), PanelObjectives(), PanelFunnel(), PanelActivity(), PanelBrands()])
+    : null;
   return <>
     <PageHeader
         title={`Hola, ${nombreCorto}`}
@@ -146,19 +152,19 @@ export default async function PanelGeneral() {
           </>
         }
       />
-    <Suspense key={scope + "stats"} fallback={<SectionLoading label="indicadores" />}><PanelStats /></Suspense>
+    {sections ? sections[0] : <Suspense key={scope + "stats"} fallback={<SectionLoading label="indicadores" />}><PanelStats /></Suspense>}
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="min-w-0 space-y-5"><Suspense key={scope + "pending"} fallback={<SectionLoading label="pendientes" />}><PanelPending /></Suspense><Suspense key={scope + "objectives"} fallback={<SectionLoading label="objetivos" />}><PanelObjectives /></Suspense></div>
-      <div className="min-w-0 space-y-5"><Suspense key={scope + "funnel"} fallback={<SectionLoading label="producción" />}><PanelFunnel /></Suspense><Suspense key={scope + "activity"} fallback={<SectionLoading label="actividad" />}><PanelActivity /></Suspense></div>
+      <div className="min-w-0 space-y-5">{sections ? <>{sections[1]}{sections[2]}</> : <><Suspense key={scope + "pending"} fallback={<SectionLoading label="pendientes" />}><PanelPending /></Suspense><Suspense key={scope + "objectives"} fallback={<SectionLoading label="objetivos" />}><PanelObjectives /></Suspense></>}</div>
+      <div className="min-w-0 space-y-5">{sections ? <>{sections[3]}{sections[4]}</> : <><Suspense key={scope + "funnel"} fallback={<SectionLoading label="producción" />}><PanelFunnel /></Suspense><Suspense key={scope + "activity"} fallback={<SectionLoading label="actividad" />}><PanelActivity /></Suspense></>}</div>
     </div>
-    <Suspense key={scope + "brands"} fallback={<SectionLoading label="marcas" />}><PanelBrands /></Suspense>
+    {sections ? sections[5] : <Suspense key={scope + "brands"} fallback={<SectionLoading label="marcas" />}><PanelBrands /></Suspense>}
   </>;
 
   });
 }
 
 async function PanelStats() {
-  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const { brandCtx, soloMarca, inicioMes, finMes, semanasMes, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
   const [publicados, enProduccion, atrasados, vistasMes] = await measurePhase("panel.stats", () => Promise.all([
     prisma.contentItem.count({ where: publicadoEsteMes }),
     prisma.contentItem.count({ where: { ...soloMarca, status: { in: ACTIVE_STATUSES } } }),
@@ -166,7 +172,8 @@ async function PanelStats() {
     prisma.metric.aggregate({
       _sum: { views: true },
       where: {
-        date: { gte: inicioMes, lte: finMes },
+        period: "WEEKLY",
+        date: { gte: fromDateKey(semanasMes.desde), lte: fromDateKey(semanasMes.hasta) },
         ...(brandCtx.activeId ? { contentItem: { brandId: brandCtx.activeId } } : {}),
       },
     })
@@ -198,9 +205,9 @@ async function PanelStats() {
           href="/contenido?vista=atrasados"
         />
         <Stat
-          label="Vistas del mes"
+          label="Vistas semanales"
           value={compactNumber(vistas)}
-          sub={`${formatNumber(vistas)} vistas registradas`}
+          sub="Semanas que abarcan este mes"
           icon={<Eye size={16} />}
           accent="#0ea5e9"
           href={`/metricas?desde=${dateKey(inicioMes)}&hasta=${dateKey(finMes)}`}

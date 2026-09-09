@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { spawnSync } from 'node:child_process';
+import { PrismaClient } from '@prisma/client';
+
+const source=process.env.DEPLOYMENT_TEST_DATABASE_URL;
+if(!source||!['localhost','127.0.0.1'].includes(new URL(source).hostname)||!new URL(source).pathname.endsWith('_test'))throw new Error('Se requiere una DB efímera local.');
+const connection=name=>{const url=new URL(source);url.searchParams.set('application_name',name);return url.href;};
+const operatorUrl=connection('intia-migrator-20260909');
+const operator=new PrismaClient({datasourceUrl:operatorUrl}), legacy=new PrismaClient({datasourceUrl:source}), current=new PrismaClient({datasourceUrl:connection('intia-schema-20260909')});
+const install=()=>{const result=spawnSync(process.execPath,['node_modules/prisma/build/index.js','db','execute','--file','prisma/operations/deployment-gate.sql','--schema','prisma/schema.prisma'],{env:{...process.env,DATABASE_URL:operatorUrl},encoding:'utf8'});assert.equal(result.status,0,result.stderr);};
+test('control de versiones y mantenimiento con conexiones reales',async t=>{
+  try{
+    await operator.brand.create({data:{id:'gate-brand',name:'Fixture',slug:'gate-brand'}});
+    // Sesión antigua conectada antes de instalar la guarda.
+    assert.equal(await legacy.brand.count(),1);
+    install();
+    await t.test('el modo cerrado permite lecturas y bloquea escrituras de ambas versiones',async()=>{
+      for(const db of [legacy,current]){
+        assert.equal(await db.brand.count(),1);
+        await assert.rejects(db.brand.update({where:{id:'gate-brand'},data:{name:'No guardar'}}),/Actualización del sistema/);
+        await assert.rejects(db.$executeRawUnsafe('TRUNCATE "AuditLog"'),/Actualización del sistema/);
+      }
+    });
+    await t.test('el operador puede migrar cerrado; reinstalar no reabre las escrituras',async()=>{
+      await operator.brand.update({where:{id:'gate-brand'},data:{name:'Migración'}});
+      install();
+      assert.equal((await operator.$queryRaw`SELECT blocked FROM intia_ops.deployment_gate`)[0].blocked,true);
+    });
+    await t.test('abrir acepta la versión nueva y rechaza escrituras desde conexiones antiguas',async()=>{
+      await operator.$executeRaw`UPDATE intia_ops.deployment_gate SET blocked=false WHERE singleton`;
+      await current.brand.update({where:{id:'gate-brand'},data:{name:'Nuevo'}});
+      await assert.rejects(legacy.brand.update({where:{id:'gate-brand'},data:{name:'Viejo'}}),/versión del sistema/);
+      await assert.rejects(legacy.brand.create({data:{name:'Viejo',slug:'old'}}),/versión del sistema/);
+      await assert.rejects(legacy.brand.delete({where:{id:'gate-brand'}}),/versión del sistema/);
+      assert.equal((await operator.brand.findUniqueOrThrow({where:{id:'gate-brand'}})).name,'Nuevo');
+    });
+    await t.test('cerrar espera a la transacción que ya estaba escribiendo',async()=>{
+      let wrote,release;const started=new Promise(r=>{wrote=r;});const hold=new Promise(r=>{release=r;});
+      const writing=current.$transaction(async tx=>{await tx.brand.update({where:{id:'gate-brand'},data:{name:'Última'}});wrote();await hold;});
+      await started;
+      try{
+        await assert.rejects(operator.$transaction(async tx=>{await tx.$executeRawUnsafe("SET LOCAL lock_timeout='100ms'");await tx.$executeRaw`UPDATE intia_ops.deployment_gate SET blocked=true WHERE singleton`;}),/lock timeout/);
+      }finally{release();await writing;}
+      await operator.$executeRaw`UPDATE intia_ops.deployment_gate SET blocked=true WHERE singleton`;
+      await assert.rejects(current.brand.update({where:{id:'gate-brand'},data:{name:'Posterior'}}),/Actualización del sistema/);
+      assert.equal((await operator.brand.findUniqueOrThrow({where:{id:'gate-brand'}})).name,'Última');
+    });
+  }finally{await Promise.all([operator.$disconnect(),legacy.$disconnect(),current.$disconnect()]);}
+});

@@ -100,6 +100,36 @@ las migraciones en PostgreSQL efímero; no despliega ni posee credenciales de Ne
 
 ## Fallo y recuperación
 
+### Control de escrituras durante esta actualización
+
+`prisma/operations/deployment-gate.sql` instala un control operativo cerrado en
+`intia_ops`, separado del esquema de negocio. Primero registrar la línea base:
+los triggers de este control cambian la huella del esquema público. La conexión
+de mantenimiento debe declarar `application_name=intia-migrator-20260909`.
+
+Los clientes de la nueva aplicación declaran `application_name=intia-schema-20260909`
+mediante `database-url.ts`. El control permite lecturas y rechaza INSERT, UPDATE,
+DELETE y TRUNCATE mientras está cerrado. Al abrirlo, sigue rechazando escrituras
+de versiones anteriores, incluidas sus URLs y sesiones ya conectadas. El marcador
+de versión es una medida de compatibilidad de despliegue, no aislamiento multitenant
+ni autorización frente al propietario de la base.
+
+La fila de control se bloquea de forma compartida durante cada transacción de
+escritura; cerrar el control espera a los escritores en curso. Instalarlo de nuevo
+después de migrar protege también las tablas recién creadas sin reabrir las escrituras.
+Tomar el respaldo definitivo con el control cerrado, antes de aplicar migraciones.
+Tras verificar la versión nueva, la conexión de mantenimiento puede abrirlo con:
+
+```sql
+UPDATE intia_ops.deployment_gate SET blocked = false WHERE singleton;
+```
+
+Para cerrarlo, usar `blocked = true`. El respaldo tomado durante mantenimiento
+también conserva el control cerrado: antes de reabrir una restauración hay que
+verificar su esquema y configurar la versión compatible; no basta con cambiar DNS.
+La suite PostgreSQL `deployment` comprueba cierre, reapertura, clientes antiguos,
+TRUNCATE y espera de transacciones en curso. No añade consultas a las lecturas.
+
 - Si falla el preflight, PostgreSQL revierte la migración completa. Prisma puede dejar un intento fallido en su historial: inspeccionar primero y registrar su rollback con `prisma migrate resolve --rolled-back 20260909190000_weekly_consistency` solo después de confirmar que no hubo cambios persistidos. Corregir la causa de forma revisada antes de reintentar.
 - Si falla el código después de migrar, mantener cerradas las escrituras mientras se decide. **No promover automáticamente la versión anterior sobre el esquema nuevo.**
 - Una vez existen varias plataformas en una misma semana, volver al índice de dos columnas ya no representa los datos. Priorizar una corrección hacia adelante. Restaurar un respaldo requiere un destino aislado, comprobarlo y planificar cómo conservar las escrituras posteriores; no descartarlas automáticamente.

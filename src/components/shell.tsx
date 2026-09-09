@@ -189,7 +189,10 @@ export function Shell({
   );
 
   return (
-    <GuiaProvider>
+    // La guía necesita el nivel para ocultar los módulos que el usuario no
+    // puede completar, y una forma de abrir el cajón cuando el menú lateral
+    // está plegado en móvil.
+    <GuiaProvider userLevel={user.level} abrirMenuMovil={() => setMobileOpen(true)}>
       <div className="flex min-h-screen">
         {/* Barra lateral fija en escritorio */}
         <aside className="bg-surface border-line no-print hidden w-[236px] shrink-0 flex-col border-r lg:flex">

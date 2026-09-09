@@ -6,7 +6,7 @@ import { Trash2, TriangleAlert } from "lucide-react";
 import { contarDatosDeEjemplo, vaciarDatosDeEjemplo, type Recuento, type VaciarState } from "@/app/actions/datos-de-ejemplo";
 import { Callout, Card, CardHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
-import { GuiaLauncherBoton, GUIA_TARGETS } from "@/components/guia";
+import { GuiaLauncherBoton } from "@/components/guia";
 
 /**
  * El botón de vaciar los datos de ejemplo.

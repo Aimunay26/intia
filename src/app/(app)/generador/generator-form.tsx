@@ -538,7 +538,7 @@ export function GeneratorForm({
                 ) : null
               }
             />
-            <div className="space-y-3.5 p-4" data-guia={GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA}>
+            <div className="space-y-3.5 p-4">
               {/* Filtros de Categoría y Búsqueda */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="flex items-center gap-1.5">
@@ -619,7 +619,10 @@ export function GeneratorForm({
               </div>
 
               {/* Grid de Formatos con Checkboxes Interactivos */}
-              <div className="grid gap-2 sm:grid-cols-2 max-h-[380px] overflow-y-auto pr-1 no-scrollbar">
+              <div
+                className="grid gap-2 sm:grid-cols-2 max-h-[380px] overflow-y-auto pr-1 no-scrollbar"
+                data-guia={GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA}
+              >
                 {structuresFiltradas.map((s) => {
                   const isSelected = selectedStructureIds.includes(s.id);
                   const isInspecting = previewStructureId === s.id;
@@ -787,7 +790,7 @@ export function GeneratorForm({
                   disabled={!puedeAvanzarPaso1}
                   onClick={() => avanzarPaso(2)}
                   className="btn btn-primary"
-                  data-guia={GUIA_TARGETS.GENERADOR_BTN_SIGUIENTE}
+                  data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_1}
                 >
                   Continuar: Identidad y Producto
                   <ArrowRight size={14} />
@@ -973,7 +976,7 @@ export function GeneratorForm({
                     disabled={!puedeAvanzarPaso2}
                     onClick={() => avanzarPaso(3)}
                     className="btn btn-primary"
-                    data-guia={GUIA_TARGETS.GENERADOR_BTN_SIGUIENTE}
+                    data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_2}
                   >
                     Continuar: Ángulo e Idea
                     <ArrowRight size={14} />
@@ -1125,7 +1128,7 @@ export function GeneratorForm({
                     disabled={!puedeAvanzarPaso3}
                     onClick={() => avanzarPaso(4)}
                     className="btn btn-primary"
-                    data-guia={GUIA_TARGETS.GENERADOR_BTN_SIGUIENTE}
+                    data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_3}
                   >
                     Continuar: Cierre y CTA (Hormozi)
                     <ArrowRight size={14} />
@@ -1146,13 +1149,16 @@ export function GeneratorForm({
               subtitle="Aplica los principios de $100M Offers y $100M Leads para que el espectador actúe ahora mismo."
               icon={<Target size={15} />}
             />
-            <div className="space-y-4 p-4" data-guia={GUIA_TARGETS.BOTONES_GENERADOR_CTA}>
+            <div className="space-y-4 p-4">
               {/* 1. Selector de Gatillo */}
               <div>
                 <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
                   1 · Elige el gatillo psicológico de cierre
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                <div
+                  className="grid grid-cols-2 sm:grid-cols-3 gap-1.5"
+                  data-guia={GUIA_TARGETS.BOTONES_GENERADOR_CTA}
+                >
                   {CTA_TRIGGERS.map((gat) => {
                     const activo = ctaTrigger === gat.id;
                     return (
@@ -1315,7 +1321,7 @@ export function GeneratorForm({
                   type="button"
                   onClick={() => avanzarPaso(5)}
                   className="btn btn-primary"
-                  data-guia={GUIA_TARGETS.GENERADOR_BTN_SIGUIENTE}
+                  data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_4}
                 >
                   Continuar: Motor y Generación
                   <ArrowRight size={14} />

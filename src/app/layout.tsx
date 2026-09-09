@@ -10,6 +10,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Con el teclado virtual abierto, Chrome en Android reduce el viewport en
+  // vez de taparlo: así la tarjeta de la guía nunca queda debajo del teclado.
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f4f5f7" },
     { media: "(prefers-color-scheme: dark)", color: "#0a0a0d" },

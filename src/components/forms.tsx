@@ -94,6 +94,7 @@ export function ModalForm({
   children,
   width,
   className,
+  "data-guia": dataGuia,
 }: {
   trigger: React.ReactNode;
   title: string;
@@ -101,13 +102,24 @@ export function ModalForm({
   children: React.ReactNode | ((close: () => void) => React.ReactNode);
   width?: number;
   className?: string;
+  /**
+   * Ancla de la guía interactiva. Va en el <button> y no en el trigger: si
+   * fuera en el span de dentro, un clic en el relleno del botón no contaría y
+   * el aro rodearía solo el texto.
+   */
+  "data-guia"?: string;
 }) {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={className ?? "btn"}>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={className ?? "btn"}
+        data-guia={dataGuia}
+      >
         {trigger}
       </button>
       <Modal open={open} onClose={close} title={title} description={description} width={width}>

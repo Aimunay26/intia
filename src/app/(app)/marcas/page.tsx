@@ -121,8 +121,9 @@ export default async function MarcasPage({
     puedeGestionar ? (
       <ModalForm
         className="btn btn-primary"
+        data-guia={targetKey}
         trigger={
-          <span data-guia={targetKey} className="inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1.5">
             <Plus size={14} /> Nueva marca
           </span>
         }

@@ -122,8 +122,10 @@ export function NuevoVideoBoton({
   className?: string;
 }) {
   if (!brands.length) {
+    // Sin marcas no hay botón de nuevo video. La guía apunta aquí igual: el aro
+    // rodea el botón que explica la condición en vez de señalar al vacío.
     return (
-      <Link href="/marcas" className="btn btn-sm">
+      <Link href="/marcas" className="btn btn-sm" data-guia={GUIA_TARGETS.BTN_NUEVO_VIDEO}>
         <Plus size={14} /> Crea una marca primero
       </Link>
     );
@@ -132,8 +134,9 @@ export function NuevoVideoBoton({
   return (
     <ModalForm
       className={className}
+      data-guia={GUIA_TARGETS.BTN_NUEVO_VIDEO}
       trigger={
-        <span data-guia={GUIA_TARGETS.BTN_NUEVO_VIDEO} className="inline-flex items-center gap-1.5">
+        <span className="inline-flex items-center gap-1.5">
           <Plus size={14} /> {label}
         </span>
       }

@@ -576,3 +576,9 @@ body {
     break-inside: avoid;
   }
 }
+
+/* La guia interactiva hace scroll hasta el ancla: dejar hueco para la cabecera fija de movil (56px) y algo de aire abajo. */
+[data-guia] {
+  scroll-margin-top: 72px;
+  scroll-margin-bottom: 24px;
+}

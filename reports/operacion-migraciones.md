@@ -4,12 +4,16 @@ Actualizado: 09/09/2026. Aplicable a PostgreSQL; no usar SQLite ni `db push` par
 
 ## Estado de esta entrega
 
-Los archivos de migración están preparados y se han ensayado en PostgreSQL 18 local.
-**Esta entrega todavía no registró la línea base ni aplicó las migraciones semanal y de trabajos/almacenamiento en Neon.**
-La consulta de producción del 09/09 verificó el esquema y cuatro invariantes mediante SELECT.
-El código y el workflow de CI se versionan en `codex/weekly-jobs-private-storage`; el despliegue de producción y las migraciones siguen pendientes. La rama desactiva el despliegue automático de Vercel hasta preparar una base aislada compatible.
+**Actualización:** línea base registrada, ambas migraciones aplicadas y despliegue
+de producción Ready el 09/09/2026. Se verificaron las copias reales de Neon y la
+conservación de los datos. `main` tiene nuevamente habilitado el despliegue.
+El procedimiento siguiente conserva la secuencia de operación y recuperación.
+Los identificadores, las comprobaciones y los recorridos funcionales aún pendientes
+están en [el acta de activación](activacion-produccion-2026-09-09.md).
 
-Para integrar la entrega en `main` sin publicar una versión incompatible con la base vigente, `vercel.json` también desactiva temporalmente el despliegue automático de `main`. Después de aplicar y verificar las migraciones y preparar la activación, retirar `main: false` de `git.deploymentEnabled` como parte del despliegue coordinado. No interpretar el merge como una migración o un despliegue de producción.
+Durante la integración, `vercel.json` desactivó temporalmente el despliegue de
+`main`. Se retiró `main: false` después de verificar las migraciones. Las ramas
+de ensayo siguen pausadas. No interpretar futuros merges como migraciones.
 
 El primer CI de GitHub pasó 77 pruebas, pero falló al escribir el informe del ensayo porque `.audit/` no existe en un checkout limpio. El ensayo ahora crea su directorio de salida antes de trabajar. CI se ejecuta en pull requests y en pushes a `main`, evitando dos ejecuciones equivalentes por cada actualización de este pull request.
 

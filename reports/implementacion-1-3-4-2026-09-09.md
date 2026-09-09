@@ -6,13 +6,22 @@ Fecha: 09/09/2026. Proyecto: intia. Alcance solicitado: puntos 1, 3 y 4 de los p
 
 El código, las migraciones y la configuración están preparados en el workspace. La generación deja de depender de una pestaña abierta; el panel evita una segunda espera de renderizado; los adjuntos pueden almacenarse fuera de PostgreSQL y los importes se guardan como decimales.
 
-**Todavía no se ha desplegado esta entrega en producción ni aplicado sus migraciones en Neon. El almacén privado `intia-private` ya está creado y conectado; aún no se transfirieron adjuntos reales.** Los resultados de rendimiento de este informe son locales. El plan Hobby de Vercel y el plan Free de Neon se comprobaron en sus paneles durante esta revisión, sin cambiar suscripciones.
+**Actualización del 09/09:** entrega publicada en producción, ambas migraciones
+aplicadas en Neon y flags de IA/Blob activados. Se verificaron las copias de Neon,
+la conservación de los datos y el despliegue Ready. Aún no se transfirieron los
+cuatro adjuntos históricos ni se validaron llamadas reales a IA/Blob.
+El estado actual y sus límites figuran en [el acta de activación](activacion-produccion-2026-09-09.md).
+Los resultados de rendimiento de este informe son locales. Se conservaron Hobby
+y Free sin cambiar suscripciones. Las secciones siguientes describen la entrega
+y las comprobaciones previas a su activación.
 
 Tras la autorización expresa del usuario, Vercel confirmó la creación de `intia-private` en `iad1`, acceso **Private**, bajo el plan **Hobby**. La conexión a intia abarca **Production y Preview**, con las variables `BLOB_READ_WRITE_TOKEN`, `BLOB_STORE_ID` y `BLOB_WEBHOOK_PUBLIC_KEY`. No se copiaron valores secretos al informe. El panel mostró almacenamiento y operaciones en cero. [Conexión del almacén](https://vercel.com/conamors-projects/intia/stores/blob/store_9iUYimS2hrGEBxfU/projects). Crear la conexión no activa el lector nuevo ni migra archivos: requiere el despliegue compatible y su configuración.
 
 Un SELECT nuevo en Neon confirmó que aún usa `double precision`, sin esquema semanal ni tabla de trabajos. Hay cuatro adjuntos (2.234.418 bytes), sin importes ni plataformas incompatibles con el preflight consultado. Esta comprobación no modifica datos y debe repetirse antes de migrar. [Resultado de Neon](neon-preflight-1-3-4-2026-09-09.json).
 
-La implementación incluye las modificaciones semanales y de consistencia de la entrega anterior, que también continúan pendientes de desplegar. No incluye organizaciones, membresías ni RLS: la instalación sigue siendo de un equipo compartido.
+La implementación incluye las modificaciones semanales y de consistencia de la
+entrega anterior, ya publicadas en esta activación. No incluye organizaciones,
+membresías ni RLS: la instalación sigue siendo de un equipo compartido.
 
 La entrega se versiona en `codex/weekly-jobs-private-storage`, incorporando el cambio del tutorial `01357f5` de `main`. La rama tiene CI configurado, pero tiene desactivado el despliegue automático de Vercel para no conectar una versión con el esquema nuevo a la base todavía sin migrar. El merge a `main` y la activación deben seguir el procedimiento coordinado descrito abajo. [Configuración de despliegues por rama](https://vercel.com/docs/project-configuration/git-configuration#git.deploymentenabled).
 

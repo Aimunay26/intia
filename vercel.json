@@ -1,0 +1,8 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "codex/weekly-jobs-private-storage": false
+    }
+  },
+  "crons": [{ "path": "/api/maintenance", "schedule": "0 10 * * *" }]
+}

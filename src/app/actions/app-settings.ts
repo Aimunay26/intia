@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireUser, can, LEVEL } from "@/lib/auth";
-import { logAudit, type Cambio } from "@/lib/audit";
+import { auditInTransaction, type Cambio } from "@/lib/audit";
+import { can, LEVEL, requireUser } from "@/lib/auth";
 import { AI_PROVIDER_MAP, DEFAULT_MODEL } from "@/lib/constants";
-import { getSettings, setSetting, SETTING_KEYS } from "@/lib/settings";
 import { GOOGLE_SETTING_KEYS } from "@/lib/google";
-import { field, boolField } from "@/lib/utils";
+import { withMutation } from "@/lib/mutations";
+import { getSettings, setSetting, SETTING_KEYS } from "@/lib/settings";
+import { boolField, field } from "@/lib/utils";
 
 /**
  * Ajustes generales de la aplicacion.
@@ -38,10 +39,11 @@ export async function guardarAjustes(
     return { error: "Solo el dueño puede cambiar los ajustes." };
   }
 
+  return withMutation(actor, true, async (tx, afterCommit) => {
   const actuales = await getSettings([
     ...Object.values(SETTING_KEYS),
     ...Object.values(GOOGLE_SETTING_KEYS),
-  ]);
+  ], tx);
 
   const orgName = field(formData, "orgName");
   const defaultProvider = field(formData, "defaultProvider") || "anthropic";
@@ -71,10 +73,10 @@ export async function guardarAjustes(
 
   const orgAntes = actuales[SETTING_KEYS.orgName] ?? "";
   if (orgName !== orgAntes) {
-    await setSetting(SETTING_KEYS.orgName, orgName);
+    await setSetting(SETTING_KEYS.orgName, orgName, tx);
     changes[SETTING_KEYS.orgName] = {
       etiqueta: "Nombre de la organización",
-      antes: orgAntes || "—",
+      antes: orgAntes || null,
       despues: orgName,
     };
     hechos.push("el nombre de la organización");
@@ -84,11 +86,11 @@ export async function guardarAjustes(
 
   const provAntes = actuales[SETTING_KEYS.defaultProvider] ?? "";
   if (defaultProvider !== provAntes) {
-    await setSetting(SETTING_KEYS.defaultProvider, defaultProvider);
+    await setSetting(SETTING_KEYS.defaultProvider, defaultProvider, tx);
     changes[SETTING_KEYS.defaultProvider] = {
       etiqueta: "Proveedor por defecto",
-      antes: AI_PROVIDER_MAP[provAntes]?.label ?? "—",
-      despues: AI_PROVIDER_MAP[defaultProvider].label,
+      antes: provAntes || null,
+      despues: defaultProvider,
     };
     hechos.push("el proveedor por defecto");
   }
@@ -112,14 +114,14 @@ export async function guardarAjustes(
     const antes = actuales[modelo.key] ?? "";
     const despues = modelo.valor || modelo.fallback;
     if (despues !== antes) {
-      await setSetting(modelo.key, despues);
+      await setSetting(modelo.key, despues, tx);
       changes[modelo.key] = { etiqueta: modelo.etiqueta, antes: antes || "—", despues };
       hechos.push(modelo.etiqueta.toLowerCase());
     }
   }
 
   if (Object.keys(changes).length) {
-    await logAudit({
+    await auditInTransaction(tx, {
       user: actor,
       action: "EDITAR",
       entity: "AppSetting",
@@ -164,8 +166,8 @@ export async function guardarAjustes(
   for (const clave of claves) {
     if (clave.quitar) {
       if ((actuales[clave.key] ?? "").length) {
-        await setSetting(clave.key, "");
-        await logAudit({
+        await setSetting(clave.key, "", tx);
+        await auditInTransaction(tx, {
           user: actor,
           action: "EDITAR",
           entity: "AppSetting",
@@ -178,8 +180,8 @@ export async function guardarAjustes(
     // Campo vacío = "no la toques". Nunca borramos por omisión.
     if (!clave.valor) continue;
 
-    await setSetting(clave.key, clave.valor);
-    await logAudit({
+    await setSetting(clave.key, clave.valor, tx);
+    await auditInTransaction(tx, {
       user: actor,
       action: "EDITAR",
       entity: "AppSetting",
@@ -192,11 +194,12 @@ export async function guardarAjustes(
     return { ok: "No había nada que cambiar." };
   }
 
-  revalidatePath("/ajustes");
-  revalidatePath("/actividad");
-  revalidatePath("/generador");
+  afterCommit(() => revalidatePath("/ajustes"));
+  afterCommit(() => revalidatePath("/actividad"));
+  afterCommit(() => revalidatePath("/generador"));
   // El nombre de la organización vive en la barra lateral.
-  revalidatePath("/", "layout");
+  afterCommit(() => revalidatePath("/", "layout"));
 
   return { ok: "Ajustes guardados." };
+  });
 }

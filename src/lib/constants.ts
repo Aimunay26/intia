@@ -211,11 +211,10 @@ export function platformLabels(platforms: string[]): string {
 
 /**
  * Filtro de Prisma para "videos que salen en esta red".
- * Como la lista se guarda en JSON dentro de un String, se busca el valor
- * entrecomillado; así TIKTOK no coincide por error con otra red que lo contenga.
+ * Relación normalizada e indexada; el JSON se conserva para formularios y compatibilidad.
  */
 export function platformFilter(platform: string) {
-  return { contains: `"${platform}"` };
+  return { some: { platform } };
 }
 
 /** Semáforo de prioridad: azul tranquilo, naranja atento, rojo urgente. */

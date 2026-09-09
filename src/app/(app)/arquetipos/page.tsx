@@ -1,17 +1,16 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { getArchetypeList } from "@/lib/archetype-list";
 import { Pagination } from "@/components/filters";
+import { getArchetypeList } from "@/lib/archetype-list";
+import { measurePagePhase } from "@/lib/performance-page";
 import { requirePageUser as requireUser } from "@/lib/render-context";
+import { Search, Sparkles, Users, UserSquare2 } from "lucide-react";
 import Link from "next/link";
-import { Search, Sparkles, UserSquare2, Users } from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
+import { FilterBar, SearchInput } from "@/components/filters";
+import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { can, LEVEL } from "@/lib/auth";
 import { FIT_SCORES } from "@/lib/constants";
-import { parseList, truncate } from "@/lib/utils";
-import { Card, EmptyState, PageHeader } from "@/components/ui";
-import { FilterBar, SearchInput } from "@/components/filters";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
+import { parseList, truncate } from "@/lib/utils";
 import { ArchetypeCreateButton } from "./archetype-form";
 
 export const dynamic = "force-dynamic";

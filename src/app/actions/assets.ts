@@ -7,6 +7,7 @@ import { assertActor } from "@/lib/auth-transactions";
 import { assertAssetOwner, validateAssetContent } from "@/lib/asset-security";
 import { extractAnyText, MAX_UPLOAD_BYTES } from "@/lib/pdf";
 import { field, fieldOrNull } from "@/lib/utils";
+import { privateStorageEnabled, stagePrivateFile, attachPrivateFile } from "@/lib/private-storage";
 export type AssetState = { ok?: string; error?: string; warning?: string } | null;
 function refresh(type: string, id: string) {
   const base: Record<string, string> = { brand: "/marcas", content: "/contenido", structure: "/estructuras", archetype: "/arquetipos", user: "/equipo" };
@@ -27,10 +28,14 @@ export async function uploadAsset(_prev: AssetState, form: FormData): Promise<As
     mimeType = validateAssetContent(file.name, new Uint8Array(buffer));
   } catch (error) { return { error: error instanceof Error ? error.message : "El archivo no es válido." }; }
   const extraction = await extractAnyText(buffer, mimeType, file.name);
+  let blobId: string | null = null;
+  try { if (privateStorageEnabled()) blobId = await stagePrivateFile(new Uint8Array(buffer)); }
+  catch (error) { return { error: error instanceof Error ? error.message : "No se pudo guardar el archivo." }; }
   await prisma.$transaction(async tx => {
     await assertActor(tx, user);
     await assertAssetOwner(tx, ownerType, ownerId, user, true);
-    const asset = await tx.asset.create({ data: { ownerType, ownerId, filename: file.name, mimeType, size: file.size, data: Buffer.from(buffer), label, extractedText: extraction.text, useForAi: Boolean(extraction.text), uploadedById: user.id } });
+    if (blobId) await attachPrivateFile(tx, blobId);
+    const asset = await tx.asset.create({ data: { ownerType, ownerId, filename: file.name, mimeType, size: file.size, data: blobId ? null : Buffer.from(buffer), blobId, label, extractedText: extraction.text, useForAi: Boolean(extraction.text), uploadedById: user.id } });
     await auditInTransaction(tx, { user, action: "SUBIR", entity: "Asset", entityId: asset.id, brandId: ownerType === "brand" ? ownerId : null, summary: `Subió el archivo "${label ?? file.name}"` });
   });
   refresh(ownerType, ownerId);

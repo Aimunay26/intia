@@ -1,12 +1,12 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
+import { measurePagePhase } from "@/lib/performance-page";
+import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
 import { getTaskBoard } from "@/lib/task-pages";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { CheckSquare } from "lucide-react";
 
+import { PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { normalizeTaskFilters, type TaskFilters } from "@/lib/task-list";
 import { EmptyBoard } from "./empty-board";
-import { PageHeader } from "@/components/ui";
 import { TaskBoard } from "./task-board";
 
 export const dynamic = "force-dynamic";

@@ -9,6 +9,7 @@
  * aleatorias que se imprimen al final de este script.
  */
 
+import "../scripts/local-database-only.mjs";
 import { prisma as rootPrisma } from "../src/lib/prisma";
 import { lockDemoTables, recordDemoSeed } from "../src/lib/demo-provenance";
 import bcrypt from "bcryptjs";

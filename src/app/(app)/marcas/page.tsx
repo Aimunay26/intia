@@ -1,22 +1,22 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
+import { measurePagePhase } from "@/lib/performance-page";
 import { requirePageUser as requireUser } from "@/lib/render-context";
-import Link from "next/link";
 import { Archive, Film, Plus, Tags, Target, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
-import { prisma } from "@/lib/prisma";
-import { can, LEVEL } from "@/lib/auth";
-import {
-  endOfMonth,
-  formatNumber,
-  objectiveProgress,
-  startOfMonth,
-  truncate,
-} from "@/lib/utils";
-import { EmptyState, PageHeader } from "@/components/ui";
+import { crearMarca } from "@/app/actions/brands";
 import { FilterBar, SearchInput, SegmentedControl } from "@/components/filters";
 import { ModalForm } from "@/components/forms";
-import { crearMarca } from "@/app/actions/brands";
 import { GUIA_TARGETS, GuiaBienvenidaBanner } from "@/components/guia";
+import { EmptyState, PageHeader } from "@/components/ui";
+import { can, LEVEL } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import {
+	endOfMonth,
+	formatNumber,
+	objectiveProgress,
+	startOfMonth,
+	truncate,
+} from "@/lib/utils";
 import { BrandColors, BrandForm } from "./brand-form";
 
 type Objetivo = {
@@ -67,8 +67,9 @@ export default async function MarcasPage({
   const puedeGestionar = can(user.role, LEVEL.MEMBER);
 
   const hoy = new Date();
-  const desde = startOfMonth(hoy.getFullYear(), hoy.getMonth());
-  const hasta = endOfMonth(hoy.getFullYear(), hoy.getMonth());
+  const [businessYear, businessMonth] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(hoy).split("-").map(Number);
+  const desde = startOfMonth(businessYear, (businessMonth - 1));
+  const hasta = endOfMonth(businessYear, (businessMonth - 1));
 
   const [brands, publicadosMes, totalArchivadas] = await Promise.all([
     prisma.brand.findMany({

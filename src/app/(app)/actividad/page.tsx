@@ -1,36 +1,37 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
+import { measurePagePhase } from "@/lib/performance-page";
+import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { endOfDay, startOfDay } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 import { Activity, Clock, Users, Zap } from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
-import {
-  AUDIT_ACTIONS,
-  AUDIT_ACTION_MAP,
-  AUDIT_ENTITIES,
-  ENTITY_LABELS,
-} from "@/lib/constants";
-import {
-  formatDate,
-  formatDateTime,
-  formatNumber,
-  fromDateKey,
-  parseJson,
-  relativeTime,
-  truncate,
-} from "@/lib/utils";
-import {
-  Avatar,
-  Badge,
-  Card,
-  CardHeader,
-  ColorChip,
-  EmptyState,
-  PageHeader,
-  Stat,
-} from "@/components/ui";
 import { RankBars, type Point } from "@/components/charts";
 import { FilterBar, FilterDate, FilterSelect, Pagination, SearchInput } from "@/components/filters";
+import {
+	Avatar,
+	Badge,
+	Card,
+	CardHeader,
+	ColorChip,
+	EmptyState,
+	PageHeader,
+	Stat,
+} from "@/components/ui";
+import {
+	AUDIT_ACTIONS,
+	AUDIT_ACTION_MAP,
+	AUDIT_ENTITIES,
+	ENTITY_LABELS,
+} from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import {
+	formatDate,
+	formatDateTime,
+	formatNumber,
+	fromDateKey,
+	parseJson,
+	relativeTime,
+	truncate,
+} from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -70,15 +71,11 @@ function mostrarValor(value: unknown): string {
 }
 
 function inicioDelDia(key: string) {
-  const d = fromDateKey(key);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return startOfDay(fromDateKey(key));
 }
 
 function finDelDia(key: string) {
-  const d = fromDateKey(key);
-  d.setHours(23, 59, 59, 999);
-  return d;
+  return endOfDay(fromDateKey(key));
 }
 
 export default async function ActividadPage({

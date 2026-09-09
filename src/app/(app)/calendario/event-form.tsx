@@ -1,16 +1,18 @@
 "use client";
+import { EditForm, RevisionField } from "@/components/edit-form";
 
-import { useState } from "react";
 import { CalendarPlus, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import { actualizarEvento, crearEvento, eliminarEvento } from "@/app/actions/events";
-import { EVENT_KINDS } from "@/lib/constants";
-import { Field } from "@/components/ui";
 import { DeleteButton, ModalForm, SubmitButton } from "@/components/forms";
+import { Field } from "@/components/ui";
+import { EVENT_KINDS } from "@/lib/constants";
 
 export type EventFormBrand = { id: string; name: string };
 
 export type EventRow = {
+  updatedAt: string;
   id: string;
   title: string;
   description: string;
@@ -216,7 +218,8 @@ export function EditarEventoBoton({
     >
       {(close) => (
         <>
-          <form action={actualizarEvento} onSubmit={close} className="space-y-3.5">
+          <EditForm action={actualizarEvento} onSuccess={close} className="space-y-3.5">
+<RevisionField value={evento.updatedAt} />
             <input type="hidden" name="id" value={evento.id} />
             <CamposEvento
               brands={brands}
@@ -240,7 +243,7 @@ export function EditarEventoBoton({
                 Guardar cambios
               </SubmitButton>
             </div>
-          </form>
+          </EditForm>
         </>
       )}
     </ModalForm>

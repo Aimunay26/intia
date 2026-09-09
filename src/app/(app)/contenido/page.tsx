@@ -1,52 +1,53 @@
+import { measurePagePhase } from "@/lib/performance-page";
+import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
 import { getStructureChoices } from "@/lib/structure-choices";
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
-import Link from "next/link";
+import { endOfDay, startOfDay } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 import { Clapperboard, Film, Shapes, User as UserIcon } from "lucide-react";
+import Link from "next/link";
 
-import { prisma } from "@/lib/prisma";
+import {
+	ActiveFilters,
+	FilterBar,
+	FilterDate,
+	FilterSelect,
+	Pagination,
+	SearchInput,
+} from "@/components/filters";
+import {
+	AvatarStack,
+	Badge,
+	Card,
+	ColorChip,
+	EmptyState,
+	PageHeader,
+	PlatformBadges,
+	ProgressBar,
+} from "@/components/ui";
+import { LEVEL, can } from "@/lib/auth";
+import { brandWhere } from "@/lib/brand-context";
+import {
+	ACTIVE_STATUSES,
+	ASSIGNMENT_ROLE_MAP,
+	CONTENT_STATUSES,
+	CONTENT_STATUS_MAP,
+	DEAD_STATUSES,
+	DONE_STATUSES,
+	PLATFORMS,
+	PLATFORM_MAP,
+	platformFilter,
+} from "@/lib/constants";
 import { getContentList } from "@/lib/content-list";
 import { measurePhase } from "@/lib/performance";
-import { brandWhere } from "@/lib/brand-context";
-import { can, LEVEL } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import {
-  ACTIVE_STATUSES,
-  ASSIGNMENT_ROLE_MAP,
-  CONTENT_STATUSES,
-  CONTENT_STATUS_MAP,
-  DEAD_STATUSES,
-  DONE_STATUSES,
-  PLATFORMS,
-  PLATFORM_MAP,
-  platformFilter,
-} from "@/lib/constants";
-import {
-  compactNumber,
-  dateKey,
-  formatDate,
-  fromDateKey,
-  parseList,
-  truncate,
+	compactNumber,
+	dateKey,
+	formatDate,
+	fromDateKey,
+	parseList,
+	truncate,
 } from "@/lib/utils";
-import {
-  AvatarStack,
-  Badge,
-  Card,
-  ColorChip,
-  EmptyState,
-  PageHeader,
-  PlatformBadges,
-  ProgressBar,
-} from "@/components/ui";
-import {
-  ActiveFilters,
-  FilterBar,
-  FilterDate,
-  FilterSelect,
-  Pagination,
-  SearchInput,
-} from "@/components/filters";
 import { NuevoVideoBoton } from "./content-form";
 
 type SearchParams = {
@@ -87,18 +88,18 @@ export default async function ContenidoPage({
   const brandCtx = await getBrandContext();
   Object.assign(where, brandWhere(sp.marca || brandCtx.activeId));
   if (sp.estado) where.status = sp.estado;
-  if (sp.plataforma) where.platforms = platformFilter(sp.plataforma);
+  if (sp.plataforma) where.platformLinks = platformFilter(sp.plataforma);
   if (sp.estructura) where.structureId = sp.estructura;
   if (sp.persona) where.assignments = { some: { userId: sp.persona } };
   if (sp.desde || sp.hasta) {
     const rango: Prisma.DateTimeFilter = {};
     if (sp.desde) {
       const d = fromDateKey(sp.desde);
-      rango.gte = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+      rango.gte = startOfDay(d);
     }
     if (sp.hasta) {
       const h = fromDateKey(sp.hasta);
-      rango.lte = new Date(h.getFullYear(), h.getMonth(), h.getDate(), 23, 59, 59, 999);
+      rango.lte = endOfDay(h);
     }
     where.scheduledDate = rango;
   }
@@ -106,15 +107,8 @@ export default async function ContenidoPage({
   // Vistas rápidas del panel. Se aplican después de los filtros normales para
   // que el número que se ve en el panel cuadre con la lista que sale al pulsar.
   const ahora = new Date();
-  const inicioHoy = new Date(
-    ahora.getFullYear(),
-    ahora.getMonth(),
-    ahora.getDate(),
-    0,
-    0,
-    0,
-    0
-  );
+  const [businessYear, businessMonth] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(ahora).split("-").map(Number);
+  const inicioHoy = startOfDay(ahora);
   if (sp.vista === "produccion") {
     where.status = { in: ACTIVE_STATUSES };
   } else if (sp.vista === "atrasados") {

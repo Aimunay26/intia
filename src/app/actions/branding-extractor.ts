@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
-import { prisma } from "@/lib/prisma";
+import { validateAssetContent } from "@/lib/asset-security";
+import { auditInTransaction, diffFields } from "@/lib/audit";
 import { LEVEL, requireLevel } from "@/lib/auth";
-import { extractAnyText } from "@/lib/pdf";
 import { parseBrandingReport, type ParsedBranding } from "@/lib/branding-parser";
-import { linesToJson, slugify } from "@/lib/utils";
+import { withMutation } from "@/lib/mutations";
+import { extractAnyText, MAX_UPLOAD_BYTES } from "@/lib/pdf";
+import { slugify } from "@/lib/utils";
+import { choice } from "@/lib/validation";
 
 export type ProcessBrandingResult = {
   ok: boolean;
@@ -26,12 +29,14 @@ export async function procesarInformeBranding(
     throw new Error("Debes seleccionar un archivo PDF con el informe de branding.");
   }
 
-  const tipo = (formData.get("tipo") as "PERSONAL" | "BUSINESS") || "PERSONAL";
+  const tipo = choice(String(formData.get("tipo") || "PERSONAL"), ["PERSONAL", "BUSINESS"], "Tipo");
+  if (file.size > MAX_UPLOAD_BYTES) throw new Error("El archivo supera los 4 MB.");
   const brandId = (formData.get("brandId") as string) || null;
   const archetypeId = (formData.get("archetypeId") as string) || null;
 
   const buffer = await file.arrayBuffer();
-  const extraction = await extractAnyText(buffer, file.type, file.name);
+  const mime = validateAssetContent(file.name, new Uint8Array(buffer));
+  const extraction = await extractAnyText(buffer, mime, file.name);
 
   if (!extraction.text || extraction.text.trim().length < 50) {
     throw new Error(
@@ -41,12 +46,15 @@ export async function procesarInformeBranding(
 
   const parsed = parseBrandingReport(extraction.text, tipo);
 
+  return withMutation(user, false, async (tx, afterCommit) => {
+  const beforeBrand = brandId ? await tx.brand.findUniqueOrThrow({where:{id:brandId}}) : null;
+  const beforeActor = archetypeId ? await tx.archetype.findUniqueOrThrow({where:{id:archetypeId}}) : tipo === "PERSONAL" ? await tx.archetype.findFirst({where:{name:parsed.name,isPerson:true}}) : null;
   let targetBrandId = brandId;
   let targetArchetypeId = archetypeId;
 
   // 1. Manejo de Marca
   if (targetBrandId) {
-    await prisma.brand.update({
+    await tx.brand.update({
       where: { id: targetBrandId },
       data: {
         tagline: parsed.tagline,
@@ -65,10 +73,10 @@ export async function procesarInformeBranding(
   } else if (!targetArchetypeId) {
     // Si no se pasó brandId ni archetypeId, crear la marca
     const baseSlug = slugify(parsed.name) || "marca";
-    const existing = await prisma.brand.findUnique({ where: { slug: baseSlug } });
+    const existing = await tx.brand.findUnique({ where: { slug: baseSlug } });
     const slug = existing ? `${baseSlug}-${Date.now().toString().slice(-4)}` : baseSlug;
 
-    const nuevaMarca = await prisma.brand.create({
+    const nuevaMarca = await tx.brand.create({
       data: {
         name: parsed.name,
         slug,
@@ -117,18 +125,18 @@ export async function procesarInformeBranding(
     };
 
     if (targetArchetypeId) {
-      await prisma.archetype.update({
+      await tx.archetype.update({
         where: { id: targetArchetypeId },
         data: actorPayload,
       });
     } else {
       // Buscar si ya existe una persona con este nombre
-      const existente = await prisma.archetype.findFirst({
+      const existente = await tx.archetype.findFirst({
         where: { name: parsed.name, isPerson: true },
       });
 
       if (existente) {
-        await prisma.archetype.update({
+        await tx.archetype.update({
           where: { id: existente.id },
           data: actorPayload,
         });
@@ -138,7 +146,7 @@ export async function procesarInformeBranding(
         let candidato = raiz;
         let intento = 2;
         for (;;) {
-          const yaExiste = await prisma.archetype.findUnique({
+          const yaExiste = await tx.archetype.findUnique({
             where: { slug: candidato },
             select: { id: true },
           });
@@ -147,7 +155,7 @@ export async function procesarInformeBranding(
           intento += 1;
         }
 
-        const nuevoActor = await prisma.archetype.create({
+        const nuevoActor = await tx.archetype.create({
           data: {
             name: parsed.name,
             slug: candidato,
@@ -165,12 +173,14 @@ export async function procesarInformeBranding(
     }
   }
 
+  if (targetBrandId) { const saved = await tx.brand.findUniqueOrThrow({where:{id:targetBrandId}}); await auditInTransaction(tx,{user,action:beforeBrand?"EDITAR":"CREAR",entity:"Brand",entityId:saved.id,brandId:saved.id,summary:"Aplicó informe de branding",changes:diffFields(beforeBrand??{},saved)}); }
+  if (targetArchetypeId) { const saved = await tx.archetype.findUniqueOrThrow({where:{id:targetArchetypeId}}); await auditInTransaction(tx,{user,action:beforeActor?"EDITAR":"CREAR",entity:"Archetype",entityId:saved.id,summary:"Aplicó informe de marca personal",changes:diffFields(beforeActor??{},saved)}); }
   // Revalidar rutas para reflejar los cambios
-  revalidatePath("/marcas");
-  if (targetBrandId) revalidatePath(`/marcas/${targetBrandId}`);
-  revalidatePath("/arquetipos");
-  if (targetArchetypeId) revalidatePath(`/arquetipos/${targetArchetypeId}`);
-  revalidatePath("/generador");
+  afterCommit(() => revalidatePath("/marcas"));
+  if (targetBrandId) afterCommit(() => revalidatePath(`/marcas/${targetBrandId}`));
+  afterCommit(() => revalidatePath("/arquetipos"));
+  if (targetArchetypeId) afterCommit(() => revalidatePath(`/arquetipos/${targetArchetypeId}`));
+  afterCommit(() => revalidatePath("/generador"));
 
   const mensaje =
     tipo === "PERSONAL"
@@ -184,4 +194,5 @@ export async function procesarInformeBranding(
     brandId: targetBrandId ?? undefined,
     archetypeId: targetArchetypeId ?? undefined,
   };
+  });
 }

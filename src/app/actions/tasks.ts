@@ -2,13 +2,34 @@
 
 import { revalidatePath } from "next/cache";
 
-import { prisma } from "@/lib/prisma";
-import { logAudit, auditInTransaction } from "@/lib/audit";
-import { assertActor } from "@/lib/auth-transactions";
+import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
 import { LEVEL, requireLevel } from "@/lib/auth";
+import { assertActor } from "@/lib/auth-transactions";
+import { prisma, type AppTransaction } from "@/lib/prisma";
 import { dateField, field, fieldOrNull } from "@/lib/utils";
 
-import { DEFAULT_TASK_COLUMNS } from "@/lib/tasks-constants";
+import { DEFAULT_TASK_COLUMNS, TASK_KINDS, TASK_PRIORITIES } from "@/lib/tasks-constants";
+
+import { lockRevision, withMutation } from "@/lib/mutations";
+import { boundedNumber, choice } from "@/lib/validation";
+
+function readTask(fd: FormData) {
+  const title = field(fd, "title");
+  if (!title || title.length > 500) throw new Error("El título debe tener entre 1 y 500 caracteres.");
+  return { title, description: fieldOrNull(fd, "description"), kind: choice(field(fd, "kind") || "ACCION", TASK_KINDS.map(k => k.value), "Tipo"),
+    priority: choice(field(fd, "priority") || "NORMAL", TASK_PRIORITIES.map(p => p.value), "Prioridad"),
+    dueDate: dateField(fd, "dueDate"), assigneeId: fieldOrNull(fd, "assigneeId"), brandId: fieldOrNull(fd, "brandId") };
+}
+
+async function checkTaskRelations(tx: AppTransaction, columnId: string, brandId: string | null, assigneeId: string | null) {
+  const column = await tx.taskColumn.findUniqueOrThrow({ where: { id: columnId }, select: { brandId: true } });
+  if (column.brandId && column.brandId !== brandId) throw new Error("La tarea debe pertenecer a la marca de la columna.");
+  if (brandId) await tx.brand.findUniqueOrThrow({ where: { id: brandId }, select: { id: true } });
+  if (assigneeId) {
+    const person = await tx.user.findUniqueOrThrow({ where: { id: assigneeId }, select: { active: true } });
+    if (!person.active) throw new Error("No puedes asignar una cuenta desactivada.");
+  }
+}
 
 function refrescar() {
   revalidatePath("/tareas");
@@ -22,10 +43,12 @@ function refrescar() {
  */
 export async function asegurarColumnasIniciales() {
   const user = await requireLevel(LEVEL.MEMBER);
-  let created = false;
+
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      created = await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
+        await assertActor(tx, user);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(781240110)`;
         if (await tx.taskColumn.count()) return false;
         for (const col of DEFAULT_TASK_COLUMNS) {
           const id = `initial-task-column-${col.order}`;
@@ -35,6 +58,7 @@ export async function asegurarColumnasIniciales() {
             create: { id, name: col.name, color: col.color, order: col.order, brandId: null },
           });
         }
+        await auditInTransaction(tx, { user, action: "CREAR", entity: "TaskColumn", summary: "Creó las columnas iniciales del tablero de tareas." });
         return true;
       }, { isolationLevel: "Serializable" });
       break;
@@ -43,7 +67,6 @@ export async function asegurarColumnasIniciales() {
       if (attempt === 2 || (code !== "P2034" && code !== "P2002")) throw error;
     }
   }
-  if (created) await logAudit({ user, action: "CREAR", entity: "TaskColumn", summary: "Creó las columnas iniciales del tablero de tareas." });
   refrescar();
   return { ok: true };
 }
@@ -51,111 +74,49 @@ export async function asegurarColumnasIniciales() {
 /* ---------------------------------------------------- ACCIONES DE TAREAS -- */
 
 export async function crearTarea(formData: FormData) {
-  await requireLevel(LEVEL.MEMBER);
-
-  const title = field(formData, "title");
-  if (!title) throw new Error("El título de la tarea es obligatorio.");
-
-  const description = fieldOrNull(formData, "description");
-  const columnId = field(formData, "columnId");
-  if (!columnId) throw new Error("Debes indicar la columna del pipeline.");
-
-  const kind = field(formData, "kind") || "ACCION";
-  const priority = field(formData, "priority") || "NORMAL";
-  const dueDate = dateField(formData, "dueDate");
-  const assigneeId = fieldOrNull(formData, "assigneeId");
-  const brandId = fieldOrNull(formData, "brandId");
-
-  const lastTask = await prisma.task.findFirst({
-    where: { columnId },
-    orderBy: { order: "desc" },
-    select: { order: true },
+  const user = await requireLevel(LEVEL.MEMBER);
+  return withMutation(user, false, async (tx, afterCommit) => {
+    const data = readTask(formData);
+    const columnId = field(formData, "columnId");
+    await checkTaskRelations(tx, columnId, data.brandId, data.assigneeId);
+    const last = await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } });
+    const task = await tx.task.create({ data: { ...data, columnId, order: (last?.order ?? -1) + 1 } });
+    await auditInTransaction(tx, { user, action: "CREAR", entity: "Task", entityId: task.id, brandId: task.brandId, summary: `Creó la tarea "${task.title}"` });
+    afterCommit(refrescar);
+    return { ok: true, task };
   });
-  const order = (lastTask?.order ?? -1) + 1;
-
-  const task = await prisma.task.create({
-    data: {
-      title,
-      description,
-      kind,
-      priority,
-      dueDate,
-      columnId,
-      assigneeId,
-      brandId,
-      order,
-    },
-  });
-
-  refrescar();
-  return { ok: true, task };
 }
 
 export async function actualizarTarea(formData: FormData) {
-  await requireLevel(LEVEL.MEMBER);
-
-  const id = field(formData, "id");
-  if (!id) throw new Error("Falta el identificador de la tarea.");
-
-  const title = field(formData, "title");
-  if (!title) throw new Error("El título no puede estar vacío.");
-
-  const description = fieldOrNull(formData, "description");
-  const kind = field(formData, "kind") || "ACCION";
-  const priority = field(formData, "priority") || "NORMAL";
-  const dueDate = dateField(formData, "dueDate");
-  const assigneeId = fieldOrNull(formData, "assigneeId");
-  const brandId = fieldOrNull(formData, "brandId");
-  const columnId = fieldOrNull(formData, "columnId");
-
-  const updateData: Record<string, unknown> = {
-    title,
-    description,
-    kind,
-    priority,
-    dueDate,
-    assigneeId,
-    brandId,
-  };
-
-  if (columnId) {
-    updateData.columnId = columnId;
-  }
-
-  const task = await prisma.task.update({
-    where: { id },
-    data: updateData,
+  const user = await requireLevel(LEVEL.MEMBER);
+  return withMutation(user, false, async (tx, afterCommit) => {
+    const id = field(formData, "id");
+    await lockRevision(tx, "Task", id, formData);
+    const before = await tx.task.findUniqueOrThrow({ where: { id } });
+    const data = readTask(formData);
+    const columnId = field(formData, "columnId") || before.columnId;
+    await checkTaskRelations(tx, columnId, data.brandId, data.assigneeId);
+    const last = columnId !== before.columnId ? await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } }) : null;
+    const task = await tx.task.update({ where: { id }, data: { ...data, columnId, ...(columnId !== before.columnId ? { order: (last?.order ?? -1) + 1 } : {}) } });
+    await auditInTransaction(tx, { user, action: "EDITAR", entity: "Task", entityId: id, brandId: task.brandId, summary: `Editó la tarea "${task.title}"`, changes: diffFields(before, task, FIELD_LABELS) });
+    afterCommit(refrescar);
+    return { ok: true, task };
   });
-
-  refrescar();
-  return { ok: true, task };
 }
 
-export async function moverTarea(taskId: string, targetColumnId: string, newOrder?: number) {
-  await requireLevel(LEVEL.MEMBER);
-
-  if (!taskId || !targetColumnId) throw new Error("Datos incompletos para mover tarea.");
-
-  let finalOrder = newOrder;
-  if (finalOrder === undefined) {
-    const lastTask = await prisma.task.findFirst({
-      where: { columnId: targetColumnId },
-      orderBy: { order: "desc" },
-      select: { order: true },
-    });
-    finalOrder = (lastTask?.order ?? -1) + 1;
-  }
-
-  const task = await prisma.task.update({
-    where: { id: taskId },
-    data: {
-      columnId: targetColumnId,
-      order: finalOrder,
-    },
+export async function moverTarea(taskId: string, targetColumnId: string, newOrder: number | undefined, expectedUpdatedAt: string) {
+  const user = await requireLevel(LEVEL.MEMBER);
+  return withMutation(user, false, async (tx, afterCommit) => {
+    await lockRevision(tx, "Task", taskId, expectedUpdatedAt);
+    const before = await tx.task.findUniqueOrThrow({ where: { id: taskId } });
+    await checkTaskRelations(tx, targetColumnId, before.brandId, before.assigneeId);
+    const last = await tx.task.findFirst({ where: { columnId: targetColumnId }, orderBy: { order: "desc" }, select: { order: true } });
+    const order = boundedNumber(newOrder ?? (last?.order ?? -1) + 1, 0, 2147483647, "Orden", true);
+    const task = await tx.task.update({ where: { id: taskId }, data: { columnId: targetColumnId, order } });
+    await auditInTransaction(tx, { user, action: "EDITAR", entity: "Task", entityId: taskId, brandId: task.brandId, summary: `Movió la tarea "${task.title}"`, changes: diffFields(before, task, FIELD_LABELS) });
+    afterCommit(refrescar);
+    return { ok: true, task };
   });
-
-  refrescar();
-  return { ok: true, task };
 }
 
 export async function eliminarTarea(idOrFormData: FormData | string) {
@@ -177,46 +138,32 @@ export async function eliminarTarea(idOrFormData: FormData | string) {
 
 /* -------------------------------------------------- ACCIONES DE COLUMNAS -- */
 
-export async function actualizarColumna(columnId: string, name: string, color: string) {
-  await requireLevel(LEVEL.MEMBER);
-
-  if (!columnId) throw new Error("Identificador de columna faltante.");
+export async function actualizarColumna(columnId: string, name: string, color: string, expectedUpdatedAt: string) {
+  const user = await requireLevel(LEVEL.MEMBER);
   if (!name.trim()) throw new Error("El nombre de la columna no puede estar vacío.");
-
-  const col = await prisma.taskColumn.update({
-    where: { id: columnId },
-    data: {
-      name: name.trim(),
-      color: color.trim() || "#8b5cf6",
-    },
+  if (!/^#[a-f0-9]{6}$/i.test(color)) throw new Error("El color no es válido.");
+  return withMutation(user, false, async (tx, afterCommit) => {
+    await lockRevision(tx, "TaskColumn", columnId, expectedUpdatedAt);
+    const before = await tx.taskColumn.findUniqueOrThrow({ where: { id: columnId } });
+    const column = await tx.taskColumn.update({ where: { id: columnId }, data: { name: name.trim(), color } });
+    await auditInTransaction(tx, { user, action: "EDITAR", entity: "TaskColumn", entityId: columnId, brandId: column.brandId, summary: `Editó la columna "${column.name}"`, changes: diffFields(before, column, FIELD_LABELS) });
+    afterCommit(refrescar);
+    return { ok: true, column };
   });
-
-  refrescar();
-  return { ok: true, column: col };
 }
 
 export async function crearColumna(name: string, color: string, brandId?: string | null) {
-  await requireLevel(LEVEL.MEMBER);
-
+  const user = await requireLevel(LEVEL.MEMBER);
   if (!name.trim()) throw new Error("El nombre de la columna es obligatorio.");
-
-  const lastCol = await prisma.taskColumn.findFirst({
-    orderBy: { order: "desc" },
-    select: { order: true },
+  if (!/^#[a-f0-9]{6}$/i.test(color)) throw new Error("El color no es válido.");
+  return withMutation(user, false, async (tx, afterCommit) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(781240110)`;
+    const last = await tx.taskColumn.findFirst({ orderBy: { order: "desc" }, select: { order: true } });
+    const column = await tx.taskColumn.create({ data: { name: name.trim(), color, brandId: brandId || null, order: (last?.order ?? -1) + 1 } });
+    await auditInTransaction(tx, { user, action: "CREAR", entity: "TaskColumn", entityId: column.id, brandId: column.brandId, summary: `Creó la columna "${column.name}"` });
+    afterCommit(refrescar);
+    return { ok: true, column };
   });
-  const order = (lastCol?.order ?? -1) + 1;
-
-  const col = await prisma.taskColumn.create({
-    data: {
-      name: name.trim(),
-      color: color.trim() || "#8b5cf6",
-      order,
-      brandId: brandId ?? null,
-    },
-  });
-
-  refrescar();
-  return { ok: true, column: col };
 }
 
 export async function eliminarColumna(columnId: string) {

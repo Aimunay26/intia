@@ -1,33 +1,35 @@
 "use client";
+import { EditForm, RevisionField } from "@/components/edit-form";
 
-import { useEffect, useState } from "react";
 import {
-  ArrowDown,
-  ArrowUp,
-  Pencil,
-  Plus,
-  Printer,
-  Trash2,
-  X,
+	ArrowDown,
+	ArrowUp,
+	Pencil,
+	Plus,
+	Printer,
+	Trash2,
+	X,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
-  actualizarEscena,
-  actualizarGuion,
-  eliminarEscena,
-  moverEscena,
+	actualizarEscena,
+	actualizarGuion,
+	eliminarEscena,
+	moverEscena,
 } from "@/app/actions/scripts";
-import { VOICE_TYPES } from "@/lib/constants";
-import { formatSeconds } from "@/lib/utils";
-import { Field } from "@/components/ui";
 import { DeleteButton, Modal, SubmitButton } from "@/components/forms";
+import { Field } from "@/components/ui";
+import { VOICE_TYPES } from "@/lib/constants";
 import { CTA_TRIGGERS } from "@/lib/script-angles";
+import { formatSeconds } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ TIPOS -- */
 
 export type SceneActor = { role: string; archetype: string; notes: string };
 
 export type SceneData = {
+  scriptUpdatedAt: string;
   id: string;
   order: number;
   beat: string;
@@ -62,6 +64,7 @@ export function PrintButton({ className = "btn btn-sm" }: { className?: string }
 /* ---------------------------------------------------------- FICHA DEL GUION -- */
 
 export type ScriptSheet = {
+  updatedAt: string;
   id: string;
   brandId: string | null;
   structureId: string | null;
@@ -103,11 +106,12 @@ export function ScriptSheetEditor({
         description="Lo que enmarca el video: a quién le habla, qué vende y con qué termina."
         width={640}
       >
-        <form
+        <EditForm
           action={actualizarGuion}
-          onSubmit={() => setOpen(false)}
+          onSuccess={() => setOpen(false)}
           className="space-y-3"
         >
+<RevisionField value={script.updatedAt} />
           <input type="hidden" name="id" value={script.id} />
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -186,7 +190,7 @@ export function ScriptSheetEditor({
               Guardar ficha
             </SubmitButton>
           </div>
-        </form>
+        </EditForm>
       </Modal>
     </>
   );
@@ -221,7 +225,8 @@ export function SceneEditor({
 
   return (
     <div className="no-print flex shrink-0 items-center gap-1">
-      <form action={moverEscena}>
+      <EditForm action={moverEscena}>
+<RevisionField value={scene.scriptUpdatedAt} />
         <input type="hidden" name="id" value={scene.id} />
         <input type="hidden" name="direccion" value="arriba" />
         <button
@@ -232,9 +237,10 @@ export function SceneEditor({
         >
           <ArrowUp size={14} />
         </button>
-      </form>
+      </EditForm>
 
-      <form action={moverEscena}>
+      <EditForm action={moverEscena}>
+<RevisionField value={scene.scriptUpdatedAt} />
         <input type="hidden" name="id" value={scene.id} />
         <input type="hidden" name="direccion" value="abajo" />
         <button
@@ -245,7 +251,7 @@ export function SceneEditor({
         >
           <ArrowDown size={14} />
         </button>
-      </form>
+      </EditForm>
 
       <button type="button" onClick={abrir} className="btn btn-sm">
         <Pencil size={13} />
@@ -254,7 +260,7 @@ export function SceneEditor({
 
       {canDelete ? (
         <DeleteButton
-          action={eliminarEscena}
+          action={async fd => { fd.set("expectedUpdatedAt", scene.scriptUpdatedAt); await eliminarEscena(fd); }}
           id={scene.id}
           label=""
           icon={<Trash2 size={14} />}
@@ -271,7 +277,8 @@ export function SceneEditor({
         description={`${formatSeconds(scene.startSec)} – ${formatSeconds(scene.endSec)} · ajusta lo que haga falta antes de grabar`}
         width={860}
       >
-        <form action={actualizarEscena} onSubmit={() => setOpen(false)} className="space-y-4">
+        <EditForm action={actualizarEscena} onSuccess={() => setOpen(false)} className="space-y-4">
+<RevisionField value={scene.scriptUpdatedAt} />
           <input type="hidden" name="id" value={scene.id} />
           <input type="hidden" name="actors" value={JSON.stringify(actors)} />
 
@@ -439,7 +446,7 @@ export function SceneEditor({
               Guardar escena
             </SubmitButton>
           </div>
-        </form>
+        </EditForm>
       </Modal>
     </div>
   );

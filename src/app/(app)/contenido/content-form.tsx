@@ -1,19 +1,20 @@
 "use client";
+import { EditForm, RevisionField } from "@/components/edit-form";
 
-import { useState } from "react";
-import Link from "next/link";
 import { FileText, Plus, Save } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 import { actualizarVideo, crearVideo } from "@/app/actions/content";
-import {
-  CONTENT_STATUSES,
-  PLATFORMS,
-  PRIORITIES,
-} from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import { Field } from "@/components/ui";
 import { ModalForm, SubmitButton } from "@/components/forms";
+import { Field } from "@/components/ui";
+import {
+	CONTENT_STATUSES,
+	PLATFORMS,
+	PRIORITIES,
+} from "@/lib/constants";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
+import { cn } from "@/lib/utils";
 
 /**
  * Formularios de creacion y edicion de un video.
@@ -25,6 +26,7 @@ export type BrandOption = { id: string; name: string; color: string };
 export type SimpleOption = { id: string; name: string };
 
 export type VideoFormItem = {
+  updatedAt: string;
   id: string;
   title: string;
   description: string;
@@ -266,7 +268,8 @@ export function VideoDatosForm({
   canEdit: boolean;
 }) {
   return (
-    <form action={actualizarVideo} className="space-y-3.5 p-4">
+    <EditForm action={actualizarVideo} className="space-y-3.5 p-4">
+<RevisionField value={item.updatedAt} />
       <input type="hidden" name="id" value={item.id} />
 
       <Field label="Título" required>
@@ -387,6 +390,6 @@ export function VideoDatosForm({
       ) : (
         <p className="hint">Tu rol solo permite consultar esta ficha.</p>
       )}
-    </form>
+    </EditForm>
   );
 }

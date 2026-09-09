@@ -1,0 +1,18 @@
+{
+  "observedAt": "2026-09-09T20:20:22.713Z",
+  "environment": "production-read-only",
+  "project": "mute-violet-04232921",
+  "branch": "br-old-water-au8cuoqk",
+  "database": "neondb",
+  "source": "Neon SQL Editor, main, SELECT only",
+  "moneyType": "double precision",
+  "weeklySchemaPresent": false,
+  "jobsSchemaPresent": false,
+  "assets": 4,
+  "assetBytes": 2234418,
+  "invalidMoney": 0,
+  "invalidPlatforms": 0,
+  "vercelPlan": "Hobby",
+  "neonPlan": "Free",
+  "blobStoreConnected": false
+}

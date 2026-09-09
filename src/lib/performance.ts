@@ -1,13 +1,11 @@
-import { randomUUID } from "node:crypto";
-import { cache } from "react";
+import { renderRequestId } from "@/lib/performance-context";
 import { queryTrace } from "@/lib/query-performance";
 
-const renderId = cache(() => randomUUID());
 
 /** Activar con PERFORMANCE_LOGS=1. No registra parámetros, datos ni credenciales. */
 export async function measurePhase<T>(phase: string, work: () => PromiseLike<T>): Promise<T> {
   if (process.env.PERFORMANCE_LOGS !== "1") return await work();
-  const requestId = queryTrace.getStore()?.requestId ?? renderId();
+  const requestId = queryTrace.getStore()?.requestId ?? renderRequestId();
   const trace = { requestId, phase, operations: 0, queryMs: 0 };
   const start = performance.now();
   let ok = false;
@@ -19,7 +17,8 @@ export async function measurePhase<T>(phase: string, work: () => PromiseLike<T>)
     console.info("[performance]", JSON.stringify({
       kind: "phase", requestId, phase, durationMs: Math.round(performance.now() - start), ok,
       operations: trace.operations, queryMs: Math.round(trace.queryMs),
-      release: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12), region: process.env.VERCEL_REGION,
+      environment: process.env.VERCEL_ENV ?? process.env.PERFORMANCE_ENVIRONMENT ?? "local",
+      release: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ?? process.env.PERFORMANCE_RELEASE ?? "local", region: process.env.VERCEL_REGION,
     }));
   }
 }

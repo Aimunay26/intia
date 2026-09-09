@@ -1,38 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+	Activity,
+	CalendarDays,
+	CheckSquare,
+	ChevronDown,
+	Film,
+	GraduationCap,
+	LayoutDashboard,
+	LogOut,
+	Menu,
+	Moon,
+	Settings,
+	Shapes,
+	Sparkles,
+	Sun,
+	Tags,
+	TrendingUp,
+	Users,
+	UserSquare2,
+	X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Activity,
-  CalendarDays,
-  CheckSquare,
-  GraduationCap,
-  ChevronDown,
-  Film,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Moon,
-  Settings,
-  Shapes,
-  Sparkles,
-  Sun,
-  Tags,
-  TrendingUp,
-  Users,
-  UserSquare2,
-  X,
-} from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { cn } from "@/lib/utils";
-import { USER_ROLE_MAP } from "@/lib/constants";
-import { Avatar } from "@/components/ui";
 import { BrandSwitcher } from "@/components/brand-switcher";
-import { NavigationPending } from "@/components/navigation-pending";
+import { GUIA_TARGETS, GuiaOverlay, GuiaProvider } from "@/components/guia";
 import { NavigationMeasurements } from "@/components/navigation-measurements";
+import { NavigationPending } from "@/components/navigation-pending";
+import { Avatar } from "@/components/ui";
 import type { BrandChoice } from "@/lib/brand-shared";
-import { GuiaProvider, GuiaOverlay, GUIA_TARGETS } from "@/components/guia";
+import { USER_ROLE_MAP } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 const NAV_GUIA_MAP: Record<string, string> = {
   "/marcas": GUIA_TARGETS.NAV_MARCAS,
@@ -102,6 +102,7 @@ export function Shell({
   activeBrandId,
   performanceEnabled = false,
   release = "local",
+  environment = "unknown",
   children,
 }: {
   user: ShellUser;
@@ -110,6 +111,7 @@ export function Shell({
   activeBrandId: string | null;
   performanceEnabled?: boolean;
   release?: string;
+  environment?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -228,7 +230,7 @@ export function Shell({
           </header>
 
           <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
-            <NavigationMeasurements enabled={performanceEnabled} release={release} />
+            <NavigationMeasurements enabled={performanceEnabled} release={release} environment={environment} />
             <div className="mx-auto w-full max-w-[1400px]">{children}</div>
           </main>
         </div>

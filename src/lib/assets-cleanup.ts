@@ -1,19 +1,19 @@
+import type { AppTransaction } from "@/lib/prisma";
 import { prisma } from "@/lib/prisma";
 
 /**
  * Limpieza de archivos huérfanos.
  *
  * `Asset` es polimórfico (`ownerType` + `ownerId`), y por eso NO tiene relación
- * en el esquema: Prisma no puede borrarlo en cascada. Si no se limpia a mano al
- * eliminar la entidad dueña, los bytes de los PDF se quedan dentro de la base
- * de datos para siempre, engordando las copias de seguridad con archivos que ya
- * no se pueden ni ver ni borrar desde ninguna pantalla.
+ * en el esquema de Prisma. Las acciones limpian dentro de su transacción y los
+ * triggers de la migración semanal protegen también borrados por FK y SQL.
+ * Para revisar huérfanos históricos con conteos SQL, usar `npm run db:integridad`.
  *
  * Se llama desde TODOS los borrados de entidades que pueden tener documentos:
  * marca, estructura, arquetipo, usuario y video.
  */
-export async function borrarAssetsDe(ownerType: string, ownerId: string) {
-  const { count } = await prisma.asset.deleteMany({ where: { ownerType, ownerId } });
+export async function borrarAssetsDe(ownerType: string, ownerId: string, db: AppTransaction = prisma) {
+  const { count } = await db.asset.deleteMany({ where: { ownerType, ownerId } });
   return count;
 }
 

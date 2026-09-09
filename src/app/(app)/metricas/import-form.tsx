@@ -1,18 +1,19 @@
 "use client";
 
-import { useActionState, useState } from "react";
 import { ChevronDown, FileSpreadsheet, Upload } from "lucide-react";
+import { useActionState, useState } from "react";
 
 import { importarMetricasCsv, type ImportState } from "@/app/actions/metrics";
-import { cn } from "@/lib/utils";
-import { Callout, Field } from "@/components/ui";
 import { CopyButton, SubmitButton } from "@/components/forms";
+import { Callout, Field } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 /** Columnas que entiende el importador, en el orden recomendado. */
 const COLUMNAS: { name: string; help: string; required?: boolean }[] = [
-  { name: "fecha", help: "2026-03-14 o 14/03/2026", required: true },
+  { name: "semana", help: "Lunes: 2026-09-07 o 07/09/2026", required: true },
+  { name: "plataforma", help: "TIKTOK, INSTAGRAM, FACEBOOK, YOUTUBE, WHATSAPP u OTRO", required: true },
   { name: "video", help: "El id del video o su título exacto", required: true },
-  { name: "vistas", help: "Reproducciones del día" },
+  { name: "vistas", help: "Reproducciones de esa semana" },
   { name: "likes", help: "Me gusta" },
   { name: "comentarios", help: "Comentarios recibidos" },
   { name: "compartidos", help: "Veces que se compartió" },
@@ -27,10 +28,10 @@ const COLUMNAS: { name: string; help: string; required?: boolean }[] = [
 ];
 
 const EJEMPLO = [
-  "fecha,video,vistas,likes,comentarios,compartidos,guardados,alcance,clics,leads,pedidos,inversion,ingresos,retencion",
-  "2026-08-14,Rutina de noche en 30 segundos,18420,940,63,120,310,22100,180,12,4,45,320,62",
-  "2026-08-15,Rutina de noche en 30 segundos,9310,410,22,48,150,11800,90,5,2,45,180,58",
-  "15/08/2026,cm7k2xq9v0001abcd,4120,210,9,17,60,5300,41,2,1,0,0,47",
+  "semana,plataforma,video,vistas,likes,comentarios,compartidos,guardados,alcance,clics,leads,pedidos,inversion,ingresos,retencion",
+  "2026-08-10,TIKTOK,Rutina de noche en 30 segundos,18420,940,63,120,310,22100,180,12,4,45,320,62",
+  "2026-08-17,TIKTOK,Rutina de noche en 30 segundos,9310,410,22,48,150,11800,90,5,2,45,180,58",
+  "17/08/2026,INSTAGRAM,cm7k2xq9v0001abcd,4120,210,9,17,60,5300,41,2,1,0,0,47",
 ].join("\n");
 
 /**
@@ -58,7 +59,7 @@ export function ImportForm() {
             Importar métricas desde un CSV
           </span>
           <span className="text-inkmuted block text-[12px] leading-snug">
-            Pega lo que exportaste de TikTok, Instagram o Meta Ads y se reparte en cada video.
+            Una fila por video, plataforma y semana. Carga solo lo obtenido esa semana, sin acumulados.
           </span>
         </span>
         <ChevronDown
@@ -106,7 +107,7 @@ export function ImportForm() {
                   Importar filas
                 </SubmitButton>
                 <span className="text-inkmuted text-[11.5px]">
-                  Hasta 500 filas. Columnas ausentes o celdas vacías conservan el dato existente; escribe 0 para ponerlo en cero. Cada cambio queda registrado.
+                  Hasta 500 filas. Columnas ausentes o celdas vacías conservan el dato existente; escribe 0 para ponerlo en cero. Cada cambio queda registrado. Retención se expresa de 0 a 100; 0 es un dato válido. Un campo vacío conserva el valor existente.
                 </span>
               </div>
 

@@ -7,15 +7,15 @@
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:push": "prisma db push",
+    "lint": "eslint src prisma scripts tests next.config.ts eslint.config.mjs",
+    "db:push": "node scripts/local-database-only.mjs && prisma db push",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:personas": "tsx prisma/seed-personas-run.ts",
+    "db:seed": "node scripts/local-database-only.mjs && tsx prisma/seed.ts",
+    "db:personas": "node scripts/local-database-only.mjs && tsx prisma/seed-personas-run.ts",
     "ver:prompt": "tsx scripts/ver-prompt.ts",
     "test:motores": "tsx scripts/calibrar-motor.ts",
-    "db:reset": "node scripts/proteger-produccion.mjs && prisma db push --force-reset && npm run db:seed",
-    "setup": "prisma generate && prisma db push && npm run db:seed",
+    "db:reset": "node scripts/local-database-only.mjs && prisma migrate reset --force --skip-seed",
+    "setup": "prisma generate && prisma migrate deploy",
     "use:postgres": "node scripts/switch-db.mjs postgresql",
     "use:sqlite": "node scripts/switch-db.mjs sqlite",
     "test:humo": "node scripts/smoke-test.mjs",
@@ -28,7 +28,18 @@
     "perf:resumen": "node scripts/summarize-navigation.mjs",
     "perf:db": "tsx scripts/diagnose-database.ts",
     "postinstall": "prisma generate",
-    "guardia": "node scripts/proteger-produccion.mjs"
+    "guardia": "node scripts/proteger-produccion.mjs",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate deploy",
+    "db:baseline": "node scripts/baseline-existing.mjs",
+    "db:integridad": "node scripts/check-db-integrity.mjs",
+    "test": "node --disable-warning=ExperimentalWarning --test tests/navigation.test.mjs tests/performance.test.mjs tests/security.test.mjs tests/consistency.test.mjs",
+    "test:postgres": "node scripts/test-postgres.mjs",
+    "db:ensayo": "node scripts/rehearse-migration.mjs",
+    "perf:local": "node scripts/run-benchmark.mjs",
+    "test:workflow": "node scripts/smoke-workflow.mjs",
+    "perf:panel": "node scripts/benchmark-panel-ab.mjs",
+    "assets:migrate": "tsx scripts/migrate-assets.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -36,7 +47,9 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
     "@google/genai": "^1.30.0",
+    "@opentelemetry/api": "^1.9.0",
     "@prisma/client": "^6.7.0",
+    "@vercel/blob": "2.8.0",
     "bcryptjs": "^3.0.2",
     "date-fns": "^4.1.0",
     "jose": "^6.1.0",
@@ -45,17 +58,28 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "unpdf": "^1.3.2",
+    "workflow": "4.8.7",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^15.5.24",
     "prisma": "^6.7.0",
     "tailwindcss": "^4.1.13",
     "tsx": "^4.20.0",
     "typescript": "^5.7.3"
+  },
+  "overrides": {
+    "postcss": "8.5.28",
+    "deepmerge-ts": "8.0.2",
+    "nanoid": "5.1.16",
+    "undici": "7.29.0"
   }
 }

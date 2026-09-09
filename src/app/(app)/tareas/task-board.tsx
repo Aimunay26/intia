@@ -3,40 +3,33 @@ import { cargarTareasColumna } from "@/app/actions/task-pages";
 import type { TaskFilters } from "@/lib/task-list";
 
 
-import { useActionState, useRef, useId, useEffect, useState, useTransition } from "react";
 import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Calendar,
-  CheckCircle2,
-  Filter,
-  Lightbulb,
-  MoreVertical,
-  Pencil,
-  Plus,
-  Search,
-  Tag,
-  Trash2,
-  User,
-  Zap,
+	ArrowLeft,
+	ArrowRight,
+	Calendar,
+	Lightbulb,
+	Pencil,
+	Plus,
+	Trash2,
+	Zap
 } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import {
-  actualizarColumna,
-  actualizarTarea,
-  crearColumna,
-  crearTarea,
-  eliminarColumna,
-  eliminarTarea,
-  revisarEliminacionColumna,
-  moverTarea,
+	actualizarColumna,
+	actualizarTarea,
+	crearColumna,
+	crearTarea,
+	eliminarColumna,
+	eliminarTarea,
+	moverTarea,
+	revisarEliminacionColumna,
 } from "@/app/actions/tasks";
-import Link from "next/link";
+import { EditForm, RevisionField } from "@/components/edit-form";
 import { FilterSelect, SearchInput } from "@/components/filters";
-import { TASK_KINDS, TASK_PRIORITIES } from "@/lib/tasks-constants";
 import { Modal, SubmitButton } from "@/components/forms";
-import { Avatar, Field } from "@/components/ui";
+import { Field } from "@/components/ui";
+import { TASK_PRIORITIES } from "@/lib/tasks-constants";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------------ TIPOS -- */
@@ -68,10 +61,12 @@ export type BoardTask = {
   assignee?: BoardUser | null;
   brand?: BoardBrand | null;
   createdAt: Date | string;
+  updatedAt: Date | string;
 };
 
 export type BoardColumn = {
   id: string;
+  updatedAt: Date | string;
   name: string;
   color: string;
   order: number;
@@ -114,6 +109,7 @@ export function TaskBoard({
   const [isPending, startTransition] = useTransition();
   const [deletion, setDeletion] = useState<{ kind: "task" | "column"; id: string; name: string; tasks: number } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [moveError, setMoveError] = useState(false);
 
   const generation = useRef(0);
   const loading = useRef(new Set<string>());
@@ -181,6 +177,11 @@ export function TaskBoard({
   };
 
   const moverTareaEntreColumnas = (taskId: string, targetColId: string) => {
+    if (isPending) return;
+    const previous = columns;
+    const task = columns.flatMap(column => column.tasks).find(task => task.id === taskId);
+    if (!task) return;
+    setMoveError(false);
     setColumns((prev) => {
       let movedTask: BoardTask | null = null;
       const next = prev.map((col) => {
@@ -205,7 +206,11 @@ export function TaskBoard({
     });
 
     startTransition(async () => {
-      await moverTarea(taskId, targetColId);
+      try {
+        await moverTarea(taskId, targetColId, undefined, new Date(task.updatedAt).toISOString());
+      } catch {
+        setColumns(previous); setMoveError(true);
+      }
     });
   };
 
@@ -219,6 +224,7 @@ export function TaskBoard({
 
   return (
     <div className="space-y-4">
+      {moveError ? <p role="alert" className="text-danger text-sm">No se movió la tarea. Recarga para comprobar cambios de otra persona.</p> : null}
       {/* ------------------------------------------------ FILTROS SUPERIORES -- */}
       <div className="card-flat flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
         <div className="flex flex-wrap items-center gap-2.5 min-w-0 flex-1">
@@ -607,7 +613,7 @@ export function TaskBoard({
           description="Actualiza el estado, responsable o detalles de la tarea."
           width={540}
         >
-          <form
+          <EditForm
             action={async (formData) => {
               await actualizarTarea(formData);
               setEditingTask(null);
@@ -615,6 +621,7 @@ export function TaskBoard({
             className="space-y-3.5"
           >
             <input type="hidden" name="id" value={editingTask.id} />
+            <RevisionField value={editingTask.updatedAt} />
 
             {/* Etapa actual */}
             <Field label="Etapa en el pipeline">
@@ -764,7 +771,7 @@ export function TaskBoard({
                 <SubmitButton pendingLabel="Guardando...">Guardar cambios</SubmitButton>
               </div>
             </div>
-          </form>
+          </EditForm>
         </Modal>
       )}
 
@@ -777,11 +784,11 @@ export function TaskBoard({
           description="Personaliza el nombre y el color de esta etapa del flujo de trabajo."
           width={460}
         >
-          <form
+          <EditForm
             action={async (formData) => {
               const name = formData.get("name") as string;
               const color = formData.get("color") as string;
-              await actualizarColumna(editingColumn.id, name, color);
+              await actualizarColumna(editingColumn.id, name, color, new Date(editingColumn.updatedAt).toISOString());
               setEditingColumn(null);
             }}
             className="space-y-4"
@@ -868,7 +875,7 @@ export function TaskBoard({
                 <SubmitButton pendingLabel="Guardando...">Guardar</SubmitButton>
               </div>
             </div>
-          </form>
+          </EditForm>
         </Modal>
       )}
 

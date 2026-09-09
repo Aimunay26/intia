@@ -1,236 +1,62 @@
 "use client";
-
-import { Plus, Save, TrendingUp, X } from "lucide-react";
-
 import { eliminarMetrica, guardarMetrica } from "@/app/actions/content";
-import {
-  compactNumber,
-  formatMoney,
-  formatNumber,
-  formatPercent,
-  safeDivide,
-} from "@/lib/utils";
-import { Card, CardHeader, EmptyState, Field } from "@/components/ui";
-import { Collapsible, SubmitButton } from "@/components/forms";
-
-/**
- * Registro manual de metricas por dia y su historico.
- * Se guarda con upsert sobre (video, fecha): volver a enviar la misma fecha
- * corrige los numeros en vez de duplicar la fila.
- */
+import { EditForm, RevisionField } from "@/components/edit-form";
+import { Card, CardHeader, Field } from "@/components/ui";
+import { PLATFORMS, PLATFORM_MAP } from "@/lib/constants";
+import { formatMoney, formatNumber, formatPercent } from "@/lib/utils";
+import { currentWeek } from "@/lib/weekly-metrics";
+import { useState } from "react";
 
 export type MetricRow = {
-  id: string;
-  /** yyyy-mm-dd, para rellenar el formulario al corregir. */
-  dateKey: string;
-  /** Ya formateado en el servidor. */
-  dateLabel: string;
-  views: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  saves: number;
-  reach: number;
-  clicks: number;
-  leads: number;
-  orders: number;
-  spend: number;
-  revenue: number;
-  retention3s: number;
+  id: string; dateKey: string; dateLabel: string; period: string; platform: string; updatedAt: string; notes: string | null;
+  views: number; likes: number; comments: number; shares: number; saves: number; reach: number; clicks: number; leads: number; orders: number;
+  spend: string; revenue: string; retention3s: number | null;
 };
+const FIELDS = [
+  ["views", "Vistas"], ["likes", "Me gusta"], ["comments", "Comentarios"], ["shares", "Compartidos"], ["saves", "Guardados"],
+  ["reach", "Alcance"], ["clicks", "Clics"], ["leads", "Leads"], ["orders", "Pedidos"], ["spend", "Inversión (S/)", "0.000001"],
+  ["revenue", "Ingresos (S/)", "0.000001"], ["retention3s", "Retención 3s (%)", "0.01"],
+] as const;
 
-const CAMPOS: { name: keyof MetricRow; label: string; step?: string }[] = [
-  { name: "views", label: "Vistas" },
-  { name: "likes", label: "Me gusta" },
-  { name: "comments", label: "Comentarios" },
-  { name: "shares", label: "Compartidos" },
-  { name: "saves", label: "Guardados" },
-  { name: "reach", label: "Alcance" },
-  { name: "clicks", label: "Clics" },
-  { name: "leads", label: "Leads" },
-  { name: "orders", label: "Pedidos" },
-  { name: "spend", label: "Inversión (S/)", step: "0.01" },
-  { name: "revenue", label: "Ingresos (S/)", step: "0.01" },
-  { name: "retention3s", label: "Retención 3s (%)", step: "0.1" },
-];
-
-export function MetricsPanel({
-  contentItemId,
-  metrics,
-  todayKey,
-  canEdit,
-  canManage,
-}: {
-  contentItemId: string;
-  metrics: MetricRow[];
-  todayKey: string;
-  canEdit: boolean;
-  canManage: boolean;
+export function MetricsPanel({ contentItemId, metrics, canEdit, canManage }: {
+  contentItemId: string; metrics: MetricRow[]; todayKey: string; canEdit: boolean; canManage: boolean;
 }) {
-  const sum = (pick: (m: MetricRow) => number) => metrics.reduce((acc, m) => acc + pick(m), 0);
-
-  const vistas = sum((m) => m.views);
-  const inversion = sum((m) => m.spend);
-  const ingresos = sum((m) => m.revenue);
-  // La retención se promedia solo sobre los días que traen el dato: contar los
-  // ceros de los días sin registrar hundiría el número. La pantalla de Métricas
-  // hace exactamente lo mismo, así que ambos coinciden.
-  const conRetencion = metrics.filter((m) => m.retention3s > 0);
-  const retencion = safeDivide(
-    conRetencion.reduce((acc, m) => acc + m.retention3s, 0),
-    conRetencion.length
-  );
-
-  const totales: { label: string; value: string }[] = [
-    { label: "Vistas", value: compactNumber(vistas) },
-    { label: "Me gusta", value: compactNumber(sum((m) => m.likes)) },
-    { label: "Comentarios", value: compactNumber(sum((m) => m.comments)) },
-    { label: "Compartidos", value: compactNumber(sum((m) => m.shares)) },
-    { label: "Guardados", value: compactNumber(sum((m) => m.saves)) },
-    { label: "Alcance", value: compactNumber(sum((m) => m.reach)) },
-    { label: "Clics", value: compactNumber(sum((m) => m.clicks)) },
-    { label: "Leads", value: formatNumber(sum((m) => m.leads)) },
-    { label: "Pedidos", value: formatNumber(sum((m) => m.orders)) },
-    { label: "Inversión", value: formatMoney(inversion) },
-    { label: "Ingresos", value: formatMoney(ingresos) },
-    { label: "ROAS", value: inversion ? `${formatNumber(safeDivide(ingresos, inversion), 2)}x` : "—" },
-    { label: "Retención 3s", value: conRetencion.length ? formatPercent(retencion) : "—" },
-  ];
-
-  return (
-    <Card>
-      <CardHeader
-        title="Métricas"
-        subtitle={
-          metrics.length
-            ? `${metrics.length} registro${metrics.length === 1 ? "" : "s"} · ${compactNumber(
-                vistas
-              )} vistas`
-            : "Sin datos todavía"
-        }
-        icon={<TrendingUp size={15} />}
-      />
-
-      {metrics.length ? (
-        <dl className="grid grid-cols-2 gap-x-4 px-4 py-3">
-          {totales.map((t) => (
-            <div key={t.label} className="flex items-baseline justify-between gap-2 py-[3px]">
-              <dt className="text-inkmuted truncate text-[11.5px]">{t.label}</dt>
-              <dd className="text-ink text-[12.5px] font-semibold tabular-nums">{t.value}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : (
-        <EmptyState
-          icon={<TrendingUp size={18} />}
-          title="Aún no hay números"
-          description="Anota las vistas del día siguiente a publicar y verás cómo rinde este video."
-        />
-      )}
-
-      {canEdit ? (
-        <div className="border-line border-t px-4 py-3">
-          <Collapsible
-            triggerClassName="btn btn-sm w-full"
-            trigger={
-              <>
-                <Plus size={13} /> Registrar métricas de un día
-              </>
-            }
-          >
-            <form
-              action={guardarMetrica}
-              className="bg-surface2 border-line space-y-2.5 rounded-xl border p-3"
-            >
-              <input type="hidden" name="contentItemId" value={contentItemId} />
-              <Field label="Fecha" required hint="Si repites una fecha, se corrigen esos números.">
-                <input type="date" name="date" className="input" defaultValue={todayKey} required />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-2">
-                {CAMPOS.map((c) => (
-                  <Field key={c.name} label={c.label}>
-                    <input
-                      type="number"
-                      name={c.name}
-                      className="input h-[32px] text-[12.5px]"
-                      min="0"
-                      step={c.step ?? "1"}
-                      defaultValue="0"
-                    />
-                  </Field>
-                ))}
-              </div>
-
-              <Field label="Nota">
-                <input name="notes" className="input h-[32px] text-[12.5px]" placeholder="Opcional" />
-              </Field>
-
-              <SubmitButton
-                className="btn btn-primary btn-sm w-full"
-                icon={<Save size={13} />}
-                pendingLabel="Guardando…"
-              >
-                Guardar métricas
-              </SubmitButton>
-            </form>
-          </Collapsible>
-        </div>
-      ) : null}
-
-      {metrics.length ? (
-        <div className="border-line overflow-x-auto border-t">
-          <table className="tbl">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th className="text-right">Vistas</th>
-                <th className="text-right">Likes</th>
-                <th className="text-right">Guard.</th>
-                {canManage ? <th /> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {metrics.map((m) => (
-                <tr key={m.id}>
-                  <td
-                    className="text-inksoft whitespace-nowrap"
-                    title={`Alcance ${formatNumber(m.reach)} · Clics ${formatNumber(
-                      m.clicks
-                    )} · Leads ${formatNumber(m.leads)} · Pedidos ${formatNumber(
-                      m.orders
-                    )} · Inversión ${formatMoney(m.spend)} · Ingresos ${formatMoney(
-                      m.revenue
-                    )} · Retención 3s ${formatPercent(m.retention3s)}`}
-                  >
-                    {m.dateLabel}
-                  </td>
-                  <td className="text-ink text-right font-semibold tabular-nums">
-                    {compactNumber(m.views)}
-                  </td>
-                  <td className="text-right tabular-nums">{compactNumber(m.likes)}</td>
-                  <td className="text-right tabular-nums">{compactNumber(m.saves)}</td>
-                  {canManage ? (
-                    <td className="text-right">
-                      <form action={eliminarMetrica}>
-                        <input type="hidden" name="id" value={m.id} />
-                        <button
-                          type="submit"
-                          className="btn btn-ghost btn-icon h-6 w-6"
-                          title={`Eliminar las métricas del ${m.dateLabel}`}
-                          aria-label={`Eliminar las métricas del ${m.dateLabel}`}
-                        >
-                          <X size={12} />
-                        </button>
-                      </form>
-                    </td>
-                  ) : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-    </Card>
-  );
+  const [editing, setEditing] = useState<MetricRow | "new" | null>(null);
+  const weekly = metrics.filter(row => row.period === "WEEKLY");
+  const historical = metrics.length - weekly.length;
+  const sum = (key: "views" | "spend" | "revenue") => weekly.reduce((total, row) => total + Number(row[key]), 0);
+  const retention = weekly.flatMap(row => row.retention3s === null ? [] : [row.retention3s]);
+  const row = editing && editing !== "new" ? editing : null;
+  return <Card>
+    <CardHeader title="Métricas semanales" subtitle="Resultados de lunes a domingo, separados por plataforma" />
+    <div className="space-y-3 p-4 text-sm">
+      <p>{formatNumber(sum("views"))} vistas · {formatMoney(sum("spend"))} invertidos · {formatMoney(sum("revenue"))} ingresados</p>
+      <p className="text-inkmuted text-xs">Retención media por registro semanal: {retention.length ? formatPercent(retention.reduce((a,b) => a+b,0) / retention.length) : "Sin dato"}. Incluye 0 %; no pondera por vistas.</p>
+      {historical ? <p role="status" className="text-warn text-xs">{historical} registros históricos conservados en la tabla. No se incluyen en los totales semanales porque su período y plataforma no están definidos.</p> : null}
+      {canEdit && !editing ? <button className="btn btn-sm" onClick={() => setEditing("new")}>Registrar una semana</button> : null}
+      {editing ? <EditForm key={row?.id ?? "new"} action={guardarMetrica} onSuccess={() => setEditing(null)} className="space-y-3">
+        <input type="hidden" name="contentItemId" value={contentItemId} />
+        {row ? <><input type="hidden" name="id" value={row.id} /><RevisionField value={row.updatedAt} /></> : null}
+        <Field label="Lunes de la semana" required hint="Carga solo lo obtenido esa semana. Si aún no termina, podrás corregirla después.">
+          <input className="input" type="date" name="date" step="7" min="1970-01-05" defaultValue={row?.dateKey ?? currentWeek()} readOnly={Boolean(row)} required />
+        </Field>
+        <Field label="Plataforma" required>
+          {row ? <><input type="hidden" name="platform" value={row.platform}/><p>{PLATFORM_MAP[row.platform]?.label ?? row.platform}</p></> :
+            <select className="input" name="platform" defaultValue="" required><option value="" disabled>Elige una plataforma</option>{PLATFORMS.map(platform => <option key={platform.value} value={platform.value}>{platform.label}</option>)}</select>}
+        </Field>
+        <div className="grid grid-cols-2 gap-2">{FIELDS.map(([key,label,...step]) => <Field key={key} label={label}>
+          <input className="input" type="number" name={key} min="0" max={key === "retention3s" ? 100 : step.length ? 1e12 : 2147483647} step={step[0] ?? "1"} defaultValue={row?.[key] ?? (key === "retention3s" ? "" : 0)} placeholder={key === "retention3s" ? "Sin dato" : undefined} />
+        </Field>)}</div>
+        <Field label="Notas"><input className="input" name="notes" maxLength={2000} defaultValue={row?.notes ?? ""}/></Field>
+        <p className="text-xs text-inkmuted">Para corregir una semana ya registrada, usa su botón Corregir. Una nueva carga manual nunca reemplaza otra.</p>
+        <div className="flex gap-2"><button className="btn btn-primary" type="submit">Guardar semana</button><button className="btn" type="button" onClick={() => setEditing(null)}>Cancelar</button></div>
+      </EditForm> : null}
+    </div>
+    <div className="overflow-x-auto"><table className="tbl"><thead><tr><th>Semana / fecha histórica</th><th>Red</th><th>Vistas</th><th>Retención</th><th /></tr></thead>
+      <tbody>{metrics.map(metric => <tr key={metric.id}>
+        <td>{metric.dateLabel}{metric.period !== "WEEKLY" ? " · Histórico" : " · lunes"}</td><td>{PLATFORM_MAP[metric.platform]?.label ?? "Sin atribuir"}</td><td>{formatNumber(metric.views)}</td><td>{metric.retention3s === null ? "Sin dato" : formatPercent(metric.retention3s)}</td>
+        <td><div className="flex gap-2">{canEdit && metric.period === "WEEKLY" ? <button className="btn btn-sm" disabled={Boolean(editing)} onClick={() => setEditing(metric)}>Corregir</button> : null}
+          {canManage ? <EditForm action={eliminarMetrica}><input type="hidden" name="id" value={metric.id}/><button className="btn btn-sm text-danger" type="submit">Eliminar</button></EditForm> : null}</div></td>
+      </tr>)}</tbody></table></div>
+  </Card>;
 }

@@ -49,8 +49,15 @@ repartidos en el calendario con sus checklists, su equipo asignado y sus métric
 
 ### Primer ingreso
 
-La app **no trae ninguna cuenta de dueño**. La primera vez que entres te pide crear la tuya, y
-esa cuenta queda como la del dueño.
+La app **no trae ninguna cuenta de dueño**. Configura `AUTH_SECRET` y, solo para la
+instalación inicial, `BOOTSTRAP_TOKEN` con dos valores aleatorios independientes de 32 bytes.
+Puedes generar cada uno con `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+La primera entrada pide la clave de instalación para crear tu cuenta de dueño. Una vez creada,
+retira `BOOTSTRAP_TOKEN`: el alta queda cerrada permanentemente, incluso si se desactiva una cuenta.
+
+Para actualizar una instalación existente, consulta la [entrega de seguridad e integridad](reports/seguridad-integridad-1-2-2026-09-09.md).
+Requiere aplicar su SQL aditivo antes del código y volver a iniciar sesión. No ejecutar `setup`
+ni el seed sobre producción para hacer esta actualización.
 
 El resto del equipo de ejemplo (Ana, Paula, Diego, Lucía, Marco) sí existe, con contraseñas
 aleatorias que se imprimieron en la terminal cuando corriste el `seed`. Si las perdiste, se

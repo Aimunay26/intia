@@ -1,0 +1,14 @@
+# Solo código de la aplicación: excluir credenciales, copias y resultados locales.
+.audit
+.audit/**
+.git
+.vercel
+.next
+.next-dev
+node_modules
+.env*
+**/.env*
+*.log
+tsconfig.tsbuildinfo
+*.db
+*.db-journal

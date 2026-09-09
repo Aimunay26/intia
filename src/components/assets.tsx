@@ -246,7 +246,7 @@ function AssetRowItem({
           ) : null}
 
           <a
-            href={`/api/assets/${asset.id}`}
+            href={`/api/assets/${asset.id}?download=1`}
             target="_blank"
             rel="noreferrer"
             className="btn btn-ghost btn-icon"

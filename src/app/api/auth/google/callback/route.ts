@@ -3,7 +3,9 @@ import { cookies } from "next/headers";
 
 import { prisma } from "@/lib/prisma";
 import { createSession } from "@/lib/auth";
-import { logAudit } from "@/lib/audit";
+import { consumeAccessAttempt } from "@/lib/auth-rate-limit";
+import { withAuthLock } from "@/lib/auth-transactions";
+import { auditInTransaction, logAudit } from "@/lib/audit";
 import { exchangeCodeForProfile, getGoogleConfig, GOOGLE_STATE_COOKIE } from "@/lib/google";
 
 /** Paso 2 y 3: Google devuelve el código, se valida y se abre la sesión. */
@@ -28,6 +30,7 @@ export async function GET(request: Request) {
   if (!code || !state) return volverConError("google_incompleto");
 
   if (!esperado || esperado !== state) return volverConError("google_state");
+  if (!await consumeAccessAttempt("google")) return volverConError("acceso_limitado");
 
   const config = await getGoogleConfig();
   if (!config) return volverConError("google_no_configurado");
@@ -36,7 +39,7 @@ export async function GET(request: Request) {
   try {
     perfil = await exchangeCodeForProfile(config, origin, code);
   } catch (error) {
-    console.error("[google] fallo el intercambio:", error);
+    console.error("[google] Falló el intercambio de autorización.");
     return volverConError("google_fallo");
   }
 
@@ -71,20 +74,22 @@ export async function GET(request: Request) {
   // entradas funcionen aunque cambie el correo. Es una escritura sobre el
   // usuario, así que queda firmada como cualquier otra.
   if (!user.googleId) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { googleId: perfil.sub, avatarUrl: user.avatarUrl ?? perfil.picture },
-    });
-    await logAudit({
+    try { await withAuthLock(async tx => {
+      const current = await tx.user.findUniqueOrThrow({ where: { id: user.id } });
+      if (!current.active || current.sessionVersion !== user.sessionVersion || (current.googleId && current.googleId !== perfil.sub)) throw new Error("El acceso cambió durante la entrada con Google.");
+      await tx.user.update({ where: { id: user.id }, data: { googleId: perfil.sub, avatarUrl: user.avatarUrl ?? perfil.picture } });
+      await auditInTransaction(tx, {
       user: sesion,
       action: "EDITAR",
       entity: "User",
       entityId: user.id,
       summary: `${user.name} enlazó su cuenta de Google (${perfil.email})`,
-    });
+      });
+    }); } catch { return volverConError("google_fallo"); }
   }
 
-  await createSession(user.id);
+  try { await createSession(user.id, user.sessionVersion); }
+  catch { return volverConError("google_fallo"); }
   await logAudit({
     user: sesion,
     action: "LOGIN",

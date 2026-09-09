@@ -27,6 +27,7 @@ model User {
   phone        String?
   bio          String?
   active       Boolean @default(true)
+  sessionVersion Int @default(0)
 
   /// Identificador de Google, para entrar con Gmail sin contraseña.
   /// Se rellena la primera vez que la persona entra con su cuenta de Google.
@@ -48,9 +49,38 @@ model User {
   comments       Comment[]
   events         CalendarEvent[] @relation("EventCreatedBy")
   tasks          Task[]          @relation("TaskAssignee")
+  sessions       AuthSession[]
 
   @@index([role])
   @@index([archetypeId])
+}
+
+/// El id es SHA-256 del identificador aleatorio firmado en el JWT, no el token.
+model AuthSession {
+  id        String @id
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Contadores distribuidos de acceso. Las claves son HMAC, sin correos ni IP en claro.
+model AuthAttempt {
+  key       String @id
+  attempts  Int @default(0)
+  expiresAt DateTime
+  @@index([expiresAt])
+}
+
+/// Procedencia explícita del seed. Nunca se deduce del nombre, correo o isPerson.
+model DemoSeedRecord {
+  entityType String
+  entityId   String
+  fingerprint String
+  createdAt  DateTime @default(now())
+  @@id([entityType, entityId])
 }
 
 // -------------------------------------------------------- EVENTOS AGENDA --

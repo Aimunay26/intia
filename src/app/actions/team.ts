@@ -1,393 +1,118 @@
 "use server";
-
 import { revalidatePath } from "next/cache";
-
-import { prisma } from "@/lib/prisma";
-import { borrarAssetsDe } from "@/lib/assets-cleanup";
-import { requireUser, requireLevel, can, hashPassword, LEVEL } from "@/lib/auth";
-import { logAudit, diffFields, FIELD_LABELS, type Cambio } from "@/lib/audit";
-import { USER_ROLE_MAP } from "@/lib/constants";
+import { requireUser, requireLevel, can, hashPassword, createSession, LEVEL } from "@/lib/auth";
+import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
+import { assertActor, preserveOwner, SecurityError, withAuthLock } from "@/lib/auth-transactions";
+import { passwordError } from "@/lib/auth-policy";
 import { field, fieldOrNull } from "@/lib/utils";
 
-/**
- * Acciones del equipo.
- *
- * Regla de oro de este archivo: en el log de auditoria NUNCA entra una
- * contrasena ni un hash. Solo se registra que la contrasena cambio.
- */
-
 export type TeamState = { ok?: string; error?: string } | null;
-
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
-
-/** Etiquetas legibles de los campos de una persona, para el log. */
-const LABELS: Record<string, string> = {
-  ...FIELD_LABELS,
-  name: "Nombre",
-  email: "Correo",
-  role: "Rol",
-  color: "Color",
-  phone: "Teléfono",
-  bio: "Descripción",
-};
-
-function roleLabel(role: string) {
-  return USER_ROLE_MAP[role]?.label ?? role;
+const LABELS = { ...FIELD_LABELS, name: "Nombre", email: "Correo", role: "Rol", color: "Color", phone: "Teléfono", bio: "Descripción", archetypeId: "Arquetipo" };
+const errorState = (error: unknown): TeamState => ({ error: error instanceof SecurityError ? error.message : "No se pudo guardar. Comprueba los datos y que el correo no esté ocupado." });
+function refresh(self = false) { revalidatePath("/equipo"); revalidatePath("/actividad"); if (self) revalidatePath("/", "layout"); }
+function profile(form: FormData) {
+  const name = field(form, "name"), phone = fieldOrNull(form, "phone"), bio = fieldOrNull(form, "bio");
+  if (name.length < 2 || name.length > 100 || (phone?.length ?? 0) > 50 || (bio?.length ?? 0) > 5000) throw new SecurityError("Revisa la longitud del nombre, teléfono y descripción.");
+  return { name, phone, bio };
+}
+function account(form: FormData) {
+  const email = field(form, "email").toLowerCase(), role = field(form, "role") || "MEMBER";
+  if (email.length > 254 || !EMAIL_RE.test(email)) throw new SecurityError("Ese correo no parece válido.");
+  if (!["OWNER", "MEMBER"].includes(role)) throw new SecurityError("Ese rol no existe.");
+  return { email, role, archetypeId: fieldOrNull(form, "archetypeId") };
 }
 
-function isValidRole(role: string) {
-  return Boolean(USER_ROLE_MAP[role]);
+export async function crearUsuario(_prev: TeamState, formData: FormData): Promise<TeamState> {
+  const actor = await requireLevel(LEVEL.OWNER);
+  try {
+    const data = { ...profile(formData), ...account(formData) };
+    const password = String(formData.get("password") ?? "");
+    const invalid = passwordError(password); if (invalid) return { error: invalid };
+    const passwordHash = await hashPassword(password);
+    const colorRaw = field(formData, "color"), color = HEX_RE.test(colorRaw) ? colorRaw : "#6366f1";
+    await withAuthLock(async tx => {
+      await assertActor(tx, actor, true);
+      const created = await tx.user.create({ data: { ...data, color, passwordHash, active: true } });
+      await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "User", entityId: created.id, summary: `Invitó a ${created.name} al equipo como ${created.role === "OWNER" ? "dueño" : "miembro"}` });
+    });
+    refresh(); return { ok: "Cuenta creada. Comparte su contraseña inicial por un canal privado." };
+  } catch (error) { return errorState(error); }
 }
 
-/** Cuantos duenos activos quedan en la casa. */
-async function activeAdmins() {
-  return prisma.user.count({ where: { role: "OWNER", active: true } });
+export async function actualizarUsuario(_prev: TeamState, formData: FormData): Promise<TeamState> {
+  const actor = await requireUser(), id = field(formData, "id");
+  const self = actor.id === id, admin = can(actor.role, LEVEL.OWNER);
+  if (!self && !admin) return { error: "Solo el dueño puede editar a otras personas." };
+  try {
+    const base = profile(formData), privileged = admin ? account(formData) : null;
+    await withAuthLock(async tx => {
+      await assertActor(tx, actor, admin);
+      const before = await tx.user.findUniqueOrThrow({ where: { id } });
+      const raw = field(formData, "color");
+      const data = { ...base, color: HEX_RE.test(raw) ? raw : before.color, ...(privileged ?? {}) };
+      if (privileged && before.role !== privileged.role) await preserveOwner(tx, id);
+      const changes = diffFields(before, data, LABELS);
+      if (!changes) return;
+      const revoke = Boolean(privileged && (before.role !== privileged.role || before.email !== privileged.email));
+      await tx.user.update({ where: { id }, data: { ...data, ...(revoke ? { sessionVersion: { increment: 1 } } : {}) } });
+      if (revoke) await tx.authSession.deleteMany({ where: { userId: id } });
+      await auditInTransaction(tx, { user: actor, action: "EDITAR", entity: "User", entityId: id, summary: self ? "Editó su propio perfil" : `Editó la ficha de ${before.name}`, changes });
+    });
+    refresh(self); return { ok: "Datos guardados. Si cambiaste el correo o rol, las sesiones anteriores quedaron cerradas." };
+  } catch (error) { return errorState(error); }
 }
 
-function refresh(self: boolean) {
-  revalidatePath("/equipo");
-  revalidatePath("/actividad");
-  // El nombre y el color de la persona salen en la barra lateral.
-  if (self) revalidatePath("/", "layout");
+export async function cambiarPassword(_prev: TeamState, formData: FormData): Promise<TeamState> {
+  const actor = await requireUser(), id = field(formData, "id"), self = actor.id === id;
+  if (!self && !can(actor.role, LEVEL.OWNER)) return { error: "Solo el dueño puede cambiar la contraseña de otra persona." };
+  const password = String(formData.get("password") ?? ""), repeat = String(formData.get("password2") ?? "");
+  const invalid = passwordError(password); if (invalid) return { error: invalid };
+  if (password !== repeat) return { error: "Las dos contraseñas no coinciden." };
+  const passwordHash = await hashPassword(password);
+  try {
+    const version = await withAuthLock(async tx => {
+      await assertActor(tx, actor, !self);
+      const target = await tx.user.update({ where: { id }, data: { passwordHash, sessionVersion: { increment: 1 } } });
+      await tx.authSession.deleteMany({ where: { userId: id } });
+      await auditInTransaction(tx, { user: actor, action: "EDITAR", entity: "User", entityId: id, summary: self ? "Cambió su propia contraseña y cerró sus sesiones anteriores" : `Cambió la contraseña de ${target.name} y cerró sus sesiones` });
+      return target.sessionVersion;
+    });
+    // Solo quien cambió su propia contraseña recibe una sesión nueva; las otras quedan revocadas.
+    if (self) await createSession(id, version);
+    refresh(); return { ok: "Contraseña actualizada. Las sesiones anteriores quedaron cerradas." };
+  } catch (error) { return errorState(error); }
 }
 
-/* ------------------------------------------------------------------ CREAR -- */
-
-export async function crearUsuario(
-  _prev: TeamState,
-  formData: FormData
-): Promise<TeamState> {
-  const actor = await requireUser();
-  if (!can(actor.role, LEVEL.OWNER)) {
-    return { error: "Solo el dueño puede invitar personas." };
-  }
-
-  const name = field(formData, "name");
-  const email = field(formData, "email").toLowerCase();
-  const password = field(formData, "password");
-  const role = field(formData, "role") || "MEMBER";
-  const colorRaw = field(formData, "color");
-  const color = HEX_RE.test(colorRaw) ? colorRaw : "#6366f1";
-  const phone = fieldOrNull(formData, "phone");
-  const bio = fieldOrNull(formData, "bio");
-  const archetypeId = fieldOrNull(formData, "archetypeId");
-
-  if (name.length < 2) return { error: "Escribe el nombre de la persona." };
-  if (!EMAIL_RE.test(email)) return { error: "Ese correo no parece válido." };
-  if (password.length < 8) {
-    return { error: "La contraseña inicial debe tener al menos 8 caracteres." };
-  }
-  if (!isValidRole(role)) return { error: "Ese rol no existe." };
-
-  const yaExiste = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true, name: true },
-  });
-  if (yaExiste) {
-    return { error: `Ya hay una cuenta con ese correo (${yaExiste.name}).` };
-  }
-
-  const created = await prisma.user.create({
-    data: {
-      name,
-      email,
-      passwordHash: await hashPassword(password),
-      role,
-      color,
-      phone,
-      bio,
-      archetypeId,
-      active: true,
-    },
-    select: { id: true, name: true, role: true },
-  });
-
-  await logAudit({
-    user: actor,
-    action: "CREAR",
-    entity: "User",
-    entityId: created.id,
-    summary: `Invitó a ${created.name} al equipo como ${roleLabel(created.role)}`,
-  });
-
-  refresh(false);
-  return {
-    ok: `${created.name} ya puede entrar. Pásale su contraseña inicial por un canal privado.`,
-  };
+export async function desactivarUsuario(_prev: TeamState, formData: FormData): Promise<TeamState> {
+  const actor = await requireLevel(LEVEL.OWNER), id = field(formData, "id"), active = field(formData, "active") === "1";
+  if (!active && actor.id === id) return { error: "No puedes desactivar tu propia cuenta." };
+  try {
+    await withAuthLock(async tx => {
+      await assertActor(tx, actor, true);
+      const target = await tx.user.findUniqueOrThrow({ where: { id } });
+      if (target.active === active) return;
+      if (!active) await preserveOwner(tx, id);
+      await tx.user.update({ where: { id }, data: { active, sessionVersion: { increment: 1 } } });
+      await tx.authSession.deleteMany({ where: { userId: id } });
+      await auditInTransaction(tx, { user: actor, action: "EDITAR", entity: "User", entityId: id, summary: `${active ? "Reactivó" : "Desactivó"} la cuenta de ${target.name}`, changes: { active: { etiqueta: "Activo", antes: target.active, despues: active } } });
+    });
+    refresh(); return { ok: active ? "Cuenta reactivada. Debe iniciar sesión de nuevo." : "Cuenta desactivada y sesiones revocadas." };
+  } catch (error) { return errorState(error); }
 }
-
-/* ------------------------------------------------------------- ACTUALIZAR -- */
-
-export async function actualizarUsuario(
-  _prev: TeamState,
-  formData: FormData
-): Promise<TeamState> {
-  const actor = await requireUser();
-  const id = field(formData, "id");
-  if (!id) return { error: "Falta indicar a quién editar." };
-
-  const isSelf = actor.id === id;
-  const isAdmin = can(actor.role, LEVEL.OWNER);
-  if (!isSelf && !isAdmin) {
-    return { error: "Solo el dueño puede editar a otras personas." };
-  }
-
-  const before = await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      color: true,
-      phone: true,
-      bio: true,
-      archetypeId: true,
-    },
-  });
-  if (!before) return { error: "Esa persona ya no existe." };
-
-  const name = field(formData, "name");
-  if (name.length < 2) return { error: "El nombre no puede quedar vacío." };
-
-  const colorRaw = field(formData, "color");
-  const color = HEX_RE.test(colorRaw) ? colorRaw : before.color;
-  const phone = fieldOrNull(formData, "phone");
-  const bio = fieldOrNull(formData, "bio");
-
-  // Correo, rol y arquetipo solo los toca el dueno.
-  let email = before.email;
-  let role = before.role;
-  let archetypeId = before.archetypeId;
-
-  if (isAdmin) {
-    const nuevoEmail = field(formData, "email").toLowerCase();
-    if (!EMAIL_RE.test(nuevoEmail)) return { error: "Ese correo no parece válido." };
-    if (nuevoEmail !== before.email) {
-      const ocupado = await prisma.user.findUnique({
-        where: { email: nuevoEmail },
-        select: { id: true, name: true },
-      });
-      if (ocupado && ocupado.id !== id) {
-        return { error: `Ese correo ya lo usa ${ocupado.name}.` };
-      }
-    }
-    email = nuevoEmail;
-
-    const nuevoRol = field(formData, "role");
-    if (!isValidRole(nuevoRol)) return { error: "Ese rol no existe." };
-    if (before.role === "OWNER" && nuevoRol !== "OWNER" && (await activeAdmins()) <= 1) {
-      return {
-        error:
-          "Es el único dueño activo. Nombra a otro dueño antes de cambiarle el rol.",
-      };
-    }
-    role = nuevoRol;
-
-    archetypeId = fieldOrNull(formData, "archetypeId");
-  }
-
-  const beforeSnapshot = {
-    name: before.name,
-    email: before.email,
-    role: before.role,
-    color: before.color,
-    phone: before.phone,
-    bio: before.bio,
-  };
-  const afterSnapshot = { name, email, role, color, phone, bio };
-
-  const changes: Record<string, Cambio> =
-    diffFields(beforeSnapshot, afterSnapshot, LABELS) ?? {};
-
-  if (before.archetypeId !== archetypeId) {
-    const ids = [before.archetypeId, archetypeId].filter(
-      (x): x is string => typeof x === "string" && x.length > 0
-    );
-    const arquetipos = ids.length
-      ? await prisma.archetype.findMany({
-          where: { id: { in: ids } },
-          select: { id: true, name: true },
-        })
-      : [];
-    const nombre = (value: string | null) =>
-      value ? (arquetipos.find((a) => a.id === value)?.name ?? "—") : "—";
-    changes.archetypeId = {
-      etiqueta: "Arquetipo",
-      antes: nombre(before.archetypeId),
-      despues: nombre(archetypeId),
-    };
-  }
-
-  if (!Object.keys(changes).length) {
-    return { ok: "No había nada que cambiar." };
-  }
-
-  await prisma.user.update({
-    where: { id },
-    data: { ...afterSnapshot, archetypeId },
-  });
-
-  await logAudit({
-    user: actor,
-    action: "EDITAR",
-    entity: "User",
-    entityId: id,
-    summary: isSelf
-      ? "Editó su propio perfil"
-      : `Editó la ficha de ${before.name} en el equipo`,
-    changes,
-  });
-
-  refresh(isSelf);
-  return { ok: "Datos guardados." };
-}
-
-/* -------------------------------------------------------------- CONTRASEÑA -- */
-
-export async function cambiarPassword(
-  _prev: TeamState,
-  formData: FormData
-): Promise<TeamState> {
-  const actor = await requireUser();
-  const id = field(formData, "id");
-  if (!id) return { error: "Falta indicar de quién es la contraseña." };
-
-  const isSelf = actor.id === id;
-  const isAdmin = can(actor.role, LEVEL.OWNER);
-  if (!isSelf && !isAdmin) {
-    return { error: "Solo el dueño puede cambiar la contraseña de otra persona." };
-  }
-
-  const password = field(formData, "password");
-  const repeat = field(formData, "password2");
-
-  if (password.length < 8) {
-    return { error: "La contraseña debe tener al menos 8 caracteres." };
-  }
-  if (password !== repeat) {
-    return { error: "Las dos contraseñas no coinciden." };
-  }
-
-  const target = await prisma.user.findUnique({
-    where: { id },
-    select: { id: true, name: true },
-  });
-  if (!target) return { error: "Esa persona ya no existe." };
-
-  await prisma.user.update({
-    where: { id },
-    data: { passwordHash: await hashPassword(password) },
-  });
-
-  // Aquí no va ningún dato de la contraseña: solo el hecho de que cambió.
-  await logAudit({
-    user: actor,
-    action: "EDITAR",
-    entity: "User",
-    entityId: id,
-    summary: isSelf
-      ? "Cambió su propia contraseña"
-      : `Cambió la contraseña de ${target.name}`,
-  });
-
-  refresh(false);
-  return {
-    ok: isSelf
-      ? "Contraseña actualizada. Úsala la próxima vez que entres."
-      : `Contraseña de ${target.name} actualizada. Comunícasela por un canal privado.`,
-  };
-}
-
-/* ------------------------------------------------------- ACTIVAR / DESACTIVAR -- */
-
-export async function desactivarUsuario(
-  _prev: TeamState,
-  formData: FormData
-): Promise<TeamState> {
-  const actor = await requireUser();
-  if (!can(actor.role, LEVEL.OWNER)) {
-    return { error: "Solo el dueño puede activar o desactivar cuentas." };
-  }
-
-  const id = field(formData, "id");
-  const activar = field(formData, "active") === "1";
-
-  const target = await prisma.user.findUnique({
-    where: { id },
-    select: { id: true, name: true, role: true, active: true },
-  });
-  if (!target) return { error: "Esa persona ya no existe." };
-  if (target.active === activar) {
-    return { ok: activar ? "Ya estaba activa." : "Ya estaba desactivada." };
-  }
-
-  if (!activar) {
-    if (target.id === actor.id) {
-      return {
-        error: "No puedes desactivar tu propia cuenta. Pídeselo a otro dueño.",
-      };
-    }
-    if (target.role === "OWNER" && (await activeAdmins()) <= 1) {
-      return {
-        error: "Es el único dueño activo. Nombra a otro antes de desactivarlo.",
-      };
-    }
-  }
-
-  await prisma.user.update({ where: { id }, data: { active: activar } });
-
-  await logAudit({
-    user: actor,
-    action: "EDITAR",
-    entity: "User",
-    entityId: id,
-    summary: activar
-      ? `Reactivó la cuenta de ${target.name}`
-      : `Desactivó la cuenta de ${target.name}`,
-    changes: {
-      active: { etiqueta: "Activo", antes: target.active, despues: activar },
-    },
-  });
-
-  refresh(false);
-  return {
-    ok: activar
-      ? `${target.name} vuelve a tener acceso.`
-      : `${target.name} ya no puede entrar. Su historial se conserva.`,
-  };
-}
-
-/* --------------------------------------------------------------- ELIMINAR -- */
 
 export async function eliminarUsuario(formData: FormData) {
-  const actor = await requireLevel(LEVEL.OWNER);
-  const id = field(formData, "id");
-
-  const target = await prisma.user.findUnique({
-    where: { id },
-    select: { id: true, name: true, role: true, active: true },
+  const actor = await requireLevel(LEVEL.OWNER), id = field(formData, "id");
+  if (id === actor.id) throw new SecurityError("No puedes eliminar tu propia cuenta.");
+  await withAuthLock(async tx => {
+    await assertActor(tx, actor, true);
+    const target = await tx.user.findUnique({ where: { id } });
+    if (!target) return;
+    await preserveOwner(tx, id);
+    await tx.asset.deleteMany({ where: { ownerType: "user", ownerId: id } });
+    await tx.user.delete({ where: { id } });
+    await auditInTransaction(tx, { user: actor, action: "ELIMINAR", entity: "User", entityId: id, summary: `Eliminó a ${target.name} del equipo` });
   });
-  if (!target) return;
-
-  if (target.id === actor.id) {
-    throw new Error("No puedes eliminar tu propia cuenta.");
-  }
-  if (target.role === "OWNER" && target.active && (await activeAdmins()) <= 1) {
-    throw new Error("Es el único dueño activo. No se puede eliminar.");
-  }
-
-  await borrarAssetsDe("user", id);
-  await prisma.user.delete({ where: { id } });
-
-  await logAudit({
-    user: actor,
-    action: "ELIMINAR",
-    entity: "User",
-    entityId: id,
-    summary: `Eliminó a ${target.name} del equipo`,
-  });
-
-  refresh(false);
+  refresh();
 }

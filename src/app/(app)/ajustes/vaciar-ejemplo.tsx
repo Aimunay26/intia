@@ -19,7 +19,7 @@ export function VaciarEjemplo() {
   const [recuento, setRecuento] = useState<Recuento | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  if (recuento) return <VaciarEjemploDetalle recuento={recuento} />;
+  if (recuento) return <VaciarEjemploDetalle recuento={recuento} onReview={() => setRecuento(null)} />;
   return (
     <Card>
       <CardHeader title="Datos de ejemplo" subtitle="Revisa qué datos se podrían limpiar antes de decidir." icon={<Trash2 size={15} />} />
@@ -37,11 +37,11 @@ export function VaciarEjemplo() {
   );
 }
 
-function VaciarEjemploDetalle({ recuento }: { recuento: Recuento }) {
+function VaciarEjemploDetalle({ recuento, onReview }: { recuento: Recuento; onReview: () => void }) {
   const [state, formAction] = useActionState<VaciarState, FormData>(vaciarDatosDeEjemplo, null);
   const [abierto, setAbierto] = useState(false);
 
-  const total =
+  const total = (recuento.marca ? 1 : 0) + recuento.objetivos +
     recuento.videos +
     recuento.guiones +
     recuento.metricas +
@@ -54,7 +54,7 @@ function VaciarEjemploDetalle({ recuento }: { recuento: Recuento }) {
       <Card>
         <CardHeader title="Datos de ejemplo" icon={<Trash2 size={15} />} />
         <div className="space-y-4 p-4">
-          <Callout tone="info" title="Ya está limpio">
+          <Callout tone="info" title="Revisión terminada">
             {state.ok}
           </Callout>
           <div className="flex flex-wrap items-center gap-3">
@@ -73,7 +73,7 @@ function VaciarEjemploDetalle({ recuento }: { recuento: Recuento }) {
       <Card>
         <CardHeader
           title="Datos de ejemplo"
-          subtitle="No queda ninguno: lo que hay en la app es tuyo."
+          subtitle={recuento.protected ? "El lote fue modificado o reutilizado. Se conserva completo." : "No hay un lote demo verificable para limpiar. Los datos antiguos sin procedencia se conservan."}
           icon={<Trash2 size={15} />}
           actions={
             <GuiaLauncherBoton
@@ -153,6 +153,7 @@ function VaciarEjemploDetalle({ recuento }: { recuento: Recuento }) {
         {state?.error ? (
           <Callout tone="danger" title="No se borró nada">
             {state.error}
+            <button type="button" className="btn btn-sm mt-2" onClick={onReview}>Revisar de nuevo</button>
           </Callout>
         ) : null}
 
@@ -167,6 +168,7 @@ function VaciarEjemploDetalle({ recuento }: { recuento: Recuento }) {
           </button>
         ) : (
           <form action={formAction} className="border-line space-y-3 rounded-lg border p-4">
+            <input type="hidden" name="reviewToken" value={recuento.reviewToken} />
             <div className="text-ink flex items-start gap-2 text-[13px]">
               <TriangleAlert size={15} className="text-danger mt-0.5 shrink-0" />
               <span>

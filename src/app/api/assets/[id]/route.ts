@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { assertAssetOwner, assetDownloadHeaders } from "@/lib/asset-security";
 
 /** Descarga de un archivo de referencia. Requiere sesión. */
 export async function GET(
@@ -18,15 +19,12 @@ export async function GET(
   if (!asset) {
     return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 });
   }
+  try { await assertAssetOwner(prisma, asset.ownerType, asset.ownerId, session); }
+  catch { return NextResponse.json({ error: "Archivo no encontrado" }, { status: 404 }); }
 
   const body = new Uint8Array(asset.data);
 
   return new NextResponse(body, {
-    headers: {
-      "Content-Type": asset.mimeType || "application/octet-stream",
-      "Content-Length": String(body.byteLength),
-      "Content-Disposition": `inline; filename="${encodeURIComponent(asset.filename)}"`,
-      "Cache-Control": "private, max-age=3600",
-    },
+    headers: assetDownloadHeaders(asset.filename, body.byteLength),
   });
 }

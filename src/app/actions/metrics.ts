@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireLevel, LEVEL } from "@/lib/auth";
-import { logAudit, diffFields } from "@/lib/audit";
+import { logAudit, diffFields, auditInTransaction } from "@/lib/audit";
+import { assertActor } from "@/lib/auth-transactions";
+import { validReportDay as validDay } from "@/lib/report-dates";
 import {
   clamp,
   dateField,
@@ -240,10 +242,11 @@ function normalizeTitle(raw: string) {
 }
 
 /** Divide una línea de CSV respetando las comillas dobles. */
-function splitCsvLine(line: string, delimiter: string): string[] {
+function splitCsvLine(line: string, delimiter: string): string[] | null {
   const out: string[] = [];
   let cur = "";
   let inQuotes = false;
+  let closedQuote = false;
 
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
@@ -254,19 +257,25 @@ function splitCsvLine(line: string, delimiter: string): string[] {
           i++;
         } else {
           inQuotes = false;
+          closedQuote = true;
         }
       } else {
         cur += ch;
       }
     } else if (ch === '"') {
+      if (cur.trim() || closedQuote) return null;
+      cur = "";
       inQuotes = true;
     } else if (ch === delimiter) {
       out.push(cur);
       cur = "";
+      closedQuote = false;
     } else {
+      if (closedQuote && ch.trim()) return null;
       cur += ch;
     }
   }
+  if (inQuotes) return null;
   out.push(cur);
   return out.map((c) => c.trim());
 }
@@ -291,24 +300,30 @@ function detectDelimiter(headerLine: string): string {
  * Devuelve null si de verdad no hay un número ahí.
  */
 function parseNumero(raw: string): number | null {
-  const cleaned = raw.replace(/[^0-9,.\-]/g, "");
-  if (!cleaned || cleaned === "-" || cleaned === "." || cleaned === ",") return null;
-
+  const cleaned = raw.trim().replace(/^(?:S\/|PEN|USD|\$)\s*/i, "").replace(/%$/, "").trim();
+  if (!/^-?\d+(?:[.,]\d+)*$/.test(cleaned)) return null;
   let t = cleaned;
   const lastComma = t.lastIndexOf(",");
   const lastDot = t.lastIndexOf(".");
 
   if (lastComma >= 0 && lastDot >= 0) {
     // El separador decimal es el que aparece más a la derecha.
-    if (lastComma > lastDot) t = t.replace(/\./g, "").replace(",", ".");
-    else t = t.replace(/,/g, "");
+    if (lastComma > lastDot) {
+      if (!/^-?\d{1,3}(?:\.\d{3})+,\d+$/.test(t)) return null;
+      t = t.replace(/\./g, "").replace(",", ".");
+    } else {
+      if (!/^-?\d{1,3}(?:,\d{3})+\.\d+$/.test(t)) return null;
+      t = t.replace(/,/g, "");
+    }
   } else if (lastComma >= 0) {
     const many = (t.match(/,/g) ?? []).length > 1;
     const decimals = t.length - lastComma - 1;
+    if (many && !/^-?\d{1,3}(?:,\d{3})+$/.test(t)) return null;
     t = many || decimals === 3 ? t.replace(/,/g, "") : t.replace(",", ".");
   } else if (lastDot >= 0) {
     const many = (t.match(/\./g) ?? []).length > 1;
     const decimals = t.length - lastDot - 1;
+    if (many && !/^-?\d{1,3}(?:\.\d{3})+$/.test(t)) return null;
     if (many || decimals === 3) t = t.replace(/\./g, "");
   }
 
@@ -325,32 +340,26 @@ function parseFecha(raw: string): Date | null {
   const s = raw.replace(/["']/g, "").trim();
   if (!s) return null;
 
-  const iso = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/.exec(s);
+  const iso = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(s);
   if (iso) {
     const mes = Number(iso[2]);
     const dia = Number(iso[3]);
     if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
-    return fromDateKey(`${iso[1]}-${pad2(iso[2])}-${pad2(iso[3])}`);
+    const day = `${iso[1]}-${pad2(iso[2])}-${pad2(iso[3])}`;
+    return validDay(day) ? new Date(`${day}T12:00:00.000Z`) : null;
   }
 
-  const dmy = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/.exec(s);
+  const dmy = /^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})$/.exec(s);
   if (dmy) {
     const year = Number(dmy[3]) < 100 ? 2000 + Number(dmy[3]) : Number(dmy[3]);
     const month = Number(dmy[2]);
     const day = Number(dmy[1]);
     if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    return fromDateKey(`${year}-${pad2(String(month))}-${pad2(String(day))}`);
+    const key = `${year}-${pad2(String(month))}-${pad2(String(day))}`;
+    return validDay(key) ? new Date(`${key}T12:00:00.000Z`) : null;
   }
 
   return null;
-}
-
-/** La retención llega como 62, 62% o 0,62. Siempre la dejamos en 0-100. */
-function parseRetencion(raw: string): number {
-  const n = parseNumero(raw);
-  if (n === null) return 0;
-  const esFraccion = n > 0 && n <= 1 && /[.,]/.test(raw);
-  return clamp(esFraccion ? n * 100 : n, 0, 100);
 }
 
 type VideoRef = { id: string; title: string; brandId: string };
@@ -361,7 +370,7 @@ type FilaValida = {
   brandId: string;
   title: string;
   date: Date;
-  data: {
+  data: Partial<{
     views: number;
     likes: number;
     comments: number;
@@ -375,7 +384,7 @@ type FilaValida = {
     revenue: number;
     retention3s: number;
     notes: string | null;
-  };
+  }>;
 };
 
 /**
@@ -390,6 +399,7 @@ export async function importarMetricasCsv(
 
   const texto = field(formData, "csv");
   if (!texto) return { error: "Pega primero las filas del CSV." };
+  if (texto.length > 1_000_000) return { error: "El CSV es demasiado grande. Divide el archivo en lotes de hasta 500 filas." };
 
   const lineas = texto
     .split(/\r?\n/)
@@ -405,7 +415,11 @@ export async function importarMetricasCsv(
 
   const delimiter = detectDelimiter(lineas[0]);
   const crudas = splitCsvLine(lineas[0], delimiter);
+  if (!crudas) return { error: "La cabecera contiene comillas sin cerrar o mal ubicadas." };
   const cabeceras = crudas.map((h) => COLUMN_ALIASES[normalizeHeader(h)] ?? "");
+  const known = cabeceras.filter(Boolean);
+  if (new Set(known).size !== known.length) return { error: "Hay columnas repetidas o alias de la misma métrica. Usa una sola columna por dato." };
+  if (lineas.length > 501) return { error: "Importa como máximo 500 filas por lote." };
 
   if (!cabeceras.includes("video")) {
     return {
@@ -440,6 +454,10 @@ export async function importarMetricasCsv(
     const raw = lineas[i];
     const preview = raw.length > 90 ? `${raw.slice(0, 89)}…` : raw;
     const celdas = splitCsvLine(raw, delimiter);
+    if (!celdas) {
+      ignoradas.push({ line: numeroLinea, reason: "Hay comillas mal ubicadas o un campo con salto de línea. Usa una línea por registro.", preview });
+      continue;
+    }
 
     const valor = (columna: string): string => {
       const idx = cabeceras.indexOf(columna);
@@ -496,10 +514,27 @@ export async function importarMetricasCsv(
       continue;
     }
 
-    const entero = (columna: string) => Math.max(0, Math.round(parseNumero(valor(columna)) ?? 0));
-    const decimal = (columna: string) => Math.max(0, parseNumero(valor(columna)) ?? 0);
-
-    const notas = valor("notas").replace(/^"|"$/g, "").trim();
+    // Ausente o vacío conserva el dato existente. Únicamente un cero explícito lo reemplaza por cero.
+    const data: FilaValida["data"] = {};
+    const numeric = { vistas: "views", likes: "likes", comentarios: "comments", compartidos: "shares", guardados: "saves", alcance: "reach", clics: "clicks", leads: "leads", pedidos: "orders", inversion: "spend", ingresos: "revenue", retencion: "retention3s" } as const;
+    let invalid: string | null = celdas.length !== cabeceras.length ? "La fila no tiene el mismo número de columnas que la cabecera." : null;
+    for (const [column, target] of Object.entries(numeric)) {
+      const rawValue = valor(column);
+      if (!rawValue.trim()) continue;
+      let number = parseNumero(rawValue);
+      if (target !== "retention3s" && rawValue.includes("%")) number = null;
+      if (target === "retention3s" && number !== null && number > 0 && number <= 1 && /[.,]/.test(rawValue) && !rawValue.includes("%")) number *= 100;
+      const integer = !["spend", "revenue", "retention3s"].includes(target);
+      if (number === null || number < 0 || (integer && (!Number.isInteger(number) || number > 2147483647)) || (!integer && number > (target === "retention3s" ? 100 : 1e12))) {
+        invalid = `La columna ${column} contiene un valor inválido. La fila se conserva sin cambios.`; break;
+      }
+      data[target] = number;
+    }
+    const notes = valor("notas").trim();
+    if (notes.length > 2000) invalid = "Las notas no pueden superar 2000 caracteres.";
+    if (notes) data.notes = notes;
+    if (!Object.keys(data).length) invalid ??= "La fila no contiene valores para actualizar.";
+    if (invalid) { ignoradas.push({ line: numeroLinea, reason: invalid, preview }); continue; }
 
     vistas.add(clave);
     validas.push({
@@ -508,21 +543,7 @@ export async function importarMetricasCsv(
       brandId: encontrado.brandId,
       title: encontrado.title,
       date: fecha,
-      data: {
-        views: entero("vistas"),
-        likes: entero("likes"),
-        comments: entero("comentarios"),
-        shares: entero("compartidos"),
-        saves: entero("guardados"),
-        reach: entero("alcance"),
-        clicks: entero("clics"),
-        leads: entero("leads"),
-        orders: entero("pedidos"),
-        spend: decimal("inversion"),
-        revenue: decimal("ingresos"),
-        retention3s: parseRetencion(valor("retencion")),
-        notes: notas.length ? notas : null,
-      },
+      data,
     });
   }
 
@@ -541,12 +562,14 @@ export async function importarMetricasCsv(
 
   for (const fila of validas) {
     try {
-      const existente = await prisma.metric.findUnique({
+      const existed = await prisma.$transaction(async tx => {
+      await assertActor(tx, user);
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${fila.contentItemId}|${fila.date.toISOString()}`}, 0))`;
+      const existente = await tx.metric.findUnique({
         where: { contentItemId_date: { contentItemId: fila.contentItemId, date: fila.date } },
-        select: { id: true },
       });
 
-      await prisma.metric.upsert({
+      const saved = await tx.metric.upsert({
         where: { contentItemId_date: { contentItemId: fila.contentItemId, date: fila.date } },
         create: {
           contentItemId: fila.contentItemId,
@@ -556,8 +579,13 @@ export async function importarMetricasCsv(
         },
         update: { source: "IMPORT", ...fila.data },
       });
-
-      if (existente) actualizadas++;
+      await auditInTransaction(tx, { user, action: existente ? "EDITAR" : "CREAR", entity: "Metric", entityId: saved.id, brandId: fila.brandId,
+        summary: `Importó métricas de "${fila.title}" desde CSV`,
+        changes: diffFields(existente ?? Object.fromEntries(Object.keys(fila.data).map(key => [key, null])), { ...fila.data, source: "IMPORT" }),
+      });
+      return Boolean(existente);
+      });
+      if (existed) actualizadas++;
       else creadas++;
       afectados.add(fila.contentItemId);
     } catch {

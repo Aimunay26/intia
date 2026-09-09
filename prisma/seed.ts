@@ -9,13 +9,14 @@
  * aleatorias que se imprimen al final de este script.
  */
 
-import { PrismaClient } from "@prisma/client";
+import { prisma as rootPrisma } from "../src/lib/prisma";
+import { lockDemoTables, recordDemoSeed } from "../src/lib/demo-provenance";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 
 import { SEED_STRUCTURES } from "./seed-structures";
 
-const prisma = new PrismaClient();
+const prisma = rootPrisma;
 
 const J = (v: unknown) => JSON.stringify(v);
 
@@ -824,6 +825,10 @@ const SCRIPTS: {
 /* ================================================================ MAIN === */
 
 async function main() {
+  await rootPrisma.$transaction(async prisma => {
+  await prisma.$executeRaw`SELECT pg_advisory_xact_lock(781240109)`;
+  await lockDemoTables(prisma);
+  const pristine = await prisma.brand.count() === 0 && await prisma.user.count() === 0 && await prisma.archetype.count() === 0 && await prisma.script.count() === 0 && await prisma.contentItem.count() === 0 && await prisma.demoSeedRecord.count() === 0;
   console.log("Sembrando datos iniciales…\n");
 
   /* --- Ajustes --- */
@@ -1211,6 +1216,11 @@ async function main() {
   }
 
   /* --- Resumen --- */
+  if (pristine) await recordDemoSeed(prisma, [
+    { entityType: "Brand", entityId: brand.id },
+    ...[...userIds.values()].map(entityId => ({ entityType: "User", entityId })),
+    ...[...archetypeIds.values()].map(entityId => ({ entityType: "Archetype", entityId })),
+  ]);
   console.log("\nListo.\n");
 
   if (credentials.length) {
@@ -1224,7 +1234,8 @@ async function main() {
   }
 
   console.log("No se creó ninguna cuenta de dueño a propósito.");
-  console.log("Abre la app y crea la tuya en la primera pantalla.\n");
+  console.log("Configura BOOTSTRAP_TOKEN y abre la app para crear el primer dueño.\n");
+  }, { maxWait: 10_000, timeout: 120_000 });
 }
 
 main()

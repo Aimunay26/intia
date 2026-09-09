@@ -106,7 +106,7 @@ export function ImportForm() {
                   Importar filas
                 </SubmitButton>
                 <span className="text-inkmuted text-[11.5px]">
-                  Volver a importar el mismo video y la misma fecha actualiza la fila, no la duplica.
+                  Hasta 500 filas. Columnas ausentes o celdas vacías conservan el dato existente; escribe 0 para ponerlo en cero. Cada cambio queda registrado.
                 </span>
               </div>
 
@@ -179,9 +179,9 @@ export function ImportForm() {
               <p className="text-inkmuted mt-2.5 text-[11.5px] leading-relaxed">
                 Solo <span className="text-inksoft font-semibold">fecha</span> y{" "}
                 <span className="text-inksoft font-semibold">video</span> son obligatorias. Las
-                demás pueden faltar o venir vacías: se guardan como 0. Las columnas que no
-                reconozco se ignoran sin romper nada, y cualquier fila con problemas se reporta
-                con su número de línea.
+                demás conservan su valor si faltan o están vacías; escribe 0 para reemplazarlo
+                por cero. Incluye al menos un dato para actualizar. Se informa de las columnas
+                desconocidas y de las filas con problemas. Usa una línea por registro.
               </p>
             </aside>
           </div>

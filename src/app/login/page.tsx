@@ -10,6 +10,7 @@ export const metadata = { title: "Entrar - Marketing OS" };
 
 /** Mensajes de la vuelta de Google, en español y sin tecnicismos. */
 const ERRORES: Record<string, string> = {
+  acceso_limitado: "Demasiados intentos. Espera 15 minutos antes de volver a intentar.",
   google_no_configurado:
     "La entrada con Google todavía no está configurada. El dueño puede activarla desde Ajustes.",
   google_cancelado: "Cancelaste la entrada con Google.",

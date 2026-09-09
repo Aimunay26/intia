@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { clientIp, type SessionUser } from "@/lib/auth";
+import type { AppTransaction } from "@/lib/prisma";
 
 /**
  * Registro de auditoria: quien hizo que, sobre que y cuando.
  *
- * Regla de oro: registrar NUNCA debe romper la operacion principal.
- * Si el log falla, se traga el error y la accion del usuario sigue adelante.
+ * logAudit mantiene el comportamiento histórico de mejor esfuerzo.
+ * Las operaciones críticas usan auditInTransaction: un fallo revierte también la escritura.
  */
 
 /**
@@ -44,6 +45,16 @@ export type AuditInput = {
   changes?: Record<string, Cambio> | null;
   brandId?: string | null;
 };
+
+/** Cambios críticos: el registro participa en la misma transacción y su fallo revierte la escritura. */
+export async function auditInTransaction(tx: AppTransaction, input: AuditInput) {
+  await tx.auditLog.create({ data: {
+    userId: input.user?.id ?? null, userName: input.user?.name ?? "Sistema",
+    action: input.action, entity: input.entity, entityId: input.entityId ?? null,
+    summary: input.summary, changes: input.changes ? JSON.stringify(input.changes) : null,
+    brandId: input.brandId ?? null,
+  } });
+}
 
 export async function logAudit(input: AuditInput) {
   try {

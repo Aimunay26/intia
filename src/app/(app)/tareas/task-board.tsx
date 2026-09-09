@@ -29,6 +29,7 @@ import {
   crearTarea,
   eliminarColumna,
   eliminarTarea,
+  revisarEliminacionColumna,
   moverTarea,
 } from "@/app/actions/tasks";
 import Link from "next/link";
@@ -100,15 +101,19 @@ export function TaskBoard({
   brands,
   activeBrandId,
   filters,
+  canDelete,
 }: {
   initialColumns: BoardColumn[];
   users: BoardUser[];
   brands: BoardBrand[];
   activeBrandId?: string | null;
   filters: TaskFilters;
+  canDelete: boolean;
 }) {
   const [columns, setColumns] = useState<BoardColumn[]>(initialColumns);
   const [isPending, startTransition] = useTransition();
+  const [deletion, setDeletion] = useState<{ kind: "task" | "column"; id: string; name: string; tasks: number } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const generation = useRef(0);
   const loading = useRef(new Set<string>());
@@ -739,19 +744,14 @@ export function TaskBoard({
             </div>
 
             <div className="flex items-center justify-between pt-3 border-t border-[var(--line)]">
-              <button
+              {canDelete ? <button
                 type="button"
-                onClick={async () => {
-                  if (confirm("¿Seguro que deseas eliminar esta tarea?")) {
-                    await eliminarTarea(editingTask.id);
-                    setEditingTask(null);
-                  }
-                }}
+                onClick={() => { setDeleteError(null); setDeletion({ kind: "task", id: editingTask.id, name: editingTask.title, tasks: 0 }); }}
                 className="btn btn-sm text-danger hover:bg-danger/10 border-transparent"
               >
                 <Trash2 size={13} />
                 Eliminar tarea
-              </button>
+              </button> : <div />}
 
               <div className="flex gap-2">
                 <button
@@ -837,18 +837,16 @@ export function TaskBoard({
             </Field>
 
             <div className="flex items-center justify-between pt-3 border-t border-[var(--line)]">
-              {columns.length > 1 ? (
+              {canDelete && columns.length > 1 ? (
                 <button
                   type="button"
                   onClick={async () => {
-                    if (
-                      confirm(
-                        `¿Eliminar la columna "${editingColumn.name}"? Sus tareas también se eliminarán.`
-                      )
-                    ) {
-                      await eliminarColumna(editingColumn.id);
-                      setEditingColumn(null);
-                    }
+                    setDeleteError(null);
+                    setDeletion({ kind: "column", id: editingColumn.id, name: editingColumn.name, tasks: -1 });
+                    try {
+                      const info = await revisarEliminacionColumna(editingColumn.id);
+                      setDeletion(current => current?.id === editingColumn.id ? { ...current, tasks: info.tasks } : current);
+                    } catch { setDeleteError("No se pudo comprobar la columna. Cierra esta ventana y vuelve a intentarlo."); }
                   }}
                   className="btn btn-sm text-danger hover:bg-danger/10 border-transparent"
                 >
@@ -941,6 +939,23 @@ export function TaskBoard({
           </form>
         </Modal>
       )}
+      {deletion ? <Modal open onClose={() => { if (!isPending) setDeletion(null); }} title={`Eliminar ${deletion.kind === "task" ? "tarea" : "columna"}`}>
+        <p className="text-sm">{deletion.name}</p>
+        {deletion.kind === "column" ? <p className="text-inkmuted text-sm mt-2">
+          {deletion.tasks < 0 ? "Comprobando todas las tareas…" : deletion.tasks > 0 ? `Tareas en la columna: ${deletion.tasks}, incluidas las ocultas por filtros. Muévelas antes de eliminar la columna.` : "La columna está vacía. Esta acción no se puede deshacer."}
+        </p> : <p className="text-inkmuted text-sm mt-2">Esta acción no se puede deshacer.</p>}
+        {deleteError ? <p role="alert" className="text-danger text-sm mt-2">{deleteError}</p> : null}
+        <div className="mt-4 flex justify-end gap-2">
+          <button type="button" className="btn" disabled={isPending} onClick={() => setDeletion(null)}>Cancelar</button>
+          <button type="button" className="btn btn-danger" disabled={isPending || (deletion.kind === "column" && deletion.tasks !== 0)} onClick={() => startTransition(async () => {
+            try {
+              if (deletion.kind === "task") { await eliminarTarea(deletion.id); setEditingTask(null); }
+              else { await eliminarColumna(deletion.id); setEditingColumn(null); }
+              setDeletion(null);
+            } catch (error) { setDeleteError(error instanceof Error ? error.message : "No se pudo eliminar."); }
+          })}>{isPending ? "Eliminando…" : "Sí, eliminar"}</button>
+        </div>
+      </Modal> : null}
     </div>
   );
 }

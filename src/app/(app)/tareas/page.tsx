@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function TareasPage({ searchParams }: { searchParams: Promise<TaskFilters> }) {
   return measurePagePhase("page:/tareas", async () => {
-  await requireUser();
+  const user = await requireUser();
   const brandCtx = await getBrandContext();
   const activeBrandId = brandCtx.activeId;
 
@@ -39,6 +39,7 @@ export default async function TareasPage({ searchParams }: { searchParams: Promi
       />
 
       {columns.length ? <TaskBoard
+        canDelete={user.role === "OWNER"}
         key={JSON.stringify([activeBrandId, filters])}
         initialColumns={columns}
         filters={filters}

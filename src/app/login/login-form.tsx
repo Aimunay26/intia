@@ -12,6 +12,9 @@ export function LoginForm({ bootstrap }: { bootstrap: boolean }) {
 
   return (
     <form action={formAction} className="space-y-3.5">
+      {bootstrap ? <Field label="Clave de instalación" required hint="La facilita quien configuró esta instalación.">
+        <input name="installationKey" type="password" className="input" required autoComplete="off" maxLength={1024} />
+      </Field> : null}
       {bootstrap ? (
         <Field label="Tu nombre" required>
           <input

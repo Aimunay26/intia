@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-import { logAudit } from "@/lib/audit";
+import { logAudit, auditInTransaction } from "@/lib/audit";
+import { assertActor } from "@/lib/auth-transactions";
 import { LEVEL, requireLevel } from "@/lib/auth";
 import { dateField, field, fieldOrNull } from "@/lib/utils";
 
@@ -158,13 +159,16 @@ export async function moverTarea(taskId: string, targetColumnId: string, newOrde
 }
 
 export async function eliminarTarea(idOrFormData: FormData | string) {
-  await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
 
   const id = typeof idOrFormData === "string" ? idOrFormData : field(idOrFormData, "id");
   if (!id) throw new Error("Falta el identificador de la tarea a eliminar.");
 
-  await prisma.task.delete({
-    where: { id },
+  await prisma.$transaction(async tx => {
+    await assertActor(tx, user, true);
+    const before = await tx.task.findUniqueOrThrow({ where: { id } });
+    await tx.task.delete({ where: { id } });
+    await auditInTransaction(tx, { user, action: "ELIMINAR", entity: "Task", entityId: id, brandId: before.brandId, summary: `Eliminó la tarea "${before.title}"` });
   });
 
   refrescar();
@@ -216,19 +220,29 @@ export async function crearColumna(name: string, color: string, brandId?: string
 }
 
 export async function eliminarColumna(columnId: string) {
-  await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
 
   if (!columnId) throw new Error("Falta el identificador de columna a eliminar.");
 
-  const count = await prisma.taskColumn.count();
-  if (count <= 1) {
-    throw new Error("No puedes eliminar la única columna restante del tablero.");
-  }
-
-  await prisma.taskColumn.delete({
-    where: { id: columnId },
+  await prisma.$transaction(async tx => {
+    await assertActor(tx, user, true);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(781240110)`;
+    // Impide una inserción concurrente mientras se comprueba que la columna está vacía.
+    await tx.$queryRaw`SELECT "id" FROM "TaskColumn" WHERE "id" = ${columnId} FOR UPDATE`;
+    const column = await tx.taskColumn.findUniqueOrThrow({ where: { id: columnId } });
+    if (await tx.taskColumn.count() <= 1) throw new Error("No puedes eliminar la única columna restante del tablero.");
+    const count = await tx.task.count({ where: { columnId } });
+    if (count) throw new Error(`La columna contiene ${count} tareas, incluidas las ocultas por filtros. Muévelas antes de eliminarla.`);
+    await tx.taskColumn.delete({ where: { id: columnId } });
+    await auditInTransaction(tx, { user, action: "ELIMINAR", entity: "TaskColumn", entityId: columnId, brandId: column.brandId, summary: `Eliminó la columna vacía "${column.name}"` });
   });
 
   refrescar();
   return { ok: true };
+}
+
+export async function revisarEliminacionColumna(columnId: string) {
+  await requireLevel(LEVEL.OWNER);
+  const column = await prisma.taskColumn.findUniqueOrThrow({ where: { id: columnId }, select: { name: true, _count: { select: { tasks: true } } } });
+  return { name: column.name, tasks: column._count.tasks };
 }

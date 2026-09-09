@@ -2,6 +2,9 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
+import { createHash, randomBytes } from "node:crypto";
+import { isStrongSecret, passwordError } from "@/lib/auth-policy";
+import { BOOTSTRAP_COMPLETE, withAuthLock } from "@/lib/auth-transactions";
 
 import { prisma } from "@/lib/prisma";
 import { ROLE_LEVEL } from "@/lib/constants";
@@ -37,7 +40,7 @@ function diagnosticoDelSecreto(donde: string): string {
 function secret(donde = "sin-especificar") {
   const raw = process.env.AUTH_SECRET;
 
-  if (!raw || raw.length < 16) {
+  if (!isStrongSecret(raw)) {
     // En producción NO se degrada: la clave de reserva está escrita en el
     // código, así que cualquiera podría falsificar la sesión del dueño. Vale
     // más que la aplicación no arranque y se vea el error en el despliegue.
@@ -61,9 +64,10 @@ function secret(donde = "sin-especificar") {
 }
 
 export function authSecretIsWeak() {
-  const raw = process.env.AUTH_SECRET;
-  return !raw || raw.length < 32 || raw.startsWith("cambia-esto");
+  return !isStrongSecret(process.env.AUTH_SECRET);
 }
+
+export function authSecretBytes() { return secret("control-acceso"); }
 
 export type SessionUser = {
   id: string;
@@ -72,11 +76,14 @@ export type SessionUser = {
   role: string;
   color: string;
   archetypeId: string | null;
+  sessionVersion?: number;
 };
 
 /* --------------------------------------------------------------- HASHING -- */
 
 export async function hashPassword(plain: string) {
+  const error = passwordError(plain);
+  if (error) throw new Error(error);
   return bcrypt.hash(plain, 10);
 }
 
@@ -90,12 +97,23 @@ export async function verifyPassword(plain: string, hash: string) {
 
 /* ---------------------------------------------------------------- SESION -- */
 
-export async function createSession(userId: string) {
-  const token = await new SignJWT({ sub: userId })
+export async function createSession(userId: string, expectedVersion: number) {
+  const sessionId = randomBytes(32).toString("hex");
+  const id = createHash("sha256").update(sessionId).digest("hex");
+  const expiresAt = new Date(Date.now() + DAYS * 86400_000);
+  const key = secret("crear-sesion");
+  await withAuthLock(async tx => {
+    const user = await tx.user.findUnique({ where: { id: userId }, select: { active: true, sessionVersion: true } });
+    if (!user?.active || user.sessionVersion !== expectedVersion) throw new Error("El acceso cambió. Vuelve a iniciar sesión.");
+    await tx.authSession.create({ data: { id, userId, expiresAt } });
+    await tx.$executeRaw`DELETE FROM "AuthSession" WHERE "id" IN (SELECT "id" FROM "AuthSession" WHERE "expiresAt" < CURRENT_TIMESTAMP LIMIT 100)`;
+  });
+  const token = await new SignJWT({ sub: userId, sv: expectedVersion })
+    .setJti(sessionId)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${DAYS}d`)
-    .sign(secret("crear-sesion"));
+    .sign(key);
 
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, {
@@ -109,6 +127,18 @@ export async function createSession(userId: string) {
 
 export async function destroySession() {
   const jar = await cookies();
+  const token = jar.get(SESSION_COOKIE)?.value;
+  if (token) {
+    try {
+      const { payload } = await jwtVerify(token, secret("cerrar-sesion"), { algorithms: ["HS256"] });
+      if (typeof payload.jti === "string") {
+        await prisma.authSession.deleteMany({ where: { id: createHash("sha256").update(payload.jti).digest("hex") } });
+      }
+    } catch (error) {
+      // Un JWT inválido se descarta; un fallo de DB no debe aparentar una revocación correcta.
+      if (!(error instanceof Error && (error.name.startsWith("JWT") || error.name.startsWith("JWS") || error.name.startsWith("JOSE")))) throw error;
+    }
+  }
   jar.delete(SESSION_COOKIE);
 }
 
@@ -123,23 +153,18 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, secret("leer-sesion"));
+    const { payload } = await jwtVerify(token, secret("leer-sesion"), { algorithms: ["HS256"] });
     const id = typeof payload.sub === "string" ? payload.sub : null;
-    if (!id) return null;
+    if (!id || typeof payload.jti !== "string" || !Number.isInteger(payload.sv)) return null;
 
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        color: true,
-        active: true,
-        archetypeId: true,
-      },
-    });
-    if (!user || !user.active) return null;
+    // Una sola consulta para sesión, revocación, versión y permisos frescos.
+    const [user] = await prisma.$queryRaw<(SessionUser & { sessionVersion: number })[]>`
+      SELECT u."id", u."name", u."email", u."role", u."color", u."archetypeId", u."sessionVersion"
+      FROM "AuthSession" s JOIN "User" u ON u."id" = s."userId"
+      WHERE s."id" = ${createHash("sha256").update(payload.jti).digest("hex")}
+        AND u."id" = ${id} AND u."active" = true AND u."sessionVersion" = ${payload.sv}
+        AND s."expiresAt" > CURRENT_TIMESTAMP`;
+    if (!user || !["OWNER", "MEMBER"].includes(user.role)) return null;
 
     return {
       id: user.id,
@@ -148,6 +173,7 @@ export async function getSession(): Promise<SessionUser | null> {
       role: user.role,
       color: user.color,
       archetypeId: user.archetypeId,
+      sessionVersion: user.sessionVersion,
     };
   } catch {
     return null;
@@ -200,12 +226,14 @@ export async function clientIp(): Promise<string | null> {
 /* ------------------------------------------------------------- ARRANQUE -- */
 
 /**
- * True si todavía no hay ninguna cuenta de dueño activa.
- * En ese caso la pantalla de entrada ofrece crear la primera.
- * Se cuentan solo dueños (no cualquier usuario) para que los datos
- * de ejemplo del equipo no bloqueen el alta inicial.
+ * El alta solo se ofrece con clave de instalación, sin marcador de cierre
+ * y sin ningún dueño (incluidos los inactivos). No se reabre por una baja.
  */
 export async function needsBootstrap() {
-  const count = await prisma.user.count({ where: { role: "OWNER", active: true } });
-  return count === 0;
+  if (!isStrongSecret(process.env.BOOTSTRAP_TOKEN)) return false;
+  const [marker, count] = await Promise.all([
+    prisma.appSetting.findUnique({ where: { key: BOOTSTRAP_COMPLETE }, select: { key: true } }),
+    prisma.user.count({ where: { role: "OWNER" } }),
+  ]);
+  return !marker && count === 0;
 }

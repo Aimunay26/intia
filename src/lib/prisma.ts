@@ -48,3 +48,4 @@ const globalForPrisma = globalThis as unknown as { navigationPrisma?: ReturnType
 // Un cliente/pool por proceso, también con recarga de módulos en desarrollo.
 export const prisma = globalForPrisma.navigationPrisma ?? createClient();
 globalForPrisma.navigationPrisma = prisma;
+export type AppTransaction = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];

@@ -30,9 +30,15 @@ const storage = load("src/lib/private-storage.ts", { ...mocks, "@vercel/blob": {
 
 test("trabajos durables, cuotas, dinero y archivos con PostgreSQL real; IA/Blob simulados", async t => {
   const owner = await prisma.user.create({ data: { name: "Fixture", email: "scalability@example.test", role: "OWNER", passwordHash: "fixture-only" } });
-  const member = await prisma.user.create({ data: { name: "Miembro", email: "member-scalability@example.test", passwordHash: "fixture-only" } });
-  const other = await prisma.user.create({ data: { name: "Otro", email: "other-scalability@example.test", passwordHash: "fixture-only" } });
+  let member = await prisma.user.create({ data: { name: "Miembro", email: "member-scalability@example.test", passwordHash: "fixture-only" } });
+  let other = await prisma.user.create({ data: { name: "Otro", email: "other-scalability@example.test", passwordHash: "fixture-only" } });
   const brand = await prisma.brand.create({ data: { name: "Fixture", slug: "scalability" } });
+  for (const account of [member,other]) {
+    await prisma.userWorkProfile.create({data:{userId:account.id,profile:'WRITER'}});
+    await prisma.userBrandAccess.create({data:{userId:account.id,brandId:brand.id}});
+  }
+  member = {...await prisma.user.findUniqueOrThrow({where:{id:member.id}}), profiles:['WRITER'],brandIds:[brand.id]};
+  other = {...await prisma.user.findUniqueOrThrow({where:{id:other.id}}), profiles:['WRITER'],brandIds:[brand.id]};
   const structure = await prisma.structure.create({ data: { name: "Fixture", slug: "scalability" } });
   const input = { request: "Guion para fixture", provider: "anthropic", brandId: brand.id };
   const enqueue = async (actor = owner, key = randomUUID()) => {

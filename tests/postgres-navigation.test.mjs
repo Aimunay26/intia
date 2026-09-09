@@ -27,7 +27,7 @@ test("PostgreSQL: agregados, páginas, cursores e inicialización concurrente", 
     await t.test("10 inicializaciones simultáneas crean cinco columnas y una auditoría", async () => {
 
       const action = load("src/app/actions/tasks.ts", {
-        ...mocks, "@/lib/auth": { LEVEL: { MEMBER: 1 }, requireLevel: async () => owner },
+        ...mocks, "@/lib/auth": { LEVEL: { MEMBER: 1, OWNER: 2 }, requireLevel: async () => owner, requirePermission: async () => owner },
         "next/cache": { revalidatePath: () => {} },
       });
       await Promise.all(Array.from({ length: 10 }, () => action.asegurarColumnasIniciales()));
@@ -88,7 +88,7 @@ test("PostgreSQL: agregados, páginas, cursores e inicialización concurrente", 
       const visible = await tasks.getTaskColumnPage(destination, id("A"), {});
       assert.equal(visible.tasks.length, 50);
       const action = load("src/app/actions/tasks.ts", {
-        ...mocks, "@/lib/auth": { LEVEL: { MEMBER: 1 }, requireLevel: async () => owner },
+        ...mocks, "@/lib/auth": { LEVEL: { MEMBER: 1, OWNER: 2 }, requireLevel: async () => owner, requirePermission: async () => owner },
         "next/cache": { revalidatePath: () => {} },
       });
       const moving = await prisma.task.findUniqueOrThrow({ where: { id: id("t109") } });

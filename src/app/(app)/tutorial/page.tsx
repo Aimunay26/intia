@@ -1,5 +1,6 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import {
 	BookOpen,
 	Building2,
@@ -127,7 +128,8 @@ function Rol({
 
 export default async function TutorialPage() {
   return measurePagePhase("page:/tutorial", async () => {
-  await requireUser();
+  const user = await requirePageSection("help");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="help" />;
 
   // El tutorial mira la base para saber en qué paso estás de verdad.
   const [marcas, personas, conVoz, estructuras, videos, guiones, unidos, metricas, equipo] =

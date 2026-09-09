@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { requireLevel, LEVEL } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { generationScope } from "@/lib/access-scope";
 
 export default async function GenerationsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.generate");
   const raw = (await searchParams).page;
   const page = Math.min(10000, Math.max(1, Number(raw) || 1));
-  const jobs = await prisma.generationJob.findMany({ where: { userId: user.id }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 21, skip: (Math.trunc(page) - 1) * 20, select: { id: true, createdAt: true, status: true, _count: { select: { items: true } } } });
+  const jobs = await prisma.generationJob.findMany({ where: { AND: [{ userId: user.id }, generationScope(user)] }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 21, skip: (Math.trunc(page) - 1) * 20, select: { id: true, createdAt: true, status: true, _count: { select: { items: true } } } });
   const labels: Record<string, string> = { QUEUED: "En espera", RUNNING: "Generando", COMPLETED: "Completado", PARTIAL: "Completado parcialmente", FAILED: "No completado", CANCELLED: "Cancelado" };
   return <div className="mx-auto max-w-3xl space-y-5">
     <h1 className="text-2xl font-bold">Mis generaciones</h1>

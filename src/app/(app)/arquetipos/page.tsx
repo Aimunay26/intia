@@ -1,7 +1,8 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { Pagination } from "@/components/filters";
 import { getArchetypeList } from "@/lib/archetype-list";
 import { measurePagePhase } from "@/lib/performance-page";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import { Search, Sparkles, Users, UserSquare2 } from "lucide-react";
 import Link from "next/link";
 
@@ -186,7 +187,8 @@ export default async function ArquetiposPage({
   searchParams: Promise<{ q?: string; pagina?: string }>;
 }) {
   return measurePagePhase("page:/arquetipos", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("archetypes");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="archetypes" query={await searchParams} />;
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
 

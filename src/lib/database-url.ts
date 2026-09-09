@@ -1,4 +1,4 @@
-export const APPLICATION_SCHEMA_VERSION = "intia-schema-20260909";
+export const APPLICATION_SCHEMA_VERSION = "intia-profiles-20260910";
 
 /** Ajustes del pool e identificación de versiones compatibles durante despliegues. */
 export function databaseUrl(env: Record<string, string | undefined> = process.env): string | undefined {

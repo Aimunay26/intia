@@ -1,6 +1,8 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { loadPage } from "@/lib/list-pagination";
 import { measurePagePhase } from "@/lib/performance-page";
-import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { getStructureChoices } from "@/lib/structure-choices";
 import { Clapperboard, Film, Search, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -31,7 +33,8 @@ export default async function GuionesPage({
   }>;
 }) {
   return measurePagePhase("page:/guiones", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("scripts");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="scripts" query={await searchParams} />;
   const sp = await searchParams;
 
   const q = sp.q?.trim() ?? "";

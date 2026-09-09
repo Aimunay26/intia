@@ -1,4 +1,7 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
+import { assertBrandPermission, assertPermission, contentStatusCapability, checklistCapability } from "@/lib/permissions";
+import { assertContentAccess, assertVideoOpen, assertAssignee, assertPublishable } from "@/lib/access-scope";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -100,11 +103,13 @@ function nombresRedes(platformsJson: string): string {
 /* ----------------------------------------------------------------- VIDEO -- */
 
 export async function crearVideo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("content.plan");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const title = field(formData, "title");
     const brandId = field(formData, "brandId");
+    assertBrandPermission(user, brandId, "content.plan");
+    if (user.role !== "OWNER" && !["", "IDEA"].includes(field(formData, "status"))) throw new Error("Los nuevos videos empiezan como idea.");
     if (!title) throw new Error("El video necesita un título.");
     if (!brandId) throw new Error("Elige la marca del video.");
 
@@ -152,8 +157,10 @@ export async function crearVideo(formData: FormData) {
 }
 
 export async function actualizarVideo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("content.plan");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertVideoOpen(tx, user, field(formData, "id"));
+    await assertContentAccess(tx, user, field(formData, "id"), "content.plan");
     const id = field(formData, "id");
 
     await lockRevision(tx, "ContentItem", id, formData);
@@ -168,8 +175,8 @@ export async function actualizarVideo(formData: FormData) {
       priority: enumField(formData, "priority", PRIORITY_MAP, before.priority),
       scheduledDate: dateField(formData, "scheduledDate") ?? before.scheduledDate,
       shootDate: dateField(formData, "shootDate"),
-      publishedAt: dateField(formData, "publishedAt"),
-      publishedUrl: fieldOrNull(formData, "publishedUrl"),
+      publishedAt: user.role === "OWNER" ? dateField(formData, "publishedAt") : before.publishedAt,
+      publishedUrl: user.role === "OWNER" ? fieldOrNull(formData, "publishedUrl") : before.publishedUrl,
       tags: linesToJson(field(formData, "tags")),
       notes: fieldOrNull(formData, "notes"),
     };
@@ -195,6 +202,7 @@ export async function cambiarEstado(formData: FormData) {
   return withMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     const status = enumField(formData, "status", CONTENT_STATUS_MAP);
+    await assertContentAccess(tx, user, id, contentStatusCapability(status));
 
     await lockRevision(tx, "ContentItem", id, formData);
     const before = await tx.contentItem.findUniqueOrThrow({
@@ -202,6 +210,10 @@ export async function cambiarEstado(formData: FormData) {
       select: { title: true, status: true, brandId: true, publishedAt: true },
     });
     if (before.status === status) return;
+    if (user.role !== "OWNER") {
+      if (["PROGRAMADO", "PUBLICADO"].includes(status)) await assertPublishable(tx, user, id);
+      if (["PROGRAMADO", "PUBLICADO"].includes(before.status) && !["PROGRAMADO", "PUBLICADO"].includes(status)) assertPermission(user, "content.approve");
+    }
 
     // Al publicar, si nadie puso fecha de publicacion, la ponemos nosotros.
     const marcaPublicacion = status === "PUBLICADO" && !before.publishedAt;
@@ -260,8 +272,9 @@ export async function eliminarVideo(formData: FormData) {
 }
 
 export async function duplicarVideo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("content.plan");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertContentAccess(tx, user, field(formData, "id"), "content.plan");
     const id = field(formData, "id");
 
     const origen = await tx.contentItem.findUniqueOrThrow({
@@ -332,6 +345,9 @@ export async function alternarCheck(formData: FormData) {
       include: { contentItem: { select: { id: true, title: true, brandId: true } } },
     });
     if (!check) return;
+    await assertContentAccess(tx, user, check.contentItemId, checklistCapability(check.stage, check.label));
+    if (checklistCapability(check.stage, check.label) !== "content.approve" && check.stage !== "PUBLICACION") await assertVideoOpen(tx, user, check.contentItemId);
+    if (check.stage === "PUBLICACION") await assertPublishable(tx, user, check.contentItemId);
 
     await tx.checklistItem.update({
       where: { id },
@@ -356,8 +372,10 @@ export async function alternarCheck(formData: FormData) {
 }
 
 export async function crearCheck(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("content.plan");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertVideoOpen(tx, user, field(formData, "contentItemId"));
+    await assertContentAccess(tx, user, field(formData, "contentItemId"), "content.plan");
     const contentItemId = field(formData, "contentItemId");
     const label = field(formData, "label");
     if (!label) return;
@@ -402,7 +420,7 @@ export async function crearCheck(formData: FormData) {
 }
 
 export async function eliminarCheck(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("content.plan");
   return withMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
 
@@ -411,6 +429,8 @@ export async function eliminarCheck(formData: FormData) {
       include: { contentItem: { select: { id: true, title: true, brandId: true } } },
     });
     if (!check) return;
+    await assertContentAccess(tx, user, check.contentItemId, "content.plan");
+    await assertVideoOpen(tx, user, check.contentItemId);
 
     await tx.checklistItem.delete({ where: { id } });
 
@@ -430,8 +450,9 @@ export async function eliminarCheck(formData: FormData) {
 /* ------------------------------------------------------------ ASIGNACION -- */
 
 export async function asignarPersona(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("content.assign");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertContentAccess(tx, user, field(formData, "contentItemId"), "content.assign");
     const contentItemId = field(formData, "contentItemId");
     const userId = field(formData, "userId");
     const role = enumField(formData, "role", ASSIGNMENT_ROLE_MAP);
@@ -445,6 +466,7 @@ export async function asignarPersona(formData: FormData) {
       tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, active: true } }),
     ]);
 
+    await assertAssignee(tx, userId, item.brandId);
     if (!persona.active) throw new Error("No puedes asignar una cuenta desactivada.");
     const asignacion = await tx.assignment.upsert({
       where: { contentItemId_userId_role: { contentItemId, userId, role } },
@@ -466,7 +488,7 @@ export async function asignarPersona(formData: FormData) {
 }
 
 export async function quitarAsignacion(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("content.assign");
   return withMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
 
@@ -478,6 +500,7 @@ export async function quitarAsignacion(formData: FormData) {
       },
     });
     if (!asignacion) return;
+    await assertContentAccess(tx, user, asignacion.contentItemId, "content.assign");
 
     await tx.assignment.delete({ where: { id } });
 
@@ -499,7 +522,7 @@ export async function quitarAsignacion(formData: FormData) {
 /* -------------------------------------------------------------- METRICAS -- */
 
 export async function guardarMetrica(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("metrics.write");
   await saveWeeklyMetric(user, formData);
   revalidar(field(formData, "contentItemId"));
 }
@@ -536,8 +559,9 @@ export async function eliminarMetrica(formData: FormData) {
 
 /** Comentar es lo unico que puede hacer cualquiera con sesion, talento incluido. */
 export async function comentar(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("content.comment");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertContentAccess(tx, user, field(formData, "contentItemId"), "content.comment");
     const contentItemId = field(formData, "contentItemId");
     const body = field(formData, "body");
     if (!body) return;

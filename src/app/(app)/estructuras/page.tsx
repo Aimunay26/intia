@@ -1,5 +1,6 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import {
 	Clock3,
 	FileText,
@@ -53,7 +54,8 @@ export default async function EstructurasPage({
   searchParams: Promise<{ q?: string; categoria?: string; aviso?: string; guiones?: string }>;
 }) {
   return measurePagePhase("page:/estructuras", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("structures");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="structures" query={await searchParams} />;
   const sp = await searchParams;
   const puedeEditar = can(user.role, LEVEL.MEMBER);
 

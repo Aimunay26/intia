@@ -1,4 +1,5 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -114,7 +115,7 @@ function etiquetaFit(score: number): string {
 /* ------------------------------------------------------------------ CREAR -- */
 
 export async function crearArquetipo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const datos = leerCampos(formData);
@@ -191,7 +192,7 @@ export async function crearArquetipo(formData: FormData) {
 /* ------------------------------------------------------------- ACTUALIZAR -- */
 
 export async function actualizarArquetipo(id: string, formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     await lockRevision(tx, "Archetype", id, formData);
@@ -232,7 +233,7 @@ export async function actualizarArquetipo(id: string, formData: FormData) {
  * dejaria vacios.
  */
 export async function actualizarMarcaPersonal(id: string, formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     await lockRevision(tx, "Archetype", id, formData);
@@ -348,7 +349,7 @@ export async function eliminarArquetipo(formData: FormData) {
  * Escribe sobre la clave unica compuesta archetypeId_structureId.
  */
 export async function guardarCompatibilidad(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const archetypeId = field(formData, "archetypeId");
@@ -397,7 +398,7 @@ export async function guardarCompatibilidad(formData: FormData) {
 
 /** Le pone (o le quita) un arquetipo a una persona del equipo. */
 export async function asignarArquetipoAUsuario(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const userId = field(formData, "userId");

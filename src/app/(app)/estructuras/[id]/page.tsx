@@ -1,5 +1,6 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import {
 	Bot,
 	Copy,
@@ -77,7 +78,8 @@ export default async function EstructuraPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ vista?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requirePageSection("structures");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="structures" id={(await params).id} query={await searchParams} />;
   const { id } = await params;
   const sp = await searchParams;
   const puedeEditar = can(user.role, LEVEL.MEMBER);

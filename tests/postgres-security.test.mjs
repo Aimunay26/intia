@@ -41,18 +41,21 @@ test("seguridad sobre PostgreSQL real y sesiones firmadas", async t => {
     });
     let owner = await prisma.user.findFirstOrThrow({ where: { role:"OWNER" } });
     let ownerJar = await jarFor(owner);
-    const member = await prisma.user.create({ data:{name:"Miembro",email:`member-${suffix}@example.test`,passwordHash:await auth.hashPassword(password)} });
+    let member = await prisma.user.create({ data:{name:"Miembro",email:`member-${suffix}@example.test`,passwordHash:await auth.hashPassword(password)} });
     let memberJar = await jarFor(member);
     await t.test("un miembro no puede cambiar a otro usuario ni elevar su propio rol", async () => {
       const denied = await run(memberJar, () => team.actualizarUsuario(null, form({ id: owner.id, name: "Intruso", email: owner.email, role: "MEMBER" })));
       assert.ok(denied.error);
       const self = await run(memberJar, () => team.actualizarUsuario(null, form({ id: member.id, name: member.name, email: "injected@example.test", role: "OWNER" })));
-      assert.ok(self.ok);
+      assert.ok(self.error);
       const fresh = await prisma.user.findUniqueOrThrow({ where: { id: member.id } });
       assert.equal(fresh.role, "MEMBER"); assert.equal(fresh.email, member.email);
       assert.equal((await prisma.user.findUniqueOrThrow({ where: { id: owner.id } })).role, "OWNER");
     });
     const brand = await prisma.brand.create({ data:{name:"Real",slug:`real-${suffix}`} });
+    await prisma.userWorkProfile.createMany({data:['STRATEGY','ANALYST'].map(profile=>({userId:member.id,profile}))});
+    await prisma.userBrandAccess.create({data:{userId:member.id,brandId:brand.id}});
+    member = await prisma.user.findUniqueOrThrow({where:{id:member.id}}); memberJar=await jarFor(member);
     const column = await prisma.taskColumn.create({ data:{name:"Trabajo"} }), spare = await prisma.taskColumn.create({ data:{name:"Vacía"} });
     const task = await prisma.task.create({ data:{title:"No perder",columnId:column.id,brandId:brand.id} });
     await t.test("miembro no borra; dueño no borra columnas con tareas ocultas; borrado correcto auditado", async () => {

@@ -127,11 +127,13 @@ export function BrandForm({
   brand = EMPTY_BRAND,
   mode = "crear",
   canEdit = true,
+  canImport = true,
 }: {
   action: (formData: FormData) => Promise<void>;
   brand?: BrandFormValues;
   mode?: "crear" | "editar";
   canEdit?: boolean;
+  canImport?: boolean;
 }) {
   const [primary, setPrimary] = useState(brand.colorPrimary);
   const [secondary, setSecondary] = useState(brand.colorSecondary);
@@ -164,7 +166,7 @@ export function BrandForm({
       ) : null}
 
       {/* Banner de Carga Rápida desde PDF */}
-      {full && canEdit && (
+      {full && canEdit && canImport && (
         <div className="rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
           <div className="space-y-0.5">
             <div className="font-bold text-ink text-[13.5px] flex items-center gap-2">

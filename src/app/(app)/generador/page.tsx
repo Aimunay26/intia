@@ -1,5 +1,7 @@
+import { requirePageSection } from "@/lib/render-context";
+import { brandScope } from "@/lib/access-scope";
 import { measurePagePhase } from "@/lib/performance-page";
-import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { Layers, Lock, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -37,7 +39,7 @@ export default async function GeneradorPage({
   }>;
 }) {
   return measurePagePhase("page:/generador", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("generator");
   const maxBatch = resourceLimit("AI_MAX_BATCH", 3);
   const jobsEnabled = process.env.AI_JOBS_ENABLED === "true" && maxBatch > 0;
   const sp = await searchParams;
@@ -59,7 +61,7 @@ export default async function GeneradorPage({
       },
     }),
     prisma.brand.findMany({
-      where: { active: true, archived: false },
+      where: { active: true, archived: false, ...brandScope(user) },
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -94,7 +96,7 @@ export default async function GeneradorPage({
     }),
     prisma.asset.groupBy({
       by: ["ownerType", "ownerId"],
-      where: { useForAi: true, NOT: { extractedText: null } },
+      where: { useForAi: true, NOT: { extractedText: null }, ...(user.role === "OWNER" ? {} : { OR: [{ ownerType: { in: ["structure", "archetype"] } }, { ownerType: "brand", ownerId: { in: user.brandIds ?? [] } }] }) },
       _count: { _all: true },
     }),
     aiStatus(),

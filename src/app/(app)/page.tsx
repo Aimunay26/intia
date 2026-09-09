@@ -1,3 +1,4 @@
+import { MemberWorkspace } from "@/components/member-workspace";
 import { SectionLoading } from "@/components/section-loading";
 import { measurePhase } from "@/lib/performance";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -125,6 +126,8 @@ const getPanelContext = cache(async () => {
 });
 
 export default async function PanelGeneral() {
+  const member = await requireUser();
+  if (member.role !== "OWNER") return <MemberWorkspace user={member} section="panel" />;
   return measurePagePhase("page:/", async () => {
   const { user, ahora, brandCtx } = await getPanelContext();
   const scope = brandCtx.activeId ?? "all";

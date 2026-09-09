@@ -66,6 +66,16 @@ try {
   const exact=await db.metric.findUniqueOrThrow({where:{id:'upgrade-metric'}});
   assert.equal(exact.spend.toString(),'0.1');assert.equal(exact.revenue.toString(),'0.2');assert.equal(exact.views,123);
   assert.equal(Buffer.from((await db.asset.findUniqueOrThrow({where:{id:'upgrade-asset'}})).data).toString(),'abc');
+  const member=await db.user.create({data:{id:'upgrade-member',name:'Miembro previo',email:'member@upgrade.test',passwordHash:'fixture-only'}});
+  await db.authSession.create({data:{id:'upgrade-session',userId:member.id,expiresAt:new Date(Date.now()+60000)}});
+  sql(source,fs.readFileSync('prisma/migrations/20260910010000_team_work_profiles/migration.sql'));
+  assert.equal(await db.userWorkProfile.count(),0,'La migración no infiere permisos de usuarios existentes');
+  assert.equal(await db.userBrandAccess.count(),0);
+  assert.equal((await db.user.findUniqueOrThrow({where:{id:member.id}})).sessionVersion,member.sessionVersion);
+  await db.userWorkProfile.create({data:{userId:member.id,profile:'EDITOR'}});
+  await db.userBrandAccess.create({data:{userId:member.id,brandId:'upgrade-brand'}});
+  assert.equal(await db.authSession.count({where:{userId:member.id}}),0);
+  assert.equal((await db.user.findUniqueOrThrow({where:{id:member.id}})).sessionVersion,member.sessionVersion+2);
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);
@@ -73,7 +83,7 @@ try {
   const schemaDiff=sourceDefinitions.flatMap(row=>{const other=targetDefinitions.find(item=>item.key===row.key);return other?.value===row.value?[]:[{key:row.key,source:row.value,restored:other?.value}];});
   fs.writeFileSync('.audit/migration-schema-diff.json',JSON.stringify(schemaDiff,null,2));
   assert.deepEqual(await snapshot(restored),original);assert.deepEqual(await restored.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8')),originalSchema);
-  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
+  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
   fs.writeFileSync('.audit/migration-rehearsal.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 } finally {
   for(const db of clients)await db.$disconnect();

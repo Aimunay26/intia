@@ -2,7 +2,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI } from "@google/genai";
-import { requireUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 
 export type TestKeyResult = {
   ok: boolean;
@@ -20,7 +20,7 @@ export async function probarClaveIA(params: {
   apiKey: string;
   model?: string;
 }): Promise<TestKeyResult> {
-  await requireUser();
+  await requirePermission("admin.settings");
 
   const key = params.apiKey.trim();
   if (!key) {

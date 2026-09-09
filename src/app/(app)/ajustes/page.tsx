@@ -1,5 +1,6 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import { CalendarDays, Database, Lock, RefreshCw, Settings, ShieldAlert } from "lucide-react";
 import { headers } from "next/headers";
 
@@ -46,7 +47,8 @@ function motorDeBaseDeDatos(): { nombre: string; detalle: string } {
 
 export default async function AjustesPage() {
   return measurePagePhase("page:/ajustes", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("settings");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="settings" />;
 
   if (!can(user.role, LEVEL.OWNER)) {
     return (

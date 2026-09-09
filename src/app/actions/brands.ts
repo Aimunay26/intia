@@ -1,4 +1,6 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
+import { assertBrandPermission } from "@/lib/permissions";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -159,7 +161,7 @@ function readBrandFields(
 /* ----------------------------------------------------------------- CREAR -- */
 
 export async function crearMarca(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const name = field(formData, "name");
@@ -190,8 +192,9 @@ export async function crearMarca(formData: FormData) {
 /* ------------------------------------------------------------ ACTUALIZAR -- */
 
 export async function actualizarMarca(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("brands.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
+    assertBrandPermission(user, field(formData, "id"), "brands.edit");
 
     const id = field(formData, "id");
     await lockRevision(tx, "Brand", id, formData);
@@ -227,7 +230,7 @@ export async function actualizarMarca(formData: FormData) {
 
 /** Archiva o reactiva la marca. No borra nada. */
 export async function archivarMarca(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const id = field(formData, "id");
@@ -327,8 +330,9 @@ function readObjectiveFields(fd: FormData): ObjectiveWrite {
 }
 
 export async function crearObjetivo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("brands.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
+    assertBrandPermission(user, field(formData, "brandId"), "brands.edit");
 
     const brandId = field(formData, "brandId");
     const brand = await tx.brand.findUniqueOrThrow({
@@ -357,12 +361,13 @@ export async function crearObjetivo(formData: FormData) {
 }
 
 export async function actualizarObjetivo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("brands.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const id = field(formData, "id");
     await lockRevision(tx, "BrandObjective", id, formData);
     const before = await tx.brandObjective.findUniqueOrThrow({ where: { id } });
+    assertBrandPermission(user, before.brandId, "brands.edit");
 
     const data = readObjectiveFields(formData);
     if (!data.name) data.name = before.name;

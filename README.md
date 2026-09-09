@@ -596,3 +596,7 @@ No habilites los flags de IA o Blob antes de aplicar las migraciones y configura
 Los límites de archivos usan una ventana móvil de 32 días y se reservan antes de las operaciones.
 La migración monetaria rechaza históricos que necesitarían redondeo. En CSV, usa `1234` para miles
 y `1.234000` para tres decimales; un importe ambiguo como `1.234` se rechaza con una explicación.
+
+## Perfiles y permisos
+
+Los perfiles de trabajo se configuran desde Equipo por el Dueño. Consulta la [matriz de permisos y la activación](reports/perfiles-permisos-2026-09-09.md) antes de desplegar esta versión sobre una instalación existente. La migración no asigna permisos por defecto a cuentas antiguas.

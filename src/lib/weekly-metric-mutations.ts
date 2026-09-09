@@ -1,3 +1,4 @@
+import { assertContentAccess } from "@/lib/access-scope";
 import { parseMoney } from "@/lib/money";
 import type { SessionUser } from "@/lib/auth";
 import { withMutation, lockRevision } from "@/lib/mutations";
@@ -22,6 +23,7 @@ export async function saveWeeklyMetric(user: SessionUser, form: FormData) {
     notes, source: "MANUAL",
   };
   return withMutation(user, false, async tx => {
+    await assertContentAccess(tx, user, contentItemId, "metrics.write");
     const video = await tx.contentItem.findUniqueOrThrow({ where: { id: contentItemId }, select: { brandId: true, title: true } });
     // Una alta nunca sobrescribe silenciosamente una semana que ya existe.
     const before = id ? await tx.metric.findUniqueOrThrow({ where: { id } }) : null;

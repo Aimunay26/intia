@@ -32,6 +32,7 @@ import { NavigationPending } from "@/components/navigation-pending";
 import { Avatar } from "@/components/ui";
 import type { BrandChoice } from "@/lib/brand-shared";
 import { USER_ROLE_MAP } from "@/lib/constants";
+import { allows, canAccessPath } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
 const NAV_GUIA_MAP: Record<string, string> = {
@@ -93,6 +94,7 @@ export type ShellUser = {
   role: string;
   color: string;
   level: number;
+  profiles?: string[];
 };
 
 export function Shell({
@@ -150,13 +152,13 @@ export function Shell({
       <BrandSwitcher
         brands={brands}
         activeId={activeBrandId}
-        canCreate={user.level >= 1}
+        canCreate={user.role === "OWNER"}
       />
 
       <nav className="flex-1 overflow-y-auto px-3.5 pb-4">
         {NAV.map((group, gi) => {
           const items = group.items.filter(
-            (i) => !i.minLevel || user.level >= i.minLevel
+            (i) => canAccessPath(user, i.href)
           );
           if (!items.length) return null;
           return (
@@ -235,7 +237,7 @@ export function Shell({
           </main>
         </div>
       </div>
-      <GuiaOverlay />
+      {user.role === "OWNER" ? <GuiaOverlay /> : null}
     </GuiaProvider>
   );
 }
@@ -250,9 +252,8 @@ function UserMenu({ user }: { user: ShellUser }) {
     <div className="border-line shrink-0 border-t p-3">
       {open ? (
         <div className="mb-2 space-y-0.5">
-          <Link href="/equipo" className="nav-link">
-            <Users size={15} /> <span>Mi equipo</span>
-          </Link>
+          <Link href="/mi-perfil" className="nav-link"><Users size={15} /> <span>Mi perfil</span></Link>
+          {allows(user, "admin.team") ? <Link href="/equipo" className="nav-link"><Users size={15} /><span>Mi equipo</span></Link> : null}
           <form action="/api/logout" method="post">
             <button type="submit" className="nav-link text-danger w-full">
               <LogOut size={15} /> <span>Cerrar sesión</span>

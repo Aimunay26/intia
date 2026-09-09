@@ -1,4 +1,7 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
+import { allows, assertBrandPermission } from "@/lib/permissions";
+import { assertTaskAccess, assertAssignee } from "@/lib/access-scope";
 
 import { revalidatePath } from "next/cache";
 
@@ -6,7 +9,7 @@ import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
 import { LEVEL, requireLevel } from "@/lib/auth";
 import { assertActor } from "@/lib/auth-transactions";
 import { prisma, type AppTransaction } from "@/lib/prisma";
-import { dateField, field, fieldOrNull } from "@/lib/utils";
+import { dateField, dateKey, field, fieldOrNull } from "@/lib/utils";
 
 import { DEFAULT_TASK_COLUMNS, TASK_KINDS, TASK_PRIORITIES } from "@/lib/tasks-constants";
 
@@ -26,6 +29,7 @@ async function checkTaskRelations(tx: AppTransaction, columnId: string, brandId:
   if (column.brandId && column.brandId !== brandId) throw new Error("La tarea debe pertenecer a la marca de la columna.");
   if (brandId) await tx.brand.findUniqueOrThrow({ where: { id: brandId }, select: { id: true } });
   if (assigneeId) {
+    if (brandId) await assertAssignee(tx, assigneeId, brandId);
     const person = await tx.user.findUniqueOrThrow({ where: { id: assigneeId }, select: { active: true } });
     if (!person.active) throw new Error("No puedes asignar una cuenta desactivada.");
   }
@@ -42,7 +46,7 @@ function refrescar() {
  * Si la base está vacía, siembra las 5 columnas por defecto.
  */
 export async function asegurarColumnasIniciales() {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
 
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -74,9 +78,11 @@ export async function asegurarColumnasIniciales() {
 /* ---------------------------------------------------- ACCIONES DE TAREAS -- */
 
 export async function crearTarea(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("tasks.manage");
   return withMutation(user, false, async (tx, afterCommit) => {
     const data = readTask(formData);
+    if (data.brandId) assertBrandPermission(user, data.brandId, "tasks.manage");
+    else if (user.role !== "OWNER" && data.assigneeId !== user.id) throw new Error("Las tareas sin marca solo pueden ser personales.");
     const columnId = field(formData, "columnId");
     await checkTaskRelations(tx, columnId, data.brandId, data.assigneeId);
     const last = await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } });
@@ -88,12 +94,20 @@ export async function crearTarea(formData: FormData) {
 }
 
 export async function actualizarTarea(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("tasks.work");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertTaskAccess(tx, user, field(formData, "id"), "tasks.work");
     const id = field(formData, "id");
     await lockRevision(tx, "Task", id, formData);
     const before = await tx.task.findUniqueOrThrow({ where: { id } });
     const data = readTask(formData);
+    if (!allows(user, "tasks.manage")) {
+      if (data.brandId !== before.brandId || data.assigneeId !== before.assigneeId || data.title !== before.title || data.priority !== before.priority || data.kind !== before.kind || dateKey(data.dueDate) !== dateKey(before.dueDate)) throw new Error("Solo coordinación o producción pueden reasignar y planificar tareas.");
+      // El formulario conserva el día visible sin normalizar fechas históricas al guardar avance.
+      data.dueDate = before.dueDate;
+    }
+    if (data.brandId) assertBrandPermission(user, data.brandId, "tasks.work");
+    else if (user.role !== "OWNER" && data.assigneeId !== user.id) throw new Error("La tarea sin marca debe ser personal.");
     const columnId = field(formData, "columnId") || before.columnId;
     await checkTaskRelations(tx, columnId, data.brandId, data.assigneeId);
     const last = columnId !== before.columnId ? await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } }) : null;
@@ -105,8 +119,9 @@ export async function actualizarTarea(formData: FormData) {
 }
 
 export async function moverTarea(taskId: string, targetColumnId: string, newOrder: number | undefined, expectedUpdatedAt: string) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("tasks.work");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertTaskAccess(tx, user, taskId, "tasks.work");
     await lockRevision(tx, "Task", taskId, expectedUpdatedAt);
     const before = await tx.task.findUniqueOrThrow({ where: { id: taskId } });
     await checkTaskRelations(tx, targetColumnId, before.brandId, before.assigneeId);
@@ -139,7 +154,7 @@ export async function eliminarTarea(idOrFormData: FormData | string) {
 /* -------------------------------------------------- ACCIONES DE COLUMNAS -- */
 
 export async function actualizarColumna(columnId: string, name: string, color: string, expectedUpdatedAt: string) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
   if (!name.trim()) throw new Error("El nombre de la columna no puede estar vacío.");
   if (!/^#[a-f0-9]{6}$/i.test(color)) throw new Error("El color no es válido.");
   return withMutation(user, false, async (tx, afterCommit) => {
@@ -153,7 +168,7 @@ export async function actualizarColumna(columnId: string, name: string, color: s
 }
 
 export async function crearColumna(name: string, color: string, brandId?: string | null) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
   if (!name.trim()) throw new Error("El nombre de la columna es obligatorio.");
   if (!/^#[a-f0-9]{6}$/i.test(color)) throw new Error("El color no es válido.");
   return withMutation(user, false, async (tx, afterCommit) => {

@@ -1,6 +1,7 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { Pagination } from "@/components/filters";
 import { measurePagePhase } from "@/lib/performance-page";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import { getTeamList, getTeamStats, teamMemberSelect, type TeamFilters } from "@/lib/team-list";
 import { Mail, Phone, ShieldCheck, UserCog, Users, UserSquare2 } from "lucide-react";
 
@@ -45,15 +46,17 @@ export default async function EquipoPage({
   searchParams: Promise<TeamFilters>;
 }) {
   return measurePagePhase("page:/equipo", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("team");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="team" query={await searchParams} />;
   const sp = await searchParams;
   const canManage = can(user.role, LEVEL.OWNER);
 
-  const [page, archetypes, stats, yo] = await Promise.all([
+  const [page, archetypes, stats, yo, brands] = await Promise.all([
     getTeamList(sp),
     prisma.archetype.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     getTeamStats(),
     prisma.user.findUnique({ where: { id: user.id }, select: teamMemberSelect }),
+    prisma.brand.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   const personas = page.items;
   const lista = personas;
@@ -71,7 +74,7 @@ export default async function EquipoPage({
     phone: p.phone,
     bio: p.bio,
     active: p.active,
-    archetypeId: p.archetypeId,
+    archetypeId: p.archetypeId, profiles: p.workProfiles.map(w => w.profile), brandIds: p.brandAccess.map(b => b.brandId),
   });
 
   return (
@@ -85,7 +88,7 @@ export default async function EquipoPage({
             {yo ? (
               <EditUserButton
                 member={toMember(yo)}
-                archetypes={opcionesArquetipo}
+                archetypes={opcionesArquetipo} brands={brands}
                 canManage={canManage}
                 isSelf
                 puedeDesactivar={false}
@@ -94,7 +97,7 @@ export default async function EquipoPage({
                 label="Mi perfil y contraseña"
               />
             ) : null}
-            {canManage ? <InviteUserButton archetypes={opcionesArquetipo} /> : null}
+            {canManage ? <InviteUserButton archetypes={opcionesArquetipo} brands={brands} /> : null}
           </>
         }
       />
@@ -278,7 +281,7 @@ export default async function EquipoPage({
                         {canManage || isSelf ? (
                           <EditUserButton
                             member={toMember(p)}
-                            archetypes={opcionesArquetipo}
+                            archetypes={opcionesArquetipo} brands={brands}
                             canManage={canManage}
                             isSelf={isSelf}
                             puedeDesactivar={canManage && !isSelf}

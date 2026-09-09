@@ -1,4 +1,7 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
+import { allows, assertBrandPermission, assertPermission } from "@/lib/permissions";
+import { assertContentAccess, assertScriptAccess, assertVideoOpen } from "@/lib/access-scope";
 
 import { enqueueGeneration } from "@/lib/generation-jobs";
 import { dispatchGeneration } from "@/lib/generation-dispatch";
@@ -19,8 +22,8 @@ import { boundedNumber, enumField } from "@/lib/validation";
  * Guiones: generacion con IA, edicion del guion y edicion escena por escena.
  *
  * Reglas de permisos que aplica este archivo:
- *  - Crear, generar y editar guiones y escenas: EDITOR (es trabajo de creacion).
- *  - Borrar un guion entero: MANAGER (es destructivo y se lleva las escenas).
+ *  - Crear, generar y editar: perfil de guionista y alcance autorizado.
+ *  - Borrar un guion entero: OWNER. Aprobar: coordinación.
  */
 
 /* ------------------------------------------------------------- ETIQUETAS -- */
@@ -99,7 +102,7 @@ export async function generarGuion(
   _prev: GenerateState,
   formData: FormData
 ): Promise<GenerateState> {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.generate");
 
   const rawEstructuras = field(formData, "estructuras") || field(formData, "estructura");
   const structureIds = Array.from(
@@ -164,8 +167,9 @@ export async function generarGuion(
  * asi el mismo action sirve para el titulo en la cabecera y para el modal completo.
  */
 export async function actualizarGuion(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.write");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertScriptAccess(tx, user, field(formData, "id"), "scripts.write");
     const id = field(formData, "id");
     if (!id) return;
 
@@ -190,7 +194,7 @@ export async function actualizarGuion(formData: FormData) {
       if (!title || title.length > 500) throw new Error("El título debe tener entre 1 y 500 caracteres.");
       if (title) data.title = title;
     }
-    if (formData.has("brandId")) data.brandId = fieldOrNull(formData, "brandId");
+    if (formData.has("brandId")) { data.brandId = fieldOrNull(formData, "brandId"); assertBrandPermission(user, data.brandId, "scripts.write"); }
     if (formData.has("structureId")) data.structureId = fieldOrNull(formData, "structureId");
     if (formData.has("archetypeId")) data.archetypeId = fieldOrNull(formData, "archetypeId");
     if (formData.has("avatar")) data.avatar = fieldOrNull(formData, "avatar");
@@ -231,12 +235,15 @@ export async function cambiarEstadoGuion(formData: FormData) {
     const status = enumField(formData, "status", SCRIPT_STATUS_MAP);
     if (!id || !SCRIPT_STATUS_MAP[status]) return;
 
+    await assertScriptAccess(tx, user, id, status === "APROBADO" ? "scripts.approve" : "scripts.view");
     await lockRevision(tx, "Script", id, formData);
     const before = await tx.script.findUnique({
       where: { id },
       select: { title: true, status: true, brandId: true },
     });
     if (!before || before.status === status) return;
+    if (before.status === "APROBADO" || status === "APROBADO") assertPermission(user, "scripts.approve");
+    else if (!allows(user, "scripts.approve")) await assertScriptAccess(tx, user, id, "scripts.write");
 
     await tx.script.update({ where: { id }, data: { status } });
 
@@ -294,8 +301,9 @@ export async function eliminarGuion(formData: FormData) {
 /* -------------------------------------------------------------- DUPLICAR -- */
 
 export async function duplicarGuion(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.write");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertScriptAccess(tx, user, field(formData, "id"), "scripts.view");
     const id = field(formData, "id");
     if (!id) return;
 
@@ -367,7 +375,7 @@ export async function duplicarGuion(formData: FormData) {
 /* ---------------------------------------------------------------- ESCENAS -- */
 
 export async function actualizarEscena(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.write");
   return withMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     if (!id) return;
@@ -377,6 +385,7 @@ export async function actualizarEscena(formData: FormData) {
       include: { script: { select: { id: true, title: true, brandId: true } } },
     });
     if (!before) return;
+    await assertScriptAccess(tx, user, before.scriptId, "scripts.write");
 
     const rawActors = field(formData, "actors") || "[]";
     if (rawActors.length > 150_000) throw new Error("La lista de actores es demasiado grande.");
@@ -430,8 +439,9 @@ export async function actualizarEscena(formData: FormData) {
 }
 
 export async function anadirEscena(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.write");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertScriptAccess(tx, user, field(formData, "scriptId"), "scripts.write");
     const scriptId = field(formData, "scriptId");
     if (!scriptId) return;
     await lockRevision(tx, "Script", scriptId, formData);
@@ -480,7 +490,7 @@ export async function anadirEscena(formData: FormData) {
 }
 
 export async function eliminarEscena(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.write");
   return withMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     if (!id) return;
@@ -490,6 +500,7 @@ export async function eliminarEscena(formData: FormData) {
       include: { script: { select: { title: true, brandId: true } } },
     });
     if (!scene) return;
+    await assertScriptAccess(tx, user, scene.scriptId, "scripts.write");
     await lockRevision(tx, "Script", scene.scriptId, formData);
 
     await tx.scriptScene.delete({ where: { id } });
@@ -509,7 +520,7 @@ export async function eliminarEscena(formData: FormData) {
 }
 
 export async function moverEscena(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.write");
   return withMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     const direccion = field(formData, "direccion");
@@ -520,6 +531,7 @@ export async function moverEscena(formData: FormData) {
       include: { script: { select: { title: true, brandId: true } } },
     });
     if (!scene) return;
+    await assertScriptAccess(tx, user, scene.scriptId, "scripts.write");
     await lockRevision(tx, "Script", scene.scriptId, formData);
 
     const hermanas = await tx.scriptScene.findMany({
@@ -588,8 +600,11 @@ export async function moverEscena(formData: FormData) {
  * Por eso la asignación vive en el área de Guiones y no en el alta del video.
  */
 export async function asignarGuionAVideo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.write");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertScriptAccess(tx, user, field(formData, "scriptId"), "scripts.write");
+    await assertContentAccess(tx, user, field(formData, "contentItemId"), "scripts.write");
+    await assertVideoOpen(tx, user, field(formData, "contentItemId"));
     const scriptId = field(formData, "scriptId");
     const contentItemId = field(formData, "contentItemId");
     if (!scriptId || !contentItemId) return;
@@ -642,8 +657,10 @@ export async function asignarGuionAVideo(formData: FormData) {
 
 /** Suelta el guion de la tarjeta. La estructura se va con él. */
 export async function desvincularGuionDeVideo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("scripts.write");
   return withMutation(user, false, async (tx, afterCommit) => {
+    await assertContentAccess(tx, user, field(formData, "contentItemId"), "scripts.write");
+    await assertVideoOpen(tx, user, field(formData, "contentItemId"));
     const contentItemId = field(formData, "contentItemId");
     if (!contentItemId) return;
 
@@ -658,6 +675,7 @@ export async function desvincularGuionDeVideo(formData: FormData) {
       },
     });
     if (!video || !video.scriptId) return;
+    await assertScriptAccess(tx, user, video.scriptId, "scripts.write");
 
     await tx.contentItem.update({
       where: { id: contentItemId },

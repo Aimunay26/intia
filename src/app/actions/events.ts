@@ -1,4 +1,7 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
+import { assertBrandPermission } from "@/lib/permissions";
+import { assertContentAccess, eventScope } from "@/lib/access-scope";
 
 import { revalidatePath } from "next/cache";
 
@@ -85,9 +88,11 @@ function leerCampos(formData: FormData) {
 /* ------------------------------------------------------------------ ALTA -- */
 
 export async function crearEvento(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("calendar.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
     const datos = leerCampos(formData);
+    if (datos.brandId) assertBrandPermission(user, datos.brandId, "calendar.edit");
+    if (datos.contentItemId) await assertContentAccess(tx, user, datos.contentItemId, "calendar.edit");
 
     if (!datos.title) throw new Error("El evento necesita un título.");
     if (!datos.startAt) throw new Error("El evento necesita una fecha.");
@@ -127,8 +132,9 @@ export async function crearEvento(formData: FormData) {
 /* ------------------------------------------------------------- ACTUALIZAR -- */
 
 export async function actualizarEvento(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("calendar.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
+    if (!await tx.calendarEvent.count({ where: { AND: [{ id: field(formData, "id") }, eventScope(user)] } })) throw new Error("No tienes acceso a este evento.");
     const id = field(formData, "id");
     if (!id) return;
 
@@ -137,6 +143,8 @@ export async function actualizarEvento(formData: FormData) {
     if (!before) return;
 
     const datos = leerCampos(formData);
+    if (datos.brandId) assertBrandPermission(user, datos.brandId, "calendar.edit");
+    if (datos.contentItemId) await assertContentAccess(tx, user, datos.contentItemId, "calendar.edit");
     if (!datos.title) throw new Error("El evento necesita un título.");
     if (!datos.startAt) throw new Error("El evento necesita una fecha y hora válidas.");
 

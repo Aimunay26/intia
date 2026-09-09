@@ -1,5 +1,6 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import { Archive, Film, Plus, Tags, Target, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
@@ -59,7 +60,8 @@ export default async function MarcasPage({
   searchParams: Promise<{ q?: string; estado?: string }>;
 }) {
   return measurePagePhase("page:/marcas", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("brands");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="brands" query={await searchParams} />;
   const sp = await searchParams;
 
   const q = (sp.q ?? "").trim();

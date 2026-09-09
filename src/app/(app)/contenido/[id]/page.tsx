@@ -1,5 +1,6 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import {
 	Copy,
 	ExternalLink,
@@ -72,7 +73,8 @@ function fechaCorta(value: Date) {
 }
 
 export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requirePageSection("content");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="content" id={(await params).id} />;
   const { id } = await params;
 
   const item = await prisma.contentItem.findUnique({

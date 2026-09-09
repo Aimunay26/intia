@@ -13,9 +13,10 @@ import { field } from "@/lib/utils";
  * solo lo que se está mirando.
  */
 export async function cambiarMarcaActiva(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
 
   const brandId = field(formData, "brandId");
+  if (brandId && brandId !== TODAS && user.role !== "OWNER" && !user.brandIds?.includes(brandId)) throw new Error("No tienes acceso a esta marca.");
   const jar = await cookies();
 
   if (!brandId || brandId === TODAS) {

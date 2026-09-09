@@ -51,9 +51,30 @@ model User {
   tasks          Task[]          @relation("TaskAssignee")
   generationJobs GenerationJob[]
   sessions       AuthSession[]
+  workProfiles   UserWorkProfile[]
+  brandAccess    UserBrandAccess[]
 
   @@index([role])
   @@index([archetypeId])
+}
+
+/// Perfiles combinables. OWNER/MEMBER siguen siendo los únicos niveles administrativos.
+model UserWorkProfile {
+  userId String
+  profile String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, profile])
+  @@index([profile])
+}
+
+/// Autorización explícita; la cookie de marca nunca concede este acceso.
+model UserBrandAccess {
+  userId String
+  brandId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  @@id([userId, brandId])
+  @@index([brandId])
 }
 
 /// El id es SHA-256 del identificador aleatorio firmado en el JWT, no el token.
@@ -158,6 +179,7 @@ model Brand {
   events     CalendarEvent[]
   tasks      Task[]
   taskColumns TaskColumn[]
+  userAccess UserBrandAccess[]
 
   @@index([active])
 }

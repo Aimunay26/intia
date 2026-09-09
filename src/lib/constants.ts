@@ -41,7 +41,7 @@ export const USER_ROLES: Option[] = [
     label: "Equipo",
     chip: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-300 ring-emerald-500/25",
     hex: "#10b981",
-    description: "Crea, edita, mueve y asigna. No puede eliminar nada.",
+    description: "Acceso según sus perfiles y marcas. Sin administración ni borrados.",
   },
 ];
 export const USER_ROLE_MAP = byValue(USER_ROLES);

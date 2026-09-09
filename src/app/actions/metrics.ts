@@ -1,4 +1,6 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
+import { contentScope, assertContentAccess } from "@/lib/access-scope";
 
 import { parseCsvMoney } from "@/lib/money";
 import type { Prisma } from "@prisma/client";
@@ -9,7 +11,6 @@ import { requireWeekStart } from "@/lib/weekly-metrics";
 import { revalidatePath } from "next/cache";
 
 import { auditInTransaction, diffFields } from "@/lib/audit";
-import { LEVEL, requireLevel } from "@/lib/auth";
 import { assertActor } from "@/lib/auth-transactions";
 import { prisma } from "@/lib/prisma";
 import { validReportDay as validDay } from "@/lib/report-dates";
@@ -56,7 +57,7 @@ const METRIC_LABELS: Record<string, string> = {
 
 /** Alta o edición con revisión de una semana y plataforma concretas. */
 export async function guardarMetricaRapida(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("metrics.write");
   await saveWeeklyMetric(user, formData);
   revalidatePath("/metricas");
   revalidatePath("/contenido");
@@ -317,7 +318,7 @@ export async function importarMetricasCsv(
   _prev: ImportState,
   formData: FormData
 ): Promise<ImportState> {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("metrics.write");
 
   const texto = field(formData, "csv");
   if (!texto) return { error: "Pega primero las filas del CSV." };
@@ -358,6 +359,7 @@ export async function importarMetricasCsv(
 
   // Índice de videos por id y por título, para resolver la columna "video".
   const videos = await prisma.contentItem.findMany({
+    where: contentScope(user, "metrics.write"),
     select: { id: true, title: true, brandId: true },
   });
   const porId = new Map<string, VideoRef>(videos.map((v) => [v.id, v]));
@@ -500,6 +502,7 @@ export async function importarMetricasCsv(
       const existed = await prisma.$transaction(async tx => {
       await assertActor(tx, user);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${fila.contentItemId}|${fila.date.toISOString()}|${fila.platform}|WEEKLY`}, 0))`;
+      await assertContentAccess(tx, user, fila.contentItemId, "metrics.write");
       const [currentVideo] = await tx.$queryRaw<VideoRef[]>`SELECT id,title,"brandId" FROM "ContentItem" WHERE id=${fila.contentItemId} FOR SHARE`;
       if (!currentVideo) throw new Error("El video ya no existe.");
       const existente = await tx.metric.findUnique({

@@ -1,7 +1,6 @@
 {
   "git": {
     "deploymentEnabled": {
-      "main": false,
       "codex/predeploy-20260909": false,
       "codex/weekly-jobs-private-storage": false
     }

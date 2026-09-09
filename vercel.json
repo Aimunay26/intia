@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "main": false,
       "codex/weekly-jobs-private-storage": false
     }
   },

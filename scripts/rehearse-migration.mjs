@@ -35,6 +35,7 @@ async function schemaDefinitions(db) {
     ORDER BY key`;
 }
 try {
+  fs.mkdirSync('.audit',{recursive:true});
   for(const name of [source,target]){await admin.$executeRawUnsafe(`CREATE DATABASE "${name}"`);created.push(name);const local=new URL(url);local.pathname=`/${name}`;clients.push(new PrismaClient({datasourceUrl:local.href}));}
   const [db,restored]=clients;
   sql(source,fs.readFileSync('prisma/migrations/00000000000000_baseline/migration.sql'));
@@ -73,7 +74,7 @@ try {
   fs.writeFileSync('.audit/migration-schema-diff.json',JSON.stringify(schemaDiff,null,2));
   assert.deepEqual(await snapshot(restored),original);assert.deepEqual(await restored.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8')),originalSchema);
   const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
-  fs.mkdirSync('.audit',{recursive:true});fs.writeFileSync('.audit/migration-rehearsal.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+  fs.writeFileSync('.audit/migration-rehearsal.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 } finally {
   for(const db of clients)await db.$disconnect();
   for(const name of created)await admin.$executeRawUnsafe(`DROP DATABASE "${name}" WITH (FORCE)`);

@@ -16,6 +16,8 @@ La implementación incluye las modificaciones semanales y de consistencia de la 
 
 La entrega se versiona en `codex/weekly-jobs-private-storage`, incorporando el cambio del tutorial `01357f5` de `main`. La rama tiene CI configurado, pero tiene desactivado el despliegue automático de Vercel para no conectar una versión con el esquema nuevo a la base todavía sin migrar. El merge a `main` y la activación deben seguir el procedimiento coordinado descrito abajo. [Configuración de despliegues por rama](https://vercel.com/docs/project-configuration/git-configuration#git.deploymentenabled).
 
+La integración a `main` mantiene también pausado su despliegue automático hasta completar la migración y la activación. GitHub puede contener la entrega sin que cambie la aplicación publicada. El control se retira explícitamente al preparar el despliegue compatible; las pruebas de CI continúan en el pull request y en `main`.
+
 ## 1. Navegación
 
 El panel resolvía sus seis secciones dentro de límites de Suspense separados. Se añadió una modalidad que espera los resultados de esas seis secciones en paralelo y entrega su contenido conjunto. Mantiene los controles de sesión, las consultas y el indicador de navegación; no comparte datos privados mediante una caché nueva.

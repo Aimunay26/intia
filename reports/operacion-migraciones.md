@@ -9,6 +9,10 @@ Los archivos de migración están preparados y se han ensayado en PostgreSQL 18 
 La consulta de producción del 09/09 verificó el esquema y cuatro invariantes mediante SELECT.
 El código y el workflow de CI se versionan en `codex/weekly-jobs-private-storage`; el despliegue de producción y las migraciones siguen pendientes. La rama desactiva el despliegue automático de Vercel hasta preparar una base aislada compatible.
 
+Para integrar la entrega en `main` sin publicar una versión incompatible con la base vigente, `vercel.json` también desactiva temporalmente el despliegue automático de `main`. Después de aplicar y verificar las migraciones y preparar la activación, retirar `main: false` de `git.deploymentEnabled` como parte del despliegue coordinado. No interpretar el merge como una migración o un despliegue de producción.
+
+El primer CI de GitHub pasó 77 pruebas, pero falló al escribir el informe del ensayo porque `.audit/` no existe en un checkout limpio. El ensayo ahora crea su directorio de salida antes de trabajar. CI se ejecuta en pull requests y en pushes a `main`, evitando dos ejecuciones equivalentes por cada actualización de este pull request.
+
 ## Archivos que se ejecutan
 
 1. `prisma/migrations/00000000000000_baseline/migration.sql`: creación de las 24 tablas existentes, con sus columnas, índices y restricciones. Incluye la seguridad ya aplicada en la entrega 1–2. En una base existente compatible **se registra como aplicada; no se ejecuta su CREATE TABLE**.

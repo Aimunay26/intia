@@ -1,0 +1,54 @@
+[
+  {
+    "id": 19,
+    "kind": "click",
+    "from": "/",
+    "to": "/metricas",
+    "startedAt": "2026-09-09T00:04:11.997Z",
+    "release": "739ace1ac8a1",
+    "visualMs": 1.7,
+    "routeMs": 447.4,
+    "firstBlockMs": 1667.8,
+    "readyMs": 1676.3,
+    "status": "complete"
+  },
+  {
+    "id": 20,
+    "kind": "click",
+    "from": "/metricas",
+    "to": "/",
+    "startedAt": "2026-09-09T00:04:44.038Z",
+    "release": "739ace1ac8a1",
+    "visualMs": 2.4,
+    "routeMs": null,
+    "firstBlockMs": null,
+    "readyMs": null,
+    "status": "timeout"
+  },
+  {
+    "id": 21,
+    "kind": "click",
+    "from": "/metricas",
+    "to": "/",
+    "startedAt": "2026-09-09T00:05:41.664Z",
+    "release": "739ace1ac8a1",
+    "visualMs": 3,
+    "routeMs": 16.5,
+    "firstBlockMs": 662.1,
+    "readyMs": 678.1,
+    "status": "complete"
+  },
+  {
+    "id": 22,
+    "kind": "click",
+    "from": "/",
+    "to": "/metricas",
+    "startedAt": "2026-09-09T00:05:49.908Z",
+    "release": "739ace1ac8a1",
+    "visualMs": 2,
+    "routeMs": 15.2,
+    "firstBlockMs": 800.1,
+    "readyMs": 811.2,
+    "status": "complete"
+  }
+]

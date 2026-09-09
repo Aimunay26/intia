@@ -523,8 +523,9 @@ Dos detalles del código que conviene saber si vas a tocarlo:
 ## Evaluaciones técnicas
 
 - [Implementación O01–O07](reports/implementacion-o01-o07-2026-09-08.md): estado actual, pruebas con PostgreSQL, diagnóstico de Vercel/Neon y procedimiento de medición.
+- [Medición de la versión publicada](reports/medicion-publicada-o01-o07-2026-09-08.md): despliegue verificado, tiempos individuales de navegación, observación tras inactividad y límites de la muestra.
 - [Diagnóstico directo de Neon/Vercel](reports/diagnostico-neon-2026-09-08.md): región, pooling, suspensión, volumen e índices contrastados en producción mediante consultas de solo lectura.
-- [Mejoras de navegación implementadas](reports/mejoras-navegacion-implementadas-2026-09-08.md): cambios locales, pruebas y pendientes de despliegue. Regresiones: `npm run test:navegacion` (Node 24).
+- [Mejoras de navegación del primer lote](reports/mejoras-navegacion-implementadas-2026-09-08.md): registro histórico del commit `051a957`, pruebas locales y su publicación. Regresiones: `npm run test:navegacion` (Node 24).
 
 - [Auditoría de arquitectura, backend, DB y multitenancy](reports/auditoria-arquitectura-multitenant-2026-09-07.md): hallazgos con evidencia, reproducciones y plan de evolución.
 - [Plan de optimización de la navegación](reports/plan-optimizacion-navegacion-2026-09-07.md): análisis de la espera al cambiar de sección, mejoras propuestas y criterios de medición.

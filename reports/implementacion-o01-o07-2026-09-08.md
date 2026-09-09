@@ -2,16 +2,16 @@
 
 Fecha: 8 de septiembre de 2026. Continuación del [plan de navegación](./plan-optimizacion-navegacion-2026-09-07.md).
 
-La segunda entrega implementa las mejoras de código y sus herramientas de medición. Pasaron el tipado, la compilación y las pruebas locales con PostgreSQL real. **Esta entrega aún no está publicada.** El despliegue de producción que se consultó corresponde al primer lote, commit `051a9572ed203014a542850477df14793c40543c`, con estado Ready.
+La segunda entrega implementa las mejoras de código y sus herramientas de medición. Pasaron el tipado, la compilación y las pruebas locales con PostgreSQL real. **Publicada en producción el 8 de septiembre a las 18:54 de Lima**, commit `739ace1ac8a15be25c7d72ed8006d4d5e8cd5e67`, despliegue Vercel `54WSggLA9GHb4c7oBVzAxM5axxZT` en estado Ready. Resultados del recorrido supervisado y muestras individuales en [Medición publicada](./medicion-publicada-o01-o07-2026-09-08.md).
 
-No se afirma que el segundo de espera de la web publicada esté resuelto. Faltan publicar esta entrega y comparar navegaciones en condiciones equivalentes. La revisión de Vercel/Neon fue de solo lectura: no se cambiaron regiones, planes, secretos, conexiones ni índices de producción.
+La publicación y su recorrido supervisado no cierran la comparación controlada de O01: aún faltan suficientes muestras por ruta/condición y correlación con fases del servidor. La revisión de Vercel/Neon fue de solo lectura: no se cambiaron regiones, planes, secretos, conexiones ni índices de producción.
 
 ## Estado por propuesta
 
 | ID | Implementado / comprobado | Pendiente para aceptación en producción |
 |---|---|---|
 | O01 | Medición de navegación voluntaria, fases del servidor, operaciones Prisma, estimación de filas/bytes, identificador por render y resumen p50/p95 por versión | Serie comparable de al menos 30 muestras por ruta/condición, tiempos RSC y correlación con consultas del despliegue nuevo |
-| O02 | Estados de carga de 14 rutas y navbar del primer lote; ahora Panel tiene 6 bloques independientes y Métricas 5 con Suspense. Verificados menú móvil, Enter, volver y cancelación | Repetir el recorrido y errores en la versión publicada; medición de pintado/INP con herramientas del navegador |
+| O02 | Estados de carga de 14 rutas y navbar del primer lote; ahora Panel tiene 6 bloques independientes y Métricas 5 con Suspense. Verificados localmente menú móvil, Enter, volver y cancelación; recorrido publicado de siete secciones sin errores | Medición de pintado/INP y repetición de la matriz de interacción en producción; el recorrido publicado fue de escritorio |
 | O03 | Reutilización por render de autorización/marcas y consultas independientes del primer lote. Contexto compartido también entre bloques del Panel; opciones de estructuras deduplicadas por petición | Contrastar número de operaciones y fases en producción sin eliminar controles de acceso |
 | O04 | Apertura de Tareas/Ajustes sin inicializadores de escritura. Prueba PostgreSQL con 10 inicializaciones simultáneas: 5 columnas, sin duplicados y una invocación de auditoría | La prueba usa DB real, pero simula la sesión y el destino de auditoría; no equivale a una prueba HTTP concurrente del despliegue |
 | O05 | Métricas agregadas por periodo/día y ranking de 50; Equipo de 50; Arquetipos de 36; Tareas con cursor por columna de 50. Filtros antes del límite, orden estable y consultas acotadas | Evaluar planes/volumen reales y concurrencia de edición. H07/H08 siguen requiriendo decisiones de dominio antes de materializar agregados |

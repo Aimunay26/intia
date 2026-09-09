@@ -1,6 +1,6 @@
 # Implementación de los puntos 1 y 2: integridad y acceso
 
-Fecha: 9 de septiembre de 2026. Estado: pruebas locales completas y **SQL aplicado y verificado en Neon**. Despliegue del código en preparación; la sección de publicación registra sus comprobaciones por separado.
+Fecha: 9 de septiembre de 2026. Estado: **SQL aplicado y verificado en Neon y código publicado en Vercel**. Las comprobaciones locales y las de producción se registran por separado; la validación autenticada con cuentas reales sigue pendiente.
 
 Esta entrega corresponde a proteger los borrados/importaciones/limpieza demo (1) y reforzar archivos, autenticación y cuentas (2). Conserva los roles OWNER/MEMBER. No implementa organizaciones, membresías ni aislamiento multitenant.
 
@@ -109,7 +109,26 @@ La consulta posterior de las 10:59:23 de Lima confirmó:
 
 Estos recuentos prueban conservación de las cantidades observadas, no una comparación byte a byte de todos los datos. El respaldo se mantiene sin modificaciones persistentes; todavía no se ha ensayado una restauración de producción.
 
-Se añadió `.vercelignore`: el ensayo de empaquetado de la CLI verificó que no incluía `.audit`, `.env*`, `.git` ni `.vercel`. El despliegue se preparará con el entorno Production y sin asignar todavía los dominios, para comprobar su arranque antes de publicarlo. `AUTH_SECRET` está configurado como variable Secret de Production; su contenido no se imprimió. No hay `BOOTSTRAP_TOKEN` configurado.
+Se añadió `.vercelignore`: el ensayo de empaquetado de la CLI verificó que no incluía `.audit`, `.env*`, `.git` ni `.vercel`. El despliegue recibió 197 archivos de aplicación. `AUTH_SECRET` está configurado como variable Secret de Production; su contenido no se imprimió. No hay `BOOTSTRAP_TOKEN` configurado.
+
+## Código publicado en Vercel
+
+Código: commit `d2b12a0`. Despliegue [3W97H7y5zwTo4Nh2CLrmEopPLMWZ](https://vercel.com/conamors-projects/intia/3W97H7y5zwTo4Nh2CLrmEopPLMWZ), creado a las 11:00 de Lima en `iad1`. Compilación y validación de tipos correctas con Next 15.5.24 y Prisma 6.19.3; estado `Ready`.
+
+Se preparó con el entorno Production mediante `vercel deploy --prod --skip-domain`. El navegador autenticado en Vercel mostró correctamente el login de ese despliegue, lo que comprobó el arranque con la configuración real y las lecturas que hace esa página. Después, `vercel promote` confirmó la promoción a [intia-lovat.vercel.app](https://intia-lovat.vercel.app/).
+
+Comprobaciones HTTP sobre el dominio público después de promover:
+
+| Petición sin sesión | Resultado |
+|---|---|
+| `GET /login` | 200, formulario de acceso presente |
+| `GET /tareas` | 307 hacia `/login` |
+| `GET /api/assets/smoke-unauthenticated` | 401 |
+| Alta inicial en login | Sin formulario de creación ni campo de token de instalación |
+
+La pantalla pública también se revisó en el navegador. Google aparece deshabilitado con el mensaje de configuración pendiente; no se cambió esa configuración ni se verificó OAuth real. Se solicitó un nuevo inicio de sesión al usuario para comprobar las sesiones revocables en producción, sin compartir credenciales. No se ejecutaron borrados, importaciones ni cambios de contraseñas de prueba sobre datos reales.
+
+La CLI `vercel curl` presentó un error al reenviar `--global-config` a curl; se utilizó el navegador con acceso a Vercel para comprobar el despliegue preparado y HTTPS directo para las comprobaciones públicas. Esa incidencia de herramienta no fue un error de la aplicación.
 
 ## Procedimiento de publicación y comprobaciones pendientes
 

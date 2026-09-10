@@ -47,7 +47,7 @@ export async function probarClaveIA(params: {
       };
     } else if (params.provider === "google") {
       const modelo = resolveAiModel("google", params.model);
-      const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 15000, retryOptions: { attempts: 1 } } });
+      const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 15000 } });
       await ai.models.get({ model: modelo });
       const latencia = Date.now() - inicio;
       return {

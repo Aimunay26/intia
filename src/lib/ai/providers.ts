@@ -32,7 +32,8 @@ export class AiError extends Error {
   constructor(
     message: string,
     readonly detail?: string,
-    readonly retryable = false
+    readonly retryable = false,
+    readonly diagnostic?: { provider: string; status?: number; code?: string }
   ) {
     super(message);
     this.name = "AiError";
@@ -129,7 +130,10 @@ function geminiSchema(): unknown {
 }
 
 export async function generateWithGemini(call: ProviderCall): Promise<GenerationResult> {
-  const ai = new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: 240000, retryOptions: { attempts: 1 } } });
+  // En @google/genai 1.52, retryOptions descarta el cuerpo y el status de
+  // respuestas HTTP fallidas incluso con attempts: 1. Sin esta opción el SDK
+  // hace un único fetch y conserva ApiError; los reintentos los gestiona el job.
+  const ai = new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: 240000 } });
 
   const baseConfig = {
     systemInstruction: call.system,
@@ -257,40 +261,48 @@ function repair(data: unknown): unknown {
 
 function toAiError(error: unknown, providerLabel: string): AiError {
   const message = error instanceof Error ? error.message : String(error);
-  const status =
-    error && typeof error === "object" && "status" in error
-      ? Number((error as { status?: unknown }).status)
-      : undefined;
+  const fields = error && typeof error === "object" ? error as Record<string, unknown> : {};
+  const cause = fields.cause && typeof fields.cause === "object" ? fields.cause as Record<string, unknown> : {};
+  const rawStatus = Number(fields.status ?? fields.statusCode);
+  const status = Number.isInteger(rawStatus) && rawStatus >= 400 && rawStatus <= 599 ? rawStatus : undefined;
+  const knownCodes = ["UND_ERR_CONNECT_TIMEOUT", "UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT", "ECONNRESET", "ETIMEDOUT", "ECONNREFUSED"];
+  const code = [fields.code, cause.code].find(value => typeof value === "string" && knownCodes.includes(value)) as string | undefined;
+  const failure = (summary: string, detail: string, retryable = false) =>
+    new AiError(summary, detail, retryable, { provider: providerLabel, status, code });
+
+  if (fields.name === "AbortError" || fields.name === "TimeoutError" || code?.includes("TIMEOUT") || code === "ETIMEDOUT" || /timeout|timed out|aborted/i.test(message)) {
+    return failure(`${providerLabel} tardó demasiado en responder.`, "Se reintentará dentro del límite de intentos y del cupo disponible.", true);
+  }
 
   if (status === 401 || status === 403 || /api[_ -]?key|unauthorized|permission/i.test(message)) {
-    return new AiError(
+    return failure(
       `La clave de ${providerLabel} no es válida o no tiene permisos.`,
       "Revísala en Ajustes o en las variables de entorno."
     );
   }
   if (status === 429 || /rate[_ -]?limit|quota|resource[_ ]exhausted/i.test(message)) {
-    return new AiError(
+    return failure(
       `${providerLabel} está limitando las peticiones.`,
       "Espera un momento y vuelve a intentar, o cambia de proveedor.", true
     );
   }
   if (status && status >= 500) {
-    return new AiError(
+    return failure(
       `${providerLabel} tuvo un error de servidor.`,
       "Es temporal. Intenta de nuevo en unos segundos.", true
     );
   }
   if (status === 404 || /not[_ ]found|unknown model|model[^\n]*(?:not supported|does not exist)/i.test(message)) {
-    return new AiError(
+    return failure(
       `${providerLabel} no reconoce ese modelo.`,
-      `${message}. Revisa el nombre del modelo en la estructura o en Ajustes.`
+      "Revisa el nombre del modelo en la estructura o en Ajustes."
     );
   }
   if (status === 400) {
-    return new AiError(
+    return failure(
       `${providerLabel} rechazó la configuración de la generación.`,
       "Revisa los parámetros y el modelo seleccionados."
     );
   }
-  return new AiError(`Falló la generación con ${providerLabel}.`, "Revisa el proveedor y vuelve a intentar.", /timeout|timed out|connection|network|fetch failed/i.test(message));
+  return failure(`Falló la generación con ${providerLabel}.`, "Revisa el proveedor y vuelve a intentar.", Boolean(code) || /connection|network|fetch failed/i.test(message));
 }

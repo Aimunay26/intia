@@ -72,13 +72,44 @@ test('la llamada a Gemini 3.8 conserva JSON estructurado y límites, sin paráme
   assert.equal(result.model, 'gemini-3.8-flash');assert.equal(result.script.title, 'Guion ficticio');
   assert.equal(requests[0].model, 'gemini-3.8-flash');assert.equal(requests[0].config.responseMimeType, 'application/json');assert.ok(requests[0].config.responseJsonSchema);
   for (const key of ['temperature', 'topP', 'topK', 'candidateCount', 'thinkingBudget']) assert.ok(!Object.hasOwn(requests[0].config, key));
-  assert.ok(requests[0].config.maxOutputTokens <= 32000);assert.equal(clients[0].httpOptions.retryOptions.attempts, 1);assert.equal(requests.length, 1);
+  assert.ok(requests[0].config.maxOutputTokens <= 32000);assert.equal(clients[0].httpOptions.retryOptions, undefined);assert.equal(requests.length, 1);
 });
 
 test('los errores de configuración y de servidor no se confunden con modelo inexistente', async () => {
   for (const [status, message, expected, retryable] of [[400, 'generateContent: Model does not support temperature', /configuración/, false], [503, 'Model temporarily unavailable for generateContent', /error de servidor/, true], [404, 'Model not found for API version v1beta, or not supported for generateContent', /no reconoce/, false], [429, 'Resource_exhausted', /limitando/, true]]) {
     const { providers } = googleFixture(async () => { throw Object.assign(new Error(message), { status }); });
     await assert.rejects(providers.generateWithGemini(call), error => expected.test(error.message) && error.retryable === retryable);
+  }
+});
+
+test('el SDK real conserva errores HTTP y hace una sola petición, sin consumir API real', async () => {
+  const originalFetch = globalThis.fetch;
+  const { generateWithGemini } = load('src/lib/ai/providers.ts');
+  try {
+    for (const [status, expected, retryable] of [[400, /configuración/, false], [401, /clave/, false], [403, /clave/, false], [404, /no reconoce/, false], [429, /limitando/, true], [500, /error de servidor/, true], [503, /error de servidor/, true], [504, /error de servidor/, true]]) {
+      let calls = 0;
+      globalThis.fetch = async () => {
+        calls++;
+        return new Response(JSON.stringify({ error: { code: status, message: 'Synthetic error', status: 'TEST' } }), {
+          status, statusText: 'Synthetic', headers: { 'Content-Type': 'application/json' },
+        });
+      };
+      await assert.rejects(generateWithGemini(call), error => expected.test(error.message) && error.retryable === retryable);
+      assert.equal(calls, 1, `HTTP ${status} debe llegar al control de reintentos del job`);
+    }
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('los abortos y timeouts de transporte se reintentan y los diagnósticos no contienen secretos', async () => {
+  for (const error of [new DOMException('This operation was aborted', 'AbortError'), new DOMException('The operation timed out', 'TimeoutError'), Object.assign(new TypeError('fetch failed synthetic-private-key'), { cause: { code: 'UND_ERR_HEADERS_TIMEOUT', message: 'private prompt' } })]) {
+    const { providers } = googleFixture(async () => { throw error; });
+    await assert.rejects(providers.generateWithGemini(call), e => {
+      assert.match(e.message, /tardó demasiado/);
+      assert.equal(e.retryable, true);
+      assert.equal(e.diagnostic.provider, 'Gemini');
+      assert.doesNotMatch(JSON.stringify(e.diagnostic), /private|prompt|key/);
+      return true;
+    });
   }
 });
 

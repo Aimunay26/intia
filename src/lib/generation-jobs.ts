@@ -120,6 +120,9 @@ export async function processGeneration(jobId: string): Promise<GenerationProgre
       result = await generateScript(input);
     } catch (error) {
       const retry = error instanceof AiError && error.retryable && item.attempts + 1 < 3;
+      // Sólo metadatos: nunca claves, prompts, respuestas ni el error crudo del SDK.
+      console.warn(JSON.stringify({ event: "generation_attempt_failed", jobId, itemId: item.id,
+        attempt: item.attempts + 1, retry, ...(error instanceof AiError ? error.diagnostic : {}) }));
       await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: {
         status: retry ? "QUEUED" : "FAILED", error: error instanceof AiError ? error.message : "No se pudo generar. Revisa el cupo disponible y los datos de la petición.",
         availableAt: new Date(Date.now() + 30000 * (item.attempts + 1)), leaseToken: null, leaseUntil: null,

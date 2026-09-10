@@ -8,6 +8,8 @@ export function EditForm({ action, children, onSuccess, ...props }: Omit<React.F
 }) {
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
+  const [ready, setReady] = useState(false);
+  useEffect(() => { setReady(true); }, []);
   const busy = useRef(false);
   const [saved, setSaved] = useState(0);
   return <form {...props} onSubmit={async event => {
@@ -21,8 +23,8 @@ export function EditForm({ action, children, onSuccess, ...props }: Omit<React.F
       onSuccess?.();
     } catch { setError(true); }
     finally { busy.current = false; setPending(false); }
-  }} aria-busy={pending}>
-    <SavedRevision.Provider value={saved}><fieldset disabled={pending} className="contents">{children}</fieldset></SavedRevision.Provider>
+  }} aria-busy={pending || !ready}>
+    <SavedRevision.Provider value={saved}><fieldset disabled={pending || !ready} className="contents">{children}</fieldset></SavedRevision.Provider>
     {error ? <p role="alert" className="text-danger text-sm mt-2">No se pudo guardar. Conservamos lo que escribiste; recarga la página para comprobar si hubo cambios de otra persona antes de reintentar.</p> : null}
   </form>;
 }

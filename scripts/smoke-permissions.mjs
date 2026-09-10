@@ -76,7 +76,25 @@ try{
     if(role==='PUBLISHER'){assert.ok(text.includes('Video aprobado'));assert.ok(!text.includes('Video asignado'));}
     const visible=role==='PUBLISHER'?'ready':'assigned';assert.equal((await page.goto(base+'/contenido/'+visible)).status(),200);
     if(role==='EDITOR'){
-     await page.getByRole('button',{name:'Completar',exact:true}).click();await page.getByRole('button',{name:'Reabrir',exact:true}).waitFor();
+     let releaseScripts;
+     const scriptsReady=new Promise(resolve=>{releaseScripts=resolve;});
+     const deferScript=route=>scriptsReady.then(()=>route.continue());
+     await page.route('**/_next/static/chunks/**',deferScript);
+     try {
+      await page.goto(base+'/contenido/'+visible,{waitUntil:'commit'});
+      const complete=page.getByRole('button',{name:'Completar',exact:true});await complete.waitFor();
+      assert.equal(await complete.isDisabled(),true,'El formulario debe impedir envíos antes de inicializar JavaScript');
+      report.preHydrationGuard=true;
+     } finally { releaseScripts();await page.unrouteAll({behavior:'wait'}); }
+     await page.waitForLoadState('load');
+     try {
+      await page.getByRole('button',{name:'Completar',exact:true}).click();await page.getByRole('button',{name:'Reabrir',exact:true}).waitFor();
+     } catch (error) {
+      await page.screenshot({path:'.audit/profiles-failure.png',fullPage:true});
+      console.error(JSON.stringify({role,url:page.url(),alerts:await page.getByRole('alert').allTextContents(),check:await db.checklistItem.findUnique({where:{id:'editing'},select:{done:true}})}));
+      console.error(fs.readFileSync('.audit/profiles-ui-server.log','utf8').split('\n').slice(-45).join('\n'));
+      throw error;
+     }
      assert.equal((await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done,true);
      await page.screenshot({path:'.audit/profiles-editor.png',fullPage:true,animations:'disabled'});
     }

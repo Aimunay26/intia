@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useActionState, useEffect, useMemo, useState } from "react";
+import { Fragment, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -40,10 +40,12 @@ import {
 import {
   AI_MODELS,
   AI_PROVIDERS,
+  DEFAULT_MODEL,
   FIT_SCORES,
   STRUCTURE_CATEGORIES,
   STRUCTURE_CATEGORY_MAP,
 } from "@/lib/constants";
+import { resolveAiModel } from "@/lib/ai-models";
 import { cn, formatSeconds, withAlpha } from "@/lib/utils";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { getStructureReference } from "@/lib/structure-references";
@@ -202,12 +204,14 @@ export function GeneratorForm({
   initialVideoId,
   initialVideoAviso = null,
   initialStructureIds = [],
+  defaultModels = DEFAULT_MODEL,
   initialStructureId,
   initialBrandId,
   initialArchetypeId,
   initialProduct,
   initialRequest,
   initialAngle,
+  maxBatch = 3,
 }: {
   structures: GeneratorStructure[];
   brands: GeneratorBrand[];
@@ -221,16 +225,25 @@ export function GeneratorForm({
   initialVideoAviso?: string | null;
   /** Lote inicial: los formatos previstos del video que siguen activos. */
   initialStructureIds?: string[];
+  /** Modelo por defecto de cada proveedor (Ajustes o catálogo). */
+  defaultModels?: Record<string, string>;
   initialStructureId: string;
   initialBrandId: string;
   initialArchetypeId?: string;
   initialProduct?: string;
   initialRequest?: string;
   initialAngle?: string;
+  maxBatch?: number;
 }) {
   const router = useRouter();
+  const submission = useRef({ fingerprint: "", key: "" });
   const [state, formAction, pending] = useActionState<GenerateState, FormData>(
-    generarGuion,
+    async (previous, data) => {
+      const fingerprint = JSON.stringify(Array.from(data.entries()));
+      if (submission.current.fingerprint !== fingerprint) submission.current = { fingerprint, key: crypto.randomUUID() };
+      data.set("requestKey", submission.current.key);
+      return generarGuion(previous, data);
+    },
     null
   );
 
@@ -279,7 +292,8 @@ export function GeneratorForm({
     String(primeraEstructura?.defaultDurationSec ?? 45)
   );
   const [provider, setProvider] = useState(proveedorInicial);
-  const [model, setModel] = useState(primeraEstructura?.defaultModel ?? "");
+  const [model, setModel] = useState(() => resolveAiModel(proveedorInicial, undefined,
+    primeraEstructura?.defaultProvider === proveedorInicial ? primeraEstructura.defaultModel : null, defaultModels[proveedorInicial]));
   const [creativeAngle, setCreativeAngle] = useState(initialAngle ?? "");
 
   // El cierre arranca según la estructura con la que se abre el generador:
@@ -366,17 +380,16 @@ export function GeneratorForm({
     setBrandId(brands.some((b) => b.id === elegido.brandId) ? elegido.brandId : "");
     if (!producto.trim()) setProducto(elegido.title);
     if (!peticion.trim()) setPeticion(peticionDeVideo(elegido));
-    const lote = elegido.structureIds.filter((sid) => structures.some((s) => s.id === sid));
+    const lote = elegido.structureIds
+      .filter((sid) => structures.some((s) => s.id === sid))
+      .slice(0, maxBatch);
     if (lote.length) {
       setSelectedStructureIds(lote);
       setPreviewStructureId(lote[0]);
       const primera = structures.find((s) => s.id === lote[0]);
       if (primera) {
         setDuracion(String(primera.defaultDurationSec || 45));
-        if (primera.defaultModel) setModel(primera.defaultModel);
-        if (primera.defaultProvider && providersReady[primera.defaultProvider]) {
-          setProvider(primera.defaultProvider);
-        }
+        aplicarPreferenciasDeEstructura(primera);
         seguirModoDeEstructura(primera);
       }
     }
@@ -393,11 +406,11 @@ export function GeneratorForm({
   const notaFit =
     archetype && structure ? (archetype.fits[structure.id]?.notes ?? null) : null;
 
-  // Al terminar, el guion nuevo se abre solo. Si el lote quedó a medias, no:
-  // primero hay que poder leer qué falló, y el enlace al guion queda en el aviso.
+  // La generación corre en segundo plano: al registrarse se abre su pantalla
+  // de avance, donde aparecen los guiones, lo que falló y el vínculo al video.
   useEffect(() => {
-    if (state?.scriptId && !state.aviso) router.push(`/guiones/${state.scriptId}`);
-  }, [state?.scriptId, state?.aviso, router]);
+    if (state?.jobId) router.push(`/generador/trabajos/${state.jobId}`);
+  }, [state?.jobId, router]);
 
   // Contador honesto de lo que lleva esperando.
   useEffect(() => {
@@ -409,10 +422,19 @@ export function GeneratorForm({
     return () => clearInterval(t);
   }, [pending]);
 
+  /** Proveedor y modelo que prefiere la estructura, validados contra el catálogo y los proveedores listos. */
+  const aplicarPreferenciasDeEstructura = (s: GeneratorStructure) => {
+    const nextProvider = s.defaultProvider && providersReady[s.defaultProvider] ? s.defaultProvider : provider;
+    setProvider(nextProvider);
+    setModel(resolveAiModel(nextProvider, undefined, s.defaultProvider === nextProvider ? s.defaultModel : null, defaultModels[nextProvider]));
+  };
+
   const toggleEstructura = (s: GeneratorStructure) => {
     // `exists` se calcula fuera del updater: el modo del cierre solo sigue a
     // una estructura que se AÑADE; quitar una del lote no cambia el cierre.
     const exists = selectedStructureIds.includes(s.id);
+    // Tope del lote por solicitud: no se añade una estructura de más.
+    if (!exists && selectedStructureIds.length >= maxBatch) return;
     if (exists) {
       const next = selectedStructureIds.filter((id) => id !== s.id);
       setSelectedStructureIds(next);
@@ -424,10 +446,7 @@ export function GeneratorForm({
       setPreviewStructureId(s.id);
     }
     setDuracion(String(s.defaultDurationSec || 45));
-    if (s.defaultModel) setModel(s.defaultModel);
-    if (s.defaultProvider && providersReady[s.defaultProvider]) {
-      setProvider(s.defaultProvider);
-    }
+    aplicarPreferenciasDeEstructura(s);
     if (!exists) seguirModoDeEstructura(s);
   };
 
@@ -436,16 +455,13 @@ export function GeneratorForm({
     setSelectedStructureIds([s.id]);
     setPreviewStructureId(s.id);
     setDuracion(String(s.defaultDurationSec || 45));
-    if (s.defaultModel) setModel(s.defaultModel);
-    if (s.defaultProvider && providersReady[s.defaultProvider]) {
-      setProvider(s.defaultProvider);
-    }
+    aplicarPreferenciasDeEstructura(s);
     seguirModoDeEstructura(s);
   };
 
   const seleccionarTodasFiltradas = () => {
     const ids = structuresFiltradas.map((s) => s.id);
-    setSelectedStructureIds((prev) => Array.from(new Set([...prev, ...ids])));
+    setSelectedStructureIds((prev) => Array.from(new Set([...prev, ...ids])).slice(0, maxBatch));
   };
 
   const deseleccionarTodas = () => {
@@ -700,7 +716,7 @@ export function GeneratorForm({
           <Card>
             <CardHeader
               title="1 · Elige el tipo de guion (Estructuras ganadoras)"
-              subtitle="Selecciona una o varias estructuras para generar versiones de tu idea en paralelo."
+              subtitle={`Selecciona hasta ${maxBatch} estructuras para obtener un guion por formato.`}
               icon={<Layers size={15} />}
               actions={
                 selectedStructureIds.length > 0 ? (
@@ -769,7 +785,7 @@ export function GeneratorForm({
               <div className="flex items-center justify-between gap-2 pt-1 border-b border-line/60 pb-2 text-[11.5px]">
                 <div className="flex items-center gap-2">
                   <span className="text-ink font-semibold">
-                    {selectedStructureIds.length} de {structures.length} seleccionados
+                    {selectedStructureIds.length} de {maxBatch} formatos permitidos por solicitud
                   </span>
                   {selectedStructureIds.length > 1 && (
                     <span className="text-inkmuted hidden sm:inline">
@@ -783,7 +799,7 @@ export function GeneratorForm({
                     onClick={seleccionarTodasFiltradas}
                     className="btn btn-ghost btn-xs text-[11px]"
                   >
-                    Seleccionar visibles ({structuresFiltradas.length})
+                    Seleccionar visibles (hasta {Math.min(maxBatch, structuresFiltradas.length)})
                   </button>
                   {selectedStructureIds.length > 0 && (
                     <button
@@ -1664,7 +1680,7 @@ export function GeneratorForm({
                           disabled={!listo}
                           onClick={() => {
                             setProvider(p.value);
-                            setModel("");
+                            setModel(resolveAiModel(p.value, undefined, defaultModels[p.value]));
                           }}
                           className={cn(
                             "card-flat flex flex-col gap-1 p-2.5 text-left transition-all",
@@ -1702,7 +1718,7 @@ export function GeneratorForm({
                 <div className="space-y-3">
                   <Field
                     label="Modelo"
-                    hint="Texto libre o selecciona uno recomendado."
+                    hint="Elige un modelo del catálogo del proveedor."
                   >
                     <input
                       name="modelo"
@@ -1781,39 +1797,14 @@ export function GeneratorForm({
           </Card>
         )}
 
-        {/* ALERTA DE ERROR SI FALLA */}
+        {/* ALERTA DE ERROR SI NO SE PUDO REGISTRAR LA SOLICITUD. Lo que falle
+            durante la generación (formatos que no salieron, clave rechazada,
+            vínculo al video) se lee en la pantalla de avance del trabajo. */}
         {state?.error ? (
           <Callout tone="danger" title={state.error}>
             {state.detail ? <span className="block">{state.detail}</span> : null}
             <span className="mt-1 block">
               No se guardó nada. Puedes ajustar el pedido y volver a intentar.
-            </span>
-          </Callout>
-        ) : null}
-
-        {/* ALGO QUEDÓ A MEDIAS: lo creado se conserva y aquí se dice qué faltó
-            (formatos que fallaron o no se intentaron, o el vínculo al video). */}
-        {state?.scriptId && state.aviso ? (
-          <Callout
-            tone="warn"
-            title={
-              (state.totalGenerados ?? 0) < selectedStructureIds.length
-                ? "El lote quedó incompleto"
-                : "El guion se creó, pero no quedó unido al video"
-            }
-          >
-            <span className="block">{state.aviso}</span>
-            <span className="mt-1 block">
-              Los guiones que sí salieron ya están guardados
-              {state.contentItemId ? " y el primero quedó vinculado al video" : ""}.{" "}
-              <Link href={`/guiones/${state.scriptId}`} className="text-brand font-semibold">
-                Abrir el primer guion
-              </Link>{" "}
-              ·{" "}
-              <Link href="/guiones" className="text-brand font-semibold">
-                Ver todos los guiones
-              </Link>
-              . Para los que faltaron, vuelve a generar solo esos formatos.
             </span>
           </Callout>
         ) : null}
@@ -1854,7 +1845,7 @@ export function GeneratorForm({
                 <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-[12px] text-ink space-y-1.5">
                   <div className="font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                     <Sparkles size={14} />
-                    Lote activo: {selectedStructureIds.length} guiones simultáneos
+                    Lote activo: {selectedStructureIds.length} guiones pendientes
                   </div>
                   <p className="text-inksoft leading-relaxed text-[11.5px]">
                     Se generará un guion independiente para cada formato elegido, manteniendo el mismo producto, briefing y cierre ({etiquetaModo(ctaModo)}). Si alguno falla, los demás se conservan y se avisa cuál faltó.
@@ -2094,31 +2085,31 @@ export function GeneratorForm({
             <div className="text-[12.5px] leading-snug">
               <div className="text-ink font-semibold">
                 {selectedStructureIds.length > 1
-                  ? `Generando lote de ${selectedStructureIds.length} guiones con ${model || provider} · ${segundos}s`
-                  : `Generando el guion con ${model || provider} · ${segundos}s`}
+                  ? `Registrando ${selectedStructureIds.length} guiones · ${segundos}s`
+                  : `Registrando la solicitud · ${segundos}s`}
               </div>
               <div className="text-inkmuted">
                 {selectedStructureIds.length > 1
-                  ? "Creando cada formato con su modelo mental y beats. Al terminar se abrirá el primer guion generado."
-                  : "Suele tardar entre 30 y 90 segundos. Cuando termine se abre solo."}
+                  ? "El avance y los guiones aparecerán en Mis generaciones."
+                  : "La generación continuará en segundo plano."}
               </div>
             </div>
           </div>
         </div>
       ) : null}
 
-      {state?.scriptId && !state.aviso ? (
+      {state?.jobId ? (
         <div className="no-print fixed inset-x-0 bottom-0 z-40 flex justify-center p-4">
           <div className="card fade-in flex items-center gap-3 px-4 py-3 shadow-[var(--shadow-3)]">
             <Check size={16} className="text-ok shrink-0" />
             <span className="text-[12.5px] font-semibold">
-              {state.totalGenerados && state.totalGenerados > 1
-                ? state.contentItemId
-                  ? `¡${state.totalGenerados} guiones listos! El primero quedó vinculado al video. Abriéndolo…`
-                  : `¡${state.totalGenerados} guiones listos! Abriendo el primero…`
-                : state.contentItemId
-                  ? "Guion listo y vinculado al video. Abriendo el visualizador…"
-                  : "Guion listo. Abriendo el visualizador…"}
+              {selectedStructureIds.length > 1
+                ? video
+                  ? `Solicitud registrada: ${selectedStructureIds.length} guiones en camino y el primero se unirá al video. Abriendo el avance…`
+                  : `Solicitud registrada: ${selectedStructureIds.length} guiones en camino. Abriendo el avance…`
+                : video
+                  ? "Solicitud registrada: el guion se unirá al video en cuanto salga. Abriendo el avance…"
+                  : "Solicitud registrada. Abriendo el avance…"}
             </span>
           </div>
         </div>

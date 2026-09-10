@@ -80,20 +80,56 @@ test("un 401 de Claude dice que la clave fue rechazada, de dónde salió y qué 
   assert.match(guardada.detail, /clave guardada en Ajustes/);
 });
 
-test("un 429 de Gemini se explica como cuota del proyecto con los pasos a seguir", () => {
+test("esErrorDeAutenticacion reconoce un AiError por su código o por un 401/403 del diagnóstico, aunque llegue sin prototipo", () => {
+  const { AiError, esErrorDeAutenticacion, esErrorDeCuota } = cargarProviders();
+  // Lo que mira generation-jobs.ts para cortar el lote: el código ya clasificado…
+  assert.equal(esErrorDeAutenticacion(new AiError("clave", undefined, "auth")), true);
+  // …o, si llegó sin código, el status del diagnóstico.
+  assert.equal(esErrorDeAutenticacion(new AiError("sin código", undefined, undefined, false, { provider: "Gemini", status: 401 })), true);
+  assert.equal(esErrorDeAutenticacion(new AiError("sin código", undefined, undefined, false, { provider: "Claude", status: 403 })), true);
+  // Un AiError de otra instancia del módulo o de un paso del workflow solo conserva sus campos.
+  assert.equal(esErrorDeAutenticacion(Object.assign(new Error("x"), { name: "AiError", code: "auth" })), true);
+  assert.equal(esErrorDeAutenticacion({ name: "AiError", diagnostic: { provider: "Gemini", status: 403 } }), true);
+  // Un AiError ya clasificado con otro código no es de clave aunque el texto mencione la api key.
+  assert.equal(esErrorDeAutenticacion(new AiError("api key quota", undefined, "quota", true, { provider: "Gemini", status: 429 })), false);
+  assert.equal(esErrorDeAutenticacion(new AiError("Falló la generación.", "algo raro")), false);
+  assert.equal(esErrorDeAutenticacion(new AiError("servidor", undefined, "server", true, { provider: "Claude", status: 500 })), false);
+  assert.equal(esErrorDeCuota(new AiError("x", undefined, "auth")), false);
+  // Los errores crudos del SDK siguen pasando por la clasificación de siempre.
+  assert.equal(esErrorDeAutenticacion(errorGemini(403, "PERMISSION_DENIED")), true);
+  assert.equal(esErrorDeAutenticacion(new Error("algo raro")), false);
+});
+
+test("un 429 de Gemini se explica como cuota del proyecto con los pasos a seguir, y el trabajo puede reintentarlo", () => {
   const { toAiError, esErrorDeCuota, esErrorDeAutenticacion } = cargarProviders();
   const e = toAiError(errorGemini(429, "Resource has been exhausted (e.g. check quota)."), "google", "env");
   assert.equal(e.code, "quota");
-  assert.match(e.message, /Gemini agotó la cuota del proyecto/);
-  assert.match(e.detail, /gemini-2\.5-flash/);
+  assert.match(e.message, /Gemini está limitando las peticiones o agotó la cuota del proyecto/);
+  assert.match(e.detail, /menos estructuras/);
   assert.match(e.detail, /activa facturación/);
   assert.match(e.detail, /medianoche/);
   assert.equal(esErrorDeCuota(e), true);
   assert.equal(esErrorDeAutenticacion(e), false);
+  // Lo que mira el trabajo en segundo plano: cuota se reintenta; el diagnóstico solo lleva metadatos.
+  assert.equal(e.retryable, true);
+  assert.deepEqual(e.diagnostic, { provider: "Gemini", status: 429, code: undefined });
 
   const claude = toAiError(errorClaude(429, "rate_limit_error", "rate limited"), "anthropic", "db");
   assert.equal(claude.code, "quota");
   assert.match(claude.message, /Claude está limitando las peticiones o la cuenta se quedó sin saldo/);
+  assert.equal(claude.retryable, true);
+
+  // Clave y modelo no se reintentan; servidor y timeout sí.
+  assert.equal(toAiError(errorClaude(401, "authentication_error", "invalid x-api-key"), "anthropic", "db").retryable, false);
+  assert.equal(toAiError(errorGemini(404, "models/gemini-9 is not found for API version v1beta"), "google", "db").retryable, false);
+  assert.equal(toAiError(errorGemini(503, "The model is overloaded."), "google", "db").retryable, true);
+  const timeout = toAiError(new DOMException("The operation timed out", "TimeoutError"), "google", "db");
+  assert.equal(timeout.code, "timeout");
+  assert.equal(timeout.retryable, true);
+  assert.match(timeout.message, /tardó demasiado/);
+  const transporte = toAiError(Object.assign(new TypeError("fetch failed"), { cause: { code: "UND_ERR_HEADERS_TIMEOUT" } }), "google", "db");
+  assert.equal(transporte.code, "timeout");
+  assert.equal(transporte.diagnostic.code, "UND_ERR_HEADERS_TIMEOUT");
 });
 
 test("Claude avisa la falta de saldo como 400 invalid_request_error y se clasifica como cuota", () => {
@@ -168,35 +204,39 @@ function providersConGemini(respuestas) {
 }
 
 const respuestaValida = { text: JSON.stringify({ title: "Guion", scenes: [] }), usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 2 } };
+const llamadaGemini = { apiKey: "k", model: "gemini-3.8-flash", system: "s", user: "u", keySource: "env" };
 
-test("Gemini: un 429, un 401 o un 400 de clave/modelo se reportan a la primera, sin gastar una segunda petición", async () => {
-  for (const [error, code] of [
-    [errorGemini(429, "quota exceeded"), "quota"],
-    [errorGemini(403, "PERMISSION_DENIED"), "auth"],
-    [errorGemini(503, "overloaded"), "server"],
-    [errorGemini(400, "API key not valid. Please pass a valid API key."), "auth"],
-    [errorGemini(404, "models/gemini-9 is not found for API version v1beta"), "model"],
+test("Gemini: un 429, un 401, un 5xx, un 400 de clave/modelo/configuración se reportan a la primera, sin gastar una segunda petición", async () => {
+  for (const [error, code, mensaje] of [
+    [errorGemini(429, "quota exceeded"), "quota", /limitando/],
+    [errorGemini(403, "PERMISSION_DENIED"), "auth", /clave/],
+    [errorGemini(503, "overloaded"), "server", /error de servidor/],
+    [errorGemini(400, "API key not valid. Please pass a valid API key."), "auth", /clave/],
+    [errorGemini(404, "models/gemini-9 is not found for API version v1beta"), "model", /no reconoce/],
+    // Un 400 de configuración (parámetro que el modelo no acepta) no es esquema ni modelo desconocido.
+    [errorGemini(400, "generateContent: Model does not support temperature"), undefined, /configuración/],
   ]) {
     const { generateWithGemini, llamadas } = providersConGemini([error, respuestaValida]);
     await assert.rejects(
-      generateWithGemini({ apiKey: "k", model: "gemini-2.5-flash", system: "s", user: "u", keySource: "env" }),
-      (e) => e.name === "AiError" && e.code === code
+      generateWithGemini(llamadaGemini),
+      (e) => e.name === "AiError" && e.code === code && mensaje.test(e.message)
     );
-    assert.equal(llamadas.length, 1, `con ${code} no debe reintentar`);
+    assert.equal(llamadas.length, 1, `con ${code ?? "configuración"} no debe reintentar`);
   }
 });
 
-test("Gemini: un 400 de esquema, o un 400 sin clasificar, provoca el reintento sin responseJsonSchema", async () => {
+test("Gemini: un 400 de esquema, o el 400 genérico «invalid argument», provoca el reintento sin responseJsonSchema", async () => {
   for (const error of [
     errorGemini(400, 'Invalid JSON payload received. Unknown name "responseJsonSchema"'),
     // Así responde Gemini a varias combinaciones de esquema que no soporta, sin nombrarlo.
     errorGemini(400, "Request contains an invalid argument."),
   ]) {
     const { generateWithGemini, llamadas } = providersConGemini([error, respuestaValida]);
-    const result = await generateWithGemini({ apiKey: "k", model: "gemini-2.5-flash", system: "s", user: "u" });
+    const result = await generateWithGemini(llamadaGemini);
     assert.equal(llamadas.length, 2, `debe reintentar ante: ${error.message}`);
     assert.ok("responseJsonSchema" in llamadas[0].config);
     assert.ok(!("responseJsonSchema" in llamadas[1].config));
+    assert.ok(!("temperature" in llamadas[0].config), "Gemini 3.8 no acepta temperature");
     assert.equal(result.script.title, "Guion");
     assert.equal(result.inputTokens, 1);
   }
@@ -207,7 +247,7 @@ test("Gemini: un 400 de esquema, o un 400 sin clasificar, provoca el reintento s
     errorGemini(429, "quota exceeded"),
   ]);
   await assert.rejects(
-    generateWithGemini({ apiKey: "k", model: "gemini-2.5-flash", system: "s", user: "u" }),
+    generateWithGemini(llamadaGemini),
     (e) => e.name === "AiError" && e.code === "quota"
   );
   assert.equal(llamadas.length, 2);
@@ -215,12 +255,15 @@ test("Gemini: un 400 de esquema, o un 400 sin clasificar, provoca el reintento s
 
 /* ------------------------------------------------- modelo por defecto -- */
 
-test("el generador usa el 'Modelo por defecto' de Ajustes entre la estructura y el predeterminado, y pasa keySource", async () => {
-  const ajustes = new Map([["ai.google.model", "gemini-2.5-flash-lite"], ["ai.google.apiKey", "db-google"]]);
+test("el generador usa el 'Modelo por defecto' de Ajustes entre la estructura y el catálogo, y pasa keySource", async () => {
+  const ajustes = new Map([["ai.anthropic.model", "claude-sonnet-5"], ["ai.anthropic.apiKey", "db-claude"]]);
   const prisma = {
-    structure: { findUnique: async () => ({ id: "s1", name: "E", category: "VENDE", family: "f", summary: "", beats: "[]", systemPrompt: "", rules: "[]", examples: "[]", defaultDurationSec: 30, defaultProvider: "google", defaultModel: "", temperature: 0.7 }) },
+    structure: { findUnique: async () => ({ id: "s1", name: "E", category: "VENDE", family: "f", summary: "", beats: "[]", systemPrompt: "", rules: "[]", examples: "[]", defaultDurationSec: 30, defaultProvider: "anthropic", defaultModel: "", temperature: 0.7 }) },
     asset: { findMany: async () => [] },
-    appSetting: { findUnique: async ({ where }) => (ajustes.has(where.key) ? { key: where.key, value: ajustes.get(where.key) } : null) },
+    appSetting: {
+      findUnique: async ({ where }) => (ajustes.has(where.key) ? { key: where.key, value: ajustes.get(where.key) } : null),
+      findMany: async ({ where }) => where.key.in.filter((k) => ajustes.has(k)).map((k) => ({ key: k, value: ajustes.get(k) })),
+    },
   };
   const capturadas = [];
   const providers = cargarProviders({ "@/lib/prisma": { prisma } });
@@ -228,30 +271,33 @@ test("el generador usa el 'Modelo por defecto' de Ajustes entre la estructura y 
     "@/lib/prisma": { prisma },
     "@/lib/ai/providers": {
       ...providers,
-      generateWithGemini: async (call) => { capturadas.push(call); return { script: { title: "x" }, raw: "{}", provider: "google", model: call.model }; },
-      generateWithClaude: async () => assert.fail("no debía llamar a Claude"),
+      generateWithClaude: async (call) => { capturadas.push(call); return { script: { title: "x" }, raw: "{}", provider: "anthropic", model: call.model }; },
+      generateWithGemini: async () => assert.fail("no debía llamar a Gemini"),
     },
   });
 
   await generateScript({ structureId: "s1", request: "hola" });
-  assert.equal(capturadas[0].model, "gemini-2.5-flash-lite");
+  assert.equal(capturadas[0].model, "claude-sonnet-5");
   assert.equal(capturadas[0].keySource, "db");
 
-  ajustes.delete("ai.google.model");
+  ajustes.delete("ai.anthropic.model");
   await generateScript({ structureId: "s1", request: "hola" });
-  assert.equal(capturadas[1].model, "gemini-2.5-flash", "sin ajuste cae en el predeterminado nuevo");
+  assert.equal(capturadas[1].model, "claude-opus-5", "sin ajuste cae en el predeterminado del catálogo");
 
-  await generateScript({ structureId: "s1", request: "hola", model: "gemini-2.5-pro" });
-  assert.equal(capturadas[2].model, "gemini-2.5-pro", "lo elegido en el generador sigue mandando");
+  await generateScript({ structureId: "s1", request: "hola", model: "claude-haiku-4-5" });
+  assert.equal(capturadas[2].model, "claude-haiku-4-5", "lo elegido en el generador sigue mandando");
 
-  ajustes.delete("ai.google.apiKey");
-  const sinEnv = process.env.GEMINI_API_KEY; const sinEnv2 = process.env.GOOGLE_API_KEY;
-  delete process.env.GEMINI_API_KEY; delete process.env.GOOGLE_API_KEY;
+  // Un modelo fuera del catálogo se rechaza antes de llamar al proveedor.
+  await assert.rejects(generateScript({ structureId: "s1", request: "hola", model: "claude-inventado" }), /catálogo/);
+  assert.equal(capturadas.length, 3);
+
+  ajustes.delete("ai.anthropic.apiKey");
+  const sinEnv = process.env.ANTHROPIC_API_KEY;
+  delete process.env.ANTHROPIC_API_KEY;
   try {
-    await assert.rejects(generateScript({ structureId: "s1", request: "hola" }), (e) => e.code === "auth" && /GEMINI_API_KEY/.test(e.detail));
+    await assert.rejects(generateScript({ structureId: "s1", request: "hola" }), (e) => e.code === "auth" && /ANTHROPIC_API_KEY/.test(e.detail));
   } finally {
-    if (sinEnv !== undefined) process.env.GEMINI_API_KEY = sinEnv;
-    if (sinEnv2 !== undefined) process.env.GOOGLE_API_KEY = sinEnv2;
+    if (sinEnv !== undefined) process.env.ANTHROPIC_API_KEY = sinEnv;
   }
 });
 
@@ -267,7 +313,12 @@ function cargarProbarClave({ nivel, clave, sdkClaude, sdkGemini }) {
     }
   }
   class FakeGenAI {
-    constructor(opts) { this.models = { generateContent: async (req) => sdkGemini(req, opts) }; }
+    constructor(opts) {
+      this.models = {
+        get: async (req) => sdkGemini(req, opts),
+        generateContent: async () => assert.fail("probar la clave de Gemini no debe generar tokens"),
+      };
+    }
   }
   return load("src/app/actions/probar-clave.ts", {
     ...sinPrisma,
@@ -279,16 +330,19 @@ function cargarProbarClave({ nivel, clave, sdkClaude, sdkGemini }) {
       resolveApiKey: async () => clave,
     },
     "@/lib/auth": {
-      LEVEL: { MEMBER: 1, OWNER: 2 },
-      requireUser: async () => ({ id: "u", role: nivel >= 2 ? "OWNER" : "MEMBER" }),
-      requireLevel: async (min) => { if (nivel < min) throw new Error("No tienes permisos para hacer esto."); return { id: "u" }; },
+      requirePermission: async (capability) => {
+        assert.equal(capability, "admin.settings");
+        if (nivel < 2) throw new Error("No tienes permisos para hacer esto.");
+        return { id: "u", role: "OWNER" };
+      },
     },
   });
 }
 
-test("probar la clave en uso exige ser dueño y avisa cuando no hay ninguna", async () => {
+test("probar una clave exige la capacidad de ajustes (dueño) y avisa cuando no hay ninguna en uso", async () => {
   const miembro = cargarProbarClave({ nivel: 1, clave: { key: "k", source: "db" }, sdkClaude: () => assert.fail("no debe llamar") });
   await assert.rejects(miembro.probarClaveIA({ provider: "anthropic" }), /permisos/);
+  await assert.rejects(miembro.probarClaveIA({ provider: "anthropic", apiKey: "sk-escrita" }), /permisos/);
 
   const sinClave = cargarProbarClave({ nivel: 2, clave: { key: null, source: null }, sdkClaude: () => assert.fail("no debe llamar") });
   const r = await sinClave.probarClaveIA({ provider: "anthropic", apiKey: "" });
@@ -308,17 +362,46 @@ test("probar la clave en uso usa un modelo barato vigente y dice el origen y los
   assert.equal(r.ok, true);
   assert.equal(r.origen, "env");
   assert.equal(peticiones[0].req.model, "claude-haiku-4-5");
+  assert.equal(peticiones[0].req.max_tokens, 1);
   assert.equal(peticiones[0].apiKey, "sk-env");
   assert.match(r.mensaje, /Clave de Claude válida · de la variable de entorno ANTHROPIC_API_KEY del servidor · \d+ ms/);
   assert.match(r.mensaje, /claude-haiku-4-5/);
 });
 
-test("probar una clave escrita no requiere ser dueño, no la guarda y usa el mismo criterio de errores", async () => {
+test("probar la clave de Gemini consulta el modelo del catálogo sin generar y no afirma saldo", async () => {
+  const consultas = [];
   const mod = cargarProbarClave({
-    nivel: 1,
+    nivel: 2,
+    clave: { key: "AIza-db", source: "db" },
+    sdkGemini: async (req, opts) => { consultas.push({ req, apiKey: opts.apiKey, timeout: opts.httpOptions?.timeout }); return { name: req.model }; },
+  });
+  const r = await mod.probarClaveIA({ provider: "google" });
+  assert.equal(r.ok, true);
+  assert.equal(r.origen, "db");
+  assert.deepEqual(consultas.map((c) => c.req.model), ["gemini-3.8-flash"]);
+  assert.equal(consultas[0].apiKey, "AIza-db");
+  assert.equal(consultas[0].timeout, 15000);
+  assert.match(r.mensaje, /Clave de Gemini válida · guardada en Ajustes · \d+ ms/);
+  assert.match(r.mensaje, /cuota.*al generar/);
+  assert.doesNotMatch(r.mensaje, /saldo verificado/);
+
+  // Un valor heredado se normaliza; uno fuera del catálogo no llega al proveedor.
+  const heredado = await mod.probarClaveIA({ provider: "google", model: "gemini-2.5-pro" });
+  assert.equal(heredado.ok, true);
+  assert.equal(consultas.at(-1).req.model, "gemini-3.8-flash");
+  const raro = await mod.probarClaveIA({ provider: "google", model: "gemini-inventado" });
+  assert.equal(raro.ok, false);
+  assert.equal(raro.code, "model");
+  assert.match(raro.error, /catálogo/);
+  assert.equal(consultas.length, 2);
+});
+
+test("probar una clave escrita no la guarda y usa el mismo criterio de errores que el generador", async () => {
+  const mod = cargarProbarClave({
+    nivel: 2,
     clave: { key: "no-se-usa", source: "db" },
     sdkClaude: async () => { throw errorClaude(401, "authentication_error", "invalid x-api-key"); },
-    sdkGemini: async (req) => { assert.equal(req.model, "gemini-2.5-flash"); throw errorGemini(429, "quota"); },
+    sdkGemini: async (req) => { assert.equal(req.model, "gemini-3.8-flash"); throw errorGemini(429, "quota"); },
   });
   const claude = await mod.probarClaveIA({ provider: "anthropic", apiKey: "  sk-ant-escrita  " });
   assert.equal(claude.ok, false);
@@ -329,7 +412,7 @@ test("probar una clave escrita no requiere ser dueño, no la guarda y usa el mis
 
   const gemini = await mod.probarClaveIA({ provider: "google", apiKey: "AIza-escrita" });
   assert.equal(gemini.code, "quota");
-  assert.match(gemini.error, /agotó la cuota del proyecto/);
+  assert.match(gemini.error, /limitando las peticiones o agotó la cuota del proyecto/);
 
   const raro = await mod.probarClaveIA({ provider: "otro", apiKey: "x" });
   assert.match(raro.error, /Proveedor desconocido/);

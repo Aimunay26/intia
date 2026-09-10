@@ -1,56 +1,57 @@
-import { requirePageUser as requireUser } from "@/lib/render-context";
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
+import { EditForm, RevisionField } from "@/components/edit-form";
 import { getStructureChoices } from "@/lib/structure-choices";
+import {
+	Copy,
+	ExternalLink,
+	Film,
+	History,
+	Layers,
+	MessageSquare,
+	ScrollText,
+	Sparkles,
+	Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Copy,
-  ExternalLink,
-  Film,
-  History,
-  Layers,
-  MessageSquare,
-  ScrollText,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
-import { can, LEVEL } from "@/lib/auth";
-import {
-  AUDIT_ACTION_MAP,
-  CONTENT_STATUSES,
-  CONTENT_STATUS_MAP,
-  PLATFORM_MAP,
-  PRIORITY_MAP,
-  SCRIPT_STATUS_MAP,
-  USER_ROLE_MAP,
-} from "@/lib/constants";
-import {
-  dateKey,
-  formatDate,
-  formatRange,
-  jsonToLines,
-  parseList,
-  relativeTime,
-  truncate,
-} from "@/lib/utils";
-import {
-  Avatar,
-  Badge,
-  Breadcrumb,
-  Card,
-  CardHeader,
-  ColorChip,
-  EmptyState,
-  PageHeader,
-  PlatformBadges,
-} from "@/components/ui";
-import { AutoSubmitSelect, DeleteButton, SubmitButton } from "@/components/forms";
 import { cambiarEstado, comentar, duplicarVideo, eliminarVideo } from "@/app/actions/content";
 import { desvincularGuionDeVideo } from "@/app/actions/scripts";
+import { AutoSubmitSelect, DeleteButton, SubmitButton } from "@/components/forms";
+import {
+	Avatar,
+	Badge,
+	Breadcrumb,
+	Card,
+	CardHeader,
+	ColorChip,
+	EmptyState,
+	PageHeader,
+	PlatformBadges,
+} from "@/components/ui";
+import { can, LEVEL } from "@/lib/auth";
+import {
+	AUDIT_ACTION_MAP,
+	CONTENT_STATUS_MAP,
+	CONTENT_STATUSES,
+	PRIORITY_MAP,
+	SCRIPT_STATUS_MAP,
+	USER_ROLE_MAP
+} from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import {
+	dateKey,
+	formatDate,
+	formatRange,
+	jsonToLines,
+	parseList,
+	relativeTime,
+	truncate,
+} from "@/lib/utils";
 import { VideoDatosForm } from "../content-form";
-import { Checklist, type CheckRow } from "./checklist";
 import { TeamPanel, type AssignmentRow } from "./assignments";
+import { Checklist, type CheckRow } from "./checklist";
 import { MetricsPanel, type MetricRow } from "./metrics-form";
 
 const MESES_CORTOS = [
@@ -70,11 +71,12 @@ const MESES_CORTOS = [
 
 /** "12 mar" — la forma corta que se usa junto al nombre de quien cerró un check. */
 function fechaCorta(value: Date) {
-  return `${value.getDate()} ${MESES_CORTOS[value.getMonth()]}`;
+  return `${Number(dateKey(value).slice(8))} ${MESES_CORTOS[Number(dateKey(value).slice(5,7))-1]}`;
 }
 
 export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requirePageSection("content");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="content" id={(await params).id} />;
   const { id } = await params;
 
   const item = await prisma.contentItem.findUnique({
@@ -224,9 +226,10 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
     clicks: m.clicks,
     leads: m.leads,
     orders: m.orders,
-    spend: m.spend,
-    revenue: m.revenue,
+    spend: m.spend.toString(),
+    revenue: m.revenue.toString(),
     retention3s: m.retention3s,
+    period: m.period, platform: m.platform, updatedAt: m.updatedAt.toISOString(), notes: m.notes,
   }));
 
   return (
@@ -271,7 +274,8 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
         }
         actions={
           <>
-            <form action={cambiarEstado} className="flex items-center">
+            <EditForm action={cambiarEstado} className="flex items-center">
+<RevisionField value={item.updatedAt} />
               <input type="hidden" name="id" value={item.id} />
               <AutoSubmitSelect
                 name="status"
@@ -280,7 +284,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
                 className="select h-[34px] w-[158px] text-[12.5px] font-semibold"
                 options={CONTENT_STATUSES.map((o) => ({ value: o.value, label: o.label }))}
               />
-            </form>
+            </EditForm>
 
             {item.publishedUrl ? (
               <a
@@ -332,6 +336,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
               structures={structures}
               item={{
                 id: item.id,
+                updatedAt: item.updatedAt.toISOString(),
                 title: item.title,
                 description: item.description ?? "",
                 hook: item.hook ?? "",

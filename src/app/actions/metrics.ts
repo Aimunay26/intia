@@ -1,23 +1,23 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
+import { contentScope, assertContentAccess } from "@/lib/access-scope";
 
+import { parseCsvMoney } from "@/lib/money";
+import type { Prisma } from "@prisma/client";
+import { eliminarMetrica as deleteMetric } from "@/app/actions/content";
+import { PLATFORM_MAP } from "@/lib/constants";
+import { saveWeeklyMetric } from "@/lib/weekly-metric-mutations";
+import { requireWeekStart } from "@/lib/weekly-metrics";
 import { revalidatePath } from "next/cache";
 
-import { prisma } from "@/lib/prisma";
-import { requireLevel, LEVEL } from "@/lib/auth";
-import { logAudit, diffFields, auditInTransaction } from "@/lib/audit";
+import { auditInTransaction, diffFields } from "@/lib/audit";
 import { assertActor } from "@/lib/auth-transactions";
+import { prisma } from "@/lib/prisma";
 import { validReportDay as validDay } from "@/lib/report-dates";
 import {
-  clamp,
-  dateField,
-  dateKey,
-  field,
-  fieldOrNull,
-  formatDate,
-  formatNumber,
-  fromDateKey,
-  intField,
-  numField,
+	field,
+	formatDate,
+	formatNumber
 } from "@/lib/utils";
 
 /**
@@ -27,8 +27,9 @@ import {
  *  - a mano, desde la ficha del video (guardarMetricaRapida)
  *  - pegando un CSV exportado de la plataforma (importarMetricasCsv)
  *
- * La clave única es contentItemId + date, así que volver a cargar el mismo
- * día del mismo video actualiza la fila en vez de duplicarla.
+ * WEEKLY registra solo lo obtenido de lunes a domingo por video/plataforma.
+ * Reimportar una semana actualiza las columnas enviadas; el alta manual
+ * duplicada exige abrir la fila existente para editarla con su revisión.
  */
 
 /* ------------------------------------------------------------ ETIQUETAS -- */
@@ -54,101 +55,18 @@ const METRIC_LABELS: Record<string, string> = {
 
 /* ------------------------------------------------------ GUARDADO RAPIDO -- */
 
-/** Alta o actualización de la métrica de un video en un día concreto. */
+/** Alta o edición con revisión de una semana y plataforma concretas. */
 export async function guardarMetricaRapida(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
-
-  const contentItemId = field(formData, "contentItemId");
-  if (!contentItemId) throw new Error("Falta indicar de qué video son las métricas.");
-
-  const date = dateField(formData, "date") ?? fromDateKey(dateKey(new Date()));
-
-  const item = await prisma.contentItem.findUniqueOrThrow({
-    where: { id: contentItemId },
-    select: { id: true, title: true, brandId: true },
-  });
-
-  const data = {
-    views: intField(formData, "views"),
-    likes: intField(formData, "likes"),
-    comments: intField(formData, "comments"),
-    shares: intField(formData, "shares"),
-    saves: intField(formData, "saves"),
-    reach: intField(formData, "reach"),
-    clicks: intField(formData, "clicks"),
-    leads: intField(formData, "leads"),
-    orders: intField(formData, "orders"),
-    spend: numField(formData, "spend"),
-    revenue: numField(formData, "revenue"),
-    watchTimeSec: numField(formData, "watchTimeSec"),
-    retention3s: clamp(numField(formData, "retention3s"), 0, 100),
-    notes: fieldOrNull(formData, "notes"),
-  };
-
-  const before = await prisma.metric.findUnique({
-    where: { contentItemId_date: { contentItemId, date } },
-  });
-
-  await prisma.metric.upsert({
-    where: { contentItemId_date: { contentItemId, date } },
-    create: { contentItemId, date, source: "MANUAL", ...data },
-    update: data,
-  });
-
-  await logAudit({
-    user,
-    action: before ? "EDITAR" : "CREAR",
-    entity: "Metric",
-    entityId: before?.id ?? null,
-    brandId: item.brandId,
-    summary: `${before ? "Actualizó" : "Registró"} las métricas de "${item.title}" del ${formatDate(date)}`,
-    changes: before ? diffFields(before, data, METRIC_LABELS) : null,
-  });
-
+  const user = await requirePermission("metrics.write");
+  await saveWeeklyMetric(user, formData);
   revalidatePath("/metricas");
-  revalidatePath(`/contenido/${contentItemId}`);
+  revalidatePath("/contenido");
+  revalidatePath("/actividad");
+  revalidatePath(`/contenido/${field(formData, "contentItemId")}`);
   revalidatePath("/");
 }
 
-/* ---------------------------------------------------------- ELIMINACION -- */
-
-export async function eliminarMetrica(formData: FormData) {
-  // Borrar es destructivo: va con nivel Manager, igual que en content.ts.
-  const user = await requireLevel(LEVEL.OWNER);
-  const id = field(formData, "id");
-  if (!id) return;
-
-  const metric = await prisma.metric.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      date: true,
-      views: true,
-      contentItemId: true,
-      contentItem: { select: { title: true, brandId: true } },
-    },
-  });
-  if (!metric) return;
-
-  await prisma.metric.delete({ where: { id } });
-
-  await logAudit({
-    user,
-    action: "ELIMINAR",
-    entity: "Metric",
-    entityId: id,
-    brandId: metric.contentItem.brandId,
-    summary: `Eliminó las métricas de "${metric.contentItem.title}" del ${formatDate(metric.date)}`,
-    changes: {
-      date: { etiqueta: "Fecha", antes: metric.date, despues: null },
-      views: { etiqueta: "Vistas", antes: metric.views, despues: null },
-    },
-  });
-
-  revalidatePath("/metricas");
-  revalidatePath(`/contenido/${metric.contentItemId}`);
-  revalidatePath("/");
-}
+export async function eliminarMetrica(formData: FormData) { await deleteMetric(formData); }
 
 /* ------------------------------------------------------- IMPORTACION CSV -- */
 
@@ -169,6 +87,10 @@ export type ImportState = {
 
 /** Columnas aceptadas y sus sinónimos, ya normalizados (sin tildes ni espacios). */
 const COLUMN_ALIASES: Record<string, string> = {
+  semana: "fecha",
+  week: "fecha",
+  plataforma: "plataforma",
+  platform: "plataforma",
   fecha: "fecha",
   dia: "fecha",
   date: "fecha",
@@ -370,6 +292,7 @@ type FilaValida = {
   brandId: string;
   title: string;
   date: Date;
+  platform: string;
   data: Partial<{
     views: number;
     likes: number;
@@ -380,8 +303,8 @@ type FilaValida = {
     clicks: number;
     leads: number;
     orders: number;
-    spend: number;
-    revenue: number;
+    spend: Prisma.Decimal;
+    revenue: Prisma.Decimal;
     retention3s: number;
     notes: string | null;
   }>;
@@ -395,7 +318,7 @@ export async function importarMetricasCsv(
   _prev: ImportState,
   formData: FormData
 ): Promise<ImportState> {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("metrics.write");
 
   const texto = field(formData, "csv");
   if (!texto) return { error: "Pega primero las filas del CSV." };
@@ -428,13 +351,15 @@ export async function importarMetricasCsv(
     };
   }
   if (!cabeceras.includes("fecha")) {
-    return { error: 'Falta la columna "fecha" en la cabecera.' };
+    return { error: 'Falta la columna "semana" (lunes) en la cabecera.' };
   }
+  if (!cabeceras.includes("plataforma")) return { error: 'Falta la columna "plataforma" en la cabecera.' };
 
   const desconocidas = crudas.filter((h, i) => h.length > 0 && !cabeceras[i]);
 
   // Índice de videos por id y por título, para resolver la columna "video".
   const videos = await prisma.contentItem.findMany({
+    where: contentScope(user, "metrics.write"),
     select: { id: true, title: true, brandId: true },
   });
   const porId = new Map<string, VideoRef>(videos.map((v) => [v.id, v]));
@@ -504,11 +429,14 @@ export async function importarMetricasCsv(
       continue;
     }
 
-    const clave = `${encontrado.id}|${fecha.getTime()}`;
+    const platform = valor("plataforma").trim().toUpperCase();
+    if (!PLATFORM_MAP[platform]) { ignoradas.push({ line: numeroLinea, reason: "Indica una plataforma válida: TIKTOK, INSTAGRAM, FACEBOOK, YOUTUBE, WHATSAPP u OTRO.", preview }); continue; }
+    try { requireWeekStart(fecha.toISOString().slice(0, 10)); } catch { ignoradas.push({ line: numeroLinea, reason: "La fecha debe ser el lunes de la semana reportada.", preview }); continue; }
+    const clave = `${encontrado.id}|${fecha.getTime()}|${platform}|WEEKLY`;
     if (vistas.has(clave)) {
       ignoradas.push({
         line: numeroLinea,
-        reason: "Fila repetida: ese video ya aparece con esa misma fecha más arriba.",
+        reason: "Fila repetida: ese video y plataforma ya aparecen con esa misma semana más arriba.",
         preview,
       });
       continue;
@@ -521,9 +449,17 @@ export async function importarMetricasCsv(
     for (const [column, target] of Object.entries(numeric)) {
       const rawValue = valor(column);
       if (!rawValue.trim()) continue;
+      if (target === "spend" || target === "revenue") {
+        try { data[target] = parseCsvMoney(rawValue); }
+        catch (error) { invalid = error instanceof Error ? error.message : "Importe inválido"; break; }
+        continue;
+      }
       let number = parseNumero(rawValue);
+      if (target === "retention3s") {
+        const percent = rawValue.trim().replace(/%$/, "").trim();
+        number = /^\d+(?:[.,]\d+)?$/.test(percent) ? Number(percent.replace(",", ".")) : null;
+      }
       if (target !== "retention3s" && rawValue.includes("%")) number = null;
-      if (target === "retention3s" && number !== null && number > 0 && number <= 1 && /[.,]/.test(rawValue) && !rawValue.includes("%")) number *= 100;
       const integer = !["spend", "revenue", "retention3s"].includes(target);
       if (number === null || number < 0 || (integer && (!Number.isInteger(number) || number > 2147483647)) || (!integer && number > (target === "retention3s" ? 100 : 1e12))) {
         invalid = `La columna ${column} contiene un valor inválido. La fila se conserva sin cambios.`; break;
@@ -543,6 +479,7 @@ export async function importarMetricasCsv(
       brandId: encontrado.brandId,
       title: encontrado.title,
       date: fecha,
+      platform,
       data,
     });
   }
@@ -564,24 +501,29 @@ export async function importarMetricasCsv(
     try {
       const existed = await prisma.$transaction(async tx => {
       await assertActor(tx, user);
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${fila.contentItemId}|${fila.date.toISOString()}`}, 0))`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`${fila.contentItemId}|${fila.date.toISOString()}|${fila.platform}|WEEKLY`}, 0))`;
+      await assertContentAccess(tx, user, fila.contentItemId, "metrics.write");
+      const [currentVideo] = await tx.$queryRaw<VideoRef[]>`SELECT id,title,"brandId" FROM "ContentItem" WHERE id=${fila.contentItemId} FOR SHARE`;
+      if (!currentVideo) throw new Error("El video ya no existe.");
       const existente = await tx.metric.findUnique({
-        where: { contentItemId_date: { contentItemId: fila.contentItemId, date: fila.date } },
+        where: { contentItemId_date_platform_period: { contentItemId: fila.contentItemId, date: fila.date, platform: fila.platform, period: "WEEKLY" } },
       });
 
       const saved = await tx.metric.upsert({
-        where: { contentItemId_date: { contentItemId: fila.contentItemId, date: fila.date } },
+        where: { contentItemId_date_platform_period: { contentItemId: fila.contentItemId, date: fila.date, platform: fila.platform, period: "WEEKLY" } },
         create: {
           contentItemId: fila.contentItemId,
           date: fila.date,
+          platform: fila.platform,
+          period: "WEEKLY",
           source: "IMPORT",
           ...fila.data,
         },
         update: { source: "IMPORT", ...fila.data },
       });
-      await auditInTransaction(tx, { user, action: existente ? "EDITAR" : "CREAR", entity: "Metric", entityId: saved.id, brandId: fila.brandId,
-        summary: `Importó métricas de "${fila.title}" desde CSV`,
-        changes: diffFields(existente ?? Object.fromEntries(Object.keys(fila.data).map(key => [key, null])), { ...fila.data, source: "IMPORT" }),
+      await auditInTransaction(tx, { user, action: existente ? "EDITAR" : "CREAR", entity: "Metric", entityId: saved.id, brandId: currentVideo.brandId,
+        summary: `Importó métricas de "${currentVideo.title}" desde CSV`,
+        changes: diffFields(existente ?? {}, existente ? { ...fila.data, source: "IMPORT" } : saved, METRIC_LABELS),
       });
       return Boolean(existente);
       });
@@ -597,26 +539,10 @@ export async function importarMetricasCsv(
     }
   }
 
-  const total = creadas + actualizadas;
-  const marcas = new Set(validas.map((f) => f.brandId));
-
-  // La importación es una sola operación: se registra un movimiento con el
-  // resumen completo, en vez de inundar el log con una entrada por fila.
-  await logAudit({
-    user,
-    action: "CREAR",
-    entity: "Metric",
-    brandId: marcas.size === 1 ? [...marcas][0] : null,
-    summary: `Importó ${formatNumber(total)} ${total === 1 ? "métrica" : "métricas"} desde CSV sobre ${afectados.size} ${afectados.size === 1 ? "video" : "videos"}${ignoradas.length ? ` (${ignoradas.length} ${ignoradas.length === 1 ? "fila ignorada" : "filas ignoradas"})` : ""}`,
-    // Un resumen de la importación, no campos de una entidad: no se deshace.
-    changes: {
-      creadas: { etiqueta: "Nuevas", antes: 0, despues: creadas },
-      actualizadas: { etiqueta: "Actualizadas", antes: 0, despues: actualizadas },
-      ignoradas: { etiqueta: "Ignoradas", antes: 0, despues: ignoradas.length },
-    },
-  });
-
+  // Cada fila confirmada ya tiene su auditoría en la misma transacción.
   revalidatePath("/metricas");
+  revalidatePath("/contenido");
+  revalidatePath("/actividad");
   revalidatePath("/");
   for (const id of afectados) revalidatePath(`/contenido/${id}`);
 

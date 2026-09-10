@@ -1,60 +1,59 @@
-import { getStructureChoices } from "@/lib/structure-choices";
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { Suspense } from "react";
-import { SectionLoading } from "@/components/section-loading";
-import { measurePhase } from "@/lib/performance";
-import { getMetricTotals, getMetricSeries, getMetricBreakdowns, getMetricRanking, type MetricFilters } from "@/lib/metric-dashboard";
-import { metricDateRange, shiftReportDay } from "@/lib/report-dates";
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { Pagination } from "@/components/filters";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
+import { SectionLoading } from "@/components/section-loading";
+import { getMetricBreakdowns, getMetricRanking, getMetricSeries, getMetricTotals, type MetricFilters } from "@/lib/metric-dashboard";
+import { measurePhase } from "@/lib/performance";
+import { measurePagePhase } from "@/lib/performance-page";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
+import { weeklyDateRange as metricDateRange, shiftReportDay } from "@/lib/report-dates";
+import { getStructureChoices } from "@/lib/structure-choices";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import {
-  ArrowDown,
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart3,
-  Banknote,
-  Eye,
-  Heart,
-  Minus,
-  Radar,
-  Timer,
-  TrendingUp,
-  Trophy,
-  Wallet,
+	ArrowDown,
+	ArrowDownRight,
+	ArrowUpRight,
+	Banknote,
+	BarChart3,
+	Eye,
+	Heart,
+	Minus,
+	Radar,
+	Timer,
+	TrendingUp,
+	Trophy,
+	Wallet,
 } from "lucide-react";
 
-import { can, LEVEL } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { brandWhere } from "@/lib/brand-context";
-import { PLATFORMS, PLATFORM_MAP, platformFilter } from "@/lib/constants";
-import {
-  addDays,
-  cn,
-  compactNumber,
-  dateKey,
-  formatDate,
-  formatMoney,
-  formatNumber,
-  formatPercent,
-  fromDateKey,
-  parseList,
-  safeDivide,
-} from "@/lib/utils";
-import {
-  Badge,
-  Card,
-  CardHeader,
-  ColorChip,
-  EmptyState,
-  PageHeader,
-  PlatformBadges,
-  SectionTitle,
-  Stat,
-} from "@/components/ui";
 import { DonutChart, LineChart, RankBars, type Point } from "@/components/charts";
-import { FilterBar, FilterDate, FilterSelect, ActiveFilters } from "@/components/filters";
+import { ActiveFilters, FilterBar, FilterDate, FilterSelect } from "@/components/filters";
+import {
+	Card,
+	CardHeader,
+	ColorChip,
+	EmptyState,
+	PageHeader,
+	PlatformBadges,
+	SectionTitle,
+	Stat
+} from "@/components/ui";
+import { can, LEVEL } from "@/lib/auth";
+import { brandWhere } from "@/lib/brand-context";
+import { PLATFORM_MAP, PLATFORMS } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import {
+	cn,
+	compactNumber,
+	formatDate,
+	formatMoney,
+	formatNumber,
+	formatPercent,
+	fromDateKey,
+	parseList,
+	safeDivide
+} from "@/lib/utils";
 import { ImportForm } from "./import-form";
 
 /* ------------------------------------------------------------------ TIPOS -- */
@@ -122,17 +121,18 @@ type MetricsSectionProps = { filters: MetricFilters; range: ReturnType<typeof me
 
 export default async function MetricasPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return measurePagePhase("page:/metricas", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("metrics");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="metrics" query={await searchParams} />;
   const [brandCtx, sp] = await Promise.all([getBrandContext(), searchParams]);
   const range = metricDateRange(sp.desde, sp.hasta);
   const filters: MetricFilters = { brandId: brandCtx.activeId, desde: range.desde, hasta: range.hasta, plataforma: sp.plataforma, estructura: sp.estructura, persona: sp.persona };
   const scope = JSON.stringify([filters, sp.orden, sp.pagina]);
   return <>
-    <PageHeader title="Métricas" subtitle={`${formatDate(fromDateKey(range.desde))} — ${formatDate(fromDateKey(range.hasta))} · ${range.days} días`} icon={<TrendingUp size={19} />} />
+    <PageHeader title="Métricas" subtitle={`${formatDate(fromDateKey(range.desde))} — ${formatDate(fromDateKey(range.hasta))} · ${range.days / 7} semanas`} icon={<TrendingUp size={19} />} />
     <Suspense key={scope + "MetricsFilters"} fallback={<SectionLoading label="filtros" />}><MetricsFilters filters={filters} range={range} sp={sp} /></Suspense>
     <div className="space-y-4">
       <Suspense key={scope + "MetricsOverview"} fallback={<SectionLoading label="resumen" />}><MetricsOverview filters={filters} range={range} sp={sp} /></Suspense>
-      <Suspense key={scope + "MetricsTrend"} fallback={<SectionLoading label="tendencia diaria" />}><MetricsTrend filters={filters} range={range} sp={sp} /></Suspense>
+      <Suspense key={scope + "MetricsTrend"} fallback={<SectionLoading label="tendencia semanal" />}><MetricsTrend filters={filters} range={range} sp={sp} /></Suspense>
       <Suspense key={scope + "MetricsBreakdowns"} fallback={<SectionLoading label="comparaciones" />}><MetricsBreakdowns filters={filters} range={range} sp={sp} /></Suspense>
       <Suspense key={scope + "MetricsRanking"} fallback={<SectionLoading label="ranking de videos" />}><MetricsRanking filters={filters} range={range} sp={sp} /></Suspense>
     </div>
@@ -187,11 +187,14 @@ async function MetricsFilters({ filters, range, sp }: MetricsSectionProps) {
 }
 
 async function MetricsOverview({ filters, range }: MetricsSectionProps) {
-  const [hoy, antes, totalEnBase] = await measurePhase("metrics.summary", () => Promise.all([
+  const [hoy, antes, totalEnBase, historical] = await measurePhase("metrics.summary", () => Promise.all([
     getMetricTotals(filters), getMetricTotals({ ...filters, desde: range.previousFrom, hasta: range.previousTo }),
-    prisma.metric.count({ where: { contentItem: brandWhere(filters.brandId) } }),
+    prisma.metric.count({ where: { period: "WEEKLY", contentItem: brandWhere(filters.brandId) } }),
+    prisma.metric.count({ where: { period: "LEGACY", contentItem: brandWhere(filters.brandId) } }),
   ]));
   return <section data-ready-block="metrics.summary">
+    <p className="text-inkmuted mb-3 text-xs">Semanas completas de lunes a domingo. Las cifras pertenecen a la plataforma registrada. Retención: media simple por registro semanal; incluye 0 % y omite solo datos ausentes.</p>
+    {historical ? <p className="text-warn mb-3 text-xs">{historical} registros históricos conservados en las fichas de video; excluidos de estos totales semanales.</p> : null}
     <p className="text-inkmuted mb-3 text-xs">{formatNumber(hoy.videos)} videos con datos · {formatNumber(hoy.records)} registros</p>
     {hoy.records ? <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
             <Stat
@@ -217,8 +220,8 @@ async function MetricsOverview({ filters, range }: MetricsSectionProps) {
             />
             <Stat
               label="Retención 3s"
-              value={hoy.retention > 0 ? formatPercent(hoy.retention) : "—"}
-              sub={<Delta actual={hoy.retention} anterior={antes.retention} />}
+              value={hoy.retention === null ? "Sin dato" : formatPercent(hoy.retention)}
+              sub={hoy.retention !== null && antes.retention !== null ? <Delta actual={hoy.retention} anterior={antes.retention} /> : <span>Sin comparación</span>}
               icon={<Timer size={15} />}
               accent="#f59e0b"
             />
@@ -257,13 +260,13 @@ async function MetricsTrend({ filters, range }: MetricsSectionProps) {
   const rows = await measurePhase("metrics.series", () => getMetricSeries(filters));
   const days = new Map(rows.map(row => [row.day, row.views]));
   const views = rows.reduce((sum, row) => sum + row.views, 0);
-  const serie: Point[] = Array.from({ length: range.days }, (_, index) => {
-    const day = shiftReportDay(range.desde, index);
+  const serie: Point[] = Array.from({ length: range.days / 7 }, (_, index) => {
+    const day = shiftReportDay(range.desde, index * 7);
     return { label: day.slice(8) + "/" + day.slice(5,7), value: days.get(day) ?? 0 };
   });
   return <section data-ready-block="metrics.series"><Card className="mb-4">
             <CardHeader
-              title="Vistas por día"
+              title="Vistas por semana"
               subtitle={`Total del periodo: ${formatNumber(views)} vistas`}
               icon={<BarChart3 size={14} />}
             />
@@ -271,7 +274,7 @@ async function MetricsTrend({ filters, range }: MetricsSectionProps) {
               <LineChart
                 data={serie}
                 height={210}
-                emptyLabel="Hacen falta al menos dos días con datos para dibujar la tendencia."
+                emptyLabel="Hacen falta al menos dos semanas con datos para dibujar la tendencia."
               />
             </div>
           </Card></section>;
@@ -288,7 +291,7 @@ async function MetricsBreakdowns({ filters }: MetricsSectionProps) {
             <Card>
               <CardHeader
                 title="Vistas por red"
-                subtitle="Un video publicado en varias redes suma en cada una"
+                subtitle="Cada registro se atribuye únicamente a la red indicada al cargarlo"
               />
               <div className="p-4">
                 {barrasPlataformas.length ? (

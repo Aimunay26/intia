@@ -1,4 +1,6 @@
 "use server";
+import { parseTeamAccess, saveTeamAccess } from "@/lib/team-access";
+
 import { revalidatePath } from "next/cache";
 import { requireUser, requireLevel, can, hashPassword, createSession, LEVEL } from "@/lib/auth";
 import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
@@ -11,7 +13,7 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const LABELS = { ...FIELD_LABELS, name: "Nombre", email: "Correo", role: "Rol", color: "Color", phone: "Teléfono", bio: "Descripción", archetypeId: "Arquetipo" };
 const errorState = (error: unknown): TeamState => ({ error: error instanceof SecurityError ? error.message : "No se pudo guardar. Comprueba los datos y que el correo no esté ocupado." });
-function refresh(self = false) { revalidatePath("/equipo"); revalidatePath("/actividad"); if (self) revalidatePath("/", "layout"); }
+function refresh(self = false) { revalidatePath("/mi-perfil"); revalidatePath("/equipo"); revalidatePath("/actividad"); if (self) revalidatePath("/", "layout"); }
 function profile(form: FormData) {
   const name = field(form, "name"), phone = fieldOrNull(form, "phone"), bio = fieldOrNull(form, "bio");
   if (name.length < 2 || name.length > 100 || (phone?.length ?? 0) > 50 || (bio?.length ?? 0) > 5000) throw new SecurityError("Revisa la longitud del nombre, teléfono y descripción.");
@@ -28,6 +30,7 @@ export async function crearUsuario(_prev: TeamState, formData: FormData): Promis
   const actor = await requireLevel(LEVEL.OWNER);
   try {
     const data = { ...profile(formData), ...account(formData) };
+    const access = parseTeamAccess(formData);
     const password = String(formData.get("password") ?? "");
     const invalid = passwordError(password); if (invalid) return { error: invalid };
     const passwordHash = await hashPassword(password);
@@ -35,7 +38,8 @@ export async function crearUsuario(_prev: TeamState, formData: FormData): Promis
     await withAuthLock(async tx => {
       await assertActor(tx, actor, true);
       const created = await tx.user.create({ data: { ...data, color, passwordHash, active: true } });
-      await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "User", entityId: created.id, summary: `Invitó a ${created.name} al equipo como ${created.role === "OWNER" ? "dueño" : "miembro"}` });
+      const accessChanges = await saveTeamAccess(tx, created.id, access);
+      await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "User", entityId: created.id, summary: `Invitó a ${created.name} al equipo como ${created.role === "OWNER" ? "dueño" : "miembro"}`, changes: accessChanges ? { access: { etiqueta: "Perfiles y marcas autorizadas", antes: JSON.stringify(accessChanges.before), despues: JSON.stringify(accessChanges.after) } } : undefined });
     });
     refresh(); return { ok: "Cuenta creada. Comparte su contraseña inicial por un canal privado." };
   } catch (error) { return errorState(error); }
@@ -46,7 +50,9 @@ export async function actualizarUsuario(_prev: TeamState, formData: FormData): P
   const self = actor.id === id, admin = can(actor.role, LEVEL.OWNER);
   if (!self && !admin) return { error: "Solo el dueño puede editar a otras personas." };
   try {
-    const base = profile(formData), privileged = admin ? account(formData) : null;
+    if (!admin && ["role", "archetypeId", "profiles", "brandIds", "accessConfigured"].some(key => formData.has(key))) throw new SecurityError("Solo el dueño puede cambiar los permisos.");
+    const base = profile(formData), privileged = admin && formData.get("selfProfile") !== "1" ? account(formData) : null;
+    const access = privileged ? parseTeamAccess(formData) : null;
     await withAuthLock(async tx => {
       await assertActor(tx, actor, admin);
       const before = await tx.user.findUniqueOrThrow({ where: { id } });
@@ -54,13 +60,14 @@ export async function actualizarUsuario(_prev: TeamState, formData: FormData): P
       const data = { ...base, color: HEX_RE.test(raw) ? raw : before.color, ...(privileged ?? {}) };
       if (privileged && before.role !== privileged.role) await preserveOwner(tx, id);
       const changes = diffFields(before, data, LABELS);
-      if (!changes) return;
+      const accessChanges = await saveTeamAccess(tx, id, access);
+      if (!changes && !accessChanges) return;
       const revoke = Boolean(privileged && (before.role !== privileged.role || before.email !== privileged.email));
       await tx.user.update({ where: { id }, data: { ...data, ...(revoke ? { sessionVersion: { increment: 1 } } : {}) } });
       if (revoke) await tx.authSession.deleteMany({ where: { userId: id } });
-      await auditInTransaction(tx, { user: actor, action: "EDITAR", entity: "User", entityId: id, summary: self ? "Editó su propio perfil" : `Editó la ficha de ${before.name}`, changes });
+      await auditInTransaction(tx, { user: actor, action: "EDITAR", entity: "User", entityId: id, summary: self ? "Editó su propio perfil" : `Editó la ficha de ${before.name}`, changes: { ...changes, ...(accessChanges ? { access: { etiqueta: "Perfiles y marcas autorizadas", antes: JSON.stringify(accessChanges.before), despues: JSON.stringify(accessChanges.after) } } : {}) } });
     });
-    refresh(self); return { ok: "Datos guardados. Si cambiaste el correo o rol, las sesiones anteriores quedaron cerradas." };
+    refresh(self); return { ok: "Datos guardados. Si cambiaste el correo, rol, perfiles o marcas, las sesiones anteriores quedaron cerradas." };
   } catch (error) { return errorState(error); }
 }
 

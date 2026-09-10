@@ -1,0 +1,253 @@
+import { createHash, randomUUID } from "node:crypto";
+import { Prisma } from "@prisma/client";
+import { z } from "zod";
+import { prisma, type AppTransaction } from "@/lib/prisma";
+import { assertActor } from "@/lib/auth-transactions";
+import type { SessionUser } from "@/lib/auth";
+import { auditInTransaction } from "@/lib/audit";
+import { resolveAiModel } from "@/lib/ai-models";
+import { generateScript, AiError, type GenerateInput, type GenerateOutput } from "@/lib/ai";
+import { esErrorDeAutenticacion } from "@/lib/ai/providers";
+import { persistGeneratedScript, vincularGuionAVideo } from "@/lib/generation-persist";
+import { revalidatePath } from "next/cache";
+import { reserveUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
+import { allows, assertBrandPermission, assertPermission } from "@/lib/permissions";
+import { contentScope, generationScope, scriptScope } from "@/lib/access-scope";
+
+const text = z.string().max(12000).optional();
+const payloadSchema = z.object({
+  brandId: z.string().max(100).nullable().optional(), archetypeId: z.string().max(100).nullable().optional(),
+  request: z.string().trim().min(1).max(12000), productFocus: text, variantHint: text,
+  durationSec: z.number().int().min(1).max(600).optional(), provider: z.enum(["anthropic", "google"]),
+  model: z.string().max(120).optional(), cta: text, creativeAngle: text, ctaTrigger: text,
+  ctaActionType: text, ctaDetail: text,
+  /** Tarjeta del calendario a la que se unirá el PRIMER guion del lote. */
+  contentItemId: z.string().max(100).nullable().optional(),
+  /** Cierre con venta (Hormozi) o sin venta (comunidad). Ausente = venta. */
+  ctaMode: z.enum(["venta", "comunidad"]).optional(),
+});
+const active = ["QUEUED", "RUNNING"];
+/** Estados de la tarjeta en los que todavía admite guion (el mismo filtro que ofrece el generador). */
+const VIDEO_ABIERTO = ["IDEA", "GUION"];
+/** Motivo con que se anotan los formatos que quedan sin intentar cuando la clave es rechazada. */
+const MOTIVO_CLAVE_RECHAZADA = "No se intentó: la clave fue rechazada. Corrige la clave en Ajustes y vuelve a generar solo este formato.";
+
+export type EnqueueInput = Omit<GenerateInput, "structureId"> & { contentItemId?: string | null; ctaMode?: "venta" | "comunidad" };
+const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+
+export async function enqueueGeneration(user: SessionUser, requestKey: string, structures: string[], input: EnqueueInput) {
+  assertBrandPermission(user, input.brandId, "scripts.generate");
+  if (process.env.AI_JOBS_ENABLED !== "true") throw new Error("La generación en segundo plano aún no está habilitada.");
+  if (!z.string().uuid().safeParse(requestKey).success) throw new Error("Recarga el formulario antes de generar.");
+  const parsed = payloadSchema.safeParse(input);
+  if (!parsed.success) throw new Error("Revisa la petición, el modelo y la duración (máximo 600 segundos).");
+  const payload = parsed.data;
+  if (payload.model) resolveAiModel(payload.provider, payload.model);
+  const structureIds = [...new Set(structures)].sort();
+  if (!structureIds.length || structureIds.length > resourceLimit("AI_MAX_BATCH", 3) || structureIds.some(id => id.length > 100)) throw new Error("Elige entre una y tres estructuras por generación.");
+  if (Buffer.byteLength(JSON.stringify(payload)) > 48000) throw new Error("La petición es demasiado larga. Reduce los detalles antes de generar.");
+  const fingerprint = createHash("sha256").update(JSON.stringify({ structureIds, payload })).digest("hex");
+  return prisma.$transaction(async tx => {
+    await assertActor(tx, user);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`generation:${user.id}`}, 0))`;
+    const previous = await tx.generationJob.findUnique({ where: { userId_requestKey: { userId: user.id, requestKey } } });
+    if (previous) {
+      if (previous.fingerprint !== fingerprint) throw new Error("Este envío ya fue utilizado con otra petición. Recarga el formulario.");
+      return previous.id;
+    }
+    if (await tx.generationJob.count({ where: { userId: user.id, status: { in: active } } }) >= 2) throw new Error("Ya tienes dos generaciones pendientes. Espera a que terminen o cancela una.");
+    if (await tx.structure.count({ where: { id: { in: structureIds } } }) !== structureIds.length) throw new Error("Una estructura ya no existe.");
+    if (payload.brandId && !await tx.brand.count({ where: { id: payload.brandId } })) throw new Error("La marca ya no existe.");
+    if (payload.archetypeId && !await tx.archetype.count({ where: { id: payload.archetypeId } })) throw new Error("El arquetipo ya no existe.");
+    if (payload.contentItemId) {
+      // La guarda definitiva contra una pestaña vieja o un doble envío vive en
+      // vincularGuionAVideo, que solo escribe si la tarjeta sigue libre; aquí se
+      // evita registrar un trabajo (y gastar llamadas) que ya no puede unirse.
+      const video = await tx.contentItem.findFirst({ where: { AND: [{ id: payload.contentItemId }, contentScope(user, "scripts.generate")] }, select: { brandId: true, status: true, scriptId: true } });
+      if (!video) throw new Error("Ese video ya no existe o no tienes acceso a él. Elige otra tarjeta o genera un guion suelto.");
+      if (video.scriptId) throw new Error("Ese video ya tiene un guion vinculado. Quítalo desde su ficha o genera un guion suelto.");
+      if (!VIDEO_ABIERTO.includes(video.status)) throw new Error("Ese video ya no admite guion: solo se vinculan tarjetas en Idea o Guion.");
+      if (payload.brandId !== video.brandId) throw new Error("La marca elegida no es la del video.");
+    }
+    await reserveUsage(tx, `ai:jobs:${usageDay()}`, 1, resourceLimit("AI_DAILY_JOBS", 20));
+    const job = await tx.generationJob.create({ data: {
+      userId: user.id, sessionVersion: user.sessionVersion ?? 0, requestKey, fingerprint, payload: json(payload),
+      items: { create: structureIds.map((structureId, order) => ({ structureId, order })) },
+    } });
+    await auditInTransaction(tx, { user, action: "GENERAR", entity: "GenerationJob", entityId: job.id, brandId: payload.brandId, summary: `Solicitó ${structureIds.length} guiones en segundo plano` });
+    return job.id;
+  });
+}
+
+async function lockJob(tx: AppTransaction, id: string) {
+  await tx.$queryRaw`SELECT "id" FROM "GenerationJob" WHERE "id" = ${id} FOR UPDATE`;
+  return tx.generationJob.findUnique({ where: { id }, include: { items: { orderBy: { order: "asc" } } } });
+}
+
+async function actorForJob(tx: AppTransaction, job: { userId: string; sessionVersion: number; payload: Prisma.JsonValue }) {
+  const user = await tx.user.findUnique({ where: { id: job.userId }, select: { id: true, name: true, email: true, role: true, color: true, archetypeId: true, sessionVersion: true, active: true, workProfiles: { select: { profile: true } }, brandAccess: { select: { brandId: true } } } });
+  if (!user?.active || user.sessionVersion !== job.sessionVersion || !["OWNER", "MEMBER"].includes(user.role)) return null;
+  const actor = { ...user, profiles: user.workProfiles.map(p => p.profile), brandIds: user.brandAccess.map(b => b.brandId) };
+  const payload = payloadSchema.safeParse(job.payload);
+  if (!payload.success || !allows(actor, "scripts.generate") || (actor.role !== "OWNER" && (!payload.data.brandId || !actor.brandIds.includes(payload.data.brandId)))) return null;
+  await assertActor(tx, actor);
+  return actor;
+}
+
+export type GenerationProgress = { done: boolean; retryAt?: number };
+
+/** Una llamada al proveedor por intento. La concesión supera el timeout HTTP y cada escritura exige su token. */
+export async function processGeneration(jobId: string): Promise<GenerationProgress> {
+  const claim = await prisma.$transaction(async tx => {
+    const job = await lockJob(tx, jobId);
+    if (!job || !active.includes(job.status)) return { done: true } as const;
+    const user = await actorForJob(tx, job);
+    if (!user || Date.now() - job.createdAt.getTime() > 86400000 || process.env.AI_JOBS_ENABLED !== "true") {
+      await tx.generationJob.update({ where: { id: jobId }, data: { status: "CANCELLED", error: "La generación expiró o su acceso fue revocado." } });
+      await tx.generationItem.updateMany({ where: { jobId, status: { in: active } }, data: { status: "CANCELLED", response: Prisma.DbNull } });
+      return { done: true } as const;
+    }
+    const item = job.items.find(i => active.includes(i.status));
+    if (!item) {
+      const completed = job.items.filter(i => i.status === "COMPLETED").length;
+      const status = completed === job.items.length ? "COMPLETED" : completed ? "PARTIAL" : "FAILED";
+      const aviso = await avisoFinal(tx, job, completed);
+      await tx.generationJob.update({ where: { id: jobId }, data: { status, ...(aviso ? { error: aviso } : {}) } });
+      return { done: true } as const;
+    }
+    const retryAt = Math.max(item.availableAt.getTime(), item.leaseUntil?.getTime() ?? 0);
+    if (retryAt > Date.now()) return { done: false, retryAt } as const;
+    if (!item.response && item.attempts >= 3) {
+      await tx.generationItem.update({ where: { id: item.id }, data: { status: "FAILED", error: "Se agotaron los tres intentos. Revisa la configuración antes de iniciar otra generación." } });
+      return { done: false } as const;
+    }
+    const leaseToken = randomUUID();
+    await tx.generationItem.update({ where: { id: item.id }, data: { status: "RUNNING", leaseToken, leaseUntil: new Date(Date.now() + 360000), error: null } });
+    await tx.generationJob.update({ where: { id: jobId }, data: { status: "RUNNING", error: null } });
+    return { item, leaseToken, input: { ...payloadSchema.parse(job.payload), structureId: item.structureId }, user };
+  });
+  if (claim.done !== undefined) return { done: claim.done, retryAt: claim.retryAt };
+  const { item, input, leaseToken } = claim;
+  let result = item.response as GenerateOutput | null;
+  if (!result) {
+    try {
+      await prisma.$transaction(async tx => {
+        const job = await lockJob(tx, jobId);
+        if (!job || !active.includes(job.status) || !await actorForJob(tx, job)) throw new Error("La generación fue cancelada o su acceso cambió.");
+        const current = job.items.find(i => i.id === item.id);
+        if (current?.leaseToken !== leaseToken) throw new Error("Otro proceso recuperó esta generación.");
+        const day = usageDay();
+        await reserveUsage(tx, `ai:calls:${day}`, 1, resourceLimit("AI_DAILY_CALLS", 20));
+        await reserveUsage(tx, `ai:user:${job.userId}:${day}`, 1, resourceLimit("AI_USER_DAILY_CALLS", 5));
+        await tx.generationItem.update({ where: { id: item.id }, data: { attempts: { increment: 1 } } });
+      });
+      result = await generateScript(input);
+    } catch (error) {
+      const claveRechazada = esErrorDeAutenticacion(error);
+      const retry = !claveRechazada && error instanceof AiError && error.retryable && item.attempts + 1 < 3;
+      // Sólo metadatos: nunca claves, prompts, respuestas ni el error crudo del SDK.
+      console.warn(JSON.stringify({ event: "generation_attempt_failed", jobId, itemId: item.id,
+        attempt: item.attempts + 1, retry, ...(error instanceof AiError ? error.diagnostic : {}) }));
+      await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: {
+        status: retry ? "QUEUED" : "FAILED", error: error instanceof AiError ? error.message : "No se pudo generar. Revisa el cupo disponible y los datos de la petición.",
+        availableAt: new Date(Date.now() + 30000 * (item.attempts + 1)), leaseToken: null, leaseUntil: null,
+      } });
+      // Con la clave rechazada, cada formato siguiente fallaría igual: se
+      // cortan aquí en vez de gastar intentos. Lo ya creado se conserva y el
+      // aviso final dice cuáles no se intentaron y por qué.
+      if (claveRechazada) await prisma.generationItem.updateMany({ where: { jobId, status: "QUEUED", job: { status: { in: active } } }, data: { status: "FAILED", error: MOTIVO_CLAVE_RECHAZADA, response: Prisma.DbNull } });
+      return { done: false };
+    }
+    // Se conserva antes de crear el guion: una caída de DB posterior no obliga a pagar otra respuesta.
+    const saved = await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: { response: json(result), inputTokens: result.inputTokens ?? 0, outputTokens: result.outputTokens ?? 0 } });
+    if (!saved.count) return { done: false };
+  }
+  await prisma.$transaction(async tx => {
+    const job = await lockJob(tx, jobId);
+    if (!job || !active.includes(job.status)) return;
+    const current = job.items.find(i => i.id === item.id);
+    if (current?.leaseToken !== leaseToken || current.status !== "RUNNING") return;
+    const user = await actorForJob(tx, job);
+    if (!user) {
+      await tx.generationJob.update({ where: { id: jobId }, data: { status: "CANCELLED" } });
+      await tx.generationItem.updateMany({ where: { jobId, status: { in: active } }, data: { status: "CANCELLED", response: Prisma.DbNull } });
+      return;
+    }
+    const scriptId = await persistGeneratedScript(tx, user, item.id, input, result!);
+    await tx.generationItem.update({ where: { id: item.id }, data: { status: "COMPLETED", response: Prisma.DbNull, leaseToken: null, leaseUntil: null, error: null } });
+    // La tarjeta solo admite un guion: se une el PRIMERO que sale del lote en
+    // cuanto existe, no al final, para que el video tenga guion aunque el resto
+    // falle. Los demás quedan sueltos y se asignan desde su ficha. Solo se
+    // escribe si la tarjeta sigue libre: un vínculo hecho mientras tanto no se pisa.
+    const primero = !job.items.some(i => i.id !== item.id && i.status === "COMPLETED");
+    if (input.contentItemId && primero) return vincularGuionAVideo(tx, user, scriptId, input.contentItemId);
+    return false;
+  }, { timeout: 15000 }).then(vinculado => {
+    if (!vinculado) return;
+    // El vínculo cambia calendario y videos; fuera de un contexto de petición no hay caché que invalidar.
+    try { for (const ruta of ["/contenido", `/contenido/${input.contentItemId}`, "/calendario", "/"]) revalidatePath(ruta); } catch {}
+  });
+  return { done: false };
+}
+
+/* ------------------------------------------------------------ AVISO FINAL -- */
+
+function listarNombres(nombres: string[]): string {
+  const citados = nombres.map(n => `«${n}»`);
+  if (citados.length <= 1) return citados.join("");
+  return `${citados.slice(0, -1).join(", ")} y ${citados[citados.length - 1]}`;
+}
+
+/**
+ * Texto que acompaña al trabajo terminado cuando algo quedó a medias: qué
+ * formatos fallaron, cuáles no se intentaron porque la clave fue rechazada y
+ * si el primer guion no pudo unirse al video pedido. Se guarda en `error`
+ * del trabajo, que la pantalla de avance muestra como aviso junto al estado.
+ */
+async function avisoFinal(tx: AppTransaction, job: { payload: Prisma.JsonValue; items: { id: string; structureId: string; status: string; error: string | null }[] }, completed: number): Promise<string | null> {
+  const partes: string[] = [];
+  const fallidos = job.items.filter(i => i.status === "FAILED" || i.status === "CANCELLED");
+  if (fallidos.length) {
+    const estructuras = await tx.structure.findMany({ where: { id: { in: fallidos.map(i => i.structureId) } }, select: { id: true, name: true } });
+    const nombre = (id: string) => estructuras.find(s => s.id === id)?.name ?? "formato";
+    const noIntentados = fallidos.filter(i => i.error === MOTIVO_CLAVE_RECHAZADA);
+    const conError = fallidos.filter(i => i.error !== MOTIVO_CLAVE_RECHAZADA);
+    if (conError.length) partes.push(`${conError.length === 1 ? "Falló" : "Fallaron"} ${listarNombres(conError.map(i => nombre(i.structureId)))}: revisa el detalle de cada formato`);
+    if (noIntentados.length) {
+      const frase = `no se ${noIntentados.length === 1 ? "intentó" : "intentaron"} ${listarNombres(noIntentados.map(i => nombre(i.structureId)))} porque la clave fue rechazada`;
+      partes.push(partes.length ? frase : `${frase.charAt(0).toUpperCase()}${frase.slice(1)}`);
+    }
+  }
+  const lote = fallidos.length ? `Se generaron ${completed} de ${job.items.length}. ${partes.join("; ")}.` : "";
+  const payload = payloadSchema.safeParse(job.payload);
+  const contentItemId = payload.success ? payload.data.contentItemId : null;
+  if (!contentItemId || !completed) return lote || null;
+  const video = await tx.contentItem.findUnique({ where: { id: contentItemId }, select: { title: true, scriptId: true } });
+  const unido = video?.scriptId ? await tx.script.count({ where: { id: video.scriptId, generationItemId: { in: job.items.map(i => i.id) } } }) : 0;
+  if (unido) return lote || null;
+  const sinVinculo = video
+    ? `El guion se creó, pero no quedó unido al video «${video.title}»: la tarjeta ya recibió otro guion mientras se generaba. Si hace falta, asígnalo desde la ficha del guion.`
+    : "El guion se creó, pero no quedó unido al video pedido porque la tarjeta ya no existe.";
+  return [lote, sinVinculo].filter(Boolean).join(" ");
+}
+
+export async function generationStatus(user: SessionUser, id: string) {
+  assertPermission(user, "scripts.generate");
+  return prisma.generationJob.findFirst({ where: { AND: [{ id }, generationScope(user)] }, select: {
+    id: true, status: true, error: true, createdAt: true, runId: true,
+    items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, status: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { where: scriptScope(user), select: { id: true, title: true } } } },
+  } });
+}
+
+export async function cancelGeneration(user: SessionUser, id: string) {
+  assertPermission(user, "scripts.generate");
+  await prisma.$transaction(async tx => {
+    const job = await lockJob(tx, id);
+    await assertActor(tx, user);
+    if (!job || (user.role !== "OWNER" && job.userId !== user.id)) throw new Error("Generación no encontrada.");
+    if (!active.includes(job.status)) return;
+    await tx.generationJob.update({ where: { id }, data: { status: "CANCELLED" } });
+    await tx.generationItem.updateMany({ where: { jobId: id, status: { in: active } }, data: { status: "CANCELLED", response: Prisma.DbNull } });
+    await auditInTransaction(tx, { user, action: "EDITAR", entity: "GenerationJob", entityId: id, summary: "Canceló una generación pendiente" });
+  });
+}

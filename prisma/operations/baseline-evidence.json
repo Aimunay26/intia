@@ -1,0 +1,9 @@
+{
+  "source": "Neon main, consulta de solo lectura mediante SQL Editor",
+  "scope": "24 tablas public: columnas, tipos, nulabilidad, defaults, indices, constraints y cantidad de triggers; excluye _prisma_migrations y schemas gestionados por Neon",
+  "fingerprint": "e67c1e9746d69db1e2b68d5301bcd28f",
+  "localBaselineMatches": true,
+  "productionBaselineRegistered": false,
+  "weeklyMigrationAppliedToProduction": false,
+  "checkedOn": "2026-09-09"
+}

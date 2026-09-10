@@ -19,3 +19,8 @@ dev-log.txt
 
 .vercel
 .audit/
+
+# Workflow: artefactos generados y persistencia local
+.workflow-data/
+src/app/.well-known/workflow/
+/.swc

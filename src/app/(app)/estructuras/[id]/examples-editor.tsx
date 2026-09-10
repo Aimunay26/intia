@@ -1,20 +1,21 @@
 "use client";
+import { EditForm, RevisionField } from "@/components/edit-form";
 
-import { useState } from "react";
 import {
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  Save,
-  Sparkles,
-  Trash2,
-  Trophy,
+	ChevronDown,
+	ChevronRight,
+	Plus,
+	Save,
+	Sparkles,
+	Trash2,
+	Trophy,
 } from "lucide-react";
+import { useState } from "react";
 
 import { guardarEjemplos, type Example } from "@/app/actions/structures";
-import { formatNumber, truncate } from "@/lib/utils";
-import { Callout, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
+import { Callout, EmptyState } from "@/components/ui";
+import { formatNumber, truncate } from "@/lib/utils";
 
 type Row = Example & { key: string };
 
@@ -34,10 +35,12 @@ function limpiar(items: Example[]): Example[] {
  */
 export function ExamplesEditor({
   structureId,
+  updatedAt,
   examples,
   canEdit,
 }: {
   structureId: string;
+  updatedAt: string;
   examples: Example[];
   canEdit: boolean;
 }) {
@@ -66,7 +69,8 @@ export function ExamplesEditor({
   };
 
   return (
-    <form action={guardarEjemplos} className="card">
+    <EditForm action={guardarEjemplos} className="card">
+<RevisionField value={updatedAt} />
       <input type="hidden" name="id" value={structureId} />
       <input type="hidden" name="examples" value={serializado} />
 
@@ -194,6 +198,6 @@ export function ExamplesEditor({
           </SubmitButton>
         </div>
       ) : null}
-    </form>
+    </EditForm>
   );
 }

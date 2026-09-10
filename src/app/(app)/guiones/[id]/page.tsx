@@ -1,78 +1,80 @@
-import { requirePageUser as requireUser } from "@/lib/render-context";
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
+import { EditForm, RevisionField } from "@/components/edit-form";
+import {
+	Camera,
+	Clapperboard,
+	Copy,
+	Film,
+	Lightbulb,
+	Link as LinkIcon,
+	MapPin,
+	Mic,
+	Music,
+	Package,
+	Plus,
+	Smile,
+	Sparkles,
+	StickyNote,
+	Trash2,
+	Type,
+	Unlink,
+	UserSquare2,
+	Users,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Camera,
-  Clapperboard,
-  Copy,
-  Film,
-  Lightbulb,
-  Link as LinkIcon,
-  MapPin,
-  Mic,
-  Music,
-  Package,
-  Plus,
-  Smile,
-  Sparkles,
-  StickyNote,
-  Trash2,
-  Type,
-  Unlink,
-  UserSquare2,
-  Users,
-} from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
-import { can, LEVEL } from "@/lib/auth";
-import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import {
-  actualizarGuion,
-  anadirEscena,
-  asignarGuionAVideo,
-  cambiarEstadoGuion,
-  desvincularGuionDeVideo,
-  duplicarGuion,
-  eliminarGuion,
+	actualizarGuion,
+	anadirEscena,
+	asignarGuionAVideo,
+	cambiarEstadoGuion,
+	desvincularGuionDeVideo,
+	duplicarGuion,
+	eliminarGuion,
 } from "@/app/actions/scripts";
 import {
-  AI_PROVIDER_MAP,
-  CONTENT_STATUS_MAP,
-  SCRIPT_STATUSES,
-  SCRIPT_STATUS_MAP,
-  VOICE_TYPE_MAP,
-} from "@/lib/constants";
-import {
-  cn,
-  formatDate,
-  formatDateTime,
-  formatRange,
-  formatSeconds,
-  parseJson,
-  parseList,
-} from "@/lib/utils";
-import type { Beat } from "@/lib/ai/context";
-import {
-  Badge,
-  Breadcrumb,
-  Card,
-  CardHeader,
-  ColorChip,
-  EmptyState,
-  Field,
-  SectionTitle,
-} from "@/components/ui";
-import {
-  AutoSubmitSelect,
-  CopyButton,
-  DeleteButton,
-  SubmitButton,
+	AutoSubmitSelect,
+	CopyButton,
+	DeleteButton,
+	SubmitButton,
 } from "@/components/forms";
 import {
-  PrintButton,
-  SceneEditor,
-  ScriptSheetEditor,
-  type SceneActor,
+	Badge,
+	Breadcrumb,
+	Card,
+	CardHeader,
+	ColorChip,
+	EmptyState,
+	Field,
+	SectionTitle,
+} from "@/components/ui";
+import type { Beat } from "@/lib/ai/context";
+import { LEVEL, can } from "@/lib/auth";
+import {
+	AI_PROVIDER_MAP,
+	CONTENT_STATUS_MAP,
+	SCRIPT_STATUSES,
+	SCRIPT_STATUS_MAP,
+	VOICE_TYPE_MAP,
+} from "@/lib/constants";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
+import { prisma } from "@/lib/prisma";
+import {
+	cn,
+	formatDate,
+	formatDateTime,
+	formatRange,
+	formatSeconds,
+	parseJson,
+	parseList,
+} from "@/lib/utils";
+import {
+	PrintButton,
+	SceneEditor,
+	ScriptSheetEditor,
+	type SceneActor,
 } from "./scene-editor";
 
 /* ------------------------------------------------------------- AUXILIARES -- */
@@ -122,7 +124,8 @@ function DatoCard({
 /* ------------------------------------------------------------------ PAGINA -- */
 
 export default async function GuionPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requirePageSection("scripts");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="scripts" id={(await params).id} />;
   const { id } = await params;
 
   const script = await prisma.script.findUnique({
@@ -305,7 +308,8 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
 
           {canEdit ? (
             <>
-              <form action={actualizarGuion} className="no-print mt-1.5 flex items-center gap-2">
+              <EditForm action={actualizarGuion} className="no-print mt-1.5 flex items-center gap-2">
+<RevisionField value={script.updatedAt} />
                 <input type="hidden" name="id" value={script.id} />
                 <input
                   name="title"
@@ -317,7 +321,7 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
                 <SubmitButton className="btn btn-sm" pendingLabel="Guardando…">
                   Guardar
                 </SubmitButton>
-              </form>
+              </EditForm>
               <h1 className="text-ink hidden text-[20px] leading-tight font-bold tracking-tight print:block">
                 {script.title}
               </h1>
@@ -363,7 +367,8 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
 
         <div className="no-print flex shrink-0 flex-wrap items-center gap-2">
           {canEdit ? (
-            <form action={cambiarEstadoGuion}>
+            <EditForm action={cambiarEstadoGuion}>
+<RevisionField value={script.updatedAt} />
               <input type="hidden" name="id" value={script.id} />
               <AutoSubmitSelect
                 name="status"
@@ -372,7 +377,7 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
                 className="select h-[30px] w-[150px] text-[12px]"
                 options={SCRIPT_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
               />
-            </form>
+            </EditForm>
           ) : (
             <Badge option={SCRIPT_STATUS_MAP[script.status]} fallback={script.status} />
           )}
@@ -384,7 +389,7 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
             <>
               <ScriptSheetEditor
                 script={{
-                  id: script.id,
+                  id: script.id, updatedAt: script.updatedAt.toISOString(),
                   brandId: script.brandId,
                   structureId: script.structureId,
                   avatar: script.avatar ?? "",
@@ -568,13 +573,14 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
       <SectionTitle
         action={
           canEdit ? (
-            <form action={anadirEscena}>
+            <EditForm action={anadirEscena}>
+<RevisionField value={script.updatedAt} />
               <input type="hidden" name="scriptId" value={script.id} />
               <SubmitButton className="btn btn-sm no-print" pendingLabel="Añadiendo…">
                 <Plus size={13} />
                 Añadir escena
               </SubmitButton>
-            </form>
+            </EditForm>
           ) : null
         }
       >
@@ -624,7 +630,7 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
                   {canEdit ? (
                     <SceneEditor
                       scene={{
-                        id: escena.id,
+                        id: escena.id, scriptUpdatedAt: script.updatedAt.toISOString(),
                         order: escena.order,
                         beat: escena.beat,
                         startSec: escena.startSec,

@@ -1,3 +1,4 @@
+import { EditForm, RevisionField } from "@/components/edit-form";
 import type { Archetype } from "@prisma/client";
 import { BadgeCheck, Eye, MessageSquareQuote, Palette, Sparkles, TriangleAlert } from "lucide-react";
 
@@ -277,7 +278,8 @@ export function BrandingForm({ a }: { a: Archetype }) {
   const guardar = actualizarMarcaPersonal.bind(null, a.id);
 
   return (
-    <form action={guardar}>
+    <EditForm action={guardar}>
+<RevisionField value={a.updatedAt} />
       <Card>
         <CardHeader
           title="Editar marca personal"
@@ -574,6 +576,6 @@ export function BrandingForm({ a }: { a: Archetype }) {
           </SubmitButton>
         </div>
       </Card>
-    </form>
+    </EditForm>
   );
 }

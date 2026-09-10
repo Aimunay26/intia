@@ -83,6 +83,7 @@ function BloqueProveedor({
   placeholder: string;
 }) {
   const [claveInput, setClaveInput] = useState("");
+  const [modeloActual, setModeloActual] = useState(modelo);
   const [probando, setProbando] = useState(false);
   const [resultadoPrueba, setResultadoPrueba] = useState<TestKeyResult | null>(null);
 
@@ -99,7 +100,12 @@ function BloqueProveedor({
     setResultadoPrueba(null);
     try {
       // Sin texto se prueba la clave EN USO (la guardada o la del servidor).
-      const res = await probarClaveIA({ provider: id, apiKey: hayTexto ? claveInput : "" });
+      // El modelo es el que hay ahora en el campo, no el que había al abrir.
+      const res = await probarClaveIA({
+        provider: id,
+        apiKey: hayTexto ? claveInput : "",
+        model: modeloActual,
+      });
       setResultadoPrueba(res);
     } catch {
       setResultadoPrueba({ ok: false, error: "Error al comunicar con el servidor." });
@@ -197,12 +203,13 @@ function BloqueProveedor({
       <Field
         label="Modelo por defecto"
         className="mt-3"
-        hint="Se usa cuando la estructura no fija uno. Puedes escribir el nombre de un modelo nuevo aunque no esté en la lista; si está mal escrito, la generación avisará."
+        hint="Se usa cuando la estructura no fija uno. Elige un modelo del catálogo del proveedor: el generador rechaza cualquier otro."
       >
         <input
           name={campoModelo}
           className="input input-mono"
-          defaultValue={modelo}
+          value={modeloActual}
+          onChange={(event) => { setModeloActual(event.target.value); setResultadoPrueba(null); }}
           list={listId}
           placeholder={DEFAULT_MODEL[id] ?? ""}
           spellCheck={false}

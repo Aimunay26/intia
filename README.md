@@ -42,10 +42,10 @@ para una base PostgreSQL de desarrollo vacía. Después:
 npm run setup
 ```
 
-Ese comando genera el cliente de Prisma, crea la base de datos y la llena con los datos
-iniciales: las 21 estructuras de video, 6 plantillas de actor de ejemplo, su matriz de compatibilidad,
-la marca Con Amor con su identidad y sus objetivos, 4 guiones de ejemplo y 14 videos
-repartidos en el calendario con sus checklists, su equipo asignado y sus métricas.
+Ese comando genera el cliente de Prisma y aplica las migraciones versionadas a la base vacía.
+No carga datos de ejemplo. Para una demo local, exporta `DATABASE_URL` en el proceso de la
+terminal y ejecuta `npm run db:seed` por separado. El seed, reset y `db:push` rechazan
+conexiones remotas y entornos Vercel. No se ejecutan automáticamente al instalar o compilar.
 
 ### Primer ingreso
 
@@ -55,11 +55,12 @@ Puedes generar cada uno con `node -e "console.log(require('crypto').randomBytes(
 La primera entrada pide la clave de instalación para crear tu cuenta de dueño. Una vez creada,
 retira `BOOTSTRAP_TOKEN`: el alta queda cerrada permanentemente, incluso si se desactiva una cuenta.
 
-Para actualizar una instalación existente, consulta la [entrega de seguridad e integridad](reports/seguridad-integridad-1-2-2026-09-09.md).
-Requiere aplicar su SQL aditivo antes del código y volver a iniciar sesión. No ejecutar `setup`
-ni el seed sobre producción para hacer esta actualización.
+Para actualizar una instalación existente, sigue el [procedimiento de migraciones](reports/operacion-migraciones.md).
+La [entrega de seguridad e integridad](reports/seguridad-integridad-1-2-2026-09-09.md) documenta
+la versión anterior. La actualización semanal necesita coordinar la migración y el código;
+no debe aplicarse mientras la versión anterior siga recibiendo escrituras.
 
-El resto del equipo de ejemplo (Ana, Paula, Diego, Lucía, Marco) sí existe, con contraseñas
+Si cargaste la demo local, el equipo de ejemplo (Ana, Paula, Diego, Lucía, Marco) existe, con contraseñas
 aleatorias que se imprimieron en la terminal cuando corriste el `seed`. Si las perdiste, se
 cambian desde **Equipo** una vez que entres.
 
@@ -83,7 +84,9 @@ IA escribe el desglose escena por escena. También puedes escribirlo a mano desd
 
 **Fase 3 · La unión.** Abres el guion y, en *Videos donde se graba este guion*, lo asignas a
 la tarjeta. En ese momento el video **hereda la estructura del guion** y pasa de *Idea* a
-*Guion*. Se puede deshacer desde cualquiera de los dos lados.
+*Guion*. Se puede deshacer desde cualquiera de los dos lados. Si en el generador elegiste la
+tarjeta («¿Para qué video es?», o llegaste desde su botón *Crear guion con IA*), la unión la
+hace sola el trabajo de generación con el primer guion que termina.
 
 A partir de ahí el video avanza por sus estados (Aprobado → Grabación → Edición → Programado →
 Publicado), se marcan los checks de producción, se asigna quién hace qué y se cargan las
@@ -231,8 +234,35 @@ En vez de un formulario con scroll vertical largo, el generador organiza la crea
 1. **Formato (21 Estructuras Ganadoras Enriquecidas):** Filtra por objetivo (*Vende* vs *Entretiene*) o busca por nombre. Cada formato cuenta con su **ficha de referencia enriquecida**: modelo mental, gancho en segundos 0 a 3, regla de oro, secreto de retención y ejemplos ganadores reales cargados en el pre-prompt de la IA (incluye *Giro 180°*, *Camaleón 90/10*, *Ellos vs Nosotros*, *PAS*, *UGC*, *Historia de Fundador*, *ASMR Unboxing*, *Hack en 3 pasos*, *Respondiendo Comentarios* y más).
 2. **Identidad & Producto:** Elige la marca, la persona frente a cámara (con su indicador de encaje o fit con el formato) y detalla a fondo el **producto o servicio a grabar** (la IA asimila todas las características, beneficios y objeciones aunque el guion solo lo mencione sutilmente al final).
 3. **Ángulo creativo e idea central (12 Enfoques Virales):** Botones de ángulos (*Camaleón 90/10*, *Ellos vs Nosotros*, *Impacto Visual*, *POV Real*, *Anti-Consejo*, *Experimento*, *Storytime / Confesión*, *Parodia Cotidiana*, *Frente al Hater*, *Hack Oculto*, *ASMR Unboxing*, *Detrás de Cámaras*) que definen el giro psicológico exacto, más la petición o historia del video.
-4. **Cierre CTA (Alex Hormozi):** Gatillos de alta conversión (*$100M Offers* y *$100M Leads*: escasez ética de cupos, urgencia temporal, motivo "porque...", incentivo/regalo, demostración visual en cámara) con fórmulas reactivas y ensamblado automático. El cierre tiene dos modos: **Vender** (esos gatillos) y **Sin venta · Comunidad** (seguir para la parte 2, guardar, enviárselo a alguien concreto, etiquetar con motivo, pregunta abierta, encuesta real, pedir el siguiente tema…). El generador arranca en comunidad cuando la estructura entretiene; en ese modo la IA tiene prohibido meter precios, ofertas, cupos, enlaces o DM aunque la estructura sea de venta. En los lotes de varias estructuras, si la clave es rechazada el lote se detiene; si es cuota, espera 20 s y reintenta una vez; lo ya generado se conserva y el generador dice qué faltó.
-5. **Motor de IA y generación:** Selector de proveedor (Claude / Gemini), modelo, duración y checklist ejecutivo de ideación.
+4. **Cierre CTA (Alex Hormozi):** Gatillos de alta conversión (*$100M Offers* y *$100M Leads*: escasez ética de cupos, urgencia temporal, motivo "porque...", incentivo/regalo, demostración visual en cámara) con fórmulas reactivas y ensamblado automático. El cierre tiene dos modos: **Vender** (esos gatillos) y **Sin venta · Comunidad** (seguir para la parte 2, guardar, enviárselo a alguien concreto, etiquetar con motivo, pregunta abierta, encuesta real, pedir el siguiente tema…). El generador arranca en comunidad cuando la estructura entretiene; en ese modo la IA tiene prohibido meter precios, ofertas, cupos, enlaces o DM aunque la estructura sea de venta. El modo elegido viaja con el trabajo y se aplica a todos los formatos del lote.
+5. **Motor de IA y generación:** Selector de proveedor (Claude / Gemini), modelo (del catálogo del proveedor; ver [Claves de IA](#claves-de-ia)), duración y checklist ejecutivo de ideación.
+
+### La generación corre en segundo plano
+
+Al pulsar **Generar** no se espera a la IA con la pestaña abierta: se registra un **trabajo**
+(un elemento por estructura, hasta tres) y se abre su pantalla de avance en **Generador → Mis
+generaciones**. Ahí aparecen los guiones a medida que salen, qué falló y por qué, y los botones
+*Reanudar si se detuvo* (se permite tras seis minutos sin avance) y *Cancelar pendientes*
+(conserva los guiones ya terminados). Requiere `AI_JOBS_ENABLED="true"` en el servidor; sin
+el flag el generador lo dice y no registra nada.
+
+Lo que admite el trabajo:
+
+- **El video del calendario.** En la etapa 2, *¿Para qué video es?* lista solo tarjetas en
+  *Idea* o *Guion* que aún no tienen guion (o llegas ya con una desde su ficha, con sus
+  formatos previstos preseleccionados). El **primer guion que termina** se une a esa tarjeta:
+  el video hereda la estructura y pasa a *Guion*; los demás guiones del lote quedan sueltos y
+  se asignan desde su ficha. Si mientras se generaba alguien le puso otro guion a la tarjeta,
+  no se pisa: el guion se crea igual, suelto, y el trabajo lo avisa junto a su estado.
+- **El modo de CTA** (*Vender* o *Sin venta · Comunidad*), que se aplica a todos los formatos
+  del lote y queda anotado en el brief de cada guion.
+
+Si algo falla, el trabajo lo dice con el mismo criterio que la pantalla de Ajustes: qué pasó,
+qué hacer y, si la clave fue rechazada, de dónde salió. Cuota, error del proveedor o tiempo agotado se reintentan
+solos (hasta tres intentos por formato, con espera creciente). **Si la clave es rechazada, se
+cancelan los formatos restantes del lote** («No se intentó: la clave fue rechazada…»): repetir
+solo gastaría intentos. Lo ya generado se conserva siempre, y el aviso final distingue lo que
+falló de lo que no se intentó.
 
 ### Lo que devuelve
 
@@ -323,47 +353,55 @@ ANTHROPIC_API_KEY="sk-ant-..."
 GEMINI_API_KEY="..."
 ```
 
-Solo se usan cuando no hay clave guardada en Ajustes. Para volver a ellas, marca «Quitar la
-clave guardada» en Ajustes. La pantalla muestra siempre el origen de la clave en uso
-(«guardada en Ajustes» o «variable de entorno») y el botón **Probar la clave en uso** hace una
-llamada mínima real con `claude-haiku-4-5` o `gemini-2.5-flash` para confirmar que funciona.
+Solo se usan cuando no hay clave guardada en Ajustes (para Gemini también vale
+`GOOGLE_API_KEY` como alias). Para volver a ellas, marca «Quitar la clave guardada» en Ajustes.
+La pantalla muestra siempre el origen de la clave en uso («guardada en Ajustes» o «variable de
+entorno») y el botón **Probar la clave en uso** la comprueba contra el proveedor real sin
+guardar nada: con Claude hace una petición mínima de un token con `claude-haiku-4-5` (confirma
+también el saldo); con Gemini **consulta el modelo elegido del catálogo sin gastar tokens**
+(no certifica la cuota de generación, que se comprueba al generar). El resultado dice qué clave
+se probó: la escrita, la guardada en Ajustes o la del servidor.
 
 Las claves se consiguen en `console.anthropic.com` → API keys y en `aistudio.google.com` →
-Get API key. Si Claude responde «clave rechazada», está revocada o mal copiada: genera otra. Si
-Gemini responde «agotó la cuota del proyecto», es el límite por minuto o por día del plan
-gratuito: espera, usa `gemini-2.5-flash` o activa facturación en el proyecto de Google.
+Get API key. Los errores de IA dicen qué pasó y qué hacer, y cuando la clave es rechazada
+dicen además **de dónde salió la que se usó** («guardada en Ajustes» o «de la variable de
+entorno GEMINI_API_KEY del servidor»): está revocada o mal copiada, así que genera otra y
+pégala en Ajustes, que manda sobre la variable de entorno. Si Gemini responde «agotó la cuota del
+proyecto», es el límite por minuto o por día del plan gratuito: espera un minuto, pide menos
+estructuras o activa facturación en el proyecto de Google (la cuota es por proyecto y se
+reinicia a medianoche, hora del Pacífico).
 
-El modelo se elige por estructura y se puede cambiar al vuelo en el generador. Si la estructura
-no fija uno, se usa el «Modelo por defecto» de Ajustes y, si tampoco hay, el predeterminado:
-`claude-opus-5` para Claude y `gemini-2.5-flash` para Gemini (2.5 Pro requiere plan de pago).
-El campo es texto libre, así que si sale un modelo nuevo se escribe y ya, sin tocar código.
+**El modelo se elige del catálogo** de `src/lib/constants.ts` (`AI_MODELS`): Claude Opus 5,
+Sonnet 5 y Haiku 4.5; Gemini 3.8 Flash. Manda lo elegido en el generador; si no, el modelo de
+la estructura (solo si es del mismo proveedor); después el «Modelo por defecto» de Ajustes; y
+si no hay ninguno, el predeterminado del catálogo: `claude-opus-5` para Claude y
+`gemini-3.8-flash` para Gemini. Un nombre fuera del catálogo se rechaza antes de gastar la
+llamada, y los valores heredados `gemini-2.5-pro` y `gemini-2.5-flash` se resuelven solos a
+`gemini-3.8-flash`. Si sale un modelo nuevo, se añade al catálogo.
 
-> Nota: los modelos Claude actuales no aceptan el parámetro `temperature`. El valor de
-> temperatura de cada estructura solo se le manda a Gemini.
+> Nota: ni los modelos Claude actuales ni Gemini 3.8 reciben el parámetro `temperature`. El
+> valor de temperatura de cada estructura se conserva en su ficha, pero ya no se envía a
+> ningún proveedor.
 
 ---
 
 ## Publicar en internet
 
-La app está lista para desplegarse en Vercel con una base de datos PostgreSQL
-(Neon, Supabase o cualquier otra).
+La app se despliega en Vercel con PostgreSQL. Para una instalación existente, usa el
+[procedimiento de migraciones y recuperación](reports/operacion-migraciones.md).
+Los siguientes pasos corresponden a una instalación nueva y vacía.
 
-Sigue los pasos **en este orden**. El paso 3 es el que más se olvida y deja la aplicación
-desplegada sin tablas.
-
-**0. Si la base ya existe**, aplica ANTES de publicar los SQL aditivos de `prisma/operations/`
-que falten (p. ej. `content-structure-ids-2026-09-09.sql`: añade `ContentItem.structureIds` y pasa el
-ajuste `ai.google.model` heredado del seed de `gemini-2.5-pro` a `gemini-2.5-flash`; un modelo elegido
-a mano no se toca). Se ejecutan con `npx prisma db execute --file prisma/operations/<archivo>.sql --url "$DATABASE_URL"`
-y se verifican con `SELECT column_name FROM information_schema.columns WHERE table_name = ContentItem;`.
-Publicar el código sin la columna deja /contenido, /calendario y el generador en error 500.
-
-**0. Si la base ya existe, aplica antes las operaciones SQL pendientes** de `prisma/operations/`
-(en orden de fecha) desde el SQL Editor de Neon o con `npx prisma db execute --file <archivo> --schema prisma/schema.prisma`.
-La de `content-structure-ids-2026-09-09.sql` añade la columna `ContentItem.structureIds` (sin ella
-`/contenido`, `/calendario` y el generador devuelven 500 con el código nuevo) y pasa el ajuste
-`ai.google.model` heredado del seed (`gemini-2.5-pro`) a `gemini-2.5-flash`; si el dueño ya eligió otro
-modelo a mano, no lo toca. Verifica con `SELECT column_name FROM information_schema.columns WHERE table_name = 'ContentItem' AND column_name = 'structureIds';`.
+**0. Si la base ya existe, aplica antes las migraciones pendientes** con `npm run db:migrate`
+(`prisma migrate deploy`), siguiendo el [procedimiento de migraciones](reports/operacion-migraciones.md)
+desde el mismo commit que vas a publicar. Esta versión trae
+`prisma/migrations/20260910120000_content_structure_ids`, que añade la columna
+`ContentItem.structureIds` (formatos previstos; sin ella `/contenido`, `/calendario` y el
+generador devuelven 500 con el código nuevo). Es aditiva e idempotente. No hace falta tocar el
+ajuste `ai.google.model`: un valor heredado (`gemini-2.5-pro` o `gemini-2.5-flash`) se resuelve al
+modelo vigente del catálogo al leerlo. Verifica con `npx prisma migrate status` o con
+`SELECT column_name FROM information_schema.columns WHERE table_name = 'ContentItem' AND column_name = 'structureIds';`.
+Los scripts de `prisma/operations/` (control de despliegue, activación de perfiles) son
+operaciones del procedimiento, no sustituyen a las migraciones versionadas.
 
 **1. Crea la base de datos** en Neon, Supabase o quien prefieras, y copia su cadena de
 conexión.
@@ -381,12 +419,11 @@ desarrollo y producción.
 git add prisma/schema.prisma && git commit -m "Cambia el motor a PostgreSQL"
 ```
 
-**4. Crea las tablas** solo en una base nueva y vacía. Pon primero su cadena en `DATABASE_URL`
-dentro de `.env`. Para una base existente, revisa y aplica operaciones SQL específicas;
-no uses `db push` como procedimiento de actualización de producción.
+**4. Aplica las migraciones** con la conexión de la base nueva en `DATABASE_URL`.
+No uses `db push` como procedimiento de actualización de producción.
 
 ```bash
-npx prisma db push
+npm run db:migrate
 ```
 
 **5. Genera la clave de sesión.** Es obligatoria: desde ahora la aplicación **se niega a
@@ -401,11 +438,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 `DATABASE_URL`, `AUTH_SECRET`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` y, si vas a usar la
 entrada con Gmail, `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`.
 
-**7. Siembra los datos iniciales** apuntando a la base de producción:
-
-```bash
-npm run db:seed
-```
+**7. Configura temporalmente `BOOTSTRAP_TOKEN` y crea la cuenta de dueño** desde el primer
+ingreso. Retira el token al terminar. Las marcas y el equipo reales se crean desde la app;
+los datos de demo quedan reservados para PostgreSQL local.
 
 Para desarrollo usa otra base PostgreSQL; `npm run use:sqlite` termina con un mensaje
 explicativo y conserva el esquema actual.
@@ -418,9 +453,12 @@ cualquier petición y de cualquier respuesta a una función. Por eso el tope de 
 Si tienes PDFs más grandes, recórtalos o pega solo el texto que importa desde el botón de
 editar del documento.
 
-**Generar un guion tarda entre 30 y 90 segundos.** El generador declara `maxDuration = 300`,
-pero el tope real depende del plan: en Hobby Vercel corta a los 60 segundos. Si se te corta,
-baja la duración objetivo del guion o usa un modelo más rápido (Sonnet 5 o Gemini Flash).
+**La generación solo corre en segundo plano y exige `AI_JOBS_ENABLED="true"`.** Sin el flag
+el generador queda deshabilitado y lo dice. El avance aparece en **Generador → Mis
+generaciones**, con recuperación y cancelación de pendientes. Cada llamada al proveedor tiene un
+límite de 240 segundos; el ejecutor necesita Fluid Compute. Hobby admite hasta 300 segundos
+por función con Fluid Compute, según la [documentación de Vercel](https://vercel.com/docs/functions/limitations).
+Las cuotas de infraestructura no incluyen las tarifas de Anthropic o Gemini.
 
 ---
 
@@ -491,9 +529,16 @@ Dos cosas que conviene saber:
 | `npm run dev` | Arranca el servidor de desarrollo |
 | `npm run build` | Compila para producción |
 | `npm start` | Sirve la versión compilada |
-| `npm run setup` | Genera cliente, crea la base y siembra los datos |
-| `npm run db:seed` | Vuelve a sembrar (no duplica lo que ya existe) |
-| `npm run db:reset` | **Borra todo** y vuelve a sembrar |
+| `npm run setup` | Genera el cliente y aplica migraciones; no carga demo |
+| `npm run db:migrate` | Aplica las migraciones pendientes |
+| `npm run db:baseline` | Comprueba, sin modificar, que la DB existente coincide con la línea base |
+| `npm run db:integridad` | Consulta referencias inválidas y archivos huérfanos |
+| `npm run db:seed` | Carga la demo únicamente en PostgreSQL local explícito |
+| `npm run db:reset` | **Borra todo en la DB local indicada** y aplica migraciones; no carga demo |
+| `npm run db:ensayo` | Ensaya migración y restauración en bases locales efímeras |
+| `npm run lint` / `npm run typecheck` | Verifica estilo y tipos |
+| `npm test` / `npm run test:postgres` | Pruebas unitarias y de integración en PostgreSQL local efímero |
+| `npm run perf:local` | Mide la navbar y conflictos de edición con la compilación de producción local |
 | `npm run db:studio` | Abre Prisma Studio para ver la base de datos |
 | `npm run use:postgres` | Cambia el esquema a PostgreSQL |
 | `npm run use:sqlite` | Informa que SQLite ya no es compatible; no modifica el esquema |
@@ -503,8 +548,6 @@ Dos cosas que conviene saber:
 | `npm run test:humo` | 37 comprobaciones: permisos, calendario, datos y archivos |
 | `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos y CTA de comunidad) |
 | `npm run test:cta` | Vigila que los CTA de comunidad no lleven presión ni oferta (`tsx --test`) |
-| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos y CTA de comunidad) |
-| `npm run test:cta` | Vigila que los CTA de comunidad no lleven presión ni oferta |
 
 > `npm run build` falla si el servidor de desarrollo está corriendo: Windows tiene bloqueado
 > el motor de Prisma. Detén el servidor antes de compilar.
@@ -592,17 +635,37 @@ Para que no haya sorpresas:
   de PostgreSQL dependen del proveedor y deben verificarse en su panel.
 - **Eliminar una marca elimina en cascada** todos sus videos, guiones, métricas y checklists.
   Por eso solo puede hacerlo el dueño. Si dudas, usa **Archivar**.
-- **Las métricas se cargan a mano** o pegando un CSV. No hay conexión automática con TikTok,
+- **Las métricas son semanales por plataforma**: solo lo obtenido de lunes a domingo, nunca
+  el acumulado del video. Los registros históricos se conservan por separado. Se cargan a mano
+  o pegando un CSV. No hay conexión automática con TikTok,
   Meta ni YouTube.
-- **La IA genera una variante por vez.** Si quieres tres versiones del mismo formato, se
-  generan una tras otra.
+- **La IA admite hasta tres estructuras por solicitud**, con ejecución secuencial durable.
+  Cada envío genera una variante de cada estructura; los límites diarios se reservan antes de llamar al proveedor.
 - **El motor automático de match está diseñado, no construido.** Hoy funciona el motor «Por
   tipo de video», que no gasta clave. El que lee el guion con IA es el siguiente paso.
 - **El generador sigue siendo un formulario largo.** El módulo conversacional con carga de
   audios, enlaces y referencias está diseñado y pendiente de construir.
 - **No se pueden subir audios ni enlaces todavía.** Solo PDF, txt, md, csv y json, hasta 4 MB,
   y siempre atados a una ficha de marca, estructura o persona.
-- **Cualquier persona con sesión puede descargar el archivo de cualquier marca** si conoce el
-  enlace directo. `/api/assets/[id]` comprueba que haya sesión pero no que tengas derecho a ese
-  archivo concreto. Es un fallo conocido y pendiente de arreglar: no abras la app a gente de
-  fuera del equipo hasta entonces.
+- **La instalación sigue siendo de un equipo compartido.** Las descargas comprueban la sesión y
+  la entidad del adjunto, y Blob es privado. No hay aislamiento entre organizaciones; no debe
+  presentarse este control como multitenancy.
+
+## Implementación de navegación, trabajos y almacenamiento (1, 3 y 4)
+
+El estado, los límites gratuitos, las pruebas y los pasos de activación están en
+[el informe de implementación](reports/implementacion-1-3-4-2026-09-09.md).
+No habilites los flags de IA o Blob antes de aplicar las migraciones y configurar los recursos.
+
+- `npm run perf:panel`: comparación local de 30 muestras por ruta y modalidad.
+- `npm run test:workflow`: ejecutor Workflow real con respuesta ficticia guardada, sin llamadas pagadas.
+- `npm run assets:migrate`: muestra cuántos archivos antiguos quedan; no copia ni borra bytes.
+- `npm run assets:migrate -- --apply --actor=<id>`: migra hasta diez archivos, verifica integridad y audita.
+
+Los límites de archivos usan una ventana móvil de 32 días y se reservan antes de las operaciones.
+La migración monetaria rechaza históricos que necesitarían redondeo. En CSV, usa `1234` para miles
+y `1.234000` para tres decimales; un importe ambiguo como `1.234` se rechaza con una explicación.
+
+## Perfiles y permisos
+
+Los perfiles de trabajo se configuran desde Equipo por el Dueño. Consulta la [matriz de permisos y la activación](reports/perfiles-permisos-2026-09-09.md) antes de desplegar esta versión sobre una instalación existente. La migración no asigna permisos por defecto a cuentas antiguas.

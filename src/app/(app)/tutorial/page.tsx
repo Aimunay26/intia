@@ -1,24 +1,25 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { requirePageUser as requireUser } from "@/lib/render-context";
-import type { ReactNode } from "react";
-import Link from "next/link";
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
+import { measurePagePhase } from "@/lib/performance-page";
 import {
-  BookOpen,
-  Building2,
-  CalendarDays,
-  CheckCircle2,
-  Film,
-  GraduationCap,
-  Shapes,
-  Sparkles,
-  TrendingUp,
-  UserSquare2,
-  Users,
+	BookOpen,
+	Building2,
+	CalendarDays,
+	CheckCircle2,
+	Film,
+	GraduationCap,
+	Shapes,
+	Sparkles,
+	TrendingUp,
+	UserSquare2,
+	Users,
 } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode } from "react";
 
-import { prisma } from "@/lib/prisma";
-import { Callout, Card, CardHeader, PageHeader } from "@/components/ui";
 import { GuiaLauncherBoton } from "@/components/guia";
+import { Callout, Card, CardHeader, PageHeader } from "@/components/ui";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -127,7 +128,8 @@ function Rol({
 
 export default async function TutorialPage() {
   return measurePagePhase("page:/tutorial", async () => {
-  await requireUser();
+  const user = await requirePageSection("help");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="help" />;
 
   // El tutorial mira la base para saber en qué paso estás de verdad.
   const [marcas, personas, conVoz, estructuras, videos, guiones, unidos, metricas, equipo] =

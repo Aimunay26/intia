@@ -49,10 +49,32 @@ model User {
   comments       Comment[]
   events         CalendarEvent[] @relation("EventCreatedBy")
   tasks          Task[]          @relation("TaskAssignee")
+  generationJobs GenerationJob[]
   sessions       AuthSession[]
+  workProfiles   UserWorkProfile[]
+  brandAccess    UserBrandAccess[]
 
   @@index([role])
   @@index([archetypeId])
+}
+
+/// Perfiles combinables. OWNER/MEMBER siguen siendo los únicos niveles administrativos.
+model UserWorkProfile {
+  userId String
+  profile String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@id([userId, profile])
+  @@index([profile])
+}
+
+/// Autorización explícita; la cookie de marca nunca concede este acceso.
+model UserBrandAccess {
+  userId String
+  brandId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  @@id([userId, brandId])
+  @@index([brandId])
 }
 
 /// El id es SHA-256 del identificador aleatorio firmado en el JWT, no el token.
@@ -104,6 +126,7 @@ model CalendarEvent {
 
   /// Si el evento nace de un video concreto (por ejemplo, su dia de grabacion).
   contentItemId String?
+  contentItem ContentItem? @relation(fields: [contentItemId], references: [id], onDelete: SetNull)
 
   createdById String?
   createdBy   User?   @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -156,6 +179,7 @@ model Brand {
   events     CalendarEvent[]
   tasks      Task[]
   taskColumns TaskColumn[]
+  userAccess UserBrandAccess[]
 
   @@index([active])
 }
@@ -310,6 +334,7 @@ model Archetype {
   users     User[]
   fits      ArchetypeFit[]
   matchRows MatchRow[]
+  scripts Script[]
 
   @@index([active])
   @@index([isPerson])
@@ -355,7 +380,9 @@ model Asset {
   filename String
   mimeType String @default("application/pdf")
   size     Int    @default(0)
-  data     Bytes
+  data     Bytes?
+  blobId   String? @unique
+  blob     BlobObject? @relation(fields: [blobId], references: [id], onDelete: Restrict)
 
   label String?
   /// Texto extraido del PDF: esto es lo que se le inyecta a la IA.
@@ -382,6 +409,8 @@ model Script {
 
   archetypeId String?
 
+  archetype Archetype? @relation(fields: [archetypeId], references: [id], onDelete: SetNull)
+
   avatar       String? // A quien le habla
   focus        String? // Enfoque de venta
   hook         String?
@@ -398,6 +427,10 @@ model Script {
   rawResponse String?
   briefInput  String? // lo que pidio el usuario
   generatedAt DateTime?
+  generationItemId String? @unique
+  generationItem GenerationItem? @relation(fields: [generationItemId], references: [id], onDelete: SetNull)
+  inputTokens Int?
+  outputTokens Int?
 
   authorId String?
   author   User?   @relation("ScriptAuthor", fields: [authorId], references: [id], onDelete: SetNull)
@@ -487,11 +520,85 @@ model ContentItem {
   assignments Assignment[]
   checklist   ChecklistItem[]
   metrics     Metric[]
+  platformLinks ContentPlatform[]
   comments    Comment[]
+  events      CalendarEvent[]
 
   @@index([brandId, scheduledDate])
   @@index([status])
   @@index([scheduledDate])
+}
+
+/// Índice relacional de las plataformas; la cadena antigua se conserva durante la transición.
+model ContentPlatform {
+  contentItemId String
+  platform String
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  @@id([contentItemId, platform])
+  @@index([platform, contentItemId])
+}
+
+/// Inventario duradero: una transacción nunca borra bytes externos antes de confirmar.
+model BlobObject {
+  id String @id
+  pathname String @unique
+  state String @default("STAGING")
+  sha256 String
+  size Int
+  attempts Int @default(0)
+  nextAttemptAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  asset Asset?
+  @@index([state, nextAttemptAt])
+}
+
+model GenerationJob {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionVersion Int
+  requestKey String
+  fingerprint String
+  status String @default("QUEUED")
+  payload Json
+  runId String?
+  error String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items GenerationItem[]
+  @@unique([userId, requestKey])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model GenerationItem {
+  id String @id @default(cuid())
+  jobId String
+  job GenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  structureId String
+  order Int
+  status String @default("QUEUED")
+  attempts Int @default(0)
+  leaseToken String?
+  leaseUntil DateTime?
+  availableAt DateTime @default(now())
+  response Json?
+  error String?
+  inputTokens Int @default(0)
+  outputTokens Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  script Script?
+  @@unique([jobId, structureId])
+  @@index([jobId, status, order])
+}
+
+/// Cuotas por instalación y usuario hasta incorporar organizaciones.
+
+model UsageCounter {
+  key String @id
+  amount BigInt @default(0)
 }
 
 /// Quien hizo que en cada video: guionista, actor, camara, editor, voz.
@@ -539,6 +646,9 @@ model Metric {
   contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
 
   date DateTime
+  /// WEEKLY: resultados de lunes a domingo, date es el lunes a las 12:00 UTC.
+  period String @default("LEGACY")
+  platform String @default("UNATTRIBUTED")
 
   views        Int   @default(0)
   likes        Int   @default(0)
@@ -549,10 +659,10 @@ model Metric {
   clicks       Int   @default(0)
   leads        Int   @default(0)
   orders       Int   @default(0)
-  spend        Float @default(0)
-  revenue      Float @default(0)
+    spend        Decimal @default(0) @db.Decimal(24, 6)
+    revenue      Decimal @default(0) @db.Decimal(24, 6)
   watchTimeSec Float @default(0)
-  retention3s  Float @default(0) // % que pasa de 3 segundos
+  retention3s  Float? // % que pasa de 3 segundos
 
   source String  @default("MANUAL") // MANUAL | IMPORT
   notes  String?
@@ -560,7 +670,7 @@ model Metric {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([contentItemId, date])
+  @@unique([contentItemId, date, platform, period])
   @@index([date])
 }
 
@@ -754,8 +864,6 @@ model Task {
   updatedAt   DateTime   @updatedAt
 
   @@index([columnId])
-  @@index([columnId, order, id])
-  @@index([columnId, brandId, order, id])
   @@index([assigneeId])
   @@index([brandId])
   @@index([kind])

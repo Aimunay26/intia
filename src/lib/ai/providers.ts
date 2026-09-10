@@ -1,3 +1,4 @@
+import { resourceLimit } from "@/lib/resource-limits";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { ApiError as GeminiApiError, GoogleGenAI } from "@google/genai";
@@ -36,7 +37,7 @@ export type ProviderCall = {
   model: string;
   system: string;
   user: string;
-  /** Solo lo usa Gemini: Claude Opus 5 / Sonnet 5 rechazan temperature. */
+  /** Se conserva por compatibilidad; Gemini 3.8 y los Claude actuales no la reciben. */
   temperature?: number;
   /** De dónde salió la clave, para decirlo en el mensaje de error. */
   keySource?: KeySource | null;
@@ -44,20 +45,30 @@ export type ProviderCall = {
 
 /**
  * Qué falló, para que quien llama decida qué hacer:
- *   auth    la clave no sirve (revocada, mal copiada, sin permisos, ausente)
- *   quota   cuota o saldo agotado, o demasiadas peticiones por minuto
- *   model   el proveedor no reconoce ese modelo
- *   server  error del proveedor o de red; suele ser temporal
- *   schema  el proveedor rechazó el esquema JSON de salida
+ *   auth     la clave no sirve (revocada, mal copiada, sin permisos, ausente)
+ *   quota    cuota o saldo agotado, o demasiadas peticiones por minuto
+ *   model    el proveedor no reconoce ese modelo
+ *   server   error del proveedor o de red; suele ser temporal
+ *   schema   el proveedor rechazó el esquema JSON de salida
+ *   timeout  el transporte abortó o se agotó el tiempo de espera
  */
-export type AiErrorCode = "auth" | "quota" | "model" | "server" | "schema";
+export type AiErrorCode = "auth" | "quota" | "model" | "server" | "schema" | "timeout";
+
+/**
+ * Solo metadatos para el registro del trabajo: proveedor, código HTTP y
+ * código de transporte conocido. Nunca claves, prompts ni el mensaje crudo.
+ */
+export type AiDiagnostic = { provider: string; status?: number; code?: string };
 
 /** Error legible para mostrar en la interfaz. */
 export class AiError extends Error {
   constructor(
     message: string,
     readonly detail?: string,
-    readonly code?: AiErrorCode
+    readonly code?: AiErrorCode,
+    /** Si el trabajo en segundo plano puede volver a intentarlo (cuota, servidor, timeout). */
+    readonly retryable = false,
+    readonly diagnostic?: AiDiagnostic
   ) {
     super(message);
     this.name = "AiError";
@@ -67,7 +78,7 @@ export class AiError extends Error {
 /* ---------------------------------------------------------------- CLAUDE -- */
 
 export async function generateWithClaude(call: ProviderCall): Promise<GenerationResult> {
-  const client = new Anthropic({ apiKey: call.apiKey, maxRetries: 2 });
+  const client = new Anthropic({ apiKey: call.apiKey, maxRetries: 0, timeout: 240000 });
 
   let message;
   try {
@@ -75,13 +86,13 @@ export async function generateWithClaude(call: ProviderCall): Promise<Generation
     // peticion muera por timeout HTTP en guiones largos.
     const stream = client.messages.stream({
       model: call.model,
-      max_tokens: 32000,
+      max_tokens: resourceLimit("AI_MAX_OUTPUT_TOKENS", 32000),
       system: call.system,
       messages: [{ role: "user", content: call.user }],
       output_config: {
         format: zodOutputFormat(GeneratedScriptSchema),
       },
-    });
+    }, { signal: AbortSignal.timeout(240000) });
     message = await stream.finalMessage();
   } catch (error) {
     throw toAiError(error, "anthropic", call.keySource);
@@ -154,13 +165,15 @@ function geminiSchema(): unknown {
 }
 
 export async function generateWithGemini(call: ProviderCall): Promise<GenerationResult> {
-  const ai = new GoogleGenAI({ apiKey: call.apiKey });
+  // En @google/genai 1.52, retryOptions descarta el cuerpo y el status de
+  // respuestas HTTP fallidas incluso con attempts: 1. Sin esta opción el SDK
+  // hace un único fetch y conserva ApiError; los reintentos los gestiona el job.
+  const ai = new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: 240000 } });
 
   const baseConfig = {
     systemInstruction: call.system,
     responseMimeType: "application/json",
-    temperature: call.temperature ?? 1,
-    maxOutputTokens: 32000,
+    maxOutputTokens: resourceLimit("AI_MAX_OUTPUT_TOKENS", 32000),
   };
 
   let text = "";
@@ -179,13 +192,17 @@ export async function generateWithGemini(call: ProviderCall): Promise<Generation
     };
   } catch (schemaError) {
     // Se reintenta pidiendo solo JSON (el contrato exacto ya va escrito en el
-    // prompt del sistema) cuando Gemini rechazó el ESQUEMA o devolvió un 400
-    // sin clasificar: Gemini responde «Request contains an invalid argument.»
-    // a varias combinaciones de esquema que no soporta, sin nombrar el esquema.
-    // Una clave mala, un modelo desconocido, la cuota agotada o un 5xx se
-    // reportan a la primera: repetir la llamada solo gastaría otra petición.
+    // prompt del sistema) cuando Gemini rechazó el ESQUEMA o devolvió el 400
+    // genérico «Request contains an invalid argument.», que es como responde a
+    // varias combinaciones de esquema que no soporta, sin nombrar el esquema.
+    // Cualquier otro error (clave mala, modelo desconocido, cuota, 5xx, un 400
+    // de configuración, un timeout) se reporta a la primera con una sola
+    // petición: repetir la llamada solo gastaría otra, y los reintentos que
+    // valen la pena los decide el trabajo en segundo plano.
     const code = clasificarError(schemaError);
-    const reintentable = code === "schema" || (code === null && errorStatus(schemaError) === 400);
+    const reintentable =
+      code === "schema" ||
+      (code === null && errorStatus(schemaError) === 400 && RE_ARGUMENTO_INVALIDO.test(errorMessage(schemaError)));
     if (!reintentable) {
       throw toAiError(schemaError, "google", call.keySource);
     }
@@ -311,18 +328,56 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function errorFields(error: unknown): Record<string, unknown> {
+  return error && typeof error === "object" ? (error as Record<string, unknown>) : {};
+}
+
 /** Código HTTP del error, venga del SDK que venga. */
 function errorStatus(error: unknown): number | undefined {
-  if (!error || typeof error !== "object" || !("status" in error)) return undefined;
-  const raw = (error as { status?: unknown }).status;
+  const fields = errorFields(error);
+  const raw = fields.status ?? fields.statusCode;
+  if (raw === undefined || raw === null) return undefined;
   const n = typeof raw === "number" ? raw : Number(raw);
   return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+/** Códigos de transporte de Node/undici que se admiten en el diagnóstico del trabajo. */
+const CODIGOS_TRANSPORTE = [
+  "UND_ERR_CONNECT_TIMEOUT",
+  "UND_ERR_HEADERS_TIMEOUT",
+  "UND_ERR_BODY_TIMEOUT",
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "ECONNREFUSED",
+];
+
+/** Código de transporte conocido, en el error o en su `cause`. */
+function transportCode(error: unknown): string | undefined {
+  const fields = errorFields(error);
+  const cause = errorFields(fields.cause);
+  return [fields.code, cause.code].find(
+    (value): value is string => typeof value === "string" && CODIGOS_TRANSPORTE.includes(value)
+  );
+}
+
+function esTimeout(error: unknown): boolean {
+  const fields = errorFields(error);
+  const code = transportCode(error);
+  return (
+    fields.name === "AbortError" ||
+    fields.name === "TimeoutError" ||
+    Boolean(code?.includes("TIMEOUT")) ||
+    code === "ETIMEDOUT" ||
+    /timeout|timed out|aborted/i.test(errorMessage(error))
+  );
 }
 
 const RE_AUTH = /api[_ -]?key|unauthorized|authentication|permission[_ ]denied|invalid x-api-key/i;
 const RE_QUOTA = /rate[_ -]?limit|quota|resource[_ ]exhausted|credit balance|too many requests/i;
 const RE_MODEL = /model .*not (found|supported)|not_found_error|no encontr|is not found for api version/i;
 const RE_SCHEMA = /schema|response_json_schema|responseJsonSchema|response_schema|output_config|unknown name/i;
+/** El 400 genérico de Gemini ante un esquema que no soporta. */
+const RE_ARGUMENTO_INVALIDO = /invalid argument/i;
 
 /**
  * Clasifica un error del proveedor. Primero por las clases tipadas del SDK,
@@ -332,6 +387,10 @@ const RE_SCHEMA = /schema|response_json_schema|responseJsonSchema|response_schem
  */
 export function clasificarError(error: unknown): AiErrorCode | null {
   if (error instanceof AiError) return error.code ?? null;
+
+  // Abortos y timeouts del transporte, antes que nada: el SDK de Anthropic los
+  // envuelve como error de conexión y el de Google como TypeError de fetch.
+  if (esTimeout(error)) return "timeout";
 
   // Claude: clases tipadas del SDK.
   if (error instanceof Anthropic.AuthenticationError) return "auth";
@@ -355,8 +414,9 @@ export function clasificarError(error: unknown): AiErrorCode | null {
   const message = errorMessage(error);
 
   // Gemini: ApiError con status numérico. Una clave mal copiada llega como
-  // 400 "API key not valid", no como 401.
-  const esGemini = error instanceof GeminiApiError;
+  // 400 "API key not valid", no como 401. (En pruebas el SDK puede venir
+  // simulado sin ApiError: por eso se comprueba que exista la clase.)
+  const esGemini = typeof GeminiApiError === "function" && error instanceof GeminiApiError;
   if (esGemini || status !== undefined) {
     if (status === 401 || status === 403) return "auth";
     if (status === 429) return "quota";
@@ -375,12 +435,27 @@ export function clasificarError(error: unknown): AiErrorCode | null {
   if (RE_AUTH.test(message)) return "auth";
   if (RE_QUOTA.test(message)) return "quota";
   if (RE_MODEL.test(message)) return "model";
-  if (/fetch failed|ECONNRESET|ENOTFOUND|ETIMEDOUT|network/i.test(message)) return "server";
+  if (transportCode(error) || /fetch failed|ECONNRESET|ENOTFOUND|ETIMEDOUT|network/i.test(message)) return "server";
   return null;
 }
 
-/** Para el lote del generador: si falla así, no tiene sentido seguir con la siguiente estructura. */
+/**
+ * Para el lote del generador: si falla así, no tiene sentido seguir con la
+ * siguiente estructura (generation-jobs.ts corta los formatos pendientes).
+ *
+ * Un AiError ya clasificado se lee por su `code`; si llegó sin código pero el
+ * diagnóstico trae un 401/403, también es la clave. Se mira por campos y no
+ * solo por `instanceof`: el error puede venir de otra instancia del módulo o
+ * de un paso del workflow que perdió el prototipo.
+ */
 export function esErrorDeAutenticacion(e: unknown): boolean {
+  const fields = errorFields(e);
+  if (e instanceof AiError || fields.name === "AiError") {
+    if (fields.code === "auth") return true;
+    const status = errorFields(fields.diagnostic).status;
+    if (status === 401 || status === 403) return true;
+    if (typeof fields.code === "string") return false;
+  }
   return clasificarError(e) === "auth";
 }
 
@@ -397,6 +472,8 @@ export function esErrorDeEsquema(e: unknown): boolean {
 /**
  * Convierte cualquier error del proveedor en un AiError con un mensaje que
  * dice qué pasó y qué hacer, incluido de dónde salió la clave que se usó.
+ * `retryable` y `diagnostic` son para el trabajo en segundo plano: cuota,
+ * servidor y timeout se reintentan; clave, modelo y esquema no.
  */
 export function toAiError(
   error: unknown,
@@ -409,45 +486,64 @@ export function toAiError(
   const message = errorMessage(error);
   const code = clasificarError(error);
   const origen = describeKeySource(provider, keySource);
+  const status = errorStatus(error);
+  const diagnostic: AiDiagnostic = {
+    provider: label,
+    status: status !== undefined && status >= 400 && status <= 599 ? status : undefined,
+    code: transportCode(error),
+  };
+  const fallo = (resumen: string, detalle: string, retryable = false) =>
+    new AiError(resumen, detalle, code ?? undefined, retryable, diagnostic);
 
   switch (code) {
     case "auth":
-      return new AiError(
+      return fallo(
         `La clave de ${label} fue rechazada: está revocada o mal copiada.`,
-        `Se usó la clave ${origen}. Genera una nueva en ${CONSOLE_HINT[provider]} y pégala en Ajustes: la guardada ahí manda sobre la variable de entorno.`,
-        "auth"
+        `Se usó la clave ${origen}. Genera una nueva en ${CONSOLE_HINT[provider]} y pégala en Ajustes: la guardada ahí manda sobre la variable de entorno.`
       );
     case "quota":
       return provider === "google"
-        ? new AiError(
-            "Gemini agotó la cuota del proyecto (peticiones por minuto o por día del plan gratuito).",
-            "Espera un minuto y vuelve a intentar con menos estructuras, usa gemini-2.5-flash, o activa facturación en aistudio.google.com. La cuota es por proyecto y se reinicia a medianoche (hora del Pacífico).",
-            "quota"
+        ? fallo(
+            "Gemini está limitando las peticiones o agotó la cuota del proyecto (por minuto o por día del plan gratuito).",
+            "Espera un minuto y vuelve a intentar con menos estructuras, o activa facturación en aistudio.google.com. La cuota es por proyecto y se reinicia a medianoche (hora del Pacífico).",
+            true
           )
-        : new AiError(
+        : fallo(
             "Claude está limitando las peticiones o la cuenta se quedó sin saldo.",
             "Espera un minuto y vuelve a intentar con menos estructuras, o revisa el saldo y los límites en console.anthropic.com → Billing.",
-            "quota"
+            true
           );
     case "model":
-      return new AiError(
+      return fallo(
         `${label} no reconoce ese modelo.`,
-        `${message}. Revisa el nombre del modelo en la estructura o en Ajustes.`,
-        "model"
+        `${message}. Revisa el nombre del modelo en la estructura o en Ajustes.`
       );
     case "schema":
-      return new AiError(
+      return fallo(
         `${label} rechazó el formato de salida pedido.`,
-        `${message.slice(0, 300)}. Es un problema del esquema JSON, no de la clave.`,
-        "schema"
+        `${message.slice(0, 300)}. Es un problema del esquema JSON, no de la clave.`
+      );
+    case "timeout":
+      return fallo(
+        `${label} tardó demasiado en responder.`,
+        "Se reintentará dentro del límite de intentos y del cupo disponible.",
+        true
       );
     case "server":
-      return new AiError(
+      return fallo(
         `${label} tuvo un error de servidor o de conexión.`,
         "Suele ser temporal. Intenta de nuevo en unos segundos.",
-        "server"
+        true
       );
     default:
-      return new AiError(`Falló la generación con ${label}.`, message);
+      if (status === 400) {
+        // Un 400 que no es de clave, cuota, esquema ni modelo: parámetros que
+        // ese modelo no acepta. Repetirlo tal cual no lo arregla.
+        return fallo(
+          `${label} rechazó la configuración de la generación.`,
+          `${message.slice(0, 300)}. Revisa los parámetros y el modelo seleccionados.`
+        );
+      }
+      return fallo(`Falló la generación con ${label}.`, message, Boolean(diagnostic.code));
   }
 }

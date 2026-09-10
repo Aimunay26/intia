@@ -3,6 +3,7 @@ import type { SessionUser } from "@/lib/auth";
 import { auditInTransaction } from "@/lib/audit";
 import { assertActor } from "@/lib/auth-transactions";
 import { assertAssetOwner, validateAssetContent } from "@/lib/asset-security";
+import { attachPrivateFile, privateStorageEnabled, stagePrivateFile } from "@/lib/private-storage";
 import { extractAnyText, limpiarSiEsDocumentoAiMunay, MAX_UPLOAD_BYTES } from "@/lib/pdf";
 import { ETIQUETA_DOCUMENTO, redactarDatosSensibles, type TipoDocumento } from "@/lib/branding-parser";
 
@@ -16,6 +17,11 @@ import { ETIQUETA_DOCUMENTO, redactarDatosSensibles, type TipoDocumento } from "
  * Lo usan uploadAsset (pestaña Documentos) y las acciones que guardan el brief
  * maestro o el informe de branding junto con la ficha, para que el Asset se
  * cree siempre igual: validado, con texto extraído y con auditoría SUBIR.
+ *
+ * El almacenamiento privado sigue el contrato en dos pasos: el archivo se
+ * escribe en el Blob (`prepararArchivoPrivado`) FUERA de la transacción, con
+ * inventario y verificación, y el Asset lo adjunta DENTRO. Con blob no se
+ * guardan los bytes en la fila (`data` null); sin blob, se guardan como antes.
  */
 
 export type ArchivoImportado = {
@@ -36,7 +42,7 @@ export type LecturaArchivo = { ok: true; archivo: ArchivoImportado } | { ok: fal
 
 /** Valida tamaño y estructura del archivo y extrae su texto. No escribe nada. */
 export async function leerArchivoImportado(file: unknown): Promise<LecturaArchivo> {
-  if (!(file instanceof File) || !file.size) return { ok: false, error: "Elige un archivo PDF antes de continuar." };
+  if (!(file instanceof File) || !file.size) return { ok: false, error: "Elige un archivo antes de continuar." };
   if (file.size > MAX_UPLOAD_BYTES) {
     return { ok: false, error: "El archivo pesa demasiado. El máximo son 4 MB: comprime el PDF o pega el texto a mano." };
   }
@@ -70,10 +76,24 @@ export async function leerArchivoOpcional(form: FormData, campo: string): Promis
   return leerArchivoImportado(file);
 }
 
+/**
+ * Sube los bytes al almacenamiento privado (inventario durable, SHA-256 y
+ * tamaño verificados) y devuelve el id del blob, o null si el flag está
+ * apagado y los bytes van a la fila. Hace red: SIEMPRE antes de la
+ * transacción. Si luego la transacción falla, el objeto queda en STAGING y la
+ * limpieza programada lo retira.
+ */
+export async function prepararArchivoPrivado(archivo: Pick<ArchivoImportado, "buffer">): Promise<string | null> {
+  if (!privateStorageEnabled()) return null;
+  return stagePrivateFile(new Uint8Array(archivo.buffer));
+}
+
 export type NuevoAsset = {
   ownerType: string;
   ownerId: string;
   archivo: Pick<ArchivoImportado, "name" | "size" | "mimeType" | "buffer">;
+  /** Id devuelto por prepararArchivoPrivado, o null para guardar los bytes en la fila. */
+  blobId: string | null;
   label: string | null;
   user: SessionUser;
   extractedText: string | null;
@@ -84,6 +104,7 @@ export type NuevoAsset = {
 export async function crearAssetDesdeArchivo(tx: AppTransaction, input: NuevoAsset): Promise<{ id: string }> {
   await assertActor(tx, input.user);
   await assertAssetOwner(tx, input.ownerType, input.ownerId, input.user, true);
+  if (input.blobId) await attachPrivateFile(tx, input.blobId);
   const asset = await tx.asset.create({
     data: {
       ownerType: input.ownerType,
@@ -91,7 +112,9 @@ export async function crearAssetDesdeArchivo(tx: AppTransaction, input: NuevoAss
       filename: input.archivo.name,
       mimeType: input.archivo.mimeType,
       size: input.archivo.size,
-      data: Buffer.from(input.archivo.buffer),
+      // `data` o `blobId`, nunca ambos ni ninguno.
+      data: input.blobId ? null : Buffer.from(input.archivo.buffer),
+      blobId: input.blobId,
       label: input.label,
       extractedText: input.extractedText,
       useForAi: input.useForAi,
@@ -135,16 +158,20 @@ export function textoDeReferencia(tipo: TipoDocumento, archivo: ArchivoImportado
   return { extractedText: archivo.texto, useForAi: true, aviso: null };
 }
 
+/** Un documento leído y ya subido al almacenamiento privado (o no, si el flag está apagado). */
+export type DocumentoPreparado = { tipo: TipoDocumento; archivo: ArchivoImportado; blobId: string | null };
+
 /** Crea el Asset del documento importado con su etiqueta fija. */
 export async function guardarDocumentoImportado(
   tx: AppTransaction,
-  input: { tipo: TipoDocumento; ownerType: string; ownerId: string; archivo: ArchivoImportado; user: SessionUser }
+  input: { tipo: TipoDocumento; ownerType: string; ownerId: string; archivo: ArchivoImportado; blobId: string | null; user: SessionUser }
 ): Promise<{ id: string }> {
   const referencia = textoDeReferencia(input.tipo, input.archivo);
   return crearAssetDesdeArchivo(tx, {
     ownerType: input.ownerType,
     ownerId: input.ownerId,
     archivo: input.archivo,
+    blobId: input.blobId,
     label: ETIQUETA_DOCUMENTO[input.tipo],
     user: input.user,
     extractedText: referencia.extractedText,

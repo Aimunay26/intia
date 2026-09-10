@@ -5,7 +5,7 @@ import { requireLevel, LEVEL } from "@/lib/auth";
 import { auditInTransaction, diffFields } from "@/lib/audit";
 import { assertActor } from "@/lib/auth-transactions";
 import { assertAssetOwner } from "@/lib/asset-security";
-import { crearAssetDesdeArchivo, leerArchivoImportado, textoDeReferencia } from "@/lib/asset-import";
+import { crearAssetDesdeArchivo, leerArchivoImportado, prepararArchivoPrivado, textoDeReferencia } from "@/lib/asset-import";
 import { detectarTipoDocumento } from "@/lib/branding-parser";
 import { field, fieldOrNull } from "@/lib/utils";
 export type AssetState = { ok?: string; error?: string; warning?: string } | null;
@@ -13,6 +13,7 @@ function refresh(type: string, id: string) {
   const base: Record<string, string> = { brand: "/marcas", content: "/contenido", structure: "/estructuras", archetype: "/arquetipos", user: "/equipo" };
   if (base[type]) revalidatePath(type === "user" ? base[type] : `${base[type]}/${id}`);
   revalidatePath("/actividad");
+  if (type === "user") revalidatePath("/mi-perfil");
 }
 
 export async function uploadAsset(_prev: AssetState, form: FormData): Promise<AssetState> {
@@ -31,8 +32,12 @@ export async function uploadAsset(_prev: AssetState, form: FormData): Promise<As
   const ref = tipo
     ? textoDeReferencia(tipo, archivo)
     : { extractedText: archivo.texto, useForAi: Boolean(archivo.texto), aviso: null };
+  // El Blob privado se escribe y verifica ANTES de la transacción; dentro solo se adjunta.
+  let blobId: string | null = null;
+  try { blobId = await prepararArchivoPrivado(archivo); }
+  catch (error) { return { error: error instanceof Error ? error.message : "No se pudo guardar el archivo." }; }
   await prisma.$transaction(async tx => {
-    await crearAssetDesdeArchivo(tx, { ownerType, ownerId, archivo, label, user, extractedText: ref.extractedText, useForAi: ref.useForAi });
+    await crearAssetDesdeArchivo(tx, { ownerType, ownerId, archivo, blobId, label, user, extractedText: ref.extractedText, useForAi: ref.useForAi });
   });
   refresh(ownerType, ownerId);
   const warning = [archivo.errorExtraccion, ref.aviso].filter((a): a is string => Boolean(a)).join(" ");

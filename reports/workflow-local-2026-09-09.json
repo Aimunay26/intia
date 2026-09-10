@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-09-09T20:21:23.675Z",
+  "environment": "local-production-build",
+  "workflowSdk": "4.8.7",
+  "actualQueueExecuted": true,
+  "persistedResponseRecovered": true,
+  "scriptsCreated": 1,
+  "auditCount": 1,
+  "liveAiCalls": 0,
+  "liveBlobCalls": 0
+}

@@ -224,10 +224,18 @@ test("la redacción oculta RUC, teléfonos, correos, números del negocio y vent
 
 // asset-import solo necesita la base para auditar y comprobar permisos: aquí se
 // sustituyen por funciones vacías y se deja pasar cualquier archivo como texto.
+// El almacenamiento privado se simula: sin flag devuelve null; con flag «sube»
+// (fuera de la transacción) y deja constancia de cada adjunto (dentro).
+const almacen = { habilitado: false, subidos: [], adjuntados: [] };
 const mocks = {
   "@/lib/audit": { auditInTransaction: async () => {} },
   "@/lib/auth-transactions": { assertActor: async () => {} },
   "@/lib/asset-security": { assertAssetOwner: async () => {}, validateAssetContent: () => "text/plain" },
+  "@/lib/private-storage": {
+    privateStorageEnabled: () => almacen.habilitado,
+    stagePrivateFile: async (bytes) => { const id = `blob-${almacen.subidos.length + 1}`; almacen.subidos.push({ id, size: bytes.byteLength }); return id; },
+    attachPrivateFile: async (_tx, id) => { almacen.adjuntados.push(id); },
+  },
 };
 const assetImport = load("src/lib/asset-import.ts", mocks);
 const schema = load("src/lib/ai/branding-schema.ts");
@@ -306,4 +314,36 @@ test("un brief subido desde Documentos se guarda redactado para la IA, como desd
   const ref2 = assetImport.textoDeReferencia(parser.detectarTipoDocumento(lectura2.archivo.texto), lectura2.archivo);
   assert.equal(ref2.extractedText, lectura2.archivo.texto);
   assert.equal(ref2.aviso, null);
+});
+
+test("el Asset se guarda con «data» o con «blobId», nunca ambos, y el Blob se sube antes y se adjunta dentro", async () => {
+  const fd = new FormData();
+  fd.append("file", new File([informeCrudo], "informe.txt", { type: "text/plain" }));
+  const lectura = await assetImport.leerArchivoImportado(fd.get("file"));
+  assert.equal(lectura.ok, true);
+  const creados = [];
+  const tx = { asset: { create: async ({ data }) => { creados.push(data); return { id: `asset-${creados.length}` }; } } };
+  const user = { id: "u1", role: "OWNER" };
+
+  // Flag apagado: no hay Blob y los bytes van en la fila.
+  almacen.habilitado = false;
+  assert.equal(await assetImport.prepararArchivoPrivado(lectura.archivo), null);
+  await assetImport.guardarDocumentoImportado(tx, { tipo: "branding", ownerType: "archetype", ownerId: "a1", archivo: lectura.archivo, blobId: null, user });
+  assert.equal(creados[0].blobId, null);
+  assert.ok(Buffer.isBuffer(creados[0].data) && creados[0].data.byteLength === lectura.archivo.size);
+  assert.equal(creados[0].label, parser.ETIQUETA_DOCUMENTO.branding);
+  assert.equal(almacen.adjuntados.length, 0);
+
+  // Flag encendido: primero se sube y verifica (fuera de la transacción)…
+  almacen.habilitado = true;
+  const blobId = await assetImport.prepararArchivoPrivado(lectura.archivo);
+  assert.equal(blobId, "blob-1");
+  assert.deepEqual(almacen.subidos, [{ id: "blob-1", size: lectura.archivo.size }]);
+  assert.equal(almacen.adjuntados.length, 0);
+  // …y dentro solo se adjunta: la fila lleva blobId y data null.
+  await assetImport.crearAssetDesdeArchivo(tx, { ownerType: "brand", ownerId: "b1", archivo: lectura.archivo, blobId, label: null, user, extractedText: lectura.archivo.texto, useForAi: true });
+  assert.deepEqual(almacen.adjuntados, ["blob-1"]);
+  assert.equal(creados[1].blobId, "blob-1");
+  assert.equal(creados[1].data, null);
+  almacen.habilitado = false;
 });

@@ -3,6 +3,8 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { GoogleGenAI } from "@google/genai";
 import type { z } from "zod/v4";
 
+import { resolveAiModel } from "@/lib/ai-models";
+import { DEFAULT_MODEL } from "@/lib/constants";
 import { getSetting, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
 import { limpiarTextoInforme } from "@/lib/pdf";
 import {
@@ -37,11 +39,23 @@ import {
  * por culpa de la IA.
  */
 
-/** Modelos baratos fijos para extraer: una llamada por PDF, nada de Opus. */
-export const MODELOS_EXTRACCION: Record<string, string> = {
-  anthropic: "claude-haiku-4-5",
-  google: "gemini-2.5-flash",
+/**
+ * Candidatos baratos para extraer, por orden de preferencia: una llamada por
+ * PDF, nada de Opus. Se filtran por el catálogo de src/lib/ai-models.ts, así
+ * un nombre retirado no llega al proveedor y el respaldo es el modelo por
+ * defecto del catálogo (nunca un nombre inventado). Para Gemini se usa el
+ * predeterminado del catálogo (DEFAULT_MODEL.google), que ya es el Flash barato:
+ * así un cambio de versión en constants.ts no deja aquí un nombre viejo.
+ */
+const MODELOS_EXTRACCION: Record<string, string[]> = {
+  anthropic: ["claude-haiku-4-5", "claude-sonnet-5"],
+  google: [DEFAULT_MODEL.google],
 };
+
+/** Modelo válido del catálogo con el que se extrae para ese proveedor. */
+export function modeloDeExtraccion(provider: string): string {
+  return resolveAiModel(provider, undefined, ...(MODELOS_EXTRACCION[provider] ?? []));
+}
 
 const MAX_CHARS_IA = 60_000;
 const MAX_TOKENS_SALIDA = 4_000;
@@ -257,7 +271,7 @@ async function elegirProveedor(): Promise<{ provider: string; apiKey: string; mo
   for (const provider of orden) {
     try {
       const { key } = await resolveApiKey(provider);
-      if (key) return { provider, apiKey: key, model: MODELOS_EXTRACCION[provider] };
+      if (key) return { provider, apiKey: key, model: modeloDeExtraccion(provider) };
     } catch {
       // seguimos con el otro proveedor
     }

@@ -1,52 +1,55 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
+import { measurePagePhase } from "@/lib/performance-page";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { getStructureChoices } from "@/lib/structure-choices";
-import Link from "next/link";
+import { endOfDay, startOfDay, timeKey } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 import {
-  AlertTriangle,
-  CalendarDays,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  CalendarClock,
-  Clapperboard,
-  Film,
-  User as UserIcon,
+	AlertTriangle,
+	CalendarClock,
+	CalendarDays,
+	CheckCircle2,
+	ChevronLeft,
+	ChevronRight,
+	Clapperboard,
+	Film,
+	User as UserIcon,
 } from "lucide-react";
+import Link from "next/link";
 
-import { prisma } from "@/lib/prisma";
-import { brandWhere } from "@/lib/brand-context";
-import { can, LEVEL } from "@/lib/auth";
-import {
-  ACTIVE_STATUSES,
-  CONTENT_STATUSES,
-  CONTENT_STATUS_MAP,
-  EVENT_KIND_MAP,
-  platformFilter,
-  DEAD_STATUSES,
-  DONE_STATUSES,
-  PLATFORMS,
-  PLATFORM_MAP,
-} from "@/lib/constants";
-import {
-  dateKey,
-  endOfMonth,
-  formatDate,
-  monthGrid,
-  monthLabel,
-  parseList,
-  startOfMonth,
-} from "@/lib/utils";
-import { Badge, Card, CardHeader, EmptyState, PageHeader, Stat } from "@/components/ui";
 import { ActiveFilters, FilterBar, FilterSelect } from "@/components/filters";
+import { Badge, Card, CardHeader, EmptyState, PageHeader, Stat } from "@/components/ui";
+import { LEVEL, can } from "@/lib/auth";
+import { brandWhere } from "@/lib/brand-context";
 import {
-  CalendarGrid,
-  type CalendarAgendaItem,
-  type CalendarVideo,
+	ACTIVE_STATUSES,
+	CONTENT_STATUSES,
+	CONTENT_STATUS_MAP,
+	DEAD_STATUSES,
+	DONE_STATUSES,
+	EVENT_KIND_MAP,
+	PLATFORMS,
+	PLATFORM_MAP,
+	platformFilter,
+} from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import {
+	dateKey,
+	endOfMonth,
+	formatDate,
+	monthGrid,
+	monthLabel,
+	parseList,
+	startOfMonth,
+} from "@/lib/utils";
+import { NuevoVideoBoton } from "../contenido/content-form";
+import {
+	CalendarGrid,
+	type CalendarAgendaItem,
+	type CalendarVideo,
 } from "./calendar-grid";
 import { EditarEventoBoton, NuevoEventoBoton } from "./event-form";
-import { NuevoVideoBoton } from "../contenido/content-form";
 
 type SearchParams = {
   anio?: string;
@@ -64,15 +67,17 @@ export default async function CalendarioPage({
   searchParams: Promise<SearchParams>;
 }) {
   return measurePagePhase("page:/calendario", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("calendar");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="calendar" query={await searchParams} />;
   const sp = await searchParams;
 
   const hoy = new Date();
+  const [businessYear, businessMonth] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(hoy).split("-").map(Number);
   const anioPedido = Number(sp.anio);
   const mesPedido = Number(sp.mes);
-  const year = Number.isFinite(anioPedido) && anioPedido > 1970 ? anioPedido : hoy.getFullYear();
+  const year = Number.isInteger(anioPedido) && anioPedido >= 1900 && anioPedido <= 9998 ? anioPedido : businessYear;
   const month =
-    Number.isFinite(mesPedido) && mesPedido >= 0 && mesPedido <= 11 ? mesPedido : hoy.getMonth();
+    Number.isInteger(mesPedido) && mesPedido >= 0 && mesPedido <= 11 ? mesPedido : (businessMonth - 1);
 
   /* -------------------------------------------------------------- enlaces -- */
 
@@ -100,28 +105,12 @@ export default async function CalendarioPage({
   const brandCtx = await getBrandContext();
   Object.assign(where, brandWhere(brandCtx.activeId));
   if (sp.estado) where.status = sp.estado;
-  if (sp.plataforma) where.platforms = platformFilter(sp.plataforma);
+  if (sp.plataforma) where.platformLinks = platformFilter(sp.plataforma);
   if (sp.persona) where.assignments = { some: { userId: sp.persona } };
 
   const grid = monthGrid(year, month);
-  const desde = new Date(
-    grid[0].getFullYear(),
-    grid[0].getMonth(),
-    grid[0].getDate(),
-    0,
-    0,
-    0,
-    0
-  );
-  const hasta = new Date(
-    grid[41].getFullYear(),
-    grid[41].getMonth(),
-    grid[41].getDate(),
-    23,
-    59,
-    59,
-    999
-  );
+  const desde = startOfDay(grid[0]);
+  const hasta = endOfDay(grid[41]);
 
   const [filas, brands, people, eventosBase, structures] = await Promise.all([
     prisma.contentItem.findMany({
@@ -152,6 +141,7 @@ export default async function CalendarioPage({
         id: true,
         title: true,
         description: true,
+        updatedAt: true,
         kind: true,
         startAt: true,
         endAt: true,
@@ -182,7 +172,7 @@ export default async function CalendarioPage({
   const delMes = videos.filter(
     (v) => v.scheduledDate >= inicioMes && v.scheduledDate <= finMes
   );
-  const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0, 0);
+  const inicioHoy = startOfDay(hoy);
 
   const publicados = delMes.filter((v) => DONE_STATUSES.includes(v.status)).length;
   const atrasados = delMes.filter(
@@ -210,17 +200,16 @@ export default async function CalendarioPage({
   const puedeCrear = can(user.role, LEVEL.MEMBER);
   const puedeBorrar = can(user.role, LEVEL.OWNER);
   const fechaPorDefecto =
-    year === hoy.getFullYear() && month === hoy.getMonth()
+    year === businessYear && month === (businessMonth - 1)
       ? dateKey(hoy)
       : dateKey(startOfMonth(year, month));
 
   /* --------------------------------------------------------------- agenda -- */
 
-  const horaDe = (d: Date) =>
-    `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const horaDe = timeKey;
 
   const agenda: CalendarAgendaItem[] = eventosBase.map((e) => ({
-    id: e.id,
+    id: e.id, updatedAt: e.updatedAt.toISOString(),
     title: e.title,
     kind: e.kind,
     startAt: e.startAt,
@@ -397,7 +386,7 @@ export default async function CalendarioPage({
                       brands={brandOptions}
                       canDelete={puedeBorrar}
                       evento={{
-                        id: e.id,
+                        id: e.id, updatedAt: e.updatedAt.toISOString(),
                         title: e.title,
                         description: e.description ?? "",
                         kind: e.kind,

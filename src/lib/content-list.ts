@@ -1,6 +1,6 @@
-import type { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { loadPage } from "@/lib/list-pagination";
+import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
 
 export async function getContentList(where: Prisma.ContentItemWhereInput, requestedPage?: string) {
   const result = await loadPage(requestedPage, 50,
@@ -22,7 +22,7 @@ export async function getContentList(where: Prisma.ContentItemWhereInput, reques
   );
   const metrics = result.items.length ? await prisma.metric.groupBy({
     by: ["contentItemId"],
-    where: { contentItemId: { in: result.items.map((item) => item.id) } },
+    where: { period: "WEEKLY", contentItemId: { in: result.items.map((item) => item.id) } },
     _sum: { views: true },
   }) : [];
   const views = new Map(metrics.map((row) => [row.contentItemId, row._sum.views ?? 0]));

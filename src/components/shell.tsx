@@ -1,38 +1,39 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+	Activity,
+	CalendarDays,
+	CheckSquare,
+	ChevronDown,
+	Film,
+	GraduationCap,
+	LayoutDashboard,
+	LogOut,
+	Menu,
+	Moon,
+	Settings,
+	Shapes,
+	Sparkles,
+	Sun,
+	Tags,
+	TrendingUp,
+	Users,
+	UserSquare2,
+	X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Activity,
-  CalendarDays,
-  CheckSquare,
-  GraduationCap,
-  ChevronDown,
-  Film,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Moon,
-  Settings,
-  Shapes,
-  Sparkles,
-  Sun,
-  Tags,
-  TrendingUp,
-  Users,
-  UserSquare2,
-  X,
-} from "lucide-react";
+import { useEffect, useState } from "react";
 
-import { cn } from "@/lib/utils";
-import { USER_ROLE_MAP } from "@/lib/constants";
-import { Avatar } from "@/components/ui";
 import { BrandSwitcher } from "@/components/brand-switcher";
-import { NavigationPending } from "@/components/navigation-pending";
+import { GUIA_TARGETS, GuiaOverlay, GuiaProvider } from "@/components/guia";
 import { NavigationMeasurements } from "@/components/navigation-measurements";
+import { NavigationPending } from "@/components/navigation-pending";
+import { Avatar } from "@/components/ui";
 import type { BrandChoice } from "@/lib/brand-shared";
-import { GuiaProvider, GuiaOverlay, GUIA_TARGETS } from "@/components/guia";
+import { USER_ROLE_MAP } from "@/lib/constants";
+import { allows, canAccessPath } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
 
 const NAV_GUIA_MAP: Record<string, string> = {
   "/marcas": GUIA_TARGETS.NAV_MARCAS,
@@ -93,6 +94,7 @@ export type ShellUser = {
   role: string;
   color: string;
   level: number;
+  profiles?: string[];
 };
 
 export function Shell({
@@ -102,6 +104,7 @@ export function Shell({
   activeBrandId,
   performanceEnabled = false,
   release = "local",
+  environment = "unknown",
   children,
 }: {
   user: ShellUser;
@@ -110,6 +113,7 @@ export function Shell({
   activeBrandId: string | null;
   performanceEnabled?: boolean;
   release?: string;
+  environment?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -148,13 +152,13 @@ export function Shell({
       <BrandSwitcher
         brands={brands}
         activeId={activeBrandId}
-        canCreate={user.level >= 1}
+        canCreate={user.role === "OWNER"}
       />
 
       <nav className="flex-1 overflow-y-auto px-3.5 pb-4">
         {NAV.map((group, gi) => {
           const items = group.items.filter(
-            (i) => !i.minLevel || user.level >= i.minLevel
+            (i) => canAccessPath(user, i.href)
           );
           if (!items.length) return null;
           return (
@@ -228,12 +232,12 @@ export function Shell({
           </header>
 
           <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
-            <NavigationMeasurements enabled={performanceEnabled} release={release} />
+            <NavigationMeasurements enabled={performanceEnabled} release={release} environment={environment} />
             <div className="mx-auto w-full max-w-[1400px]">{children}</div>
           </main>
         </div>
       </div>
-      <GuiaOverlay />
+      {user.role === "OWNER" ? <GuiaOverlay /> : null}
     </GuiaProvider>
   );
 }
@@ -248,9 +252,8 @@ function UserMenu({ user }: { user: ShellUser }) {
     <div className="border-line shrink-0 border-t p-3">
       {open ? (
         <div className="mb-2 space-y-0.5">
-          <Link href="/equipo" className="nav-link">
-            <Users size={15} /> <span>Mi equipo</span>
-          </Link>
+          <Link href="/mi-perfil" className="nav-link"><Users size={15} /> <span>Mi perfil</span></Link>
+          {allows(user, "admin.team") ? <Link href="/equipo" className="nav-link"><Users size={15} /><span>Mi equipo</span></Link> : null}
           <form action="/api/logout" method="post">
             <button type="submit" className="nav-link text-danger w-full">
               <LogOut size={15} /> <span>Cerrar sesión</span>

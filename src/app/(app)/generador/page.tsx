@@ -1,33 +1,29 @@
-import { measurePhase as measurePagePhase } from "@/lib/performance";
-import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
-import Link from "next/link";
+import { requirePageSection } from "@/lib/render-context";
+import { brandScope, contentScope } from "@/lib/access-scope";
+import { measurePagePhase } from "@/lib/performance-page";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { Layers, Lock, Sparkles } from "lucide-react";
+import Link from "next/link";
 
-/**
- * Generar un guion con Claude Opus puede tardar entre 30 y 90 segundos, y las
- * Server Actions se ejecutan dentro del segmento de esta página. Sin esto, en
- * producción la petición se cortaría antes de terminar y el guion se perdería.
- *
- * En Vercel el tope real depende del plan: Hobby corta a los 60 s, Pro llega a
- * 300 s. Si en Hobby se corta, hay que bajar la duración objetivo del guion o
- * usar un modelo más rápido (Sonnet 5 o Gemini Flash).
- */
-export const maxDuration = 300;
+/** La acción sólo registra y despacha; las llamadas largas pertenecen a Workflow. */
+export const maxDuration = 60;
 
-import { prisma } from "@/lib/prisma";
+import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { can, LEVEL } from "@/lib/auth";
 import { brandWhere } from "@/lib/brand-context";
-import { aiStatus } from "@/lib/settings";
 import { CONTENT_STATUS_MAP } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import { aiStatus, getSettings, SETTING_KEYS } from "@/lib/settings";
+import { resolveAiModel } from "@/lib/ai-models";
+import { resourceLimit } from "@/lib/resource-limits";
 import { formatDate, parseJson, parseList } from "@/lib/utils";
-import { Card, EmptyState, PageHeader } from "@/components/ui";
 import {
-  GeneratorForm,
-  type GeneratorArchetype,
-  type GeneratorBeat,
-  type GeneratorBrand,
-  type GeneratorStructure,
-  type GeneratorVideo,
+	GeneratorForm,
+	type GeneratorArchetype,
+	type GeneratorBeat,
+	type GeneratorBrand,
+	type GeneratorStructure,
+	type GeneratorVideo,
 } from "./generator-form";
 
 /** Lo que el generador necesita saber de una tarjeta del calendario. */
@@ -62,11 +58,17 @@ export default async function GeneradorPage({
   }>;
 }) {
   return measurePagePhase("page:/generador", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("generator");
+  const maxBatch = resourceLimit("AI_MAX_BATCH", 3);
+  const jobsEnabled = process.env.AI_JOBS_ENABLED === "true" && maxBatch > 0;
   const sp = await searchParams;
+  // La marca activa se necesita antes: filtra las tarjetas candidatas.
   const brandCtx = await getBrandContext();
+  // Solo las tarjetas a las que esta persona puede unir un guion (el mismo
+  // alcance que exige asignarGuionAVideo): la cookie de marca no concede acceso.
+  const alcanceVideos = contentScope(user, "scripts.write");
 
-  const [structures, brands, archetypes, fits, refRows, ai, candidatos, tarjetaPedida] = await Promise.all([
+  const [structures, brands, archetypes, fits, refRows, ai, modelSettings, candidatos, tarjetaPedida] = await Promise.all([
     prisma.structure.findMany({
       where: { active: true },
       orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -83,7 +85,7 @@ export default async function GeneradorPage({
       },
     }),
     prisma.brand.findMany({
-      where: { active: true, archived: false },
+      where: { active: true, archived: false, ...brandScope(user) },
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -118,28 +120,32 @@ export default async function GeneradorPage({
     }),
     prisma.asset.groupBy({
       by: ["ownerType", "ownerId"],
-      where: { useForAi: true, NOT: { extractedText: null } },
+      where: { useForAi: true, NOT: { extractedText: null }, ...(user.role === "OWNER" ? {} : { OR: [{ ownerType: { in: ["structure", "archetype"] } }, { ownerType: "brand", ownerId: { in: user.brandIds ?? [] } }] }) },
       _count: { _all: true },
     }),
     aiStatus(),
-    // Tarjetas que todavía no tienen guion: solo Idea o Guion, y de la marca activa.
+    getSettings([SETTING_KEYS.defaultGoogleModel, SETTING_KEYS.defaultAnthropicModel]),
+    // Tarjetas que todavía no tienen guion: solo Idea o Guion, de la marca
+    // activa y dentro del alcance de permisos de quien mira.
     prisma.contentItem.findMany({
       where: {
-        scriptId: null,
-        status: { in: ["IDEA", "GUION"] },
-        ...brandWhere(brandCtx.activeId),
+        AND: [
+          { scriptId: null, status: { in: ["IDEA", "GUION"] }, ...brandWhere(brandCtx.activeId) },
+          alcanceVideos,
+        ],
       },
       select: VIDEO_SELECT,
       orderBy: [{ scheduledDate: "asc" }, { title: "asc" }],
       take: 80,
     }),
     // Si llega ?video= de otra marca (o fuera de las 80), se carga aparte y se
-    // antepone: la marca del video manda sobre la activa. Se lee sin filtro
-    // para poder decir POR QUÉ no se preselecciona cuando no cumple el mismo
-    // criterio que la lista (sin guion y en Idea o Guion).
+    // antepone: la marca del video manda sobre la activa. Se lee con el mismo
+    // alcance de permisos que la lista (fuera de él es como si no existiera),
+    // pero sin el filtro de guion/estado, para poder decir POR QUÉ no se
+    // preselecciona cuando no cumple el criterio (sin guion y en Idea o Guion).
     sp.video
-      ? prisma.contentItem.findUnique({
-          where: { id: sp.video },
+      ? prisma.contentItem.findFirst({
+          where: { AND: [{ id: sp.video }, alcanceVideos] },
           select: { ...VIDEO_SELECT, scriptId: true },
         })
       : Promise.resolve(null),
@@ -153,7 +159,7 @@ export default async function GeneradorPage({
   const avisoVideo = !sp.video || tarjetaPedidaAdmiteGuion
     ? null
     : !tarjetaPedida
-      ? "El video de la dirección ya no existe. El guion se generará suelto; si quieres, elige otra tarjeta en la etapa 2."
+      ? "El video de la dirección ya no existe o no tienes acceso a él. El guion se generará suelto; si quieres, elige otra tarjeta en la etapa 2."
       : tarjetaPedida.scriptId
         ? `«${tarjetaPedida.title}» ya tiene un guion vinculado: quítalo desde su ficha si quieres otro. El guion se generará suelto.`
         : `«${tarjetaPedida.title}» está en ${CONTENT_STATUS_MAP[tarjetaPedida.status]?.label ?? tarjetaPedida.status}: solo se vinculan tarjetas en Idea o Guion. El guion se generará suelto; cambia el estado desde la ficha si hace falta.`;
@@ -281,7 +287,7 @@ export default async function GeneradorPage({
         }
       />
 
-      {structureOptions.length === 0 ? (
+      {!jobsEnabled ? <Card><div className="space-y-3 p-5"><p>La generación está deshabilitada. El dueño puede activarla cuando termine la configuración del servicio.</p><Link href="/generador/trabajos" className="text-brand">Mis generaciones →</Link></div></Card> : structureOptions.length === 0 ? (
         <Card>
           <EmptyState
             icon={<Layers size={19} />}
@@ -295,7 +301,10 @@ export default async function GeneradorPage({
           />
         </Card>
       ) : (
-        <GeneratorForm
+        <><div className="mb-4"><Link href="/generador/trabajos" className="text-brand font-semibold">Mis generaciones →</Link><p className="text-sm text-inkmuted">Hasta {maxBatch} estructuras por solicitud. Las llamadas a tu proveedor de IA conservan su tarifa.</p></div>
+      <GeneratorForm
+          defaultModels={{ google: resolveAiModel("google", undefined, modelSettings[SETTING_KEYS.defaultGoogleModel]), anthropic: resolveAiModel("anthropic", undefined, modelSettings[SETTING_KEYS.defaultAnthropicModel]) }}
+          maxBatch={maxBatch}
           structures={structureOptions}
           brands={brandOptions}
           archetypes={archetypeOptions}
@@ -313,7 +322,7 @@ export default async function GeneradorPage({
           initialProduct={sp.producto}
           initialRequest={sp.peticion}
           initialAngle={sp.angulo}
-        />
+        /></>
       )}
     </>
   );

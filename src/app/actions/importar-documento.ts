@@ -1,6 +1,7 @@
 "use server";
 
-import { requireLevel, LEVEL } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
+import type { Capability } from "@/lib/permissions";
 import { leerArchivoImportado } from "@/lib/asset-import";
 import { extraerFicha, type ResultadoExtraccion } from "@/lib/ai/extractor";
 import { field } from "@/lib/utils";
@@ -14,7 +15,16 @@ import type { TipoDocumento } from "@/lib/branding-parser";
  * avisos, y la pantalla decide qué aplicar. Escribir es cosa del submit
  * normal del formulario (crearMarca, actualizarMarca, crearArquetipo…), que
  * es el que audita.
+ *
+ * Aun así exige la capacidad de escribir en el destino (brands.edit para una
+ * marca, archetypes.edit para una persona): leer el PDF no toca la base, pero
+ * puede gastar una llamada de IA y devuelve el contenido del documento.
  */
+
+const CAPACIDAD_POR_DESTINO: Record<string, Capability> = {
+  marca: "brands.edit",
+  persona: "archetypes.edit",
+};
 
 export type Previsualizacion =
   | {
@@ -26,10 +36,12 @@ export type Previsualizacion =
   | { ok: false; error: string };
 
 export async function previsualizarDocumento(formData: FormData): Promise<Previsualizacion> {
-  await requireLevel(LEVEL.MEMBER);
-
   const tipoCrudo = field(formData, "tipo");
   const tipo: TipoDocumento = tipoCrudo === "brief" ? "brief" : "branding";
+  // Sin destino explícito se asume una persona (el informe de branding es lo
+  // que más se importa); un brief solo tiene sentido para una marca.
+  const destino = field(formData, "destino") || (tipo === "brief" ? "marca" : "persona");
+  await requirePermission(CAPACIDAD_POR_DESTINO[destino] ?? "brands.edit");
 
   const lectura = await leerArchivoImportado(formData.get("file"));
   if (!lectura.ok) return { ok: false, error: lectura.error };

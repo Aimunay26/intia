@@ -94,8 +94,8 @@ test("el resumen de comparación conserva filtros, ceros y denominadores", async
   } } };
   const { getMetricSummary } = load("src/lib/metric-summary.ts", { "@/lib/prisma": { prisma } });
   assert.deepEqual(await getMetricSummary(where), { views: 900, interactions: 20, reach: 500, spend: 0, revenue: 120, retention: 75, roas: 0 });
-  assert.deepEqual(queries[0].where, where);
-  assert.deepEqual(queries[1].where.AND, [where, { retention3s: { gt: 0 } }]);
+  assert.deepEqual(queries[0].where.AND, [where, { period: "WEEKLY" }]);
+  assert.deepEqual(queries[1].where.AND, [where, { period: "WEEKLY" }]);
 });
 
 test("Equipo cuenta un video una vez aunque haya dos funciones: SQL real sobre fixture", async () => {
@@ -144,7 +144,7 @@ test("el inicializador rechaza una sesión ausente antes de tocar DB", async () 
 
 test("inicialización idempotente, con reintento de conflicto y una auditoría", async () => {
   const columns = new Map(); let attempts = 0; let audits = 0;
-  const tx = { taskColumn: { count: async () => columns.size, upsert: async ({ create }) => { columns.set(create.id, create); } } };
+  const tx = { $executeRaw: async () => {}, taskColumn: { count: async () => columns.size, upsert: async ({ create }) => { columns.set(create.id, create); } } };
   const prisma = { $transaction: async (work, options) => {
     assert.equal(options.isolationLevel, "Serializable");
     if (++attempts === 1) throw Object.assign(new Error("Conflicto"), { code: "P2034" });
@@ -152,7 +152,8 @@ test("inicialización idempotente, con reintento de conflicto y una auditoría",
   } };
   const { asegurarColumnasIniciales } = load("src/app/actions/tasks.ts", {
     "@/lib/prisma": { prisma }, "@/lib/auth": { LEVEL: { MEMBER: 1 }, requireLevel: async () => ({ id: "u1" }) },
-    "@/lib/audit": { logAudit: async () => { audits++; } }, "next/cache": { revalidatePath: () => {} },
+    "@/lib/auth-transactions": { assertActor: async () => {} },
+    "@/lib/audit": { auditInTransaction: async (received) => { assert.equal(received, tx); audits++; } }, "next/cache": { revalidatePath: () => {} },
   });
   await asegurarColumnasIniciales(); await asegurarColumnasIniciales();
   assert.equal(columns.size, 5); assert.equal(audits, 1); assert.equal(attempts, 3);

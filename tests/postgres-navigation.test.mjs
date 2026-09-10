@@ -25,27 +25,27 @@ test("PostgreSQL: agregados, páginas, cursores e inicialización concurrente", 
   try {
     const owner = await prisma.user.create({ data: { id: id("owner"), name: "Dueño de prueba", email: `${prefix}@example.test`, passwordHash: "fixture-not-a-password", role: "OWNER" } });
     await t.test("10 inicializaciones simultáneas crean cinco columnas y una auditoría", async () => {
-      let audits = 0;
+
       const action = load("src/app/actions/tasks.ts", {
-        ...mocks, "@/lib/auth": { LEVEL: { MEMBER: 1 }, requireLevel: async () => owner },
-        "next/cache": { revalidatePath: () => {} }, "@/lib/audit": { logAudit: async () => { audits++; } },
+        ...mocks, "@/lib/auth": { LEVEL: { MEMBER: 1, OWNER: 2 }, requireLevel: async () => owner, requirePermission: async () => owner },
+        "next/cache": { revalidatePath: () => {} },
       });
       await Promise.all(Array.from({ length: 10 }, () => action.asegurarColumnasIniciales()));
       const columns = await prisma.taskColumn.findMany();
       initialIds = columns.map(column => column.id);
-      assert.equal(columns.length, 5); assert.equal(new Set(columns.map(column => column.order)).size, 5); assert.equal(audits, 1);
+      assert.equal(columns.length, 5); assert.equal(new Set(columns.map(column => column.order)).size, 5); assert.equal(await prisma.auditLog.count({where:{entity:"TaskColumn",action:"CREAR"}}), 1);
     });
     await prisma.brand.createMany({ data: ["A", "B"].map(name => ({ id: id(name), name, slug: id(name) })) });
     await prisma.contentItem.createMany({ data: Array.from({ length: 62 }, (_, index) => ({ id: id(`v${String(index).padStart(3,"0")}`), brandId: id(index === 61 ? "B" : "A"), title: `Video ${index}`, scheduledDate: new Date("2026-09-08T12:00:00Z"), platforms: '["TIKTOK","INSTAGRAM"]' })) });
     const content = await prisma.contentItem.findMany({ where: { brandId: { in: [id("A"),id("B")] } }, orderBy: { id: "asc" } });
-    await prisma.metric.createMany({ data: content.flatMap((row,index) => [0,1,2].map(day => ({ contentItemId: row.id, date: new Date(`2026-09-0${day+1}T12:00:00Z`), views: index === 61 ? 999999 : 10 + index, likes: 2, comments: 1, spend: day === 0 ? 10 : 0, revenue: 20, retention3s: day === 0 ? 50 : day === 1 ? 100 : 0 }))) });
+    await prisma.metric.createMany({ data: content.flatMap((row,index) => [0,1,2].map(day => ({ contentItemId: row.id, period: "WEEKLY", platform: "TIKTOK", date: new Date(Date.UTC(2026,8,7+day*7,12)), views: index === 61 ? 999999 : 10 + index, likes: 2, comments: 1, spend: day === 0 ? 10 : 0, revenue: 20, retention3s: day === 0 ? 50 : day === 1 ? 100 : 0 }))) });
     await prisma.assignment.createMany({ data: ["ACTOR","EDITOR"].map(role => ({ contentItemId: content[0].id, userId: owner.id, role })) });
-    const filters = { brandId: id("A"), desde: "2026-09-01", hasta: "2026-09-03" };
+    const filters = { brandId: id("A"), desde: "2026-09-01", hasta: "2026-09-30" };
     await t.test("resúmenes y series coinciden con filas reales sin duplicar roles ni marcas", async () => {
       const rows = await prisma.metric.findMany({ where: { contentItem: { brandId: id("A") } } });
       const totalViews = rows.reduce((sum,row) => sum+row.views,0);
       const totals = await dashboard.getMetricTotals(filters);
-      assert.equal(totals.views,totalViews); assert.equal(totals.records,183); assert.equal(totals.videos,61); assert.equal(totals.retention,75); assert.equal(totals.roas,6);
+      assert.equal(totals.views,totalViews); assert.equal(totals.records,183); assert.equal(totals.videos,61); assert.equal(totals.retention,50); assert.equal(totals.roas,6);
       assert.equal((await dashboard.getMetricSeries(filters)).reduce((sum,row)=>sum+row.views,0), totalViews);
       const person = await dashboard.getMetricTotals({ ...filters, persona: owner.id });
       assert.equal(person.videos,1); assert.equal(person.records,3); assert.equal(person.views,30);
@@ -88,10 +88,11 @@ test("PostgreSQL: agregados, páginas, cursores e inicialización concurrente", 
       const visible = await tasks.getTaskColumnPage(destination, id("A"), {});
       assert.equal(visible.tasks.length, 50);
       const action = load("src/app/actions/tasks.ts", {
-        ...mocks, "@/lib/auth": { LEVEL: { MEMBER: 1 }, requireLevel: async () => owner },
-        "next/cache": { revalidatePath: () => {} }, "@/lib/audit": { logAudit: async () => {} },
+        ...mocks, "@/lib/auth": { LEVEL: { MEMBER: 1, OWNER: 2 }, requireLevel: async () => owner, requirePermission: async () => owner },
+        "next/cache": { revalidatePath: () => {} },
       });
-      await action.moverTarea(id("t109"), destination);
+      const moving = await prisma.task.findUniqueOrThrow({ where: { id: id("t109") } });
+      await action.moverTarea(id("t109"), destination, undefined, moving.updatedAt.toISOString());
       const next = await tasks.getTaskColumnPage(destination, id("A"), {}, visible.nextCursor);
       assert.equal(next.tasks.at(-1).id, id("t109"));
       assert.equal(next.tasks.at(-1).order, 60);

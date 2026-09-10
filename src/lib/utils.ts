@@ -1,4 +1,5 @@
 /** Utilidades compartidas. Sin dependencias externas. */
+import { boundedNumber, parseNumber, requireDay, requireTime } from "@/lib/validation";
 
 /** Une clases de tailwind ignorando falsos. */
 export function cn(...parts: (string | false | null | undefined)[]) {
@@ -153,40 +154,42 @@ export function toDate(value: Date | string | null | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** yyyy-mm-dd en hora local (no UTC): sirve para inputs date y para agrupar. */
+/** Día del negocio en Lima, idéntico en el servidor y el navegador. */
 export function dateKey(value: Date | string | null | undefined): string {
   const d = toDate(value);
   if (!d) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return new Intl.DateTimeFormat("en-CA", { timeZone: APP_TIMEZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
 
-/** Convierte "2026-03-14" a un Date a mediodia local (evita saltos de zona). */
+/** Día sin hora: representación canónica a las 12:00 UTC (07:00 en Lima). */
 export function fromDateKey(key: string): Date {
-  const [y, m, d] = key.split("-").map(Number);
-  return new Date(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0, 0);
+  return new Date(`${requireDay(key)}T12:00:00.000Z`);
 }
 
 export function formatDate(value: Date | string | null | undefined) {
   const d = toDate(value);
   if (!d) return "—";
-  return `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
+  const [year, month, day] = dateKey(d).split("-").map(Number);
+  return `${day} ${MESES[month - 1].slice(0, 3)} ${year}`;
 }
 
 export function formatDateLong(value: Date | string | null | undefined) {
   const d = toDate(value);
   if (!d) return "—";
-  return `${DIAS[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
+  const [year, month, day] = dateKey(d).split("-").map(Number);
+  const weekday = fromDateKey(dateKey(d)).getUTCDay();
+  return `${DIAS[weekday]} ${day} de ${MESES[month - 1]} de ${year}`;
 }
 
 export function formatDateTime(value: Date | string | null | undefined) {
   const d = toDate(value);
   if (!d) return "—";
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
-  return `${formatDate(d)}, ${hh}:${mm}`;
+  return `${formatDate(d)}, ${timeKey(d)}`;
+}
+
+export function timeKey(value: Date | string | null | undefined): string {
+  const d = toDate(value);
+  return d ? new Intl.DateTimeFormat("en-GB", { timeZone: APP_TIMEZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d) : "";
 }
 
 export function monthLabel(year: number, month: number) {
@@ -208,16 +211,25 @@ export function relativeTime(value: Date | string | null | undefined) {
 }
 
 export function startOfMonth(year: number, month: number) {
-  return new Date(year, month, 1, 0, 0, 0, 0);
+  const first = new Date(Date.UTC(year, month, 1, 12));
+  return instantInZone(first.toISOString().slice(0, 10), "00:00");
 }
 
 export function endOfMonth(year: number, month: number) {
-  return new Date(year, month + 1, 0, 23, 59, 59, 999);
+  return new Date(startOfMonth(year, month + 1).getTime() - 1);
+}
+
+export function startOfDay(value: Date | string) {
+  return instantInZone(dateKey(value), "00:00");
+}
+
+export function endOfDay(value: Date | string) {
+  return new Date(startOfDay(value).getTime() + 86_400_000 - 1);
 }
 
 export function addDays(date: Date, days: number) {
   const d = new Date(date);
-  d.setDate(d.getDate() + days);
+  d.setUTCDate(d.getUTCDate() + days);
   return d;
 }
 
@@ -226,9 +238,9 @@ export function addDays(date: Date, days: number) {
  * empezando en lunes.
  */
 export function monthGrid(year: number, month: number): Date[] {
-  const first = startOfMonth(year, month);
+  const first = fromDateKey(dateKey(startOfMonth(year, month)));
   // getDay(): 0=domingo. Queremos lunes como primer dia.
-  const offset = (first.getDay() + 6) % 7;
+  const offset = (first.getUTCDay() + 6) % 7;
   const start = addDays(first, -offset);
   return Array.from({ length: 42 }, (_, i) => addDays(start, i));
 }
@@ -257,7 +269,7 @@ export const APP_TIMEZONE = "America/Lima";
 export function zoneOffsetMinutes(date: Date, timeZone: string = APP_TIMEZONE): number {
   const dtf = new Intl.DateTimeFormat("en-US", {
     timeZone,
-    hour12: false,
+    hourCycle: "h23",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -275,7 +287,7 @@ export function zoneOffsetMinutes(date: Date, timeZone: string = APP_TIMEZONE): 
     get("minute"),
     get("second")
   );
-  return (comoUtc - date.getTime()) / 60000;
+  return (comoUtc - Math.floor(date.getTime() / 1000) * 1000) / 60000;
 }
 
 /**
@@ -287,6 +299,8 @@ export function instantInZone(
   time: string,
   timeZone: string = APP_TIMEZONE
 ): Date {
+  requireDay(key);
+  requireTime(time);
   const [y, m, d] = key.split("-").map(Number);
   const [hh, mm] = time.split(":").map(Number);
 
@@ -325,12 +339,12 @@ export function fieldOrNull(fd: FormData, name: string): string | null {
 }
 
 export function numField(fd: FormData, name: string, fallback = 0): number {
-  const v = Number(field(fd, name).replace(/,/g, "."));
-  return Number.isFinite(v) ? v : fallback;
+  const value = field(fd, name);
+  return value === "" ? fallback : parseNumber(value, name);
 }
 
 export function intField(fd: FormData, name: string, fallback = 0): number {
-  return Math.round(numField(fd, name, fallback));
+  return boundedNumber(numField(fd, name, fallback), -2147483648, 2147483647, name, true);
 }
 
 export function boolField(fd: FormData, name: string): boolean {

@@ -401,6 +401,7 @@ export function ImportarDocumentoModal({
       const fd = new FormData();
       fd.append("file", file);
       fd.append("tipo", tipo);
+      fd.append("destino", destino);
       const res = await previsualizarDocumento(fd);
       if (!res.ok) {
         setError(res.error);

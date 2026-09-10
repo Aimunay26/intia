@@ -1,12 +1,13 @@
 "use client";
+import { EditForm, RevisionField } from "@/components/edit-form";
 
-import { useState } from "react";
 import { ArrowDown, ArrowUp, ListOrdered, Plus, Save, Trash2, Wand2 } from "lucide-react";
+import { useState } from "react";
 
 import { guardarBeats, type Beat } from "@/app/actions/structures";
-import { cn, formatSeconds } from "@/lib/utils";
-import { Callout, EmptyState } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
+import { Callout, EmptyState } from "@/components/ui";
+import { cn, formatSeconds } from "@/lib/utils";
 
 type Row = Beat & { key: string };
 
@@ -46,11 +47,13 @@ function limpiar(items: Beat[]): Beat[] {
  */
 export function BeatsEditor({
   structureId,
+  updatedAt,
   beats,
   defaultDurationSec,
   canEdit,
 }: {
   structureId: string;
+  updatedAt: string;
   beats: Beat[];
   defaultDurationSec: number;
   canEdit: boolean;
@@ -86,7 +89,8 @@ export function BeatsEditor({
     setRows((prev) => [...prev, { key: nuevaKey(), name: "", goal: "", seconds: 5, notes: "" }]);
 
   return (
-    <form action={guardarBeats} className="card">
+    <EditForm action={guardarBeats} className="card">
+<RevisionField value={updatedAt} />
       <input type="hidden" name="id" value={structureId} />
       <input type="hidden" name="beats" value={serializado} />
 
@@ -283,6 +287,6 @@ export function BeatsEditor({
           </SubmitButton>
         ) : null}
       </div>
-    </form>
+    </EditForm>
   );
 }

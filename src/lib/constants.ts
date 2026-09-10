@@ -41,7 +41,7 @@ export const USER_ROLES: Option[] = [
     label: "Equipo",
     chip: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-300 ring-emerald-500/25",
     hex: "#10b981",
-    description: "Crea, edita, mueve y asigna. No puede eliminar nada.",
+    description: "Acceso según sus perfiles y marcas. Sin administración ni borrados.",
   },
 ];
 export const USER_ROLE_MAP = byValue(USER_ROLES);
@@ -211,11 +211,10 @@ export function platformLabels(platforms: string[]): string {
 
 /**
  * Filtro de Prisma para "videos que salen en esta red".
- * Como la lista se guarda en JSON dentro de un String, se busca el valor
- * entrecomillado; así TIKTOK no coincide por error con otra red que lo contenga.
+ * Relación normalizada e indexada; el JSON se conserva para formularios y compatibilidad.
  */
 export function platformFilter(platform: string) {
-  return { contains: `"${platform}"` };
+  return { some: { platform } };
 }
 
 /** Semáforo de prioridad: azul tranquilo, naranja atento, rojo urgente. */
@@ -542,8 +541,7 @@ export const AI_PROVIDERS: Option[] = [
 export const AI_PROVIDER_MAP = byValue(AI_PROVIDERS);
 
 /**
- * Modelos sugeridos. El campo es texto libre en la interfaz, asi que si
- * sale un modelo nuevo se puede escribir a mano sin tocar el codigo.
+ * Catálogo de modelos admitidos por el generador y sus trabajos durables.
  */
 export const AI_MODELS: Record<string, { value: string; label: string }[]> = {
   anthropic: [
@@ -552,18 +550,18 @@ export const AI_MODELS: Record<string, { value: string; label: string }[]> = {
     { value: "claude-haiku-4-5", label: "Claude Haiku 4.5 - rápido y barato" },
   ],
   google: [
-    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro - el más capaz (requiere plan de pago)" },
-    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash - rápido y barato" },
+    { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash - rápido, con nivel gratuito" },
   ],
 };
 
 /**
- * Gemini 2.5 Flash es el único predeterminado razonable sin facturación:
- * 2.5 Pro se queda sin cuota gratuita en pocas peticiones.
+ * Predeterminados del catálogo. Los valores heredados de Gemini (2.5 Pro y
+ * 2.5 Flash) que sigan guardados en estructuras, ajustes o trabajos se
+ * resuelven a 3.8 en `normalizeAiModel` (src/lib/ai-models.ts).
  */
 export const DEFAULT_MODEL: Record<string, string> = {
   anthropic: "claude-opus-5",
-  google: "gemini-2.5-flash",
+  google: "gemini-3.8-flash",
 };
 
 /* ---------------------------------------------------------- AUDITORIA -- */

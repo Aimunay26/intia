@@ -9,6 +9,7 @@
  * aleatorias que se imprimen al final de este script.
  */
 
+import "../scripts/local-database-only.mjs";
 import { prisma as rootPrisma } from "../src/lib/prisma";
 import { lockDemoTables, recordDemoSeed } from "../src/lib/demo-provenance";
 import bcrypt from "bcryptjs";
@@ -836,7 +837,7 @@ async function main() {
     "org.name": "Con Amor",
     "ai.defaultProvider": "anthropic",
     "ai.anthropic.model": "claude-opus-5",
-    "ai.google.model": "gemini-2.5-flash",
+    "ai.google.model": "gemini-3.8-flash",
   })) {
     await prisma.appSetting.upsert({ where: { key }, create: { key, value }, update: {} });
   }

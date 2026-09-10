@@ -1,19 +1,23 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
+import { assertBrandPermission } from "@/lib/permissions";
+import { assertContentAccess, eventScope } from "@/lib/access-scope";
 
 import { revalidatePath } from "next/cache";
 
-import { prisma } from "@/lib/prisma";
+import { auditInTransaction, diffFields } from "@/lib/audit";
 import { LEVEL, requireLevel } from "@/lib/auth";
-import { diffFields, logAudit } from "@/lib/audit";
 import { EVENT_KIND_MAP } from "@/lib/constants";
+import { lockRevision, withMutation } from "@/lib/mutations";
 import {
-  boolField,
-  field,
-  fieldOrNull,
-  formatDate,
-  fromDateKey,
-  instantInZone,
+	boolField,
+	field,
+	fieldOrNull,
+	formatDate,
+	fromDateKey,
+	instantInZone,
 } from "@/lib/utils";
+import { enumField } from "@/lib/validation";
 
 /**
  * Agenda: reuniones, pendientes, días de grabación y recordatorios.
@@ -48,17 +52,11 @@ function tipoLabel(value: string) {
  *
  * La hora se interpreta SIEMPRE en la zona del negocio, no en la del servidor:
  * en Vercel el servidor corre en UTC y "las 10:00" acabarían siendo las 5:00.
- * Si la hora llega vacía o mal escrita, se deja la fecha tal cual.
+ * Una hora vacía no define un instante; una hora inválida se rechaza.
  */
 function conHora(fecha: string, hora: string): Date | null {
-  if (!fecha) return null;
-  const partes = hora.split(":");
-  const h = Number(partes[0]);
-  const m = Number(partes[1]);
-  if (partes.length < 2 || partes[0].trim() === "" || !Number.isFinite(h)) {
-    return fromDateKey(fecha);
-  }
-  return instantInZone(fecha, `${h}:${Number.isFinite(m) ? m : 0}`);
+  if (!fecha || !hora) return null;
+  return instantInZone(fecha, hora);
 }
 
 function leerCampos(formData: FormData) {
@@ -69,7 +67,7 @@ function leerCampos(formData: FormData) {
   return {
     title: field(formData, "title"),
     description: fieldOrNull(formData, "description"),
-    kind: field(formData, "kind") || "REUNION",
+    kind: enumField(formData, "kind", EVENT_KIND_MAP, "REUNION"),
     allDay,
     startAt: allDay
       ? inicioKey
@@ -90,17 +88,71 @@ function leerCampos(formData: FormData) {
 /* ------------------------------------------------------------------ ALTA -- */
 
 export async function crearEvento(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
-  const datos = leerCampos(formData);
+  const user = await requirePermission("calendar.edit");
+  return withMutation(user, false, async (tx, afterCommit) => {
+    const datos = leerCampos(formData);
+    if (datos.brandId) assertBrandPermission(user, datos.brandId, "calendar.edit");
+    if (datos.contentItemId) await assertContentAccess(tx, user, datos.contentItemId, "calendar.edit");
 
-  if (!datos.title) throw new Error("El evento necesita un título.");
-  if (!datos.startAt) throw new Error("El evento necesita una fecha.");
+    if (!datos.title) throw new Error("El evento necesita un título.");
+    if (!datos.startAt) throw new Error("El evento necesita una fecha.");
 
-  // Si alguien pone el fin antes del inicio, se ignora en vez de guardar basura.
-  const endAt = datos.endAt && datos.endAt > datos.startAt ? datos.endAt : null;
+    if (datos.endAt && datos.endAt < datos.startAt) throw new Error("El fin no puede ser anterior al inicio.");
+    if (!datos.allDay && datos.endAt?.getTime() === datos.startAt.getTime()) throw new Error("La hora de fin debe ser posterior al inicio.");
+    const endAt = datos.endAt;
 
-  const evento = await prisma.calendarEvent.create({
-    data: {
+    const evento = await tx.calendarEvent.create({
+      data: {
+        title: datos.title,
+        description: datos.description,
+        kind: datos.kind,
+        startAt: datos.startAt,
+        endAt,
+        allDay: datos.allDay,
+        location: datos.location,
+        brandId: datos.brandId,
+        contentItemId: datos.contentItemId,
+        createdById: user.id,
+      },
+    });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "CREAR",
+      entity: "CalendarEvent",
+      entityId: evento.id,
+      brandId: datos.brandId,
+      summary: `Agendó ${tipoLabel(datos.kind).toLowerCase()} "${datos.title}" para el ${formatDate(datos.startAt)}`,
+    });
+
+    afterCommit(() => refrescar());
+  });
+}
+
+/* ------------------------------------------------------------- ACTUALIZAR -- */
+
+export async function actualizarEvento(formData: FormData) {
+  const user = await requirePermission("calendar.edit");
+  return withMutation(user, false, async (tx, afterCommit) => {
+    if (!await tx.calendarEvent.count({ where: { AND: [{ id: field(formData, "id") }, eventScope(user)] } })) throw new Error("No tienes acceso a este evento.");
+    const id = field(formData, "id");
+    if (!id) return;
+
+    await lockRevision(tx, "CalendarEvent", id, formData);
+    const before = await tx.calendarEvent.findUnique({ where: { id } });
+    if (!before) return;
+
+    const datos = leerCampos(formData);
+    if (datos.brandId) assertBrandPermission(user, datos.brandId, "calendar.edit");
+    if (datos.contentItemId) await assertContentAccess(tx, user, datos.contentItemId, "calendar.edit");
+    if (!datos.title) throw new Error("El evento necesita un título.");
+    if (!datos.startAt) throw new Error("El evento necesita una fecha y hora válidas.");
+
+    if (datos.endAt && datos.endAt < datos.startAt) throw new Error("El fin no puede ser anterior al inicio.");
+    if (!datos.allDay && datos.endAt?.getTime() === datos.startAt.getTime()) throw new Error("La hora de fin debe ser posterior al inicio.");
+    const endAt = datos.endAt;
+
+    const data = {
       title: datos.title,
       description: datos.description,
       kind: datos.kind,
@@ -109,62 +161,22 @@ export async function crearEvento(formData: FormData) {
       allDay: datos.allDay,
       location: datos.location,
       brandId: datos.brandId,
-      contentItemId: datos.contentItemId,
-      createdById: user.id,
-    },
+    };
+
+    await tx.calendarEvent.update({ where: { id }, data });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "EDITAR",
+      entity: "CalendarEvent",
+      entityId: id,
+      brandId: data.brandId ?? before.brandId,
+      summary: `Movió o editó "${data.title}" en la agenda`,
+      changes: diffFields(before, data, LABELS),
+    });
+
+    afterCommit(() => refrescar());
   });
-
-  await logAudit({
-    user,
-    action: "CREAR",
-    entity: "CalendarEvent",
-    entityId: evento.id,
-    brandId: datos.brandId,
-    summary: `Agendó ${tipoLabel(datos.kind).toLowerCase()} "${datos.title}" para el ${formatDate(datos.startAt)}`,
-  });
-
-  refrescar();
-}
-
-/* ------------------------------------------------------------- ACTUALIZAR -- */
-
-export async function actualizarEvento(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
-  const id = field(formData, "id");
-  if (!id) return;
-
-  const before = await prisma.calendarEvent.findUnique({ where: { id } });
-  if (!before) return;
-
-  const datos = leerCampos(formData);
-  if (!datos.title || !datos.startAt) return;
-
-  const endAt = datos.endAt && datos.endAt > datos.startAt ? datos.endAt : null;
-
-  const data = {
-    title: datos.title,
-    description: datos.description,
-    kind: datos.kind,
-    startAt: datos.startAt,
-    endAt,
-    allDay: datos.allDay,
-    location: datos.location,
-    brandId: datos.brandId,
-  };
-
-  await prisma.calendarEvent.update({ where: { id }, data });
-
-  await logAudit({
-    user,
-    action: "EDITAR",
-    entity: "CalendarEvent",
-    entityId: id,
-    brandId: data.brandId ?? before.brandId,
-    summary: `Movió o editó "${data.title}" en la agenda`,
-    changes: diffFields(before, data, LABELS),
-  });
-
-  refrescar();
 }
 
 /* --------------------------------------------------------------- ELIMINAR -- */
@@ -172,25 +184,27 @@ export async function actualizarEvento(formData: FormData) {
 /** Borrar es cosa del dueño, como todo lo destructivo. */
 export async function eliminarEvento(formData: FormData) {
   const user = await requireLevel(LEVEL.OWNER);
-  const id = field(formData, "id");
-  if (!id) return;
+  return withMutation(user, true, async (tx, afterCommit) => {
+    const id = field(formData, "id");
+    if (!id) return;
 
-  const evento = await prisma.calendarEvent.findUnique({
-    where: { id },
-    select: { id: true, title: true, kind: true, brandId: true, startAt: true },
+    const evento = await tx.calendarEvent.findUnique({
+      where: { id },
+      select: { id: true, title: true, kind: true, brandId: true, startAt: true },
+    });
+    if (!evento) return;
+
+    await tx.calendarEvent.delete({ where: { id } });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "ELIMINAR",
+      entity: "CalendarEvent",
+      entityId: id,
+      brandId: evento.brandId,
+      summary: `Quitó de la agenda ${tipoLabel(evento.kind).toLowerCase()} "${evento.title}" del ${formatDate(evento.startAt)}`,
+    });
+
+    afterCommit(() => refrescar());
   });
-  if (!evento) return;
-
-  await prisma.calendarEvent.delete({ where: { id } });
-
-  await logAudit({
-    user,
-    action: "ELIMINAR",
-    entity: "CalendarEvent",
-    entityId: id,
-    brandId: evento.brandId,
-    summary: `Quitó de la agenda ${tipoLabel(evento.kind).toLowerCase()} "${evento.title}" del ${formatDate(evento.startAt)}`,
-  });
-
-  refrescar();
 }

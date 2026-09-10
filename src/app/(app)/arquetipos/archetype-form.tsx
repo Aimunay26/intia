@@ -196,6 +196,7 @@ export function ArchetypeCreateButton({
       const fd = new FormData();
       fd.append("file", pdf);
       fd.append("tipo", "branding");
+      fd.append("destino", "persona");
       const res = await previsualizarDocumento(fd);
       if (!res.ok) {
         setError(res.error);

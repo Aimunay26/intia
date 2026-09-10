@@ -1,17 +1,17 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { loadPage } from "@/lib/list-pagination";
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export type MetricFilters = { brandId: string | null; desde: string; hasta: string; plataforma?: string; estructura?: string; persona?: string };
-export type MetricTotals = { views: number; interactions: number; reach: number; spend: number; revenue: number; retention: number; roas: number; records: number; videos: number };
+export type MetricTotals = { views: number; interactions: number; reach: number; spend: number; revenue: number; retention: number | null; roas: number; records: number; videos: number };
 export type MetricVideo = { id: string; title: string; platforms: string; fecha: Date; brandName: string; brandColor: string; views: number; interactions: number; spend: number; revenue: number; retSum: number; retCount: number };
 
 /** Metric.date representa un día de reporte. Se compara por fecha UTC, sin zona del host. */
 export function metricSource(filters: MetricFilters) {
-  const conditions = [Prisma.sql`m."date" >= ${new Date(`${filters.desde}T00:00:00.000Z`)}`,
+  const conditions = [Prisma.sql`m."period" = 'WEEKLY'`, Prisma.sql`m."date" >= ${new Date(`${filters.desde}T00:00:00.000Z`)}`,
     Prisma.sql`m."date" < ${new Date(new Date(`${filters.hasta}T00:00:00.000Z`).getTime() + 86400000)}`];
   if (filters.brandId) conditions.push(Prisma.sql`ci."brandId" = ${filters.brandId}`);
-  if (filters.plataforma) conditions.push(Prisma.sql`POSITION(${JSON.stringify(filters.plataforma)} IN ci."platforms") > 0`);
+  if (filters.plataforma) conditions.push(Prisma.sql`m."platform" = ${filters.plataforma}`);
   if (filters.estructura) conditions.push(Prisma.sql`ci."structureId" = ${filters.estructura}`);
   if (filters.persona) conditions.push(Prisma.sql`EXISTS (SELECT 1 FROM "Assignment" a WHERE a."contentItemId" = ci."id" AND a."userId" = ${filters.persona})`);
   return Prisma.sql`FROM "Metric" m JOIN "ContentItem" ci ON ci."id" = m."contentItemId" WHERE ${Prisma.join(conditions, " AND ")}`;
@@ -23,7 +23,7 @@ export async function getMetricTotals(filters: MetricFilters): Promise<MetricTot
       COALESCE(SUM(m."likes"::float8 + m."comments" + m."shares" + m."saves"),0)::float8 AS "interactions",
       COALESCE(SUM(m."reach"),0)::float8 AS "reach", COALESCE(SUM(m."spend"),0)::float8 AS "spend",
       COALESCE(SUM(m."revenue"),0)::float8 AS "revenue",
-      COALESCE(AVG(m."retention3s") FILTER (WHERE m."retention3s" > 0),0)::float8 AS "retention",
+      AVG(m."retention3s")::float8 AS "retention",
       COALESCE(SUM(m."revenue") / NULLIF(SUM(m."spend"),0),0)::float8 AS "roas",
       COUNT(*)::int AS "records", COUNT(DISTINCT ci."id")::int AS "videos"
     ${metricSource(filters)}`);
@@ -40,7 +40,7 @@ export async function getMetricBreakdowns(filters: MetricFilters) {
   const source = metricSource(filters);
   const [platforms, brands, structures] = await Promise.all([
     prisma.$queryRaw<Array<{ platforms: string; views: number }>>(Prisma.sql`
-      SELECT ci."platforms", SUM(m."views")::float8 AS "views" ${source} GROUP BY ci."platforms"`),
+      SELECT json_build_array(m."platform")::text AS "platforms", SUM(m."views")::float8 AS "views" ${source} GROUP BY m."platform"`),
     prisma.$queryRaw<Array<{ id: string; name: string; color: string; value: number }>>(Prisma.sql`
       SELECT b."id", b."name", b."colorPrimary" AS "color", g."value" FROM (
         SELECT ci."brandId", SUM(m."views")::float8 AS "value" ${source} GROUP BY ci."brandId"
@@ -67,8 +67,8 @@ export function getMetricRanking(filters: MetricFilters, order: string | undefin
         SELECT ci."id", SUM(m."views")::float8 AS "views",
           SUM(m."likes"::float8 + m."comments" + m."shares" + m."saves")::float8 AS "interactions",
           SUM(m."spend")::float8 AS "spend", SUM(m."revenue")::float8 AS "revenue",
-          COALESCE(SUM(m."retention3s") FILTER (WHERE m."retention3s" > 0),0)::float8 AS "retSum",
-          COUNT(*) FILTER (WHERE m."retention3s" > 0)::int AS "retCount",
+          COALESCE(SUM(m."retention3s") FILTER (WHERE m."retention3s" IS NOT NULL),0)::float8 AS "retSum",
+          COUNT(*) FILTER (WHERE m."retention3s" IS NOT NULL)::int AS "retCount",
           COALESCE(SUM(m."revenue") / NULLIF(SUM(m."spend"),0),0)::float8 AS "roas"
         ${source} GROUP BY ci."id" ORDER BY ${sort} DESC, ci."id" ASC LIMIT ${take} OFFSET ${skip}
       ) g JOIN "ContentItem" ci ON ci."id" = g."id" JOIN "Brand" b ON b."id" = ci."brandId"

@@ -1,37 +1,41 @@
 "use server";
+import { assertBrandPermission } from "@/lib/permissions";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { prisma } from "@/lib/prisma";
 import { borrarAssetsDe } from "@/lib/assets-cleanup";
-import { requireLevel, LEVEL, type SessionUser } from "@/lib/auth";
-import { logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
+import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
+import { LEVEL, requireLevel, requirePermission, type SessionUser } from "@/lib/auth";
 import {
   guardarDocumentoImportado,
   leerArchivoOpcional,
-  type ArchivoImportado,
+  prepararArchivoPrivado,
+  type DocumentoPreparado,
 } from "@/lib/asset-import";
-import type { TipoDocumento } from "@/lib/branding-parser";
+import { OBJECTIVE_PERIODS, OBJECTIVE_STATUS_MAP } from "@/lib/constants";
+import { lockRevision, withMutation } from "@/lib/mutations";
 import { MAX_UPLOAD_BYTES } from "@/lib/pdf";
+import { type AppTransaction } from "@/lib/prisma";
 import {
-  field,
-  fieldOrNull,
-  numField,
-  intField,
-  boolField,
-  dateField,
-  linesToJson,
-  slugify,
+	boolField,
+	dateField,
+	field,
+	fieldOrNull,
+	intField,
+	linesToJson,
+	numField,
+	slugify,
 } from "@/lib/utils";
+import { boundedNumber, choice, enumField } from "@/lib/validation";
 
 /**
  * Acciones de marcas y de sus objetivos.
  *
  * Reglas del contrato aplicadas aqui:
- *  - crear / editar marca y objetivos: LEVEL.MEMBER
- *  - eliminar marca: LEVEL.OWNER
- *  - toda escritura deja rastro en el log de auditoria
+ *  - crear / eliminar marca: LEVEL.OWNER
+ *  - editar marca y objetivos: capacidad brands.edit sobre una marca autorizada
+ *  - toda escritura deja rastro en el log de auditoria, en la misma transacción
  */
 
 /* ---------------------------------------------------------------- APOYOS -- */
@@ -75,12 +79,12 @@ function colorField(fd: FormData, name: string, fallback: string): string {
 }
 
 /** Devuelve un slug libre. Si "con-amor" existe, prueba "con-amor-2", "-3"... */
-async function uniqueSlug(base: string, ignoreId?: string): Promise<string> {
+async function uniqueSlug(tx: AppTransaction, base: string, ignoreId?: string): Promise<string> {
   const root = slugify(base) || "marca";
   let candidate = root;
 
   for (let n = 2; n < 500; n++) {
-    const found = await prisma.brand.findUnique({
+    const found = await tx.brand.findUnique({
       where: { slug: candidate },
       select: { id: true },
     });
@@ -172,182 +176,202 @@ function readBrandFields(
  * Los campos de la ficha ya vienen rellenados desde la previsualización; aquí
  * solo se guardan los PDF como Asset con su etiqueta y su auditoría SUBIR.
  *
- * Se leen y validan ANTES de escribir la marca: un PDF inválido no puede dejar
- * la marca a medias.
+ * Se leen, validan y suben al almacenamiento privado ANTES de la transacción:
+ * un PDF inválido no puede dejar la marca a medias, y el Blob hace red, que
+ * no cabe dentro de una transacción serializable. Dentro solo se adjuntan.
  */
-type DocumentoDeMarca = { tipo: TipoDocumento; archivo: ArchivoImportado };
-
 const CAMPOS_PDF = [
   { tipo: "brief", campo: "briefPdf" },
   { tipo: "branding", campo: "brandingPdf" },
 ] as const;
 
-async function leerDocumentosDeMarca(formData: FormData): Promise<DocumentoDeMarca[]> {
-  const out: DocumentoDeMarca[] = [];
+async function prepararDocumentosDeMarca(formData: FormData): Promise<DocumentoPreparado[]> {
+  const leidos: Omit<DocumentoPreparado, "blobId">[] = [];
   for (const { tipo, campo } of CAMPOS_PDF) {
     const lectura = await leerArchivoOpcional(formData, campo);
     if (!lectura) continue;
     if (!lectura.ok) throw new Error(lectura.error);
-    out.push({ tipo, archivo: lectura.archivo });
+    leidos.push({ tipo, archivo: lectura.archivo });
   }
   // Los dos viajan en el mismo cuerpo: el tope por archivo no basta. El
   // formulario ya lo impide; esto es la red de seguridad del servidor.
-  const total = out.reduce((suma, d) => suma + d.archivo.size, 0);
+  const total = leidos.reduce((suma, d) => suma + d.archivo.size, 0);
   if (total > MAX_UPLOAD_BYTES) {
     throw new Error(
       "Los dos PDF juntos superan los 4 MB por guardado. Guarda la ficha con uno y sube el otro desde la pestaña Documentos."
     );
   }
+  const out: DocumentoPreparado[] = [];
+  for (const doc of leidos) out.push({ ...doc, blobId: await prepararArchivoPrivado(doc.archivo) });
   return out;
 }
 
-async function guardarDocumentosDeMarca(user: SessionUser, brandId: string, documentos: DocumentoDeMarca[]) {
-  for (const { tipo, archivo } of documentos) {
-    await prisma.$transaction(async (tx) => {
-      await guardarDocumentoImportado(tx, { tipo, ownerType: "brand", ownerId: brandId, archivo, user });
-    });
+async function guardarDocumentosDeMarca(
+  tx: AppTransaction,
+  user: SessionUser,
+  brandId: string,
+  documentos: DocumentoPreparado[]
+) {
+  for (const { tipo, archivo, blobId } of documentos) {
+    await guardarDocumentoImportado(tx, { tipo, ownerType: "brand", ownerId: brandId, archivo, blobId, user });
   }
+}
+
+function resumenDesdeDocumentos(verbo: string, name: string, documentos: DocumentoPreparado[]): string {
+  return documentos.length
+    ? `${verbo} la marca "${name}" desde ${documentos.map((d) => `«${d.archivo.name}»`).join(" y ")}`
+    : `${verbo} la marca "${name}"`;
 }
 
 /* ----------------------------------------------------------------- CREAR -- */
 
 export async function crearMarca(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
 
   const name = field(formData, "name");
   if (!name) throw new Error("La marca necesita un nombre.");
 
-  const documentos = await leerDocumentosDeMarca(formData);
+  const documentos = await prepararDocumentosDeMarca(formData);
 
-  const brand = await prisma.brand.create({
-    data: {
-      name,
-      slug: await uniqueSlug(name),
-      ...readBrandFields(formData),
-    },
+  return withMutation(user, false, async (tx, afterCommit) => {
+    const brand = await tx.brand.create({
+      data: {
+        name,
+        slug: await uniqueSlug(tx, name),
+        ...readBrandFields(formData),
+      },
+    });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "CREAR",
+      entity: "Brand",
+      entityId: brand.id,
+      brandId: brand.id,
+      summary: resumenDesdeDocumentos("Creó", brand.name, documentos),
+    });
+
+    await guardarDocumentosDeMarca(tx, user, brand.id, documentos);
+
+    afterCommit(() => {
+      revalidateBrand(brand.id);
+      revalidatePath("/actividad");
+    });
+    afterCommit(() => redirect(`/marcas/${brand.id}`));
   });
-
-  await logAudit({
-    user,
-    action: "CREAR",
-    entity: "Brand",
-    entityId: brand.id,
-    brandId: brand.id,
-    summary: documentos.length
-      ? `Creó la marca "${brand.name}" desde ${documentos.map((d) => `«${d.archivo.name}»`).join(" y ")}`
-      : `Creó la marca "${brand.name}"`,
-  });
-
-  // Los Assets van antes del redirect: redirect() lanza y no volvería aquí.
-  await guardarDocumentosDeMarca(user, brand.id, documentos);
-
-  revalidateBrand(brand.id);
-  revalidatePath("/actividad");
-  redirect(`/marcas/${brand.id}`);
 }
 
 /* ------------------------------------------------------------ ACTUALIZAR -- */
 
 export async function actualizarMarca(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
-
+  const user = await requirePermission("brands.edit");
   const id = field(formData, "id");
-  const before = await prisma.brand.findUniqueOrThrow({ where: { id } });
+  assertBrandPermission(user, id, "brands.edit");
 
-  const documentos = await leerDocumentosDeMarca(formData);
+  const documentos = await prepararDocumentosDeMarca(formData);
 
-  const name = field(formData, "name") || before.name;
+  return withMutation(user, false, async (tx, afterCommit) => {
+    await lockRevision(tx, "Brand", id, formData);
+    const before = await tx.brand.findUniqueOrThrow({ where: { id } });
 
-  const data: BrandWrite = {
-    name,
-    ...readBrandFields(formData, before),
-  };
-  if (name !== before.name) {
-    data.slug = await uniqueSlug(name, id);
-  }
+    const name = field(formData, "name") || before.name;
 
-  await prisma.brand.update({ where: { id }, data });
+    const data: BrandWrite = {
+      name,
+      ...readBrandFields(formData, before),
+    };
+    if (name !== before.name) {
+      data.slug = await uniqueSlug(tx, name, id);
+    }
 
-  await logAudit({
-    user,
-    action: "EDITAR",
-    entity: "Brand",
-    entityId: id,
-    brandId: id,
-    summary: documentos.length
-      ? `Editó la marca "${name}" desde ${documentos.map((d) => `«${d.archivo.name}»`).join(" y ")}`
-      : `Editó la marca "${name}"`,
-    changes: diffFields(before, data, BRAND_LABELS),
+    await tx.brand.update({ where: { id }, data });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "EDITAR",
+      entity: "Brand",
+      entityId: id,
+      brandId: id,
+      summary: resumenDesdeDocumentos("Editó", name, documentos),
+      changes: diffFields(before, data, BRAND_LABELS),
+    });
+
+    await guardarDocumentosDeMarca(tx, user, id, documentos);
+
+    afterCommit(() => {
+      revalidateBrand(id);
+      revalidatePath("/actividad");
+    });
   });
-
-  await guardarDocumentosDeMarca(user, id, documentos);
-
-  revalidateBrand(id);
-  revalidatePath("/actividad");
 }
 
 /* -------------------------------------------------------------- ARCHIVAR -- */
 
 /** Archiva o reactiva la marca. No borra nada. */
 export async function archivarMarca(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
+  return withMutation(user, false, async (tx, afterCommit) => {
 
-  const id = field(formData, "id");
-  const before = await prisma.brand.findUniqueOrThrow({
-    where: { id },
-    select: { id: true, name: true, archived: true },
+    const id = field(formData, "id");
+    await lockRevision(tx, "Brand", id, formData);
+    const before = await tx.brand.findUniqueOrThrow({
+      where: { id },
+      select: { id: true, name: true, archived: true },
+    });
+
+    const archived = !before.archived;
+
+    await tx.brand.update({
+      where: { id },
+      data: { archived, active: !archived },
+    });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "EDITAR",
+      entity: "Brand",
+      entityId: id,
+      brandId: id,
+      summary: archived
+        ? `Archivó la marca "${before.name}"`
+        : `Reactivó la marca "${before.name}"`,
+      changes: {
+        archived: { etiqueta: "Archivada", antes: before.archived, despues: archived },
+      },
+    });
+
+    afterCommit(() => revalidateBrand(id));
   });
-
-  const archived = !before.archived;
-
-  await prisma.brand.update({
-    where: { id },
-    data: { archived, active: !archived },
-  });
-
-  await logAudit({
-    user,
-    action: "EDITAR",
-    entity: "Brand",
-    entityId: id,
-    brandId: id,
-    summary: archived
-      ? `Archivó la marca "${before.name}"`
-      : `Reactivó la marca "${before.name}"`,
-    changes: {
-      archived: { etiqueta: "Archivada", antes: before.archived, despues: archived },
-    },
-  });
-
-  revalidateBrand(id);
 }
 
 /* -------------------------------------------------------------- ELIMINAR -- */
 
 export async function eliminarMarca(formData: FormData) {
   const user = await requireLevel(LEVEL.OWNER);
+  return withMutation(user, true, async (tx, afterCommit) => {
 
-  const id = field(formData, "id");
-  const before = await prisma.brand.findUniqueOrThrow({
-    where: { id },
-    select: { id: true, name: true, _count: { select: { content: true, objectives: true } } },
+    const id = field(formData, "id");
+    const before = await tx.brand.findUniqueOrThrow({
+      where: { id },
+      select: { id: true, name: true, _count: { select: { content: true, objectives: true } } },
+    });
+
+    await borrarAssetsDe("brand", id, tx);
+    await tx.brand.delete({ where: { id } });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "ELIMINAR",
+      entity: "Brand",
+      entityId: id,
+      brandId: id,
+      summary: `Eliminó la marca "${before.name}" con sus ${before._count.content} videos y ${before._count.objectives} objetivos`,
+    });
+
+    afterCommit(() => revalidatePath("/marcas"));
+    afterCommit(() => revalidatePath("/"));
+    afterCommit(() => redirect("/marcas"));
   });
-
-  await borrarAssetsDe("brand", id);
-  await prisma.brand.delete({ where: { id } });
-
-  await logAudit({
-    user,
-    action: "ELIMINAR",
-    entity: "Brand",
-    entityId: id,
-    brandId: id,
-    summary: `Eliminó la marca "${before.name}" con sus ${before._count.content} videos y ${before._count.objectives} objetivos`,
-  });
-
-  revalidatePath("/marcas");
-  revalidatePath("/");
-  redirect("/marcas");
 }
 
 /* ------------------------------------------------------------ OBJETIVOS -- */
@@ -376,85 +400,94 @@ function readObjectiveFields(fd: FormData): ObjectiveWrite {
     currentValue: numField(fd, "currentValue", 0),
     targetValue: numField(fd, "targetValue", 0),
     baselineValue: numField(fd, "baselineValue", 0),
-    period: field(fd, "period") || "MENSUAL",
+    period: choice(field(fd, "period") || "MENSUAL", OBJECTIVE_PERIODS.map(p => p.value), "Periodo"),
     deadline: dateField(fd, "deadline"),
-    status: field(fd, "status") || "EN_CURSO",
+    status: enumField(fd, "status", OBJECTIVE_STATUS_MAP, "EN_CURSO"),
     higherIsBetter: boolField(fd, "higherIsBetter"),
-    sortOrder: intField(fd, "sortOrder", 0),
+    sortOrder: boundedNumber(intField(fd, "sortOrder", 0), 0, 2147483647, "Orden", true),
   };
 }
 
 export async function crearObjetivo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("brands.edit");
+  return withMutation(user, false, async (tx, afterCommit) => {
+    assertBrandPermission(user, field(formData, "brandId"), "brands.edit");
 
-  const brandId = field(formData, "brandId");
-  const brand = await prisma.brand.findUniqueOrThrow({
-    where: { id: brandId },
-    select: { id: true, name: true },
+    const brandId = field(formData, "brandId");
+    const brand = await tx.brand.findUniqueOrThrow({
+      where: { id: brandId },
+      select: { id: true, name: true },
+    });
+
+    const data = readObjectiveFields(formData);
+    if (!data.name) throw new Error("El objetivo necesita un nombre.");
+
+    const objective = await tx.brandObjective.create({
+      data: { ...data, brandId: brand.id },
+    });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "CREAR",
+      entity: "BrandObjective",
+      entityId: objective.id,
+      brandId: brand.id,
+      summary: `Creó el objetivo "${objective.name}" en ${brand.name}`,
+    });
+
+    afterCommit(() => revalidateBrand(brand.id));
   });
-
-  const data = readObjectiveFields(formData);
-  if (!data.name) throw new Error("El objetivo necesita un nombre.");
-
-  const objective = await prisma.brandObjective.create({
-    data: { ...data, brandId: brand.id },
-  });
-
-  await logAudit({
-    user,
-    action: "CREAR",
-    entity: "BrandObjective",
-    entityId: objective.id,
-    brandId: brand.id,
-    summary: `Creó el objetivo "${objective.name}" en ${brand.name}`,
-  });
-
-  revalidateBrand(brand.id);
 }
 
 export async function actualizarObjetivo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("brands.edit");
+  return withMutation(user, false, async (tx, afterCommit) => {
 
-  const id = field(formData, "id");
-  const before = await prisma.brandObjective.findUniqueOrThrow({ where: { id } });
+    const id = field(formData, "id");
+    await lockRevision(tx, "BrandObjective", id, formData);
+    const before = await tx.brandObjective.findUniqueOrThrow({ where: { id } });
+    assertBrandPermission(user, before.brandId, "brands.edit");
 
-  const data = readObjectiveFields(formData);
-  if (!data.name) data.name = before.name;
+    const data = readObjectiveFields(formData);
+    if (!data.name) data.name = before.name;
 
-  await prisma.brandObjective.update({ where: { id }, data });
+    await tx.brandObjective.update({ where: { id }, data });
 
-  await logAudit({
-    user,
-    action: "EDITAR",
-    entity: "BrandObjective",
-    entityId: id,
-    brandId: before.brandId,
-    summary: `Editó el objetivo "${data.name}"`,
-    changes: diffFields(before, data, OBJECTIVE_LABELS),
+    await auditInTransaction(tx, {
+      user,
+      action: "EDITAR",
+      entity: "BrandObjective",
+      entityId: id,
+      brandId: before.brandId,
+      summary: `Editó el objetivo "${data.name}"`,
+      changes: diffFields(before, data, OBJECTIVE_LABELS),
+    });
+
+    afterCommit(() => revalidateBrand(before.brandId));
   });
-
-  revalidateBrand(before.brandId);
 }
 
 export async function eliminarObjetivo(formData: FormData) {
   const user = await requireLevel(LEVEL.OWNER);
+  return withMutation(user, true, async (tx, afterCommit) => {
 
-  const id = field(formData, "id");
-  const before = await prisma.brandObjective.findUniqueOrThrow({
-    where: { id },
-    select: { id: true, name: true, brandId: true },
+    const id = field(formData, "id");
+    const before = await tx.brandObjective.findUniqueOrThrow({
+      where: { id },
+      select: { id: true, name: true, brandId: true },
+    });
+
+    await tx.brandObjective.delete({ where: { id } });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "ELIMINAR",
+      entity: "BrandObjective",
+      entityId: id,
+      brandId: before.brandId,
+      summary: `Eliminó el objetivo "${before.name}"`,
+    });
+
+    afterCommit(() => revalidateBrand(before.brandId));
   });
-
-  await prisma.brandObjective.delete({ where: { id } });
-
-  await logAudit({
-    user,
-    action: "ELIMINAR",
-    entity: "BrandObjective",
-    entityId: id,
-    brandId: before.brandId,
-    summary: `Eliminó el objetivo "${before.name}"`,
-  });
-
-  revalidateBrand(before.brandId);
 }

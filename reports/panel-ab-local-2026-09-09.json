@@ -1,0 +1,1183 @@
+{
+  "checkedAt": "2026-09-09T20:03:12.005Z",
+  "environment": "local-production-build",
+  "sampleDesign": "same build, sequential arms, separate identical fixtures; not a randomized production experiment",
+  "buildId": "1_cBnicKh86sxk9wIl4Dj",
+  "versionNote": "Los grupos conservan la etiqueta anterior consistency-weekly; BUILD_ID identifica la compilación local de esta comparación.",
+  "arms": [
+    {
+      "mode": "streaming",
+      "samples": 362,
+      "fixture": {
+        "brands": 6,
+        "videos": 60,
+        "weeklyMetrics": 600,
+        "tasks": 150
+      },
+      "editConflictPreservesDraft": true,
+      "groups": [
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "initial:initial:navigation:/"
+          ],
+          "samples": 1,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 808.3,
+              "p95": null,
+              "max": 808.3
+            },
+            "routeMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 511.7,
+              "p95": null,
+              "max": 511.7
+            },
+            "firstBlockMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 808.3,
+              "p95": null,
+              "max": 808.3
+            },
+            "readyMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 811.8,
+              "p95": null,
+              "max": 811.8
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/contenido"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 11.9,
+              "p95": 13.9,
+              "max": 13.9
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.1,
+              "p95": 31,
+              "max": 41.9
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 339.7,
+              "p95": 356.9,
+              "max": 358.3
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 345.7,
+              "p95": 363.2,
+              "max": 364.4
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/tareas"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.1,
+              "p95": 13.2,
+              "max": 14.9
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.3,
+              "p95": 30.8,
+              "max": 31.4
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 349.2,
+              "p95": 365.4,
+              "max": 367
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 358.8,
+              "p95": 373.9,
+              "max": 374
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/metricas"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.3,
+              "p95": 13.7,
+              "max": 13.9
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29,
+              "p95": 31,
+              "max": 32.2
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 343.7,
+              "p95": 362.6,
+              "max": 362.7
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 349,
+              "p95": 368.6,
+              "max": 662
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/guiones"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12,
+              "p95": 13.4,
+              "max": 13.4
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.6,
+              "p95": 30.9,
+              "max": 31
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 333.2,
+              "p95": 349.7,
+              "max": 350.1
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 345.9,
+              "p95": 363.2,
+              "max": 363.8
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/marcas"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 11.9,
+              "p95": 13.2,
+              "max": 13.4
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.2,
+              "p95": 31,
+              "max": 31.4
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 332.1,
+              "p95": 349.5,
+              "max": 349.5
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346,
+              "p95": 363.2,
+              "max": 363.4
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/calendario"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.1,
+              "p95": 13.4,
+              "max": 13.8
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.3,
+              "p95": 30.8,
+              "max": 31.3
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 333.4,
+              "p95": 349.2,
+              "max": 350
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 345.9,
+              "p95": 362.5,
+              "max": 363.4
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/estructuras"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.7,
+              "p95": 14.3,
+              "max": 14.5
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 30,
+              "p95": 31.6,
+              "max": 31.7
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 333.3,
+              "p95": 339.5,
+              "max": 349.8
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 345.7,
+              "p95": 347.9,
+              "max": 362.3
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/arquetipos"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.5,
+              "p95": 13.4,
+              "max": 13.5
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.6,
+              "p95": 30.8,
+              "max": 31.3
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 332.5,
+              "p95": 350,
+              "max": 350.5
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 345.8,
+              "p95": 363.3,
+              "max": 363.7
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/equipo"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.4,
+              "p95": 14.1,
+              "max": 14.1
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 30,
+              "p95": 31.9,
+              "max": 32.9
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 331.7,
+              "p95": 349.6,
+              "max": 349.7
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 345.9,
+              "p95": 362.6,
+              "max": 362.9
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.4,
+              "p95": 14.1,
+              "max": 14.6
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 30,
+              "p95": 31.9,
+              "max": 34.8
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 334.1,
+              "p95": 336.2,
+              "max": 349.9
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 646.5,
+              "p95": 663.2,
+              "max": 663.6
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "history:history:navigation:/equipo"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 13.8,
+              "p95": 15.6,
+              "max": 15.7
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 13.8,
+              "p95": 15.6,
+              "max": 15.7
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 13.8,
+              "p95": 15.6,
+              "max": 15.7
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 28.3,
+              "p95": 29.6,
+              "max": 30.2
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "history:history:navigation:/"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 16.1,
+              "p95": 17.8,
+              "max": 18.1
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 16.1,
+              "p95": 17.8,
+              "max": 18.1
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 16.1,
+              "p95": 17.8,
+              "max": 18.1
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 28.3,
+              "p95": 29.4,
+              "max": 29.8
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "initial:initial:navigation:detail"
+          ],
+          "samples": 1,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 70,
+              "p95": null,
+              "max": 70
+            },
+            "routeMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 70,
+              "p95": null,
+              "max": 70
+            },
+            "firstBlockMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 94.1,
+              "p95": null,
+              "max": 94.1
+            },
+            "readyMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 103.9,
+              "p95": null,
+              "max": 103.9
+            }
+          }
+        }
+      ]
+    },
+    {
+      "mode": "together",
+      "samples": 362,
+      "fixture": {
+        "brands": 6,
+        "videos": 60,
+        "weeklyMetrics": 600,
+        "tasks": 150
+      },
+      "editConflictPreservesDraft": true,
+      "groups": [
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "initial:initial:navigation:/"
+          ],
+          "samples": 1,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 342.9,
+              "p95": null,
+              "max": 342.9
+            },
+            "routeMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 342.9,
+              "p95": null,
+              "max": 342.9
+            },
+            "firstBlockMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 651,
+              "p95": null,
+              "max": 651
+            },
+            "readyMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 654.8,
+              "p95": null,
+              "max": 654.8
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/contenido"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.4,
+              "p95": 13.7,
+              "max": 13.9
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.6,
+              "p95": 31,
+              "max": 31.3
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 339.1,
+              "p95": 356.9,
+              "max": 358.5
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346.7,
+              "p95": 362.8,
+              "max": 363.2
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/tareas"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.3,
+              "p95": 14.3,
+              "max": 14.6
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.7,
+              "p95": 31.3,
+              "max": 31.9
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 359.2,
+              "p95": 365.4,
+              "max": 367.7
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 364.8,
+              "p95": 372.2,
+              "max": 375.8
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/metricas"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.5,
+              "p95": 13.5,
+              "max": 13.9
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.5,
+              "p95": 30.5,
+              "max": 31
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346.3,
+              "p95": 361.3,
+              "max": 362.2
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 350.5,
+              "p95": 364.6,
+              "max": 366.9
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/guiones"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.3,
+              "p95": 13.9,
+              "max": 14.5
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.6,
+              "p95": 31.3,
+              "max": 32.1
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 333.4,
+              "p95": 350,
+              "max": 351.1
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346.3,
+              "p95": 362.7,
+              "max": 363.9
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/marcas"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.7,
+              "p95": 14.3,
+              "max": 15
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.9,
+              "p95": 31.2,
+              "max": 31.6
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 332.1,
+              "p95": 349.1,
+              "max": 349.9
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346.2,
+              "p95": 363.6,
+              "max": 363.9
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/calendario"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.3,
+              "p95": 14.3,
+              "max": 14.5
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.6,
+              "p95": 31.7,
+              "max": 31.8
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 332.8,
+              "p95": 350.7,
+              "max": 354.1
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 345.6,
+              "p95": 363.5,
+              "max": 363.8
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/estructuras"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.2,
+              "p95": 13.9,
+              "max": 14.1
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.6,
+              "p95": 31.1,
+              "max": 31.5
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 333.5,
+              "p95": 350.4,
+              "max": 350.7
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346,
+              "p95": 363.3,
+              "max": 363.6
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/arquetipos"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.5,
+              "p95": 13.5,
+              "max": 14
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.8,
+              "p95": 31.3,
+              "max": 31.8
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 332.6,
+              "p95": 349,
+              "max": 349.7
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346,
+              "p95": 362.6,
+              "max": 363.3
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/equipo"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 12.5,
+              "p95": 13.4,
+              "max": 13.4
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.8,
+              "p95": 31.2,
+              "max": 31.3
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 332.1,
+              "p95": 348.1,
+              "max": 348.7
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346.2,
+              "p95": 362.7,
+              "max": 363.1
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "click:continuous:navigation:/"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 11.9,
+              "p95": 13.8,
+              "max": 13.8
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 29.6,
+              "p95": 30.9,
+              "max": 30.9
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 334.4,
+              "p95": 352.4,
+              "max": 352.5
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 346.1,
+              "p95": 362.5,
+              "max": 363.8
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "history:history:navigation:/equipo"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 14,
+              "p95": 15.9,
+              "max": 16.5
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 14,
+              "p95": 15.9,
+              "max": 16.5
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 14,
+              "p95": 15.9,
+              "max": 16.5
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 28.1,
+              "p95": 30,
+              "max": 30
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "history:history:navigation:/"
+          ],
+          "samples": 30,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 16.3,
+              "p95": 18,
+              "max": 18.3
+            },
+            "routeMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 16.3,
+              "p95": 18,
+              "max": 18.3
+            },
+            "firstBlockMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 16.3,
+              "p95": 18,
+              "max": 18.3
+            },
+            "readyMs": {
+              "n": 30,
+              "sufficient": true,
+              "p50": 27.9,
+              "p95": 29.5,
+              "max": 31
+            }
+          }
+        },
+        {
+          "key": [
+            "local-staging",
+            "consistency-weekly",
+            "unknown",
+            "initial:initial:navigation:detail"
+          ],
+          "samples": 1,
+          "failures": 0,
+          "cancelled": 0,
+          "timings": {
+            "visualMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 91.9,
+              "p95": null,
+              "max": 91.9
+            },
+            "routeMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 91.9,
+              "p95": null,
+              "max": 91.9
+            },
+            "firstBlockMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 91.9,
+              "p95": null,
+              "max": 91.9
+            },
+            "readyMs": {
+              "n": 1,
+              "sufficient": false,
+              "p50": 96.9,
+              "p95": null,
+              "max": 96.9
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

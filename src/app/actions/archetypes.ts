@@ -3,17 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { prisma } from "@/lib/prisma";
+import { archetypeScope } from "@/lib/access-scope";
 import { borrarAssetsDe } from "@/lib/assets-cleanup";
-import { requireLevel, LEVEL, type SessionUser } from "@/lib/auth";
-import { auditInTransaction, logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
-import { assertActor } from "@/lib/auth-transactions";
+import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
+import { LEVEL, requireLevel, requirePermission, type SessionUser } from "@/lib/auth";
 import { FIT_SCORES } from "@/lib/constants";
+import { lockRevision, withMutation } from "@/lib/mutations";
 import { PLANTILLA_POR_ID } from "@/lib/plantillas-persona";
+import { type AppTransaction } from "@/lib/prisma";
 import {
   guardarDocumentoImportado,
   leerArchivoImportado,
   leerArchivoOpcional,
+  prepararArchivoPrivado,
   type ArchivoImportado,
 } from "@/lib/asset-import";
 import {
@@ -33,6 +35,7 @@ import {
   linesToJson,
   slugify,
 } from "@/lib/utils";
+import { boundedNumber } from "@/lib/validation";
 
 /**
  * Arquetipos de actor y su compatibilidad con cada estructura.
@@ -89,13 +92,13 @@ const DEFAULT_COLOR = "#0ea5e9";
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 /** Busca un slug libre a partir del nombre. */
-async function slugUnico(nombre: string, ignorarId?: string): Promise<string> {
+async function slugUnico(tx: AppTransaction, nombre: string, ignorarId?: string): Promise<string> {
   const raiz = slugify(nombre) || "arquetipo";
   let candidato = raiz;
   let intento = 2;
 
   for (;;) {
-    const existente = await prisma.archetype.findUnique({
+    const existente = await tx.archetype.findUnique({
       where: { slug: candidato },
       select: { id: true },
     });
@@ -112,7 +115,7 @@ function leerCampos(formData: FormData) {
     summary: fieldOrNull(formData, "summary"),
     personality: fieldOrNull(formData, "personality"),
     ageRange: fieldOrNull(formData, "ageRange"),
-    energyLevel: clamp(intField(formData, "energyLevel", 3), 1, 5),
+    energyLevel: boundedNumber(intField(formData, "energyLevel", 3), 1, 5, "Puntuación", true),
     color: field(formData, "color") || DEFAULT_COLOR,
     strengths: linesToJson(field(formData, "strengths")),
     avoid: linesToJson(field(formData, "avoid")),
@@ -253,10 +256,15 @@ function soloConValor(datos: DatosDesdeInforme): Partial<DatosDesdeInforme> {
 
 export type ResultadoImportacion = { ok: true } | { error: string };
 
+/** Mensaje legible de un fallo de escritura (conflicto, acceso, cupo de archivos…). */
+function mensajeDe(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 /* ------------------------------------------------------------------ CREAR -- */
 
 export async function crearArquetipo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
 
   const datos = leerCampos(formData);
   if (!datos.name) return;
@@ -276,95 +284,105 @@ export async function crearArquetipo(formData: FormData) {
   }
 
   if (informe && camposInforme) {
-    const creado = await crearPersonaConInforme(user, {
-      name: datos.name,
-      ageRange: datos.ageRange,
-      energyLevel: formData.get("energyLevel") ? datos.energyLevel : null,
-      color: field(formData, "color") || null,
-      summary: datos.summary,
-      strengths: datos.strengths,
-      avoid: datos.avoid,
-      campos: camposInforme.campos,
-      archivo: informe,
+    // El Blob privado hace red: se sube y verifica ANTES de la transacción.
+    const blobId = await prepararArchivoPrivado(informe);
+    return withMutation(user, false, async (tx, afterCommit) => {
+      const creado = await crearPersonaConInforme(tx, user, {
+        name: datos.name,
+        ageRange: datos.ageRange,
+        energyLevel: formData.get("energyLevel") ? datos.energyLevel : null,
+        color: field(formData, "color") || null,
+        summary: datos.summary,
+        strengths: datos.strengths,
+        avoid: datos.avoid,
+        campos: camposInforme.campos,
+        archivo: informe,
+        blobId,
+      });
+      afterCommit(() => {
+        revalidatePath("/arquetipos");
+        revalidatePath("/actividad");
+      });
+      afterCommit(() => redirect(`/arquetipos/${creado.id}?vista=marca`));
     });
-    revalidatePath("/arquetipos");
-    revalidatePath("/actividad");
-    redirect(`/arquetipos/${creado.id}?vista=marca`);
   }
 
-  /**
-   * La plantilla rellena la marca personal ENTERA, no solo el perfil.
-   *
-   * Sin esto, una persona nueva nace a medias: con nombre y fortalezas, pero
-   * sin tono de voz ni vocabulario. Y una ficha sin voz hace que la IA escriba
-   * un guion correcto que no suena a nadie, que es justo lo que este sistema
-   * existe para evitar. Lo que se escribe aquí es un punto de partida: todo
-   * queda editable desde la pestaña Marca personal.
-   */
-  const plantilla = PLANTILLA_POR_ID[field(formData, "plantilla")];
-  const desdePlantilla = plantilla
-    ? {
-        // Lo que el formulario deja vacío lo pone la plantilla; lo que el
-        // usuario escribió siempre manda.
-        summary: datos.summary ?? plantilla.summary,
-        personality: datos.personality ?? plantilla.personality,
-        color: field(formData, "color") || plantilla.color,
-        energyLevel: formData.get("energyLevel")
-          ? datos.energyLevel
-          : plantilla.energyLevel,
-        strengths: datos.strengths === "[]" ? J(plantilla.strengths) : datos.strengths,
-        avoid: datos.avoid === "[]" ? J(plantilla.avoid) : datos.avoid,
-        toneKeywords:
-          datos.toneKeywords === "[]" ? J(plantilla.toneKeywords) : datos.toneKeywords,
+  return withMutation(user, false, async (tx, afterCommit) => {
+    /**
+     * La plantilla rellena la marca personal ENTERA, no solo el perfil.
+     *
+     * Sin esto, una persona nueva nace a medias: con nombre y fortalezas, pero
+     * sin tono de voz ni vocabulario. Y una ficha sin voz hace que la IA escriba
+     * un guion correcto que no suena a nadie, que es justo lo que este sistema
+     * existe para evitar. Lo que se escribe aquí es un punto de partida: todo
+     * queda editable desde la pestaña Marca personal.
+     */
+    const plantilla = PLANTILLA_POR_ID[field(formData, "plantilla")];
+    const desdePlantilla = plantilla
+      ? {
+          // Lo que el formulario deja vacío lo pone la plantilla; lo que el
+          // usuario escribió siempre manda.
+          summary: datos.summary ?? plantilla.summary,
+          personality: datos.personality ?? plantilla.personality,
+          color: field(formData, "color") || plantilla.color,
+          energyLevel: formData.get("energyLevel")
+            ? datos.energyLevel
+            : plantilla.energyLevel,
+          strengths: datos.strengths === "[]" ? J(plantilla.strengths) : datos.strengths,
+          avoid: datos.avoid === "[]" ? J(plantilla.avoid) : datos.avoid,
+          toneKeywords:
+            datos.toneKeywords === "[]" ? J(plantilla.toneKeywords) : datos.toneKeywords,
 
-        archetypePrimary: plantilla.archetypePrimary,
-        archetypeSecondary: plantilla.archetypeSecondary,
-        archetypeSummary: plantilla.archetypeSummary,
-        coreDesire: plantilla.coreDesire,
-        coreFear: plantilla.coreFear,
-        coreTalent: plantilla.coreTalent,
-        coreTrap: plantilla.coreTrap,
+          archetypePrimary: plantilla.archetypePrimary,
+          archetypeSecondary: plantilla.archetypeSecondary,
+          archetypeSummary: plantilla.archetypeSummary,
+          coreDesire: plantilla.coreDesire,
+          coreFear: plantilla.coreFear,
+          coreTalent: plantilla.coreTalent,
+          coreTrap: plantilla.coreTrap,
 
-        voiceTone: plantilla.voiceTone,
-        messageStructure: plantilla.messageStructure,
-        vocabulary: J(plantilla.vocabulary),
-        avoidInVoice: J(plantilla.avoidInVoice),
-        soundsLike: plantilla.soundsLike,
+          voiceTone: plantilla.voiceTone,
+          messageStructure: plantilla.messageStructure,
+          vocabulary: J(plantilla.vocabulary),
+          avoidInVoice: J(plantilla.avoidInVoice),
+          soundsLike: plantilla.soundsLike,
 
-        aesthetics: plantilla.aesthetics,
-        visualAvoid: plantilla.visualAvoid,
-        palette: J(plantilla.palette),
-      }
-    : {};
+          aesthetics: plantilla.aesthetics,
+          visualAvoid: plantilla.visualAvoid,
+          palette: J(plantilla.palette),
+        }
+      : {};
 
-  const creado = await prisma.archetype.create({
-    data: {
-      ...datos,
-      ...desdePlantilla,
-      slug: await slugUnico(datos.name),
-      active: true,
-      isPerson: true,
-    },
+    const creado = await tx.archetype.create({
+      data: {
+        ...datos,
+        ...desdePlantilla,
+        slug: await slugUnico(tx, datos.name),
+        active: true,
+        isPerson: true,
+      },
+    });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "CREAR",
+      entity: "Archetype",
+      entityId: creado.id,
+      summary: `Creó el arquetipo "${creado.name}"`,
+    });
+
+    afterCommit(() => revalidatePath("/arquetipos"));
+    afterCommit(() => redirect(`/arquetipos/${creado.id}`));
   });
-
-  await logAudit({
-    user,
-    action: "CREAR",
-    entity: "Archetype",
-    entityId: creado.id,
-    summary: `Creó el arquetipo "${creado.name}"`,
-  });
-
-  revalidatePath("/arquetipos");
-  redirect(`/arquetipos/${creado.id}`);
 }
 
 /**
  * Crea la persona con todo lo que trae el informe y guarda el PDF como Asset
  * en la misma transacción. Lo que el usuario escribió a mano siempre manda
- * sobre lo del PDF.
+ * sobre lo del PDF. El Blob (si hay) ya está subido: aquí solo se adjunta.
  */
 async function crearPersonaConInforme(
+  tx: AppTransaction,
   user: SessionUser,
   input: {
     name: string;
@@ -376,45 +394,43 @@ async function crearPersonaConInforme(
     avoid: string;
     campos: PersonaCampos;
     archivo: ArchivoImportado;
+    blobId: string | null;
   }
 ) {
   const desdeInforme = soloConValor(datosDesdeInforme(input.campos));
-  const slug = await slugUnico(input.name);
 
-  return prisma.$transaction(async (tx) => {
-    await assertActor(tx, user);
-    const creado = await tx.archetype.create({
-      data: {
-        ...desdeInforme,
-        name: input.name,
-        slug,
-        ageRange: input.ageRange,
-        ...(input.energyLevel !== null ? { energyLevel: clamp(input.energyLevel, 1, 5) } : {}),
-        ...(input.color ? { color: input.color } : {}),
-        ...(input.summary ? { summary: input.summary } : {}),
-        ...(input.strengths !== "[]" ? { strengths: input.strengths } : {}),
-        ...(input.avoid !== "[]" ? { avoid: input.avoid } : {}),
-        active: true,
-        isPerson: true,
-      },
-      select: { id: true, name: true },
-    });
-    await auditInTransaction(tx, {
-      user,
-      action: "CREAR",
-      entity: "Archetype",
-      entityId: creado.id,
-      summary: `Creó la persona "${creado.name}" desde su informe de branding «${input.archivo.name}»`,
-    });
-    await guardarDocumentoImportado(tx, {
-      tipo: "branding",
-      ownerType: "archetype",
-      ownerId: creado.id,
-      archivo: input.archivo,
-      user,
-    });
-    return creado;
+  const creado = await tx.archetype.create({
+    data: {
+      ...desdeInforme,
+      name: input.name,
+      slug: await slugUnico(tx, input.name),
+      ageRange: input.ageRange,
+      ...(input.energyLevel !== null ? { energyLevel: clamp(input.energyLevel, 1, 5) } : {}),
+      ...(input.color ? { color: input.color } : {}),
+      ...(input.summary ? { summary: input.summary } : {}),
+      ...(input.strengths !== "[]" ? { strengths: input.strengths } : {}),
+      ...(input.avoid !== "[]" ? { avoid: input.avoid } : {}),
+      active: true,
+      isPerson: true,
+    },
+    select: { id: true, name: true },
   });
+  await auditInTransaction(tx, {
+    user,
+    action: "CREAR",
+    entity: "Archetype",
+    entityId: creado.id,
+    summary: `Creó la persona "${creado.name}" desde su informe de branding «${input.archivo.name}»`,
+  });
+  await guardarDocumentoImportado(tx, {
+    tipo: "branding",
+    ownerType: "archetype",
+    ownerId: creado.id,
+    archivo: input.archivo,
+    blobId: input.blobId,
+    user,
+  });
+  return creado;
 }
 
 /**
@@ -423,7 +439,7 @@ async function crearPersonaConInforme(
  * oculta el mensaje de las excepciones de las acciones.
  */
 export async function crearPersonaDesdeInforme(formData: FormData): Promise<ResultadoImportacion> {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
 
   const lectura = await leerArchivoImportado(formData.get("branding"));
   if (!lectura.ok) return { error: lectura.error };
@@ -435,20 +451,33 @@ export async function crearPersonaDesdeInforme(formData: FormData): Promise<Resu
   const name = field(formData, "name") || campos.name;
   if (!name) return { error: "El informe no trae el nombre de la persona. Escríbelo antes de crearla." };
 
-  const creado = await crearPersonaConInforme(user, {
-    name,
-    ageRange: null,
-    energyLevel: null,
-    color: null,
-    summary: null,
-    strengths: "[]",
-    avoid: "[]",
-    campos,
-    archivo: lectura.archivo,
-  });
+  let creado: { id: string };
+  try {
+    const blobId = await prepararArchivoPrivado(lectura.archivo);
+    creado = await withMutation(user, false, async (tx, afterCommit) => {
+      const persona = await crearPersonaConInforme(tx, user, {
+        name,
+        ageRange: null,
+        energyLevel: null,
+        color: null,
+        summary: null,
+        strengths: "[]",
+        avoid: "[]",
+        campos,
+        archivo: lectura.archivo,
+        blobId,
+      });
+      afterCommit(() => {
+        revalidatePath("/arquetipos");
+        revalidatePath("/actividad");
+      });
+      return persona;
+    });
+  } catch (error) {
+    return { error: mensajeDe(error, "No se pudo crear la persona. Inténtalo de nuevo.") };
+  }
 
-  revalidatePath("/arquetipos");
-  revalidatePath("/actividad");
+  // Fuera del try: redirect() lanza a propósito y no debe convertirse en un error.
   redirect(`/arquetipos/${creado.id}?vista=marca`);
 }
 
@@ -461,7 +490,7 @@ export async function guardarInformeEnPersona(
   id: string,
   formData: FormData
 ): Promise<ResultadoImportacion> {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
 
   const lectura = await leerArchivoImportado(formData.get("branding"));
   if (!lectura.ok) return { error: lectura.error };
@@ -471,75 +500,88 @@ export async function guardarInformeEnPersona(
   const campos = leido.campos;
   const sobrescribir = boolField(formData, "sobrescribir");
 
-  const before = await prisma.archetype.findUnique({ where: { id } });
-  if (!before) return { error: "La persona ya no existe." };
+  try {
+    const blobId = await prepararArchivoPrivado(lectura.archivo);
+    await withMutation(user, false, async (tx, afterCommit) => {
+      // Se lee dentro de la transacción serializable y solo dentro del alcance
+      // del perfil: un miembro con alcance «asignado» solo llega a su persona.
+      const before = await tx.archetype.findFirst({ where: { AND: [{ id }, archetypeScope(user)] } });
+      if (!before) throw new Error("La persona ya no existe o no tienes acceso a ella.");
 
-  const propuesto = soloConValor(datosDesdeInforme(campos));
-  const data: Partial<DatosDesdeInforme> = {};
-  for (const clave of Object.keys(propuesto) as (keyof DatosDesdeInforme)[]) {
-    const actual = before[clave];
-    const vacio = clave === "color" ? before.color === DEFAULT_COLOR : estaVacio(actual) || actual === "[]";
-    if (sobrescribir || vacio) (data as Record<string, unknown>)[clave] = propuesto[clave];
+      const propuesto = soloConValor(datosDesdeInforme(campos));
+      const data: Partial<DatosDesdeInforme> = {};
+      for (const clave of Object.keys(propuesto) as (keyof DatosDesdeInforme)[]) {
+        const actual = before[clave];
+        const vacio = clave === "color" ? before.color === DEFAULT_COLOR : estaVacio(actual) || actual === "[]";
+        if (sobrescribir || vacio) (data as Record<string, unknown>)[clave] = propuesto[clave];
+      }
+
+      const changes = diffFields(before, data, ARCHETYPE_LABELS);
+      if (changes) {
+        await tx.archetype.update({ where: { id }, data });
+        await auditInTransaction(tx, {
+          user,
+          action: "EDITAR",
+          entity: "Archetype",
+          entityId: id,
+          summary: `Rellenó la marca personal de "${before.name}" desde el PDF «${lectura.archivo.name}»`,
+          changes,
+        });
+      }
+      await guardarDocumentoImportado(tx, {
+        tipo: "branding",
+        ownerType: "archetype",
+        ownerId: id,
+        archivo: lectura.archivo,
+        blobId,
+        user,
+      });
+
+      afterCommit(() => {
+        revalidatePath("/arquetipos");
+        revalidatePath(`/arquetipos/${id}`);
+        revalidatePath("/actividad");
+      });
+    });
+  } catch (error) {
+    return { error: mensajeDe(error, "No se pudo guardar el informe. Inténtalo de nuevo.") };
   }
 
-  await prisma.$transaction(async (tx) => {
-    await assertActor(tx, user);
-    const changes = diffFields(before, data, ARCHETYPE_LABELS);
-    if (changes) {
-      await tx.archetype.update({ where: { id }, data });
-      await auditInTransaction(tx, {
-        user,
-        action: "EDITAR",
-        entity: "Archetype",
-        entityId: id,
-        summary: `Rellenó la marca personal de "${before.name}" desde el PDF «${lectura.archivo.name}»`,
-        changes,
-      });
-    }
-    await guardarDocumentoImportado(tx, {
-      tipo: "branding",
-      ownerType: "archetype",
-      ownerId: id,
-      archivo: lectura.archivo,
-      user,
-    });
-  });
-
-  revalidatePath("/arquetipos");
-  revalidatePath(`/arquetipos/${id}`);
-  revalidatePath("/actividad");
   return { ok: true };
 }
 
 /* ------------------------------------------------------------- ACTUALIZAR -- */
 
 export async function actualizarArquetipo(id: string, formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
+  return withMutation(user, false, async (tx, afterCommit) => {
 
-  const before = await prisma.archetype.findUniqueOrThrow({ where: { id } });
+    await lockRevision(tx, "Archetype", id, formData);
+    const before = await tx.archetype.findUniqueOrThrow({ where: { id } });
 
-  const campos = leerCampos(formData);
-  if (!campos.name) return;
+    const campos = leerCampos(formData);
+    if (!campos.name) return;
 
-  const data = {
-    ...campos,
-    active: boolField(formData, "active"),
-    slug: campos.name === before.name ? before.slug : await slugUnico(campos.name, id),
-  };
+    const data = {
+      ...campos,
+      active: boolField(formData, "active"),
+      slug: campos.name === before.name ? before.slug : await slugUnico(tx, campos.name, id),
+    };
 
-  await prisma.archetype.update({ where: { id }, data });
+    await tx.archetype.update({ where: { id }, data });
 
-  await logAudit({
-    user,
-    action: "EDITAR",
-    entity: "Archetype",
-    entityId: id,
-    summary: `Editó el arquetipo "${data.name}"`,
-    changes: diffFields(before, data, ARCHETYPE_LABELS),
+    await auditInTransaction(tx, {
+      user,
+      action: "EDITAR",
+      entity: "Archetype",
+      entityId: id,
+      summary: `Editó el arquetipo "${data.name}"`,
+      changes: diffFields(before, data, ARCHETYPE_LABELS),
+    });
+
+    afterCommit(() => revalidatePath("/arquetipos"));
+    afterCommit(() => revalidatePath(`/arquetipos/${id}`));
   });
-
-  revalidatePath("/arquetipos");
-  revalidatePath(`/arquetipos/${id}`);
 }
 
 /* ---------------------------------------------------------- MARCA PERSONAL -- */
@@ -552,57 +594,60 @@ export async function actualizarArquetipo(id: string, formData: FormData) {
  * dejaria vacios.
  */
 export async function actualizarMarcaPersonal(id: string, formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
+  return withMutation(user, false, async (tx, afterCommit) => {
 
-  const before = await prisma.archetype.findUniqueOrThrow({ where: { id } });
+    await lockRevision(tx, "Archetype", id, formData);
+    const before = await tx.archetype.findUniqueOrThrow({ where: { id } });
 
-  // 0 significa "sin medir", no un 0 real: el informe puntua del 1 al 10.
-  const coherencia = numField(formData, "coherenceIndex", 0);
+    // Vacío significa sin dato; cero es una puntuación válida.
+    const coherencia = numField(formData, "coherenceIndex", 0);
 
-  const data = {
-    isPerson: boolField(formData, "isPerson"),
-    photoUrl: fieldOrNull(formData, "photoUrl"),
+    const data = {
+      isPerson: boolField(formData, "isPerson"),
+      photoUrl: fieldOrNull(formData, "photoUrl"),
 
-    archetypePrimary: fieldOrNull(formData, "archetypePrimary"),
-    archetypeSecondary: fieldOrNull(formData, "archetypeSecondary"),
-    archetypeTertiary: fieldOrNull(formData, "archetypeTertiary"),
-    archetypeSummary: fieldOrNull(formData, "archetypeSummary"),
-    coreDesire: fieldOrNull(formData, "coreDesire"),
-    coreFear: fieldOrNull(formData, "coreFear"),
-    coreTalent: fieldOrNull(formData, "coreTalent"),
-    coreTrap: fieldOrNull(formData, "coreTrap"),
-    evolveToward: fieldOrNull(formData, "evolveToward"),
-    watchOut: fieldOrNull(formData, "watchOut"),
-    coherenceIndex: coherencia > 0 ? clamp(coherencia, 0, 10) : null,
+      archetypePrimary: fieldOrNull(formData, "archetypePrimary"),
+      archetypeSecondary: fieldOrNull(formData, "archetypeSecondary"),
+      archetypeTertiary: fieldOrNull(formData, "archetypeTertiary"),
+      archetypeSummary: fieldOrNull(formData, "archetypeSummary"),
+      coreDesire: fieldOrNull(formData, "coreDesire"),
+      coreFear: fieldOrNull(formData, "coreFear"),
+      coreTalent: fieldOrNull(formData, "coreTalent"),
+      coreTrap: fieldOrNull(formData, "coreTrap"),
+      evolveToward: fieldOrNull(formData, "evolveToward"),
+      watchOut: fieldOrNull(formData, "watchOut"),
+      coherenceIndex: field(formData, "coherenceIndex") ? boundedNumber(coherencia, 0, 10, "Coherencia") : null,
 
-    voiceTone: fieldOrNull(formData, "voiceTone"),
-    messageStructure: fieldOrNull(formData, "messageStructure"),
-    vocabulary: linesToJson(field(formData, "vocabulary")),
-    avoidInVoice: linesToJson(field(formData, "avoidInVoice")),
-    soundsLike: fieldOrNull(formData, "soundsLike"),
-    sameArchetypeIcons: linesToJson(field(formData, "sameArchetypeIcons")),
-    toneReferences: linesToJson(field(formData, "toneReferences")),
-    signatureGesture: fieldOrNull(formData, "signatureGesture"),
+      voiceTone: fieldOrNull(formData, "voiceTone"),
+      messageStructure: fieldOrNull(formData, "messageStructure"),
+      vocabulary: linesToJson(field(formData, "vocabulary")),
+      avoidInVoice: linesToJson(field(formData, "avoidInVoice")),
+      soundsLike: fieldOrNull(formData, "soundsLike"),
+      sameArchetypeIcons: linesToJson(field(formData, "sameArchetypeIcons")),
+      toneReferences: linesToJson(field(formData, "toneReferences")),
+      signatureGesture: fieldOrNull(formData, "signatureGesture"),
 
-    typography: fieldOrNull(formData, "typography"),
-    aesthetics: fieldOrNull(formData, "aesthetics"),
-    visualAvoid: fieldOrNull(formData, "visualAvoid"),
-    palette: paletaDesdeTexto(field(formData, "palette")),
-  };
+      typography: fieldOrNull(formData, "typography"),
+      aesthetics: fieldOrNull(formData, "aesthetics"),
+      visualAvoid: fieldOrNull(formData, "visualAvoid"),
+      palette: paletaDesdeTexto(field(formData, "palette")),
+    };
 
-  await prisma.archetype.update({ where: { id }, data });
+    await tx.archetype.update({ where: { id }, data });
 
-  await logAudit({
-    user,
-    action: "EDITAR",
-    entity: "Archetype",
-    entityId: id,
-    summary: `Editó la marca personal de "${before.name}"`,
-    changes: diffFields(before, data, ARCHETYPE_LABELS),
+    await auditInTransaction(tx, {
+      user,
+      action: "EDITAR",
+      entity: "Archetype",
+      entityId: id,
+      summary: `Editó la marca personal de "${before.name}"`,
+      changes: diffFields(before, data, ARCHETYPE_LABELS),
+    });
+
+    afterCommit(() => revalidatePath("/arquetipos"));
+    afterCommit(() => revalidatePath(`/arquetipos/${id}`));
   });
-
-  revalidatePath("/arquetipos");
-  revalidatePath(`/arquetipos/${id}`);
 }
 
 /**
@@ -632,28 +677,30 @@ function paletaDesdeTexto(texto: string): string {
 
 export async function eliminarArquetipo(formData: FormData) {
   const user = await requireLevel(LEVEL.OWNER);
-  const id = field(formData, "id");
+  return withMutation(user, true, async (tx, afterCommit) => {
+    const id = field(formData, "id");
 
-  const arquetipo = await prisma.archetype.findUnique({
-    where: { id },
-    select: { id: true, name: true },
+    const arquetipo = await tx.archetype.findUnique({
+      where: { id },
+      select: { id: true, name: true },
+    });
+    if (!arquetipo) return;
+
+    await borrarAssetsDe("archetype", id, tx);
+    await tx.archetype.delete({ where: { id } });
+
+    await auditInTransaction(tx, {
+      user,
+      action: "ELIMINAR",
+      entity: "Archetype",
+      entityId: id,
+      summary: `Eliminó el arquetipo "${arquetipo.name}"`,
+    });
+
+    afterCommit(() => revalidatePath("/arquetipos"));
+    afterCommit(() => revalidatePath("/equipo"));
+    afterCommit(() => redirect("/arquetipos"));
   });
-  if (!arquetipo) return;
-
-  await borrarAssetsDe("archetype", id);
-  await prisma.archetype.delete({ where: { id } });
-
-  await logAudit({
-    user,
-    action: "ELIMINAR",
-    entity: "Archetype",
-    entityId: id,
-    summary: `Eliminó el arquetipo "${arquetipo.name}"`,
-  });
-
-  revalidatePath("/arquetipos");
-  revalidatePath("/equipo");
-  redirect("/arquetipos");
 }
 
 /* --------------------------------------------------------- COMPATIBILIDAD -- */
@@ -663,92 +710,96 @@ export async function eliminarArquetipo(formData: FormData) {
  * Escribe sobre la clave unica compuesta archetypeId_structureId.
  */
 export async function guardarCompatibilidad(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("archetypes.edit");
+  return withMutation(user, false, async (tx, afterCommit) => {
 
-  const archetypeId = field(formData, "archetypeId");
-  const structureId = field(formData, "structureId");
-  if (!archetypeId || !structureId) return;
+    const archetypeId = field(formData, "archetypeId");
+    const structureId = field(formData, "structureId");
+    if (!archetypeId || !structureId) return;
 
-  const score = clamp(intField(formData, "score", 2), 0, 3);
-  const notes = fieldOrNull(formData, "notes");
+    const score = boundedNumber(intField(formData, "score", 2), 0, 3, "Puntuación", true);
+    const notes = fieldOrNull(formData, "notes");
 
-  const [arquetipo, estructura, anterior] = await Promise.all([
-    prisma.archetype.findUnique({ where: { id: archetypeId }, select: { name: true } }),
-    prisma.structure.findUnique({ where: { id: structureId }, select: { name: true } }),
-    prisma.archetypeFit.findUnique({
+    const [arquetipo, estructura, anterior] = await Promise.all([
+      tx.archetype.findUnique({ where: { id: archetypeId }, select: { name: true } }),
+      tx.structure.findUnique({ where: { id: structureId }, select: { name: true } }),
+      tx.archetypeFit.findUnique({
+        where: { archetypeId_structureId: { archetypeId, structureId } },
+        select: { score: true, notes: true },
+      }),
+    ]);
+    if (!arquetipo || !estructura) return;
+
+    const fit = await tx.archetypeFit.upsert({
       where: { archetypeId_structureId: { archetypeId, structureId } },
-      select: { score: true, notes: true },
-    }),
-  ]);
-  if (!arquetipo || !estructura) return;
+      create: { archetypeId, structureId, score, notes },
+      update: { score, notes },
+    });
 
-  const fit = await prisma.archetypeFit.upsert({
-    where: { archetypeId_structureId: { archetypeId, structureId } },
-    create: { archetypeId, structureId, score, notes },
-    update: { score, notes },
+    await auditInTransaction(tx, {
+      user,
+      action: anterior ? "EDITAR" : "CREAR",
+      entity: "ArchetypeFit",
+      entityId: fit.id,
+      summary: `Marcó "${arquetipo.name}" como ${etiquetaFit(score)} para "${estructura.name}"`,
+      changes: diffFields(
+        { score: anterior?.score ?? null, notes: anterior?.notes ?? null },
+        { score, notes },
+        { score: "Compatibilidad", notes: "Notas" }
+      ),
+    });
+
+    afterCommit(() => revalidatePath("/arquetipos"));
+    afterCommit(() => revalidatePath(`/arquetipos/${archetypeId}`));
+    afterCommit(() => revalidatePath(`/estructuras/${structureId}`));
   });
-
-  await logAudit({
-    user,
-    action: anterior ? "EDITAR" : "CREAR",
-    entity: "ArchetypeFit",
-    entityId: fit.id,
-    summary: `Marcó "${arquetipo.name}" como ${etiquetaFit(score)} para "${estructura.name}"`,
-    changes: diffFields(
-      { score: anterior?.score ?? null, notes: anterior?.notes ?? null },
-      { score, notes },
-      { score: "Compatibilidad", notes: "Notas" }
-    ),
-  });
-
-  revalidatePath("/arquetipos");
-  revalidatePath(`/arquetipos/${archetypeId}`);
-  revalidatePath(`/estructuras/${structureId}`);
 }
 
 /* ------------------------------------------------------------- ASIGNACION -- */
 
 /** Le pone (o le quita) un arquetipo a una persona del equipo. */
 export async function asignarArquetipoAUsuario(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
+  return withMutation(user, false, async (tx, afterCommit) => {
 
-  const userId = field(formData, "userId");
-  const archetypeId = fieldOrNull(formData, "archetypeId");
-  if (!userId) return;
+    const userId = field(formData, "userId");
+    const archetypeId = fieldOrNull(formData, "archetypeId");
+    if (!userId) return;
 
-  const before = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, archetypeId: true },
+    const before = await tx.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, archetypeId: true },
+    });
+    if (!before) return;
+
+    const arquetipo = archetypeId
+      ? await tx.archetype.findUnique({
+          where: { id: archetypeId },
+          select: { id: true, name: true },
+        })
+      : null;
+    if (archetypeId && !arquetipo) return;
+
+    await tx.user.update({ where: { id: userId }, data: { archetypeId } });
+
+    await auditInTransaction(tx, {
+      user,
+      action: arquetipo ? "ASIGNAR" : "DESASIGNAR",
+      entity: "User",
+      entityId: userId,
+      summary: arquetipo
+        ? `Asignó el arquetipo "${arquetipo.name}" a ${before.name}`
+        : `Quitó el arquetipo a ${before.name}`,
+      changes: diffFields(
+        { archetypeId: before.archetypeId },
+        { archetypeId },
+        { archetypeId: "Arquetipo" }
+      ),
+    });
+
+    afterCommit(() => revalidatePath("/arquetipos"));
+    afterCommit(() => revalidatePath("/equipo"));
+    if (archetypeId) afterCommit(() => revalidatePath(`/arquetipos/${archetypeId}`));
+    if (before.archetypeId) afterCommit(() => revalidatePath(`/arquetipos/${before.archetypeId}`));
   });
-  if (!before) return;
-
-  const arquetipo = archetypeId
-    ? await prisma.archetype.findUnique({
-        where: { id: archetypeId },
-        select: { id: true, name: true },
-      })
-    : null;
-  if (archetypeId && !arquetipo) return;
-
-  await prisma.user.update({ where: { id: userId }, data: { archetypeId } });
-
-  await logAudit({
-    user,
-    action: arquetipo ? "ASIGNAR" : "DESASIGNAR",
-    entity: "User",
-    entityId: userId,
-    summary: arquetipo
-      ? `Asignó el arquetipo "${arquetipo.name}" a ${before.name}`
-      : `Quitó el arquetipo a ${before.name}`,
-    changes: diffFields(
-      { archetypeId: before.archetypeId },
-      { archetypeId },
-      { archetypeId: "Arquetipo" }
-    ),
-  });
-
-  revalidatePath("/arquetipos");
-  revalidatePath("/equipo");
-  if (archetypeId) revalidatePath(`/arquetipos/${archetypeId}`);
-  if (before.archetypeId) revalidatePath(`/arquetipos/${before.archetypeId}`);
 }

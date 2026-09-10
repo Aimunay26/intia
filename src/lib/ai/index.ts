@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { ENV_KEY_NAMES, getSetting, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
-import { DEFAULT_MODEL } from "@/lib/constants";
+import { ENV_KEY_NAMES, getSettings, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
+import { resolveAiModel } from "@/lib/ai-models";
 import { buildSystemPrompt, buildUserPrompt, type ReferenceDoc } from "@/lib/ai/context";
 import {
   AiError,
@@ -56,23 +56,6 @@ async function loadReferences(
       source,
       text: a.extractedText as string,
     }));
-}
-
-/**
- * El "Modelo por defecto" que el dueño escribe en Ajustes. Es texto libre,
- * igual que el de la estructura: si está mal escrito, el proveedor devolverá
- * "no reconoce ese modelo" y el mensaje dirá dónde corregirlo.
- */
-async function defaultModelFromSettings(provider: string): Promise<string | null> {
-  const key =
-    provider === "google"
-      ? SETTING_KEYS.defaultGoogleModel
-      : provider === "anthropic"
-        ? SETTING_KEYS.defaultAnthropicModel
-        : null;
-  if (!key) return null;
-  const value = (await getSetting(key))?.trim();
-  return value || null;
 }
 
 export async function generateScript(input: GenerateInput): Promise<GenerateOutput> {
@@ -198,15 +181,22 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
   const systemPrompt = buildSystemPrompt(promptInput);
   const userPrompt = buildUserPrompt(promptInput);
 
-  const provider = input.provider || structure.defaultProvider || "anthropic";
-  const model =
-    input.model?.trim() ||
-    structure.defaultModel?.trim() ||
-    (await defaultModelFromSettings(provider)) ||
-    DEFAULT_MODEL[provider] ||
-    DEFAULT_MODEL.anthropic;
+  if (Buffer.byteLength(systemPrompt) + Buffer.byteLength(userPrompt) > 200000) throw new AiError("Las referencias exceden el límite de contexto. Reduce los documentos seleccionados.");
 
-  const { key, source } = await resolveApiKey(provider);
+  // Orden del modelo: lo elegido en el generador → el de la estructura (solo si
+  // es del mismo proveedor) → el «Modelo por defecto» de Ajustes → el catálogo.
+  // Los valores heredados (gemini-2.5-*) se normalizan; uno explícito fuera del
+  // catálogo falla aquí, antes de gastar una llamada.
+  const provider = input.provider || structure.defaultProvider || "anthropic";
+  const modelKey = provider === "google" ? SETTING_KEYS.defaultGoogleModel : SETTING_KEYS.defaultAnthropicModel;
+  const apiKeySetting = provider === "google" ? SETTING_KEYS.googleKey : SETTING_KEYS.anthropicKey;
+  const settings = await getSettings([modelKey, apiKeySetting]);
+  const model = resolveAiModel(provider, input.model,
+    structure.defaultProvider === provider ? structure.defaultModel : null, settings[modelKey]);
+
+  // La clave guardada en Ajustes manda; la variable de entorno es el respaldo.
+  // `source` viaja al proveedor para que el error diga de dónde salió la clave.
+  const { key, source } = await resolveApiKey(provider, settings);
   if (!key) {
     const envName = ENV_KEY_NAMES[provider] ?? "correspondiente";
     throw new AiError(

@@ -1,14 +1,15 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState } from "react";
+import { EditForm, RevisionField } from "@/components/edit-form";
 import { FileCheck2, Lock, Save, Sparkles, X } from "lucide-react";
 
+import { SubmitButton } from "@/components/forms";
+import { Callout, Divider, Field } from "@/components/ui";
 import { PALETTE } from "@/lib/constants";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { cn } from "@/lib/utils";
 import type { MarcaCampos } from "@/lib/branding-parser";
-import { Callout, Divider, Field } from "@/components/ui";
-import { SubmitButton } from "@/components/forms";
 import {
   BotonImportarDocumento,
   type Actuales,
@@ -45,6 +46,7 @@ const NOMBRE_DOC: Record<"brief" | "branding", string> = {
 };
 
 export type BrandFormValues = {
+  updatedAt?: string;
   id: string;
   name: string;
   tagline: string;
@@ -186,12 +188,14 @@ export function BrandForm({
   mode = "crear",
   canEdit = true,
   documentos,
+  canImport = true,
 }: {
   action: (formData: FormData) => Promise<void>;
   brand?: BrandFormValues;
   mode?: "crear" | "editar";
   canEdit?: boolean;
   documentos?: DocumentosMarca;
+  canImport?: boolean;
 }) {
   const [name, setName] = useState(brand.name);
   const [primary, setPrimary] = useState(brand.colorPrimary);
@@ -223,6 +227,9 @@ export function BrandForm({
 
   const disabled = !canEdit;
   const full = mode === "editar" || mostrarTodo;
+  // En edición el formulario conserva el borrador si el servidor rechaza la
+  // revisión (EditForm); el alta rápida sigue siendo un <form> normal.
+  const Form = mode === "editar" ? EditForm : "form";
 
   const actuales: Actuales = {
     name,
@@ -307,21 +314,27 @@ export function BrandForm({
     setAvisoAdjunto(null);
   };
 
-  /** Red de seguridad: si por lo que sea los dos inputs superan el tope, no se envía. */
-  const comprobarPeso = (e: FormEvent<HTMLFormElement>) => {
+  /**
+   * Red de seguridad: si por lo que sea los dos inputs superan el tope, no se
+   * envía. Envuelve la acción en vez de usar onSubmit porque EditForm no lo
+   * admite (él mismo intercepta el submit para conservar el borrador).
+   */
+  const enviar = async (fd: FormData) => {
     const total = tamañoAdjunto(briefRef.current) + tamañoAdjunto(brandingRef.current);
     if (total > MAX_ADJUNTOS_BYTES) {
-      e.preventDefault();
       setAvisoAdjunto(
         `Los dos PDF juntos pesan ${mb(total)} y el máximo por guardado son 4 MB. Quita uno de los dos y súbelo después desde la pestaña Documentos.`
       );
+      return;
     }
+    await action(fd);
   };
 
   const luz = (clave: string) => (iluminados.has(clave) ? ILUMINADO : "");
 
   return (
-    <form action={action} onSubmit={comprobarPeso} className="space-y-5">
+    <Form action={enviar} className="space-y-5">
+      {mode === "editar" && brand.updatedAt ? <RevisionField value={brand.updatedAt} /> : null}
       {brand.id ? <input type="hidden" name="id" value={brand.id} /> : null}
       {/*
         Los PDF aplicados viajan aquí para guardarse como documentos de la marca.
@@ -337,7 +350,7 @@ export function BrandForm({
         </Callout>
       ) : null}
 
-      {canEdit ? (
+      {canEdit && canImport ? (
         <div className="border-brand/35 bg-brandsoft/30 rounded-xl border p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-0.5">
@@ -675,7 +688,7 @@ export function BrandForm({
           <Lock size={13} /> Sin permisos de edición
         </div>
       )}
-    </form>
+    </Form>
   );
 }
 

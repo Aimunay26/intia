@@ -1,3 +1,4 @@
+import { dateKey } from "@/lib/utils";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 
 import { getSetting, setSetting } from "@/lib/settings";
@@ -61,15 +62,12 @@ function stampUtc(d: Date): string {
 
 /** 20260314 — para eventos de día completo. */
 function stampDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}${m}${day}`;
+  return dateKey(d).replaceAll("-", "");
 }
 
 function addDays(d: Date, days: number) {
   const out = new Date(d);
-  out.setDate(out.getDate() + days);
+  out.setUTCDate(out.getUTCDate() + days);
   return out;
 }
 

@@ -1,59 +1,60 @@
-import { requirePageUser as requireUser } from "@/lib/render-context";
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
+import { EditForm, RevisionField } from "@/components/edit-form";
+import {
+	Archive,
+	ArchiveRestore,
+	ExternalLink,
+	FileText,
+	Film,
+	Globe,
+	Instagram,
+	Music2,
+	Palette,
+	Target,
+	Trash2,
+	TrendingUp,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Archive,
-  ArchiveRestore,
-  ExternalLink,
-  FileText,
-  Film,
-  Globe,
-  Instagram,
-  Music2,
-  Palette,
-  Target,
-  Trash2,
-  TrendingUp,
-} from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
-import { can, LEVEL } from "@/lib/auth";
-import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import {
-  ACTIVE_STATUSES,
-  CONTENT_STATUS_MAP,
-  OBJECTIVE_STATUS_MAP,
-  PLATFORM_MAP,
-} from "@/lib/constants";
-import {
-  dateKey,
-  formatDate,
-  formatNumber,
-  fromDateKey,
-  jsonToLines,
-  objectiveProgress,
-  parseList,
-} from "@/lib/utils";
-import {
-  Badge,
-  Breadcrumb,
-  Card,
-  ColorChip,
-  EmptyState,
-  PageHeader,
-  PlatformBadges,
-  SectionTitle,
-  Stat,
-} from "@/components/ui";
-import { SegmentedControl } from "@/components/filters";
-import { DeleteButton, SubmitButton } from "@/components/forms";
+	actualizarMarca,
+	archivarMarca,
+	eliminarMarca,
+} from "@/app/actions/brands";
 import { AssetManager, type AssetRow } from "@/components/assets";
 import { ETIQUETA_DOCUMENTO } from "@/lib/branding-parser";
+import { SegmentedControl } from "@/components/filters";
+import { DeleteButton, SubmitButton } from "@/components/forms";
 import {
-  actualizarMarca,
-  archivarMarca,
-  eliminarMarca,
-} from "@/app/actions/brands";
+	Badge,
+	Breadcrumb,
+	Card,
+	ColorChip,
+	EmptyState,
+	PageHeader,
+	PlatformBadges,
+	SectionTitle,
+	Stat,
+} from "@/components/ui";
+import { can, LEVEL } from "@/lib/auth";
+import {
+	ACTIVE_STATUSES,
+	CONTENT_STATUS_MAP,
+	OBJECTIVE_STATUS_MAP
+} from "@/lib/constants";
+import { GUIA_TARGETS } from "@/lib/guia/catalogo";
+import { prisma } from "@/lib/prisma";
+import {
+	dateKey,
+	formatDate,
+	formatNumber,
+	fromDateKey,
+	jsonToLines,
+	objectiveProgress,
+	parseList,
+} from "@/lib/utils";
 import { BrandForm, type DocumentosMarca } from "../brand-form";
 import { ObjectivesPanel, type ObjectiveRow } from "./objectives";
 
@@ -76,7 +77,8 @@ export default async function MarcaPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ vista?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requirePageSection("brands");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="brands" id={(await params).id} query={await searchParams} />;
   const { id } = await params;
   const sp = await searchParams;
 
@@ -111,7 +113,7 @@ export default async function MarcaPage({
   const enProduccion = cuenta(ACTIVE_STATUSES);
 
   const objetivos: ObjectiveRow[] = brand.objectives.map((o) => ({
-    id: o.id,
+    id: o.id, updatedAt: o.updatedAt.toISOString(),
     name: o.name,
     description: o.description,
     metricKey: o.metricKey,
@@ -275,7 +277,8 @@ export default async function MarcaPage({
               </a>
             ))}
             {puedeGestionar ? (
-              <form action={archivarMarca}>
+              <EditForm action={archivarMarca}>
+<RevisionField value={brand.updatedAt} />
                 <input type="hidden" name="id" value={brand.id} />
                 <SubmitButton
                   className="btn btn-sm"
@@ -286,7 +289,7 @@ export default async function MarcaPage({
                 >
                   {brand.archived ? "Reactivar" : "Archivar"}
                 </SubmitButton>
-              </form>
+              </EditForm>
             ) : null}
             {esAdmin ? (
               <DeleteButton
@@ -367,7 +370,7 @@ export default async function MarcaPage({
               canEdit={puedeGestionar}
               documentos={documentos}
               brand={{
-                id: brand.id,
+                id: brand.id, updatedAt: brand.updatedAt.toISOString(),
                 name: brand.name,
                 tagline: brand.tagline ?? "",
                 description: brand.description ?? "",

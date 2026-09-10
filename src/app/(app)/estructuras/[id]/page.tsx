@@ -1,61 +1,63 @@
-import { requirePageUser as requireUser } from "@/lib/render-context";
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
+import { EditForm, RevisionField } from "@/components/edit-form";
+import {
+	Bot,
+	Copy,
+	FileText,
+	Film,
+	ListOrdered,
+	Shapes,
+	Sparkles,
+	Terminal,
+	Trash2,
+	Trophy,
+	UserSquare2,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Bot,
-  Copy,
-  FileText,
-  Film,
-  ListOrdered,
-  Shapes,
-  Sparkles,
-  Terminal,
-  Trash2,
-  Trophy,
-  UserSquare2,
-} from "lucide-react";
 
-import { prisma } from "@/lib/prisma";
+import {
+	duplicarEstructura,
+	eliminarEstructura,
+	guardarPrompt,
+	guardarReglas,
+	type Beat,
+	type Example,
+} from "@/app/actions/structures";
+import { AssetManager, type AssetRow } from "@/components/assets";
+import { DeleteButton, SubmitButton } from "@/components/forms";
+import {
+	Avatar,
+	Badge,
+	Breadcrumb,
+	Callout,
+	Card,
+	CardHeader,
+	ColorChip,
+	EmptyState,
+	Field,
+	PageHeader,
+} from "@/components/ui";
 import { can, LEVEL } from "@/lib/auth";
 import {
-  AI_MODELS,
-  AI_PROVIDERS,
-  AI_PROVIDER_MAP,
-  FIT_SCORES,
-  SCRIPT_STATUS_MAP,
-  STRUCTURE_CATEGORY_MAP,
+	AI_MODELS,
+	AI_PROVIDER_MAP,
+	AI_PROVIDERS,
+	FIT_SCORES,
+	SCRIPT_STATUS_MAP,
+	STRUCTURE_CATEGORY_MAP,
 } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 import {
-  cn,
-  formatDate,
-  formatNumber,
-  formatSeconds,
-  parseJson,
-  parseList,
-  truncate,
+	cn,
+	formatDate,
+	formatNumber,
+	formatSeconds,
+	parseJson,
+	parseList,
+	truncate,
 } from "@/lib/utils";
-import {
-  duplicarEstructura,
-  eliminarEstructura,
-  guardarPrompt,
-  guardarReglas,
-  type Beat,
-  type Example,
-} from "@/app/actions/structures";
-import {
-  Avatar,
-  Badge,
-  Breadcrumb,
-  Callout,
-  Card,
-  CardHeader,
-  ColorChip,
-  EmptyState,
-  Field,
-  PageHeader,
-} from "@/components/ui";
-import { DeleteButton, SubmitButton } from "@/components/forms";
-import { AssetManager, type AssetRow } from "@/components/assets";
 import { StructureForm } from "../structure-form";
 import { BeatsEditor } from "./beats-editor";
 import { ExamplesEditor } from "./examples-editor";
@@ -76,7 +78,8 @@ export default async function EstructuraPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ vista?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requirePageSection("structures");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="structures" id={(await params).id} query={await searchParams} />;
   const { id } = await params;
   const sp = await searchParams;
   const puedeEditar = can(user.role, LEVEL.MEMBER);
@@ -143,7 +146,7 @@ export default async function EstructuraPage({
                   triggerLabel="Editar ficha"
                   triggerClassName="btn"
                   structure={{
-                    id: structure.id,
+                    id: structure.id, updatedAt: structure.updatedAt.toISOString(),
                     name: structure.name,
                     category: structure.category,
                     family: structure.family ?? "",
@@ -225,7 +228,7 @@ export default async function EstructuraPage({
 
       {vista === "beats" ? (
         <BeatsEditor
-          structureId={structure.id}
+          structureId={structure.id} updatedAt={structure.updatedAt.toISOString()}
           beats={beats}
           defaultDurationSec={structure.defaultDurationSec}
           canEdit={puedeEditar}
@@ -234,7 +237,7 @@ export default async function EstructuraPage({
 
       {vista === "prompt" ? (
         <PromptTab
-          id={structure.id}
+          id={structure.id} updatedAt={structure.updatedAt.toISOString()}
           systemPrompt={structure.systemPrompt}
           rules={rules}
           provider={structure.defaultProvider}
@@ -247,7 +250,7 @@ export default async function EstructuraPage({
 
       {vista === "ejemplos" ? (
         <ExamplesEditor
-          structureId={structure.id}
+          structureId={structure.id} updatedAt={structure.updatedAt.toISOString()}
           examples={examples}
           canEdit={puedeEditar}
         />
@@ -346,6 +349,7 @@ function FichaResumen({
 
 function PromptTab({
   id,
+  updatedAt,
   systemPrompt,
   rules,
   provider,
@@ -355,6 +359,7 @@ function PromptTab({
   canEdit,
 }: {
   id: string;
+  updatedAt: string;
   systemPrompt: string;
   rules: string[];
   provider: string;
@@ -367,7 +372,8 @@ function PromptTab({
 
   return (
     <div className="space-y-4">
-      <form action={guardarPrompt} className="card">
+      <EditForm action={guardarPrompt} className="card">
+<RevisionField value={updatedAt} />
         <input type="hidden" name="id" value={id} />
         <CardHeader
           title="Prompt del sistema de esta estructura"
@@ -428,7 +434,7 @@ function PromptTab({
               </select>
             </Field>
 
-            <Field label="Modelo por defecto" hint="Texto libre: la lista es solo una ayuda.">
+            <Field label="Modelo por defecto" hint="Elige un modelo del catálogo. Vacío usa el de Ajustes para ese proveedor.">
               <input
                 name="defaultModel"
                 className="input input-mono"
@@ -460,7 +466,7 @@ function PromptTab({
 
             <Field
               label="Temperatura"
-              hint="Solo la usa Gemini. Los modelos Claude actuales la rechazan, así que con Anthropic se ignora."
+              hint="Valor heredado. Gemini 3.8 y los Claude actuales lo ignoran."
             >
               <input
                 name="temperature"
@@ -475,9 +481,10 @@ function PromptTab({
             </Field>
           </div>
         </div>
-      </form>
+      </EditForm>
 
-      <form action={guardarReglas} className="card">
+      <EditForm action={guardarReglas} className="card">
+<RevisionField value={updatedAt} />
         <input type="hidden" name="id" value={id} />
         <CardHeader
           title="Reglas duras"
@@ -507,7 +514,7 @@ function PromptTab({
             />
           </Field>
         </div>
-      </form>
+      </EditForm>
     </div>
   );
 }

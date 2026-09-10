@@ -1,7 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
+import { taskScope } from "@/lib/access-scope";
 import { getBrandContext } from "@/lib/brand-context";
 import { prisma } from "@/lib/prisma";
 import { getTaskColumnPage, taskColumnWhere } from "@/lib/task-pages";
@@ -13,11 +14,11 @@ const request = z.object({
 });
 
 export async function cargarTareasColumna(input: z.infer<typeof request>) {
-  await requireUser();
+  const user = await requirePermission("tasks.view");
   const values = request.parse(input);
-  const context = await getBrandContext();
+  const context = await getBrandContext(user);
   if (context.activeId !== values.brandId) throw new Error("La marca cambió. Actualiza el tablero antes de cargar más tareas.");
-  const column = await prisma.taskColumn.findFirst({ where: { id: values.columnId, ...taskColumnWhere(context.activeId) }, select: { id: true } });
+  const column = await prisma.taskColumn.findFirst({ where: { AND: [{ id: values.columnId }, taskColumnWhere(context.activeId), user.role === "OWNER" ? {} : { OR: [{ brandId: null }, { brandId: { in: user.brandIds ?? [] } }] }] }, select: { id: true } });
   if (!column) throw new Error("La columna ya no está disponible en esta vista.");
-  return measurePhase("tasks.next-page", () => getTaskColumnPage(column.id, context.activeId, values.filters, values.cursor));
+  return measurePhase("tasks.next-page", () => getTaskColumnPage(column.id, context.activeId, values.filters, values.cursor, taskScope(user)));
 }

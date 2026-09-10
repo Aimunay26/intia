@@ -8,6 +8,7 @@ import { BOOTSTRAP_COMPLETE, withAuthLock } from "@/lib/auth-transactions";
 
 import { prisma } from "@/lib/prisma";
 import { ROLE_LEVEL } from "@/lib/constants";
+import { assertPermission, type Capability } from "@/lib/permissions";
 
 export const SESSION_COOKIE = "mos_session";
 const DAYS = 30;
@@ -77,6 +78,8 @@ export type SessionUser = {
   color: string;
   archetypeId: string | null;
   sessionVersion?: number;
+  profiles?: string[];
+  brandIds?: string[];
 };
 
 /* --------------------------------------------------------------- HASHING -- */
@@ -159,7 +162,9 @@ export async function getSession(): Promise<SessionUser | null> {
 
     // Una sola consulta para sesión, revocación, versión y permisos frescos.
     const [user] = await prisma.$queryRaw<(SessionUser & { sessionVersion: number })[]>`
-      SELECT u."id", u."name", u."email", u."role", u."color", u."archetypeId", u."sessionVersion"
+      SELECT u."id", u."name", u."email", u."role", u."color", u."archetypeId", u."sessionVersion",
+        ARRAY(SELECT p.profile FROM "UserWorkProfile" p WHERE p."userId"=u.id ORDER BY p.profile) AS profiles,
+        ARRAY(SELECT b."brandId" FROM "UserBrandAccess" b WHERE b."userId"=u.id ORDER BY b."brandId") AS "brandIds"
       FROM "AuthSession" s JOIN "User" u ON u."id" = s."userId"
       WHERE s."id" = ${createHash("sha256").update(payload.jti).digest("hex")}
         AND u."id" = ${id} AND u."active" = true AND u."sessionVersion" = ${payload.sv}
@@ -174,6 +179,8 @@ export async function getSession(): Promise<SessionUser | null> {
       color: user.color,
       archetypeId: user.archetypeId,
       sessionVersion: user.sessionVersion,
+      profiles: user.profiles ?? [],
+      brandIds: user.brandIds ?? [],
     };
   } catch {
     return null;
@@ -203,6 +210,13 @@ export async function requireLevel(min: number): Promise<SessionUser> {
   if ((ROLE_LEVEL[user.role] ?? 0) < min) {
     throw new Error("No tienes permisos para hacer esto.");
   }
+  return user;
+}
+
+/** Acciones/API: consulta sesión y permisos actuales, sin caché entre peticiones. */
+export async function requirePermission(capability: Capability): Promise<SessionUser> {
+  const user = await requireUser();
+  assertPermission(user, capability);
   return user;
 }
 

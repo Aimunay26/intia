@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auditInTransaction, type Cambio } from "@/lib/audit";
 import { can, LEVEL, requireUser } from "@/lib/auth";
 import { AI_PROVIDER_MAP, DEFAULT_MODEL } from "@/lib/constants";
+import { resolveAiModel } from "@/lib/ai-models";
 import { GOOGLE_SETTING_KEYS } from "@/lib/google";
 import { withMutation } from "@/lib/mutations";
 import { getSettings, setSetting, SETTING_KEYS } from "@/lib/settings";
@@ -48,7 +49,9 @@ export async function guardarAjustes(
   const orgName = field(formData, "orgName");
   const defaultProvider = field(formData, "defaultProvider") || "anthropic";
   const anthropicModel = field(formData, "anthropicModel");
-  const googleModel = field(formData, "googleModel");
+  let googleModel: string;
+  try { googleModel = resolveAiModel("google", field(formData, "googleModel")); }
+  catch { return { error: "Elige un modelo de Gemini disponible en el catálogo." }; }
   const anthropicKey = field(formData, "anthropicKey");
   const googleKey = field(formData, "googleKey");
   const quitarAnthropic = boolField(formData, "quitarAnthropicKey");

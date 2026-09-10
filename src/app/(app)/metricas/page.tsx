@@ -1,9 +1,11 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { Pagination } from "@/components/filters";
 import { SectionLoading } from "@/components/section-loading";
 import { getMetricBreakdowns, getMetricRanking, getMetricSeries, getMetricTotals, type MetricFilters } from "@/lib/metric-dashboard";
 import { measurePhase } from "@/lib/performance";
 import { measurePagePhase } from "@/lib/performance-page";
-import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { weeklyDateRange as metricDateRange, shiftReportDay } from "@/lib/report-dates";
 import { getStructureChoices } from "@/lib/structure-choices";
 import Link from "next/link";
@@ -119,7 +121,8 @@ type MetricsSectionProps = { filters: MetricFilters; range: ReturnType<typeof me
 
 export default async function MetricasPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return measurePagePhase("page:/metricas", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("metrics");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="metrics" query={await searchParams} />;
   const [brandCtx, sp] = await Promise.all([getBrandContext(), searchParams]);
   const range = metricDateRange(sp.desde, sp.hasta);
   const filters: MetricFilters = { brandId: brandCtx.activeId, desde: range.desde, hasta: range.hasta, plataforma: sp.plataforma, estructura: sp.estructura, persona: sp.persona };

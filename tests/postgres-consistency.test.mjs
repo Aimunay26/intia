@@ -8,7 +8,7 @@ if(!url || !['localhost','127.0.0.1'].includes(new URL(url).hostname) || !new UR
 const prisma=new PrismaClient({datasourceUrl:url}), form=values=>{const f=new FormData();for(const[k,v]of Object.entries(values))f.set(k,String(v));return f;};
 test('consistencia con PostgreSQL real: auditoría, revisiones, métricas y relaciones',async t=>{
   const owner=await prisma.user.create({data:{name:'Fixture',email:'consistency@example.test',role:'OWNER',passwordHash:'fixture-not-a-password'}});
-  const mocks={'@/lib/prisma':{prisma},'@/lib/auth':{requireLevel:async()=>owner,LEVEL:{MEMBER:1,OWNER:2}},'next/cache':{revalidatePath:()=>{},revalidateTag:()=>{}},'next/navigation':{redirect:()=>{}}};
+  const mocks={'@/lib/prisma':{prisma},'@/lib/auth':{requireLevel:async()=>owner,requirePermission:async()=>owner,LEVEL:{MEMBER:1,OWNER:2}},'next/cache':{revalidatePath:()=>{},revalidateTag:()=>{}},'next/navigation':{redirect:()=>{}}};
   const tasks=load('src/app/actions/tasks.ts',mocks), content=load('src/app/actions/content.ts',mocks), scripts=load('src/app/actions/scripts.ts',mocks), metric=load('src/app/actions/metrics.ts',mocks), dashboard=load('src/lib/metric-dashboard.ts',mocks);
   const brand=await prisma.brand.create({data:{name:'Marca A',slug:'consistency-a'}}), other=await prisma.brand.create({data:{name:'Marca B',slug:'consistency-b'}});
   const column=await prisma.taskColumn.create({data:{name:'Trabajo'}});

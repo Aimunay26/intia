@@ -30,9 +30,15 @@ const storage = load("src/lib/private-storage.ts", { ...mocks, "@vercel/blob": {
 
 test("trabajos durables, cuotas, dinero y archivos con PostgreSQL real; IA/Blob simulados", async t => {
   const owner = await prisma.user.create({ data: { name: "Fixture", email: "scalability@example.test", role: "OWNER", passwordHash: "fixture-only" } });
-  const member = await prisma.user.create({ data: { name: "Miembro", email: "member-scalability@example.test", passwordHash: "fixture-only" } });
-  const other = await prisma.user.create({ data: { name: "Otro", email: "other-scalability@example.test", passwordHash: "fixture-only" } });
+  let member = await prisma.user.create({ data: { name: "Miembro", email: "member-scalability@example.test", passwordHash: "fixture-only" } });
+  let other = await prisma.user.create({ data: { name: "Otro", email: "other-scalability@example.test", passwordHash: "fixture-only" } });
   const brand = await prisma.brand.create({ data: { name: "Fixture", slug: "scalability" } });
+  for (const account of [member,other]) {
+    await prisma.userWorkProfile.create({data:{userId:account.id,profile:'WRITER'}});
+    await prisma.userBrandAccess.create({data:{userId:account.id,brandId:brand.id}});
+  }
+  member = {...await prisma.user.findUniqueOrThrow({where:{id:member.id}}), profiles:['WRITER'],brandIds:[brand.id]};
+  other = {...await prisma.user.findUniqueOrThrow({where:{id:other.id}}), profiles:['WRITER'],brandIds:[brand.id]};
   const structure = await prisma.structure.create({ data: { name: "Fixture", slug: "scalability" } });
   const input = { request: "Guion para fixture", provider: "anthropic", brandId: brand.id };
   const enqueue = async (actor = owner, key = randomUUID()) => {
@@ -42,6 +48,15 @@ test("trabajos durables, cuotas, dinero y archivos con PostgreSQL real; IA/Blob 
   };
   const drain = async id => { for (let n = 0; n < 7; n++) { const state = await jobs.processGeneration(id); if (state.done) return; if (state.retryAt) await prisma.generationItem.updateMany({ where: { jobId: id }, data: { leaseUntil: new Date(0), availableAt: new Date(0) } }); } throw new Error("No terminó el fixture"); };
   try {
+    await t.test("la cola acepta Gemini 3.8 y modelos heredados, pero rechaza un modelo de Claude enviado a Google", async () => {
+      for (const model of ['gemini-3.8-flash', 'gemini-2.5-pro']) {
+        const id = await jobs.enqueueGeneration(owner, randomUUID(), [structure.id], { ...input, provider: 'google', model });
+        const job = await prisma.generationJob.findUniqueOrThrow({ where: { id } });
+        assert.equal(job.payload.model, model);assert.equal(job.payload.provider, 'google');
+        await jobs.cancelGeneration(owner, id);
+      }
+      await assert.rejects(jobs.enqueueGeneration(owner, randomUUID(), [structure.id], { ...input, provider: 'google', model: 'claude-opus-5' }), /catálogo/);
+    });
     await t.test("dos envíos idénticos producen un trabajo; la misma clave no admite otro contenido", async () => {
       const key = randomUUID();
       const ids = await Promise.all([jobs.enqueueGeneration(owner, key, [structure.id], input), jobs.enqueueGeneration(owner, key, [structure.id], input)]);

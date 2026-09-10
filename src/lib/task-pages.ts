@@ -25,11 +25,11 @@ export function taskCursorWhere(cursor: string | null | undefined, scope: string
   return { order: { gte: decoded.order }, OR: [{ order: { gt: decoded.order } }, { order: decoded.order, id: { gt: decoded.id } }] };
 }
 
-export async function getTaskColumnPage(columnId: string, brandId: string | null, filters: TaskFilters, cursor?: string | null) {
+export async function getTaskColumnPage(columnId: string, brandId: string | null, filters: TaskFilters, cursor?: string | null, access: Prisma.TaskWhereInput = {}) {
   const scope = scopeKey(columnId, brandId, filters);
   const after = taskCursorWhere(cursor, scope);
   const tasks = await prisma.task.findMany({
-    where: { AND: [{ columnId }, taskListOptions(brandId, filters).where, after] },
+    where: { AND: [{ columnId }, taskListOptions(brandId, filters).where, after, access] },
     take: TASK_PAGE_SIZE + 1,
     orderBy: [{ order: "asc" }, { id: "asc" }],
     include: { assignee: { select: { id: true, name: true, color: true, avatarUrl: true } }, brand: { select: { id: true, name: true, colorPrimary: true } } },

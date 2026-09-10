@@ -79,6 +79,7 @@ function BloqueProveedor({
   placeholder: string;
 }) {
   const [claveInput, setClaveInput] = useState("");
+  const [modeloActual, setModeloActual] = useState(modelo);
   const [probando, setProbando] = useState(false);
   const [resultadoPrueba, setResultadoPrueba] = useState<TestKeyResult | null>(null);
 
@@ -93,7 +94,7 @@ function BloqueProveedor({
     setProbando(true);
     setResultadoPrueba(null);
     try {
-      const res = await probarClaveIA({ provider: id, apiKey: claveInput, model: modelo });
+      const res = await probarClaveIA({ provider: id, apiKey: claveInput, model: modeloActual });
       setResultadoPrueba(res);
     } catch {
       setResultadoPrueba({ ok: false, error: "Error al comunicar con el servidor." });
@@ -187,12 +188,13 @@ function BloqueProveedor({
       <Field
         label="Modelo por defecto"
         className="mt-3"
-        hint="Puedes escribir el nombre de un modelo nuevo aunque no esté en la lista."
+        hint="Elige un modelo del catálogo del proveedor."
       >
         <input
           name={campoModelo}
           className="input input-mono"
-          defaultValue={modelo}
+          value={modeloActual}
+          onChange={(event) => { setModeloActual(event.target.value); setResultadoPrueba(null); }}
           list={listId}
           placeholder={DEFAULT_MODEL[id] ?? ""}
           spellCheck={false}

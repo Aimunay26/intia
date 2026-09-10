@@ -1,5 +1,7 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { endOfDay, startOfDay } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 import { Activity, Clock, Users, Zap } from "lucide-react";
@@ -93,7 +95,8 @@ export default async function ActividadPage({
   }>;
 }) {
   return measurePagePhase("page:/actividad", async () => {
-  await requireUser();
+  const user = await requirePageSection("activity");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="activity" query={await searchParams} />;
   const sp = await searchParams;
 
   const q = (sp.q ?? "").trim();

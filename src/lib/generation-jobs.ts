@@ -5,10 +5,12 @@ import { prisma, type AppTransaction } from "@/lib/prisma";
 import { assertActor } from "@/lib/auth-transactions";
 import type { SessionUser } from "@/lib/auth";
 import { auditInTransaction } from "@/lib/audit";
-import { AI_MODELS } from "@/lib/constants";
+import { resolveAiModel } from "@/lib/ai-models";
 import { generateScript, AiError, type GenerateInput, type GenerateOutput } from "@/lib/ai";
 import { persistGeneratedScript } from "@/lib/generation-persist";
 import { reserveUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
+import { allows, assertBrandPermission, assertPermission } from "@/lib/permissions";
+import { generationScope, scriptScope } from "@/lib/access-scope";
 
 const text = z.string().max(12000).optional();
 const payloadSchema = z.object({
@@ -22,12 +24,13 @@ const active = ["QUEUED", "RUNNING"];
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 
 export async function enqueueGeneration(user: SessionUser, requestKey: string, structures: string[], input: Omit<GenerateInput, "structureId">) {
+  assertBrandPermission(user, input.brandId, "scripts.generate");
   if (process.env.AI_JOBS_ENABLED !== "true") throw new Error("La generación en segundo plano aún no está habilitada.");
   if (!z.string().uuid().safeParse(requestKey).success) throw new Error("Recarga el formulario antes de generar.");
   const parsed = payloadSchema.safeParse(input);
   if (!parsed.success) throw new Error("Revisa la petición, el modelo y la duración (máximo 600 segundos).");
   const payload = parsed.data;
-  if (payload.model && !AI_MODELS[payload.provider]?.some(m => m.value === payload.model)) throw new Error("El modelo no está disponible en el catálogo.");
+  if (payload.model) resolveAiModel(payload.provider, payload.model);
   const structureIds = [...new Set(structures)].sort();
   if (!structureIds.length || structureIds.length > resourceLimit("AI_MAX_BATCH", 3) || structureIds.some(id => id.length > 100)) throw new Error("Elige entre una y tres estructuras por generación.");
   if (Buffer.byteLength(JSON.stringify(payload)) > 48000) throw new Error("La petición es demasiado larga. Reduce los detalles antes de generar.");
@@ -59,11 +62,14 @@ async function lockJob(tx: AppTransaction, id: string) {
   return tx.generationJob.findUnique({ where: { id }, include: { items: { orderBy: { order: "asc" } } } });
 }
 
-async function actorForJob(tx: AppTransaction, job: { userId: string; sessionVersion: number }) {
-  const user = await tx.user.findUnique({ where: { id: job.userId }, select: { id: true, name: true, email: true, role: true, color: true, archetypeId: true, sessionVersion: true, active: true } });
+async function actorForJob(tx: AppTransaction, job: { userId: string; sessionVersion: number; payload: Prisma.JsonValue }) {
+  const user = await tx.user.findUnique({ where: { id: job.userId }, select: { id: true, name: true, email: true, role: true, color: true, archetypeId: true, sessionVersion: true, active: true, workProfiles: { select: { profile: true } }, brandAccess: { select: { brandId: true } } } });
   if (!user?.active || user.sessionVersion !== job.sessionVersion || !["OWNER", "MEMBER"].includes(user.role)) return null;
-  await assertActor(tx, user);
-  return user;
+  const actor = { ...user, profiles: user.workProfiles.map(p => p.profile), brandIds: user.brandAccess.map(b => b.brandId) };
+  const payload = payloadSchema.safeParse(job.payload);
+  if (!payload.success || !allows(actor, "scripts.generate") || (actor.role !== "OWNER" && (!payload.data.brandId || !actor.brandIds.includes(payload.data.brandId)))) return null;
+  await assertActor(tx, actor);
+  return actor;
 }
 
 export type GenerationProgress = { done: boolean; retryAt?: number };
@@ -142,13 +148,15 @@ export async function processGeneration(jobId: string): Promise<GenerationProgre
 }
 
 export async function generationStatus(user: SessionUser, id: string) {
-  return prisma.generationJob.findFirst({ where: { id, ...(user.role === "OWNER" ? {} : { userId: user.id }) }, select: {
+  assertPermission(user, "scripts.generate");
+  return prisma.generationJob.findFirst({ where: { AND: [{ id }, generationScope(user)] }, select: {
     id: true, status: true, error: true, createdAt: true, runId: true,
-    items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, status: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { select: { id: true, title: true } } } },
+    items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, status: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { where: scriptScope(user), select: { id: true, title: true } } } },
   } });
 }
 
 export async function cancelGeneration(user: SessionUser, id: string) {
+  assertPermission(user, "scripts.generate");
   await prisma.$transaction(async tx => {
     const job = await lockJob(tx, id);
     await assertActor(tx, user);

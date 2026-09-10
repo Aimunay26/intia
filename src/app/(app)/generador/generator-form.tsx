@@ -35,10 +35,12 @@ import {
 import {
   AI_MODELS,
   AI_PROVIDERS,
+  DEFAULT_MODEL,
   FIT_SCORES,
   STRUCTURE_CATEGORIES,
   STRUCTURE_CATEGORY_MAP,
 } from "@/lib/constants";
+import { resolveAiModel } from "@/lib/ai-models";
 import { cn, formatSeconds, withAlpha } from "@/lib/utils";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { getStructureReference } from "@/lib/structure-references";
@@ -150,6 +152,7 @@ export function GeneratorForm({
   brands,
   archetypes,
   providersReady,
+  defaultModels = DEFAULT_MODEL,
   initialStructureId,
   initialBrandId,
   initialArchetypeId,
@@ -162,6 +165,7 @@ export function GeneratorForm({
   brands: GeneratorBrand[];
   archetypes: GeneratorArchetype[];
   providersReady: Record<string, boolean>;
+  defaultModels?: Record<string, string>;
   initialStructureId: string;
   initialBrandId: string;
   initialArchetypeId?: string;
@@ -215,7 +219,8 @@ export function GeneratorForm({
     String(primeraEstructura?.defaultDurationSec ?? 45)
   );
   const [provider, setProvider] = useState(proveedorInicial);
-  const [model, setModel] = useState(primeraEstructura?.defaultModel ?? "");
+  const [model, setModel] = useState(() => resolveAiModel(proveedorInicial, undefined,
+    primeraEstructura?.defaultProvider === proveedorInicial ? primeraEstructura.defaultModel : null, defaultModels[proveedorInicial]));
   const [creativeAngle, setCreativeAngle] = useState(initialAngle ?? "");
   const [ctaTrigger, setCtaTrigger] = useState("escasez");
   const [ctaAction, setCtaAction] = useState("compra");
@@ -272,10 +277,9 @@ export function GeneratorForm({
       }
     });
     setDuracion(String(s.defaultDurationSec || 45));
-    if (s.defaultModel) setModel(s.defaultModel);
-    if (s.defaultProvider && providersReady[s.defaultProvider]) {
-      setProvider(s.defaultProvider);
-    }
+    const nextProvider = s.defaultProvider && providersReady[s.defaultProvider] ? s.defaultProvider : provider;
+    setProvider(nextProvider);
+    setModel(resolveAiModel(nextProvider, undefined, s.defaultProvider === nextProvider ? s.defaultModel : null, defaultModels[nextProvider]));
   };
 
   const seleccionarSoloEsta = (s: GeneratorStructure, e?: React.MouseEvent) => {
@@ -283,10 +287,9 @@ export function GeneratorForm({
     setSelectedStructureIds([s.id]);
     setPreviewStructureId(s.id);
     setDuracion(String(s.defaultDurationSec || 45));
-    if (s.defaultModel) setModel(s.defaultModel);
-    if (s.defaultProvider && providersReady[s.defaultProvider]) {
-      setProvider(s.defaultProvider);
-    }
+    const nextProvider = s.defaultProvider && providersReady[s.defaultProvider] ? s.defaultProvider : provider;
+    setProvider(nextProvider);
+    setModel(resolveAiModel(nextProvider, undefined, s.defaultProvider === nextProvider ? s.defaultModel : null, defaultModels[nextProvider]));
   };
 
   const seleccionarTodasFiltradas = () => {
@@ -1398,7 +1401,7 @@ export function GeneratorForm({
                           disabled={!listo}
                           onClick={() => {
                             setProvider(p.value);
-                            setModel("");
+                            setModel(resolveAiModel(p.value, undefined, defaultModels[p.value]));
                           }}
                           className={cn(
                             "card-flat flex flex-col gap-1 p-2.5 text-left transition-all",
@@ -1436,7 +1439,7 @@ export function GeneratorForm({
                 <div className="space-y-3">
                   <Field
                     label="Modelo"
-                    hint="Texto libre o selecciona uno recomendado."
+                    hint="Elige un modelo del catálogo del proveedor."
                   >
                     <input
                       name="modelo"

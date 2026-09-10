@@ -19,6 +19,7 @@ import {
   eliminarUsuario,
   type TeamState,
 } from "@/app/actions/team";
+import { WORK_PROFILES } from "@/lib/permissions";
 import { PALETTE, USER_ROLES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Divider, Field, SectionTitle } from "@/components/ui";
@@ -39,6 +40,8 @@ export type TeamMember = {
   bio: string | null;
   active: boolean;
   archetypeId: string | null;
+  profiles?: string[];
+  brandIds?: string[];
 };
 
 /* -------------------------------------------------------------- AVISOS -- */
@@ -104,10 +107,12 @@ function CamposPersona({
   member,
   archetypes,
   canManage,
+  brands = [],
 }: {
   member?: TeamMember;
   archetypes: ArchetypeOption[];
   canManage: boolean;
+  brands?: ArchetypeOption[];
 }) {
   return (
     <>
@@ -187,6 +192,15 @@ function CamposPersona({
         </Field>
       </div>
 
+      {canManage ? <fieldset className="space-y-3 rounded-lg border border-line p-3">
+        <legend className="px-1 font-semibold">Perfiles y marcas autorizadas</legend>
+        <input type="hidden" name="accessConfigured" value="1" />
+        <p className="text-sm text-inkmuted">Puedes combinar perfiles. El Dueño conserva acceso completo. Equipo sin perfiles solo accede a su inicio, ayuda y perfil personal.</p>
+        {WORK_PROFILES.map(p => <label key={p.id} className="flex gap-2 text-sm"><input type="checkbox" name="profiles" value={p.id} defaultChecked={member?.profiles?.includes(p.id)} /><span><strong>{p.label}</strong><br />{p.description}</span></label>)}
+        <p className="font-semibold">Marcas</p>
+        {brands.map(b => <label key={b.id} className="flex gap-2 text-sm"><input type="checkbox" name="brandIds" value={b.id} defaultChecked={member?.brandIds?.includes(b.id)} />{b.name}</label>)}
+        <p className="text-sm text-inkmuted">Cámara, talento, edición y diseño requieren además una asignación al video o tarea. Cambiar accesos cierra las sesiones anteriores.</p>
+      </fieldset> : null}
       <Field label="Nota interna" hint="Qué hace, en qué es buena, disponibilidad…">
         <textarea
           name="bio"
@@ -202,7 +216,7 @@ function CamposPersona({
 
 /* ------------------------------------------------------------- INVITAR -- */
 
-export function InviteUserButton({ archetypes }: { archetypes: ArchetypeOption[] }) {
+export function InviteUserButton({ archetypes, brands = [] }: { archetypes: ArchetypeOption[]; brands?: ArchetypeOption[] }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState<TeamState, FormData>(
     crearUsuario,
@@ -236,7 +250,7 @@ export function InviteUserButton({ archetypes }: { archetypes: ArchetypeOption[]
         width={620}
       >
         <form action={formAction} className="space-y-3.5">
-          <CamposPersona archetypes={archetypes} canManage />
+          <CamposPersona archetypes={archetypes} brands={brands} canManage />
 
           <Divider label="Acceso" />
 
@@ -278,6 +292,7 @@ export function EditUserButton({
   member,
   archetypes,
   canManage,
+  brands = [],
   isSelf,
   puedeDesactivar,
   puedeEliminar,
@@ -287,6 +302,7 @@ export function EditUserButton({
   member: TeamMember;
   archetypes: ArchetypeOption[];
   canManage: boolean;
+  brands?: ArchetypeOption[];
   isSelf: boolean;
   puedeDesactivar: boolean;
   puedeEliminar: boolean;
@@ -328,7 +344,7 @@ export function EditUserButton({
       >
         <form action={datosAction} className="space-y-3.5">
           <input type="hidden" name="id" value={member.id} />
-          <CamposPersona member={member} archetypes={archetypes} canManage={canManage} />
+          <input type="hidden" name="selfProfile" value={canManage ? "0" : "1"} /><CamposPersona member={member} archetypes={archetypes} brands={brands} canManage={canManage} />
           <Aviso state={datos} />
           <div className="flex justify-end">
             <button type="submit" className="btn btn-primary" disabled={datosPending}>

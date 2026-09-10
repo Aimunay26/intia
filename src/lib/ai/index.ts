@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { resolveApiKey } from "@/lib/settings";
-import { DEFAULT_MODEL } from "@/lib/constants";
+import { getSettings, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
+import { resolveAiModel } from "@/lib/ai-models";
 import { buildSystemPrompt, buildUserPrompt, type ReferenceDoc } from "@/lib/ai/context";
 import {
   AiError,
@@ -181,13 +181,13 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
   if (Buffer.byteLength(systemPrompt) + Buffer.byteLength(userPrompt) > 200000) throw new AiError("Las referencias exceden el límite de contexto. Reduce los documentos seleccionados.");
 
   const provider = input.provider || structure.defaultProvider || "anthropic";
-  const model =
-    input.model?.trim() ||
-    structure.defaultModel?.trim() ||
-    DEFAULT_MODEL[provider] ||
-    DEFAULT_MODEL.anthropic;
+  const modelKey = provider === "google" ? SETTING_KEYS.defaultGoogleModel : SETTING_KEYS.defaultAnthropicModel;
+  const apiKeySetting = provider === "google" ? SETTING_KEYS.googleKey : SETTING_KEYS.anthropicKey;
+  const settings = await getSettings([modelKey, apiKeySetting]);
+  const model = resolveAiModel(provider, input.model,
+    structure.defaultProvider === provider ? structure.defaultModel : null, settings[modelKey]);
 
-  const { key } = await resolveApiKey(provider);
+  const { key } = await resolveApiKey(provider, settings);
   if (!key) {
     throw new AiError(
       provider === "anthropic"

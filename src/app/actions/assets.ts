@@ -13,6 +13,7 @@ function refresh(type: string, id: string) {
   const base: Record<string, string> = { brand: "/marcas", content: "/contenido", structure: "/estructuras", archetype: "/arquetipos", user: "/equipo" };
   if (base[type]) revalidatePath(type === "user" ? base[type] : `${base[type]}/${id}`);
   revalidatePath("/actividad");
+  if (type === "user") revalidatePath("/mi-perfil");
 }
 
 export async function uploadAsset(_prev: AssetState, form: FormData): Promise<AssetState> {

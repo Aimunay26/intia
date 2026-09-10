@@ -1,5 +1,6 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import {
 	Bot,
 	Copy,
@@ -77,7 +78,8 @@ export default async function EstructuraPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ vista?: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requirePageSection("structures");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="structures" id={(await params).id} query={await searchParams} />;
   const { id } = await params;
   const sp = await searchParams;
   const puedeEditar = can(user.role, LEVEL.MEMBER);
@@ -432,7 +434,7 @@ function PromptTab({
               </select>
             </Field>
 
-            <Field label="Modelo por defecto" hint="Texto libre: la lista es solo una ayuda.">
+            <Field label="Modelo por defecto" hint="Elige un modelo del catálogo. Vacío usa el de Ajustes para ese proveedor.">
               <input
                 name="defaultModel"
                 className="input input-mono"
@@ -464,7 +466,7 @@ function PromptTab({
 
             <Field
               label="Temperatura"
-              hint="Solo la usa Gemini. Los modelos Claude actuales la rechazan, así que con Anthropic se ignora."
+              hint="Valor heredado. Gemini 3.8 y los Claude actuales lo ignoran."
             >
               <input
                 name="temperature"

@@ -48,6 +48,7 @@ jobs:
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:workflow
+      - run: npm run test:perfiles
       - name: Navegación y conservación del borrador ante conflicto
         run: npm run perf:local
         env:
@@ -59,7 +60,13 @@ jobs:
           path: |
             .audit/migration-rehearsal.json
             .audit/workflow-smoke.json
+            .audit/profiles-ui.json
+            .audit/profiles-owner.png
+            .audit/profiles-editor.png
+            .audit/profiles-failure.png
+            .audit/profiles-ui-server.log
             .audit/generation-progress.png
+            .audit/gemini-3-8-selector.png
             .audit/navigation-report.json
             .audit/navigation-browser.jsonl
             .audit/edit-conflict.png

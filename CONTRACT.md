@@ -32,6 +32,8 @@ Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pi
 | `/arquetipos` · `/arquetipos/[id]` | Personas frente a cámara: perfil, marca personal y compatibilidad |
 | `/metricas` | Visualizador de métricas |
 | `/equipo` | Personas |
+| `/mi-perfil` | Datos y documentos de la cuenta propia |
+| `/sin-acceso` | Explicación del acceso denegado |
 | `/actividad` | Log de auditoría |
 | `/ajustes` | Claves de IA, entrada con Google y calendario |
 
@@ -65,10 +67,10 @@ Las pantallas de negocio viven bajo `src/app/(app)/`, con `requireUser()` y carc
 **Solo hay dos posiciones.** No se añaden más.
 
 ```ts
-import { requireUser, requireLevel, can, LEVEL } from "@/lib/auth";
+import { requireUser, requirePermission, requireLevel, can, LEVEL } from "@/lib/auth";
 
 const user = await requireUser();              // en páginas
-const user = await requireLevel(LEVEL.MEMBER); // crear, editar, mover
+const user = await requirePermission("content.plan"); // capacidad específica + filtro de registro
 const user = await requireLevel(LEVEL.OWNER);  // eliminar, equipo, ajustes
 can(user.role, LEVEL.OWNER)                    // para ocultar botones en la UI
 ```
@@ -76,14 +78,14 @@ can(user.role, LEVEL.OWNER)                    // para ocultar botones en la UI
 | Posición | Nivel | Puede |
 |---|---|---|
 | `OWNER` (Dueño) | 2 | Todo. Es la única que **elimina**, gestiona personas y toca ajustes. |
-| `MEMBER` (Equipo) | 1 | Crea, edita, mueve, asigna, publica. **No elimina nada.** |
+| `MEMBER` (Equipo) | 1 | Acceso según perfiles de trabajo y marcas autorizadas. **Sin administración ni borrado de entidades completas.** |
 
 La regla es literal: **toda acción que destruya una entidad completa exige
 `LEVEL.OWNER`**. Eso incluye marca, objetivo, video, guion, estructura, arquetipo,
 métrica, archivo, usuario y evento de agenda.
 
 Las cuatro excepciones a propósito, que son *mover* y no *destruir*, y por eso van
-con `LEVEL.MEMBER`: quitar un check de la lista, quitar una escena de un guion,
+con la capacidad operativa correspondiente y acceso al padre: quitar un check de la lista, quitar una escena de un guion,
 quitar una asignación de persona y desvincular un guion de un video.
 
 Todo, de las dos posiciones, queda firmado en el log de actividad.
@@ -107,6 +109,16 @@ cada llamada a `can()` y a `requireLevel()` del proyecto, porque un nivel interm
 concede en silencio todo lo que hoy exige `LEVEL.MEMBER`. Es exactamente el fallo que ya se
 cazó una vez en `ROLE_LEVEL`, cuando unas entradas heredadas de un modelo anterior le daban
 permisos de equipo a roles que ya no existían.
+
+### Perfiles operativos y alcance
+
+Los nueve perfiles combinables, su matriz y la activación están en [Perfiles y permisos](reports/perfiles-permisos-2026-09-09.md). La política vive en `src/lib/permissions.ts` y los filtros en `src/lib/access-scope.ts`. Se aplican en páginas, acciones, descargas, CSV, tareas e IA. La cookie de marca no concede acceso.
+
+Equipo, Actividad y Ajustes requieren Dueño. Cambiar UserWorkProfile o UserBrandAccess revoca sesiones y aumenta la versión de acceso mediante triggers. No se asignan perfiles por inferencia durante la migración. Sin perfiles, un miembro conserva inicio, ayuda y Mi perfil.
+
+Las funciones de video en Assignment no sustituyen los perfiles de acceso. Los perfiles combinados suman capacidades sin ampliar el alcance de una capacidad distinta. Generar/escribir no concede aprobar o publicar. Publicación requiere la revisión final aprobada de postproducción; APROBADO sigue siendo una etapa previa a grabación.
+
+Esta autorización no incorpora organizaciones ni RLS y no debe anunciarse como multitenancy. El cambio de política exige retirar/proteger builds anteriores y ejecutar la activación de compatibilidad antes de reabrir producción.
 
 ### Entrar con Google
 
@@ -168,31 +180,34 @@ instantInZone("2026-03-14", "10:30"); // el instante real de esa hora en Lima
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
-import { requireLevel, LEVEL } from "@/lib/auth";
-import { logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
-import { field, fieldOrNull, intField, numField, boolField, dateField } from "@/lib/utils";
+import { requirePermission } from "@/lib/auth";
+import { assertContentAccess, assertVideoOpen } from "@/lib/access-scope";
+import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
+import { lockRevision, withMutation } from "@/lib/mutations";
+import { field } from "@/lib/utils";
 
 export async function actualizarVideo(id: string, formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
-
-  const before = await prisma.contentItem.findUniqueOrThrow({ where: { id } });
-  const data = { title: field(formData, "title"), status: field(formData, "status") };
-
-  await prisma.contentItem.update({ where: { id }, data });
-
-  await logAudit({
-    user,
-    action: "EDITAR",
-    entity: "ContentItem",
-    entityId: id,
-    brandId: before.brandId,
-    summary: `Editó el video "${data.title}"`,
-    changes: diffFields(before, data, FIELD_LABELS),
+  const user = await requirePermission("content.plan");
+  return withMutation(user, false, async (tx, afterCommit) => {
+    await assertContentAccess(tx, user, id, "content.plan");
+    await lockRevision(tx, "ContentItem", id, formData);
+    await assertVideoOpen(tx, user, id);
+    const before = await tx.contentItem.findUniqueOrThrow({ where: { id } });
+    const title = field(formData, "title");
+    if (!title || title.length > 500) throw new Error("Revisa el título.");
+    const data = { title };
+    await tx.contentItem.update({ where: { id }, data });
+    await auditInTransaction(tx, {
+      user, action: "EDITAR", entity: "ContentItem", entityId: id,
+      brandId: before.brandId,
+      summary: `Editó el video "${data.title}"`,
+      changes: diffFields(before, data, FIELD_LABELS),
+    });
+    afterCommit(() => {
+      revalidatePath("/contenido");
+      revalidatePath(`/contenido/${id}`);
+    });
   });
-
-  revalidatePath("/contenido");
-  revalidatePath(`/contenido/${id}`);
 }
 ```
 

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { prisma } from "@/lib/prisma";
+import { requireUser, type SessionUser } from "@/lib/auth";
 
 /**
  * Marca activa.
@@ -28,10 +29,11 @@ export type BrandContext = {
   focused: boolean;
 };
 
-export async function getBrandContext(): Promise<BrandContext> {
+export async function getBrandContext(actor?: SessionUser): Promise<BrandContext> {
+  const user = actor ?? await requireUser();
   const [brands, jar] = await Promise.all([
     prisma.brand.findMany({
-      where: { archived: false },
+      where: { archived: false, ...(user.role === "OWNER" ? {} : { id: { in: user.brandIds ?? [] } }) },
       orderBy: { name: "asc" },
       select: { id: true, name: true, colorPrimary: true },
     }),

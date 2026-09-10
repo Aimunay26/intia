@@ -1,5 +1,7 @@
+import { requirePageSection } from "@/lib/render-context";
+import { brandScope } from "@/lib/access-scope";
 import { measurePagePhase } from "@/lib/performance-page";
-import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { Layers, Lock, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -9,7 +11,8 @@ export const maxDuration = 60;
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { can, LEVEL } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { aiStatus } from "@/lib/settings";
+import { aiStatus, getSettings, SETTING_KEYS } from "@/lib/settings";
+import { resolveAiModel } from "@/lib/ai-models";
 import { resourceLimit } from "@/lib/resource-limits";
 import { parseJson, parseList } from "@/lib/utils";
 import {
@@ -37,12 +40,12 @@ export default async function GeneradorPage({
   }>;
 }) {
   return measurePagePhase("page:/generador", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("generator");
   const maxBatch = resourceLimit("AI_MAX_BATCH", 3);
   const jobsEnabled = process.env.AI_JOBS_ENABLED === "true" && maxBatch > 0;
   const sp = await searchParams;
 
-  const [structures, brands, archetypes, fits, refRows, ai, brandCtx] = await Promise.all([
+  const [structures, brands, archetypes, fits, refRows, ai, brandCtx, modelSettings] = await Promise.all([
     prisma.structure.findMany({
       where: { active: true },
       orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -59,7 +62,7 @@ export default async function GeneradorPage({
       },
     }),
     prisma.brand.findMany({
-      where: { active: true, archived: false },
+      where: { active: true, archived: false, ...brandScope(user) },
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -94,11 +97,12 @@ export default async function GeneradorPage({
     }),
     prisma.asset.groupBy({
       by: ["ownerType", "ownerId"],
-      where: { useForAi: true, NOT: { extractedText: null } },
+      where: { useForAi: true, NOT: { extractedText: null }, ...(user.role === "OWNER" ? {} : { OR: [{ ownerType: { in: ["structure", "archetype"] } }, { ownerType: "brand", ownerId: { in: user.brandIds ?? [] } }] }) },
       _count: { _all: true },
     }),
     aiStatus(),
     getBrandContext(),
+    getSettings([SETTING_KEYS.defaultGoogleModel, SETTING_KEYS.defaultAnthropicModel]),
   ]);
 
   if (!can(user.role, LEVEL.MEMBER)) {
@@ -216,6 +220,7 @@ export default async function GeneradorPage({
       ) : (
         <><div className="mb-4"><Link href="/generador/trabajos" className="text-brand font-semibold">Mis generaciones →</Link><p className="text-sm text-inkmuted">Hasta {maxBatch} estructuras por solicitud. Las llamadas a tu proveedor de IA conservan su tarifa.</p></div>
       <GeneratorForm
+          defaultModels={{ google: resolveAiModel("google", undefined, modelSettings[SETTING_KEYS.defaultGoogleModel]), anthropic: resolveAiModel("anthropic", undefined, modelSettings[SETTING_KEYS.defaultAnthropicModel]) }}
           maxBatch={maxBatch}
           structures={structureOptions}
           brands={brandOptions}

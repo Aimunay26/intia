@@ -1,4 +1,5 @@
 "use server";
+import { requirePermission } from "@/lib/auth";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -87,7 +88,7 @@ export async function crearEstructura(
   _prev: StructureState,
   formData: FormData
 ): Promise<StructureState> {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("structures.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const name = field(formData, "name");
@@ -131,7 +132,7 @@ export async function actualizarEstructura(
   _prev: StructureState,
   formData: FormData
 ): Promise<StructureState> {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("structures.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const id = field(formData, "id");
@@ -189,7 +190,7 @@ export async function actualizarEstructura(
 /* -------------------------------------------------------------- DUPLICAR -- */
 
 export async function duplicarEstructura(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("structures.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
 
@@ -295,7 +296,7 @@ export async function eliminarEstructura(formData: FormData) {
 /* ----------------------------------------------------------------- BEATS -- */
 
 export async function guardarBeats(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("structures.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const id = field(formData, "id");
@@ -329,7 +330,7 @@ export async function guardarBeats(formData: FormData) {
 /* -------------------------------------------------------------- EJEMPLOS -- */
 
 export async function guardarEjemplos(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("structures.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const id = field(formData, "id");
@@ -363,7 +364,7 @@ export async function guardarEjemplos(formData: FormData) {
 /* --------------------------------------------------------------- REGLAS -- */
 
 export async function guardarReglas(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("structures.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const id = field(formData, "id");
@@ -394,7 +395,7 @@ export async function guardarReglas(formData: FormData) {
 /* --------------------------------------------------------------- PROMPT -- */
 
 export async function guardarPrompt(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requirePermission("structures.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
 
     const id = field(formData, "id");

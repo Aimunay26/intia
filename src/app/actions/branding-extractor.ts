@@ -22,7 +22,7 @@ export type ProcessBrandingResult = {
 export async function procesarInformeBranding(
   formData: FormData
 ): Promise<ProcessBrandingResult> {
-  const user = await requireLevel(LEVEL.MEMBER);
+  const user = await requireLevel(LEVEL.OWNER);
 
   const file = formData.get("file") as File | null;
   if (!file || !(file instanceof File) || file.size === 0) {

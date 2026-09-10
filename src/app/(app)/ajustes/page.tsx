@@ -1,5 +1,6 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { requirePageUser as requireUser } from "@/lib/render-context";
 import { CalendarDays, Database, Lock, RefreshCw, Settings, ShieldAlert } from "lucide-react";
 import { headers } from "next/headers";
 
@@ -8,6 +9,7 @@ import { CopyButton, SubmitButton } from "@/components/forms";
 import { Callout, Card, CardHeader, EmptyState, Field, PageHeader } from "@/components/ui";
 import { authSecretIsWeak, can, LEVEL } from "@/lib/auth";
 import { DEFAULT_MODEL } from "@/lib/constants";
+import { resolveAiModel } from "@/lib/ai-models";
 import { getGoogleConfig, GOOGLE_SETTING_KEYS, redirectUriFor } from "@/lib/google";
 import { getFeedToken } from "@/lib/ical";
 import { aiStatus, getSettings, SETTING_KEYS } from "@/lib/settings";
@@ -46,7 +48,8 @@ function motorDeBaseDeDatos(): { nombre: string; detalle: string } {
 
 export default async function AjustesPage() {
   return measurePagePhase("page:/ajustes", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("settings");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="settings" />;
 
   if (!can(user.role, LEVEL.OWNER)) {
     return (
@@ -121,7 +124,7 @@ export default async function AjustesPage() {
             anthropicModel={
               settings[SETTING_KEYS.defaultAnthropicModel] || DEFAULT_MODEL.anthropic
             }
-            googleModel={settings[SETTING_KEYS.defaultGoogleModel] || DEFAULT_MODEL.google}
+            googleModel={resolveAiModel("google", undefined, settings[SETTING_KEYS.defaultGoogleModel])}
             status={status}
             guardada={{
               anthropic: Boolean((settings[SETTING_KEYS.anthropicKey] ?? "").trim()),

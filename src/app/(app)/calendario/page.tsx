@@ -1,5 +1,7 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { endOfDay, startOfDay, timeKey } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 import {
@@ -64,7 +66,8 @@ export default async function CalendarioPage({
   searchParams: Promise<SearchParams>;
 }) {
   return measurePagePhase("page:/calendario", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("calendar");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="calendar" query={await searchParams} />;
   const sp = await searchParams;
 
   const hoy = new Date();

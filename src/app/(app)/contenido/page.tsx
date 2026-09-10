@@ -1,5 +1,7 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { getStructureChoices } from "@/lib/structure-choices";
 import { endOfDay, startOfDay } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
@@ -72,7 +74,8 @@ export default async function ContenidoPage({
   searchParams: Promise<SearchParams>;
 }) {
   return measurePagePhase("page:/contenido", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("content");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="content" query={await searchParams} />;
   const sp = await searchParams;
 
   const where: Prisma.ContentItemWhereInput = {};

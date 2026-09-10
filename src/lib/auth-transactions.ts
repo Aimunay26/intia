@@ -15,7 +15,7 @@ export async function withAuthLock<T>(work: (tx: AppTransaction) => Promise<T>) 
 
 export async function assertActor(tx: AppTransaction, actor: SessionUser, owner = false) {
   const [current] = await tx.$queryRaw<{ active: boolean; role: string; sessionVersion: number }[]>`SELECT "active", "role", "sessionVersion" FROM "User" WHERE "id" = ${actor.id} FOR SHARE`;
-  if (!current?.active || (owner && current.role !== "OWNER") || current.sessionVersion !== (actor.sessionVersion ?? 0)) {
+  if (!current?.active || !["OWNER", "MEMBER"].includes(current.role) || current.role !== actor.role || (owner && current.role !== "OWNER") || current.sessionVersion !== (actor.sessionVersion ?? 0)) {
     throw new SecurityError("Tu acceso cambió. Vuelve a iniciar sesión antes de continuar.");
   }
 }

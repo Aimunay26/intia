@@ -1,5 +1,7 @@
+import { requirePageSection } from "@/lib/render-context";
+import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
+import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { getTaskBoard } from "@/lib/task-pages";
 import { CheckSquare } from "lucide-react";
 
@@ -13,7 +15,8 @@ export const dynamic = "force-dynamic";
 
 export default async function TareasPage({ searchParams }: { searchParams: Promise<TaskFilters> }) {
   return measurePagePhase("page:/tareas", async () => {
-  const user = await requireUser();
+  const user = await requirePageSection("tasks");
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="tasks" query={await searchParams} />;
   const brandCtx = await getBrandContext();
   const activeBrandId = brandCtx.activeId;
 

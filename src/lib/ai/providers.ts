@@ -23,7 +23,7 @@ export type ProviderCall = {
   model: string;
   system: string;
   user: string;
-  /** Solo lo usa Gemini: Claude Opus 5 / Sonnet 5 rechazan temperature. */
+  /** Se conserva por compatibilidad; Gemini 3.8 y los Claude actuales no la reciben. */
   temperature?: number;
 };
 
@@ -134,7 +134,6 @@ export async function generateWithGemini(call: ProviderCall): Promise<Generation
   const baseConfig = {
     systemInstruction: call.system,
     responseMimeType: "application/json",
-    temperature: call.temperature ?? 1,
     maxOutputTokens: resourceLimit("AI_MAX_OUTPUT_TOKENS", 32000),
   };
 
@@ -269,22 +268,28 @@ function toAiError(error: unknown, providerLabel: string): AiError {
       "Revísala en Ajustes o en las variables de entorno."
     );
   }
-  if (status === 429 || /rate|quota|resource[_ ]exhausted/i.test(message)) {
+  if (status === 429 || /rate[_ -]?limit|quota|resource[_ ]exhausted/i.test(message)) {
     return new AiError(
       `${providerLabel} está limitando las peticiones.`,
       "Espera un momento y vuelve a intentar, o cambia de proveedor.", true
-    );
-  }
-  if (status === 404 || /model|not found/i.test(message)) {
-    return new AiError(
-      `${providerLabel} no reconoce ese modelo.`,
-      `${message}. Revisa el nombre del modelo en la estructura o en Ajustes.`
     );
   }
   if (status && status >= 500) {
     return new AiError(
       `${providerLabel} tuvo un error de servidor.`,
       "Es temporal. Intenta de nuevo en unos segundos.", true
+    );
+  }
+  if (status === 404 || /not[_ ]found|unknown model|model[^\n]*(?:not supported|does not exist)/i.test(message)) {
+    return new AiError(
+      `${providerLabel} no reconoce ese modelo.`,
+      `${message}. Revisa el nombre del modelo en la estructura o en Ajustes.`
+    );
+  }
+  if (status === 400) {
+    return new AiError(
+      `${providerLabel} rechazó la configuración de la generación.`,
+      "Revisa los parámetros y el modelo seleccionados."
     );
   }
   return new AiError(`Falló la generación con ${providerLabel}.`, "Revisa el proveedor y vuelve a intentar.", /timeout|timed out|connection|network|fetch failed/i.test(message));

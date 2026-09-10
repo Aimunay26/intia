@@ -146,6 +146,8 @@ type GuiaContextType = {
   siguientePaso: () => void;
   pasoAnterior: () => void;
   irAModulo: (index: number) => void;
+  /** Recoloca la guía en un paso del módulo actual sin navegar: el ancla ya está a la vista. */
+  irAPaso: (pasoIdx: number) => void;
   reiniciarGuia: () => void;
   navegarAPasoActual: () => void;
   abrirMenuMovil: () => void;
@@ -275,6 +277,21 @@ export function GuiaProvider({
     [modulos, navegarA]
   );
 
+  // Recolocar la guía en un paso del módulo actual cuyo ancla YA está a la
+  // vista (el usuario se adelantó). Transición pura y sin navegar: el overlay
+  // solo lo llama con el ancla visible, así que no hay adónde empujar. No toca
+  // `completados` ni `terminado`: recolocar no es completar.
+  const irAPaso = useCallback(
+    (pasoIdx: number) => {
+      setState((prev) => {
+        const max = (modulos[prev.moduloIndex]?.pasos.length ?? 1) - 1;
+        const idx = Math.min(Math.max(0, pasoIdx), max);
+        return idx === prev.pasoIndex ? prev : { ...prev, pasoIndex: idx };
+      });
+    },
+    [modulos]
+  );
+
   // Se parte del `state` del render y no del `prev` del updater: solo lo
   // dispara un clic, no hay lote, y así la navegación queda FUERA del updater.
   const siguientePaso = useCallback(() => {
@@ -329,6 +346,7 @@ export function GuiaProvider({
         siguientePaso,
         pasoAnterior,
         irAModulo,
+        irAPaso,
         reiniciarGuia,
         navegarAPasoActual,
         abrirMenuMovil,

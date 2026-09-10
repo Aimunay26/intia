@@ -5,10 +5,24 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { borrarAssetsDe } from "@/lib/assets-cleanup";
-import { requireLevel, LEVEL } from "@/lib/auth";
-import { logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
+import { requireLevel, LEVEL, type SessionUser } from "@/lib/auth";
+import { auditInTransaction, logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
+import { assertActor } from "@/lib/auth-transactions";
 import { FIT_SCORES } from "@/lib/constants";
 import { PLANTILLA_POR_ID } from "@/lib/plantillas-persona";
+import {
+  guardarDocumentoImportado,
+  leerArchivoImportado,
+  leerArchivoOpcional,
+  type ArchivoImportado,
+} from "@/lib/asset-import";
+import {
+  detectarTipoDocumento,
+  estaVacio,
+  parseInformeBranding,
+  type PersonaCampos,
+} from "@/lib/branding-parser";
+import { PersonaExtraidaSchema } from "@/lib/ai/branding-schema";
 import {
   boolField,
   clamp,
@@ -72,6 +86,7 @@ const ARCHETYPE_LABELS: Record<string, string> = {
 const J = (v: unknown) => JSON.stringify(v);
 
 const DEFAULT_COLOR = "#0ea5e9";
+const HEX = /^#[0-9a-fA-F]{6}$/;
 
 /** Busca un slug libre a partir del nombre. */
 async function slugUnico(nombre: string, ignorarId?: string): Promise<string> {
@@ -110,6 +125,134 @@ function etiquetaFit(score: number): string {
   return FIT_SCORES.find((f) => f.value === score)?.label ?? "Sin evaluar";
 }
 
+/* ------------------------------------------------------ INFORME EN PDF -- */
+
+/**
+ * Lo que el informe de branding puede escribir en la persona, ya en el formato
+ * de las columnas (listas como JSON). No lleva name, ageRange, energyLevel,
+ * photoUrl, signatureGesture ni toneReferences: eso no sale del PDF.
+ */
+type DatosDesdeInforme = {
+  summary: string | null;
+  personality: string | null;
+  strengths: string;
+  avoid: string;
+  toneKeywords: string;
+  brandingNotes: string | null;
+  color: string;
+  archetypePrimary: string | null;
+  archetypeSecondary: string | null;
+  archetypeTertiary: string | null;
+  archetypeSummary: string | null;
+  coreDesire: string | null;
+  coreFear: string | null;
+  coreTalent: string | null;
+  coreTrap: string | null;
+  evolveToward: string | null;
+  watchOut: string | null;
+  coherenceIndex: number | null;
+  voiceTone: string | null;
+  messageStructure: string | null;
+  vocabulary: string;
+  avoidInVoice: string;
+  soundsLike: string | null;
+  sameArchetypeIcons: string;
+  palette: string;
+  typography: string | null;
+  aesthetics: string | null;
+  visualAvoid: string | null;
+};
+
+function datosDesdeInforme(c: PersonaCampos): DatosDesdeInforme {
+  const t = (v: string) => (v.trim() ? v.trim() : null);
+  return {
+    summary: t(c.summary.slice(0, 160)),
+    personality: t(c.personality),
+    strengths: J(c.strengths),
+    avoid: J(c.avoid),
+    toneKeywords: J(c.toneKeywords),
+    brandingNotes: t(c.brandingNotes),
+    // Sin paleta en el PDF no se inventa un color: "" hace que soloConValor lo
+    // omita, así «sobrescribir» no pisa el color elegido a mano y, al crear,
+    // Prisma aplica el azul por defecto de la columna.
+    color: HEX.test(c.color) ? c.color.toLowerCase() : "",
+    archetypePrimary: t(c.archetypePrimary),
+    archetypeSecondary: t(c.archetypeSecondary),
+    archetypeTertiary: t(c.archetypeTertiary),
+    archetypeSummary: t(c.archetypeSummary),
+    coreDesire: t(c.coreDesire),
+    coreFear: t(c.coreFear),
+    coreTalent: t(c.coreTalent),
+    coreTrap: t(c.coreTrap),
+    evolveToward: t(c.evolveToward),
+    watchOut: t(c.watchOut),
+    coherenceIndex: c.coherenceIndex !== null && c.coherenceIndex > 0 ? clamp(c.coherenceIndex, 0, 10) : null,
+    voiceTone: t(c.voiceTone),
+    messageStructure: t(c.messageStructure),
+    vocabulary: J(c.vocabulary),
+    avoidInVoice: J(c.avoidInVoice),
+    soundsLike: t(c.soundsLike),
+    sameArchetypeIcons: J(c.sameArchetypeIcons),
+    // Misma regla que la ruta manual (paletaDesdeTexto): solo entra #RRGGBB.
+    palette: J(c.palette.filter((p) => HEX.test(p.hex)).map((p) => ({ name: p.name, hex: p.hex.toLowerCase() }))),
+    typography: t(c.typography),
+    aesthetics: t(c.aesthetics),
+    visualAvoid: t(c.visualAvoid),
+  };
+}
+
+/**
+ * Los campos previsualizados viajan en un hidden «importado» (JSON). Nunca se
+ * confía en el navegador: se validan con el esquema y, si faltan o no pasan,
+ * se vuelve a leer el PDF con el parser determinista.
+ */
+type CamposInforme = { campos: PersonaCampos; origen: "importado" | "pdf" };
+
+function camposDelInforme(formData: FormData, archivo: ArchivoImportado): CamposInforme | null {
+  const crudo = fieldOrNull(formData, "importado");
+  if (crudo) {
+    try {
+      const check = PersonaExtraidaSchema.safeParse(JSON.parse(crudo));
+      if (check.success) return { campos: check.data, origen: "importado" };
+    } catch {
+      // se cae al parser
+    }
+  }
+  return archivo.texto ? { campos: parseInformeBranding(archivo.texto).campos, origen: "pdf" } : null;
+}
+
+const ERROR_INFORME_SIN_TEXTO =
+  "El PDF no tiene texto legible (parece escaneado). Pulsa «Previsualizar» para comprobarlo o súbelo desde Documentos y pega el texto a mano.";
+const ERROR_NO_ES_INFORME =
+  "El PDF no parece un informe de branding de Ai Munay: no se reconoció ninguna de sus secciones. Pulsa «Previsualizar» para ver lo que se lee antes de crear la persona.";
+
+/**
+ * Motivo por el que un PDF elegido como informe no puede rellenar la ficha,
+ * o null si sirve. Sin texto no hay nada que leer; y si el usuario no
+ * previsualizó (no hay «importado» válido) y el parser no reconoce el
+ * formato, crear la persona «desde el informe» sería crearla vacía en silencio.
+ */
+function motivoInformeInutil(archivo: ArchivoImportado, lectura: CamposInforme | null): string | null {
+  if (!lectura) return archivo.errorExtraccion ?? ERROR_INFORME_SIN_TEXTO;
+  if (lectura.origen === "pdf" && archivo.texto && detectarTipoDocumento(archivo.texto) !== "branding") {
+    return ERROR_NO_ES_INFORME;
+  }
+  return null;
+}
+
+/** Solo los campos que traen algo, para no borrar lo que el PDF no tiene. */
+function soloConValor(datos: DatosDesdeInforme): Partial<DatosDesdeInforme> {
+  const out: Partial<DatosDesdeInforme> = {};
+  for (const clave of Object.keys(datos) as (keyof DatosDesdeInforme)[]) {
+    const valor = datos[clave];
+    if (valor === null || valor === "[]" || valor === "") continue;
+    (out as Record<string, unknown>)[clave] = valor;
+  }
+  return out;
+}
+
+export type ResultadoImportacion = { ok: true } | { error: string };
+
 /* ------------------------------------------------------------------ CREAR -- */
 
 export async function crearArquetipo(formData: FormData) {
@@ -117,6 +260,37 @@ export async function crearArquetipo(formData: FormData) {
 
   const datos = leerCampos(formData);
   if (!datos.name) return;
+
+  // Si viene su informe de branding, la ficha sale de ahí y la plantilla se ignora.
+  const lecturaInforme = await leerArchivoOpcional(formData, "branding");
+  if (lecturaInforme && !lecturaInforme.ok) throw new Error(lecturaInforme.error);
+  const informe = lecturaInforme?.ok ? lecturaInforme.archivo : null;
+  const camposInforme = informe ? camposDelInforme(formData, informe) : null;
+
+  // Si eligió un informe pero no sirve (escaneado, o no es un informe y no se
+  // previsualizó), se frena con un motivo legible en vez de crear la persona
+  // desde la plantilla mientras el modal promete que «sale de ahí todo».
+  if (informe) {
+    const motivo = motivoInformeInutil(informe, camposInforme);
+    if (motivo) throw new Error(motivo);
+  }
+
+  if (informe && camposInforme) {
+    const creado = await crearPersonaConInforme(user, {
+      name: datos.name,
+      ageRange: datos.ageRange,
+      energyLevel: formData.get("energyLevel") ? datos.energyLevel : null,
+      color: field(formData, "color") || null,
+      summary: datos.summary,
+      strengths: datos.strengths,
+      avoid: datos.avoid,
+      campos: camposInforme.campos,
+      archivo: informe,
+    });
+    revalidatePath("/arquetipos");
+    revalidatePath("/actividad");
+    redirect(`/arquetipos/${creado.id}?vista=marca`);
+  }
 
   /**
    * La plantilla rellena la marca personal ENTERA, no solo el perfil.
@@ -183,6 +357,158 @@ export async function crearArquetipo(formData: FormData) {
 
   revalidatePath("/arquetipos");
   redirect(`/arquetipos/${creado.id}`);
+}
+
+/**
+ * Crea la persona con todo lo que trae el informe y guarda el PDF como Asset
+ * en la misma transacción. Lo que el usuario escribió a mano siempre manda
+ * sobre lo del PDF.
+ */
+async function crearPersonaConInforme(
+  user: SessionUser,
+  input: {
+    name: string;
+    ageRange: string | null;
+    energyLevel: number | null;
+    color: string | null;
+    summary: string | null;
+    strengths: string;
+    avoid: string;
+    campos: PersonaCampos;
+    archivo: ArchivoImportado;
+  }
+) {
+  const desdeInforme = soloConValor(datosDesdeInforme(input.campos));
+  const slug = await slugUnico(input.name);
+
+  return prisma.$transaction(async (tx) => {
+    await assertActor(tx, user);
+    const creado = await tx.archetype.create({
+      data: {
+        ...desdeInforme,
+        name: input.name,
+        slug,
+        ageRange: input.ageRange,
+        ...(input.energyLevel !== null ? { energyLevel: clamp(input.energyLevel, 1, 5) } : {}),
+        ...(input.color ? { color: input.color } : {}),
+        ...(input.summary ? { summary: input.summary } : {}),
+        ...(input.strengths !== "[]" ? { strengths: input.strengths } : {}),
+        ...(input.avoid !== "[]" ? { avoid: input.avoid } : {}),
+        active: true,
+        isPerson: true,
+      },
+      select: { id: true, name: true },
+    });
+    await auditInTransaction(tx, {
+      user,
+      action: "CREAR",
+      entity: "Archetype",
+      entityId: creado.id,
+      summary: `Creó la persona "${creado.name}" desde su informe de branding «${input.archivo.name}»`,
+    });
+    await guardarDocumentoImportado(tx, {
+      tipo: "branding",
+      ownerType: "archetype",
+      ownerId: creado.id,
+      archivo: input.archivo,
+      user,
+    });
+    return creado;
+  });
+}
+
+/**
+ * Alta directa desde el listado de Personas: el PDF crea la persona.
+ * Devuelve un error legible en vez de lanzar, porque en producción Next
+ * oculta el mensaje de las excepciones de las acciones.
+ */
+export async function crearPersonaDesdeInforme(formData: FormData): Promise<ResultadoImportacion> {
+  const user = await requireLevel(LEVEL.MEMBER);
+
+  const lectura = await leerArchivoImportado(formData.get("branding"));
+  if (!lectura.ok) return { error: lectura.error };
+  const leido = camposDelInforme(formData, lectura.archivo);
+  const motivo = motivoInformeInutil(lectura.archivo, leido);
+  if (!leido || motivo) return { error: motivo ?? ERROR_INFORME_SIN_TEXTO };
+  const campos = leido.campos;
+
+  const name = field(formData, "name") || campos.name;
+  if (!name) return { error: "El informe no trae el nombre de la persona. Escríbelo antes de crearla." };
+
+  const creado = await crearPersonaConInforme(user, {
+    name,
+    ageRange: null,
+    energyLevel: null,
+    color: null,
+    summary: null,
+    strengths: "[]",
+    avoid: "[]",
+    campos,
+    archivo: lectura.archivo,
+  });
+
+  revalidatePath("/arquetipos");
+  revalidatePath("/actividad");
+  redirect(`/arquetipos/${creado.id}?vista=marca`);
+}
+
+/**
+ * Rellena la marca personal de una persona que ya existe desde su informe.
+ * Por defecto respeta lo que ya tenga texto; con «sobrescribir» pisa todo lo
+ * que el PDF traiga. El nombre nunca se toca desde aquí.
+ */
+export async function guardarInformeEnPersona(
+  id: string,
+  formData: FormData
+): Promise<ResultadoImportacion> {
+  const user = await requireLevel(LEVEL.MEMBER);
+
+  const lectura = await leerArchivoImportado(formData.get("branding"));
+  if (!lectura.ok) return { error: lectura.error };
+  const leido = camposDelInforme(formData, lectura.archivo);
+  const motivo = motivoInformeInutil(lectura.archivo, leido);
+  if (!leido || motivo) return { error: motivo ?? ERROR_INFORME_SIN_TEXTO };
+  const campos = leido.campos;
+  const sobrescribir = boolField(formData, "sobrescribir");
+
+  const before = await prisma.archetype.findUnique({ where: { id } });
+  if (!before) return { error: "La persona ya no existe." };
+
+  const propuesto = soloConValor(datosDesdeInforme(campos));
+  const data: Partial<DatosDesdeInforme> = {};
+  for (const clave of Object.keys(propuesto) as (keyof DatosDesdeInforme)[]) {
+    const actual = before[clave];
+    const vacio = clave === "color" ? before.color === DEFAULT_COLOR : estaVacio(actual) || actual === "[]";
+    if (sobrescribir || vacio) (data as Record<string, unknown>)[clave] = propuesto[clave];
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await assertActor(tx, user);
+    const changes = diffFields(before, data, ARCHETYPE_LABELS);
+    if (changes) {
+      await tx.archetype.update({ where: { id }, data });
+      await auditInTransaction(tx, {
+        user,
+        action: "EDITAR",
+        entity: "Archetype",
+        entityId: id,
+        summary: `Rellenó la marca personal de "${before.name}" desde el PDF «${lectura.archivo.name}»`,
+        changes,
+      });
+    }
+    await guardarDocumentoImportado(tx, {
+      tipo: "branding",
+      ownerType: "archetype",
+      ownerId: id,
+      archivo: lectura.archivo,
+      user,
+    });
+  });
+
+  revalidatePath("/arquetipos");
+  revalidatePath(`/arquetipos/${id}`);
+  revalidatePath("/actividad");
+  return { ok: true };
 }
 
 /* ------------------------------------------------------------- ACTUALIZAR -- */

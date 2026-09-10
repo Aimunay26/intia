@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { resolveApiKey } from "@/lib/settings";
+import { ENV_KEY_NAMES, getSetting, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
 import { DEFAULT_MODEL } from "@/lib/constants";
 import { buildSystemPrompt, buildUserPrompt, type ReferenceDoc } from "@/lib/ai/context";
 import {
@@ -24,6 +24,8 @@ export type GenerateInput = {
   model?: string;
   cta?: string;
   creativeAngle?: string;
+  /** "venta" (Hormozi) o "comunidad" (sin venta). Vacío = venta. */
+  ctaMode?: string;
   ctaTrigger?: string;
   ctaActionType?: string;
   ctaDetail?: string;
@@ -54,6 +56,23 @@ async function loadReferences(
       source,
       text: a.extractedText as string,
     }));
+}
+
+/**
+ * El "Modelo por defecto" que el dueño escribe en Ajustes. Es texto libre,
+ * igual que el de la estructura: si está mal escrito, el proveedor devolverá
+ * "no reconoce ese modelo" y el mensaje dirá dónde corregirlo.
+ */
+async function defaultModelFromSettings(provider: string): Promise<string | null> {
+  const key =
+    provider === "google"
+      ? SETTING_KEYS.defaultGoogleModel
+      : provider === "anthropic"
+        ? SETTING_KEYS.defaultAnthropicModel
+        : null;
+  if (!key) return null;
+  const value = (await getSetting(key))?.trim();
+  return value || null;
 }
 
 export async function generateScript(input: GenerateInput): Promise<GenerateOutput> {
@@ -169,6 +188,7 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
     variantHint: input.variantHint,
     cta: input.cta,
     creativeAngle: input.creativeAngle,
+    ctaMode: input.ctaMode,
     ctaTrigger: input.ctaTrigger,
     ctaActionType: input.ctaActionType,
     ctaDetail: input.ctaDetail,
@@ -182,21 +202,25 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
   const model =
     input.model?.trim() ||
     structure.defaultModel?.trim() ||
+    (await defaultModelFromSettings(provider)) ||
     DEFAULT_MODEL[provider] ||
     DEFAULT_MODEL.anthropic;
 
-  const { key } = await resolveApiKey(provider);
+  const { key, source } = await resolveApiKey(provider);
   if (!key) {
+    const envName = ENV_KEY_NAMES[provider] ?? "correspondiente";
     throw new AiError(
       provider === "anthropic"
         ? "Falta la clave de Claude (Anthropic)."
         : "Falta la clave de Gemini (Google).",
-      "Cárgala en Ajustes o define la variable de entorno correspondiente."
+      `Pégala en Ajustes (o, como respaldo, define la variable de entorno ${envName} en el servidor).`,
+      "auth"
     );
   }
 
   const call = {
     apiKey: key,
+    keySource: source,
     model,
     system: systemPrompt,
     user: userPrompt,

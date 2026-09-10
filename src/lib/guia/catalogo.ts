@@ -63,6 +63,8 @@ export const GUIA_TARGETS = {
   BTN_GENERADOR_CONTINUAR_3: "btn-generador-continuar-3",
   BTN_GENERADOR_CONTINUAR_4: "btn-generador-continuar-4",
   SELECT_GENERADOR_ESTRUCTURA: "select-generador-estructura",
+  // Selector «¿Para qué video es?» de la etapa 2. Todavía sin paso en la guía.
+  SELECT_GENERADOR_VIDEO: "select-generador-video",
   SELECT_GENERADOR_MARCA: "select-generador-marca",
   SELECT_GENERADOR_ARQUETIPO: "select-generador-arquetipo",
   INPUT_GENERADOR_PRODUCTO: "input-generador-producto",

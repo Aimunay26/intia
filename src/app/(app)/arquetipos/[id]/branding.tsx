@@ -4,8 +4,61 @@ import { BadgeCheck, Eye, MessageSquareQuote, Palette, Sparkles, TriangleAlert }
 import { jsonToLines, parseJson, parseList } from "@/lib/utils";
 import { Callout, Card, CardHeader, Field } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
-import { actualizarMarcaPersonal } from "@/app/actions/archetypes";
-import { BotonCargarBranding } from "@/components/cargador-branding";
+import { actualizarMarcaPersonal, guardarInformeEnPersona } from "@/app/actions/archetypes";
+import { BotonImportarDocumento, type Actuales } from "@/components/importar-documento";
+
+/**
+ * Valores actuales de la persona, para que el modal de importación no pise
+ * lo que ya tiene texto salvo que se marque «sobrescribir».
+ */
+export function actualesDePersona(a: Archetype): Actuales {
+  return {
+    name: a.name,
+    summary: a.summary,
+    personality: a.personality,
+    strengths: parseList(a.strengths),
+    avoid: parseList(a.avoid),
+    toneKeywords: parseList(a.toneKeywords),
+    brandingNotes: a.brandingNotes,
+    // El azul por defecto cuenta como «sin color»: igual que guardarInformeEnPersona.
+    color: a.color === "#0ea5e9" ? "" : a.color,
+    archetypePrimary: a.archetypePrimary,
+    archetypeSecondary: a.archetypeSecondary,
+    archetypeTertiary: a.archetypeTertiary,
+    archetypeSummary: a.archetypeSummary,
+    coreDesire: a.coreDesire,
+    coreFear: a.coreFear,
+    coreTalent: a.coreTalent,
+    coreTrap: a.coreTrap,
+    evolveToward: a.evolveToward,
+    watchOut: a.watchOut,
+    coherenceIndex: a.coherenceIndex,
+    voiceTone: a.voiceTone,
+    messageStructure: a.messageStructure,
+    vocabulary: parseList(a.vocabulary),
+    avoidInVoice: parseList(a.avoidInVoice),
+    soundsLike: a.soundsLike,
+    sameArchetypeIcons: parseList(a.sameArchetypeIcons),
+    palette: parseJson<Color[]>(a.palette, []).map((c) => c?.hex ?? "").filter(Boolean),
+    typography: a.typography,
+    aesthetics: a.aesthetics,
+    visualAvoid: a.visualAvoid,
+  };
+}
+
+function BotonInforme({ a, className, label }: { a: Archetype; className: string; label: string }) {
+  return (
+    <BotonImportarDocumento
+      tipo="branding"
+      destino="persona"
+      modo="guardar"
+      label={label}
+      className={className}
+      actuales={actualesDePersona(a)}
+      guardar={guardarInformeEnPersona.bind(null, a.id)}
+    />
+  );
+}
 
 /**
  * El informe de marca personal de la persona.
@@ -87,14 +140,10 @@ export function BrandingLectura({ a }: { a: Archetype }) {
               ¿Tienes el informe de branding en PDF?
             </h4>
             <p className="text-[12px] text-inkmuted max-w-xl">
-              Sube el PDF del informe de {a.name} (arquetipos, valores, tono de voz, colores y vocabulario) y el sistema lo extraerá y rellenará todo automáticamente.
+              Sube el PDF del informe de {a.name}: verás lo que se leyó (arquetipos, tono de voz, vocabulario, paleta) antes de guardarlo, y el PDF queda en sus Documentos.
             </p>
           </div>
-          <BotonCargarBranding
-            archetypeId={a.id}
-            className="btn btn-primary btn-sm shrink-0"
-            label="Subir informe PDF"
-          />
+          <BotonInforme a={a} className="btn btn-primary btn-sm shrink-0" label="Cargar informe de branding" />
         </div>
         <Callout tone="warn" title="Sin marca personal cargada">
           La IA sabe cómo actúa {a.name}, pero no cómo habla. Rellena al menos el tono de voz y
@@ -239,15 +288,11 @@ export function BrandingForm({ a }: { a: Archetype }) {
           <div className="border border-brand/20 bg-brand/5 rounded-lg p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="text-[12px] text-inkmuted">
               <span className="font-semibold text-ink text-[12.5px] flex items-center gap-1.5">
-                <Sparkles size={14} className="text-brand" /> Cargar informe de branding automáticamente
+                <Sparkles size={14} className="text-brand" /> Rellenar desde su informe de branding
               </span>
-              Sube el PDF para rellenar arquetipos, tono, paleta y vocabulario de este actor en un clic.
+              Sube el PDF, revisa lo que se leyó y guárdalo. Por defecto no pisa lo que ya tengas escrito.
             </div>
-            <BotonCargarBranding
-              archetypeId={a.id}
-              className="btn btn-sm btn-subtle shrink-0"
-              label="Cargar PDF"
-            />
+            <BotonInforme a={a} className="btn btn-sm shrink-0" label="Cargar informe de branding" />
           </div>
 
           <label className="border-line hover:bg-surface2 flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors">

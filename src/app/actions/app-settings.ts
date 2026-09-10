@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireUser, can, LEVEL } from "@/lib/auth";
 import { logAudit, type Cambio } from "@/lib/audit";
-import { AI_PROVIDER_MAP, DEFAULT_MODEL } from "@/lib/constants";
+import { AI_MODELS, AI_PROVIDER_MAP, DEFAULT_MODEL } from "@/lib/constants";
 import { getSettings, setSetting, SETTING_KEYS } from "@/lib/settings";
 import { GOOGLE_SETTING_KEYS } from "@/lib/google";
 import { field, boolField } from "@/lib/utils";
@@ -93,20 +93,32 @@ export async function guardarAjustes(
     hechos.push("el proveedor por defecto");
   }
 
-  const modelos: { key: string; valor: string; etiqueta: string; fallback: string }[] = [
+  const modelos: {
+    proveedor: string;
+    key: string;
+    valor: string;
+    etiqueta: string;
+    fallback: string;
+  }[] = [
     {
+      proveedor: "anthropic",
       key: SETTING_KEYS.defaultAnthropicModel,
       valor: anthropicModel,
       etiqueta: "Modelo de Claude",
       fallback: DEFAULT_MODEL.anthropic,
     },
     {
+      proveedor: "google",
       key: SETTING_KEYS.defaultGoogleModel,
       valor: googleModel,
       etiqueta: "Modelo de Gemini",
       fallback: DEFAULT_MODEL.google,
     },
   ];
+
+  // El modelo es texto libre (así se puede usar uno nuevo sin tocar código),
+  // pero como ahora el generador lo usa de verdad, se avisa si no está en la lista.
+  const avisosModelo: string[] = [];
 
   for (const modelo of modelos) {
     const antes = actuales[modelo.key] ?? "";
@@ -115,6 +127,12 @@ export async function guardarAjustes(
       await setSetting(modelo.key, despues);
       changes[modelo.key] = { etiqueta: modelo.etiqueta, antes: antes || "—", despues };
       hechos.push(modelo.etiqueta.toLowerCase());
+      const conocidos = (AI_MODELS[modelo.proveedor] ?? []).map((m) => m.value);
+      if (!conocidos.includes(despues)) {
+        avisosModelo.push(
+          `«${despues}» no está en la lista de modelos sugeridos: si el nombre está mal escrito, la generación fallará hasta corregirlo.`
+        );
+      }
     }
   }
 
@@ -198,5 +216,7 @@ export async function guardarAjustes(
   // El nombre de la organización vive en la barra lateral.
   revalidatePath("/", "layout");
 
-  return { ok: "Ajustes guardados." };
+  return {
+    ok: avisosModelo.length ? `Ajustes guardados. Aviso: ${avisosModelo.join(" ")}` : "Ajustes guardados.",
+  };
 }

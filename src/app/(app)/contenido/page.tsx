@@ -3,7 +3,7 @@ import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
-import { Clapperboard, Film, Shapes, User as UserIcon } from "lucide-react";
+import { Clapperboard, Film, Shapes, Sparkles, User as UserIcon } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { getContentList } from "@/lib/content-list";
@@ -158,6 +158,7 @@ export default async function ContenidoPage({
   const nuevoVideo = puedeCrear ? (
     <NuevoVideoBoton
       brands={brands.map((b) => ({ id: b.id, name: b.name, color: b.colorPrimary }))}
+      structures={structures}
       defaultDate={dateKey(new Date())}
       defaultBrandId={brandCtx.activeId ?? undefined}
     />
@@ -244,6 +245,11 @@ export default async function ContenidoPage({
                   const avance = totalChecks ? (hechos / totalChecks) * 100 : 0;
                   const vistas = item.metricViews;
                   const estado = CONTENT_STATUS_MAP[item.status];
+                  // Formatos previstos con nombre conocido (solo estructuras activas).
+                  const previstos = parseList(item.structureIds)
+                    .map((sid) => ({ id: sid, name: estructuraMap.get(sid) }))
+                    .filter((p): p is { id: string; name: string } => Boolean(p.name));
+                  const sinGuion = item.status === "IDEA" && !item.scriptId;
 
                   return (
                     <tr key={item.id}>
@@ -267,6 +273,15 @@ export default async function ContenidoPage({
                             {truncate(item.hook, 78)}
                           </div>
                         ) : null}
+                        {sinGuion && puedeCrear ? (
+                          <Link
+                            href={`/generador?video=${item.id}`}
+                            className="btn btn-sm mt-1.5"
+                            title="Abrir el generador con esta tarjeta ya elegida"
+                          >
+                            <Sparkles size={12} /> Crear guion
+                          </Link>
+                        ) : null}
                       </td>
                       <td className="text-inkmuted">
                         {item.structure ? (
@@ -276,6 +291,17 @@ export default async function ContenidoPage({
                           >
                             {truncate(item.structure.name, 24)}
                           </Link>
+                        ) : previstos.length ? (
+                          <div
+                            className="flex max-w-[200px] flex-wrap gap-1"
+                            title="Formatos previstos: el guion fijará el definitivo"
+                          >
+                            {previstos.map((p) => (
+                              <span key={p.id} className="chip chip-plain text-[10.5px]">
+                                {truncate(p.name, 20)}
+                              </span>
+                            ))}
+                          </div>
                         ) : (
                           "—"
                         )}

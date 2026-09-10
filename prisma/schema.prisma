@@ -466,6 +466,11 @@ model ContentItem {
   scriptId    String?
   script      Script?    @relation(fields: [scriptId], references: [id], onDelete: SetNull)
 
+  /// Formatos previstos para este video: se eligen en la idea, antes del guion.
+  /// JSON: string[] de ids de Structure. No confundir con structureId, que es
+  /// la estructura heredada del guion vinculado.
+  structureIds String @default("[]")
+
   hook         String?
   cta          String?
   publishedUrl String?

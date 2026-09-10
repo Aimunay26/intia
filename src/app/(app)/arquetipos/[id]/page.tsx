@@ -34,11 +34,12 @@ import {
   actualizarArquetipo,
   asignarArquetipoAUsuario,
   eliminarArquetipo,
+  guardarInformeEnPersona,
 } from "@/app/actions/archetypes";
 import { ColorPicker, EnergyPicker } from "../archetype-form";
 import { FitMatrix, type FitRow } from "./fit-matrix";
-import { BrandingForm, BrandingLectura } from "./branding";
-import { BotonCargarBranding } from "@/components/cargador-branding";
+import { BrandingForm, BrandingLectura, actualesDePersona } from "./branding";
+import { BotonImportarDocumento } from "@/components/importar-documento";
 
 export const dynamic = "force-dynamic";
 
@@ -187,10 +188,14 @@ export default async function ArquetipoPage({
         actions={
           <>
             {editable ? (
-              <BotonCargarBranding
-                archetypeId={arquetipo.id}
+              <BotonImportarDocumento
+                tipo="branding"
+                destino="persona"
+                modo="guardar"
+                label="Cargar informe de branding"
                 className="btn btn-primary btn-sm"
-                label="Cargar PDF branding"
+                actuales={actualesDePersona(arquetipo)}
+                guardar={guardarInformeEnPersona.bind(null, arquetipo.id)}
               />
             ) : null}
             <span
@@ -564,7 +569,7 @@ export default async function ArquetipoPage({
           canEdit={editable}
           canDelete={puedeEliminar}
           title="Documentos de referencia del arquetipo"
-          description="PDF o notas con ejemplos de sus mejores videos, su forma de hablar o su manual de marca personal. El texto se le pasa a la IA al generar guiones para esta persona."
+          description="Su informe de branding (cargado desde Marca personal), PDF o notas con ejemplos de sus mejores videos o su forma de hablar. El texto se le pasa a la IA al generar guiones para esta persona."
         />
       ) : null}
     </>

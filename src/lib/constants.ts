@@ -552,14 +552,18 @@ export const AI_MODELS: Record<string, { value: string; label: string }[]> = {
     { value: "claude-haiku-4-5", label: "Claude Haiku 4.5 - rápido y barato" },
   ],
   google: [
-    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro - el más capaz" },
+    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro - el más capaz (requiere plan de pago)" },
     { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash - rápido y barato" },
   ],
 };
 
+/**
+ * Gemini 2.5 Flash es el único predeterminado razonable sin facturación:
+ * 2.5 Pro se queda sin cuota gratuita en pocas peticiones.
+ */
 export const DEFAULT_MODEL: Record<string, string> = {
   anthropic: "claude-opus-5",
-  google: "gemini-2.5-pro",
+  google: "gemini-2.5-flash",
 };
 
 /* ---------------------------------------------------------- AUDITORIA -- */

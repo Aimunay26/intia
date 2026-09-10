@@ -48,13 +48,13 @@ import {
 import { SegmentedControl } from "@/components/filters";
 import { DeleteButton, SubmitButton } from "@/components/forms";
 import { AssetManager, type AssetRow } from "@/components/assets";
-import { BotonCargarBranding } from "@/components/cargador-branding";
+import { ETIQUETA_DOCUMENTO } from "@/lib/branding-parser";
 import {
   actualizarMarca,
   archivarMarca,
   eliminarMarca,
 } from "@/app/actions/brands";
-import { BrandForm } from "../brand-form";
+import { BrandForm, type DocumentosMarca } from "../brand-form";
 import { ObjectivesPanel, type ObjectiveRow } from "./objectives";
 
 type Vista = "identidad" | "objetivos" | "contenido" | "documentos";
@@ -193,6 +193,24 @@ export default async function MarcaPage({
         }))
       : [];
 
+  // Solo los PDF importados, sin los bytes: para el chip «ya cargado» del formulario.
+  const documentos: DocumentosMarca = {};
+  if (vista === "identidad") {
+    const importados = await prisma.asset.findMany({
+      where: {
+        ownerType: "brand",
+        ownerId: brand.id,
+        label: { in: [ETIQUETA_DOCUMENTO.brief, ETIQUETA_DOCUMENTO.branding] },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { label: true, filename: true, createdAt: true },
+    });
+    for (const a of importados) {
+      const clave = a.label === ETIQUETA_DOCUMENTO.brief ? "brief" : "branding";
+      if (!documentos[clave]) documentos[clave] = { filename: a.filename, fecha: formatDate(a.createdAt) };
+    }
+  }
+
   const enlaces: { label: string; href: string; icon: React.ReactNode }[] = [];
   if (brand.website)
     enlaces.push({
@@ -256,14 +274,6 @@ export default async function MarcaPage({
                 {l.label}
               </a>
             ))}
-            {puedeGestionar ? (
-              <BotonCargarBranding
-                brandId={brand.id}
-                className="btn btn-primary btn-sm"
-                label="Cargar PDF de branding"
-                data-guia={GUIA_TARGETS.BTN_CARGAR_BRANDING_PDF}
-              />
-            ) : null}
             {puedeGestionar ? (
               <form action={archivarMarca}>
                 <input type="hidden" name="id" value={brand.id} />
@@ -355,6 +365,7 @@ export default async function MarcaPage({
               action={actualizarMarca}
               mode="editar"
               canEdit={puedeGestionar}
+              documentos={documentos}
               brand={{
                 id: brand.id,
                 name: brand.name,
@@ -554,7 +565,7 @@ export default async function MarcaPage({
           canEdit={puedeGestionar}
           canDelete={puedeEliminar}
           title="Documentos de la marca"
-          description="Brand books, catálogos y referencias. Su texto se le pasa a la IA al escribir para esta marca."
+          description="Brand books, catálogos y referencias, incluidos el brief maestro y el informe de branding cargados desde Identidad. Su texto se le pasa a la IA al escribir para esta marca."
         />
       ) : null}
     </>

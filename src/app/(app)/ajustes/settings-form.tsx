@@ -14,6 +14,8 @@ export type ProviderStatus = {
   configured: boolean;
   source: "env" | "db" | null;
   masked: string | null;
+  /** Si además existe la variable de entorno en el servidor (queda de respaldo). */
+  envDefined?: boolean;
 };
 
 export type SettingsFormProps = {
@@ -31,8 +33,8 @@ export type SettingsFormProps = {
 };
 
 const ORIGEN: Record<string, string> = {
-  env: "Viene de una variable de entorno del servidor.",
-  db: "Está guardada aquí, en la base de datos.",
+  env: "Viene de la variable de entorno del servidor, porque no hay ninguna guardada aquí.",
+  db: "Es la que está guardada aquí, en Ajustes.",
 };
 
 function EstadoClave({ status }: { status: ProviderStatus }) {
@@ -52,7 +54,9 @@ function EstadoClave({ status }: { status: ProviderStatus }) {
           : "bg-sky-500/12 text-sky-600 ring-sky-500/25 dark:text-sky-300"
       )}
     >
-      {status.source === "env" ? "Configurada · variable de entorno" : "Configurada · en la app"}
+      {status.source === "env"
+        ? "En uso · variable de entorno (respaldo)"
+        : "En uso · guardada en Ajustes"}
     </span>
   );
 }
@@ -88,12 +92,14 @@ function BloqueProveedor({
   const guiaTargetInput =
     id === "google" ? GUIA_TARGETS.INPUT_API_KEY_GOOGLE : GUIA_TARGETS.INPUT_API_KEY_ANTHROPIC;
 
+  const hayTexto = claveInput.trim().length > 0;
+
   const handleProbar = async () => {
-    if (!claveInput.trim()) return;
     setProbando(true);
     setResultadoPrueba(null);
     try {
-      const res = await probarClaveIA({ provider: id, apiKey: claveInput, model: modelo });
+      // Sin texto se prueba la clave EN USO (la guardada o la del servidor).
+      const res = await probarClaveIA({ provider: id, apiKey: hayTexto ? claveInput : "" });
       setResultadoPrueba(res);
     } catch {
       setResultadoPrueba({ ok: false, error: "Error al comunicar con el servidor." });
@@ -111,16 +117,16 @@ function BloqueProveedor({
 
       <p className="text-inkmuted mb-3 text-[12px] leading-relaxed">
         {status.configured
-          ? `${ORIGEN[status.source ?? ""] ?? ""} Clave en uso: ${status.masked ?? "••••••"}.`
+          ? `Clave en uso: ${status.masked ?? "••••••"}. ${ORIGEN[status.source ?? ""] ?? ""}`
           : "Todavía no hay clave. Sin ella, este proveedor no se puede usar en el generador."}
-        {status.source === "env" && guardada
-          ? " Hay además una clave guardada en la aplicación, pero la variable de entorno manda y esa es la que se usa."
+        {status.source === "db" && status.envDefined
+          ? " Hay además una variable de entorno en el servidor, pero la clave guardada aquí es la que manda; si la quitas, se volverá a usar la del servidor."
           : ""}
       </p>
 
       <Field
         label="Pegar una clave nueva"
-        hint="Si lo dejas en blanco, la clave que ya existe se queda como está."
+        hint="Si lo dejas en blanco, la clave que ya existe se queda como está. La que guardes aquí manda sobre la variable de entorno."
       >
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
@@ -140,17 +146,21 @@ function BloqueProveedor({
           <button
             type="button"
             onClick={handleProbar}
-            disabled={probando || !claveInput.trim()}
+            disabled={probando}
             className="btn btn-sm shrink-0 self-start sm:self-center"
             data-guia={id === "google" ? GUIA_TARGETS.BTN_PROBAR_CLAVE_AI : undefined}
-            title="Verificar validez y saldo de la clave en vivo con llamada real"
+            title={
+              hayTexto
+                ? "Hace una llamada real y mínima al proveedor con la clave que escribiste, sin guardarla"
+                : "Hace una llamada real y mínima al proveedor con la clave que se está usando ahora mismo"
+            }
           >
             {probando ? (
               <Loader2 size={13} className="spin" />
             ) : (
               <Play size={13} fill="currentColor" />
             )}
-            {probando ? "Probando…" : "Probar clave"}
+            {probando ? "Probando…" : hayTexto ? "Probar esta clave" : "Probar la clave en uso"}
           </button>
         </div>
 
@@ -187,7 +197,7 @@ function BloqueProveedor({
       <Field
         label="Modelo por defecto"
         className="mt-3"
-        hint="Puedes escribir el nombre de un modelo nuevo aunque no esté en la lista."
+        hint="Se usa cuando la estructura no fija uno. Puedes escribir el nombre de un modelo nuevo aunque no esté en la lista; si está mal escrito, la generación avisará."
       >
         <input
           name={campoModelo}
@@ -293,12 +303,14 @@ export function SettingsForm({
             />
           </div>
 
-          <Callout tone="info" title="La variable de entorno siempre gana">
-            Si el servidor tiene <code className="kbd">ANTHROPIC_API_KEY</code> o{" "}
-            <code className="kbd">GEMINI_API_KEY</code>, esa clave es la que se usa y lo que
-            pegues aquí queda ignorado. Pegar la clave en esta pantalla es la vía cómoda para
-            empezar; en producción lo correcto es ponerla como variable de entorno, porque así
-            no se guarda en la base de datos ni viaja en las copias de seguridad.
+          <Callout tone="info" title="La clave guardada aquí manda">
+            Lo que pegues en esta pantalla es lo que usa el generador. Las variables de entorno
+            del servidor (<code className="kbd">ANTHROPIC_API_KEY</code>,{" "}
+            <code className="kbd">GEMINI_API_KEY</code>) solo se usan como respaldo cuando no hay
+            ninguna clave guardada. Así, si una clave se revoca, basta con crear otra y pegarla
+            aquí, sin tocar el servidor. Ten en cuenta que la clave guardada vive en la base de
+            datos y viaja en sus copias de seguridad: si prefieres no guardarla, quítala con la
+            casilla y deja solo la variable de entorno.
           </Callout>
         </div>
       </Card>

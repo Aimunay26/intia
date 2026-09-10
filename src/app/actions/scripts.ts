@@ -4,10 +4,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import { requireLevel, LEVEL } from "@/lib/auth";
+import { requireLevel, LEVEL, type SessionUser } from "@/lib/auth";
 import { logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
 import { AiError, generateScript, normalizeSceneTimes } from "@/lib/ai";
-import { AI_MODELS, SCRIPT_STATUS_MAP, VOICE_TYPE_MAP } from "@/lib/constants";
+import { esErrorDeAutenticacion, esErrorDeCuota } from "@/lib/ai/providers";
+import { coherenciaCta, type CtaModo } from "@/lib/script-angles";
+import {
+  AI_MODELS,
+  CONTENT_STATUS_MAP,
+  SCRIPT_STATUS_MAP,
+  VOICE_TYPE_MAP,
+} from "@/lib/constants";
 import { field, fieldOrNull, intField, linesToJson, parseJson } from "@/lib/utils";
 
 /**
@@ -85,13 +92,113 @@ export type GenerateState = {
   scriptId?: string;
   scriptIds?: string[];
   totalGenerados?: number;
+  /** Tarjeta del calendario a la que quedó unido el primer guion, si se pidió. */
+  contentItemId?: string;
   error?: string;
   detail?: string;
+  /**
+   * Algo salió a medias aunque hubo guiones creados: otros formatos fallaron
+   * o no se intentaron (clave rechazada, sin tiempo antes de maxDuration), o
+   * el primer guion no pudo unirse al video pedido. Se muestra junto al éxito
+   * y el formulario NO redirige para que se pueda leer.
+   */
+  aviso?: string;
 } | null;
+
+/**
+ * Límites del lote. La acción corre bajo `maxDuration = 300` de
+ * generador/page.tsx: un reintento solo tiene sentido si, tras esperar, todavía
+ * cabe un guion entero antes de que Vercel corte la función.
+ */
+const LOTE_MAX_MS = 300_000;
+/** Pausa antes de reintentar la estructura que chocó con la cuota del proveedor. */
+const ESPERA_CUOTA_MS = 20_000;
+/** Lo que suele tardar un guion (30-90 s con Opus 5). */
+const DURACION_GUION_MS = 90_000;
+
+function esperar(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Mensaje y detalle legibles de un fallo de generación. */
+function describirFallo(error: unknown, nombreEstructura: string): { error: string; detail?: string } {
+  if (error instanceof AiError) return { error: error.message, detail: error.detail };
+  return {
+    error: `No se pudo generar el formato «${nombreEstructura}».`,
+    detail: error instanceof Error ? error.message : String(error),
+  };
+}
+
+/**
+ * Los mensajes de AiError son oraciones completas («Claude está limitando…»).
+ * Para incrustarlos en el aviso del lote se les quita el punto final; la
+ * mayúscula inicial se conserva porque van tras dos puntos y así no se
+ * estropean nombres propios como Claude o Gemini.
+ */
+function comoMotivo(mensaje: string): string {
+  return mensaje.trim().replace(/[.\s]+$/, "");
+}
+
+function listarNombres(nombres: string[]): string {
+  const citados = nombres.map((n) => `«${n}»`);
+  if (citados.length <= 1) return citados.join("");
+  return `${citados.slice(0, -1).join(", ")} y ${citados[citados.length - 1]}`;
+}
+
+type FormatoConMotivo = { nombre: string; motivo: string };
+
+/** Agrupa formatos por motivo conservando el orden en que aparecieron. */
+function agruparPorMotivo(lista: FormatoConMotivo[]): { motivo: string; nombres: string[] }[] {
+  const grupos: { motivo: string; nombres: string[] }[] = [];
+  for (const item of lista) {
+    const grupo = grupos.find((g) => g.motivo === item.motivo);
+    if (grupo) grupo.nombres.push(item.nombre);
+    else grupos.push({ motivo: item.motivo, nombres: [item.nombre] });
+  }
+  return grupos;
+}
+
+/**
+ * «Se generaron 2 de 4. Fallaron «A» y «B»: Claude está limitando…; no se
+ * intentó «C» porque la clave fue rechazada.» Si todos fallaron por lo mismo
+ * se dice una vez; si no, cada uno con su motivo entre paréntesis.
+ */
+function avisoDeLoteParcial(
+  creados: number,
+  total: number,
+  fallidos: FormatoConMotivo[],
+  noIntentados: FormatoConMotivo[]
+): string {
+  const partes: string[] = [];
+  if (fallidos.length) {
+    const grupos = agruparPorMotivo(fallidos);
+    const lista =
+      grupos.length === 1
+        ? `${listarNombres(grupos[0].nombres)}: ${grupos[0].motivo}`
+        : fallidos.map((f) => `«${f.nombre}» (${f.motivo})`).join(", ");
+    partes.push(`${fallidos.length === 1 ? "Falló" : "Fallaron"} ${lista}`);
+  }
+  for (const grupo of agruparPorMotivo(noIntentados)) {
+    const verbo = grupo.nombres.length === 1 ? "intentó" : "intentaron";
+    const frase = `no se ${verbo} ${listarNombres(grupo.nombres)} porque ${grupo.motivo}`;
+    partes.push(partes.length ? frase : `${frase.charAt(0).toUpperCase()}${frase.slice(1)}`);
+  }
+  return `Se generaron ${creados} de ${total}. ${partes.join("; ")}.`;
+}
+
+/** Motivos con que se anota un formato que quedó sin intentar. */
+const MOTIVO_CLAVE_RECHAZADA = "la clave fue rechazada";
+const MOTIVO_SIN_TIEMPO = "no quedaba tiempo antes del límite de 5 minutos de la generación";
 
 /**
  * El corazon del producto: arma el contexto, llama al modelo y guarda
  * el guion (o lote de guiones) con todas sus escenas.
+ *
+ * El lote es secuencial a propósito (una llamada a la vez contra la cuota).
+ * Si la clave es rechazada se aborta de inmediato: seguir con la siguiente
+ * estructura solo repetiría el mismo error. Si es cuota, se espera y se
+ * reintenta UNA vez esa estructura, siempre que quede margen frente a
+ * maxDuration. Lo que sí se creó se conserva y se avisa de lo que faltó.
  */
 export async function generarGuion(
   _prev: GenerateState,
@@ -109,7 +216,8 @@ export async function generarGuion(
     )
   );
 
-  const brandId = fieldOrNull(formData, "marca");
+  let brandId = fieldOrNull(formData, "marca");
+  const contentItemId = fieldOrNull(formData, "video");
   const archetypeId = fieldOrNull(formData, "arquetipo");
   const request = field(formData, "peticion");
   const productName = field(formData, "producto");
@@ -126,8 +234,15 @@ export async function generarGuion(
   const model = field(formData, "modelo");
   const cta = field(formData, "cta");
   const creativeAngle = field(formData, "anguloCreativo");
-  const ctaTrigger = field(formData, "ctaGatillo");
-  const ctaActionType = field(formData, "ctaAccion");
+  // Modo del cierre: sin el campo (formularios viejos) es venta, como siempre.
+  // Un gatillo o una acción que no son de ese modo se descartan: un cierre de
+  // venta nunca entra en un guion de comunidad, ni al revés.
+  const ctaMode: CtaModo = field(formData, "ctaModo") === "comunidad" ? "comunidad" : "venta";
+  const { gatillo: ctaTrigger, accion: ctaActionType } = coherenciaCta(
+    ctaMode,
+    field(formData, "ctaGatillo"),
+    field(formData, "ctaAccion")
+  );
   const ctaDetail = field(formData, "ctaDetalle");
 
   if (!structureIds.length) {
@@ -140,51 +255,146 @@ export async function generarGuion(
     };
   }
 
-  const createdScriptIds: string[] = [];
-  let primerError: { error: string; detail?: string } | null = null;
-
-  for (const structureId of structureIds) {
-    const structure = await prisma.structure.findUnique({
-      where: { id: structureId },
-      select: { id: true, name: true, defaultDurationSec: true },
+  // Si el guion es para una tarjeta del calendario, se comprueba ANTES de
+  // gastar una llamada a la IA: que exista, que siga sin guion, que esté en
+  // Idea o Guion (el mismo filtro que ofrece el generador) y que sea de la
+  // misma marca. La guarda definitiva contra una pestaña vieja o un doble
+  // envío vive en vincularGuionAVideo, que solo escribe si la tarjeta sigue libre.
+  let video: { id: string; title: string; brandId: string } | null = null;
+  if (contentItemId) {
+    const tarjeta = await prisma.contentItem.findUnique({
+      where: { id: contentItemId },
+      select: {
+        id: true,
+        title: true,
+        brandId: true,
+        status: true,
+        scriptId: true,
+        brand: { select: { name: true } },
+      },
     });
-    if (!structure) continue;
+    if (!tarjeta) {
+      return {
+        error: "Ese video ya no existe.",
+        detail: "Quizá lo eliminaron mientras preparabas el guion. Elige otra tarjeta o genera un guion suelto.",
+      };
+    }
+    if (tarjeta.scriptId) {
+      return {
+        error: "Ese video ya tiene un guion vinculado.",
+        detail: "Quítalo desde su ficha o genera un guion suelto.",
+      };
+    }
+    if (tarjeta.status !== "IDEA" && tarjeta.status !== "GUION") {
+      return {
+        error: "Ese video ya no admite guion.",
+        detail: `Está en ${CONTENT_STATUS_MAP[tarjeta.status]?.label ?? tarjeta.status}: solo se vinculan tarjetas en Idea o Guion. Cambia su estado desde la ficha o genera un guion suelto.`,
+      };
+    }
+    if (brandId && brandId !== tarjeta.brandId) {
+      return {
+        error: "La marca elegida no es la del video.",
+        detail: `El guion se une a la tarjeta «${tarjeta.title}», de ${tarjeta.brand.name}, así que tiene que escribirse para esa marca.`,
+      };
+    }
+    brandId = tarjeta.brandId;
+    video = { id: tarjeta.id, title: tarjeta.title, brandId: tarjeta.brandId };
+  }
 
-    let result;
-    try {
-      result = await generateScript({
-        structureId,
-        brandId,
-        archetypeId,
-        request,
-        productFocus: productFocus || undefined,
-        variantHint: variantHint || undefined,
-        durationSec: durationSec > 0 ? durationSec : undefined,
-        provider,
-        model: model || undefined,
-        cta: cta || undefined,
-        creativeAngle: creativeAngle || undefined,
-        ctaTrigger: ctaTrigger || undefined,
-        ctaActionType: ctaActionType || undefined,
-        ctaDetail: ctaDetail || undefined,
-      });
-    } catch (error) {
-      if (!primerError) {
-        if (error instanceof AiError) {
-          primerError = { error: error.message, detail: error.detail };
-        } else {
-          primerError = {
-            error: `No se pudo generar el formato «${structure.name}».`,
-            detail: error instanceof Error ? error.message : String(error),
-          };
-        }
-      }
+  // Todas las estructuras de una vez, en el orden pedido: así se sabe el nombre
+  // de las que quedan sin intentar si el lote se aborta.
+  const estructuras = await prisma.structure.findMany({
+    where: { id: { in: structureIds } },
+    select: { id: true, name: true, defaultDurationSec: true },
+  });
+  const lote = structureIds
+    .map((id) => estructuras.find((s) => s.id === id))
+    .filter((s): s is NonNullable<typeof s> => Boolean(s));
+
+  const inicio = Date.now();
+  const createdScriptIds: string[] = [];
+  const fallidos: FormatoConMotivo[] = [];
+  let primerError: { error: string; detail?: string } | null = null;
+  /** La clave fue rechazada: se corta el lote y se devuelve ese error. */
+  let abortadoPorClave: { error: string; detail?: string } | null = null;
+  const noIntentados: FormatoConMotivo[] = [];
+  /** Si el primer guion del lote quedó unido al video pedido. */
+  let vinculado = false;
+
+  for (const structure of lote) {
+    const structureId = structure.id;
+
+    if (abortadoPorClave) {
+      noIntentados.push({ nombre: structure.name, motivo: MOTIVO_CLAVE_RECHAZADA });
       continue;
     }
 
+    // Vercel corta la acción en maxDuration: no se arranca un formato que no
+    // cabe entero. Lo ya creado se conserva y este se anota en el aviso.
+    if (Date.now() - inicio + DURACION_GUION_MS >= LOTE_MAX_MS) {
+      noIntentados.push({ nombre: structure.name, motivo: MOTIVO_SIN_TIEMPO });
+      continue;
+    }
+
+    const entrada = {
+      structureId,
+      brandId,
+      archetypeId,
+      request,
+      productFocus: productFocus || undefined,
+      variantHint: variantHint || undefined,
+      durationSec: durationSec > 0 ? durationSec : undefined,
+      provider,
+      model: model || undefined,
+      cta: cta || undefined,
+      creativeAngle: creativeAngle || undefined,
+      ctaMode,
+      ctaTrigger: ctaTrigger || undefined,
+      ctaActionType: ctaActionType || undefined,
+      ctaDetail: ctaDetail || undefined,
+    };
+
+    let result: Awaited<ReturnType<typeof generateScript>> | null = null;
+    let reintentado = false;
+    while (!result) {
+      try {
+        result = await generateScript(entrada);
+      } catch (error) {
+        const fallo = describirFallo(error, structure.name);
+
+        if (esErrorDeAutenticacion(error)) {
+          // Con la clave rechazada, cada estructura siguiente fallaría igual.
+          // Este formato también cuenta como fallido: si ya había guiones
+          // creados, el aviso tiene que decir que se cortó aquí y por qué.
+          abortadoPorClave = fallo;
+          if (!primerError) primerError = fallo;
+          fallidos.push({ nombre: structure.name, motivo: comoMotivo(fallo.error) });
+          break;
+        }
+
+        const transcurrido = Date.now() - inicio;
+        const quedaMargen = transcurrido + ESPERA_CUOTA_MS + DURACION_GUION_MS < LOTE_MAX_MS;
+        if (esErrorDeCuota(error) && !reintentado && quedaMargen) {
+          reintentado = true;
+          await esperar(ESPERA_CUOTA_MS);
+          continue;
+        }
+
+        if (!primerError) primerError = fallo;
+        fallidos.push({ nombre: structure.name, motivo: comoMotivo(fallo.error) });
+        break;
+      }
+    }
+    // Sin resultado: o falló (ya anotado) o se abortó por la clave; en ese caso
+    // las estructuras que faltan se anotan como no intentadas en las vueltas siguientes.
+    if (!result) continue;
+
     const generated = result.script;
     const scenes = Array.isArray(generated.scenes) ? generated.scenes : [];
-    if (!scenes.length) continue;
+    if (!scenes.length) {
+      fallidos.push({ nombre: structure.name, motivo: "el modelo devolvió un guion sin escenas" });
+      continue;
+    }
 
     const times = normalizeSceneTimes(
       scenes.map((scene) => ({
@@ -196,11 +406,15 @@ export async function generarGuion(
 
     const objetivo = durationSec > 0 ? durationSec : structure.defaultDurationSec;
     const briefInput = [
+      video ? `Video del calendario: ${video.title}` : "",
       productFocus ? `Producto o servicio: ${productFocus}` : "",
       request ? `Petición del equipo:\n${request}` : "",
       creativeAngle ? `Ángulo creativo: ${creativeAngle}` : "",
       variantHint ? `Variante pedida: ${variantHint}` : "",
-      ctaTrigger ? `Gatillo CTA (Hormozi): ${ctaTrigger}` : "",
+      ctaMode === "comunidad" ? "Modo de CTA: sin venta (comunidad)" : "Modo de CTA: venta",
+      ctaTrigger
+        ? `${ctaMode === "comunidad" ? "Gatillo de comunidad" : "Gatillo CTA (Hormozi)"}: ${ctaTrigger}`
+        : "",
       ctaActionType ? `Acción de CTA: ${ctaActionType}` : "",
       ctaDetail ? `Detalle CTA: ${ctaDetail}` : "",
       cta ? `CTA solicitado: ${cta}` : "",
@@ -283,10 +497,20 @@ export async function generarGuion(
     });
 
     createdScriptIds.push(script.id);
+
+    // La tarjeta solo admite un guion: se une el PRIMERO del lote (el del
+    // primer formato previsto) en cuanto existe, no al final: si Vercel corta
+    // el lote en maxDuration, el video ya tiene su guion. Los demás quedan
+    // sueltos y se asignan desde su ficha. Solo se escribe si la tarjeta sigue
+    // libre: un vínculo hecho durante la generación no se pisa.
+    if (video && createdScriptIds.length === 1) {
+      vinculado = await vincularGuionAVideo(user, script.id, video.id);
+    }
   }
 
   if (!createdScriptIds.length) {
     return (
+      abortadoPorClave ||
       primerError || {
         error: "No se pudo generar ningún guion.",
         detail: "Vuelve a intentar con otro modelo o revisa tu clave de API.",
@@ -297,10 +521,22 @@ export async function generarGuion(
   refrescar(createdScriptIds[0]);
   revalidatePath("/");
 
+  const avisos: string[] = [];
+  if (fallidos.length > 0 || noIntentados.length > 0) {
+    avisos.push(avisoDeLoteParcial(createdScriptIds.length, lote.length, fallidos, noIntentados));
+  }
+  if (video && !vinculado) {
+    avisos.push(
+      `El guion se creó, pero no quedó unido al video «${video.title}»: la tarjeta ya recibió otro guion mientras se generaba, o ya no existe. Si hace falta, asígnalo desde la ficha del guion.`
+    );
+  }
+
   return {
     scriptId: createdScriptIds[0],
     scriptIds: createdScriptIds,
     totalGenerados: createdScriptIds.length,
+    ...(vinculado && video ? { contentItemId: video.id } : {}),
+    ...(avisos.length ? { aviso: avisos.join(" ") } : {}),
   };
 }
 
@@ -694,48 +930,77 @@ export async function moverEscena(formData: FormData) {
 
 /* ------------------------------------------------------------- VINCULAR -- */
 
-/** Cuelga un guion de un video del calendario. */
 /**
- * Puente entre las dos fases del flujo.
+ * Puente entre las fases del flujo (CONTRACT.md, «Las tres fases de un video»).
  *
- *   Fase 1  La idea nace como tarjeta en el calendario, sin guion ni estructura.
- *   Fase 2  El guion se trabaja aquí, en Guiones, eligiendo estructura y arquetipo.
- *   Fase 3  Se asigna el guion a la tarjeta: el video hereda la estructura del
- *           guion y, si seguía en Idea, pasa a Guion.
+ *   Fase 1  La idea nace como tarjeta en el calendario, con sus formatos
+ *           PREVISTOS (structureIds) pero sin guion ni estructura definitiva.
+ *   Fase 2  El guion se escribe en el generador (desde la propia tarjeta con
+ *           «Crear guion con IA», o suelto) o se trabaja en Guiones.
+ *   Fase 3  Se une el guion a la tarjeta: el video hereda la estructura del
+ *           guion (structureId) y, si seguía en Idea, pasa a Guion.
  *
- * Por eso la asignación vive en el área de Guiones y no en el alta del video.
+ * Esta función es la ÚNICA que escribe ese vínculo. La usan tanto
+ * `asignarGuionAVideo` (desde la ficha del guion) como `generarGuion` (cuando
+ * el generador arrancó con un video elegido), para que la regla viva en un
+ * solo sitio. Devuelve false si algo no cuadra (no existe, marcas distintas)
+ * o si la tarjeta ya recibió otro guion entre la comprobación y la escritura:
+ * las dos pantallas solo ofrecen tarjetas sin guion, y una generación de
+ * 30-300 s no debe pisar un vínculo hecho mientras tanto. En ese caso no se
+ * audita nada, porque no se escribió nada.
  */
-export async function asignarGuionAVideo(formData: FormData) {
-  const user = await requireLevel(LEVEL.MEMBER);
-  const scriptId = field(formData, "scriptId");
-  const contentItemId = field(formData, "contentItemId");
-  if (!scriptId || !contentItemId) return;
-
+async function vincularGuionAVideo(
+  user: SessionUser,
+  scriptId: string,
+  contentItemId: string
+): Promise<boolean> {
   const [script, video] = await Promise.all([
     prisma.script.findUnique({
       where: { id: scriptId },
-      select: { id: true, title: true, structureId: true, brandId: true },
+      select: {
+        id: true,
+        title: true,
+        structureId: true,
+        brandId: true,
+        structure: { select: { name: true } },
+      },
     }),
     prisma.contentItem.findUnique({
       where: { id: contentItemId },
-      select: { id: true, title: true, brandId: true, status: true, scriptId: true },
+      select: {
+        id: true,
+        title: true,
+        brandId: true,
+        status: true,
+        scriptId: true,
+        structureId: true,
+        script: { select: { title: true } },
+        structure: { select: { name: true } },
+      },
     }),
   ]);
-  if (!script || !video) return;
+  if (!script || !video) return false;
+  // Un guion escrito para otra marca no se cuelga de esta tarjeta.
+  if (script.brandId && script.brandId !== video.brandId) return false;
 
   // El video hereda la estructura del guion: es la que se usó para escribirlo.
   // Y si la tarjeta seguía siendo una idea suelta, ya tiene guion.
   const nuevoEstado = video.status === "IDEA" ? "GUION" : video.status;
 
-  await prisma.contentItem.update({
-    where: { id: contentItemId },
+  // Escritura condicionada: solo si la tarjeta sigue sin guion en este
+  // instante. Si otra pestaña o compañero se adelantó, count es 0 y se
+  // devuelve false sin auditar.
+  const { count } = await prisma.contentItem.updateMany({
+    where: { id: contentItemId, scriptId: null },
     data: {
       scriptId,
       structureId: script.structureId,
       status: nuevoEstado,
     },
   });
+  if (count === 0) return false;
 
+  // `changes` lleva el VALOR DE LA COLUMNA (ids, IDEA/GUION); lo legible va en verAntes/verDespues.
   await logAudit({
     user,
     action: "ASIGNAR",
@@ -746,6 +1011,33 @@ export async function asignarGuionAVideo(formData: FormData) {
       nuevoEstado !== video.status
         ? `Asignó el guion "${script.title}" al video "${video.title}" y lo pasó a Guion`
         : `Asignó el guion "${script.title}" al video "${video.title}"`,
+    changes: {
+      scriptId: {
+        etiqueta: "Guion",
+        antes: video.scriptId,
+        despues: scriptId,
+        verAntes: video.script?.title ?? "",
+        verDespues: script.title,
+      },
+      structureId: {
+        etiqueta: "Estructura",
+        antes: video.structureId,
+        despues: script.structureId,
+        verAntes: video.structure?.name ?? "",
+        verDespues: script.structure?.name ?? "",
+      },
+      ...(nuevoEstado !== video.status
+        ? {
+            status: {
+              etiqueta: "Estado",
+              antes: video.status,
+              despues: nuevoEstado,
+              verAntes: CONTENT_STATUS_MAP[video.status]?.label ?? video.status,
+              verDespues: CONTENT_STATUS_MAP[nuevoEstado]?.label ?? nuevoEstado,
+            },
+          }
+        : {}),
+    },
   });
 
   revalidatePath("/contenido");
@@ -753,6 +1045,17 @@ export async function asignarGuionAVideo(formData: FormData) {
   revalidatePath("/calendario");
   revalidatePath("/");
   refrescar(scriptId);
+  return true;
+}
+
+/** Cuelga un guion de un video del calendario, desde la ficha del guion. */
+export async function asignarGuionAVideo(formData: FormData) {
+  const user = await requireLevel(LEVEL.MEMBER);
+  const scriptId = field(formData, "scriptId");
+  const contentItemId = field(formData, "contentItemId");
+  if (!scriptId || !contentItemId) return;
+
+  await vincularGuionAVideo(user, scriptId, contentItemId);
 }
 
 /** Suelta el guion de la tarjeta. La estructura se va con él. */

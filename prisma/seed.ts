@@ -836,7 +836,7 @@ async function main() {
     "org.name": "Con Amor",
     "ai.defaultProvider": "anthropic",
     "ai.anthropic.model": "claude-opus-5",
-    "ai.google.model": "gemini-2.5-pro",
+    "ai.google.model": "gemini-2.5-flash",
   })) {
     await prisma.appSetting.upsert({ where: { key }, create: { key, value }, update: {} });
   }

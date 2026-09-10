@@ -231,7 +231,7 @@ En vez de un formulario con scroll vertical largo, el generador organiza la crea
 1. **Formato (21 Estructuras Ganadoras Enriquecidas):** Filtra por objetivo (*Vende* vs *Entretiene*) o busca por nombre. Cada formato cuenta con su **ficha de referencia enriquecida**: modelo mental, gancho en segundos 0 a 3, regla de oro, secreto de retención y ejemplos ganadores reales cargados en el pre-prompt de la IA (incluye *Giro 180°*, *Camaleón 90/10*, *Ellos vs Nosotros*, *PAS*, *UGC*, *Historia de Fundador*, *ASMR Unboxing*, *Hack en 3 pasos*, *Respondiendo Comentarios* y más).
 2. **Identidad & Producto:** Elige la marca, la persona frente a cámara (con su indicador de encaje o fit con el formato) y detalla a fondo el **producto o servicio a grabar** (la IA asimila todas las características, beneficios y objeciones aunque el guion solo lo mencione sutilmente al final).
 3. **Ángulo creativo e idea central (12 Enfoques Virales):** Botones de ángulos (*Camaleón 90/10*, *Ellos vs Nosotros*, *Impacto Visual*, *POV Real*, *Anti-Consejo*, *Experimento*, *Storytime / Confesión*, *Parodia Cotidiana*, *Frente al Hater*, *Hack Oculto*, *ASMR Unboxing*, *Detrás de Cámaras*) que definen el giro psicológico exacto, más la petición o historia del video.
-4. **Cierre CTA (Alex Hormozi):** Gatillos de alta conversión (*$100M Offers* y *$100M Leads*: escasez ética de cupos, urgencia temporal, motivo "porque...", incentivo/regalo, demostración visual en cámara) con fórmulas reactivas y ensamblado automático.
+4. **Cierre CTA (Alex Hormozi):** Gatillos de alta conversión (*$100M Offers* y *$100M Leads*: escasez ética de cupos, urgencia temporal, motivo "porque...", incentivo/regalo, demostración visual en cámara) con fórmulas reactivas y ensamblado automático. El cierre tiene dos modos: **Vender** (esos gatillos) y **Sin venta · Comunidad** (seguir para la parte 2, guardar, enviárselo a alguien concreto, etiquetar con motivo, pregunta abierta, encuesta real, pedir el siguiente tema…). El generador arranca en comunidad cuando la estructura entretiene; en ese modo la IA tiene prohibido meter precios, ofertas, cupos, enlaces o DM aunque la estructura sea de venta. En los lotes de varias estructuras, si la clave es rechazada el lote se detiene; si es cuota, espera 20 s y reintenta una vez; lo ya generado se conserva y el generador dice qué faltó.
 5. **Motor de IA y generación:** Selector de proveedor (Claude / Gemini), modelo, duración y checklist ejecutivo de ideación.
 
 ### Lo que devuelve
@@ -307,23 +307,36 @@ tuya.
 
 ## Claves de IA
 
-Se pueden usar Claude (Anthropic) y Gemini (Google). Se configuran en dos sitios, y la
-variable de entorno siempre manda sobre lo guardado en la app:
+Se pueden usar Claude (Anthropic) y Gemini (Google). Se configuran en dos sitios, y **la clave
+guardada en Ajustes manda**; la variable de entorno es solo el respaldo cuando no hay ninguna
+guardada:
 
-**Opción A — desde la app** (más fácil): entra a **Ajustes** y pega la clave.
+**Opción A — desde la app** (la que se usa si existe): entra a **Ajustes** y pega la clave. Si
+una clave se revoca, basta con crear otra y pegarla ahí, sin tocar el servidor ni redesplegar.
+Ten en cuenta que esa clave vive en la base de datos y viaja en sus copias de seguridad.
 
-**Opción B — variables de entorno** (lo correcto en producción): edita el archivo `.env`
+**Opción B — variables de entorno** (respaldo): edita el archivo `.env` (o las variables del
+proyecto en Vercel)
 
 ```
 ANTHROPIC_API_KEY="sk-ant-..."
 GEMINI_API_KEY="..."
 ```
 
-Las claves se consiguen en `console.anthropic.com` y en `aistudio.google.com`.
+Solo se usan cuando no hay clave guardada en Ajustes. Para volver a ellas, marca «Quitar la
+clave guardada» en Ajustes. La pantalla muestra siempre el origen de la clave en uso
+(«guardada en Ajustes» o «variable de entorno») y el botón **Probar la clave en uso** hace una
+llamada mínima real con `claude-haiku-4-5` o `gemini-2.5-flash` para confirmar que funciona.
 
-El modelo se elige por estructura y se puede cambiar al vuelo en el generador. Por defecto:
-`claude-opus-5` para Claude y `gemini-2.5-pro` para Gemini. El campo es texto libre, así que
-si sale un modelo nuevo se escribe y ya, sin tocar código.
+Las claves se consiguen en `console.anthropic.com` → API keys y en `aistudio.google.com` →
+Get API key. Si Claude responde «clave rechazada», está revocada o mal copiada: genera otra. Si
+Gemini responde «agotó la cuota del proyecto», es el límite por minuto o por día del plan
+gratuito: espera, usa `gemini-2.5-flash` o activa facturación en el proyecto de Google.
+
+El modelo se elige por estructura y se puede cambiar al vuelo en el generador. Si la estructura
+no fija uno, se usa el «Modelo por defecto» de Ajustes y, si tampoco hay, el predeterminado:
+`claude-opus-5` para Claude y `gemini-2.5-flash` para Gemini (2.5 Pro requiere plan de pago).
+El campo es texto libre, así que si sale un modelo nuevo se escribe y ya, sin tocar código.
 
 > Nota: los modelos Claude actuales no aceptan el parámetro `temperature`. El valor de
 > temperatura de cada estructura solo se le manda a Gemini.
@@ -337,6 +350,20 @@ La app está lista para desplegarse en Vercel con una base de datos PostgreSQL
 
 Sigue los pasos **en este orden**. El paso 3 es el que más se olvida y deja la aplicación
 desplegada sin tablas.
+
+**0. Si la base ya existe**, aplica ANTES de publicar los SQL aditivos de `prisma/operations/`
+que falten (p. ej. `content-structure-ids-2026-09-09.sql`: añade `ContentItem.structureIds` y pasa el
+ajuste `ai.google.model` heredado del seed de `gemini-2.5-pro` a `gemini-2.5-flash`; un modelo elegido
+a mano no se toca). Se ejecutan con `npx prisma db execute --file prisma/operations/<archivo>.sql --url "$DATABASE_URL"`
+y se verifican con `SELECT column_name FROM information_schema.columns WHERE table_name = ContentItem;`.
+Publicar el código sin la columna deja /contenido, /calendario y el generador en error 500.
+
+**0. Si la base ya existe, aplica antes las operaciones SQL pendientes** de `prisma/operations/`
+(en orden de fecha) desde el SQL Editor de Neon o con `npx prisma db execute --file <archivo> --schema prisma/schema.prisma`.
+La de `content-structure-ids-2026-09-09.sql` añade la columna `ContentItem.structureIds` (sin ella
+`/contenido`, `/calendario` y el generador devuelven 500 con el código nuevo) y pasa el ajuste
+`ai.google.model` heredado del seed (`gemini-2.5-pro`) a `gemini-2.5-flash`; si el dueño ya eligió otro
+modelo a mano, no lo toca. Verifica con `SELECT column_name FROM information_schema.columns WHERE table_name = 'ContentItem' AND column_name = 'structureIds';`.
 
 **1. Crea la base de datos** en Neon, Supabase o quien prefieras, y copia su cadena de
 conexión.
@@ -474,6 +501,10 @@ Dos cosas que conviene saber:
 | `npm run ver:prompt -- eru` | Imprime el prompt exacto que se le manda a la IA por esa persona |
 | `npm run test:motores` | Calibra el motor de match contra la matriz de compatibilidad |
 | `npm run test:humo` | 37 comprobaciones: permisos, calendario, datos y archivos |
+| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos y CTA de comunidad) |
+| `npm run test:cta` | Vigila que los CTA de comunidad no lleven presión ni oferta (`tsx --test`) |
+| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos y CTA de comunidad) |
+| `npm run test:cta` | Vigila que los CTA de comunidad no lleven presión ni oferta |
 
 > `npm run build` falla si el servidor de desarrollo está corriendo: Windows tiene bloqueado
 > el motor de Prisma. Detén el servidor antes de compilar.
@@ -544,7 +575,7 @@ La auditoría y el plan describen la copia revisada el 7 de septiembre de 2026; 
 - [ ] Define `AUTH_SECRET` con una cadena larga y aleatoria. Sin esto, las sesiones se firman
       con una clave de desarrollo pública y cualquiera podría falsificar la del dueño.
 - [ ] Cambia las contraseñas del equipo de ejemplo, o elimina esas cuentas si no las usas.
-- [ ] Pon las claves de IA como variables de entorno, no en la base de datos.
+- [ ] Decide dónde viven las claves de IA: la guardada en Ajustes manda (cómoda para rotarla sin redesplegar, pero viaja en las copias de la base); la variable de entorno queda solo de respaldo.
 - [ ] Revisa quién tiene la posición de **Dueño**: es la única que puede eliminar.
 - [ ] Cambia la dirección del calendario si la compartiste durante las pruebas.
 - [ ] Verifica PostgreSQL y los respaldos del proveedor antes de usar datos reales.

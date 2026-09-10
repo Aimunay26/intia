@@ -1,19 +1,48 @@
 "use client";
 
-import { useState } from "react";
-import { Lock, Save, Sparkles } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
+import { FileCheck2, Lock, Save, Sparkles, X } from "lucide-react";
 
 import { PALETTE } from "@/lib/constants";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { cn } from "@/lib/utils";
+import type { MarcaCampos } from "@/lib/branding-parser";
 import { Callout, Divider, Field } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
-import { BotonCargarBranding } from "@/components/cargador-branding";
+import {
+  BotonImportarDocumento,
+  type Actuales,
+  type AplicacionMarca,
+} from "@/components/importar-documento";
 
 /**
  * Formulario de marca. El mismo componente sirve para el alta rapida
  * (dentro de un modal) y para la edicion completa de la ficha.
+ *
+ * Los PDF (brief maestro e informe de branding) se previsualizan en un modal
+ * y «aplicar» solo rellena estos campos; el submit normal (crearMarca /
+ * actualizarMarca) es el que escribe y audita, y se lleva el PDF en los
+ * campos de archivo «briefPdf» y «brandingPdf» para guardarlo como documento.
+ * Esos nombres no pueden coincidir con ninguna columna de Brand: un input de
+ * archivo llamado «brief» pisaría al textarea «brief» en el FormData.
  */
+
+/**
+ * Tope conjunto de los dos PDF que viajan en el mismo cuerpo. Es el mismo
+ * MAX_UPLOAD_BYTES de src/lib/pdf.ts (4 MB), que no se importa aquí porque
+ * ese módulo es solo de servidor; deja margen bajo los 4,5 MB que aceptan
+ * las Server Actions (next.config.ts) y Vercel.
+ */
+const MAX_ADJUNTOS_BYTES = 4 * 1024 * 1024;
+
+function mb(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
+}
+
+const NOMBRE_DOC: Record<"brief" | "branding", string> = {
+  brief: "el brief maestro",
+  branding: "el informe de branding",
+};
 
 export type BrandFormValues = {
   id: string;
@@ -35,6 +64,10 @@ export type BrandFormValues = {
   tiktok: string;
   whatsapp: string;
 };
+
+/** Documentos ya guardados de la marca, para el chip «ya cargado». */
+export type DocumentoCargado = { filename: string; fecha: string };
+export type DocumentosMarca = { brief?: DocumentoCargado | null; branding?: DocumentoCargado | null };
 
 export const EMPTY_BRAND: BrandFormValues = {
   id: "",
@@ -66,6 +99,7 @@ function ColorField({
   onChange,
   disabled,
   swatches,
+  iluminado,
 }: {
   label: string;
   name: string;
@@ -73,6 +107,7 @@ function ColorField({
   onChange: (v: string) => void;
   disabled?: boolean;
   swatches?: boolean;
+  iluminado?: boolean;
 }) {
   const safe = HEX.test(value) ? value : "#000000";
 
@@ -95,7 +130,7 @@ function ColorField({
           maxLength={7}
           placeholder="#ec4899"
           onChange={(e) => onChange(e.target.value)}
-          className="input input-mono"
+          className={cn("input input-mono", iluminado && ILUMINADO)}
         />
       </div>
       {swatches && !disabled ? (
@@ -120,17 +155,45 @@ function ColorField({
   );
 }
 
+const ILUMINADO = "border-brand ring-brand/30 bg-brandsoft/40 ring-2";
+
+/**
+ * Mete el File en un <input type="file"> oculto para que viaje con el submit.
+ * Devuelve false si el navegador no lo permite (sin DataTransfer o con un
+ * setter de files que no hace nada): entonces el chip no puede prometer que
+ * el PDF se guardará.
+ */
+function ponerArchivo(input: HTMLInputElement | null, file: File): boolean {
+  if (!input) return false;
+  try {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    return input.files?.length === 1;
+  } catch {
+    return false;
+  }
+}
+
+/** Tamaño del archivo que ya está en un input oculto (0 si no hay ninguno). */
+function tamañoAdjunto(input: HTMLInputElement | null): number {
+  return input?.files?.[0]?.size ?? 0;
+}
+
 export function BrandForm({
   action,
   brand = EMPTY_BRAND,
   mode = "crear",
   canEdit = true,
+  documentos,
 }: {
   action: (formData: FormData) => Promise<void>;
   brand?: BrandFormValues;
   mode?: "crear" | "editar";
   canEdit?: boolean;
+  documentos?: DocumentosMarca;
 }) {
+  const [name, setName] = useState(brand.name);
   const [primary, setPrimary] = useState(brand.colorPrimary);
   const [secondary, setSecondary] = useState(brand.colorSecondary);
   const [accent, setAccent] = useState(brand.colorAccent);
@@ -144,14 +207,129 @@ export function BrandForm({
   const [valueProps, setValueProps] = useState(brand.valueProps);
   const [doNots, setDoNots] = useState(brand.doNots);
   const [keywords, setKeywords] = useState(brand.keywords);
-  const [camposIluminados, setCamposIluminados] = useState(false);
+  const [website, setWebsite] = useState(brand.website);
+  const [instagram, setInstagram] = useState(brand.instagram);
+  const [tiktok, setTiktok] = useState(brand.tiktok);
+  const [whatsapp, setWhatsapp] = useState(brand.whatsapp);
+
+  const [iluminados, setIluminados] = useState<Set<string>>(new Set());
+  const [mostrarTodo, setMostrarTodo] = useState(false);
+  const [adjuntos, setAdjuntos] = useState<{ brief?: string; branding?: string }>({});
+  /** Aviso cuando un PDF aplicado NO va a viajar con el submit (peso o navegador). */
+  const [avisoAdjunto, setAvisoAdjunto] = useState<string | null>(null);
+
+  const briefRef = useRef<HTMLInputElement>(null);
+  const brandingRef = useRef<HTMLInputElement>(null);
 
   const disabled = !canEdit;
-  const full = mode === "editar";
+  const full = mode === "editar" || mostrarTodo;
+
+  const actuales: Actuales = {
+    name,
+    tagline,
+    description,
+    identity,
+    brief,
+    toneOfVoice,
+    audience,
+    valueProps,
+    doNots,
+    keywords,
+    website,
+    instagram,
+    tiktok,
+    whatsapp,
+    // Los colores siempre tienen valor: solo cuentan como «ya escritos» al editar.
+    colorPrimary: mode === "editar" ? primary : "",
+    colorSecondary: mode === "editar" ? secondary : "",
+    colorAccent: mode === "editar" ? accent : "",
+  };
+
+  const aplicar = ({ campos, file, tipo }: AplicacionMarca) => {
+    const setters: { [K in keyof MarcaCampos]: (v: MarcaCampos[K]) => void } = {
+      name: setName,
+      tagline: setTagline,
+      description: setDescription,
+      identity: setIdentity,
+      brief: setBrief,
+      toneOfVoice: setToneOfVoice,
+      audience: setAudience,
+      valueProps: (v) => setValueProps(v.join("\n")),
+      doNots: (v) => setDoNots(v.join("\n")),
+      keywords: (v) => setKeywords(v.join("\n")),
+      instagram: setInstagram,
+      tiktok: setTiktok,
+      website: setWebsite,
+      whatsapp: setWhatsapp,
+      colorPrimary: setPrimary,
+      colorSecondary: setSecondary,
+      colorAccent: setAccent,
+    };
+    const tocados = new Set(iluminados);
+    for (const clave of Object.keys(campos) as (keyof MarcaCampos)[]) {
+      const valor = campos[clave];
+      if (valor === undefined) continue;
+      (setters[clave] as (v: unknown) => void)(valor);
+      tocados.add(clave);
+    }
+    setIluminados(tocados);
+    setMostrarTodo(true);
+
+    // Los dos PDF viajan en el mismo cuerpo: juntos no pueden pasar del tope,
+    // si no Next rechaza la petición entera con un error en inglés y no se
+    // guarda ni un campo. La ficha se rellena igual; el segundo PDF se sube
+    // luego desde la pestaña Documentos.
+    const otro = tipo === "brief" ? "branding" : "brief";
+    const pesoDelOtro = tamañoAdjunto(otro === "brief" ? briefRef.current : brandingRef.current);
+    if (pesoDelOtro > 0 && file.size + pesoDelOtro > MAX_ADJUNTOS_BYTES) {
+      setAvisoAdjunto(
+        `Los dos PDF juntos pesan ${mb(file.size + pesoDelOtro)} y el máximo por guardado son 4 MB: la ficha queda rellena y se guarda con ${NOMBRE_DOC[otro]}; sube ${NOMBRE_DOC[tipo]} («${file.name}») después desde la pestaña Documentos.`
+      );
+      return;
+    }
+
+    const adjuntado = ponerArchivo(tipo === "brief" ? briefRef.current : brandingRef.current, file);
+    if (adjuntado) {
+      setAdjuntos((a) => ({ ...a, [tipo]: file.name }));
+      setAvisoAdjunto(null);
+    } else {
+      setAvisoAdjunto(
+        `No se pudo adjuntar «${file.name}»: tu navegador no permite añadirlo automáticamente. La ficha queda rellena, pero ${NOMBRE_DOC[tipo]} tendrás que subirlo después desde la pestaña Documentos.`
+      );
+    }
+  };
+
+  /** Quita un PDF ya adjunto para que no viaje con el submit. */
+  const quitarAdjunto = (tipo: "brief" | "branding") => {
+    const input = tipo === "brief" ? briefRef.current : brandingRef.current;
+    if (input) input.value = "";
+    setAdjuntos((a) => ({ ...a, [tipo]: undefined }));
+    setAvisoAdjunto(null);
+  };
+
+  /** Red de seguridad: si por lo que sea los dos inputs superan el tope, no se envía. */
+  const comprobarPeso = (e: FormEvent<HTMLFormElement>) => {
+    const total = tamañoAdjunto(briefRef.current) + tamañoAdjunto(brandingRef.current);
+    if (total > MAX_ADJUNTOS_BYTES) {
+      e.preventDefault();
+      setAvisoAdjunto(
+        `Los dos PDF juntos pesan ${mb(total)} y el máximo por guardado son 4 MB. Quita uno de los dos y súbelo después desde la pestaña Documentos.`
+      );
+    }
+  };
+
+  const luz = (clave: string) => (iluminados.has(clave) ? ILUMINADO : "");
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} onSubmit={comprobarPeso} className="space-y-5">
       {brand.id ? <input type="hidden" name="id" value={brand.id} /> : null}
+      {/*
+        Los PDF aplicados viajan aquí para guardarse como documentos de la marca.
+        Sus nombres NO son «brief» ni «branding»: el textarea de abajo se llama
+        «brief» y un input de archivo con el mismo nombre lo pisaría.
+      */}
+      <input ref={briefRef} type="file" name="briefPdf" accept=".pdf" className="hidden" tabIndex={-1} aria-hidden />
+      <input ref={brandingRef} type="file" name="brandingPdf" accept=".pdf" className="hidden" tabIndex={-1} aria-hidden />
 
       {disabled ? (
         <Callout tone="info" title="Solo lectura">
@@ -159,50 +337,103 @@ export function BrandForm({
         </Callout>
       ) : null}
 
-      {/* Banner de Carga Rápida desde PDF */}
-      {full && canEdit && (
-        <div className="rounded-xl border border-[var(--brand)]/35 bg-[var(--brand)]/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-          <div className="space-y-0.5">
-            <div className="font-bold text-ink text-[13.5px] flex items-center gap-2">
-              <Sparkles size={16} className="text-brand" />
-              ¿Tienes un informe de branding en PDF?
+      {canEdit ? (
+        <div className="border-brand/35 bg-brandsoft/30 rounded-xl border p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-0.5">
+              <div className="text-ink flex items-center gap-2 text-[13.5px] font-bold">
+                <Sparkles size={16} className="text-brand" />
+                Rellena la ficha desde un PDF
+              </div>
+              <p className="text-inkmuted text-[12px] leading-relaxed">
+                El brief maestro rellena el preprompt de empresa (qué es, público, propuestas, reglas,
+                colores, redes). El informe de branding rellena la voz y la paleta de una marca personal.
+                Primero ves lo que se leyó y decides qué aplicar; el PDF se guarda en Documentos al pulsar{" "}
+                {mode === "crear" ? "«Crear marca»" : "«Guardar cambios»"}.
+              </p>
             </div>
-            <p className="text-inkmuted text-[12px] leading-relaxed">
-              Sube tu PDF (Yoryo, Piero, Eru o empresa) para auto-rellenar tono, público, reglas y colores automáticamente.
-            </p>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <BotonImportarDocumento
+                tipo="brief"
+                destino="marca"
+                modo="aplicar"
+                label="Cargar brief maestro"
+                className="btn btn-primary btn-sm"
+                actuales={actuales}
+                onAplicarMarca={aplicar}
+              />
+              <BotonImportarDocumento
+                tipo="branding"
+                destino="marca"
+                modo="aplicar"
+                label="Cargar informe de branding"
+                className="btn btn-sm"
+                data-guia={GUIA_TARGETS.BTN_CARGAR_BRANDING_PDF}
+                actuales={actuales}
+                onAplicarMarca={aplicar}
+              />
+            </div>
           </div>
-          <BotonCargarBranding
-            brandId={brand.id}
-            className="btn btn-primary btn-sm shrink-0"
-            label="Cargar PDF de branding"
-            data-guia={GUIA_TARGETS.BTN_CARGAR_BRANDING_PDF}
-            onSuccess={(res) => {
-              if (res.parsed.tagline) setTagline(res.parsed.tagline);
-              if (res.parsed.identity) setIdentity(res.parsed.identity);
-              if (res.parsed.brief) setBrief(res.parsed.brief);
-              if (res.parsed.toneOfVoice) setToneOfVoice(res.parsed.toneOfVoice);
-              if (res.parsed.audience) setAudience(res.parsed.audience);
-              if (res.parsed.valueProps.length) setValueProps(res.parsed.valueProps.join("\n"));
-              if (res.parsed.doNots.length) setDoNots(res.parsed.doNots.join("\n"));
-              if (res.parsed.keywords.length) setKeywords(res.parsed.keywords.join("\n"));
-              if (res.parsed.colorPrimary) setPrimary(res.parsed.colorPrimary);
-              if (res.parsed.colorSecondary) setSecondary(res.parsed.colorSecondary);
-              if (res.parsed.colorAccent) setAccent(res.parsed.colorAccent);
-              setCamposIluminados(true);
-            }}
-          />
+          {avisoAdjunto ? (
+            <div className="mt-3">
+              <Callout tone="warn" title="El PDF no se va a guardar con la ficha">
+                <span className="text-[12px]">{avisoAdjunto}</span>
+              </Callout>
+            </div>
+          ) : null}
+          {documentos?.brief || documentos?.branding || adjuntos.brief || adjuntos.branding ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {adjuntos.brief ? (
+                <span className="chip chip-plain text-brand inline-flex items-center gap-1">
+                  <FileCheck2 size={11} /> Brief maestro listo para guardar: {adjuntos.brief}
+                  <button
+                    type="button"
+                    onClick={() => quitarAdjunto("brief")}
+                    className="hover:text-ink ml-0.5 inline-flex"
+                    aria-label="No guardar el brief maestro"
+                    title="No guardar este PDF"
+                  >
+                    <X size={11} />
+                  </button>
+                </span>
+              ) : documentos?.brief ? (
+                <span className="chip chip-plain inline-flex items-center gap-1" title={documentos.brief.filename}>
+                  <FileCheck2 size={11} /> Brief maestro ya cargado · {documentos.brief.fecha}
+                </span>
+              ) : null}
+              {adjuntos.branding ? (
+                <span className="chip chip-plain text-brand inline-flex items-center gap-1">
+                  <FileCheck2 size={11} /> Informe de branding listo para guardar: {adjuntos.branding}
+                  <button
+                    type="button"
+                    onClick={() => quitarAdjunto("branding")}
+                    className="hover:text-ink ml-0.5 inline-flex"
+                    aria-label="No guardar el informe de branding"
+                    title="No guardar este PDF"
+                  >
+                    <X size={11} />
+                  </button>
+                </span>
+              ) : documentos?.branding ? (
+                <span className="chip chip-plain inline-flex items-center gap-1" title={documentos.branding.filename}>
+                  <FileCheck2 size={11} /> Informe de branding ya cargado · {documentos.branding.fecha}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
-      )}
+      ) : null}
 
       {/* ---------------------------------------------------------- BASICO -- */}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Nombre" required>
           <input
             name="name"
-            className="input"
+            className={cn("input", luz("name"))}
             required
             disabled={disabled}
-            defaultValue={brand.name}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             placeholder="Ej. Con Amor"
             autoFocus={mode === "crear"}
             data-guia={GUIA_TARGETS.INPUT_MARCA_NOMBRE}
@@ -211,7 +442,7 @@ export function BrandForm({
         <Field label="Lema" hint="Una línea que resuma la promesa de la marca.">
           <input
             name="tagline"
-            className={cn("input transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
+            className={cn("input transition-all", luz("tagline"))}
             disabled={disabled}
             value={tagline}
             onChange={(e) => setTagline(e.target.value)}
@@ -224,7 +455,7 @@ export function BrandForm({
       <Field label="Descripción" hint="Qué vende y a quién, en dos o tres líneas.">
         <textarea
           name="description"
-          className="textarea"
+          className={cn("textarea transition-all", luz("description"))}
           rows={3}
           disabled={disabled}
           value={description}
@@ -240,11 +471,11 @@ export function BrandForm({
           <div className="grid gap-3 lg:grid-cols-2">
             <Field
               label="Identidad y personalidad"
-              hint="En tu informe: ARQUETIPOS (Quién es, qué representa y arquetipos dominante y secundario)."
+              hint="Del brief: cómo debe sonar, a dónde quiere llegar y por qué comprarle. Del informe: arquetipos y lo que representa."
             >
               <textarea
                 name="identity"
-                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
+                className={cn("textarea transition-all", luz("identity"))}
                 rows={5}
                 disabled={disabled}
                 value={identity}
@@ -254,11 +485,11 @@ export function BrandForm({
             </Field>
             <Field
               label="Brief permanente"
-              hint="En tu informe: Deseo central, talento diferencial y frase insignia fija."
+              hint="Del brief maestro: catálogo, precios, delivery, pagos, garantías, horarios y competidores."
             >
               <textarea
                 name="brief"
-                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
+                className={cn("textarea transition-all", luz("brief"))}
                 rows={5}
                 disabled={disabled}
                 value={brief}
@@ -269,10 +500,10 @@ export function BrandForm({
           </div>
 
           <div className="grid gap-3 lg:grid-cols-2">
-            <Field label="Tono de voz" hint="En tu informe: sección COMUNICACIÓN → TONO (cómo suena al hablar).">
+            <Field label="Tono de voz" hint="Del brief: «¿Cómo debe sonar la marca?». Del informe: sección TONO.">
               <textarea
                 name="toneOfVoice"
-                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
+                className={cn("textarea transition-all", luz("toneOfVoice"))}
                 rows={4}
                 disabled={disabled}
                 value={toneOfVoice}
@@ -281,10 +512,10 @@ export function BrandForm({
                 data-guia={GUIA_TARGETS.INPUT_MARCA_TONO}
               />
             </Field>
-            <Field label="Público objetivo" hint="En tu informe: Audiencia y público que conecta con este arquetipo.">
+            <Field label="Público objetivo" hint="Del brief: cliente ideal, qué lo motiva y qué lo frena.">
               <textarea
                 name="audience"
-                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
+                className={cn("textarea transition-all", luz("audience"))}
                 rows={4}
                 disabled={disabled}
                 value={audience}
@@ -298,10 +529,10 @@ export function BrandForm({
           <Divider label="Reglas de la marca" />
 
           <div className="grid gap-3 lg:grid-cols-3">
-            <Field label="Propuestas de valor" hint="En tu informe: Talentos diferenciales y fortalezas. Una por línea.">
+            <Field label="Propuestas de valor" hint="Del brief: por qué comprarles, qué dicen los clientes, garantías. Una por línea.">
               <textarea
                 name="valueProps"
-                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
+                className={cn("textarea transition-all", luz("valueProps"))}
                 rows={6}
                 disabled={disabled}
                 value={valueProps}
@@ -309,10 +540,10 @@ export function BrandForm({
                 placeholder={"Entrega el mismo día\nEnvoltura incluida\nPago contra entrega"}
               />
             </Field>
-            <Field label="Prohibiciones" hint="En tu informe: sección COMUNICACIÓN → EVITA (lo que nunca dice ni hace).">
+            <Field label="Prohibiciones" hint="Del brief: «¿Qué no se debe decir o mostrar?». Del informe: EVITA.">
               <textarea
                 name="doNots"
-                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
+                className={cn("textarea transition-all", luz("doNots"))}
                 rows={6}
                 disabled={disabled}
                 value={doNots}
@@ -321,10 +552,10 @@ export function BrandForm({
                 data-guia={GUIA_TARGETS.INPUT_MARCA_PROHIBICIONES}
               />
             </Field>
-            <Field label="Palabras clave" hint="En tu informe: sección COMUNICACIÓN → VOCABULARIO. Una por línea.">
+            <Field label="Palabras clave" hint="Del informe: VOCABULARIO. Del brief solo las propone la IA. Una por línea.">
               <textarea
                 name="keywords"
-                className={cn("textarea transition-all", camposIluminados && "border-[var(--brand)] ring-2 ring-[var(--brand)]/30 bg-[var(--brand)]/5")}
+                className={cn("textarea transition-all", luz("keywords"))}
                 rows={6}
                 disabled={disabled}
                 value={keywords}
@@ -346,6 +577,7 @@ export function BrandForm({
           onChange={setPrimary}
           disabled={disabled}
           swatches
+          iluminado={iluminados.has("colorPrimary")}
         />
         <ColorField
           label="Secundario"
@@ -353,6 +585,7 @@ export function BrandForm({
           value={secondary}
           onChange={setSecondary}
           disabled={disabled}
+          iluminado={iluminados.has("colorSecondary")}
         />
         <ColorField
           label="Acento"
@@ -360,6 +593,7 @@ export function BrandForm({
           value={accent}
           onChange={setAccent}
           disabled={disabled}
+          iluminado={iluminados.has("colorAccent")}
         />
       </div>
 
@@ -379,36 +613,40 @@ export function BrandForm({
             <Field label="Web">
               <input
                 name="website"
-                className="input"
+                className={cn("input", luz("website"))}
                 disabled={disabled}
-                defaultValue={brand.website}
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
                 placeholder="https://…"
               />
             </Field>
             <Field label="Instagram">
               <input
                 name="instagram"
-                className="input"
+                className={cn("input", luz("instagram"))}
                 disabled={disabled}
-                defaultValue={brand.instagram}
+                value={instagram}
+                onChange={(e) => setInstagram(e.target.value)}
                 placeholder="@usuario"
               />
             </Field>
             <Field label="TikTok">
               <input
                 name="tiktok"
-                className="input"
+                className={cn("input", luz("tiktok"))}
                 disabled={disabled}
-                defaultValue={brand.tiktok}
+                value={tiktok}
+                onChange={(e) => setTiktok(e.target.value)}
                 placeholder="@usuario"
               />
             </Field>
-            <Field label="WhatsApp">
+            <Field label="WhatsApp" hint="El brief no trae el número de ventas: escríbelo aquí.">
               <input
                 name="whatsapp"
-                className="input"
+                className={cn("input", luz("whatsapp"))}
                 disabled={disabled}
-                defaultValue={brand.whatsapp}
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
                 placeholder="+51 999 999 999"
               />
             </Field>
@@ -417,7 +655,7 @@ export function BrandForm({
       ) : (
         <p className="text-inkmuted text-[12.5px] leading-relaxed">
           El brief, el tono de voz, las prohibiciones y los enlaces se completan después en la
-          ficha de la marca.
+          ficha de la marca, o ahora mismo si cargas el brief maestro en PDF.
         </p>
       )}
 

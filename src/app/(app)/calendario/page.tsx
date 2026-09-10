@@ -1,5 +1,6 @@
 import { measurePhase as measurePagePhase } from "@/lib/performance";
 import { requirePageUser as requireUser, getPageBrandContext as getBrandContext } from "@/lib/render-context";
+import { getStructureChoices } from "@/lib/structure-choices";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import {
@@ -122,7 +123,7 @@ export default async function CalendarioPage({
     999
   );
 
-  const [filas, brands, people, eventosBase] = await Promise.all([
+  const [filas, brands, people, eventosBase, structures] = await Promise.all([
     prisma.contentItem.findMany({
       where: { ...where, scheduledDate: { gte: desde, lte: hasta } },
       select: {
@@ -160,6 +161,8 @@ export default async function CalendarioPage({
         brand: { select: { name: true } },
       },
     }),
+    // Estructuras activas para los formatos previstos del alta de video.
+    getStructureChoices(false),
   ]);
 
   const videos: CalendarVideo[] = filas.map((f) => ({
@@ -288,6 +291,7 @@ export default async function CalendarioPage({
                 />
                 <NuevoVideoBoton
                   brands={brands.map((b) => ({ id: b.id, name: b.name, color: b.colorPrimary }))}
+                  structures={structures}
                   defaultDate={fechaPorDefecto}
                   defaultBrandId={brandCtx.activeId ?? undefined}
                 />
@@ -447,6 +451,7 @@ export default async function CalendarioPage({
                 <NuevoVideoBoton
                   className="btn btn-primary btn-sm"
                   brands={brands.map((b) => ({ id: b.id, name: b.name, color: b.colorPrimary }))}
+                  structures={structures}
                   defaultDate={fechaPorDefecto}
                   defaultBrandId={brandCtx.activeId ?? undefined}
                 />

@@ -4,8 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { requireLevel, LEVEL } from "@/lib/auth";
 import { auditInTransaction, diffFields } from "@/lib/audit";
 import { assertActor } from "@/lib/auth-transactions";
-import { assertAssetOwner, validateAssetContent } from "@/lib/asset-security";
-import { extractAnyText, MAX_UPLOAD_BYTES } from "@/lib/pdf";
+import { assertAssetOwner } from "@/lib/asset-security";
+import { crearAssetDesdeArchivo, leerArchivoImportado, textoDeReferencia } from "@/lib/asset-import";
+import { detectarTipoDocumento } from "@/lib/branding-parser";
 import { field, fieldOrNull } from "@/lib/utils";
 export type AssetState = { ok?: string; error?: string; warning?: string } | null;
 function refresh(type: string, id: string) {
@@ -16,25 +17,26 @@ function refresh(type: string, id: string) {
 
 export async function uploadAsset(_prev: AssetState, form: FormData): Promise<AssetState> {
   const user = await requireLevel(LEVEL.MEMBER);
-  const ownerType = field(form, "ownerType"), ownerId = field(form, "ownerId"), label = fieldOrNull(form, "label"), file = form.get("file");
-  if (!(file instanceof File) || !file.size) return { error: "Elige un archivo antes de subir." };
-  if (file.size > MAX_UPLOAD_BYTES) return { error: "El archivo pesa demasiado. El máximo son 4 MB." };
+  const ownerType = field(form, "ownerType"), ownerId = field(form, "ownerId"), label = fieldOrNull(form, "label");
   if ((label?.length ?? 0) > 200) return { error: "El nombre visible no puede superar 200 caracteres." };
-  let mimeType: string;
-  const buffer = await file.arrayBuffer();
-  try {
-    await assertAssetOwner(prisma, ownerType, ownerId, user, true);
-    mimeType = validateAssetContent(file.name, new Uint8Array(buffer));
-  } catch (error) { return { error: error instanceof Error ? error.message : "El archivo no es válido." }; }
-  const extraction = await extractAnyText(buffer, mimeType, file.name);
+  try { await assertAssetOwner(prisma, ownerType, ownerId, user, true); }
+  catch (error) { return { error: error instanceof Error ? error.message : "El archivo no es válido." }; }
+  const lectura = await leerArchivoImportado(form.get("file"));
+  if (!lectura.ok) return { error: lectura.error };
+  const { archivo } = lectura;
+  // Misma regla que al cargar desde Identidad: si lo que entra es el brief
+  // maestro, el texto que ve la IA se guarda redactado (RUC, teléfonos,
+  // correos, ventas). Cualquier otro documento se guarda tal cual.
+  const tipo = archivo.texto ? detectarTipoDocumento(archivo.texto) : null;
+  const ref = tipo
+    ? textoDeReferencia(tipo, archivo)
+    : { extractedText: archivo.texto, useForAi: Boolean(archivo.texto), aviso: null };
   await prisma.$transaction(async tx => {
-    await assertActor(tx, user);
-    await assertAssetOwner(tx, ownerType, ownerId, user, true);
-    const asset = await tx.asset.create({ data: { ownerType, ownerId, filename: file.name, mimeType, size: file.size, data: Buffer.from(buffer), label, extractedText: extraction.text, useForAi: Boolean(extraction.text), uploadedById: user.id } });
-    await auditInTransaction(tx, { user, action: "SUBIR", entity: "Asset", entityId: asset.id, brandId: ownerType === "brand" ? ownerId : null, summary: `Subió el archivo "${label ?? file.name}"` });
+    await crearAssetDesdeArchivo(tx, { ownerType, ownerId, archivo, label, user, extractedText: ref.extractedText, useForAi: ref.useForAi });
   });
   refresh(ownerType, ownerId);
-  return { ok: "Archivo guardado.", ...(extraction.error ? { warning: extraction.error } : {}) };
+  const warning = [archivo.errorExtraccion, ref.aviso].filter((a): a is string => Boolean(a)).join(" ");
+  return { ok: "Archivo guardado.", ...(warning ? { warning } : {}) };
 }
 export async function deleteAsset(form: FormData) {
   const user = await requireLevel(LEVEL.OWNER), id = field(form, "id");

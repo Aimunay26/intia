@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FileText, Plus, Save } from "lucide-react";
+import { Plus, Save, Sparkles } from "lucide-react";
 
 import { actualizarVideo, crearVideo } from "@/app/actions/content";
 import {
@@ -32,6 +32,8 @@ export type VideoFormItem = {
   cta: string;
   /** Redes donde va a salir. Un video puede ir a varias. */
   platforms: string[];
+  /** Formatos previstos (ids de Structure). Se eligen en la idea; el guion fija el definitivo. */
+  structureIds: string[];
   priority: string;
   /** Todas las fechas llegan ya en formato yyyy-mm-dd para no depender de la zona horaria del navegador. */
   scheduledDate: string;
@@ -105,16 +107,95 @@ function PlatformPicker({
   );
 }
 
+/* ---------------------------------------------------------- FORMATOS -- */
+
+/**
+ * Formatos previstos para el video, con casillas múltiples. Se envían como
+ * varios campos `structureIds` y en el servidor se leen con getAll.
+ *
+ * El campo oculto `structureIdsForm` le dice al servidor que el picker estaba
+ * en el formulario: así vaciar la lista a propósito se distingue de un
+ * formulario que no la incluye. Deshabilitado no se envía nada y se conserva
+ * lo que había.
+ */
+function StructurePicker({
+  structures,
+  defaultValue,
+  disabled,
+}: {
+  structures: SimpleOption[];
+  defaultValue: string[];
+  disabled?: boolean;
+}) {
+  const [selected, setSelected] = useState<string[]>(defaultValue);
+
+  const toggle = (id: string) => {
+    setSelected((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+  };
+
+  return (
+    <Field
+      label="Formatos previstos"
+      hint={
+        structures.length === 0
+          ? undefined
+          : "Marca uno o varios formatos que quieres probar con esta idea. El guion final fija la estructura definitiva."
+      }
+    >
+      {structures.length === 0 ? (
+        <p className="text-inkmuted text-[12.5px] leading-relaxed">
+          Todavía no hay estructuras activas.{" "}
+          <Link href="/estructuras" className="text-brand font-semibold">
+            Crea la primera en Estructuras
+          </Link>{" "}
+          y podrás marcarlas aquí.
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {!disabled ? <input type="hidden" name="structureIdsForm" value="1" /> : null}
+          {structures.map((s) => {
+            const active = selected.includes(s.id);
+            return (
+              <label
+                key={s.id}
+                className={cn(
+                  "chip cursor-pointer select-none transition-all",
+                  active ? "chip-brand font-semibold" : "chip-plain hover:bg-surface2",
+                  disabled && "cursor-not-allowed opacity-60"
+                )}
+              >
+                <input
+                  type="checkbox"
+                  name="structureIds"
+                  value={s.id}
+                  checked={active}
+                  disabled={disabled}
+                  onChange={() => toggle(s.id)}
+                  className="accent-brand h-3 w-3 cursor-pointer"
+                />
+                {s.name}
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </Field>
+  );
+}
+
 /* ------------------------------------------------------------ NUEVO VIDEO -- */
 
 export function NuevoVideoBoton({
   brands,
+  structures,
   defaultDate,
   defaultBrandId,
   label = "Nuevo video",
   className = "btn btn-primary",
 }: {
   brands: BrandOption[];
+  /** Estructuras activas, para marcar los formatos previstos. */
+  structures: SimpleOption[];
   /** yyyy-mm-dd */
   defaultDate: string;
   defaultBrandId?: string;
@@ -215,6 +296,8 @@ export function NuevoVideoBoton({
           defaultValue={["TIKTOK"]}
         />
 
+        <StructurePicker structures={structures} defaultValue={[]} />
+
         <Field label="Idea / descripción">
           <textarea
             name="description"
@@ -232,12 +315,13 @@ export function NuevoVideoBoton({
           }}
         >
           <div className="text-brand mb-0.5 flex items-center gap-1.5 font-semibold">
-            <FileText size={13} /> El guion viene después
+            <Sparkles size={13} /> El guion viene después
           </div>
           <span className="text-inksoft">
-            La tarjeta nace como idea, sin guion ni estructura. Cuando el guion esté listo en{" "}
-            <strong>Guiones</strong>, se asigna desde allí a esta tarjeta y el video hereda su
-            estructura automáticamente.
+            La tarjeta nace como idea. Desde su ficha podrás <strong>crear el guion con IA</strong>:
+            el generador arrancará con esta marca, el título, el hook y los formatos previstos, y
+            al terminar el guion queda unido a la tarjeta. También puedes asignarle un guion ya
+            escrito desde <strong>Guiones</strong>.
           </span>
         </div>
 
@@ -260,9 +344,12 @@ export function NuevoVideoBoton({
 
 export function VideoDatosForm({
   item,
+  structures,
   canEdit,
 }: {
   item: VideoFormItem;
+  /** Estructuras activas, para editar los formatos previstos. */
+  structures: SimpleOption[];
   canEdit: boolean;
 }) {
   return (
@@ -345,6 +432,12 @@ export function VideoDatosForm({
         defaultValue={item.platforms}
         disabled={!canEdit}
         hint="Un mismo video puede ir a varias redes."
+      />
+
+      <StructurePicker
+        structures={structures}
+        defaultValue={item.structureIds}
+        disabled={!canEdit}
       />
 
       <Field label="Link publicado" hint="La URL del video ya subido, para revisarlo de un clic.">

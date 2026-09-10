@@ -16,8 +16,10 @@ export const maxDuration = 300;
 
 import { prisma } from "@/lib/prisma";
 import { can, LEVEL } from "@/lib/auth";
+import { brandWhere } from "@/lib/brand-context";
 import { aiStatus } from "@/lib/settings";
-import { parseJson, parseList } from "@/lib/utils";
+import { CONTENT_STATUS_MAP } from "@/lib/constants";
+import { formatDate, parseJson, parseList } from "@/lib/utils";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import {
   GeneratorForm,
@@ -25,7 +27,21 @@ import {
   type GeneratorBeat,
   type GeneratorBrand,
   type GeneratorStructure,
+  type GeneratorVideo,
 } from "./generator-form";
+
+/** Lo que el generador necesita saber de una tarjeta del calendario. */
+const VIDEO_SELECT = {
+  id: true,
+  title: true,
+  hook: true,
+  description: true,
+  brandId: true,
+  status: true,
+  scheduledDate: true,
+  structureIds: true,
+  brand: { select: { name: true } },
+} as const;
 
 /**
  * Pantalla de trabajo del generador.
@@ -41,13 +57,16 @@ export default async function GeneradorPage({
     peticion?: string;
     angulo?: string;
     arquetipo?: string;
+    /** Tarjeta del calendario a la que se unirá el guion (botón «Crear guion»). */
+    video?: string;
   }>;
 }) {
   return measurePagePhase("page:/generador", async () => {
   const user = await requireUser();
   const sp = await searchParams;
+  const brandCtx = await getBrandContext();
 
-  const [structures, brands, archetypes, fits, refRows, ai, brandCtx] = await Promise.all([
+  const [structures, brands, archetypes, fits, refRows, ai, candidatos, tarjetaPedida] = await Promise.all([
     prisma.structure.findMany({
       where: { active: true },
       orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -103,8 +122,41 @@ export default async function GeneradorPage({
       _count: { _all: true },
     }),
     aiStatus(),
-    getBrandContext(),
+    // Tarjetas que todavía no tienen guion: solo Idea o Guion, y de la marca activa.
+    prisma.contentItem.findMany({
+      where: {
+        scriptId: null,
+        status: { in: ["IDEA", "GUION"] },
+        ...brandWhere(brandCtx.activeId),
+      },
+      select: VIDEO_SELECT,
+      orderBy: [{ scheduledDate: "asc" }, { title: "asc" }],
+      take: 80,
+    }),
+    // Si llega ?video= de otra marca (o fuera de las 80), se carga aparte y se
+    // antepone: la marca del video manda sobre la activa. Se lee sin filtro
+    // para poder decir POR QUÉ no se preselecciona cuando no cumple el mismo
+    // criterio que la lista (sin guion y en Idea o Guion).
+    sp.video
+      ? prisma.contentItem.findUnique({
+          where: { id: sp.video },
+          select: { ...VIDEO_SELECT, scriptId: true },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const tarjetaPedidaAdmiteGuion =
+    tarjetaPedida !== null &&
+    tarjetaPedida.scriptId === null &&
+    (tarjetaPedida.status === "IDEA" || tarjetaPedida.status === "GUION");
+  const videoPedido = tarjetaPedidaAdmiteGuion ? tarjetaPedida : null;
+  const avisoVideo = !sp.video || tarjetaPedidaAdmiteGuion
+    ? null
+    : !tarjetaPedida
+      ? "El video de la dirección ya no existe. El guion se generará suelto; si quieres, elige otra tarjeta en la etapa 2."
+      : tarjetaPedida.scriptId
+        ? `«${tarjetaPedida.title}» ya tiene un guion vinculado: quítalo desde su ficha si quieres otro. El guion se generará suelto.`
+        : `«${tarjetaPedida.title}» está en ${CONTENT_STATUS_MAP[tarjetaPedida.status]?.label ?? tarjetaPedida.status}: solo se vinculan tarjetas en Idea o Guion. El guion se generará suelto; cambia el estado desde la ficha si hace falta.`;
 
   if (!can(user.role, LEVEL.MEMBER)) {
     return (
@@ -182,12 +234,36 @@ export default async function GeneradorPage({
     fits: fitsPorArquetipo.get(a.id) ?? {},
   }));
 
-  const preseleccion = structureOptions.some((s) => s.id === sp.estructura)
-    ? (sp.estructura as string)
-    : (structureOptions[0]?.id ?? "");
+  const filasVideo = videoPedido && !candidatos.some((v) => v.id === videoPedido.id)
+    ? [videoPedido, ...candidatos]
+    : candidatos;
+  const videoOptions: GeneratorVideo[] = filasVideo.map((v) => ({
+    id: v.id,
+    title: v.title,
+    hook: v.hook,
+    description: v.description,
+    brandId: v.brandId,
+    brandName: v.brand.name,
+    statusLabel: CONTENT_STATUS_MAP[v.status]?.label ?? v.status,
+    dateLabel: formatDate(v.scheduledDate),
+    structureIds: parseList(v.structureIds),
+  }));
+  const videoElegido = videoOptions.find((v) => v.id === sp.video) ?? null;
 
-  // La marca activa manda; el parametro de la URL solo sirve si no hay ninguna.
-  const marcaPedida = brandCtx.activeId ?? sp.marca;
+  // Formatos previstos del video que siguen activos: preseleccionan el lote.
+  const structureIdsIniciales = videoElegido
+    ? videoElegido.structureIds.filter((id) => structureOptions.some((s) => s.id === id))
+    : [];
+
+  const preseleccion = structureIdsIniciales.length
+    ? structureIdsIniciales[0]
+    : structureOptions.some((s) => s.id === sp.estructura)
+      ? (sp.estructura as string)
+      : (structureOptions[0]?.id ?? "");
+
+  // La marca del video manda; después la activa; el parámetro de la URL solo
+  // sirve si no hay ninguna de las dos.
+  const marcaPedida = videoElegido?.brandId ?? brandCtx.activeId ?? sp.marca;
   const marcaInicial = brandOptions.some((b) => b.id === marcaPedida)
     ? (marcaPedida as string)
     : "";
@@ -227,6 +303,10 @@ export default async function GeneradorPage({
             anthropic: ai.anthropic.configured,
             google: ai.google.configured,
           }}
+          videos={videoOptions}
+          initialVideoId={videoElegido?.id}
+          initialVideoAviso={avisoVideo}
+          initialStructureIds={structureIdsIniciales}
           initialStructureId={preseleccion}
           initialBrandId={marcaInicial}
           initialArchetypeId={sp.arquetipo}

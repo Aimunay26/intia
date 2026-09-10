@@ -166,7 +166,7 @@ test("leer el feed sin token no escribe y conserva tokens existentes", async () 
   assert.equal(await getFeedToken(), token);
 });
 
-test("el snapshot de ajustes evita lecturas adicionales y respeta la precedencia del entorno", async () => {
+test("el snapshot de ajustes evita lecturas adicionales: la clave guardada manda y el entorno es respaldo", async () => {
   const names = ["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
   const before = Object.fromEntries(names.map((key) => [key, process.env[key]]));
   try {
@@ -175,8 +175,15 @@ test("el snapshot de ajustes evita lecturas adicionales y respeta la precedencia
     const { aiStatus } = load("src/lib/settings.ts", { "@/lib/prisma": { prisma } });
     const snapshot = { "ai.anthropic.apiKey": "fixture-db-key", "auth.google.clientId": "fixture-id", "auth.google.clientSecret": "fixture-secret" };
     assert.equal((await aiStatus(snapshot)).anthropic.source, "db");
+    assert.equal((await aiStatus(snapshot)).anthropic.envDefined, false);
+    // Con la variable definida, la guardada en Ajustes sigue mandando.
     process.env.ANTHROPIC_API_KEY = "fixture-env-key";
-    assert.equal((await aiStatus(snapshot)).anthropic.source, "env");
+    assert.equal((await aiStatus(snapshot)).anthropic.source, "db");
+    assert.equal((await aiStatus(snapshot)).anthropic.envDefined, true);
+    // Sin clave guardada (o guardada en blanco), la variable es el respaldo.
+    assert.equal((await aiStatus({})).anthropic.source, "env");
+    assert.equal((await aiStatus({ "ai.anthropic.apiKey": "   " })).anthropic.source, "env");
+    // La entrada con Google conserva su propia precedencia (entorno manda).
     const { getGoogleConfig } = load("src/lib/google.ts", { "@/lib/settings": { getSetting: () => assert.fail("Lectura duplicada de OAuth") } });
     assert.equal((await getGoogleConfig(snapshot)).source, "db");
     process.env.GOOGLE_CLIENT_ID = "fixture-env-id"; process.env.GOOGLE_CLIENT_SECRET = "fixture-env-secret";

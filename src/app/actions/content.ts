@@ -91,6 +91,43 @@ function readPlatforms(formData: FormData, fallback?: string): string {
   return JSON.stringify(["TIKTOK"]);
 }
 
+/**
+ * Lee las casillas de formatos previstos (`structureIds`). Igual que las redes,
+ * llegan como varios campos con el mismo nombre y se validan contra las
+ * estructuras que existen de verdad.
+ *
+ * El picker manda además un marcador `structureIdsForm`: si el marcador viene
+ * y no hay ninguna casilla, la persona vació la lista a propósito y se guarda
+ * `[]`. Si el marcador NO viene (formulario sin picker, o con el picker
+ * deshabilitado), se conserva lo que había para no borrar nada por accidente.
+ */
+async function readStructureIds(formData: FormData, fallback?: string): Promise<string> {
+  const conPicker = formData.has("structureIdsForm");
+  const pedidas = Array.from(
+    new Set(
+      formData
+        .getAll("structureIds")
+        .map((v) => String(v).trim())
+        .filter(Boolean)
+    )
+  );
+
+  if (!conPicker && !pedidas.length) {
+    return fallback && parseList(fallback).length ? fallback : "[]";
+  }
+  if (!pedidas.length) return "[]";
+
+  const existentes = await prisma.structure.findMany({
+    where: { id: { in: pedidas } },
+    select: { id: true },
+  });
+  const validas = new Set(existentes.map((s) => s.id));
+  // Se conserva el orden en que llegan las casillas (el del picker, por
+  // nombre; el navegador las envía en orden de DOM, no de marcado): el
+  // generador usa el primero como formato de vista previa.
+  return JSON.stringify(pedidas.filter((id) => validas.has(id)));
+}
+
 /** "TikTok, Instagram" — para que el log de actividad se lea en español. */
 function nombresRedes(platformsJson: string): string {
   const nombres = parseList(platformsJson).map((p) => PLATFORM_MAP[p]?.label ?? p);
@@ -117,8 +154,10 @@ export async function crearVideo(formData: FormData) {
       priority: field(formData, "priority") || "MEDIA",
       scheduledDate: dateField(formData, "scheduledDate") ?? fromDateKey(dateKey(new Date())),
       shootDate: dateField(formData, "shootDate"),
-      // La estructura y el guion NO se eligen aquí. Llegan solos cuando se
-      // vincula un guion desde el área de Guiones: la tarjeta nace como idea.
+      // Los formatos PREVISTOS sí se eligen en la idea (structureIds). La
+      // estructura definitiva (structureId) y el guion (scriptId) llegan solos
+      // al vincular un guion, desde Guiones o desde el propio generador.
+      structureIds: await readStructureIds(formData),
       hook: fieldOrNull(formData, "hook"),
       cta: fieldOrNull(formData, "cta"),
       notes: fieldOrNull(formData, "notes"),
@@ -161,6 +200,7 @@ export async function actualizarVideo(formData: FormData) {
     hook: fieldOrNull(formData, "hook"),
     cta: fieldOrNull(formData, "cta"),
     platforms: readPlatforms(formData, before.platforms),
+    structureIds: await readStructureIds(formData, before.structureIds),
     priority: field(formData, "priority") || before.priority,
     scheduledDate: dateField(formData, "scheduledDate") ?? before.scheduledDate,
     shootDate: dateField(formData, "shootDate"),
@@ -271,6 +311,7 @@ export async function duplicarVideo(formData: FormData) {
       shootDate: origen.shootDate,
       structureId: origen.structureId,
       scriptId: origen.scriptId,
+      structureIds: origen.structureIds,
       hook: origen.hook,
       cta: origen.cta,
       tags: origen.tags,

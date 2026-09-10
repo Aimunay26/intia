@@ -124,14 +124,105 @@ Está separado a propósito y hay que respetarlo:
 
 | Fase | Dónde | Qué pasa |
 |---|---|---|
-| 1 · Idea | `/calendario`, `/contenido` | Nace la tarjeta: marca, fecha, título, hook, redes, prioridad. **Sin `structureId` ni `scriptId`.** |
-| 2 · Guion | `/generador`, `/guiones` | Se escribe el guion eligiendo estructura y quién actúa. |
-| 3 · Unión | `/guiones/[id]` | `asignarGuionAVideo` conecta ambos. |
+| 1 · Idea | `/calendario`, `/contenido` | Nace la tarjeta: marca, fecha, título, hook, redes, prioridad y **formatos previstos** (`structureIds`). **Sin `structureId` ni `scriptId`.** |
+| 2 · Guion | `/generador`, `/guiones` | Se escribe el guion eligiendo estructura y quién actúa. Desde la ficha de la tarjeta, «Crear guion con IA» abre `/generador?video=ID` con la marca, el título, el hook y los formatos previstos ya puestos. |
+| 3 · Unión | `/guiones/[id]` o el propio generador | `vincularGuionAVideo` (en `src/app/actions/scripts.ts`) conecta ambos. La llaman `asignarGuionAVideo` desde la ficha del guion y `generarGuion` cuando se generó con un video elegido. |
 
 Al unirlos, el video **hereda `structureId` del guion** y, si estaba en `IDEA`, pasa a `GUION`.
+Si se generó un lote de varios formatos para un video, solo el **primer** guion queda unido (la
+tarjeta admite un único `scriptId`); los demás se asignan después desde su ficha.
 
-**No devuelvas selectores de estructura ni de guion al alta del video.** Se quitaron
-deliberadamente: la estructura llega con el guion, no antes.
+### `structureIds` no es `structureId`
+
+Son dos columnas de `ContentItem` con papeles distintos, y no se mezclan:
+
+| Columna | Qué es | Quién la escribe |
+|---|---|---|
+| `structureIds` (JSON `string[]`) | **Formatos previstos**: los que el equipo quiere probar con esa idea. Se eligen al crear o editar el video (`StructurePicker`, casillas `structureIds`). El generador los usa para preseleccionar el lote. | `crearVideo`, `actualizarVideo`, `duplicarVideo` |
+| `structureId` | **Estructura definitiva**: la del guion vinculado. | Solo `vincularGuionAVideo` (y `desvincularGuionDeVideo`, que la deja en `null`) |
+
+El selector de **guion** sigue sin existir en el alta del video: el guion llega desde el generador
+o desde Guiones, nunca se elige a mano al crear la tarjeta. `generarGuion` rechaza el vínculo si
+la tarjeta ya no existe, si ya tiene guion (una pestaña vieja no pisa el vínculo) o si la marca
+elegida no es la del video.
+
+### CTA con y sin venta
+
+El cierre de un guion tiene un **modo** (`ctaModo`, campo del formulario del generador; no es
+columna): `venta` o `comunidad`. Viven en `src/lib/script-angles.ts` como **dos catálogos
+separados del mismo tipo `CtaTrigger`**, y no se mezclan:
+
+| Modo | Catálogo | Qué pide | Acciones (`CTA_ACTIONS`) |
+|---|---|---|---|
+| `venta` | `CTA_TRIGGERS` (escasez, urgencia, motivo, incentivo, impacto visual, directo) | Una decisión con costo: comprar, reservar, ir al enlace, escribir al DM | Las sin `modo` (comentar, seguir) y las de `modo: "venta"` (bio, dm, compra) |
+| `comunidad` | `CTA_COMUNIDAD` (ids `com_…`: seguir para la parte 2, guardar, enviárselo a alguien, etiquetar, pregunta, encuesta, próximo tema, duda en video, reto, notificaciones, quédate hasta el final, sin pedido) | Una acción de plataforma que no cuesta nada, con un motivo que sale del contenido | Las sin `modo` y las de `modo: "comunidad"` (guardar, compartir, etiquetar, opinar, votar, notificaciones, siguiente, mostrar) |
+
+Reglas:
+
+- `ctaCatalogo(modo)`, `ctaAccionesDeModo(modo)`, `modoDeGatillo(id)` y `buscarGatillo(id)` son
+  la única forma de elegir catálogo. **No se reutilizan ids entre catálogos** ni se añaden
+  gatillos de comunidad a `CTA_TRIGGERS`.
+- `armarCtaTexto` busca el gatillo en los dos catálogos; con un gatillo de comunidad **nunca
+  añade presión ni vocabulario de oferta** (`tests/cta-comunidad.test.mts` lo vigila; corre con
+  `npm run test:cta`, o todo junto con `npm run test:unidad`).
+- El servidor no se fía del formulario: `generarGuion` pasa gatillo y acción por
+  `coherenciaCta(modo, gatillo, accion)` y descarta lo que no sea del modo enviado. Sin el campo
+  (formularios viejos) el modo es `venta`, como siempre.
+- En el prompt (`src/lib/ai/context.ts`), el modo comunidad emite el bloque
+  `### CIERRE DE COMUNIDAD (SIN VENTA)` con `PROHIBICION_CTA_COMUNIDAD` literal (oferta,
+  promoción, precio, cupo, enlace de compra, DM comercial…) y **prevalece sobre la categoría
+  VENDE de la estructura**; los canales de la marca se marcan como no mencionables. Cada
+  `promptGuidance` de comunidad repite la prohibición y las reglas de redacción (un solo pedido,
+  motivo que sale del contenido, destinatario por situación, pregunta antes que orden, texto en
+  pantalla de cinco palabras, ubicación por familia).
+- El generador arranca en `comunidad` si la estructura ENTRETIENE y en `venta` si VENDE, y
+  sigue a la estructura hasta que alguien toca el conmutador. El grid con
+  `data-guia={GUIA_TARGETS.BOTONES_GENERADOR_CTA}` **existe en los dos modos**: la guía lo busca.
+- El modo no se persiste en `Script`: queda en `briefInput` («Modo de CTA: sin venta
+  (comunidad)») y en `promptUsed`. Si algún día hace falta filtrar por él, es una columna
+  `ctaMode String?` con SQL aditivo en `prisma/operations`, no un enum.
+
+### Lote de guiones
+
+`generarGuion` recorre las estructuras **en serie** (una llamada a la vez contra la cuota).
+Si el proveedor rechaza la clave (`esErrorDeAutenticacion`) el lote **se aborta**: seguir solo
+repetiría el error. Si es cuota (`esErrorDeCuota`) espera 20 s y reintenta **una vez** esa
+estructura, solo si todavía cabe un guion antes del `maxDuration = 300` de la página. Lo que sí
+se creó se conserva con su auditoría y vuelve en `GenerateState.aviso` («Se generaron 2 de 4:
+fallaron «…» por …»); con aviso el generador no redirige solo, muestra qué faltó y enlaza al
+primer guion.
+
+## IA: claves, modelos y errores
+
+- **La clave guardada en Ajustes manda; la variable de entorno es el respaldo**
+  (`resolveApiKey` en `src/lib/settings.ts` devuelve `{ key, source: "db" | "env" }`). Ajustes
+  y el generador dicen de dónde sale la clave en uso. Guardar o quitar una clave se audita solo
+  con `summary` (ningún secreto entra al log; ver arriba).
+- Los errores del proveedor se convierten en `AiError` con `code` (`auth | quota | model |
+  server | schema`) en `toAiError` (`src/lib/ai/providers.ts`), clasificando primero por las
+  clases tipadas del SDK y solo al final por texto. Los mensajes dicen **qué pasó y qué hacer**:
+  clave rechazada → de dónde salió y dónde generar otra; cuota de Gemini → esperar, menos
+  estructuras, `gemini-2.5-flash` o facturación. Gemini reintenta una vez sin esquema ante un 400
+  de esquema o un 400 sin clasificar (p. ej. «Request contains an invalid argument.»); clave
+  rechazada, modelo desconocido, cuota (401/403/404/429) y 5xx lanzan a la primera.
+- `probarClaveIA` prueba la clave escrita o, sin texto, la **clave en uso** (solo `OWNER`), con
+  modelos baratos fijos (`claude-haiku-4-5`, `gemini-2.5-flash`).
+- El «Modelo por defecto» de Ajustes sí se usa: `input.model` → `structure.defaultModel` →
+  Ajustes → `DEFAULT_MODEL` (`gemini-2.5-flash` para Google). Los catálogos siguen en
+  `src/lib/constants.ts`; el campo es texto libre.
+
+### Importar un brief maestro o un informe de branding (PDF)
+
+`previsualizarDocumento` (`src/app/actions/importar-documento.ts`) es de **solo lectura**: extrae
+el texto, lo limpia (`limpiarTextoInforme` en `src/lib/pdf.ts`), lo pasa por los parsers
+deterministas de `src/lib/branding-parser.ts` (`detectarTipoDocumento`, `parseBriefMaestro`,
+`parseInformeBranding`) y, si hay clave, pide a la IA **solo la prosa** con un modelo barato
+(`extraerFicha` en `src/lib/ai/extractor.ts`). Cada campo lleva su fuente (`pdf | ia | vacio`):
+**lo que no está en el PDF queda vacío y se avisa, nunca se inventa**; `toneReferences` no sale
+del PDF. Escribir es cosa del submit normal (`crearMarca`, `actualizarMarca`, `crearArquetipo`…),
+que audita como siempre y crea el `Asset` con `crearAssetDesdeArchivo`. El texto del brief que
+va al prompt pasa por `redactarDatosSensibles` (RUC, razón social, teléfonos, correos, números
+del negocio y ventas): esos datos no viajan al proveedor de IA.
 
 ## Agenda
 

@@ -28,9 +28,14 @@ import {
 import { generarGuion, type GenerateState } from "@/app/actions/scripts";
 import {
   ANGULOS_CREATIVOS,
-  CTA_TRIGGERS,
   CTA_ACTIONS,
+  CTA_MODOS,
   armarCtaTexto,
+  buscarGatillo,
+  ctaAccionesDeModo,
+  ctaCatalogo,
+  modoDeGatillo,
+  type CtaModo,
 } from "@/lib/script-angles";
 import {
   AI_MODELS,
@@ -97,7 +102,50 @@ export type GeneratorArchetype = {
   fits: Record<string, { score: number; notes: string | null }>;
 };
 
+/** Tarjeta del calendario sin guion, candidata a recibir el que se genere. */
+export type GeneratorVideo = {
+  id: string;
+  title: string;
+  hook: string | null;
+  description: string | null;
+  brandId: string;
+  brandName: string;
+  statusLabel: string;
+  dateLabel: string;
+  /** Formatos previstos en la idea (ids de Structure), en el orden en que se guardaron (el del picker, por nombre). */
+  structureIds: string[];
+};
+
 /* ------------------------------------------------------------ AUXILIARES -- */
+
+/** La petición inicial que sale de la tarjeta: título, hook y descripción. */
+function peticionDeVideo(video: GeneratorVideo): string {
+  return [video.title, video.hook, video.description]
+    .map((t) => (t ?? "").trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Una estructura que ENTRETIENE arranca sin vender; una que VENDE, con Hormozi. */
+function modoDeEstructura(s: GeneratorStructure | null): CtaModo {
+  return s?.category === "ENTRETIENE" ? "comunidad" : "venta";
+}
+
+/** El primer gatillo del modo con su primera fórmula: el punto de partida de la etapa 4. */
+function cierreInicial(modo: CtaModo) {
+  const gatillo = ctaCatalogo(modo)[0];
+  const preset = gatillo.presets[0];
+  return {
+    gatillo: gatillo.id,
+    accion: preset.accion,
+    detalle: preset.detalle,
+    texto: preset.textoCompleto,
+  };
+}
+
+function etiquetaModo(modo: CtaModo): string {
+  return CTA_MODOS.find((m) => m.id === modo)?.label ?? modo;
+}
 
 function FitBadge({ score, className }: { score: number | null; className?: string }) {
   if (score === null || score === undefined) {
@@ -150,6 +198,10 @@ export function GeneratorForm({
   brands,
   archetypes,
   providersReady,
+  videos = [],
+  initialVideoId,
+  initialVideoAviso = null,
+  initialStructureIds = [],
   initialStructureId,
   initialBrandId,
   initialArchetypeId,
@@ -161,6 +213,14 @@ export function GeneratorForm({
   brands: GeneratorBrand[];
   archetypes: GeneratorArchetype[];
   providersReady: Record<string, boolean>;
+  /** Tarjetas sin guion a las que se puede unir el resultado. */
+  videos?: GeneratorVideo[];
+  /** Tarjeta elegida desde su ficha (`?video=`). */
+  initialVideoId?: string;
+  /** Por qué la tarjeta de `?video=` no se preseleccionó (ya tiene guion, está publicada o cancelada, no existe). */
+  initialVideoAviso?: string | null;
+  /** Lote inicial: los formatos previstos del video que siguen activos. */
+  initialStructureIds?: string[];
   initialStructureId: string;
   initialBrandId: string;
   initialArchetypeId?: string;
@@ -173,6 +233,8 @@ export function GeneratorForm({
     generarGuion,
     null
   );
+
+  const videoInicial = videos.find((v) => v.id === initialVideoId) ?? null;
 
   const primeraEstructura =
     structures.find((s) => s.id === initialStructureId) ?? null;
@@ -188,19 +250,29 @@ export function GeneratorForm({
   const [maxStepReached, setMaxStepReached] = useState<number>(initialStructureId ? 2 : 1);
   const [categoryFilter, setCategoryFilter] = useState<string>("TODOS");
   const [searchStructure, setSearchStructure] = useState<string>("");
-  const [producto, setProducto] = useState<string>(initialProduct ?? "");
+  // Con un video elegido, el producto y la petición arrancan desde la tarjeta
+  // si la URL no trae nada más concreto.
+  const [producto, setProducto] = useState<string>(
+    initialProduct || videoInicial?.title || ""
+  );
   const [productoDetalle, setProductoDetalle] = useState<string>("");
-  const [peticion, setPeticion] = useState<string>(initialRequest ?? "");
+  const [peticion, setPeticion] = useState<string>(
+    initialRequest || (videoInicial ? peticionDeVideo(videoInicial) : "")
+  );
   const [variante, setVariante] = useState<string>("");
 
   const [selectedStructureIds, setSelectedStructureIds] = useState<string[]>(() => {
+    if (initialStructureIds.length) return initialStructureIds;
     if (initialStructureId) return [initialStructureId];
     if (primeraEstructura) return [primeraEstructura.id];
     return structures.length ? [structures[0].id] : [];
   });
   const [previewStructureId, setPreviewStructureId] = useState<string>(
-    initialStructureId || (primeraEstructura?.id ?? (structures[0]?.id ?? ""))
+    initialStructureIds[0] ||
+      initialStructureId ||
+      (primeraEstructura?.id ?? (structures[0]?.id ?? ""))
   );
+  const [videoId, setVideoId] = useState<string>(videoInicial?.id ?? "");
   const [brandId, setBrandId] = useState(initialBrandId);
   const [archetypeId, setArchetypeId] = useState(initialArchetypeId ?? "");
   const [duracion, setDuracion] = useState(
@@ -209,15 +281,65 @@ export function GeneratorForm({
   const [provider, setProvider] = useState(proveedorInicial);
   const [model, setModel] = useState(primeraEstructura?.defaultModel ?? "");
   const [creativeAngle, setCreativeAngle] = useState(initialAngle ?? "");
-  const [ctaTrigger, setCtaTrigger] = useState("escasez");
-  const [ctaAction, setCtaAction] = useState("compra");
-  const [ctaDetail, setCtaDetail] = useState(
-    "Solo puedo atender a 9 clientes y ya tengo 5, las plazas de atención se llenan"
-  );
-  const [cta, setCta] = useState(
-    "Si no me compras ahora solo puedo atender a 9 clientes y ya tengo 5 clientes, así que ya lo sabes: las plazas de atención se llenan y conmigo vas a conseguir los resultados que quieres."
-  );
+
+  // El cierre arranca según la estructura con la que se abre el generador:
+  // ENTRETIENE → sin venta (comunidad); VENDE → gatillos de Hormozi. Mientras
+  // nadie toque el conmutador, sigue a la estructura que se elija en la etapa 1.
+  const estructuraInicial =
+    structures.find(
+      (s) => s.id === (initialStructureIds[0] || initialStructureId || primeraEstructura?.id)
+    ) ??
+    structures[0] ??
+    null;
+  const modoInicial = modoDeEstructura(estructuraInicial);
+  const cierre0 = cierreInicial(modoInicial);
+  const [ctaModo, setCtaModo] = useState<CtaModo>(modoInicial);
+  const [modoElegidoAMano, setModoElegidoAMano] = useState(false);
+  // El usuario ya trabajó el cierre (gatillo, acción, detalle o texto): tocar
+  // el lote en la etapa 1 no debe reescribirlo aunque no haya cambiado el modo.
+  const [cierreEditadoAMano, setCierreEditadoAMano] = useState(false);
+  const [ctaTrigger, setCtaTrigger] = useState(cierre0.gatillo);
+  const [ctaAction, setCtaAction] = useState(cierre0.accion);
+  const [ctaDetail, setCtaDetail] = useState(cierre0.detalle);
+  const [cta, setCta] = useState(cierre0.texto);
   const [segundos, setSegundos] = useState(0);
+
+  /** Aplica un gatillo con su primera fórmula (o la que coincida con la acción actual). */
+  const aplicarGatillo = (gatilloId: string, preferirAccion?: string) => {
+    const gat = buscarGatillo(gatilloId);
+    if (!gat) return;
+    const preset =
+      (preferirAccion ? gat.presets.find((p) => p.accion === preferirAccion) : undefined) ??
+      gat.presets[0];
+    setCtaTrigger(gat.id);
+    if (preset) {
+      setCtaAction(preset.accion);
+      setCtaDetail(preset.detalle);
+      setCta(preset.textoCompleto);
+    }
+  };
+
+  /** Cambia de modo y deja el cierre coherente: el primer gatillo del catálogo nuevo. */
+  const aplicarModo = (modo: CtaModo, aMano: boolean) => {
+    if (aMano) setModoElegidoAMano(true);
+    if (modo === ctaModo && modoDeGatillo(ctaTrigger) === modo) return;
+    setCtaModo(modo);
+    const inicial = cierreInicial(modo);
+    setCtaTrigger(inicial.gatillo);
+    setCtaAction(inicial.accion);
+    setCtaDetail(inicial.detalle);
+    setCta(inicial.texto);
+  };
+
+  /**
+   * Al elegir estructura, el modo la sigue salvo que ya se haya elegido a mano
+   * o que el cierre ya esté redactado: aplicarModo reemplaza gatillo, acción,
+   * detalle y texto, y ese trabajo no se pierde por marcar otro formato.
+   */
+  const seguirModoDeEstructura = (s: GeneratorStructure | null) => {
+    if (modoElegidoAMano || cierreEditadoAMano || !s) return;
+    aplicarModo(modoDeEstructura(s), false);
+  };
 
   const structure =
     structures.find((s) => s.id === previewStructureId) ??
@@ -226,16 +348,56 @@ export function GeneratorForm({
     null;
   const brand = brands.find((b) => b.id === brandId) ?? null;
   const archetype = archetypes.find((a) => a.id === archetypeId) ?? null;
+  const video = videos.find((v) => v.id === videoId) ?? null;
+
+  // Con marca elegida solo se ofrecen sus tarjetas (y la ya elegida, por si acaso).
+  const videosVisibles = videos.filter(
+    (v) => !brandId || v.brandId === brandId || v.id === videoId
+  );
+
+  /**
+   * Elegir un video fija la marca, rellena producto y petición si estaban
+   * vacíos y preselecciona el lote con sus formatos previstos que sigan activos.
+   */
+  const elegirVideo = (id: string) => {
+    setVideoId(id);
+    const elegido = videos.find((v) => v.id === id);
+    if (!elegido) return;
+    setBrandId(brands.some((b) => b.id === elegido.brandId) ? elegido.brandId : "");
+    if (!producto.trim()) setProducto(elegido.title);
+    if (!peticion.trim()) setPeticion(peticionDeVideo(elegido));
+    const lote = elegido.structureIds.filter((sid) => structures.some((s) => s.id === sid));
+    if (lote.length) {
+      setSelectedStructureIds(lote);
+      setPreviewStructureId(lote[0]);
+      const primera = structures.find((s) => s.id === lote[0]);
+      if (primera) {
+        setDuracion(String(primera.defaultDurationSec || 45));
+        if (primera.defaultModel) setModel(primera.defaultModel);
+        if (primera.defaultProvider && providersReady[primera.defaultProvider]) {
+          setProvider(primera.defaultProvider);
+        }
+        seguirModoDeEstructura(primera);
+      }
+    }
+  };
+
+  /** Cambiar de marca suelta el video si era de otra: el servidor exige que coincidan. */
+  const elegirMarca = (id: string) => {
+    setBrandId(id);
+    if (video && id && video.brandId !== id) setVideoId("");
+  };
 
   const fitActual =
     archetype && structure ? (archetype.fits[structure.id]?.score ?? null) : null;
   const notaFit =
     archetype && structure ? (archetype.fits[structure.id]?.notes ?? null) : null;
 
-  // Al terminar, el guion nuevo se abre solo.
+  // Al terminar, el guion nuevo se abre solo. Si el lote quedó a medias, no:
+  // primero hay que poder leer qué falló, y el enlace al guion queda en el aviso.
   useEffect(() => {
-    if (state?.scriptId) router.push(`/guiones/${state.scriptId}`);
-  }, [state?.scriptId, router]);
+    if (state?.scriptId && !state.aviso) router.push(`/guiones/${state.scriptId}`);
+  }, [state?.scriptId, state?.aviso, router]);
 
   // Contador honesto de lo que lleva esperando.
   useEffect(() => {
@@ -248,24 +410,25 @@ export function GeneratorForm({
   }, [pending]);
 
   const toggleEstructura = (s: GeneratorStructure) => {
-    setSelectedStructureIds((prev) => {
-      const exists = prev.includes(s.id);
-      if (exists) {
-        const next = prev.filter((id) => id !== s.id);
-        if (next.length > 0 && previewStructureId === s.id) {
-          setPreviewStructureId(next[0]);
-        }
-        return next;
-      } else {
-        setPreviewStructureId(s.id);
-        return [...prev, s.id];
+    // `exists` se calcula fuera del updater: el modo del cierre solo sigue a
+    // una estructura que se AÑADE; quitar una del lote no cambia el cierre.
+    const exists = selectedStructureIds.includes(s.id);
+    if (exists) {
+      const next = selectedStructureIds.filter((id) => id !== s.id);
+      setSelectedStructureIds(next);
+      if (next.length > 0 && previewStructureId === s.id) {
+        setPreviewStructureId(next[0]);
       }
-    });
+    } else {
+      setSelectedStructureIds([...selectedStructureIds, s.id]);
+      setPreviewStructureId(s.id);
+    }
     setDuracion(String(s.defaultDurationSec || 45));
     if (s.defaultModel) setModel(s.defaultModel);
     if (s.defaultProvider && providersReady[s.defaultProvider]) {
       setProvider(s.defaultProvider);
     }
+    if (!exists) seguirModoDeEstructura(s);
   };
 
   const seleccionarSoloEsta = (s: GeneratorStructure, e?: React.MouseEvent) => {
@@ -277,6 +440,7 @@ export function GeneratorForm({
     if (s.defaultProvider && providersReady[s.defaultProvider]) {
       setProvider(s.defaultProvider);
     }
+    seguirModoDeEstructura(s);
   };
 
   const seleccionarTodasFiltradas = () => {
@@ -312,6 +476,12 @@ export function GeneratorForm({
   );
 
   const modelosSugeridos = AI_MODELS[provider] ?? [];
+
+  const esComunidad = ctaModo === "comunidad";
+  const gatillosDelModo = ctaCatalogo(ctaModo);
+  const accionesDelModo = ctaAccionesDeModo(ctaModo);
+  const gatilloActual = buscarGatillo(ctaTrigger);
+  const resumenCierre = `${etiquetaModo(ctaModo)} · ${gatilloActual?.shortLabel ?? "Sin gatillo"}`;
 
   // --- PASOS DEL ASISTENTE DE IDEACIÓN (GEMINI-STYLE) ---
   const PASOS = [
@@ -353,9 +523,9 @@ export function GeneratorForm({
       id: 4,
       numero: 4,
       titulo: "Cierre CTA",
-      descripcion: "Gatillos Hormozi",
+      descripcion: esComunidad ? "Sin venta · Comunidad" : "Gatillos Hormozi",
       icono: <Target size={13} />,
-      resumen: CTA_TRIGGERS.find((t) => t.id === ctaTrigger)?.shortLabel ?? "Hormozi",
+      resumen: resumenCierre,
       completo: cta.trim().length > 0,
     },
     {
@@ -419,12 +589,14 @@ export function GeneratorForm({
           value={selectedStructureIds.join(",")}
         />
         <input type="hidden" name="marca" value={brandId} />
+        <input type="hidden" name="video" value={videoId} />
         <input type="hidden" name="arquetipo" value={archetypeId} />
         <input type="hidden" name="producto" value={producto} />
         <input type="hidden" name="productoDetalle" value={productoDetalle} />
         <input type="hidden" name="anguloCreativo" value={creativeAngle} />
         <input type="hidden" name="peticion" value={peticion} />
         <input type="hidden" name="variante" value={variante} />
+        <input type="hidden" name="ctaModo" value={ctaModo} />
         <input type="hidden" name="ctaGatillo" value={ctaTrigger} />
         <input type="hidden" name="ctaAccion" value={ctaAction} />
         <input type="hidden" name="ctaDetalle" value={ctaDetail} />
@@ -432,6 +604,13 @@ export function GeneratorForm({
         <input type="hidden" name="duracion" value={duracion} />
         <input type="hidden" name="proveedor" value={provider} />
         <input type="hidden" name="modelo" value={model} />
+
+        {/* LA TARJETA DE ?video= NO SE PUDO PRESELECCIONAR: se dice por qué hasta que se elija otra */}
+        {initialVideoAviso && !videoId ? (
+          <Callout tone="warn" title="Ese video no se pudo elegir">
+            <span className="block">{initialVideoAviso}</span>
+          </Callout>
+        ) : null}
 
         {/* BARRA SUPERIOR DE ETAPAS (STEPPER GEMINI-STYLE) */}
         <div
@@ -811,15 +990,42 @@ export function GeneratorForm({
               icon={<Package size={15} />}
             />
             <div className="space-y-4 p-4">
+              <Field
+                label="¿Para qué video es?"
+                hint={
+                  videos.length
+                    ? "Solo tarjetas en Idea o Guion sin guion vinculado. Al generar, el guion se une a esa tarjeta y el video pasa a Guion."
+                    : "No hay tarjetas en Idea o Guion sin guion. Crea el video en Videos y vuelve, o genera un guion suelto."
+                }
+              >
+                <select
+                  className="select"
+                  value={videoId}
+                  onChange={(e) => elegirVideo(e.target.value)}
+                  data-guia={GUIA_TARGETS.SELECT_GENERADOR_VIDEO}
+                >
+                  <option value="">Guion suelto (sin video)</option>
+                  {videosVisibles.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.title} · {v.brandName} · {v.dateLabel}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field
                   label="Marca"
-                  hint="Opcional, pero muy recomendado: sin marca la IA escribe genérico."
+                  hint={
+                    video
+                      ? `Fijada por el video: el guion tiene que ser de ${video.brandName}.`
+                      : "Opcional, pero muy recomendado: sin marca la IA escribe genérico."
+                  }
                 >
                   <select
                     className="select"
                     value={brandId}
-                    onChange={(e) => setBrandId(e.target.value)}
+                    onChange={(e) => elegirMarca(e.target.value)}
                     data-guia={GUIA_TARGETS.SELECT_GENERADOR_MARCA}
                   >
                     <option value="">Sin marca (generalista)</option>
@@ -1130,7 +1336,7 @@ export function GeneratorForm({
                     className="btn btn-primary"
                     data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_3}
                   >
-                    Continuar: Cierre y CTA (Hormozi)
+                    Continuar: Cierre y CTA
                     <ArrowRight size={14} />
                   </button>
                 </div>
@@ -1145,34 +1351,78 @@ export function GeneratorForm({
         {currentStep === 4 && (
           <Card>
             <CardHeader
-              title="4 · Cierre y llamado a la acción (Alex Hormozi)"
-              subtitle="Aplica los principios de $100M Offers y $100M Leads para que el espectador actúe ahora mismo."
+              title={
+                esComunidad
+                  ? "4 · Cierre y llamado a la acción (sin venta · comunidad)"
+                  : "4 · Cierre y llamado a la acción (Alex Hormozi)"
+              }
+              subtitle={
+                esComunidad
+                  ? "El video no vende: solo pide una acción de comunidad (seguir, guardar, enviar, comentar…) con un motivo que sale del contenido."
+                  : "Aplica los principios de $100M Offers y $100M Leads para que el espectador actúe ahora mismo."
+              }
               icon={<Target size={15} />}
             />
             <div className="space-y-4 p-4">
-              {/* 1. Selector de Gatillo */}
+              {/* 0. Conmutador de modo: vender o solo comunidad */}
               <div>
                 <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
-                  1 · Elige el gatillo psicológico de cierre
+                  ¿Este video vende o solo construye comunidad?
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {CTA_MODOS.map((modo) => {
+                    const activo = ctaModo === modo.id;
+                    return (
+                      <button
+                        key={modo.id}
+                        type="button"
+                        onClick={() => aplicarModo(modo.id, true)}
+                        aria-pressed={activo}
+                        className={cn(
+                          "p-2.5 rounded-lg border text-left transition-all flex items-start gap-2",
+                          activo
+                            ? "border-brand bg-brandsoft/70 ring-1 ring-brand font-semibold text-ink shadow-sm"
+                            : "border-line bg-surface hover:bg-surface2 text-inksoft"
+                        )}
+                      >
+                        <span className="text-lg shrink-0 mt-0.5">{modo.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[12px] font-bold leading-tight">{modo.label}</div>
+                          <div className="text-[10.5px] text-inkmuted leading-snug mt-0.5">
+                            {modo.description}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {!modoElegidoAMano && !cierreEditadoAMano ? (
+                  <p className="text-inkmuted text-[10.5px] mt-1">
+                    Sugerido por la estructura elegida ({structure?.category === "ENTRETIENE" ? "entretiene" : "vende"}). Cámbialo si este video pide otra cosa.
+                  </p>
+                ) : null}
+              </div>
+
+              {/* 1. Selector de Gatillo (el contenedor con data-guia existe en ambos modos) */}
+              <div>
+                <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
+                  {esComunidad
+                    ? "1 · Elige qué acción de comunidad pides"
+                    : "1 · Elige el gatillo psicológico de cierre"}
                 </div>
                 <div
                   className="grid grid-cols-2 sm:grid-cols-3 gap-1.5"
                   data-guia={GUIA_TARGETS.BOTONES_GENERADOR_CTA}
                 >
-                  {CTA_TRIGGERS.map((gat) => {
+                  {gatillosDelModo.map((gat) => {
                     const activo = ctaTrigger === gat.id;
                     return (
                       <button
                         key={gat.id}
                         type="button"
                         onClick={() => {
-                          setCtaTrigger(gat.id);
-                          const preset = gat.presets[0];
-                          if (preset) {
-                            setCtaAction(preset.accion);
-                            setCtaDetail(preset.detalle);
-                            setCta(preset.textoCompleto);
-                          }
+                          setCierreEditadoAMano(true);
+                          aplicarGatillo(gat.id);
                         }}
                         className={cn(
                           "p-2 rounded-lg border text-left transition-all flex items-start gap-2",
@@ -1200,15 +1450,17 @@ export function GeneratorForm({
               <div>
                 <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
                   2 · Qué acción pides en redes
+                  {esComunidad ? " (una sola, sin enlace ni DM)" : ""}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {CTA_ACTIONS.map((acc) => {
+                  {accionesDelModo.map((acc) => {
                     const activo = ctaAction === acc.id;
                     return (
                       <button
                         key={acc.id}
                         type="button"
                         onClick={() => {
+                          setCierreEditadoAMano(true);
                           setCtaAction(acc.id);
                           const nuevoTexto = armarCtaTexto(ctaTrigger, acc.id, ctaDetail);
                           setCta(nuevoTexto);
@@ -1230,13 +1482,13 @@ export function GeneratorForm({
 
               {/* 3. Presets y detalle específico */}
               {(() => {
-                const gat = CTA_TRIGGERS.find((g) => g.id === ctaTrigger);
+                const gat = gatilloActual;
                 if (!gat) return null;
                 return (
                   <div className="space-y-2 rounded-lg border border-line bg-surface2/30 p-2.5">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                       <span className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider">
-                        3 · Fórmulas probadas ({gat.shortLabel})
+                        3 · {esComunidad ? "Frases de ejemplo" : "Fórmulas probadas"} ({gat.shortLabel})
                       </span>
                       <span className="text-[10px] text-inkmuted italic">
                         {gat.explanation}
@@ -1249,6 +1501,7 @@ export function GeneratorForm({
                           key={idx}
                           type="button"
                           onClick={() => {
+                            setCierreEditadoAMano(true);
                             setCtaAction(p.accion);
                             setCtaDetail(p.detalle);
                             setCta(p.textoCompleto);
@@ -1262,8 +1515,16 @@ export function GeneratorForm({
                     </div>
 
                     <Field
-                      label="Incentivo, límite o detalle específico"
-                      hint="Personaliza los números o la razón exacta: cupos disponibles, fecha límite o guía a regalar."
+                      label={
+                        esComunidad
+                          ? "Motivo, destinatario o pregunta del pedido"
+                          : "Incentivo, límite o detalle específico"
+                      }
+                      hint={
+                        esComunidad
+                          ? "Lo que justifica el pedido y sale del video: para cuándo guardarlo, a quién enviárselo o qué preguntas. Sin precios ni promociones."
+                          : "Personaliza los números o la razón exacta: cupos disponibles, fecha límite o guía a regalar."
+                      }
                     >
                       <input
                         className="input text-[12px]"
@@ -1271,6 +1532,7 @@ export function GeneratorForm({
                         placeholder={gat.defaultDetailPlaceholder}
                         onChange={(e) => {
                           const nuevoDet = e.target.value;
+                          setCierreEditadoAMano(true);
                           setCtaDetail(nuevoDet);
                           setCta(armarCtaTexto(ctaTrigger, ctaAction, nuevoDet));
                         }}
@@ -1291,14 +1553,28 @@ export function GeneratorForm({
                     className="textarea font-medium text-[12px]"
                     rows={3}
                     value={cta}
-                    onChange={(e) => setCta(e.target.value)}
-                    placeholder="Ej. Si no me compras ahora solo puedo atender a 9 clientes..."
+                    onChange={(e) => {
+                      setCierreEditadoAMano(true);
+                      setCta(e.target.value);
+                    }}
+                    placeholder={
+                      esComunidad
+                        ? "Ej. Mándaselo a tu pata que siempre dice que no sabe qué regalar."
+                        : "Ej. Si no me compras ahora solo puedo atender a 9 clientes..."
+                    }
                   />
                   <div className="flex items-center justify-between text-[11px] text-inkmuted">
-                    <span>Este texto exacto se inyectará en el pre-prompt de la IA para el cierre.</span>
+                    <span>
+                      {esComunidad
+                        ? "Este texto se inyecta en el prompt junto con la prohibición de vender: la IA no puede añadir precios, ofertas ni enlaces."
+                        : "Este texto exacto se inyectará en el pre-prompt de la IA para el cierre."}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => setCta(armarCtaTexto(ctaTrigger, ctaAction, ctaDetail))}
+                      onClick={() => {
+                        setCierreEditadoAMano(true);
+                        setCta(armarCtaTexto(ctaTrigger, ctaAction, ctaDetail));
+                      }}
                       className="text-brand hover:underline flex items-center gap-1 font-semibold"
                     >
                       <RotateCcw size={11} /> Re-ensamblar fórmula
@@ -1368,7 +1644,7 @@ export function GeneratorForm({
                   <div className="p-2 rounded bg-surface border border-line">
                     <span className="text-inkmuted text-[10px] uppercase font-bold block">4 · Ángulo y CTA:</span>
                     <span className="text-ink font-semibold">{creativeAngle ? ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle)?.shortLabel : "Estándar"}</span>
-                    <span className="text-inkmuted block text-[11px]">Gatillo: {CTA_TRIGGERS.find((t) => t.id === ctaTrigger)?.shortLabel}</span>
+                    <span className="text-inkmuted block text-[11px]">Cierre: {resumenCierre}</span>
                   </div>
                 </div>
               </div>
@@ -1495,8 +1771,10 @@ export function GeneratorForm({
                       ? `Generando ${selectedStructureIds.length} guiones con IA…`
                       : "Generando guion con IA…"
                     : selectedStructureIds.length > 1
-                      ? `✨ Generar ${selectedStructureIds.length} guiones con IA (Lote)`
-                      : "✨ Generar guion con IA"}
+                      ? `✨ Generar ${selectedStructureIds.length} guiones con IA (Lote)${
+                          video ? " y vincular el primero al video" : ""
+                        }`
+                      : `✨ Generar guion con IA${video ? " y vincularlo al video" : ""}`}
                 </button>
               </div>
             </div>
@@ -1512,6 +1790,33 @@ export function GeneratorForm({
             </span>
           </Callout>
         ) : null}
+
+        {/* ALGO QUEDÓ A MEDIAS: lo creado se conserva y aquí se dice qué faltó
+            (formatos que fallaron o no se intentaron, o el vínculo al video). */}
+        {state?.scriptId && state.aviso ? (
+          <Callout
+            tone="warn"
+            title={
+              (state.totalGenerados ?? 0) < selectedStructureIds.length
+                ? "El lote quedó incompleto"
+                : "El guion se creó, pero no quedó unido al video"
+            }
+          >
+            <span className="block">{state.aviso}</span>
+            <span className="mt-1 block">
+              Los guiones que sí salieron ya están guardados
+              {state.contentItemId ? " y el primero quedó vinculado al video" : ""}.{" "}
+              <Link href={`/guiones/${state.scriptId}`} className="text-brand font-semibold">
+                Abrir el primer guion
+              </Link>{" "}
+              ·{" "}
+              <Link href="/guiones" className="text-brand font-semibold">
+                Ver todos los guiones
+              </Link>
+              . Para los que faltaron, vuelve a generar solo esos formatos.
+            </span>
+          </Callout>
+        ) : null}
       </form>
 
       {/* --------------------------------------------------- COLUMNA DERECHA */}
@@ -1524,6 +1829,27 @@ export function GeneratorForm({
               icon={<Sparkles size={15} />}
             />
             <div className="space-y-3.5 p-4">
+              <PanelRow icon={<Film size={13} />} label="Video">
+                {video ? (
+                  <>
+                    <span className="text-ink font-semibold">{video.title}</span>
+                    <span className="text-inkmuted">
+                      {" "}
+                      · {video.brandName} · {video.dateLabel} · {video.statusLabel}
+                    </span>
+                    <span className="text-inkmuted block">
+                      {selectedStructureIds.length > 1
+                        ? "Al generar, el primer guion del lote queda unido a esta tarjeta; los demás se asignan desde su ficha."
+                        : "Al generar, el guion queda unido a esta tarjeta y el video pasa a Guion."}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-inkmuted">
+                    Guion suelto: no se une a ninguna tarjeta del calendario.
+                  </span>
+                )}
+              </PanelRow>
+
               {selectedStructureIds.length > 1 && (
                 <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-[12px] text-ink space-y-1.5">
                   <div className="font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
@@ -1531,7 +1857,7 @@ export function GeneratorForm({
                     Lote activo: {selectedStructureIds.length} guiones simultáneos
                   </div>
                   <p className="text-inksoft leading-relaxed text-[11.5px]">
-                    Se generará un guion independiente para cada formato elegido, manteniendo el mismo producto, briefing y gatillos de conversión.
+                    Se generará un guion independiente para cada formato elegido, manteniendo el mismo producto, briefing y cierre ({etiquetaModo(ctaModo)}). Si alguno falla, los demás se conservan y se avisa cuál faltó.
                   </p>
                   <div className="flex flex-wrap gap-1 pt-1">
                     {selectedStructureIds.map((id) => {
@@ -1695,16 +2021,24 @@ export function GeneratorForm({
                     )}
                   </PanelRow>
 
-                  <PanelRow icon={<Target size={13} />} label="Cierre y CTA (Hormozi)">
+                  <PanelRow
+                    icon={<Target size={13} />}
+                    label={esComunidad ? "Cierre y CTA (sin venta · comunidad)" : "Cierre y CTA (Hormozi)"}
+                  >
                     {cta ? (
                       <div>
-                        <div className="flex items-center gap-1.5 mb-1">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                          <span className="chip chip-brand text-[10px] font-semibold">
+                            {etiquetaModo(ctaModo)}
+                          </span>
                           <span className="chip chip-plain text-[10px] font-semibold">
-                            {CTA_TRIGGERS.find((g) => g.id === ctaTrigger)?.shortLabel ?? "Gatillo"}
+                            {gatilloActual?.shortLabel ?? "Sin gatillo"}
                           </span>
-                          <span className="chip chip-plain text-[10px]">
-                            {CTA_ACTIONS.find((a) => a.id === ctaAction)?.label ?? ctaAction}
-                          </span>
+                          {ctaAction ? (
+                            <span className="chip chip-plain text-[10px]">
+                              {CTA_ACTIONS.find((a) => a.id === ctaAction)?.label ?? ctaAction}
+                            </span>
+                          ) : null}
                         </div>
                         <span className="text-ink font-medium text-[12px] leading-snug block line-clamp-3">
                           {cta}
@@ -1773,14 +2107,18 @@ export function GeneratorForm({
         </div>
       ) : null}
 
-      {state?.scriptId ? (
+      {state?.scriptId && !state.aviso ? (
         <div className="no-print fixed inset-x-0 bottom-0 z-40 flex justify-center p-4">
           <div className="card fade-in flex items-center gap-3 px-4 py-3 shadow-[var(--shadow-3)]">
             <Check size={16} className="text-ok shrink-0" />
             <span className="text-[12.5px] font-semibold">
               {state.totalGenerados && state.totalGenerados > 1
-                ? `¡${state.totalGenerados} guiones listos! Abriendo el primero…`
-                : "Guion listo. Abriendo el visualizador…"}
+                ? state.contentItemId
+                  ? `¡${state.totalGenerados} guiones listos! El primero quedó vinculado al video. Abriéndolo…`
+                  : `¡${state.totalGenerados} guiones listos! Abriendo el primero…`
+                : state.contentItemId
+                  ? "Guion listo y vinculado al video. Abriendo el visualizador…"
+                  : "Guion listo. Abriendo el visualizador…"}
             </span>
           </div>
         </div>

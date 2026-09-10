@@ -12,7 +12,7 @@ import { parseList, truncate } from "@/lib/utils";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { FilterBar, SearchInput } from "@/components/filters";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
-import { ArchetypeCreateButton } from "./archetype-form";
+import { ArchetypeCreateButton, ImportarPersonaButton } from "./archetype-form";
 
 export const dynamic = "force-dynamic";
 
@@ -205,7 +205,14 @@ export default async function ArquetiposPage({
         title="Personas frente a cámara"
         subtitle="Cada persona del equipo con su arquetipo y su marca personal: cómo habla, qué palabras usa, qué no diría nunca y con qué formatos hace match. Es lo que hace que el guion suene a ella y no a cualquiera."
         icon={<UserSquare2 size={19} />}
-        actions={editable ? <ArchetypeCreateButton /> : null}
+        actions={
+          editable ? (
+            <>
+              <ImportarPersonaButton />
+              <ArchetypeCreateButton />
+            </>
+          ) : null
+        }
       />
 
       <FilterBar>
@@ -229,7 +236,14 @@ export default async function ArquetiposPage({
                 ? "Prueba con otra palabra: el buscador mira el nombre, el arquetipo, la personalidad, el tono y el vocabulario."
                 : "Carga a cada persona que sale en cámara con su informe de branding. Sin eso, la IA escribe guiones correctos pero que no suenan a nadie."
             }
-            action={editable && !q ? <ArchetypeCreateButton label="Añadir a la primera" /> : null}
+            action={
+              editable && !q ? (
+                <div className="flex flex-wrap justify-center gap-2">
+                  <ImportarPersonaButton label="Cargar su informe de branding" />
+                  <ArchetypeCreateButton label="Añadir a la primera" />
+                </div>
+              ) : null
+            }
           />
         </Card>
       ) : (

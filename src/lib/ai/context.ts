@@ -1,6 +1,13 @@
 import { parseJson, parseList } from "@/lib/utils";
 import { OUTPUT_CONTRACT_TEXT } from "@/lib/ai/schema";
-import { ANGULOS_CREATIVOS, CTA_TRIGGERS } from "@/lib/script-angles";
+import {
+  ANGULOS_CREATIVOS,
+  CTA_ACTIONS,
+  CTA_COMUNIDAD,
+  CTA_TRIGGERS,
+  PROHIBICION_CTA_COMUNIDAD,
+  REGLAS_CTA_COMUNIDAD,
+} from "@/lib/script-angles";
 
 /**
  * Aquí se arma el "fine tuning" de cada generación.
@@ -115,11 +122,17 @@ export type BuildPromptInput = {
   cta?: string;
   /** Ángulo creativo de la versión (ej: ella_vs_ellos, camaleon, impacto_visual, pov_situacion, anti_consejo, experimento) */
   creativeAngle?: string;
-  /** Gatillo psicológico de cierre (Hormozi: escasez, urgencia, motivo_fraternidad, incentivo_regalo, impacto_visual, directo) */
+  /**
+   * "venta" (gatillos de Hormozi) o "comunidad" (cierre sin venta: seguir,
+   * guardar, enviar, comentar…). En comunidad la prohibición de vender
+   * prevalece sobre la categoría VENDE de la estructura.
+   */
+  ctaMode?: string;
+  /** Gatillo de cierre: de CTA_TRIGGERS en venta (escasez, urgencia…) o de CTA_COMUNIDAD en comunidad (com_guardar, com_compartir…) */
   ctaTrigger?: string;
-  /** Tipo de acción del CTA (comentar, seguir, bio, dm, compra) */
+  /** Tipo de acción del CTA (id de CTA_ACTIONS: comentar, seguir, bio, dm, compra, guardar, compartir…) */
   ctaActionType?: string;
-  /** Detalle del límite, fecha, regalo o motivo del CTA */
+  /** Detalle del límite, fecha, regalo o motivo del CTA; en comunidad, el motivo, destinatario o pregunta */
   ctaDetail?: string;
 };
 
@@ -245,9 +258,106 @@ function renderExamples(raw: string): string {
 
 /* ---------------------------------------------------------------- SISTEMA -- */
 
+/* ----------------------------------------------------------------- CIERRE -- */
+
+function esCierreDeComunidad(input: BuildPromptInput): boolean {
+  return input.ctaMode === "comunidad";
+}
+
+/** "seguir" -> "Seguir cuenta". Si no está en el catálogo, se deja el id. */
+function etiquetaAccion(id: string | undefined): string {
+  if (!id) return "";
+  return CTA_ACTIONS.find((a) => a.id === id)?.label ?? id;
+}
+
+/**
+ * El bloque de cierre del system prompt.
+ *
+ * En modo comunidad la prohibición de vender va explícita y PREVALECE sobre la
+ * categoría VENDE de la estructura: sin eso el modelo cuela una venta en la
+ * última escena porque la sección 1 le dijo que era obligatorio.
+ */
+function bloqueCierre(input: BuildPromptInput, esVenta: boolean): string {
+  if (esCierreDeComunidad(input)) {
+    const gatillo = input.ctaTrigger
+      ? (CTA_COMUNIDAD.find((g) => g.id === input.ctaTrigger) ?? null)
+      : null;
+    const b: string[] = [];
+    b.push(`### CIERRE DE COMUNIDAD (SIN VENTA)`);
+    b.push(
+      `En este video NO se vende nada. Esto PREVALECE sobre la categoría de la estructura (aunque sea VENDE), sobre el ángulo creativo y sobre cualquier ejemplo ganador que termine vendiendo: el remate y la última escena se convierten en el pedido de comunidad.`
+    );
+    b.push(PROHIBICION_CTA_COMUNIDAD);
+    b.push(
+      `- La marca o el producto pueden aparecer como contexto o tema del video, nunca como oferta. Los canales de la marca (WhatsApp, web, enlace del perfil) NO se mencionan.`
+    );
+    b.push(
+      `- La ÚNICA petición al espectador es la acción de comunidad indicada aquí, dicha una sola vez.`
+    );
+    if (gatillo) {
+      b.push(`- **Gatillo de comunidad**: ${gatillo.name} (${gatillo.badge})`);
+      b.push(`- **Para qué sirve**: ${gatillo.explanation}`);
+      b.push(`- **Directiva**: ${gatillo.promptGuidance}`);
+    } else {
+      b.push(
+        `- No se eligió un gatillo concreto: cierra con una pregunta abierta que salga del contenido (que se responda en tres palabras) o con la frase ritual de la marca, sin pedir nada más.\n${REGLAS_CTA_COMUNIDAD}`
+      );
+    }
+    if (input.ctaActionType) {
+      b.push(`- **Acción solicitada al espectador**: ${etiquetaAccion(input.ctaActionType)}`);
+    }
+    if (input.ctaDetail?.trim()) {
+      b.push(`- **Motivo, destinatario o pregunta del pedido**: "${input.ctaDetail.trim()}"`);
+    }
+    if (input.cta?.trim()) {
+      b.push(`- **Texto acordado para el cierre**: "${input.cta.trim()}"`);
+    }
+    b.push(
+      `Refleja este cierre en 'voice' de la escena que le corresponde (la última, salvo que la directiva diga que va justo después del gancho). En esa escena, 'onScreenText' repite el pedido en máximo cinco palabras y 'action' describe el gesto del actor hacia donde va la acción.`
+    );
+    b.push(
+      `El campo "cta" del JSON de salida lleva esta petición de comunidad tal cual, sin palabras de oferta.`
+    );
+    return b.join("\n");
+  }
+
+  const gatilloHormozi = input.ctaTrigger
+    ? CTA_TRIGGERS.find((g) => g.id === input.ctaTrigger)
+    : null;
+
+  if (gatilloHormozi || input.cta?.trim() || input.ctaDetail?.trim()) {
+    const bloquesCta: string[] = [];
+    bloquesCta.push(`### ESTRATEGIA DE CIERRE Y CONVERSIÓN (GATILLOS DE ALEX HORMOZI)`);
+    if (gatilloHormozi) {
+      bloquesCta.push(`- **Gatillo Psicológico**: ${gatilloHormozi.name} (${gatilloHormozi.badge})`);
+      bloquesCta.push(`- **Fundamento**: ${gatilloHormozi.explanation}`);
+      bloquesCta.push(`- **Directiva**: ${gatilloHormozi.promptGuidance}`);
+    }
+    if (input.ctaActionType) {
+      bloquesCta.push(`- **Acción solicitada al espectador**: ${etiquetaAccion(input.ctaActionType)}`);
+    }
+    if (input.ctaDetail?.trim()) {
+      bloquesCta.push(`- **Detalle de la escasez, urgencia, motivo o regalo**: "${input.ctaDetail.trim()}"`);
+    }
+    if (input.cta?.trim()) {
+      bloquesCta.push(`- **Texto acordado para el cierre**: "${input.cta.trim()}"`);
+    }
+    bloquesCta.push(`El guion DEBE culminar con este cierre. La última escena debe reflejar esta llamada a la acción en 'voice'. Si el gatillo es "Impacto Visual", describe en 'shot', 'action' y 'props' qué sostiene o muestra en cámara el actor mientras dice el CTA.`);
+    bloquesCta.push(`El campo "cta" del JSON de salida debe reflejar esta llamada a la acción.`);
+    return bloquesCta.join("\n");
+  }
+
+  return esVenta
+    ? `Como esta estructura VENDE, el guion TERMINA en un llamado a la acción claro y concreto, usando los canales de la marca. El CTA no puede ser genérico.`
+    : `Como esta estructura solo ENTRETIENE, NO vendas nada y deja "cta" en "". No menciones precios, ofertas ni "escribenos".`;
+}
+
+/* ---------------------------------------------------------------- SISTEMA -- */
+
 export function buildSystemPrompt(input: BuildPromptInput): string {
   const { structure, brand, archetype, references } = input;
   const esVenta = structure.category === "VENDE";
+  const esComunidad = esCierreDeComunidad(input);
 
   const parts: string[] = [];
 
@@ -258,10 +368,15 @@ Tu trabajo no es "escribir un texto bonito": es entregar un guion que un equipo 
   );
 
   // ---- 1. LA ESTRUCTURA -------------------------------------------------
+  const categoria = esVenta
+    ? esComunidad
+      ? "VENDE, pero en ESTE video el cierre es de comunidad y NO se vende (ver CIERRE DE COMUNIDAD más abajo: prevalece sobre la categoría)"
+      : "VENDE (obligatorio terminar en llamado a la acción)"
+    : "ENTRETIENE (NO vendas, no metas CTA de compra)";
   parts.push(`
 # 1. LA ESTRUCTURA QUE DEBES SEGUIR: ${structure.name}
 
-Categoría: ${esVenta ? "VENDE (obligatorio terminar en llamado a la acción)" : "ENTRETIENE (NO vendas, no metas CTA de compra)"}${
+Categoría: ${categoria}${
     structure.family ? `\nFamilia: ${structure.family}` : ""
   }${structure.summary ? `\n${structure.summary}` : ""}
 
@@ -385,7 +500,16 @@ debería interpretarla, para que producción elija bien.`);
       brand.tiktok ? `TikTok: ${brand.tiktok}` : "",
       brand.website ? `Web: ${brand.website}` : "",
     ].filter(Boolean);
-    if (contacto.length) parts.push(section("Canales para el CTA", bullets(contacto)));
+    if (contacto.length) {
+      parts.push(
+        section(
+          esComunidad
+            ? "Canales de la marca (en este video NO se mencionan: el cierre es de comunidad, sin venta)"
+            : "Canales para el CTA",
+          bullets(contacto)
+        )
+      );
+    }
   }
 
   // ---- 3.1 EL PRODUCTO O SERVICIO A GRABAR (CONTEXTO EXHAUSTIVO) --------
@@ -456,43 +580,7 @@ Reglas de tiempo:
 - Los primeros 3 segundos deciden todo: el primer beat tiene que entrar sin introduccion.
 - startSec y endSec deben ser continuos: el endSec de una escena es el startSec de la siguiente.
 
-${(() => {
-  const gatilloHormozi = input.ctaTrigger
-    ? CTA_TRIGGERS.find((g) => g.id === input.ctaTrigger)
-    : null;
-
-  if (gatilloHormozi || input.cta?.trim() || input.ctaDetail?.trim()) {
-    const bloquesCta: string[] = [];
-    bloquesCta.push(`### ESTRATEGIA DE CIERRE Y CONVERSIÓN (GATILLOS DE ALEX HORMOZI)`);
-    if (gatilloHormozi) {
-      bloquesCta.push(`- **Gatillo Psicológico**: ${gatilloHormozi.name} (${gatilloHormozi.badge})`);
-      bloquesCta.push(`- **Fundamento**: ${gatilloHormozi.explanation}`);
-      bloquesCta.push(`- **Directiva**: ${gatilloHormozi.promptGuidance}`);
-    }
-    if (input.ctaActionType) {
-      bloquesCta.push(`- **Acción solicitada al espectador**: ${input.ctaActionType}`);
-    }
-    if (input.ctaDetail?.trim()) {
-      bloquesCta.push(`- **Detalle de la escasez, urgencia, motivo o regalo**: "${input.ctaDetail.trim()}"`);
-    }
-    if (input.cta?.trim()) {
-      bloquesCta.push(`- **Texto acordado para el cierre**: "${input.cta.trim()}"`);
-    }
-    bloquesCta.push(`El guion DEBE culminar con este cierre. La última escena debe reflejar esta llamada a la acción en 'voice'. Si el gatillo es "Impacto Visual", describe en 'shot', 'action' y 'props' qué sostiene o muestra en cámara el actor mientras dice el CTA.`);
-    bloquesCta.push(`El campo "cta" del JSON de salida debe reflejar esta llamada a la acción.`);
-    return bloquesCta.join("\n");
-  }
-
-  if (input.cta?.trim()) {
-    return `Llamado a la acción (CTA) OBLIGATORIO especificado por el usuario:
-El guion DEBE culminar con este llamado a la acción exacto o adaptado directamente al tono del video: "${input.cta.trim()}".
-El campo "cta" del JSON de salida debe reflejar esta llamada a la acción.`;
-  }
-
-  return esVenta
-    ? `Como esta estructura VENDE, el guion TERMINA en un llamado a la acción claro y concreto, usando los canales de la marca. El CTA no puede ser genérico.`
-    : `Como esta estructura solo ENTRETIENE, NO vendas nada y deja "cta" en "". No menciones precios, ofertas ni "escribenos".`;
-})()}
+${bloqueCierre(input, esVenta)}
 
 Prohibido:
 - Frases de relleno de IA ("en el mundo actual", "descubre como", "no es solo X, es Y").
@@ -531,12 +619,15 @@ export function buildUserPrompt(input: BuildPromptInput): string {
     parts.push(`\nLo que pide el equipo para este video:\n${input.request.trim()}`);
   }
 
-  if (input.ctaTrigger || input.cta?.trim()) {
-    const gatillo = CTA_TRIGGERS.find((g) => g.id === input.ctaTrigger);
+  const esComunidad = esCierreDeComunidad(input);
+  if (esComunidad || input.ctaTrigger || input.cta?.trim()) {
+    const catalogo = esComunidad ? CTA_COMUNIDAD : CTA_TRIGGERS;
+    const gatillo = catalogo.find((g) => g.id === input.ctaTrigger);
+    const etiqueta = esComunidad
+      ? `Sin venta · ${gatillo?.shortLabel ?? "Comunidad"}`
+      : (gatillo?.shortLabel ?? "Cierre");
     parts.push(
-      `\nEstrategia de CTA: [${gatillo?.shortLabel ?? "Cierre"}] ${
-        input.cta?.trim() || input.ctaDetail?.trim() || ""
-      }`
+      `\nEstrategia de CTA: [${etiqueta}] ${input.cta?.trim() || input.ctaDetail?.trim() || ""}`
     );
   }
 

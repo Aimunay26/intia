@@ -25,6 +25,8 @@
     "test:seguridad:postgres": "node --test tests/postgres-security.test.mjs",
     "test:demo:postgres": "node --test tests/postgres-demo.test.mjs",
     "test:seguridad:arranque": "node --test tests/security-startup.test.mjs",
+    "test:cta": "tsx --test tests/cta-comunidad.test.mts",
+    "test:unidad": "node --disable-warning=ExperimentalWarning --test tests/navigation.test.mjs tests/performance.test.mjs tests/security.test.mjs tests/security-startup.test.mjs tests/ia-claves.test.mjs tests/branding-parser.test.mjs tests/content-structure-ids.test.mjs && npm run test:cta",
     "perf:resumen": "node scripts/summarize-navigation.mjs",
     "perf:db": "tsx scripts/diagnose-database.ts",
     "postinstall": "prisma generate",

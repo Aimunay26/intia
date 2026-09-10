@@ -145,4 +145,7 @@ export const FIELD_LABELS: Record<string, string> = {
   active: "Activo",
   publishedUrl: "Link publicado",
   totalSeconds: "Duración",
+  structureIds: "Formatos previstos",
+  structureId: "Estructura",
+  scriptId: "Guion",
 };

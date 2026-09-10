@@ -76,7 +76,8 @@ export function Modal({
             <div className="card-title">{title}</div>
             {description ? <div className="card-sub mt-0.5">{description}</div> : null}
           </div>
-          <button onClick={onClose} className="btn btn-ghost btn-icon" aria-label="Cerrar">
+          {/* type="button": el Modal vive dentro de formularios (marca, persona) y el aspa nunca debe enviar. */}
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon" aria-label="Cerrar">
             <X size={16} />
           </button>
         </div>

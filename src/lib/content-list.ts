@@ -11,6 +11,8 @@ export async function getContentList(where: Prisma.ContentItemWhereInput, reques
       orderBy: [{ scheduledDate: "desc" }, { createdAt: "desc" }, { id: "desc" }],
       select: {
         id: true, title: true, hook: true, status: true, platforms: true, scheduledDate: true,
+        // scriptId decide si se ofrece «Crear guion»; structureIds son los formatos previstos.
+        scriptId: true, structureIds: true,
         brand: { select: { id: true, name: true, colorPrimary: true } },
         structure: { select: { id: true, name: true } },
         assignments: { select: { id: true, role: true, user: { select: { name: true, color: true } } } },

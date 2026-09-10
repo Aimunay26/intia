@@ -198,9 +198,10 @@ export type CtaTrigger = {
   name: string;
   shortLabel: string;
   icon: string;
-  category: "escasez" | "urgencia" | "motivo" | "incentivo" | "impacto" | "directo";
+  category: "escasez" | "urgencia" | "motivo" | "incentivo" | "impacto" | "directo" | "comunidad";
   badge: string;
   explanation: string;
+  /** De dónde sale la idea: cita del libro (venta) o evidencia de plataforma (comunidad). */
   bookReference: string;
   defaultDetailPlaceholder: string;
   presets: {
@@ -211,6 +212,33 @@ export type CtaTrigger = {
   }[];
   promptGuidance: string;
 };
+
+/* ------------------------------------------------------------ MODOS DE CTA -- */
+
+/**
+ * Un cierre VENDE (gatillos de Hormozi: cupos, urgencia, regalo, enlace, DM,
+ * compra) o solo pide una acción de COMUNIDAD (seguir, guardar, enviar,
+ * comentar, etiquetar, votar…) sin mencionar oferta alguna. Son dos catálogos
+ * separados a propósito: mismo tipo, distinta intención y distinto prompt.
+ */
+export type CtaModo = "venta" | "comunidad";
+
+export const CTA_MODOS: { id: CtaModo; label: string; icon: string; description: string }[] = [
+  {
+    id: "venta",
+    label: "Vender",
+    icon: "💰",
+    description:
+      "Cierre con gatillos de Hormozi: cupos, urgencia, regalo, enlace en bio, DM o compra.",
+  },
+  {
+    id: "comunidad",
+    label: "Sin venta · Comunidad",
+    icon: "🤝",
+    description:
+      "Solo pide una acción social: seguir, guardar, enviar, comentar, etiquetar, votar… Sin precios, ofertas ni promociones.",
+  },
+];
 
 export const CTA_TRIGGERS: CtaTrigger[] = [
   {
@@ -424,6 +452,482 @@ export const CTA_TRIGGERS: CtaTrigger[] = [
   },
 ];
 
+/* --------------------------------------------- CIERRES DE COMUNIDAD (SIN VENTA) -- */
+
+/**
+ * Lo que NUNCA puede aparecer cuando el cierre es de comunidad. Va literal en
+ * el promptGuidance de cada gatillo y en el bloque de cierre del system prompt.
+ */
+export const PROHIBICION_CTA_COMUNIDAD = `PROHIBIDO en todo el guion y en el campo "cta": mencionar oferta, promoción, descuento, precio, cupo, reserva, compra, pedido, catálogo, "enlace en bio", enlace de compra, DM comercial o palabra clave por DM, regalos a cambio de una acción, "solo hoy", "últimas unidades" ni "quedan pocos". Sin reloj ni cantidades limitadas.`;
+
+/** Reglas de redacción comunes a todos los cierres de comunidad. */
+export const REGLAS_CTA_COMUNIDAD = `- Un solo pedido en todo el guion y una sola acción concreta. Nunca encadenes "dale like, comenta, comparte y sígueme": eso baja la distribución.
+- El motivo del pedido sale del contenido que se acaba de ver, no de la marca.
+- Si pides enviar o etiquetar, describe al destinatario por una situación ("a tu pata que nunca sabe qué regalar"); nunca "etiqueta a 3 amigos" ni "comparte si estás de acuerdo".
+- Prefiere una pregunta a una orden; la pregunta debe poder responderse en tres palabras.
+- Repite el pedido en 'onScreenText' de esa escena con máximo cinco palabras, y que 'action' describa el gesto del actor hacia donde va la acción (abajo hacia los comentarios, arriba hacia el perfil).
+- Tono cercano, en tú y ustedes. Jerga peruana (pata, causa, chévere) solo si la voz de la marca la permite y como máximo una por cierre.
+- El producto puede ser el tema del video, nunca algo que adquirir: si la frase se puede reescribir con "compra" sin cambiar de sentido, está mal.`;
+
+function guiaComunidad(familia: string, especifico: string, ubicacion: string): string {
+  return `CIERRE DE COMUNIDAD (SIN VENTA) · ${familia}:
+${especifico}
+- Ubicación: ${ubicacion}
+${PROHIBICION_CTA_COMUNIDAD}
+${REGLAS_CTA_COMUNIDAD}`;
+}
+
+const ULTIMA_ESCENA = "en la última escena, en los últimos 3 a 5 segundos del video.";
+
+/**
+ * Acciones que las plataformas premian sin salir del feed. Ninguna cuesta
+ * nada ni menciona una transacción. Los ids llevan prefijo com_ para no
+ * chocar nunca con los gatillos de venta.
+ */
+export const CTA_COMUNIDAD: CtaTrigger[] = [
+  {
+    id: "com_seguir_serie",
+    name: "Seguir para la parte 2 o para ver el proceso",
+    shortLabel: "Seguir · Parte 2",
+    icon: "➕",
+    category: "comunidad",
+    badge: "Continuidad",
+    explanation:
+      "Pide seguir por continuidad (mañana sale la parte 2, el proceso sigue) o por identidad (somos del mismo bando), nunca a cambio de un regalo. Mueve los seguidores nuevos por alcance.",
+    bookReference:
+      "Solo promete parte 2 o serie cuando existe el guion o la fecha en el calendario. Hootsuite: seguir desde el propio contenido es señal de ranking en Reels. Guías para emprendedores peruanos en TikTok: «Sígueme para ver el proceso».",
+    defaultDetailPlaceholder: "Ej. Esto tiene parte 2 y la subo mañana",
+    presets: [
+      {
+        label: "Parte 2 mañana",
+        accion: "seguir",
+        detalle: "Esto tiene parte 2 y la subo mañana",
+        textoCompleto: "Esto tiene parte 2 y la subo mañana. Sígueme para que te aparezca.",
+      },
+      {
+        label: "Ver el proceso (detrás de cámaras)",
+        accion: "seguir",
+        detalle: "Mañana grabo cómo hacemos la masa desde cero a las seis de la mañana",
+        textoCompleto:
+          "Mañana grabo cómo hacemos la masa desde cero a las seis de la mañana. Sígueme y lo ves conmigo.",
+      },
+      {
+        label: "Somos del mismo bando",
+        accion: "seguir",
+        detalle: "Si tú también crees que un waffle sin fresas no cuenta",
+        textoCompleto:
+          "Si tú también crees que un waffle sin fresas no cuenta, sígueme, por acá somos varios.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "SEGUIR POR CONTINUIDAD O IDENTIDAD",
+      `- Pide seguir por continuidad (qué pasa mañana, la parte 2, el siguiente paso del proceso) o por identidad («sígueme si tú también…»). NUNCA por regalo («sígueme y te mando…»).
+- Solo prometas parte 2 o serie si el pedido la menciona; no inventes continuaciones.`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_guardar",
+    name: "Guardar para después",
+    shortLabel: "Guardar",
+    icon: "🔖",
+    category: "comunidad",
+    badge: "Utilidad futura",
+    explanation:
+      "Para contenido que se usa en otro momento: recetas, listas, tallas, rutinas, ideas de regalo, pasos. Siempre dice cuándo lo va a necesitar. Mueve los guardados, una señal de ranking en Reels.",
+    bookReference:
+      "Hootsuite: los guardados son señal de ranking y el contenido «guardable» son tips, listas y tutoriales. La Jungla Network: «Guarda este reel para no perder la información».",
+    defaultDetailPlaceholder: "Ej. para el domingo, que es cuando te va a tocar hacerlo en casa",
+    presets: [
+      {
+        label: "Para cuando te toque",
+        accion: "guardar",
+        detalle: "para el domingo, que es cuando te va a tocar hacerlo en casa",
+        textoCompleto: "Guárdalo para el domingo, que es cuando te va a tocar hacerlo en casa.",
+      },
+      {
+        label: "Lista para no olvidarla",
+        accion: "guardar",
+        detalle: "para cuando estés en el mercado y no te acuerdes de nada",
+        textoCompleto:
+          "Guárdalo para cuando estés en el mercado y no te acuerdes de nada: acá está la lista completa.",
+      },
+      {
+        label: "Receta o pasos",
+        accion: "guardar",
+        detalle: "para la próxima vez que lo hagas en casa",
+        textoCompleto:
+          "Guárdalo para la próxima vez que lo hagas en casa, así no tienes que buscarlo de nuevo.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "GUARDAR PARA DESPUÉS",
+      `- Di para cuándo lo va a necesitar («guárdalo para el domingo, que es cuando…»), nunca «guárdalo» a secas.
+- El video tiene que contener algo que valga la pena guardar: pasos, lista, medidas, receta.`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_compartir",
+    name: "Enviárselo a alguien concreto",
+    shortLabel: "Mándaselo",
+    icon: "📤",
+    category: "comunidad",
+    badge: "Envíos por alcance",
+    explanation:
+      "Contenido gracioso, relatable o útil para «esa persona». El destinatario se describe con una situación, nunca «comparte con tus amigos». Mueve los envíos por alcance, la señal más fuerte para llegar a quien no te sigue.",
+    bookReference:
+      "Adam Mosseri (enero de 2025): tiempo de visualización, likes por alcance y envíos por alcance son las señales que más pesan en Reels. Meta: pedir compartidos sin motivo es «engagement bait» y baja la distribución.",
+    defaultDetailPlaceholder: "Ej. tu pata que siempre dice que no sabe qué regalar",
+    presets: [
+      {
+        label: "A quien le pasa esto",
+        accion: "compartir",
+        detalle: "tu pata que siempre dice que no sabe qué regalar",
+        textoCompleto: "Mándaselo a tu pata que siempre dice que no sabe qué regalar.",
+      },
+      {
+        label: "A quien lo necesita hoy",
+        accion: "compartir",
+        detalle: "esa persona que hoy necesitaba escuchar esto",
+        textoCompleto: "Mándaselo a esa persona que hoy necesitaba escuchar esto.",
+      },
+      {
+        label: "A quien discute contigo por esto",
+        accion: "compartir",
+        detalle: "quien siempre discute contigo por esto",
+        textoCompleto: "Mándaselo a quien siempre discute contigo por esto, y que lo vea.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "ENVIÁRSELO A ALGUIEN",
+      `- Describe al destinatario por una situación que sale del video («a tu pata que…», «a esa persona que…»). Nunca «comparte con tus amigos», «comparte si estás de acuerdo» ni «compártelo».`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_etiquetar",
+    name: "Etiquetar con motivo",
+    shortLabel: "Etiquetar",
+    icon: "🏷️",
+    category: "comunidad",
+    badge: "Con motivo",
+    explanation:
+      "Igual que enviar, pero en comentario público. Siempre con una razón que sale del video. Mueve los comentarios con menciones, que llegan a quien no te sigue por notificación.",
+    bookReference:
+      "Meta Transparency Center: el «tag baiting» sin contexto reduce la distribución; una razón concreta es un propósito legítimo. Mónica Prados: «Etiqueta a un amigo que necesite esto».",
+    defaultDetailPlaceholder: "Ej. la persona con la que irías a probar esto un domingo",
+    presets: [
+      {
+        label: "Con quién irías",
+        accion: "etiquetar",
+        detalle: "la persona con la que irías a probar esto un domingo",
+        textoCompleto: "Etiqueta a la persona con la que irías a probar esto un domingo.",
+      },
+      {
+        label: "Quien hace esto siempre",
+        accion: "etiquetar",
+        detalle: "quien hace exactamente esto cada vez que salen",
+        textoCompleto: "Etiqueta a quien hace exactamente esto cada vez que salen.",
+      },
+      {
+        label: "Quien tiene que verlo",
+        accion: "etiquetar",
+        detalle: "la persona que tiene que ver esto antes del fin de semana",
+        textoCompleto: "Etiqueta a la persona que tiene que ver esto antes del fin de semana.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "ETIQUETAR CON MOTIVO",
+      `- Una sola persona, descrita por una situación. Nunca «etiqueta a 3 amigos» ni «etiqueta si estás de acuerdo».`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_pregunta",
+    name: "Pregunta abierta o elegir un bando",
+    shortLabel: "Pregunta",
+    icon: "🗣️",
+    category: "comunidad",
+    badge: "Conversación",
+    explanation:
+      "El cierre por defecto para conversar: una pregunta que se responde en pocas palabras y sale del contenido, o dos opciones claras sin respuesta correcta ni premio. Mueve los comentarios por alcance.",
+    bookReference:
+      "Metricool, estudio de TikTok 2026 sobre 2,3 millones de publicaciones: las que llevan una pregunta reciben más comentarios que las que solo dicen «comenta abajo». YouTube Help: preguntas directas para abrir conversación.",
+    defaultDetailPlaceholder: "Ej. ¿Y tú con qué lo acompañas?",
+    presets: [
+      {
+        label: "Pregunta fácil",
+        accion: "opinar",
+        detalle: "¿Y tú con qué lo acompañas?",
+        textoCompleto: "¿Y tú con qué lo acompañas? Cuéntame abajo, leo todo.",
+      },
+      {
+        label: "Elige un bando",
+        accion: "opinar",
+        detalle: "¿Team salado o team dulce?",
+        textoCompleto: "¿Team salado o team dulce? Defiéndete en los comentarios.",
+      },
+      {
+        label: "¿Te ha pasado?",
+        accion: "opinar",
+        detalle: "¿A ti también te pasó buscando regalo a última hora?",
+        textoCompleto:
+          "¿A ti también te pasó buscando regalo a última hora? Cuéntame cómo lo resolviste.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "PREGUNTA ABIERTA O ELEGIR UN BANDO",
+      `- Una sola pregunta que se responda en tres palabras, o dos opciones sin respuesta correcta y sin premio.
+- Promete reciprocidad creíble («leo todo», «te respondo»).`,
+      "tras el momento emocional del video o " + ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_encuesta",
+    name: "Encuesta real (decisión de marca)",
+    shortLabel: "Encuesta",
+    icon: "📊",
+    category: "comunidad",
+    badge: "Decisión real",
+    explanation:
+      "Solo para decisiones reales del negocio: color, sabor nuevo, horario. En TikTok va como encuesta en el comentario fijado; en Instagram, como sticker en historias. Mueve los votos y la participación en decisiones de la marca.",
+    bookReference:
+      "TikTok Newsroom: encuestas en comentarios de hasta 5 opciones. Meta: «vota con un emoji» sin decisión detrás es «vote baiting» y reduce la distribución.",
+    defaultDetailPlaceholder: "Ej. ¿matcha o lúcuma? El que gane sale el viernes",
+    presets: [
+      {
+        label: "Sabor nuevo",
+        accion: "votar",
+        detalle: "¿matcha o lúcuma? El que gane sale el viernes",
+        textoCompleto:
+          "Te dejé la encuesta en el primer comentario: ¿matcha o lúcuma? Vota y el que gane sale el viernes.",
+      },
+      {
+        label: "Color o diseño",
+        accion: "votar",
+        detalle: "¿negro o verde? El más votado es el que se produce",
+        textoCompleto:
+          "Te dejé la encuesta en el primer comentario: ¿negro o verde? Vota, que el más votado es el que se produce.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "ENCUESTA REAL",
+      `- La encuesta decide algo real del negocio y el guion dice qué pasa con el resultado. Nunca «vota con un emoji».
+- Di dónde está la encuesta (comentario fijado o historias).`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_siguiente_tema",
+    name: "Pedir el siguiente tema",
+    shortLabel: "Próximo tema",
+    icon: "💡",
+    category: "comunidad",
+    badge: "Banco de ideas",
+    explanation:
+      "Cuando hay una serie o un banco de ideas y la audiencia decide. Se cumple con el más pedido y se le da crédito. Mueve comentarios e ideas de contenido, y la gente vuelve a ver si ganó su pedido.",
+    bookReference:
+      "TikTok Creator Academy: preguntar a los seguidores qué contenido quieren ver. YouTube Help: usar los comentarios como fuente de contenido y reconocer a quien sugiere.",
+    defaultDetailPlaceholder: "Ej. ¿Qué sabor quieren que pruebe la próxima semana?",
+    presets: [
+      {
+        label: "El más pedido se graba",
+        accion: "opinar",
+        detalle: "¿Qué sabor quieren que pruebe la próxima semana?",
+        textoCompleto: "¿Qué sabor quieren que pruebe la próxima semana? El más pedido se graba.",
+      },
+      {
+        label: "Qué error resuelvo",
+        accion: "opinar",
+        detalle: "¿Qué error quieren que resuelva en el próximo video?",
+        textoCompleto:
+          "¿Qué error quieren que resuelva en el próximo video? Dime qué grabo y le doy crédito a quien lo pidió.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "PEDIR EL SIGUIENTE TEMA",
+      `- Pregunta concreta y promesa de cumplirla («el más pedido se graba», con crédito a quien lo pidió).`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_responder_video",
+    name: "Responder comentarios con video",
+    shortLabel: "Tu duda en video",
+    icon: "🎥",
+    category: "comunidad",
+    badge: "Respuesta en video",
+    explanation:
+      "Cuando el video ya responde a un comentario o quiere abrir la puerta a preguntas. Convierte comentarios en videos futuros y la gente se siente escuchada. Mueve comentarios con preguntas y la retención de seguidores.",
+    bookReference:
+      "TikTok Newsroom: función oficial «responder comentarios con video». YouTube Help: Shorts como respuesta a comentarios.",
+    defaultDetailPlaceholder: "Ej. Déjame tu duda abajo y la respondo en video",
+    presets: [
+      {
+        label: "Déjame tu duda",
+        accion: "opinar",
+        detalle: "Déjame tu duda abajo y la respondo en video",
+        textoCompleto: "Déjame tu duda abajo y la respondo en video, como hice con este.",
+      },
+      {
+        label: "Este salió de un comentario",
+        accion: "opinar",
+        detalle: "Este video existe porque ustedes lo pidieron en los comentarios",
+        textoCompleto:
+          "Este video existe porque ustedes lo pidieron en los comentarios de la semana pasada. Déjame el siguiente abajo.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "RESPONDER COMENTARIOS CON VIDEO",
+      `- Compromiso explícito de responder en video; si este video ya responde a alguien, dilo y dale crédito.`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_reto",
+    name: "Reto, muéstranos lo tuyo o dueto",
+    shortLabel: "Muéstranos",
+    icon: "🎬",
+    category: "comunidad",
+    badge: "Contenido de la gente",
+    explanation:
+      "Cuando hay algo replicable en casa: una receta, un outfit, una forma de envolver. La marca promete repostear y dar crédito, no un premio. Mueve menciones, duetos y contenido hecho por la audiencia.",
+    bookReference:
+      "Curator.io: retos simples con hashtag propio y destacar las mejores participaciones. Infobae Perú 2025: la mayoría de peruanos confía más en «gente común» que en famosos. Dash Social: dueto y stitch deben estar permitidos en la configuración del video.",
+    defaultDetailPlaceholder: "Ej. cómo lo haces en tu casa",
+    presets: [
+      {
+        label: "Hazlo y etiquétanos",
+        accion: "mostrar",
+        detalle: "cómo lo haces en tu casa",
+        textoCompleto: "Grábate haciéndolo en tu casa, etiquétanos y lo subimos a nuestras historias.",
+      },
+      {
+        label: "Dueto",
+        accion: "mostrar",
+        detalle: "tu versión reaccionando a esto",
+        textoCompleto: "Haz un dueto reaccionando a esto y muéstrame cómo lo haces tú.",
+      },
+      {
+        label: "Pruébalo y vuelve",
+        accion: "mostrar",
+        detalle: "qué pasó después de probarlo tres días",
+        textoCompleto: "Pruébalo tres días seguidos y vuelve a contarme qué pasó.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "RETO O MUÉSTRANOS LO TUYO",
+      `- El pedido es replicable con lo que la gente tiene en casa. La recompensa es crédito o repost en historias, nunca un premio ni un sorteo.
+- Si es dueto o stitch, deja en 'notes' que hay que permitirlos al publicar.`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_notificaciones",
+    name: "Activar notificaciones o unirse al canal",
+    shortLabel: "Notificaciones",
+    icon: "🔔",
+    category: "comunidad",
+    badge: "Primera hora",
+    explanation:
+      "Solo si hay un calendario real (día y hora fijos) o una serie en curso, o si la marca tiene canal de difusión con primicias no comerciales. Mueve las vistas de la primera hora, que el algoritmo premia.",
+    bookReference:
+      "Instagram: canales de difusión; se invita con el sticker en historias o el enlace fijado en el perfil. Metricool 2026: casi todo el alcance se logra en los primeros días, por eso importa el arranque.",
+    defaultDetailPlaceholder: "Ej. Subo esto todos los martes a las siete de la noche",
+    presets: [
+      {
+        label: "Día y hora fijos",
+        accion: "notificaciones",
+        detalle: "Subo esto todos los martes a las siete de la noche",
+        textoCompleto:
+          "Subo esto todos los martes a las siete de la noche. Activa las notificaciones y te llega apenas salga.",
+      },
+      {
+        label: "Únete al canal",
+        accion: "notificaciones",
+        detalle: "En el canal cuento qué sabor nuevo sale antes de publicarlo acá",
+        textoCompleto:
+          "En el canal cuento qué sabor nuevo sale antes de publicarlo acá. Únete, está en mi perfil.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "NOTIFICACIONES O CANAL",
+      `- Solo con calendario real o canal existente: di el día y la hora, o qué se cuenta en el canal (nunca ofertas).
+- Nunca junto a otro pedido.`,
+      ULTIMA_ESCENA
+    ),
+  },
+  {
+    id: "com_quedate",
+    name: "Quédate hasta el final (retención)",
+    shortLabel: "Hasta el final",
+    icon: "⏱️",
+    category: "comunidad",
+    badge: "Va tras el gancho",
+    explanation:
+      "Se coloca justo después del gancho, no al cierre, y solo si hay un pago real al final: el error más común, el resultado, el giro. Mueve el tiempo de visualización y la tasa de finalización.",
+    bookReference:
+      "Mosseri vía Hootsuite: el tiempo de visualización es la señal principal. Megadigital: estructura gancho → pedido → valor. Waalaxy: «Mira hasta el final y dime qué opinas».",
+    defaultDetailPlaceholder: "Ej. el último error es el que casi todos cometen sin darse cuenta",
+    presets: [
+      {
+        label: "Pago al final",
+        accion: "opinar",
+        detalle: "el último error es el que casi todos cometen sin darse cuenta",
+        textoCompleto:
+          "Quédate hasta el final, porque el último error es el que casi todos cometen sin darse cuenta. Después me cuentas si te pasó.",
+      },
+      {
+        label: "Míralo otra vez",
+        accion: "opinar",
+        detalle: "fíjate en la mano izquierda, nadie lo ve la primera vez",
+        textoCompleto: "Míralo de nuevo y fíjate en la mano izquierda. Nadie lo ve la primera vez.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "QUÉDATE HASTA EL FINAL",
+      `- Esta frase va en la SEGUNDA escena, justo después del gancho, no en la última. Tiene que existir el pago prometido en la escena final (el error, el resultado, el giro); prohibido prometerlo sin cumplirlo.
+- La última escena cierra con una frase ritual de la marca sin pedir nada más.
+- «Míralo otra vez» solo en videos muy cortos con un detalle escondido.`,
+      "justo después del gancho (segunda escena); el cierre final no pide nada."
+    ),
+  },
+  {
+    id: "com_sin_pedido",
+    name: "Cierre de marca sin pedido",
+    shortLabel: "Sin pedido",
+    icon: "👋",
+    category: "comunidad",
+    badge: "Frase ritual",
+    explanation:
+      "Cuando el contenido ya se comparte solo (dato útil, humor) o el guion ya tuvo un pedido antes. Frase fija de la marca, sin pedir nada. Mueve la tasa de finalización y el reconocimiento de la marca.",
+    bookReference:
+      "Socialync: un pedido forzado sobre contenido que no se comparte no ayuda. YouTube Help: frases propias y tradiciones de la comunidad. Meta: evitar pedidos genéricos de interacción.",
+    defaultDetailPlaceholder: "Ej. Y eso fue todo por hoy. Nos vemos en el próximo.",
+    presets: [
+      {
+        label: "Nos vemos en el próximo",
+        accion: "",
+        detalle: "Y eso fue todo por hoy. Nos vemos en el próximo.",
+        textoCompleto: "Y eso fue todo por hoy. Nos vemos en el próximo.",
+      },
+      {
+        label: "Frase de la tribu",
+        accion: "",
+        detalle: "Si ya eres del Team Waffle, ya sabes qué hacer. Nos leemos abajo.",
+        textoCompleto: "Si ya eres del Team Waffle, ya sabes qué hacer. Nos leemos abajo.",
+      },
+    ],
+    promptGuidance: guiaComunidad(
+      "CIERRE SIN PEDIDO",
+      `- No pidas nada: ni seguir, ni comentar, ni compartir. Cierra con la frase ritual de la marca y deja esa frase en el campo "cta".
+- Si la marca tiene apodo de comunidad, úsalo.`,
+      ULTIMA_ESCENA
+    ),
+  },
+];
+
 /* ----------------------------------------------------------------- ACCIONES -- */
 
 export type CtaActionType = {
@@ -431,18 +935,89 @@ export type CtaActionType = {
   label: string;
   icon: string;
   verbo: string;
+  /** Sin modo sirve en ambos; "venta" o "comunidad" la limita a ese cierre. */
+  modo?: CtaModo;
 };
 
 export const CTA_ACTIONS: CtaActionType[] = [
-  { id: "comentar", label: "Comentar palabra clave", icon: "💬", verbo: "Comenta" },
+  // «Comentar palabra clave» es captación por DM (comenta GUIA y te lo mando):
+  // solo en venta. En comunidad el comentario se pide con «opinar» (Cuéntame).
+  { id: "comentar", label: "Comentar palabra clave", icon: "💬", verbo: "Comenta", modo: "venta" },
   { id: "seguir", label: "Seguir cuenta", icon: "👤", verbo: "Sígueme" },
-  { id: "bio", label: "Enlace en Bio / Perfil", icon: "🔗", verbo: "Ve al enlace de mi perfil" },
-  { id: "dm", label: "Mensaje Directo (DM)", icon: "📩", verbo: "Escríbeme al DM" },
-  { id: "compra", label: "Comprar / Reservar cupo", icon: "🛒", verbo: "Separa tu cupo" },
+  { id: "bio", label: "Enlace en Bio / Perfil", icon: "🔗", verbo: "Ve al enlace de mi perfil", modo: "venta" },
+  { id: "dm", label: "Mensaje Directo (DM)", icon: "📩", verbo: "Escríbeme al DM", modo: "venta" },
+  { id: "compra", label: "Comprar / Reservar cupo", icon: "🛒", verbo: "Separa tu cupo", modo: "venta" },
+  { id: "guardar", label: "Guardar el video", icon: "🔖", verbo: "Guárdalo", modo: "comunidad" },
+  { id: "compartir", label: "Enviárselo a alguien", icon: "📤", verbo: "Mándaselo", modo: "comunidad" },
+  { id: "etiquetar", label: "Etiquetar con motivo", icon: "🏷️", verbo: "Etiqueta a", modo: "comunidad" },
+  { id: "opinar", label: "Responder una pregunta", icon: "🗣️", verbo: "Cuéntame", modo: "comunidad" },
+  { id: "votar", label: "Votar en la encuesta", icon: "📊", verbo: "Vota", modo: "comunidad" },
+  { id: "notificaciones", label: "Activar notificaciones / canal", icon: "🔔", verbo: "Activa las notificaciones", modo: "comunidad" },
+  { id: "siguiente", label: "Ver la siguiente parte", icon: "⏭️", verbo: "Mira la siguiente parte", modo: "comunidad" },
+  { id: "mostrar", label: "Muéstranos lo tuyo / dueto", icon: "🎬", verbo: "Muéstranos", modo: "comunidad" },
 ];
+
+/* ---------------------------------------------------------------- CATÁLOGOS -- */
+
+/** Los gatillos del modo elegido. */
+export function ctaCatalogo(modo: CtaModo): CtaTrigger[] {
+  return modo === "comunidad" ? CTA_COMUNIDAD : CTA_TRIGGERS;
+}
+
+/** Las acciones que caben en ese modo (las sin modo sirven en ambos). */
+export function ctaAccionesDeModo(modo: CtaModo): CtaActionType[] {
+  return CTA_ACTIONS.filter((a) => !a.modo || a.modo === modo);
+}
+
+/** A qué modo pertenece un gatillo, o null si no existe en ningún catálogo. */
+export function modoDeGatillo(gatilloId: string): CtaModo | null {
+  if (CTA_TRIGGERS.some((g) => g.id === gatilloId)) return "venta";
+  if (CTA_COMUNIDAD.some((g) => g.id === gatilloId)) return "comunidad";
+  return null;
+}
+
+export function esCtaDeVenta(gatilloId: string): boolean {
+  return modoDeGatillo(gatilloId) === "venta";
+}
+
+/** Busca un gatillo en los dos catálogos. */
+export function buscarGatillo(gatilloId: string): CtaTrigger | null {
+  return (
+    CTA_TRIGGERS.find((g) => g.id === gatilloId) ??
+    CTA_COMUNIDAD.find((g) => g.id === gatilloId) ??
+    null
+  );
+}
+
+/**
+ * Defensa del servidor: un gatillo o una acción que no son del modo enviado
+ * se descartan (quedan en ""), así un formulario viejo o manipulado nunca cuela
+ * un cierre de venta en un guion de comunidad, ni al revés.
+ */
+export function coherenciaCta(
+  modo: CtaModo,
+  gatilloId: string,
+  accionId: string
+): { gatillo: string; accion: string } {
+  const gatillo = modoDeGatillo(gatilloId) === modo ? gatilloId : "";
+  const accionDef = CTA_ACTIONS.find((a) => a.id === accionId);
+  const accion = accionDef && (!accionDef.modo || accionDef.modo === modo) ? accionId : "";
+  return { gatillo, accion };
+}
+
+/** Cierra la frase con punto si el usuario no puso ningún signo final. */
+function frase(texto: string): string {
+  return /[.!?»…]$/.test(texto) ? texto : `${texto}.`;
+}
+
+/** "a tu pata…" -> "tu pata…", para no repetir la preposición del verbo. */
+function sinPreposicionA(texto: string): string {
+  return texto.replace(/^a\s+/i, "");
+}
 
 /**
  * Función que ensambla inteligentemente un texto de CTA a partir del gatillo, la acción y el detalle.
+ * Busca el gatillo en los dos catálogos; un cierre de comunidad nunca añade presión ni palabras de oferta.
  */
 export function armarCtaTexto(
   gatilloId: string,
@@ -451,7 +1026,7 @@ export function armarCtaTexto(
 ): string {
   const det = (detalle ?? "").trim();
   const accion = CTA_ACTIONS.find((a) => a.id === accionId) ?? CTA_ACTIONS[0];
-  const gatillo = CTA_TRIGGERS.find((g) => g.id === gatilloId) ?? CTA_TRIGGERS[0];
+  const gatillo = buscarGatillo(gatilloId) ?? CTA_TRIGGERS[0];
 
   if (!det) {
     const preset = gatillo.presets.find((p) => p.accion === accionId) ?? gatillo.presets[0];
@@ -459,6 +1034,34 @@ export function armarCtaTexto(
   }
 
   switch (gatillo.category) {
+    case "comunidad":
+      if (gatillo.id === "com_sin_pedido") return frase(det);
+      if (gatillo.id === "com_quedate") return `Quédate hasta el final: ${frase(det)}`;
+      switch (accion.id) {
+        case "seguir":
+          return `${frase(det)} Sígueme para que te aparezca.`;
+        case "guardar":
+          return /^para\b/i.test(det) ? `Guárdalo ${frase(det)}` : `Guárdalo para después: ${frase(det)}`;
+        case "compartir":
+          return `Mándaselo a ${frase(sinPreposicionA(det))}`;
+        case "etiquetar":
+          return `Etiqueta a ${frase(sinPreposicionA(det))}`;
+        case "opinar":
+          return `${frase(det)} Cuéntame abajo, leo todo.`;
+        case "comentar":
+          return `${frase(det)} Te leo en los comentarios.`;
+        case "votar":
+          return `Te dejé la encuesta en el primer comentario: ${frase(det)} Vota, que el resultado decide.`;
+        case "notificaciones":
+          return `${frase(det)} Activa las notificaciones y te llega apenas salga.`;
+        case "siguiente":
+          return `${frase(det)} La siguiente parte ya está en mi perfil.`;
+        case "mostrar":
+          return `Muéstranos ${det}: grábalo, etiquétanos y lo subimos a nuestras historias.`;
+        default:
+          return `${frase(det)} Nos leemos en los comentarios.`;
+      }
+
     case "escasez":
       if (accion.id === "seguir") {
         return `Sígueme ahora mismo: ${det}. ¡No te quedes sin tu espacio!`;

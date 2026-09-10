@@ -5,8 +5,15 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { borrarAssetsDe } from "@/lib/assets-cleanup";
-import { requireLevel, LEVEL } from "@/lib/auth";
+import { requireLevel, LEVEL, type SessionUser } from "@/lib/auth";
 import { logAudit, diffFields, FIELD_LABELS } from "@/lib/audit";
+import {
+  guardarDocumentoImportado,
+  leerArchivoOpcional,
+  type ArchivoImportado,
+} from "@/lib/asset-import";
+import type { TipoDocumento } from "@/lib/branding-parser";
+import { MAX_UPLOAD_BYTES } from "@/lib/pdf";
 import {
   field,
   fieldOrNull,
@@ -153,6 +160,55 @@ function readBrandFields(
   return out;
 }
 
+/* ------------------------------------------------------------ DOCUMENTOS -- */
+
+/**
+ * El formulario de marca puede traer el brief maestro (campo de archivo
+ * «briefPdf») y el informe de branding (campo «brandingPdf»). Los nombres no
+ * coinciden con ninguna columna a propósito: el textarea del brief permanente
+ * se llama «brief», y un input de archivo con ese mismo nombre lo pisaría en
+ * el FormData (readBrandFields leería un File y lo guardaría como null).
+ *
+ * Los campos de la ficha ya vienen rellenados desde la previsualización; aquí
+ * solo se guardan los PDF como Asset con su etiqueta y su auditoría SUBIR.
+ *
+ * Se leen y validan ANTES de escribir la marca: un PDF inválido no puede dejar
+ * la marca a medias.
+ */
+type DocumentoDeMarca = { tipo: TipoDocumento; archivo: ArchivoImportado };
+
+const CAMPOS_PDF = [
+  { tipo: "brief", campo: "briefPdf" },
+  { tipo: "branding", campo: "brandingPdf" },
+] as const;
+
+async function leerDocumentosDeMarca(formData: FormData): Promise<DocumentoDeMarca[]> {
+  const out: DocumentoDeMarca[] = [];
+  for (const { tipo, campo } of CAMPOS_PDF) {
+    const lectura = await leerArchivoOpcional(formData, campo);
+    if (!lectura) continue;
+    if (!lectura.ok) throw new Error(lectura.error);
+    out.push({ tipo, archivo: lectura.archivo });
+  }
+  // Los dos viajan en el mismo cuerpo: el tope por archivo no basta. El
+  // formulario ya lo impide; esto es la red de seguridad del servidor.
+  const total = out.reduce((suma, d) => suma + d.archivo.size, 0);
+  if (total > MAX_UPLOAD_BYTES) {
+    throw new Error(
+      "Los dos PDF juntos superan los 4 MB por guardado. Guarda la ficha con uno y sube el otro desde la pestaña Documentos."
+    );
+  }
+  return out;
+}
+
+async function guardarDocumentosDeMarca(user: SessionUser, brandId: string, documentos: DocumentoDeMarca[]) {
+  for (const { tipo, archivo } of documentos) {
+    await prisma.$transaction(async (tx) => {
+      await guardarDocumentoImportado(tx, { tipo, ownerType: "brand", ownerId: brandId, archivo, user });
+    });
+  }
+}
+
 /* ----------------------------------------------------------------- CREAR -- */
 
 export async function crearMarca(formData: FormData) {
@@ -160,6 +216,8 @@ export async function crearMarca(formData: FormData) {
 
   const name = field(formData, "name");
   if (!name) throw new Error("La marca necesita un nombre.");
+
+  const documentos = await leerDocumentosDeMarca(formData);
 
   const brand = await prisma.brand.create({
     data: {
@@ -175,10 +233,16 @@ export async function crearMarca(formData: FormData) {
     entity: "Brand",
     entityId: brand.id,
     brandId: brand.id,
-    summary: `Creó la marca "${brand.name}"`,
+    summary: documentos.length
+      ? `Creó la marca "${brand.name}" desde ${documentos.map((d) => `«${d.archivo.name}»`).join(" y ")}`
+      : `Creó la marca "${brand.name}"`,
   });
 
+  // Los Assets van antes del redirect: redirect() lanza y no volvería aquí.
+  await guardarDocumentosDeMarca(user, brand.id, documentos);
+
   revalidateBrand(brand.id);
+  revalidatePath("/actividad");
   redirect(`/marcas/${brand.id}`);
 }
 
@@ -189,6 +253,8 @@ export async function actualizarMarca(formData: FormData) {
 
   const id = field(formData, "id");
   const before = await prisma.brand.findUniqueOrThrow({ where: { id } });
+
+  const documentos = await leerDocumentosDeMarca(formData);
 
   const name = field(formData, "name") || before.name;
 
@@ -208,11 +274,16 @@ export async function actualizarMarca(formData: FormData) {
     entity: "Brand",
     entityId: id,
     brandId: id,
-    summary: `Editó la marca "${name}"`,
+    summary: documentos.length
+      ? `Editó la marca "${name}" desde ${documentos.map((d) => `«${d.archivo.name}»`).join(" y ")}`
+      : `Editó la marca "${name}"`,
     changes: diffFields(before, data, BRAND_LABELS),
   });
 
+  await guardarDocumentosDeMarca(user, id, documentos);
+
   revalidateBrand(id);
+  revalidatePath("/actividad");
 }
 
 /* -------------------------------------------------------------- ARCHIVAR -- */

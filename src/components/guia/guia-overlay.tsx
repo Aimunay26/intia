@@ -150,6 +150,7 @@ export function GuiaOverlay() {
     minimizado,
     siguientePaso,
     pasoAnterior,
+    irAPaso,
     cerrarGuia,
     reiniciarGuia,
     minimizarGuia,
@@ -174,6 +175,15 @@ export function GuiaOverlay() {
   /** Ruta en la que se ejecutó la acción del paso: si cambia, la acción tuvo éxito. */
   const rutaAlActuar = useRef<string | null>(null);
   const menuAbiertoPara = useRef<string | null>(null);
+  /**
+   * Ruta en la que se vio el ancla de ESTE paso (null si nunca estuvo: lista
+   * vacía). Se guarda la ruta y no un booleano porque un adelanto real ocurre
+   * dentro de la misma pantalla; si la ruta cambió (abrir una tarjeta de marca
+   * desde la lista) el ancla desapareció por la navegación, no por adelantarse.
+   */
+  const vistoRef = useRef<string | null>(null);
+  /** Id del paso desde el que ya se resincronizó: una sola vez por paso. */
+  const saltoRef = useRef<string | null>(null);
 
   // La intención vive en el catálogo; el prefijo «btn-» es solo el valor por defecto.
   const esPasoDeAccion = pasoActual.requiereAccion ?? pasoActual.target.startsWith("btn-");
@@ -187,6 +197,8 @@ export function GuiaOverlay() {
     setTapado(false);
     rutaAlActuar.current = null;
     ultimoScrollRef.current = null;
+    vistoRef.current = null;
+    saltoRef.current = null;
   }, [pasoActual.id]);
 
   /* ------------------------------------------ delegación de eventos -- */
@@ -238,6 +250,11 @@ export function GuiaOverlay() {
       if (e.type === "click" && esBotonDeEnvio(ancla)) return;
       marcarHecha();
       // El objetivo abre una ventana y el siguiente paso vive dentro: no obligar a pulsar Siguiente.
+      // Avanza también con la guía minimizada, a propósito: así el efecto de
+      // resincronización ve el ancla del paso nuevo en la misma pantalla y lo
+      // anota como «visto». Si se frenara aquí, al restaurar la guía el paso
+      // seguiría siendo el botón ya pulsado (acción hecha → no resincroniza) y
+      // el usuario tendría que pulsar Siguiente y Omitir a ciegas.
       if (e.type === "click" && pasoActual.avanzarAlInteractuar) siguientePaso();
       // Enlace del menú con la sección ya abierta: la ruta no va a cambiar y el
       // efecto de abajo nunca avanzaría. El clic ya cumple el paso.
@@ -541,6 +558,67 @@ export function GuiaOverlay() {
       abrirMenuMovil();
     }
   }, [activo, minimizado, pasoActual.id, pasoActual.target, abrirMenuMovil, encontrado]);
+
+  /* -------------- resincronizar cuando el usuario se adelanta -- */
+  // El ancla de este paso estaba y desapareció (pulsó «Continuar» de etapa en
+  // el generador antes que «Siguiente») y ya se ve la de un paso POSTERIOR del
+  // mismo módulo: la guía se coloca ahí sola en vez de pedir dos «Omitir» a
+  // ciegas. Solo hacia delante y al más cercano, una vez por paso, nunca a
+  // pasos puente ni de menú, nunca cruza de módulo y no navega: el ancla de
+  // destino ya está en pantalla. No va dentro de `buscarElemento`, que solo
+  // mide y corre en cada scroll.
+  useEffect(() => {
+    if (!activo || terminado) return;
+    // Un enlace del menú se cumple con su clic y el cambio de ruta (efectos de
+    // arriba): aquí no se compite con ellos.
+    if (esNav) return;
+    // `encontrado` es la medida del render anterior: al cambiar de paso aún es
+    // la del paso viejo. Se pregunta al DOM por el ancla de ESTE paso, con el
+    // mismo criterio de visibilidad que usa el resto de la guía. Se anota
+    // también con la guía minimizada: la delegación de eventos sigue
+    // avanzando pasos en ese estado y, sin la marca, al restaurar no habría
+    // forma de distinguir «se adelantó» de «lista vacía».
+    if (anclaVisible(pasoActual.target)) {
+      vistoRef.current = pathname;
+      return;
+    }
+    // Minimizada: se marca «visto» pero no se salta; se recoloca al restaurar
+    // (`minimizado` está en las dependencias).
+    if (minimizado) return;
+    // Nunca estuvo en ESTA ruta: lista vacía o cambio de sección (abrir una
+    // tarjeta desde la lista no es adelantarse; los redirects tras una acción
+    // ya los cubre el efecto de arriba).
+    if (vistoRef.current !== pathname) return;
+    if (accionRealizada && esPasoDeAccion) return; // ya lo cubre «Acción completada» / redirect
+    if (saltoRef.current === pasoActual.id) return;
+    if (!pathnameCubrePaso(pathname, pasoActual)) return;
+    const destino = moduloActual.pasos.findIndex(
+      (p, i) =>
+        i > pasoIndex &&
+        !p.puente &&
+        !p.target.startsWith("nav-") &&
+        pathnameCubrePaso(pathname, p) &&
+        anclaVisible(p.target) !== null
+    );
+    if (destino < 0) return;
+    saltoRef.current = pasoActual.id;
+    irAPaso(destino);
+    // `encontrado` está en la lista solo como disparador: cambia cuando el
+    // ancla aparece o desaparece, que es justo cuando hay que volver a mirar.
+  }, [
+    activo,
+    terminado,
+    minimizado,
+    esNav,
+    encontrado,
+    accionRealizada,
+    esPasoDeAccion,
+    pasoActual,
+    pasoIndex,
+    moduloActual,
+    pathname,
+    irAPaso,
+  ]);
 
   /* ---------------------------------------------------- avanzar -- */
   const limpiar = () => {

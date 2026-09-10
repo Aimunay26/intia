@@ -6,6 +6,8 @@
  * subida: se guarda el archivo igual y se avisa para que el texto se pegue a mano.
  */
 
+import { detectarTipoDocumento } from "@/lib/branding-parser";
+
 const MAX_STORED_CHARS = 200_000;
 
 export type ExtractResult = {
@@ -21,7 +23,7 @@ export async function extractPdfText(buffer: ArrayBuffer): Promise<ExtractResult
     const result = await extractText(pdf, { mergePages: true });
 
     const raw = Array.isArray(result.text) ? result.text.join("\n\n") : result.text ?? "";
-    const clean = normalize(raw);
+    const clean = limpiarSiEsDocumentoAiMunay(normalize(raw));
 
     if (!clean) {
       return {
@@ -57,6 +59,106 @@ function normalize(text: string) {
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
     .trim();
+}
+
+/* ------------------------------------------------------- LIMPIEZA INFORMES -- */
+
+/**
+ * Encabezados que los PDF de Ai Munay maquetan con las letras separadas
+ * («T O N O», «E V I TA», «N OTA M E TO D O L Ó G I C A»). Es un catálogo
+ * cerrado a propósito: solo se junta lo que se sabe que es un encabezado, y
+ * nunca texto corriente. Los más largos van primero para que «ARQUETIPO
+ * PRIMARIO» se resuelva antes que «TU ARQUETIPO».
+ */
+const ENCABEZADOS_ESPACIADOS = [
+  "MARCAS DE TU MISMO ARQUETIPO",
+  "ICONOS DE TU MISMO ARQUETIPO",
+  "LO QUE DEBERÍAS VIGILAR",
+  "HACIA DÓNDE EVOLUCIONAR",
+  "BRIEF MAESTRO DE MARCA",
+  "ESTRUCTURA DEL MENSAJE",
+  "ARQUETIPO SECUNDARIO",
+  "ARQUETIPO TERCIARIO",
+  "ÍNDICE DE DEFINICIÓN",
+  "INFORME DE BRANDING",
+  "ARQUETIPO PRIMARIO",
+  "NOTA METODOLÓGICA",
+  "ÍNDICE DE AUDACIA",
+  "TU ARQUETIPO",
+  "COMUNICACIÓN",
+  "VOCABULARIO",
+  "REFERENTES",
+  "SUENA ASÍ",
+  "ACCIONES",
+  "AI MUNAY",
+  "VISUAL",
+  "EVITA",
+  "TONO",
+];
+
+const LETRA_MAYUSCULA = "A-ZÁÉÍÓÚÜÑ";
+
+/** «TONO» → /(?<![A-Z])T\s*O\s*N\s*O/g. Las palabras del encabezado también van unidas por \s*. */
+function regexEspaciado(encabezado: string): RegExp {
+  const letras = encabezado.replace(/\s+/g, "").split("");
+  const cuerpo = letras.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s*");
+  return new RegExp(`(?<![${LETRA_MAYUSCULA}])${cuerpo}`, "g");
+}
+
+const REGEX_ENCABEZADOS = ENCABEZADOS_ESPACIADOS.map((encabezado) => ({
+  encabezado,
+  regex: regexEspaciado(encabezado),
+}));
+
+/**
+ * Un tramo solo cuenta como encabezado espaciado si de verdad viene con las
+ * letras separadas: al menos la mitad de los huecos entre letras llevan espacio.
+ * Así «T O N O» se junta y «ESTO NO» (que también contiene T, O, N, O) se deja en paz.
+ */
+function estaEspaciado(tramo: string): boolean {
+  const letras = tramo.replace(/\s+/g, "").length;
+  if (letras < 2) return false;
+  const huecosConEspacio = (tramo.match(/\S\s+(?=\S)/g) ?? []).length;
+  return huecosConEspacio * 2 >= letras - 1;
+}
+
+/**
+ * Limpieza propia de los PDF de branding y de brief maestro:
+ *  - quita los marcadores de página «2 / 13» y los pies del brief;
+ *  - junta las letras de los encabezados del catálogo y los deja en línea propia;
+ *  - separa el pie de portada «Marca personal · Generado el …» del párrafo;
+ *  - deja una sola línea entre bloques, que es lo que espera branding-parser.
+ * Ese último paso funde los párrafos, así que NO se aplica a documentos
+ * corrientes (brand books, ejemplos de guiones): ver limpiarSiEsDocumentoAiMunay.
+ */
+export function limpiarTextoInforme(text: string): string {
+  let out = text
+    .replace(/^[ \t]*\d{1,3}[ \t]*\/[ \t]*\d{1,3}[ \t]*$/gm, "")
+    .replace(/^[ \t]*BRIEF DE MARCA ·.*?\d{1,3}[ \t]*\/[ \t]*\d{1,3}[ \t]*$/gm, "")
+    .replace(/(\S)(Marca personal · Generado el)/g, "$1\n$2");
+
+  for (const { encabezado, regex } of REGEX_ENCABEZADOS) {
+    out = out.replace(regex, (tramo) => (estaEspaciado(tramo) ? `\n${encabezado}\n` : tramo));
+  }
+
+  return out
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
+}
+
+/**
+ * Aplica limpiarTextoInforme solo si el texto es un brief maestro o un informe
+ * de branding de Ai Munay; cualquier otro documento se queda como lo dejó
+ * normalize(), con sus párrafos separados por una línea en blanco.
+ *
+ * La detección se hace sobre el texto ya limpio, porque los encabezados del
+ * PDF vienen con las letras separadas y solo después de juntarlas se leen.
+ */
+export function limpiarSiEsDocumentoAiMunay(text: string): string {
+  const limpio = limpiarTextoInforme(text);
+  return detectarTipoDocumento(limpio) ? limpio : text;
 }
 
 /** Extrae texto de archivos de texto plano (md, txt, csv). */

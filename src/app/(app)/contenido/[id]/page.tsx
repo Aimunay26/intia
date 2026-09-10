@@ -1,4 +1,5 @@
 import { requirePageUser as requireUser } from "@/lib/render-context";
+import { getStructureChoices } from "@/lib/structure-choices";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -6,6 +7,7 @@ import {
   ExternalLink,
   Film,
   History,
+  Layers,
   MessageSquare,
   ScrollText,
   Sparkles,
@@ -139,13 +141,25 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
 
   if (!item) notFound();
 
-  // La estructura y el guion ya no se eligen aquí: llegan al asignar un guion
-  // desde el área de Guiones. Aquí solo hace falta el equipo para asignar roles.
-  const people = await prisma.user.findMany({
-    where: { active: true },
-    select: { id: true, name: true, role: true },
-    orderBy: { name: "asc" },
-  });
+  // La estructura definitiva (structureId) y el guion llegan al vincular un
+  // guion, desde Guiones o desde el generador. Lo que sí se edita aquí son los
+  // formatos PREVISTOS (structureIds), para lo que hacen falta las estructuras
+  // activas; y el equipo, para asignar roles.
+  const [people, structures] = await Promise.all([
+    prisma.user.findMany({
+      where: { active: true },
+      select: { id: true, name: true, role: true },
+      orderBy: { name: "asc" },
+    }),
+    getStructureChoices(false),
+  ]);
+  const estructuraMap = new Map(structures.map((s) => [s.id, s.name]));
+  // Con id y nombre: Structure.name no es único, así que la clave de React es el id.
+  const previstos = parseList(item.structureIds)
+    .map((sid) => ({ id: sid, name: estructuraMap.get(sid) }))
+    .filter((p): p is { id: string; name: string } => Boolean(p.name));
+  // El generador solo une guiones a tarjetas en Idea o Guion (mismo filtro que /generador).
+  const admiteGuion = item.status === "IDEA" || item.status === "GUION";
 
   // Historial: lo del video mas lo de sus checks, asignaciones, metricas y comentarios.
   const logs = await prisma.auditLog.findMany({
@@ -235,6 +249,15 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
               {item.brand.name}
             </ColorChip>
             <PlatformBadges platforms={parseList(item.platforms)} max={2} />
+            {previstos.map((p) => (
+              <span
+                key={p.id}
+                className="chip chip-plain text-[11px]"
+                title="Formato previsto: el guion fijará la estructura definitiva"
+              >
+                <Layers size={11} /> {p.name}
+              </span>
+            ))}
             <Badge option={PRIORITY_MAP[item.priority]} fallback={item.priority} />
             <span className="text-inkmuted text-[12.5px]">
               Calendario: {formatDate(item.scheduledDate)}
@@ -306,6 +329,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
             />
             <VideoDatosForm
               canEdit={canEdit}
+              structures={structures}
               item={{
                 id: item.id,
                 title: item.title,
@@ -313,6 +337,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
                 hook: item.hook ?? "",
                 cta: item.cta ?? "",
                 platforms: parseList(item.platforms),
+                structureIds: parseList(item.structureIds),
                 priority: item.priority,
                 scheduledDate: dateKey(item.scheduledDate),
                 shootDate: dateKey(item.shootDate),
@@ -414,18 +439,28 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
               />
               <div className="p-4">
                 <p className="text-inksoft text-[13px] leading-relaxed">
-                  El guion no se elige desde aquí. Se escribe en el área de{" "}
-                  <strong>Guiones</strong>, donde se define la estructura y el arquetipo del
-                  actor, y desde allí se asigna a esta tarjeta. Al asignarlo, este video hereda
-                  la estructura del guion y pasa a estado <strong>Guion</strong>.
+                  El generador arranca con la marca, el título, el hook y los formatos previstos
+                  de esta tarjeta
+                  {previstos.length ? ` (${previstos.map((p) => p.name).join(", ")})` : ""}. Al
+                  terminar, el guion queda unido a este video, que hereda su estructura y pasa a
+                  estado <strong>Guion</strong>. Si ya tienes un guion escrito, también puedes
+                  asignarlo desde <strong>Guiones</strong>.
                 </p>
+                {!admiteGuion ? (
+                  <p className="text-inkmuted mt-2 text-[12.5px]">
+                    Esta tarjeta está en {estado?.label ?? item.status}: solo se une un guion a
+                    videos en Idea o Guion. Cambia el estado si todavía hace falta escribirlo.
+                  </p>
+                ) : null}
                 <div className="mt-3.5 flex flex-wrap gap-2">
-                  <Link
-                    href={`/generador?marca=${item.brandId}`}
-                    className="btn btn-primary btn-sm"
-                  >
-                    <Sparkles size={13} /> Generar guion con IA
-                  </Link>
+                  {admiteGuion ? (
+                    <Link
+                      href={`/generador?video=${item.id}`}
+                      className="btn btn-primary btn-sm"
+                    >
+                      <Sparkles size={13} /> Crear guion con IA
+                    </Link>
+                  ) : null}
                   <Link href="/guiones" className="btn btn-sm">
                     Ver guiones existentes
                   </Link>

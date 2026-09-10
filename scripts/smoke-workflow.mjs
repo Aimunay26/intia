@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import bcrypt from "bcryptjs";
 import { assertLocalDatabase } from "./local-database-only.mjs";
 
@@ -61,21 +61,22 @@ try {
   await page.goto(base + "/generador");
   await page.getByRole("link", { name: "Mis generaciones →", exact: true }).waitFor();
   await page.getByRole("button", { name: /Seleccionar visibles/ }).click();
-  assert.equal((await page.locator('input[name="estructuras"]').inputValue()).split(",").length, 3);
+  const generatorForm=page.getByRole('main').locator('form:visible').filter({has:page.getByRole('button',{name:/Seleccionar visibles/})});
+  await expect(generatorForm.locator('input[name="estructuras"]')).toHaveValue(/^[^,]+,[^,]+,[^,]+$/);
   await page.screenshot({ path: ".audit/generator-jobs.png", fullPage: true });
   await page.goto(`${base}/generador?estructura=${structure.id}&producto=Producto%20ficticio&peticion=Idea%20ficticia%20para%20probar%20el%20selector`);
   for (const name of ['Continuar: Identidad y Producto', 'Continuar: Ángulo e Idea', 'Continuar: Cierre y CTA (Hormozi)', 'Continuar: Motor y Generación']) await page.getByRole('button', { name, exact: true }).click();
-  const modelInput = page.locator('input[name="modelo"]:not([type="hidden"])');
+  const modelInput = page.getByRole('main').locator('input[name="modelo"]:visible');
   assert.equal(await modelInput.inputValue(), 'claude-opus-5');
   await page.getByRole('button', { name: /Gemini \(Google\)/ }).click();
   assert.equal(await modelInput.inputValue(), 'gemini-3.8-flash');
-  assert.equal(await page.locator('#modelos-ia option[value="gemini-3.8-flash"]').count(), 1);
+  assert.equal(await page.getByRole('main').locator('form:visible #modelos-ia option[value="gemini-3.8-flash"]').count(), 1);
   await page.getByRole('button', { name: /Claude \(Anthropic\)/ }).click();
   assert.equal(await modelInput.inputValue(), 'claude-opus-5');
   await page.getByRole('button', { name: /Gemini \(Google\)/ }).click();
   await page.screenshot({ path: '.audit/gemini-3-8-selector.png', fullPage: true, animations: 'disabled' });
   await page.goto(base + '/ajustes');
-  assert.equal(await page.locator('input[name="googleModel"]').inputValue(), 'gemini-3.8-flash');
+  assert.equal(await page.getByRole('main').locator('input[name="googleModel"]:visible').inputValue(), 'gemini-3.8-flash');
   const report = { checkedAt: new Date().toISOString(), environment: "local-production-build", workflowSdk: "4.8.7", actualQueueExecuted: true, persistedResponseRecovered: true, scriptsCreated: 1, auditCount: 1, gemini38ProviderSwitch: true, legacyGoogleSettingResolved: true, liveAiCalls: 0, liveBlobCalls: 0 };
   fs.writeFileSync(".audit/workflow-smoke.json", JSON.stringify(report, null, 2)); console.log(JSON.stringify(report));
 } finally {

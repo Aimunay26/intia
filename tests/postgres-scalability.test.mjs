@@ -48,6 +48,15 @@ test("trabajos durables, cuotas, dinero y archivos con PostgreSQL real; IA/Blob 
   };
   const drain = async id => { for (let n = 0; n < 7; n++) { const state = await jobs.processGeneration(id); if (state.done) return; if (state.retryAt) await prisma.generationItem.updateMany({ where: { jobId: id }, data: { leaseUntil: new Date(0), availableAt: new Date(0) } }); } throw new Error("No terminó el fixture"); };
   try {
+    await t.test("la cola acepta Gemini 3.8 y modelos heredados, pero rechaza un modelo de Claude enviado a Google", async () => {
+      for (const model of ['gemini-3.8-flash', 'gemini-2.5-pro']) {
+        const id = await jobs.enqueueGeneration(owner, randomUUID(), [structure.id], { ...input, provider: 'google', model });
+        const job = await prisma.generationJob.findUniqueOrThrow({ where: { id } });
+        assert.equal(job.payload.model, model);assert.equal(job.payload.provider, 'google');
+        await jobs.cancelGeneration(owner, id);
+      }
+      await assert.rejects(jobs.enqueueGeneration(owner, randomUUID(), [structure.id], { ...input, provider: 'google', model: 'claude-opus-5' }), /catálogo/);
+    });
     await t.test("dos envíos idénticos producen un trabajo; la misma clave no admite otro contenido", async () => {
       const key = randomUUID();
       const ids = await Promise.all([jobs.enqueueGeneration(owner, key, [structure.id], input), jobs.enqueueGeneration(owner, key, [structure.id], input)]);

@@ -11,7 +11,8 @@ export const maxDuration = 60;
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { can, LEVEL } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { aiStatus } from "@/lib/settings";
+import { aiStatus, getSettings, SETTING_KEYS } from "@/lib/settings";
+import { resolveAiModel } from "@/lib/ai-models";
 import { resourceLimit } from "@/lib/resource-limits";
 import { parseJson, parseList } from "@/lib/utils";
 import {
@@ -44,7 +45,7 @@ export default async function GeneradorPage({
   const jobsEnabled = process.env.AI_JOBS_ENABLED === "true" && maxBatch > 0;
   const sp = await searchParams;
 
-  const [structures, brands, archetypes, fits, refRows, ai, brandCtx] = await Promise.all([
+  const [structures, brands, archetypes, fits, refRows, ai, brandCtx, modelSettings] = await Promise.all([
     prisma.structure.findMany({
       where: { active: true },
       orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -101,6 +102,7 @@ export default async function GeneradorPage({
     }),
     aiStatus(),
     getBrandContext(),
+    getSettings([SETTING_KEYS.defaultGoogleModel, SETTING_KEYS.defaultAnthropicModel]),
   ]);
 
   if (!can(user.role, LEVEL.MEMBER)) {
@@ -218,6 +220,7 @@ export default async function GeneradorPage({
       ) : (
         <><div className="mb-4"><Link href="/generador/trabajos" className="text-brand font-semibold">Mis generaciones →</Link><p className="text-sm text-inkmuted">Hasta {maxBatch} estructuras por solicitud. Las llamadas a tu proveedor de IA conservan su tarifa.</p></div>
       <GeneratorForm
+          defaultModels={{ google: resolveAiModel("google", undefined, modelSettings[SETTING_KEYS.defaultGoogleModel]), anthropic: resolveAiModel("anthropic", undefined, modelSettings[SETTING_KEYS.defaultAnthropicModel]) }}
           maxBatch={maxBatch}
           structures={structureOptions}
           brands={brandOptions}

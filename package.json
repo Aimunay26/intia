@@ -33,7 +33,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:baseline": "node scripts/baseline-existing.mjs",
     "db:integridad": "node scripts/check-db-integrity.mjs",
-    "test": "node --disable-warning=ExperimentalWarning --test tests/navigation.test.mjs tests/performance.test.mjs tests/security.test.mjs tests/consistency.test.mjs tests/permissions.test.mjs",
+    "test": "node --disable-warning=ExperimentalWarning --test tests/navigation.test.mjs tests/performance.test.mjs tests/security.test.mjs tests/consistency.test.mjs tests/permissions.test.mjs tests/gemini-models.test.mjs",
     "test:postgres": "node scripts/test-postgres.mjs",
     "db:ensayo": "node scripts/rehearse-migration.mjs",
     "perf:local": "node scripts/run-benchmark.mjs",

@@ -64,6 +64,7 @@ jobs:
             .audit/profiles-owner.png
             .audit/profiles-editor.png
             .audit/generation-progress.png
+            .audit/gemini-3-8-selector.png
             .audit/navigation-report.json
             .audit/navigation-browser.jsonl
             .audit/edit-conflict.png

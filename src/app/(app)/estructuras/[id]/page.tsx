@@ -434,7 +434,7 @@ function PromptTab({
               </select>
             </Field>
 
-            <Field label="Modelo por defecto" hint="Texto libre: la lista es solo una ayuda.">
+            <Field label="Modelo por defecto" hint="Elige un modelo del catálogo. Vacío usa el de Ajustes para ese proveedor.">
               <input
                 name="defaultModel"
                 className="input input-mono"
@@ -466,7 +466,7 @@ function PromptTab({
 
             <Field
               label="Temperatura"
-              hint="Solo la usa Gemini. Los modelos Claude actuales la rechazan, así que con Anthropic se ignora."
+              hint="Valor heredado. Gemini 3.8 y los Claude actuales lo ignoran."
             >
               <input
                 name="temperature"

@@ -5,7 +5,7 @@ import { prisma, type AppTransaction } from "@/lib/prisma";
 import { assertActor } from "@/lib/auth-transactions";
 import type { SessionUser } from "@/lib/auth";
 import { auditInTransaction } from "@/lib/audit";
-import { AI_MODELS } from "@/lib/constants";
+import { resolveAiModel } from "@/lib/ai-models";
 import { generateScript, AiError, type GenerateInput, type GenerateOutput } from "@/lib/ai";
 import { persistGeneratedScript } from "@/lib/generation-persist";
 import { reserveUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
@@ -30,7 +30,7 @@ export async function enqueueGeneration(user: SessionUser, requestKey: string, s
   const parsed = payloadSchema.safeParse(input);
   if (!parsed.success) throw new Error("Revisa la petición, el modelo y la duración (máximo 600 segundos).");
   const payload = parsed.data;
-  if (payload.model && !AI_MODELS[payload.provider]?.some(m => m.value === payload.model)) throw new Error("El modelo no está disponible en el catálogo.");
+  if (payload.model) resolveAiModel(payload.provider, payload.model);
   const structureIds = [...new Set(structures)].sort();
   if (!structureIds.length || structureIds.length > resourceLimit("AI_MAX_BATCH", 3) || structureIds.some(id => id.length > 100)) throw new Error("Elige entre una y tres estructuras por generación.");
   if (Buffer.byteLength(JSON.stringify(payload)) > 48000) throw new Error("La petición es demasiado larga. Reduce los detalles antes de generar.");

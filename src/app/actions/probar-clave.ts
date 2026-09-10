@@ -3,6 +3,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI } from "@google/genai";
 import { requirePermission } from "@/lib/auth";
+import { resolveAiModel } from "@/lib/ai-models";
 
 export type TestKeyResult = {
   ok: boolean;
@@ -12,8 +13,8 @@ export type TestKeyResult = {
 };
 
 /**
- * Prueba en vivo una clave de API llamando al proveedor real.
- * No guarda nada en la base de datos; solo comprueba validez y saldo.
+ * Comprueba acceso al proveedor sin guardar la clave. Gemini consulta el modelo
+ * sin generar tokens; esta consulta no certifica la cuota de generación.
  */
 export async function probarClaveIA(params: {
   provider: "anthropic" | "google" | string;
@@ -45,17 +46,13 @@ export async function probarClaveIA(params: {
         latenciaMs: latencia,
       };
     } else if (params.provider === "google") {
-      const ai = new GoogleGenAI({ apiKey: key });
-      const modelo = params.model || "gemini-2.5-flash";
-      await ai.models.generateContent({
-        model: modelo,
-        contents: "ping",
-        config: { maxOutputTokens: 1 },
-      });
+      const modelo = resolveAiModel("google", params.model);
+      const ai = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 15000, retryOptions: { attempts: 1 } } });
+      await ai.models.get({ model: modelo });
       const latencia = Date.now() - inicio;
       return {
         ok: true,
-        mensaje: `Clave de Gemini válida y con saldo verificado (${latencia} ms).`,
+        mensaje: `Acceso a ${modelo} confirmado (${latencia} ms). La cuota disponible se comprueba al generar.`,
         latenciaMs: latencia,
       };
     } else {

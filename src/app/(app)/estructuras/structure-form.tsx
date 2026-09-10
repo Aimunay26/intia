@@ -176,7 +176,7 @@ export function StructureForm({
               </select>
             </Field>
 
-            <Field label="Temperatura" hint="Solo la usa Gemini.">
+            <Field label="Temperatura" hint="Valor heredado. Gemini 3.8 y los Claude actuales lo ignoran.">
               <input
                 name="temperature"
                 type="number"
@@ -191,7 +191,7 @@ export function StructureForm({
 
           <Field
             label="Modelo por defecto"
-            hint="Texto libre: si sale un modelo nuevo, escríbelo aquí. Vacío usa el de Ajustes."
+            hint="Elige un modelo del catálogo. Vacío usa el de Ajustes para ese proveedor."
           >
             <input
               name="defaultModel"

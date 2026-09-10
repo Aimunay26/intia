@@ -13,7 +13,7 @@ const url = assertLocalDatabase(), admin = new PrismaClient({ datasourceUrl: url
 const suffix = randomBytes(4).toString("hex"), name = `intia_workflow_${suffix}_test`, target = new URL(url);
 target.pathname = `/${name}`;
 const port = 3007, base = `http://127.0.0.1:${port}`;
-const env = { ...process.env, DATABASE_URL: target.href, AUTH_SECRET: randomBytes(32).toString("hex"), AI_JOBS_ENABLED: "true", WORKFLOW_TARGET_WORLD: "local", WORKFLOW_LOCAL_BASE_URL: base, WORKFLOW_LOCAL_DATA_DIR: path.resolve(`.audit/workflow-${suffix}`), WORKFLOW_LOCAL_RECOVER_ACTIVE_RUNS: "false", NODE_ENV: "production" };
+const env = { ...process.env, DATABASE_URL: target.href, AUTH_SECRET: randomBytes(32).toString("hex"), GEMINI_API_KEY: "fixture-not-a-real-key", ANTHROPIC_API_KEY: "fixture-not-a-real-key", AI_JOBS_ENABLED: "true", WORKFLOW_TARGET_WORLD: "local", WORKFLOW_LOCAL_BASE_URL: base, WORKFLOW_LOCAL_DATA_DIR: path.resolve(`.audit/workflow-${suffix}`), WORKFLOW_LOCAL_RECOVER_ACTIVE_RUNS: "false", NODE_ENV: "production" };
 let server, db, browser;
 try {
   await admin.$executeRawUnsafe(`CREATE DATABASE "${name}"`);
@@ -23,7 +23,8 @@ try {
   const password = randomBytes(16).toString("hex");
   const user = await db.user.create({ data: { name: "Fixture", email: "workflow@example.test", role: "OWNER", passwordHash: await bcrypt.hash(password, 10) } });
   await db.appSetting.create({ data: { key: "security.bootstrap.complete", value: "1" } });
-  const structure = await db.structure.create({ data: { name: "Fixture", slug: "workflow" } });
+  const structure = await db.structure.create({ data: { name: "Fixture", slug: "workflow", defaultProvider: "anthropic", defaultModel: "claude-opus-5" } });
+  await db.appSetting.create({ data: { key: 'ai.google.model', value: 'gemini-2.5-pro' } });
   await db.structure.createMany({ data: [1, 2, 3].map(n => ({ name: `Fixture ${n}`, slug: `workflow-${n}` })) });
   const response = { script: { title: "Recuperado por Workflow", scenes: [{ beat: "Inicio", startSec: 0, endSec: 5, voiceType: "EN_CAMARA" }] }, provider: "anthropic", model: "fixture", raw: "fixture-response", systemPrompt: "fixture-prompt", userPrompt: "fixture", referencesUsed: [], inputTokens: 10, outputTokens: 20 };
   const job = await db.generationJob.create({ data: { userId: user.id, sessionVersion: user.sessionVersion, requestKey: randomBytes(16).toString("hex"), fingerprint: "fixture", payload: { provider: "anthropic", request: "Fixture" }, items: { create: { structureId: structure.id, order: 0, response, attempts: 1 } } } });
@@ -62,7 +63,20 @@ try {
   await page.getByRole("button", { name: /Seleccionar visibles/ }).click();
   assert.equal((await page.locator('input[name="estructuras"]').inputValue()).split(",").length, 3);
   await page.screenshot({ path: ".audit/generator-jobs.png", fullPage: true });
-  const report = { checkedAt: new Date().toISOString(), environment: "local-production-build", workflowSdk: "4.8.7", actualQueueExecuted: true, persistedResponseRecovered: true, scriptsCreated: 1, auditCount: 1, liveAiCalls: 0, liveBlobCalls: 0 };
+  await page.goto(`${base}/generador?estructura=${structure.id}&producto=Producto%20ficticio&peticion=Idea%20ficticia%20para%20probar%20el%20selector`);
+  for (const name of ['Continuar: Identidad y Producto', 'Continuar: Ángulo e Idea', 'Continuar: Cierre y CTA (Hormozi)', 'Continuar: Motor y Generación']) await page.getByRole('button', { name, exact: true }).click();
+  const modelInput = page.locator('input[name="modelo"]:not([type="hidden"])');
+  assert.equal(await modelInput.inputValue(), 'claude-opus-5');
+  await page.getByRole('button', { name: /Gemini \(Google\)/ }).click();
+  assert.equal(await modelInput.inputValue(), 'gemini-3.8-flash');
+  assert.equal(await page.locator('#modelos-ia option[value="gemini-3.8-flash"]').count(), 1);
+  await page.getByRole('button', { name: /Claude \(Anthropic\)/ }).click();
+  assert.equal(await modelInput.inputValue(), 'claude-opus-5');
+  await page.getByRole('button', { name: /Gemini \(Google\)/ }).click();
+  await page.screenshot({ path: '.audit/gemini-3-8-selector.png', fullPage: true, animations: 'disabled' });
+  await page.goto(base + '/ajustes');
+  assert.equal(await page.locator('input[name="googleModel"]').inputValue(), 'gemini-3.8-flash');
+  const report = { checkedAt: new Date().toISOString(), environment: "local-production-build", workflowSdk: "4.8.7", actualQueueExecuted: true, persistedResponseRecovered: true, scriptsCreated: 1, auditCount: 1, gemini38ProviderSwitch: true, legacyGoogleSettingResolved: true, liveAiCalls: 0, liveBlobCalls: 0 };
   fs.writeFileSync(".audit/workflow-smoke.json", JSON.stringify(report, null, 2)); console.log(JSON.stringify(report));
 } finally {
   await browser?.close();

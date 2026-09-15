@@ -13,6 +13,7 @@ import { revalidatePath } from "next/cache";
 import { reserveUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
 import { allows, assertBrandPermission, assertPermission } from "@/lib/permissions";
 import { contentScope, generationScope, scriptScope } from "@/lib/access-scope";
+import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
 
 const text = z.string().max(12000).optional();
 const payloadSchema = z.object({
@@ -36,6 +37,14 @@ export type EnqueueInput = Omit<GenerateInput, "structureId"> & { contentItemId?
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 
 export async function enqueueGeneration(user: SessionUser, requestKey: string, structures: string[], input: EnqueueInput) {
+  return withGenerationTrace({}, () => generationStage("enqueue", async () => {
+    const jobId = await enqueueValidatedGeneration(user, requestKey, structures, input);
+    generationEvent("enqueue", "info", { jobId });
+    return jobId;
+  }));
+}
+
+async function enqueueValidatedGeneration(user: SessionUser, requestKey: string, structures: string[], input: EnqueueInput) {
   assertBrandPermission(user, input.brandId, "scripts.generate");
   if (process.env.AI_JOBS_ENABLED !== "true") throw new Error("La generación en segundo plano aún no está habilitada.");
   if (!z.string().uuid().safeParse(requestKey).success) throw new Error("Recarga el formulario antes de generar.");
@@ -98,13 +107,21 @@ export type GenerationProgress = { done: boolean; retryAt?: number };
 
 /** Una llamada al proveedor por intento. La concesión supera el timeout HTTP y cada escritura exige su token. */
 export async function processGeneration(jobId: string): Promise<GenerationProgress> {
-  const claim = await prisma.$transaction(async tx => {
+  return withGenerationTrace({ jobId }, () => generationStage("process", () => processGenerationStep(jobId)));
+}
+
+async function processGenerationStep(jobId: string): Promise<GenerationProgress> {
+  const claim = await generationStage("claim", () => prisma.$transaction(async tx => {
     const job = await lockJob(tx, jobId);
-    if (!job || !active.includes(job.status)) return { done: true } as const;
+    if (!job || !active.includes(job.status)) {
+      generationEvent("job_state", "info", { reason: "not_runnable", status: job?.status });
+      return { done: true } as const;
+    }
     const user = await actorForJob(tx, job);
     if (!user || Date.now() - job.createdAt.getTime() > 86400000 || process.env.AI_JOBS_ENABLED !== "true") {
       await tx.generationJob.update({ where: { id: jobId }, data: { status: "CANCELLED", error: "La generación expiró o su acceso fue revocado." } });
       await tx.generationItem.updateMany({ where: { jobId, status: { in: active } }, data: { status: "CANCELLED", response: Prisma.DbNull } });
+      generationEvent("job_state", "info", { status: "CANCELLED", reason: "access_revoked_or_expired" });
       return { done: true } as const;
     }
     const item = job.items.find(i => active.includes(i.status));
@@ -113,81 +130,94 @@ export async function processGeneration(jobId: string): Promise<GenerationProgre
       const status = completed === job.items.length ? "COMPLETED" : completed ? "PARTIAL" : "FAILED";
       const aviso = await avisoFinal(tx, job, completed);
       await tx.generationJob.update({ where: { id: jobId }, data: { status, ...(aviso ? { error: aviso } : {}) } });
+      generationEvent("job_state", "info", { status });
       return { done: true } as const;
     }
     const retryAt = Math.max(item.availableAt.getTime(), item.leaseUntil?.getTime() ?? 0);
-    if (retryAt > Date.now()) return { done: false, retryAt } as const;
+    if (retryAt > Date.now()) {
+      generationEvent("job_state", "info", { itemId: item.id, reason: "lease_wait", waitMs: retryAt - Date.now() });
+      return { done: false, retryAt } as const;
+    }
     if (!item.response && item.attempts >= 3) {
       await tx.generationItem.update({ where: { id: item.id }, data: { status: "FAILED", error: "Se agotaron los tres intentos. Revisa la configuración antes de iniciar otra generación." } });
+      generationEvent("job_state", "info", { itemId: item.id, status: "FAILED", reason: "attempt_limit" });
       return { done: false } as const;
     }
     const leaseToken = randomUUID();
     await tx.generationItem.update({ where: { id: item.id }, data: { status: "RUNNING", leaseToken, leaseUntil: new Date(Date.now() + 360000), error: null } });
     await tx.generationJob.update({ where: { id: jobId }, data: { status: "RUNNING", error: null } });
     return { item, leaseToken, input: { ...payloadSchema.parse(job.payload), structureId: item.structureId }, user };
-  });
+  }));
   if (claim.done !== undefined) return { done: claim.done, retryAt: claim.retryAt };
   const { item, input, leaseToken } = claim;
-  let result = item.response as GenerateOutput | null;
-  if (!result) {
-    try {
-      await prisma.$transaction(async tx => {
-        const job = await lockJob(tx, jobId);
-        if (!job || !active.includes(job.status) || !await actorForJob(tx, job)) throw new Error("La generación fue cancelada o su acceso cambió.");
-        const current = job.items.find(i => i.id === item.id);
-        if (current?.leaseToken !== leaseToken) throw new Error("Otro proceso recuperó esta generación.");
-        const day = usageDay();
-        await reserveUsage(tx, `ai:calls:${day}`, 1, resourceLimit("AI_DAILY_CALLS", 20));
-        await reserveUsage(tx, `ai:user:${job.userId}:${day}`, 1, resourceLimit("AI_USER_DAILY_CALLS", 5));
-        await tx.generationItem.update({ where: { id: item.id }, data: { attempts: { increment: 1 } } });
-      });
-      result = await generateScript(input);
-    } catch (error) {
-      const claveRechazada = esErrorDeAutenticacion(error);
-      const retry = !claveRechazada && error instanceof AiError && error.retryable && item.attempts + 1 < 3;
-      // Sólo metadatos: nunca claves, prompts, respuestas ni el error crudo del SDK.
-      console.warn(JSON.stringify({ event: "generation_attempt_failed", jobId, itemId: item.id,
-        attempt: item.attempts + 1, retry, ...(error instanceof AiError ? error.diagnostic : {}) }));
-      await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: {
-        status: retry ? "QUEUED" : "FAILED", error: error instanceof AiError ? error.message : "No se pudo generar. Revisa el cupo disponible y los datos de la petición.",
-        availableAt: new Date(Date.now() + 30000 * (item.attempts + 1)), leaseToken: null, leaseUntil: null,
-      } });
-      // Con la clave rechazada, cada formato siguiente fallaría igual: se
-      // cortan aquí en vez de gastar intentos. Lo ya creado se conserva y el
-      // aviso final dice cuáles no se intentaron y por qué.
-      if (claveRechazada) await prisma.generationItem.updateMany({ where: { jobId, status: "QUEUED", job: { status: { in: active } } }, data: { status: "FAILED", error: MOTIVO_CLAVE_RECHAZADA, response: Prisma.DbNull } });
-      return { done: false };
+  return withGenerationTrace({ itemId: item.id, attempt: item.response ? item.attempts : item.attempts + 1 }, async () => {
+    let result = item.response as GenerateOutput | null;
+    generationEvent("job_state", "info", { status: "RUNNING", reused: Boolean(result) });
+    if (!result) {
+      try {
+        await generationStage("quota", () => prisma.$transaction(async tx => {
+          const job = await lockJob(tx, jobId);
+          if (!job || !active.includes(job.status) || !await actorForJob(tx, job)) throw new Error("La generación fue cancelada o su acceso cambió.");
+          const current = job.items.find(i => i.id === item.id);
+          if (current?.leaseToken !== leaseToken) throw new Error("Otro proceso recuperó esta generación.");
+          const day = usageDay();
+          await reserveUsage(tx, `ai:calls:${day}`, 1, resourceLimit("AI_DAILY_CALLS", 20));
+          await reserveUsage(tx, `ai:user:${job.userId}:${day}`, 1, resourceLimit("AI_USER_DAILY_CALLS", 5));
+          await tx.generationItem.update({ where: { id: item.id }, data: { attempts: { increment: 1 } } });
+        }));
+        result = await generationStage("generate", () => generateScript(input));
+      } catch (error) {
+        const claveRechazada = esErrorDeAutenticacion(error);
+        const retry = !claveRechazada && error instanceof AiError && error.retryable && item.attempts + 1 < 3;
+        generationEvent("retry", "info", { retry, waitMs: retry ? 30000 * (item.attempts + 1) : 0,
+          status: retry ? "QUEUED" : "FAILED", httpStatus: error instanceof AiError ? error.diagnostic?.status : undefined });
+        await generationStage("failure_save", async () => {
+          await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: {
+            status: retry ? "QUEUED" : "FAILED", error: error instanceof AiError ? error.message : "No se pudo generar. Revisa el cupo disponible y los datos de la petición.",
+            availableAt: new Date(Date.now() + 30000 * (item.attempts + 1)), leaseToken: null, leaseUntil: null,
+          } });
+          // Con la clave rechazada, cada formato siguiente fallaría igual: se
+          // cortan aquí en vez de gastar intentos. Lo ya creado se conserva y el
+          // aviso final dice cuáles no se intentaron y por qué.
+          if (claveRechazada) await prisma.generationItem.updateMany({ where: { jobId, status: "QUEUED", job: { status: { in: active } } }, data: { status: "FAILED", error: MOTIVO_CLAVE_RECHAZADA, response: Prisma.DbNull } });
+        });
+        return { done: false };
+      }
+      // Se conserva antes de crear el guion: una caída de DB posterior no obliga a pagar otra respuesta.
+      const saved = await generationStage("response_save", () => prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: { response: json(result), inputTokens: result!.inputTokens ?? 0, outputTokens: result!.outputTokens ?? 0 } }));
+      if (!saved.count) {
+        generationEvent("job_state", "info", { reason: "lease_lost" });
+        return { done: false };
+      }
     }
-    // Se conserva antes de crear el guion: una caída de DB posterior no obliga a pagar otra respuesta.
-    const saved = await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: { response: json(result), inputTokens: result.inputTokens ?? 0, outputTokens: result.outputTokens ?? 0 } });
-    if (!saved.count) return { done: false };
-  }
-  await prisma.$transaction(async tx => {
-    const job = await lockJob(tx, jobId);
-    if (!job || !active.includes(job.status)) return;
-    const current = job.items.find(i => i.id === item.id);
-    if (current?.leaseToken !== leaseToken || current.status !== "RUNNING") return;
-    const user = await actorForJob(tx, job);
-    if (!user) {
-      await tx.generationJob.update({ where: { id: jobId }, data: { status: "CANCELLED" } });
-      await tx.generationItem.updateMany({ where: { jobId, status: { in: active } }, data: { status: "CANCELLED", response: Prisma.DbNull } });
-      return;
-    }
-    const scriptId = await persistGeneratedScript(tx, user, item.id, input, result!);
-    await tx.generationItem.update({ where: { id: item.id }, data: { status: "COMPLETED", response: Prisma.DbNull, leaseToken: null, leaseUntil: null, error: null } });
-    // La tarjeta solo admite un guion: se une el PRIMERO que sale del lote en
-    // cuanto existe, no al final, para que el video tenga guion aunque el resto
-    // falle. Los demás quedan sueltos y se asignan desde su ficha. Solo se
-    // escribe si la tarjeta sigue libre: un vínculo hecho mientras tanto no se pisa.
-    const primero = !job.items.some(i => i.id !== item.id && i.status === "COMPLETED");
-    if (input.contentItemId && primero) return vincularGuionAVideo(tx, user, scriptId, input.contentItemId);
-    return false;
-  }, { timeout: 15000 }).then(vinculado => {
-    if (!vinculado) return;
-    // El vínculo cambia calendario y videos; fuera de un contexto de petición no hay caché que invalidar.
-    try { for (const ruta of ["/contenido", `/contenido/${input.contentItemId}`, "/calendario", "/"]) revalidatePath(ruta); } catch {}
+    await generationStage("script_save", () => prisma.$transaction(async tx => {
+      const job = await lockJob(tx, jobId);
+      if (!job || !active.includes(job.status)) { generationEvent("job_state", "info", { reason: "not_runnable" }); return; }
+      const current = job.items.find(i => i.id === item.id);
+      if (current?.leaseToken !== leaseToken || current.status !== "RUNNING") { generationEvent("job_state", "info", { reason: "lease_lost" }); return; }
+      const user = await actorForJob(tx, job);
+      if (!user) {
+        await tx.generationJob.update({ where: { id: jobId }, data: { status: "CANCELLED" } });
+        await tx.generationItem.updateMany({ where: { jobId, status: { in: active } }, data: { status: "CANCELLED", response: Prisma.DbNull } });
+        return;
+      }
+      const scriptId = await persistGeneratedScript(tx, user, item.id, input, result!);
+      await tx.generationItem.update({ where: { id: item.id }, data: { status: "COMPLETED", response: Prisma.DbNull, leaseToken: null, leaseUntil: null, error: null } });
+      generationEvent("job_state", "info", { status: "COMPLETED" });
+      // La tarjeta solo admite un guion: se une el PRIMERO que sale del lote en
+      // cuanto existe, no al final, para que el video tenga guion aunque el resto
+      // falle. Los demás quedan sueltos y se asignan desde su ficha. Solo se
+      // escribe si la tarjeta sigue libre: un vínculo hecho mientras tanto no se pisa.
+      const primero = !job.items.some(i => i.id !== item.id && i.status === "COMPLETED");
+      if (input.contentItemId && primero) return generationStage("video_link", () => vincularGuionAVideo(tx, user, scriptId, input.contentItemId!));
+      return false;
+    }, { timeout: 15000 }).then(vinculado => {
+      if (!vinculado) return;
+      // El vínculo cambia calendario y videos; fuera de un contexto de petición no hay caché que invalidar.
+      try { for (const ruta of ["/contenido", `/contenido/${input.contentItemId}`, "/calendario", "/"]) revalidatePath(ruta); } catch {}
+    }));
+    return { done: false };
   });
-  return { done: false };
 }
 
 /* ------------------------------------------------------------ AVISO FINAL -- */
@@ -240,6 +270,10 @@ export async function generationStatus(user: SessionUser, id: string) {
 }
 
 export async function cancelGeneration(user: SessionUser, id: string) {
+  return withGenerationTrace({ jobId: id }, () => generationStage("cancel", () => cancelGenerationJob(user, id)));
+}
+
+async function cancelGenerationJob(user: SessionUser, id: string) {
   assertPermission(user, "scripts.generate");
   await prisma.$transaction(async tx => {
     const job = await lockJob(tx, id);

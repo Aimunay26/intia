@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { ENV_KEY_NAMES, getSettings, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
 import { resolveAiModel } from "@/lib/ai-models";
+import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
 import { buildSystemPrompt, buildUserPrompt, type ReferenceDoc } from "@/lib/ai/context";
 import {
   AiError,
@@ -59,40 +60,48 @@ async function loadReferences(
 }
 
 export async function generateScript(input: GenerateInput): Promise<GenerateOutput> {
-  const structure = await prisma.structure.findUnique({
-    where: { id: input.structureId },
-  });
-  if (!structure) throw new AiError("No se encontró la estructura seleccionada.");
+  return withGenerationTrace({}, () => generateScriptWithTrace(input));
+}
 
-  const brand = input.brandId
-    ? await prisma.brand.findUnique({ where: { id: input.brandId } })
-    : null;
-
-  const archetype = input.archetypeId
-    ? await prisma.archetype.findUnique({ where: { id: input.archetypeId } })
-    : null;
-
-  // Compatibilidad arquetipo <-> estructura: el segundo fine tuning.
-  let fitScore: number | null = null;
-  let fitNotes: string | null = null;
-  if (archetype) {
-    const fit = await prisma.archetypeFit.findUnique({
-      where: {
-        archetypeId_structureId: {
-          archetypeId: archetype.id,
-          structureId: structure.id,
-        },
-      },
+async function generateScriptWithTrace(input: GenerateInput): Promise<GenerateOutput> {
+  const { structure, brand, archetype, fitScore, fitNotes } = await generationStage("context_load", async () => {
+    const structure = await prisma.structure.findUnique({
+      where: { id: input.structureId },
     });
-    fitScore = fit?.score ?? null;
-    fitNotes = fit?.notes ?? null;
-  }
+    if (!structure) throw new AiError("No se encontró la estructura seleccionada.");
 
-  const references: ReferenceDoc[] = [
+    const brand = input.brandId
+      ? await prisma.brand.findUnique({ where: { id: input.brandId } })
+      : null;
+
+    const archetype = input.archetypeId
+      ? await prisma.archetype.findUnique({ where: { id: input.archetypeId } })
+      : null;
+
+    // Compatibilidad arquetipo <-> estructura: el segundo fine tuning.
+    let fitScore: number | null = null;
+    let fitNotes: string | null = null;
+    if (archetype) {
+      const fit = await prisma.archetypeFit.findUnique({
+        where: {
+          archetypeId_structureId: {
+            archetypeId: archetype.id,
+            structureId: structure.id,
+          },
+        },
+      });
+      fitScore = fit?.score ?? null;
+      fitNotes = fit?.notes ?? null;
+    }
+    return { structure, brand, archetype, fitScore, fitNotes };
+  });
+
+  const references: ReferenceDoc[] = await generationStage("references_load", async () => [
     ...(await loadReferences("structure", structure.id, "Estructura")),
     ...(archetype ? await loadReferences("archetype", archetype.id, "Arquetipo") : []),
     ...(brand ? await loadReferences("brand", brand.id, "Marca") : []),
-  ];
+  ]);
+  generationEvent("references_load", "info", { referenceCount: references.length });
 
   const durationSec = input.durationSec ?? structure.defaultDurationSec ?? 45;
 
@@ -178,10 +187,14 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
     durationSec,
   };
 
-  const systemPrompt = buildSystemPrompt(promptInput);
-  const userPrompt = buildUserPrompt(promptInput);
-
-  if (Buffer.byteLength(systemPrompt) + Buffer.byteLength(userPrompt) > 200000) throw new AiError("Las referencias exceden el límite de contexto. Reduce los documentos seleccionados.");
+  const { systemPrompt, userPrompt } = await generationStage("prompt_build", () => {
+    const systemPrompt = buildSystemPrompt(promptInput);
+    const userPrompt = buildUserPrompt(promptInput);
+    const promptBytes = Buffer.byteLength(systemPrompt) + Buffer.byteLength(userPrompt);
+    generationEvent("prompt_build", "info", { promptBytes });
+    if (promptBytes > 200000) throw new AiError("Las referencias exceden el límite de contexto. Reduce los documentos seleccionados.");
+    return { systemPrompt, userPrompt };
+  });
 
   // Orden del modelo: lo elegido en el generador → el de la estructura (solo si
   // es del mismo proveedor) → el «Modelo por defecto» de Ajustes → el catálogo.
@@ -190,42 +203,47 @@ export async function generateScript(input: GenerateInput): Promise<GenerateOutp
   const provider = input.provider || structure.defaultProvider || "anthropic";
   const modelKey = provider === "google" ? SETTING_KEYS.defaultGoogleModel : SETTING_KEYS.defaultAnthropicModel;
   const apiKeySetting = provider === "google" ? SETTING_KEYS.googleKey : SETTING_KEYS.anthropicKey;
-  const settings = await getSettings([modelKey, apiKeySetting]);
-  const model = resolveAiModel(provider, input.model,
-    structure.defaultProvider === provider ? structure.defaultModel : null, settings[modelKey]);
+  const settings = await generationStage("settings_load", () => getSettings([modelKey, apiKeySetting]));
+  const model = await generationStage("model_resolve", () => resolveAiModel(provider, input.model,
+    structure.defaultProvider === provider ? structure.defaultModel : null, settings[modelKey]));
 
   // La clave guardada en Ajustes manda; la variable de entorno es el respaldo.
   // `source` viaja al proveedor para que el error diga de dónde salió la clave.
-  const { key, source } = await resolveApiKey(provider, settings);
-  if (!key) {
-    const envName = ENV_KEY_NAMES[provider] ?? "correspondiente";
-    throw new AiError(
-      provider === "anthropic"
-        ? "Falta la clave de Claude (Anthropic)."
-        : "Falta la clave de Gemini (Google).",
-      `Pégala en Ajustes (o, como respaldo, define la variable de entorno ${envName} en el servidor).`,
-      "auth"
-    );
-  }
+  const { key, source } = await generationStage("key_resolve", async () => {
+    const { key, source } = await resolveApiKey(provider, settings);
+    if (!key) {
+      const envName = ENV_KEY_NAMES[provider] ?? "correspondiente";
+      throw new AiError(
+        provider === "anthropic"
+          ? "Falta la clave de Claude (Anthropic)."
+          : "Falta la clave de Gemini (Google).",
+        `Pégala en Ajustes (o, como respaldo, define la variable de entorno ${envName} en el servidor).`,
+        "auth"
+      );
+    }
+    return { key, source };
+  }, { provider, model });
 
-  const call = {
-    apiKey: key,
-    keySource: source,
-    model,
-    system: systemPrompt,
-    user: userPrompt,
-    temperature: structure.temperature ?? 1,
-  };
+  return withGenerationTrace({ provider, model, keySource: source }, async () => {
+    const call = {
+      apiKey: key,
+      keySource: source,
+      model,
+      system: systemPrompt,
+      user: userPrompt,
+      temperature: structure.temperature ?? 1,
+    };
 
-  const result =
-    provider === "google" ? await generateWithGemini(call) : await generateWithClaude(call);
+    const result =
+      provider === "google" ? await generateWithGemini(call) : await generateWithClaude(call);
 
-  return {
-    ...result,
-    systemPrompt,
-    userPrompt,
-    referencesUsed: references.map((r) => `[${r.source}] ${r.label}`),
-  };
+    return {
+      ...result,
+      systemPrompt,
+      userPrompt,
+      referencesUsed: references.map((r) => `[${r.source}] ${r.label}`),
+    };
+  });
 }
 
 /**

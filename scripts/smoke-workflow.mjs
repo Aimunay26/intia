@@ -46,6 +46,13 @@ try {
   const scripts = await db.script.findMany({ where: { generationItem: { jobId: job.id } } });
   assert.equal(scripts.length, 1); assert.equal(scripts[0].inputTokens, 10);
   assert.equal(await db.auditLog.count({ where: { entityId: scripts[0].id } }), 1);
+  const traces = fs.readFileSync('.audit/workflow-server.log', 'utf8').split(/\r?\n/).flatMap(line => {
+    try { const row = JSON.parse(line);return row.event === 'generation_trace' && row.jobId === job.id ? [row] : []; } catch { return []; }
+  });
+  assert.ok(traces.some(r => r.stage === 'workflow_step' && r.state === 'success'), 'El Workflow compilado debe conservar las trazas');
+  assert.ok(traces.some(r => r.stage === 'script_save' && r.state === 'success'));
+  assert.ok(traces.some(r => r.stage === 'script_insert' && r.state === 'success'));
+  assert.doesNotMatch(JSON.stringify(traces), /fixture-prompt|fixture-response|fixture-not-a-real-key/);
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await page.goto(base + "/login");
@@ -65,7 +72,7 @@ try {
   await expect(generatorForm.locator('input[name="estructuras"]')).toHaveValue(/^[^,]+,[^,]+,[^,]+$/);
   await page.screenshot({ path: ".audit/generator-jobs.png", fullPage: true });
   await page.goto(`${base}/generador?estructura=${structure.id}&producto=Producto%20ficticio&peticion=Idea%20ficticia%20para%20probar%20el%20selector`);
-  for (const name of ['Continuar: Identidad y Producto', 'Continuar: Ángulo e Idea', 'Continuar: Cierre y CTA (Hormozi)', 'Continuar: Motor y Generación']) await page.getByRole('button', { name, exact: true }).click();
+  for (const name of ['Continuar: Identidad y Producto', 'Continuar: Ángulo e Idea', 'Continuar: Cierre y CTA', 'Continuar: Motor y Generación']) await page.getByRole('button', { name, exact: true }).click();
   const modelInput = page.getByRole('main').locator('input[name="modelo"]:visible');
   assert.equal(await modelInput.inputValue(), 'claude-opus-5');
   await page.getByRole('button', { name: /Gemini \(Google\)/ }).click();
@@ -77,7 +84,7 @@ try {
   await page.screenshot({ path: '.audit/gemini-3-8-selector.png', fullPage: true, animations: 'disabled' });
   await page.goto(base + '/ajustes');
   assert.equal(await page.getByRole('main').locator('input[name="googleModel"]:visible').inputValue(), 'gemini-3.8-flash');
-  const report = { checkedAt: new Date().toISOString(), environment: "local-production-build", workflowSdk: "4.8.7", actualQueueExecuted: true, persistedResponseRecovered: true, scriptsCreated: 1, auditCount: 1, gemini38ProviderSwitch: true, legacyGoogleSettingResolved: true, liveAiCalls: 0, liveBlobCalls: 0 };
+  const report = { checkedAt: new Date().toISOString(), environment: "local-production-build", workflowSdk: "4.8.7", actualQueueExecuted: true, persistedResponseRecovered: true, scriptsCreated: 1, auditCount: 1, generationTracesVerified: true, gemini38ProviderSwitch: true, legacyGoogleSettingResolved: true, liveAiCalls: 0, liveBlobCalls: 0 };
   fs.writeFileSync(".audit/workflow-smoke.json", JSON.stringify(report, null, 2)); console.log(JSON.stringify(report));
 } finally {
   await browser?.close();

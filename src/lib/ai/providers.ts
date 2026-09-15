@@ -9,6 +9,7 @@ import {
   type GeneratedScript,
 } from "@/lib/ai/schema";
 import { describeKeySource, type KeySource } from "@/lib/settings";
+import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
 
 export type AiProviderId = "anthropic" | "google";
 
@@ -78,71 +79,80 @@ export class AiError extends Error {
 /* ---------------------------------------------------------------- CLAUDE -- */
 
 export async function generateWithClaude(call: ProviderCall): Promise<GenerationResult> {
+  return withGenerationTrace({ provider: "anthropic", model: call.model, keySource: call.keySource }, () => generateClaude(call));
+}
+
+async function generateClaude(call: ProviderCall): Promise<GenerationResult> {
   const client = new Anthropic({ apiKey: call.apiKey, maxRetries: 0, timeout: 240000 });
 
   let message;
   try {
-    // Se usa stream + finalMessage porque max_tokens es alto: evita que la
-    // peticion muera por timeout HTTP en guiones largos.
-    const stream = client.messages.stream({
-      model: call.model,
-      max_tokens: resourceLimit("AI_MAX_OUTPUT_TOKENS", 32000),
-      system: call.system,
-      messages: [{ role: "user", content: call.user }],
-      output_config: {
-        format: zodOutputFormat(GeneratedScriptSchema),
-      },
-    }, { signal: AbortSignal.timeout(240000) });
-    message = await stream.finalMessage();
+    message = await generationStage("provider_request", async () => {
+      // Se usa stream + finalMessage porque max_tokens es alto: evita que la
+      // peticion muera por timeout HTTP en guiones largos.
+      const stream = client.messages.stream({
+        model: call.model,
+        max_tokens: resourceLimit("AI_MAX_OUTPUT_TOKENS", 32000),
+        system: call.system,
+        messages: [{ role: "user", content: call.user }],
+        output_config: {
+          format: zodOutputFormat(GeneratedScriptSchema),
+        },
+      }, { signal: AbortSignal.timeout(240000) });
+      return await stream.finalMessage();
+    }, { requestIndex: 1, timeoutMs: 240000, structured: true });
   } catch (error) {
     throw toAiError(error, "anthropic", call.keySource);
   }
 
-  if (message.stop_reason === "refusal") {
-    throw new AiError(
-      "Claude no quiso generar este guion.",
-      "El modelo rechazó la petición por sus filtros de seguridad. Reformula el pedido o prueba con Gemini."
-    );
-  }
-  if (message.stop_reason === "max_tokens") {
-    throw new AiError(
-      "El guion salió cortado.",
-      "Se alcanzó el límite de tokens. Reduce la duración objetivo o acorta los PDFs de referencia."
-    );
-  }
-
-  const parsed = message.parsed_output;
-  if (!parsed) {
-    // Plan B: intentar leer el JSON del texto plano.
-    const text = message.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n");
-    const fallback = parseScriptJson(text);
-    if (!fallback) {
+  generationEvent("provider_response", "info", { finishReason: message.stop_reason ?? undefined, inputTokens: message.usage?.input_tokens, outputTokens: message.usage?.output_tokens });
+  return generationStage("response_parse", () => {
+    if (message.stop_reason === "refusal") {
       throw new AiError(
-        "Claude respondió, pero no en el formato esperado.",
-        text.slice(0, 500)
+        "Claude no quiso generar este guion.",
+        "El modelo rechazó la petición por sus filtros de seguridad. Reformula el pedido o prueba con Gemini."
       );
     }
+    if (message.stop_reason === "max_tokens") {
+      throw new AiError(
+        "El guion salió cortado.",
+        "Se alcanzó el límite de tokens. Reduce la duración objetivo o acorta los PDFs de referencia."
+      );
+    }
+
+    const parsed = message.parsed_output;
+    if (!parsed) {
+      // Plan B: intentar leer el JSON del texto plano.
+      const text = message.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("\n");
+      const fallback = parseScriptJson(text);
+      if (!fallback) {
+        throw new AiError(
+          "Claude respondió, pero no en el formato esperado.",
+          text.slice(0, 500)
+        );
+      }
+      return {
+        script: fallback,
+        raw: text,
+        provider: "anthropic",
+        model: call.model,
+        inputTokens: message.usage?.input_tokens,
+        outputTokens: message.usage?.output_tokens,
+      };
+    }
+
     return {
-      script: fallback,
-      raw: text,
+      script: parsed as GeneratedScript,
+      raw: JSON.stringify(parsed, null, 2),
       provider: "anthropic",
       model: call.model,
       inputTokens: message.usage?.input_tokens,
       outputTokens: message.usage?.output_tokens,
     };
-  }
-
-  return {
-    script: parsed as GeneratedScript,
-    raw: JSON.stringify(parsed, null, 2),
-    provider: "anthropic",
-    model: call.model,
-    inputTokens: message.usage?.input_tokens,
-    outputTokens: message.usage?.output_tokens,
-  };
+  });
 }
 
 /* ---------------------------------------------------------------- GEMINI -- */
@@ -165,6 +175,10 @@ function geminiSchema(): unknown {
 }
 
 export async function generateWithGemini(call: ProviderCall): Promise<GenerationResult> {
+  return withGenerationTrace({ provider: "google", model: call.model, keySource: call.keySource }, () => generateGemini(call));
+}
+
+async function generateGemini(call: ProviderCall): Promise<GenerationResult> {
   // En @google/genai 1.52, retryOptions descarta el cuerpo y el status de
   // respuestas HTTP fallidas incluso con attempts: 1. Sin esta opción el SDK
   // hace un único fetch y conserva ApiError; los reintentos los gestiona el job.
@@ -180,11 +194,12 @@ export async function generateWithGemini(call: ProviderCall): Promise<Generation
   let usage: { input?: number; output?: number } = {};
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generationStage("provider_request", () => ai.models.generateContent({
       model: call.model,
       contents: call.user,
       config: { ...baseConfig, responseJsonSchema: geminiSchema() },
-    });
+    }), { requestIndex: 1, structured: true, timeoutMs: 240000, maxOutputTokens: baseConfig.maxOutputTokens });
+    generationEvent("provider_response", "info", { finishReason: response.candidates?.[0]?.finishReason, blockReason: response.promptFeedback?.blockReason, responseBytes: Buffer.byteLength(response.text ?? ""), inputTokens: response.usageMetadata?.promptTokenCount, outputTokens: response.usageMetadata?.candidatesTokenCount });
     text = response.text ?? "";
     usage = {
       input: response.usageMetadata?.promptTokenCount,
@@ -206,12 +221,14 @@ export async function generateWithGemini(call: ProviderCall): Promise<Generation
     if (!reintentable) {
       throw toAiError(schemaError, "google", call.keySource);
     }
+    generationEvent("schema_fallback", "info", { requestIndex: 2, structured: false });
     try {
-      const response = await ai.models.generateContent({
+      const response = await generationStage("provider_request", () => ai.models.generateContent({
         model: call.model,
         contents: call.user,
         config: baseConfig,
-      });
+      }), { requestIndex: 2, structured: false, timeoutMs: 240000, maxOutputTokens: baseConfig.maxOutputTokens });
+      generationEvent("provider_response", "info", { finishReason: response.candidates?.[0]?.finishReason, blockReason: response.promptFeedback?.blockReason, responseBytes: Buffer.byteLength(response.text ?? ""), inputTokens: response.usageMetadata?.promptTokenCount, outputTokens: response.usageMetadata?.candidatesTokenCount });
       text = response.text ?? "";
       usage = {
         input: response.usageMetadata?.promptTokenCount,
@@ -222,10 +239,15 @@ export async function generateWithGemini(call: ProviderCall): Promise<Generation
     }
   }
 
-  const script = parseScriptJson(text);
-  if (!script) {
-    throw new AiError("Gemini respondió, pero no en el formato esperado.", text.slice(0, 500));
-  }
+  const script = await generationStage("response_parse", () => {
+    const script = parseScriptJson(text);
+    if (!script) {
+      generationEvent("response_parse", "info", { reason: "invalid_response", responseBytes: Buffer.byteLength(text) });
+      throw new AiError("Gemini respondió, pero no en el formato esperado.", text.slice(0, 500));
+    }
+    generationEvent("response_parse", "info", { sceneCount: script.scenes.length });
+    return script;
+  });
 
   return {
     script,

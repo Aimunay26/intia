@@ -3,6 +3,7 @@ import { auditInTransaction } from "@/lib/audit";
 import type { SessionUser } from "@/lib/auth";
 import type { AppTransaction } from "@/lib/prisma";
 import { AI_MODELS, CONTENT_STATUS_MAP, VOICE_TYPE_MAP } from "@/lib/constants";
+import { generationStage } from "@/lib/generation-trace";
 
 /**
  * Lo que el trabajo de generación guarda además de la entrada del modelo:
@@ -63,7 +64,7 @@ export async function persistGeneratedScript(tx: AppTransaction, user: SessionUs
       .join("\n\n");
 
 
-    const script = await tx.script.create({
+    const script = await generationStage("script_insert", () => tx.script.create({
       data: {
         generationItemId: itemId,
         inputTokens: result.inputTokens,
@@ -118,9 +119,9 @@ export async function persistGeneratedScript(tx: AppTransaction, user: SessionUs
         },
       },
       select: { id: true, title: true, brandId: true },
-    });
+    }));
 
-    await auditInTransaction(tx, {
+    await generationStage("audit_save", () => auditInTransaction(tx, {
       user,
       action: "GENERAR",
       entity: "Script",
@@ -134,7 +135,7 @@ export async function persistGeneratedScript(tx: AppTransaction, user: SessionUs
         escenas: { etiqueta: "Escenas", antes: 0, despues: scenes.length },
         totalSeconds: { etiqueta: "Duración", antes: 0, despues: totalSeconds },
       },
-    });
+    }));
 
       return script.id;
 

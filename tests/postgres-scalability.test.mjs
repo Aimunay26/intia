@@ -86,7 +86,14 @@ test("trabajos durables, cuotas, dinero y archivos con PostgreSQL real; IA/Blob 
     await t.test("si falla auditoría, el resultado queda durable y recuperar no vuelve a llamar al proveedor", async () => {
       const id = await enqueue(), before = calls;
       const broken = load("src/lib/generation-jobs.ts", { ...mocks, "@/lib/generation-persist": { persistGeneratedScript: async () => { throw new Error("audit unavailable"); } } });
-      await assert.rejects(broken.processGeneration(id), /audit unavailable/);
+      const info = console.info, warn = console.warn, traces = [];
+      console.info = console.warn = line => { const row = JSON.parse(line);if (row.event === 'generation_trace') traces.push(row); };
+      try { await assert.rejects(broken.processGeneration(id), /audit unavailable/); }
+      finally { console.info = info;console.warn = warn; }
+      assert.ok(traces.some(r => r.stage === 'response_save' && r.state === 'success'));
+      assert.ok(traces.some(r => r.stage === 'script_save' && r.state === 'error'));
+      assert.ok(traces.every(r => r.jobId === id));
+      assert.doesNotMatch(JSON.stringify(traces), /fixture-prompt|fixture-response|audit unavailable/);
       assert.equal(await prisma.script.count({ where: { generationItem: { jobId: id } } }), 0);
       const item = await prisma.generationItem.findFirstOrThrow({ where: { jobId: id } });
       assert.equal(item.response.raw, "fixture-response");

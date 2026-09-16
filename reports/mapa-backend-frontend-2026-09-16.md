@@ -43,12 +43,12 @@ Pruebas reproducibles: [regresiones PostgreSQL](../tests/postgres-priorities.tes
 
 ### Activación pendiente en producción
 
-1. Revisar y publicar los cambios de código mediante commit/push; esta entrega queda local.
+1. Implementación publicada en GitHub: commit c3735c2, rama codex/backend-priorities-b01-b06. El despliegue automático de esta rama está deshabilitado en vercel.json; la integración a main queda pendiente de la migración.
 2. Con respaldo verificado y control de trabajos activos, ejecutar el [preflight de solo lectura](../prisma/operations/preflight-backend-priorities.sql). Sus cuatro consultas deben devolver cero filas. Si hay referencias huérfanas, revisar/restaurar su relación legítima antes de migrar; nunca borrarlas automáticamente.
 3. Aplicar [20260916180000_backend_priorities](../prisma/migrations/20260916180000_backend_priorities/migration.sql) con el procedimiento versionado, antes de activar el código que lee linkWarning y ContentPlannedStructure. La transacción completa falla ante referencias inválidas. El backfill renueva updatedAt de los videos: los formularios abiertos deberán recargarse.
 4. Desplegar y verificar permisos, importación local, cupos y trazas. Confirmar aparte una generación real con el proveedor autorizado y disponible; los SDK simulados no certifican modelos, claves ni cuota externa.
 
-**Siguiente bloque del plan:** B07–B10 (coherencia de agenda, procedencia de datos, estados/aprobaciones y concurrencia), seguido de paridad funcional y rendimiento. No se ha aplicado SQL en Neon, hecho push ni desplegado esta entrega.
+**Siguiente bloque del plan:** B07–B10 (coherencia de agenda, procedencia de datos, estados/aprobaciones y concurrencia), seguido de paridad funcional y rendimiento. La implementación ya está commiteada y subida a codex/backend-priorities-b01-b06. No se ha aplicado SQL en Neon, integrado a main ni desplegado esta entrega.
 
 ## Dictamen de la auditoría original
 

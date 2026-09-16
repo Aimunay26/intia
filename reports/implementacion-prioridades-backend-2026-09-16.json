@@ -129,8 +129,8 @@
   "externalBlobCalls": 0,
   "productionMigrated": false,
   "deployed": false,
-  "committed": false,
-  "pushed": false,
+  "committed": true,
+  "pushed": true,
   "pendingPackages": [
     "B07",
     "B08",
@@ -148,5 +148,13 @@
     "B20",
     "B21",
     "B22"
-  ]
+  ],
+  "publication": {
+    "verifiedAt": "2026-09-16T19:32:50.221Z",
+    "implementationCommit": "c3735c2c5ec7a6ba82e335ca7923734d61071b56",
+    "branch": "codex/backend-priorities-b01-b06",
+    "remote": "https://github.com/conamormarket-lgtm/intia.git",
+    "branchAutoDeployment": false,
+    "mergedToMain": false
+  }
 }

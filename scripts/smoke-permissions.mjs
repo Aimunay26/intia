@@ -96,6 +96,13 @@ try{
       throw error;
      }
      assert.equal((await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done,true);
+     await page.getByRole('button',{name:'Reabrir',exact:true}).click();
+     await page.getByRole('button',{name:'Completar',exact:true}).waitFor();
+     assert.equal((await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done,false);
+     await page.getByRole('button',{name:'Completar',exact:true}).click();
+     await page.getByRole('button',{name:'Reabrir',exact:true}).waitFor();
+     assert.equal((await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done,true);
+     report.checklistRefreshWithoutReload=true;
      await page.screenshot({path:'.audit/profiles-editor.png',fullPage:true,animations:'disabled'});
     }
     if(nav[role].includes('/guiones'))assert.equal((await page.goto(base+'/guiones/script')).status(),200);

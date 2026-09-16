@@ -1,11 +1,13 @@
 "use client";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 const SavedRevision = createContext(0);
 
 /** Conserva el borrador si el servidor rechaza una edición o hay un conflicto. */
 export function EditForm({ action, children, onSuccess, ...props }: Omit<React.FormHTMLAttributes<HTMLFormElement>, "action" | "onSubmit"> & {
   action: (data: FormData) => Promise<unknown>; onSuccess?: () => void;
 }) {
+  const router = useRouter();
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
   const [ready, setReady] = useState(false);
@@ -20,6 +22,8 @@ export function EditForm({ action, children, onSuccess, ...props }: Omit<React.F
     try {
       await action(new FormData(form, (event.nativeEvent as SubmitEvent).submitter));
       setSaved(version => version + 1);
+      // Los formularios con onSubmit también deben incorporar el estado confirmado del servidor.
+      router.refresh();
       onSuccess?.();
     } catch { setError(true); }
     finally { busy.current = false; setPending(false); }

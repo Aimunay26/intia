@@ -128,8 +128,8 @@
   },
   "externalAiCalls": 0,
   "externalBlobCalls": 0,
-  "productionMigrated": false,
-  "deployed": false,
+  "productionMigrated": true,
+  "deployed": true,
   "committed": true,
   "pushed": true,
   "pendingPackages": [
@@ -156,7 +156,9 @@
     "branch": "codex/backend-priorities-b01-b06",
     "remote": "https://github.com/conamormarket-lgtm/intia.git",
     "branchAutoDeployment": false,
-    "mergedToMain": false
+    "mergedToMain": true,
+    "mergeVerifiedAt": "2026-09-16T20:52:06.753Z",
+    "mainApplicationCommit": "2f89f7d0f29059a7f015690b04fa66382b5acdde"
   },
   "predeployment": {
     "checkedAt": "2026-09-16T20:43:44.969Z",
@@ -231,5 +233,6 @@
     },
     "editConflictPreservesDraft": true,
     "intermittentHydrationWarningObservedInOneRepeat": true
-  }
+  },
+  "deploymentEvidence": "despliegue-prioridades-backend-2026-09-16.json"
 }

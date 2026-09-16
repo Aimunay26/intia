@@ -1,0 +1,241 @@
+{
+  "checkedAt": "2026-09-16T20:52:06.753Z",
+  "applicationCommit": "2f89f7d0f29059a7f015690b04fa66382b5acdde",
+  "deploymentId": "dpl_3Kr1XCVXd5qk3HPKBdDMS8s6uYco",
+  "url": "https://intia-lovat.vercel.app",
+  "state": "READY",
+  "domainMatches": true,
+  "previousDeploymentProtected": true,
+  "autoAssignCustomDomains": true,
+  "migration": {
+    "checkedAt": "2026-09-16T20:51:41.343Z",
+    "migration": "20260916180000_backend_priorities",
+    "checksumMatches": true,
+    "plannedReferencesMatch": true,
+    "gate": [
+      {
+        "blocked": false,
+        "required_client": "intia-profiles-20260910"
+      }
+    ],
+    "originalBusinessTablesPreserved": 31,
+    "contentRevisionsRenewed": true
+  },
+  "backup": {
+    "localPath": ".audit/production-priorities-predeploy-20260916.dump.dpapi",
+    "encryptedWith": "Windows DPAPI CurrentUser",
+    "sha256": "ea95064cc710298baa57e582c7b06572c399b5033de377fdeec06c7d500b968e",
+    "bytes": 2719182,
+    "publicTables": 32,
+    "restoredRowsMatch": true,
+    "restoredSchemaMatches": true,
+    "actualNeonSnapshotRehearsed": true
+  },
+  "ci": {
+    "checkedAt": "2026-09-16T20:49:19.090Z",
+    "sha": "2f89f7d0f29059a7f015690b04fa66382b5acdde",
+    "runId": 35148321879,
+    "url": "https://github.com/conamormarket-lgtm/intia/actions/runs/35148321879",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "verify",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm ci",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm audit --audit-level=moderate",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run lint",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run typecheck",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm test",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run test:postgres",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Ensayar migración y restauración",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run db:migrate",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npx playwright install --with-deps chromium",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run test:workflow",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run test:perfiles",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Navegación y conservación del borrador ante conflicto",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  "predeployInterfaceFix": {
+    "initialFailedCiRuns": [
+      35142801449,
+      35143960635,
+      35146470827
+    ],
+    "symptom": "Checklist persisted but the page retained its previous state",
+    "fix": "Keep the action and local state in a React transition, with the form disabled until the server response is applied; no redundant router refresh",
+    "runtimeBackport": {
+      "next": "15.5.24",
+      "upstreamReactPullRequests": [
+        35518,
+        35521
+      ],
+      "versionAndSha256Guard": true,
+      "resolveLazyCompatibility": "Raw thenable propagation from React 19.1.0; local mitigation",
+      "webpackCacheVersioned": true,
+      "emittedBrowserRuntimeVerified": true,
+      "cleanBuildConsecutiveLocalProfileRuns": 3
+    },
+    "checklistCompleteReopenCompleteWithoutReload": true,
+    "editConflictPreservesDraft": true,
+    "localProfilesChecked": 11
+  },
+  "unauthenticatedChecks": [
+    {
+      "path": "/login",
+      "status": 200
+    },
+    {
+      "path": "/generador/trabajos",
+      "status": 307
+    },
+    {
+      "path": "/equipo",
+      "status": 307
+    },
+    {
+      "path": "/api/maintenance",
+      "status": 401
+    },
+    {
+      "path": "/api/assets/priorities-check-missing",
+      "status": 401
+    }
+  ],
+  "authenticatedBrowser": {
+    "checkedAt": "2026-09-16T20:53:32.249Z",
+    "origin": "https://intia-lovat.vercel.app",
+    "sessionRole": "OWNER",
+    "method": "CUA authenticated read-only browser",
+    "checks": [
+      {
+        "path": "/generador/trabajos",
+        "result": "History loaded"
+      },
+      {
+        "path": "/generador/trabajos/[id]",
+        "result": "Existing completed generation and script link loaded"
+      },
+      {
+        "path": "/arquetipos",
+        "result": "List and branding import dialog loaded; local reading selected by default; dialog closed without upload"
+      },
+      {
+        "path": "/contenido",
+        "result": "Video list and filters loaded after client navigation"
+      }
+    ],
+    "businessWrites": 0,
+    "providerCalls": 0,
+    "existingEditorTabPreserved": true
+  },
+  "publicRuntime": {
+    "checkedAt": "2026-09-16T20:52:07.771Z",
+    "url": "https://intia-lovat.vercel.app",
+    "browserBundle": "/_next/static/chunks/4bd1b696-f180f45ba15feb29.js",
+    "patchedRuntimeConfirmed": true
+  },
+  "realAiCalls": 0,
+  "businessWriteSmokeInProduction": false
+}

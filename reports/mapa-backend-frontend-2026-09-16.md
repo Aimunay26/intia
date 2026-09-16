@@ -8,15 +8,15 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 
 | Paquete | Estado | Evidencia / pendiente |
 |---|---|---|
-| B01 · Protección de aprobados | Implementado; validado localmente | Guiones compartidos, adjuntos, concurrencia, motivo de reapertura y auditoría; falta despliegue |
-| B02 · Destino de la generación | Implementado; validado localmente | Revisión, permisos, aprobación y estado; conserva guion independiente con motivo; falta despliegue |
-| B03 · Presupuesto de IA | Implementado; validado localmente | Dos peticiones = dos unidades, fallback bloqueado sin cupo, plazo compartido, prueba de clave de Claude incluida; falta despliegue |
-| B04 · Importación documental | Corrección P1 implementada; validada localmente | Lectura local inicial, proveedor explícito, cupos y límite por documento; mejoras futuras detalladas abajo |
-| B05 · Referencias a estructuras | Implementado; migración ensayada localmente | FK, formatos previstos ordenados, archivo en vez de borrado y backfill; faltan preflight/migración en Neon |
-| B06 · Validación del guion | Implementado; validado localmente | Reglas semánticas, fallo terminal legible y sin repetir respuesta inválida; falta despliegue |
+| B01 · Protección de aprobados | Desplegado | Guiones compartidos, adjuntos, concurrencia, motivo de reapertura y auditoría; regresiones locales y CI correctas |
+| B02 · Destino de la generación | Desplegado | Revisión, permisos, aprobación y estado; conserva guion independiente con motivo; generación real posterior pendiente |
+| B03 · Presupuesto de IA | Desplegado | Cuota por petición, fallback bloqueado sin cupo, plazo compartido y prueba de clave de Claude; pruebas con SDK simulado |
+| B04 · Importación documental | Corrección P1 desplegada | Lectura local inicial comprobada en producción; proveedor explícito, cupos y límite por documento; mejoras futuras detalladas abajo |
+| B05 · Referencias a estructuras | Migrado en Neon y desplegado | Cuatro preflight sin incidencias; respaldo/restauración real verificados; FK y backfill aplicados sin perder datos de negocio |
+| B06 · Validación del guion | Desplegado | Reglas semánticas, fallo terminal legible y sin repetir respuesta inválida; pruebas con respuestas simuladas |
 | B07–B22 | Pendiente | 16 paquetes restantes; se mantienen las prioridades y criterios del informe |
 
-Actualización: 16/09/2026. **Los criterios críticos de B01–B06 están cubiertos en código y pruebas locales. Todavía no están activados en producción.** Los apartados de diagnóstico que siguen conservan la evidencia anterior a estas correcciones.
+Actualización: 16/09/2026. **Las correcciones P1 de B01–B06 están desplegadas en Vercel y su migración está aplicada en Neon. Pasaron las pruebas locales y CI. La comprobación productiva fue de lectura y acceso; no se efectuaron generaciones reales ni escrituras de negocio de prueba.** Los apartados de diagnóstico que siguen conservan la evidencia anterior a estas correcciones.
 
 ### Decisiones implementadas
 
@@ -39,20 +39,22 @@ Actualización: 16/09/2026. **Los criterios críticos de B01–B06 están cubier
 - Corrección durante el despliegue: CI detectó un checklist persistido cuya interfaz conservaba el estado anterior. La instrumentación local confirmó una respuesta HTTP 200 completa con el nuevo estado y la interfaz pendiente. Añadir refrescos o transiciones no resolvió por sí solo el bloqueo. Se incorporaron temporalmente los cambios oficiales de React [35518](https://github.com/react/react/pull/35518) y [35521](https://github.com/react/react/pull/35521) en el runtime incluido en Next 15.5.24. El script verifica versión y hashes, es idempotente y se ejecuta al instalar y compilar; debe retirarse al actualizar a una versión que incluya la corrección y pase las regresiones. No añade paquetes ni cambia la versión mayor del framework.
 - `EditForm` conserva el control de hidratación y de doble envío, agrupa la acción y el estado local en una transición y no realiza un refresco adicional. La regresión comprueba completar/reabrir/completar sin recarga y contrasta cada paso con PostgreSQL. Los dos backports iniciales no bastaron: aunque hubo ejecuciones locales correctas, CI reprodujo el bloqueo y otra repetición local registró React 418. Se conserva esta evidencia para no atribuirles una solución completa.
 - Mitigación adicional del runtime: `resolveLazy` vuelve a propagar la promesa como en [React 19.1.0](https://github.com/react/react/blob/v19.1.0/packages/react-reconciler/src/ReactChildFiber.js), evitando la conversión a `SuspenseException` usada para repetir inmediatamente el render suspendido. Es una adaptación local acotada a Next 15.5.24 y sus hashes originales, no una corrección oficial adicional. Se mantiene el framework con sus parches de seguridad. Su retirada requiere que una versión oficial supere las mismas regresiones en build de producción y CI; el muestreo no garantiza ausencia de cualquier fallo intermitente.
-- Se detectó que Webpack reutilizaba localmente el bundle anterior pese a modificar `node_modules`. La caché ahora incluye el hash del script de compatibilidad y el build verifica el runtime emitido. Sobre compilación limpia y bundle inspeccionado pasaron tres ejecuciones consecutivas de once perfiles, incluyendo completar/reabrir/completar sin recarga; navegación y conservación del borrador también correctas. La activación productiva sigue supeditada a CI.
+- Se detectó que Webpack reutilizaba localmente el bundle anterior pese a modificar `node_modules`. La caché ahora incluye el hash del script de compatibilidad y el build verifica el runtime emitido. Sobre compilación limpia y bundle inspeccionado pasaron tres ejecuciones consecutivas de once perfiles, incluyendo completar/reabrir/completar sin recarga; navegación y conservación del borrador también correctas. CI aprobó el commit aplicado en producción.
 - Ensayo de actualización con datos existentes: rechaza trabajos huérfanos, formatos previstos huérfanos y JSON inválido, sin dejar cambios parciales. El backfill conserva valores y orden. El respaldo/restauración mantiene filas y esquema de las 32 tablas.
-- **Cero llamadas reales a Google, Anthropic o Blob.** La respuesta de un proveedor real y el comportamiento desplegado siguen pendientes de comprobación.
+- **Cero llamadas reales a Google, Anthropic o Blob.** El despliegue, el acceso y las páginas indicadas en la evidencia se comprobaron en producción. La generación real con proveedor y las escrituras de negocio de prueba no se ejecutaron en producción.
 
 Pruebas reproducibles: [regresiones PostgreSQL](../tests/postgres-priorities.test.mjs), [reglas y plazo](../tests/backend-priorities.test.mjs), [ensayo de migración](../scripts/rehearse-migration.mjs), [interfaz por perfiles](../scripts/smoke-permissions.mjs), [Workflow](../scripts/smoke-workflow.mjs). Resultados resumidos: [evidencia de implementación](implementacion-prioridades-backend-2026-09-16.json). Las nueve reproducciones del diagnóstico original quedan como evidencia histórica; las regresiones nuevas exigen el comportamiento corregido.
 
-### Activación pendiente en producción
+### Activación en producción: completada
 
-1. Implementación publicada en GitHub: commit c3735c2, rama codex/backend-priorities-b01-b06. El despliegue automático de esta rama está deshabilitado en vercel.json; la integración a main queda pendiente de la migración.
-2. Con respaldo verificado y control de trabajos activos, ejecutar el [preflight de solo lectura](../prisma/operations/preflight-backend-priorities.sql). Sus cuatro consultas deben devolver cero filas. Si hay referencias huérfanas, revisar/restaurar su relación legítima antes de migrar; nunca borrarlas automáticamente.
-3. Aplicar [20260916180000_backend_priorities](../prisma/migrations/20260916180000_backend_priorities/migration.sql) con el procedimiento versionado, antes de activar el código que lee linkWarning y ContentPlannedStructure. La transacción completa falla ante referencias inválidas. El backfill renueva updatedAt de los videos: los formularios abiertos deberán recargarse.
-4. Desplegar y verificar permisos, importación local, cupos y trazas. Confirmar aparte una generación real con el proveedor autorizado y disponible; los SDK simulados no certifican modelos, claves ni cuota externa.
+- Aplicación integrada en `main`: `2f89f7d`. Vercel `READY`, dominio [Intia](https://intia-lovat.vercel.app) confirmado en el despliegue `dpl_3Kr1XCVXd5qk3HPKBdDMS8s6uYco`.
+- CI de este commit completada correctamente: [ejecución 35148321879](https://github.com/conamormarket-lgtm/intia/actions/runs/35148321879). Incluye pruebas unitarias, PostgreSQL, restauración/migración, build, Workflow e interfaz por perfiles.
+- Respaldo real cifrado con Windows DPAPI, restaurado localmente con igualdad de filas y esquema en las 32 tablas públicas previas. La migración se ensayó primero sobre otra instantánea real de Neon.
+- Aplicada `20260916180000_backend_priorities`. Conservados los datos de las 31 tablas de negocio originales, salvo la renovación prevista de `ContentItem.updatedAt`; relaciones previstas equivalentes al JSON original y checksum verificado. Se reinstalaron las guardas en la tabla nueva y se reabrieron las escrituras.
+- Verificados los controles HTTP sin sesión y las páginas autenticadas consignadas en la [evidencia de despliegue](despliegue-prioridades-backend-2026-09-16.json). La prueba productiva no alteró contenido ni consumió cupo de IA.
+- Restaurada la promoción automática de Vercel. Las URL de despliegues anteriores siguen protegidas. Los formularios de videos abiertos antes de la migración deben recargarse por el cambio de revisión.
 
-**Siguiente bloque del plan:** B07–B10 (coherencia de agenda, procedencia de datos, estados/aprobaciones y concurrencia), seguido de paridad funcional y rendimiento. La implementación ya está commiteada y subida a codex/backend-priorities-b01-b06. No se ha aplicado SQL en Neon, integrado a main ni desplegado esta entrega.
+**Siguiente bloque del plan:** B07–B10 (coherencia de agenda, procedencia de datos, estados/aprobaciones y concurrencia), seguido de paridad funcional y rendimiento. B07–B22 siguen pendientes. Una generación real posterior a esta entrega requiere proveedor disponible y autorización para usar datos y cupo.
 
 ## Dictamen de la auditoría original
 

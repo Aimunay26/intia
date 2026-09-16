@@ -43,7 +43,8 @@ try{
  let index=1;
  for(const role of ['OWNER',...roles,'EMPTY']){
   const context=await browser.newContext({viewport:{width:1440,height:1000},extraHTTPHeaders:{'x-forwarded-for':`127.0.0.${index++}`}}),page=await context.newPage();
-  page.on('pageerror',error=>report.errors.push({role,error:error.message}));
+  let phase='profile-navigation';
+  page.on('pageerror',error=>report.errors.push({role,url:page.url(),phase,error:error.message}));
   await page.goto(base+'/login');await page.locator('input[name="email"]').fill(`${role}@ui.fixture.test`);await page.locator('input[name="password"]').fill(password);await page.getByRole('button',{name:'Entrar',exact:true}).click();await page.waitForURL(base+'/');
   const aside=page.locator('aside').first();
   if(role==='OWNER'){
@@ -76,6 +77,13 @@ try{
     if(role==='PUBLISHER'){assert.ok(text.includes('Video aprobado'));assert.ok(!text.includes('Video asignado'));}
     const visible=role==='PUBLISHER'?'ready':'assigned';assert.equal((await page.goto(base+'/contenido/'+visible)).status(),200);
     if(role==='EDITOR'){
+     phase='deferred-hydration';
+     const requests=new Map(), responses=[], consoleErrors=[], failedRequests=[];
+     page.on('request',r=>requests.set(r,{method:r.method(),url:r.url()}));
+     page.on('requestfinished',r=>requests.delete(r));
+     page.on('requestfailed',r=>{failedRequests.push({url:r.url(),failure:r.failure()});requests.delete(r);});
+     page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text().slice(0,500));});
+     page.on('response',async r=>{if(r.url().includes('/contenido/assigned')){const entry={status:r.status(),method:r.request().method(),complete:false};responses.push(entry);try{const text=await r.text();Object.assign(entry,{complete:true,bytes:text.length,reopen:text.includes('Reabrir'),completeLabel:text.includes('Completar')});}catch(error){entry.failure=error.message;}}});
      let releaseScripts;
      const scriptsReady=new Promise(resolve=>{releaseScripts=resolve;});
      const deferScript=route=>scriptsReady.then(()=>route.continue());
@@ -88,22 +96,25 @@ try{
      } finally { releaseScripts();await page.unrouteAll({behavior:'wait'}); }
      await page.waitForLoadState('load');
      try {
-      await page.getByRole('button',{name:'Completar',exact:true}).click();await page.getByRole('button',{name:'Reabrir',exact:true}).waitFor();
+      for (const done of [true,false,true]) {
+       phase='checklist-'+done;
+       const button=page.getByRole('button',{name:done?'Completar':'Reabrir',exact:true});
+       const form=page.locator('form').filter({has:button});
+       await expect(form.locator('input[name="done"]')).toHaveValue(done?'1':'0');
+       await button.click();
+       await expect.poll(async()=> (await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done).toBe(done);
+       await expect(page.getByRole('button',{name:done?'Reabrir':'Completar',exact:true})).toBeEnabled({timeout:30000});
+      }
+      report.checklistRefreshWithoutReload=true;
      } catch (error) {
       await page.screenshot({path:'.audit/profiles-failure.png',fullPage:true});
-      console.error(JSON.stringify({role,url:page.url(),alerts:await page.getByRole('alert').allTextContents(),check:await db.checklistItem.findUnique({where:{id:'editing'},select:{done:true}})}));
+      console.error(JSON.stringify({role,url:page.url(),failedRequests,pendingRequests:[...requests.values()],responses,consoleErrors,alerts:await page.getByRole('alert').allTextContents(),errors:report.errors,buttons:await page.getByRole('button').allTextContents(),check:await db.checklistItem.findUnique({where:{id:'editing'},select:{done:true}})}));
       console.error(fs.readFileSync('.audit/profiles-ui-server.log','utf8').split('\n').slice(-45).join('\n'));
       throw error;
      }
      assert.equal((await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done,true);
-     await page.getByRole('button',{name:'Reabrir',exact:true}).click();
-     await page.getByRole('button',{name:'Completar',exact:true}).waitFor();
-     assert.equal((await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done,false);
-     await page.getByRole('button',{name:'Completar',exact:true}).click();
-     await page.getByRole('button',{name:'Reabrir',exact:true}).waitFor();
-     assert.equal((await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done,true);
-     report.checklistRefreshWithoutReload=true;
      await page.screenshot({path:'.audit/profiles-editor.png',fullPage:true,animations:'disabled'});
+     phase='profile-navigation';
     }
     if(nav[role].includes('/guiones'))assert.equal((await page.goto(base+'/guiones/script')).status(),200);
     if(nav[role].includes('/estructuras'))assert.equal((await page.goto(base+'/estructuras/structure')).status(),200);

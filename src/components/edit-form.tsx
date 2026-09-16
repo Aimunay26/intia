@@ -1,32 +1,33 @@
 "use client";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useContext, useEffect, useRef, useState, useTransition } from "react";
 const SavedRevision = createContext(0);
 
 /** Conserva el borrador si el servidor rechaza una edición o hay un conflicto. */
 export function EditForm({ action, children, onSuccess, ...props }: Omit<React.FormHTMLAttributes<HTMLFormElement>, "action" | "onSubmit"> & {
   action: (data: FormData) => Promise<unknown>; onSuccess?: () => void;
 }) {
-  const router = useRouter();
   const [error, setError] = useState(false);
-  const [pending, setPending] = useState(false);
+  const [pending, startTransition] = useTransition();
   const [ready, setReady] = useState(false);
   useEffect(() => { setReady(true); }, []);
   const busy = useRef(false);
   const [saved, setSaved] = useState(0);
-  return <form {...props} onSubmit={async event => {
+  return <form {...props} onSubmit={event => {
     event.preventDefault();
-    if (busy.current) return;
-    busy.current = true; setPending(true); setError(false);
-    const form = event.currentTarget;
-    try {
-      await action(new FormData(form, (event.nativeEvent as SubmitEvent).submitter));
-      setSaved(version => version + 1);
-      // Los formularios con onSubmit también deben incorporar el estado confirmado del servidor.
-      router.refresh();
-      onSuccess?.();
-    } catch { setError(true); }
-    finally { busy.current = false; setPending(false); }
+    if (busy.current || pending || !ready) return;
+    const data = new FormData(event.currentTarget, (event.nativeEvent as SubmitEvent).submitter);
+    busy.current = true; setError(false);
+    // Mantiene el formulario bloqueado hasta incorporar también la respuesta de servidor a la UI.
+    startTransition(async () => {
+      try {
+        await action(data);
+        startTransition(() => {
+          setSaved(version => version + 1);
+          onSuccess?.();
+        });
+      } catch { startTransition(() => setError(true)); }
+      finally { busy.current = false; }
+    });
   }} aria-busy={pending || !ready}>
     <SavedRevision.Provider value={saved}><fieldset disabled={pending || !ready} className="contents">{children}</fieldset></SavedRevision.Provider>
     {error ? <p role="alert" className="text-danger text-sm mt-2">No se pudo guardar. Conservamos lo que escribiste; recarga la página para comprobar si hubo cambios de otra persona antes de reintentar.</p> : null}

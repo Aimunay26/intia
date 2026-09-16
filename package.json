@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "node scripts/patch-next-react.mjs && prisma generate && next build",
+    "build": "node scripts/patch-next-react.mjs && prisma generate && next build && node scripts/verify-next-react-build.mjs",
     "start": "next start",
     "lint": "eslint src prisma scripts tests next.config.ts eslint.config.mjs",
     "db:push": "node scripts/local-database-only.mjs && prisma db push",

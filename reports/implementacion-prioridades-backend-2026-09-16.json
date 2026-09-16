@@ -159,7 +159,7 @@
     "mergedToMain": false
   },
   "predeployment": {
-    "checkedAt": "2026-09-16T20:25:25.404Z",
+    "checkedAt": "2026-09-16T20:43:44.969Z",
     "reactBackport": {
       "next": "15.5.24",
       "upstreamPullRequests": [
@@ -167,7 +167,11 @@
         35521
       ],
       "versionAndHashGuard": true,
-      "idempotenceVerified": true
+      "idempotenceVerified": true,
+      "resolveLazyCompatibility": "Raw thenable propagation from React 19.1.0; local mitigation, not an additional upstream patch",
+      "webpackCacheVersioned": true,
+      "emittedBrowserRuntimeVerified": true,
+      "cleanBuildConsecutiveProfileRuns": 3
     },
     "profiles": {
       "environment": "local-production-build",

@@ -6,6 +6,7 @@ import { Check, FileUp, Loader2, Plus, Sparkles } from "lucide-react";
 import { PLANTILLAS_PERSONA } from "@/lib/plantillas-persona";
 import { crearArquetipo, crearPersonaDesdeInforme } from "@/app/actions/archetypes";
 import { previsualizarDocumento } from "@/app/actions/importar-documento";
+import { DocumentAiChoice } from "@/components/document-ai-choice";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { PALETTE } from "@/lib/constants";
 import { cn, readableOn } from "@/lib/utils";
@@ -165,6 +166,7 @@ export function ArchetypeCreateButton({
   const [avoid, setAvoid] = useState("");
 
   const [pdf, setPdf] = useState<File | null>(null);
+  const [aiProvider, setAiProvider] = useState("local");
   const [informe, setInforme] = useState<Informe | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -197,6 +199,7 @@ export function ArchetypeCreateButton({
       fd.append("file", pdf);
       fd.append("tipo", "branding");
       fd.append("destino", "persona");
+      fd.append("aiProvider", aiProvider);
       const res = await previsualizarDocumento(fd);
       if (!res.ok) {
         setError(res.error);
@@ -276,6 +279,7 @@ export function ArchetypeCreateButton({
                 {pending ? "Leyendo…" : "Previsualizar"}
               </button>
             </div>
+            <DocumentAiChoice value={aiProvider} onChange={setAiProvider} disabled={pending} />
             {informe ? <input type="hidden" name="importado" value={JSON.stringify(informe.campos)} /> : null}
             {error ? (
               <Callout tone="danger">

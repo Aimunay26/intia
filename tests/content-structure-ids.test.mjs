@@ -19,6 +19,7 @@ const REDIRECT = Symbol("redirect");
 function fakePrisma(overrides = {}) {
   const calls = { updates: [], updateManys: [], creates: [], audits: [], jobUpdates: [] };
   const prisma = {
+    $queryRaw: async () => [],
     structure: {
       findMany: async ({ where }) =>
         (where?.id?.in ?? [])
@@ -27,6 +28,7 @@ function fakePrisma(overrides = {}) {
       findUnique: async ({ where }) => ({ id: where.id, name: `Estructura ${where.id}`, defaultDurationSec: 45 }),
     },
     contentItem: {
+      count: async ({ where }) => JSON.stringify(where).includes("closed-sentinel") ? 0 : overrides.video ? 1 : 0,
       findUniqueOrThrow: async () => overrides.video,
       findUnique: async () => overrides.video ?? null,
       // El generador busca la tarjeta dentro del alcance del usuario (findFirst con contentScope).
@@ -76,6 +78,8 @@ const PERMISOS = {
   isFinalApproval: () => false,
 };
 const ALCANCE = {
+  lockVideoLifecycle: async () => {},
+  closedVideoWhere: { id: "closed-sentinel" },
   contentScope: () => ({}),
   scriptScope: () => ({}),
   brandScope: () => ({}),
@@ -114,6 +118,7 @@ function form(entries) {
 }
 
 const VIDEO = {
+  updatedAt: new Date("2026-09-16T12:00:00Z"),
   id: "vid-1", title: "Tres errores al regalar", brandId: "marca-1", status: "IDEA", priority: "MEDIA",
   platforms: '["TIKTOK"]', structureIds: '["est-a"]', scheduledDate: new Date("2026-09-10T12:00:00Z"),
   scriptId: null, structureId: null, hook: null, cta: null, description: null, notes: null, tags: "[]",
@@ -287,11 +292,11 @@ test("vincularGuionAVideo escribe el vínculo condicionado (scriptId null): con 
   const { prisma, calls } = fakePrisma({ video: VIDEO, script: GUION });
   const { vincularGuionAVideo } = persistModule(prisma);
 
-  assert.equal(await vincularGuionAVideo(prisma, USER, "guion-1", "vid-1"), true);
+  assert.equal((await vincularGuionAVideo(prisma, USER, "guion-1", "vid-1")).linked, true);
   // Una sola escritura, condicionada a que la tarjeta siga libre; nunca un update a ciegas.
   assert.equal(calls.updates.length, 0);
   assert.equal(calls.updateManys.length, 1);
-  assert.deepEqual(calls.updateManys[0].where, { id: "vid-1", scriptId: null });
+  assert.deepEqual(calls.updateManys[0].where, { id: "vid-1", scriptId: null, status: { in: ["IDEA", "GUION"] }, updatedAt: VIDEO.updatedAt });
   assert.deepEqual(calls.updateManys[0].data, { scriptId: "guion-1", structureId: "est-a", status: "GUION" });
 
   const asignar = calls.audits.find((a) => a.action === "ASIGNAR");
@@ -309,14 +314,14 @@ test("vincularGuionAVideo escribe el vínculo condicionado (scriptId null): con 
 
   // Tarjeta que ya estaba en Guion: conserva su estado y el cambio de estado no se registra.
   const enGuion = fakePrisma({ video: { ...VIDEO, status: "GUION" }, script: GUION });
-  assert.equal(await persistModule(enGuion.prisma).vincularGuionAVideo(enGuion.prisma, USER, "guion-1", "vid-1"), true);
+  assert.equal((await persistModule(enGuion.prisma).vincularGuionAVideo(enGuion.prisma, USER, "guion-1", "vid-1")).linked, true);
   assert.equal(enGuion.calls.updateManys[0].data.status, "GUION");
   assert.doesNotMatch(enGuion.calls.audits[0].summary, /lo pasó a Guion/);
   assert.equal(JSON.parse(enGuion.calls.audits[0].changes).status, undefined);
 
   // Un guion escrito para otra marca no se cuelga: ni escritura ni auditoría.
   const ajeno = fakePrisma({ video: VIDEO, script: { ...GUION, brandId: "marca-2" } });
-  assert.equal(await persistModule(ajeno.prisma).vincularGuionAVideo(ajeno.prisma, USER, "guion-1", "vid-1"), false);
+  assert.equal((await persistModule(ajeno.prisma).vincularGuionAVideo(ajeno.prisma, USER, "guion-1", "vid-1")).linked, false);
   assert.equal(ajeno.calls.updateManys.length, 0);
   assert.equal(ajeno.calls.audits.length, 0);
 });
@@ -325,9 +330,9 @@ test("vincularGuionAVideo no pisa un vínculo hecho mientras se generaba (count 
   // Otra pestaña asignó un guion a la tarjeta entre la comprobación y la escritura: updateMany no toca ninguna fila.
   const { prisma, calls } = fakePrisma({ video: VIDEO, script: GUION, updateManyCount: 0 });
   const { vincularGuionAVideo } = persistModule(prisma);
-  assert.equal(await vincularGuionAVideo(prisma, USER, "guion-1", "vid-1"), false);
+  assert.equal((await vincularGuionAVideo(prisma, USER, "guion-1", "vid-1")).linked, false);
   assert.equal(calls.updateManys.length, 1);
-  assert.deepEqual(calls.updateManys[0].where, { id: "vid-1", scriptId: null });
+  assert.deepEqual(calls.updateManys[0].where, { id: "vid-1", scriptId: null, status: { in: ["IDEA", "GUION"] }, updatedAt: VIDEO.updatedAt });
   assert.equal(calls.audits.length, 0, "no se audita un vínculo que no se escribió");
 });
 
@@ -390,7 +395,7 @@ function jobFixture({ job, video, unido = false, generateScript }) {
     script: { ...base.prisma.script, count: async () => (unido ? 1 : 0) },
   };
   const mod = load("src/lib/generation-jobs.ts", mocks(prisma, {
-    "@/lib/ai": { ...NORMALIZAR, AiError: FakeAiError, generateScript: generateScript ?? (async () => assert.fail("la IA no debería llamarse en esta prueba")) },
+    "@/lib/ai": { ...NORMALIZAR, AiError: FakeAiError, generateScript: (input, request) => request(() => generateScript ? generateScript(input) : assert.fail("la IA no debería llamarse en esta prueba")) },
     "@/lib/ai/providers": { esErrorDeAutenticacion: (e) => e instanceof FakeAiError && e.code === "auth" },
     "@/lib/auth-transactions": { assertActor: async () => {} },
   }));
@@ -503,10 +508,10 @@ test("asignarGuionAVideo avisa con un error legible si el video ya tiene guion o
   await assert.rejects(scriptsModule(otra.prisma).asignarGuionAVideo(pedido), /misma marca/);
   assert.equal(otra.calls.updateManys.length, 0);
 
-  const misma = fakePrisma({ video: { ...VIDEO, status: "APROBADO" }, script: PROPIO });
+  const misma = fakePrisma({ video: { ...VIDEO, status: "GUION" }, script: PROPIO });
   await scriptsModule(misma.prisma).asignarGuionAVideo(pedido);
-  assert.deepEqual(misma.calls.updateManys[0].where, { id: "vid-1", scriptId: null });
-  assert.deepEqual(misma.calls.updateManys[0].data, { scriptId: "g", structureId: "est-b", status: "APROBADO" });
+  assert.deepEqual(misma.calls.updateManys[0].where, { id: "vid-1", scriptId: null, status: { in: ["IDEA", "GUION"] }, updatedAt: VIDEO.updatedAt });
+  assert.deepEqual(misma.calls.updateManys[0].data, { scriptId: "g", structureId: "est-b", status: "GUION" });
   const changes = JSON.parse(misma.calls.audits[0].changes);
   assert.equal(misma.calls.audits[0].action, "ASIGNAR");
   assert.equal(changes.status, undefined, "si el estado no cambia, no se registra");
@@ -514,7 +519,7 @@ test("asignarGuionAVideo avisa con un error legible si el video ya tiene guion o
 
   // Si la tarjeta recibió otro guion entre la ficha y el envío, no se escribe, no se audita y se pide recargar.
   const tarde = fakePrisma({ video: VIDEO, updateManyCount: 0, script: PROPIO });
-  await assert.rejects(scriptsModule(tarde.prisma).asignarGuionAVideo(pedido), /la tarjeta cambió mientras tanto\. Recarga la página/);
+  await assert.rejects(scriptsModule(tarde.prisma).asignarGuionAVideo(pedido), /el video cambió mientras se vinculaba/);
   assert.equal(tarde.calls.updateManys.length, 1);
   assert.equal(tarde.calls.audits.length, 0);
 });

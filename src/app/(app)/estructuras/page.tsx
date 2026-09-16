@@ -131,8 +131,8 @@ export default async function EstructurasPage({
       {sp.aviso === "desactivada" ? (
         <div className="mb-4">
           <Callout tone="warn" title="No se borró: se desactivó">
-            Esa estructura ya tiene {sp.guiones ?? "varios"} guiones generados con ella. Si la
-            borráramos, esos guiones perderían su formato de origen. Queda desactivada: ya no
+            Esa estructura está referenciada por guiones, videos o trabajos de generación.
+            Queda desactivada para conservar esas referencias: ya no
             aparece en el generador, pero su historia se conserva.
           </Callout>
         </div>
@@ -140,7 +140,7 @@ export default async function EstructurasPage({
       {sp.aviso === "eliminada" ? (
         <div className="mb-4">
           <Callout tone="ok" title="Estructura eliminada">
-            No tenía guiones asociados, así que se borró junto con sus documentos de referencia.
+            No tenía guiones, videos ni trabajos asociados, así que se borró junto con sus documentos de referencia.
           </Callout>
         </div>
       ) : null}

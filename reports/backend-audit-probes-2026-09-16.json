@@ -1,0 +1,632 @@
+{
+  "date": "2026-09-16",
+  "scope": "PostgreSQL local efímero, acciones reales, SDK de IA simulado, sin HTTP ni datos de producción",
+  "auditedCommit": "adbbc916dcccdb6a5fb3ef09d48ef3f5b217b812",
+  "results": [
+    {
+      "id": "R01",
+      "title": "Guionista edita una escena vinculada a un video publicado y aprobado",
+      "reproduced": true,
+      "evidence": {
+        "actor": "WRITER",
+        "scriptStatus": "BORRADOR",
+        "videoStatus": "PUBLICADO",
+        "approvalStillDone": true,
+        "sceneChanged": true
+      }
+    },
+    {
+      "id": "R02",
+      "title": "Referencia documental modificable después de aprobación final",
+      "reproduced": true,
+      "evidence": {
+        "actor": "WRITER",
+        "videoStatus": "PUBLICADO",
+        "referenceChanged": true
+      }
+    },
+    {
+      "id": "R03",
+      "title": "Generación en curso vincula un guion tras cancelar el video",
+      "reproduced": true,
+      "evidence": {
+        "videoStatus": "CANCELADO",
+        "linkedAfterCancellation": true,
+        "jobStatus": "COMPLETED"
+      }
+    },
+    {
+      "id": "R04",
+      "title": "Fallback Gemini realiza dos peticiones, pero descuenta una llamada",
+      "reproduced": true,
+      "evidence": {
+        "simulatedProviderRequests": 2,
+        "quotaUnits": 1,
+        "attempts": 1
+      }
+    },
+    {
+      "id": "R05",
+      "title": "Eliminar estructura deja referencias previstas y trabajos pendientes huérfanos",
+      "reproduced": true,
+      "evidence": {
+        "deleted": true,
+        "plannedReferenceRemains": true,
+        "queuedReferenceRemains": true
+      }
+    },
+    {
+      "id": "R06",
+      "title": "Evento puede pertenecer a una marca distinta de su video",
+      "reproduced": true,
+      "evidence": {
+        "eventBrand": "B",
+        "contentBrand": "A"
+      }
+    },
+    {
+      "id": "R07",
+      "title": "Salida IA de 10000 segundos se acepta para un pedido de 30 segundos",
+      "reproduced": true,
+      "evidence": {
+        "requestedSeconds": 30,
+        "savedSeconds": 10000,
+        "emptyVoiceAccepted": true
+      }
+    },
+    {
+      "id": "R08",
+      "title": "Previsualización documental llama IA con trabajos deshabilitados y cupos cero",
+      "reproduced": true,
+      "evidence": {
+        "aiJobsEnabled": false,
+        "dailyLimit": 0,
+        "simulatedProviderCalls": 1,
+        "countersChanged": false
+      }
+    },
+    {
+      "id": "R09",
+      "title": "Edición manual de compatibilidad conserva origen SEED",
+      "reproduced": true,
+      "evidence": {
+        "savedScore": 3,
+        "sourceAfterManualEdit": "SEED"
+      }
+    }
+  ],
+  "indexes": [
+    {
+      "tablename": "AppSetting",
+      "indexname": "AppSetting_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"AppSetting_pkey\" ON public.\"AppSetting\" USING btree (key)"
+    },
+    {
+      "tablename": "Archetype",
+      "indexname": "Archetype_active_idx",
+      "indexdef": "CREATE INDEX \"Archetype_active_idx\" ON public.\"Archetype\" USING btree (active)"
+    },
+    {
+      "tablename": "Archetype",
+      "indexname": "Archetype_isPerson_idx",
+      "indexdef": "CREATE INDEX \"Archetype_isPerson_idx\" ON public.\"Archetype\" USING btree (\"isPerson\")"
+    },
+    {
+      "tablename": "Archetype",
+      "indexname": "Archetype_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Archetype_pkey\" ON public.\"Archetype\" USING btree (id)"
+    },
+    {
+      "tablename": "Archetype",
+      "indexname": "Archetype_slug_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Archetype_slug_key\" ON public.\"Archetype\" USING btree (slug)"
+    },
+    {
+      "tablename": "ArchetypeFit",
+      "indexname": "ArchetypeFit_archetypeId_structureId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"ArchetypeFit_archetypeId_structureId_key\" ON public.\"ArchetypeFit\" USING btree (\"archetypeId\", \"structureId\")"
+    },
+    {
+      "tablename": "ArchetypeFit",
+      "indexname": "ArchetypeFit_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"ArchetypeFit_pkey\" ON public.\"ArchetypeFit\" USING btree (id)"
+    },
+    {
+      "tablename": "ArchetypeFit",
+      "indexname": "ArchetypeFit_structureId_idx",
+      "indexdef": "CREATE INDEX \"ArchetypeFit_structureId_idx\" ON public.\"ArchetypeFit\" USING btree (\"structureId\")"
+    },
+    {
+      "tablename": "Asset",
+      "indexname": "Asset_blobId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Asset_blobId_key\" ON public.\"Asset\" USING btree (\"blobId\")"
+    },
+    {
+      "tablename": "Asset",
+      "indexname": "Asset_ownerType_ownerId_idx",
+      "indexdef": "CREATE INDEX \"Asset_ownerType_ownerId_idx\" ON public.\"Asset\" USING btree (\"ownerType\", \"ownerId\")"
+    },
+    {
+      "tablename": "Asset",
+      "indexname": "Asset_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Asset_pkey\" ON public.\"Asset\" USING btree (id)"
+    },
+    {
+      "tablename": "Assignment",
+      "indexname": "Assignment_contentItemId_userId_role_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Assignment_contentItemId_userId_role_key\" ON public.\"Assignment\" USING btree (\"contentItemId\", \"userId\", role)"
+    },
+    {
+      "tablename": "Assignment",
+      "indexname": "Assignment_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Assignment_pkey\" ON public.\"Assignment\" USING btree (id)"
+    },
+    {
+      "tablename": "Assignment",
+      "indexname": "Assignment_role_idx",
+      "indexdef": "CREATE INDEX \"Assignment_role_idx\" ON public.\"Assignment\" USING btree (role)"
+    },
+    {
+      "tablename": "Assignment",
+      "indexname": "Assignment_userId_idx",
+      "indexdef": "CREATE INDEX \"Assignment_userId_idx\" ON public.\"Assignment\" USING btree (\"userId\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_brandId_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_brandId_idx\" ON public.\"AuditLog\" USING btree (\"brandId\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_createdAt_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_createdAt_idx\" ON public.\"AuditLog\" USING btree (\"createdAt\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_entity_entityId_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_entity_entityId_idx\" ON public.\"AuditLog\" USING btree (entity, \"entityId\")"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"AuditLog_pkey\" ON public.\"AuditLog\" USING btree (id)"
+    },
+    {
+      "tablename": "AuditLog",
+      "indexname": "AuditLog_userId_idx",
+      "indexdef": "CREATE INDEX \"AuditLog_userId_idx\" ON public.\"AuditLog\" USING btree (\"userId\")"
+    },
+    {
+      "tablename": "AuthAttempt",
+      "indexname": "AuthAttempt_expiresAt_idx",
+      "indexdef": "CREATE INDEX \"AuthAttempt_expiresAt_idx\" ON public.\"AuthAttempt\" USING btree (\"expiresAt\")"
+    },
+    {
+      "tablename": "AuthAttempt",
+      "indexname": "AuthAttempt_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"AuthAttempt_pkey\" ON public.\"AuthAttempt\" USING btree (key)"
+    },
+    {
+      "tablename": "AuthSession",
+      "indexname": "AuthSession_expiresAt_idx",
+      "indexdef": "CREATE INDEX \"AuthSession_expiresAt_idx\" ON public.\"AuthSession\" USING btree (\"expiresAt\")"
+    },
+    {
+      "tablename": "AuthSession",
+      "indexname": "AuthSession_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"AuthSession_pkey\" ON public.\"AuthSession\" USING btree (id)"
+    },
+    {
+      "tablename": "AuthSession",
+      "indexname": "AuthSession_userId_idx",
+      "indexdef": "CREATE INDEX \"AuthSession_userId_idx\" ON public.\"AuthSession\" USING btree (\"userId\")"
+    },
+    {
+      "tablename": "BlobObject",
+      "indexname": "BlobObject_pathname_key",
+      "indexdef": "CREATE UNIQUE INDEX \"BlobObject_pathname_key\" ON public.\"BlobObject\" USING btree (pathname)"
+    },
+    {
+      "tablename": "BlobObject",
+      "indexname": "BlobObject_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"BlobObject_pkey\" ON public.\"BlobObject\" USING btree (id)"
+    },
+    {
+      "tablename": "BlobObject",
+      "indexname": "BlobObject_state_nextAttemptAt_idx",
+      "indexdef": "CREATE INDEX \"BlobObject_state_nextAttemptAt_idx\" ON public.\"BlobObject\" USING btree (state, \"nextAttemptAt\")"
+    },
+    {
+      "tablename": "Brand",
+      "indexname": "Brand_active_idx",
+      "indexdef": "CREATE INDEX \"Brand_active_idx\" ON public.\"Brand\" USING btree (active)"
+    },
+    {
+      "tablename": "Brand",
+      "indexname": "Brand_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Brand_pkey\" ON public.\"Brand\" USING btree (id)"
+    },
+    {
+      "tablename": "Brand",
+      "indexname": "Brand_slug_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Brand_slug_key\" ON public.\"Brand\" USING btree (slug)"
+    },
+    {
+      "tablename": "BrandObjective",
+      "indexname": "BrandObjective_brandId_idx",
+      "indexdef": "CREATE INDEX \"BrandObjective_brandId_idx\" ON public.\"BrandObjective\" USING btree (\"brandId\")"
+    },
+    {
+      "tablename": "BrandObjective",
+      "indexname": "BrandObjective_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"BrandObjective_pkey\" ON public.\"BrandObjective\" USING btree (id)"
+    },
+    {
+      "tablename": "CalendarEvent",
+      "indexname": "CalendarEvent_brandId_idx",
+      "indexdef": "CREATE INDEX \"CalendarEvent_brandId_idx\" ON public.\"CalendarEvent\" USING btree (\"brandId\")"
+    },
+    {
+      "tablename": "CalendarEvent",
+      "indexname": "CalendarEvent_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"CalendarEvent_pkey\" ON public.\"CalendarEvent\" USING btree (id)"
+    },
+    {
+      "tablename": "CalendarEvent",
+      "indexname": "CalendarEvent_startAt_idx",
+      "indexdef": "CREATE INDEX \"CalendarEvent_startAt_idx\" ON public.\"CalendarEvent\" USING btree (\"startAt\")"
+    },
+    {
+      "tablename": "ChecklistItem",
+      "indexname": "ChecklistItem_contentItemId_sortOrder_idx",
+      "indexdef": "CREATE INDEX \"ChecklistItem_contentItemId_sortOrder_idx\" ON public.\"ChecklistItem\" USING btree (\"contentItemId\", \"sortOrder\")"
+    },
+    {
+      "tablename": "ChecklistItem",
+      "indexname": "ChecklistItem_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"ChecklistItem_pkey\" ON public.\"ChecklistItem\" USING btree (id)"
+    },
+    {
+      "tablename": "Comment",
+      "indexname": "Comment_contentItemId_idx",
+      "indexdef": "CREATE INDEX \"Comment_contentItemId_idx\" ON public.\"Comment\" USING btree (\"contentItemId\")"
+    },
+    {
+      "tablename": "Comment",
+      "indexname": "Comment_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Comment_pkey\" ON public.\"Comment\" USING btree (id)"
+    },
+    {
+      "tablename": "ContentItem",
+      "indexname": "ContentItem_brandId_scheduledDate_idx",
+      "indexdef": "CREATE INDEX \"ContentItem_brandId_scheduledDate_idx\" ON public.\"ContentItem\" USING btree (\"brandId\", \"scheduledDate\")"
+    },
+    {
+      "tablename": "ContentItem",
+      "indexname": "ContentItem_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"ContentItem_pkey\" ON public.\"ContentItem\" USING btree (id)"
+    },
+    {
+      "tablename": "ContentItem",
+      "indexname": "ContentItem_scheduledDate_idx",
+      "indexdef": "CREATE INDEX \"ContentItem_scheduledDate_idx\" ON public.\"ContentItem\" USING btree (\"scheduledDate\")"
+    },
+    {
+      "tablename": "ContentItem",
+      "indexname": "ContentItem_status_idx",
+      "indexdef": "CREATE INDEX \"ContentItem_status_idx\" ON public.\"ContentItem\" USING btree (status)"
+    },
+    {
+      "tablename": "ContentPlatform",
+      "indexname": "ContentPlatform_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"ContentPlatform_pkey\" ON public.\"ContentPlatform\" USING btree (\"contentItemId\", platform)"
+    },
+    {
+      "tablename": "ContentPlatform",
+      "indexname": "ContentPlatform_platform_contentItemId_idx",
+      "indexdef": "CREATE INDEX \"ContentPlatform_platform_contentItemId_idx\" ON public.\"ContentPlatform\" USING btree (platform, \"contentItemId\")"
+    },
+    {
+      "tablename": "DemoSeedRecord",
+      "indexname": "DemoSeedRecord_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"DemoSeedRecord_pkey\" ON public.\"DemoSeedRecord\" USING btree (\"entityType\", \"entityId\")"
+    },
+    {
+      "tablename": "GenerationItem",
+      "indexname": "GenerationItem_jobId_status_order_idx",
+      "indexdef": "CREATE INDEX \"GenerationItem_jobId_status_order_idx\" ON public.\"GenerationItem\" USING btree (\"jobId\", status, \"order\")"
+    },
+    {
+      "tablename": "GenerationItem",
+      "indexname": "GenerationItem_jobId_structureId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"GenerationItem_jobId_structureId_key\" ON public.\"GenerationItem\" USING btree (\"jobId\", \"structureId\")"
+    },
+    {
+      "tablename": "GenerationItem",
+      "indexname": "GenerationItem_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"GenerationItem_pkey\" ON public.\"GenerationItem\" USING btree (id)"
+    },
+    {
+      "tablename": "GenerationJob",
+      "indexname": "GenerationJob_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"GenerationJob_pkey\" ON public.\"GenerationJob\" USING btree (id)"
+    },
+    {
+      "tablename": "GenerationJob",
+      "indexname": "GenerationJob_status_createdAt_idx",
+      "indexdef": "CREATE INDEX \"GenerationJob_status_createdAt_idx\" ON public.\"GenerationJob\" USING btree (status, \"createdAt\")"
+    },
+    {
+      "tablename": "GenerationJob",
+      "indexname": "GenerationJob_userId_createdAt_idx",
+      "indexdef": "CREATE INDEX \"GenerationJob_userId_createdAt_idx\" ON public.\"GenerationJob\" USING btree (\"userId\", \"createdAt\")"
+    },
+    {
+      "tablename": "GenerationJob",
+      "indexname": "GenerationJob_userId_requestKey_key",
+      "indexdef": "CREATE UNIQUE INDEX \"GenerationJob_userId_requestKey_key\" ON public.\"GenerationJob\" USING btree (\"userId\", \"requestKey\")"
+    },
+    {
+      "tablename": "MatchRow",
+      "indexname": "MatchRow_archetypeId_idx",
+      "indexdef": "CREATE INDEX \"MatchRow_archetypeId_idx\" ON public.\"MatchRow\" USING btree (\"archetypeId\")"
+    },
+    {
+      "tablename": "MatchRow",
+      "indexname": "MatchRow_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"MatchRow_pkey\" ON public.\"MatchRow\" USING btree (id)"
+    },
+    {
+      "tablename": "MatchRow",
+      "indexname": "MatchRow_runId_archetypeId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"MatchRow_runId_archetypeId_key\" ON public.\"MatchRow\" USING btree (\"runId\", \"archetypeId\")"
+    },
+    {
+      "tablename": "MatchRun",
+      "indexname": "MatchRun_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"MatchRun_pkey\" ON public.\"MatchRun\" USING btree (id)"
+    },
+    {
+      "tablename": "MatchRun",
+      "indexname": "MatchRun_scriptId_createdAt_idx",
+      "indexdef": "CREATE INDEX \"MatchRun_scriptId_createdAt_idx\" ON public.\"MatchRun\" USING btree (\"scriptId\", \"createdAt\")"
+    },
+    {
+      "tablename": "MatchRun",
+      "indexname": "MatchRun_status_startedAt_idx",
+      "indexdef": "CREATE INDEX \"MatchRun_status_startedAt_idx\" ON public.\"MatchRun\" USING btree (status, \"startedAt\")"
+    },
+    {
+      "tablename": "Metric",
+      "indexname": "Metric_contentItemId_date_platform_period_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Metric_contentItemId_date_platform_period_key\" ON public.\"Metric\" USING btree (\"contentItemId\", date, platform, period)"
+    },
+    {
+      "tablename": "Metric",
+      "indexname": "Metric_date_idx",
+      "indexdef": "CREATE INDEX \"Metric_date_idx\" ON public.\"Metric\" USING btree (date)"
+    },
+    {
+      "tablename": "Metric",
+      "indexname": "Metric_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Metric_pkey\" ON public.\"Metric\" USING btree (id)"
+    },
+    {
+      "tablename": "Script",
+      "indexname": "Script_brandId_idx",
+      "indexdef": "CREATE INDEX \"Script_brandId_idx\" ON public.\"Script\" USING btree (\"brandId\")"
+    },
+    {
+      "tablename": "Script",
+      "indexname": "Script_generationItemId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Script_generationItemId_key\" ON public.\"Script\" USING btree (\"generationItemId\")"
+    },
+    {
+      "tablename": "Script",
+      "indexname": "Script_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Script_pkey\" ON public.\"Script\" USING btree (id)"
+    },
+    {
+      "tablename": "Script",
+      "indexname": "Script_status_idx",
+      "indexdef": "CREATE INDEX \"Script_status_idx\" ON public.\"Script\" USING btree (status)"
+    },
+    {
+      "tablename": "Script",
+      "indexname": "Script_structureId_idx",
+      "indexdef": "CREATE INDEX \"Script_structureId_idx\" ON public.\"Script\" USING btree (\"structureId\")"
+    },
+    {
+      "tablename": "ScriptScene",
+      "indexname": "ScriptScene_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"ScriptScene_pkey\" ON public.\"ScriptScene\" USING btree (id)"
+    },
+    {
+      "tablename": "ScriptScene",
+      "indexname": "ScriptScene_scriptId_order_idx",
+      "indexdef": "CREATE INDEX \"ScriptScene_scriptId_order_idx\" ON public.\"ScriptScene\" USING btree (\"scriptId\", \"order\")"
+    },
+    {
+      "tablename": "Structure",
+      "indexname": "Structure_active_idx",
+      "indexdef": "CREATE INDEX \"Structure_active_idx\" ON public.\"Structure\" USING btree (active)"
+    },
+    {
+      "tablename": "Structure",
+      "indexname": "Structure_category_idx",
+      "indexdef": "CREATE INDEX \"Structure_category_idx\" ON public.\"Structure\" USING btree (category)"
+    },
+    {
+      "tablename": "Structure",
+      "indexname": "Structure_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Structure_pkey\" ON public.\"Structure\" USING btree (id)"
+    },
+    {
+      "tablename": "Structure",
+      "indexname": "Structure_slug_key",
+      "indexdef": "CREATE UNIQUE INDEX \"Structure_slug_key\" ON public.\"Structure\" USING btree (slug)"
+    },
+    {
+      "tablename": "Task",
+      "indexname": "Task_assigneeId_idx",
+      "indexdef": "CREATE INDEX \"Task_assigneeId_idx\" ON public.\"Task\" USING btree (\"assigneeId\")"
+    },
+    {
+      "tablename": "Task",
+      "indexname": "Task_brandId_idx",
+      "indexdef": "CREATE INDEX \"Task_brandId_idx\" ON public.\"Task\" USING btree (\"brandId\")"
+    },
+    {
+      "tablename": "Task",
+      "indexname": "Task_columnId_idx",
+      "indexdef": "CREATE INDEX \"Task_columnId_idx\" ON public.\"Task\" USING btree (\"columnId\")"
+    },
+    {
+      "tablename": "Task",
+      "indexname": "Task_kind_idx",
+      "indexdef": "CREATE INDEX \"Task_kind_idx\" ON public.\"Task\" USING btree (kind)"
+    },
+    {
+      "tablename": "Task",
+      "indexname": "Task_order_idx",
+      "indexdef": "CREATE INDEX \"Task_order_idx\" ON public.\"Task\" USING btree (\"order\")"
+    },
+    {
+      "tablename": "Task",
+      "indexname": "Task_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"Task_pkey\" ON public.\"Task\" USING btree (id)"
+    },
+    {
+      "tablename": "TaskColumn",
+      "indexname": "TaskColumn_brandId_idx",
+      "indexdef": "CREATE INDEX \"TaskColumn_brandId_idx\" ON public.\"TaskColumn\" USING btree (\"brandId\")"
+    },
+    {
+      "tablename": "TaskColumn",
+      "indexname": "TaskColumn_order_idx",
+      "indexdef": "CREATE INDEX \"TaskColumn_order_idx\" ON public.\"TaskColumn\" USING btree (\"order\")"
+    },
+    {
+      "tablename": "TaskColumn",
+      "indexname": "TaskColumn_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"TaskColumn_pkey\" ON public.\"TaskColumn\" USING btree (id)"
+    },
+    {
+      "tablename": "UsageCounter",
+      "indexname": "UsageCounter_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"UsageCounter_pkey\" ON public.\"UsageCounter\" USING btree (key)"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_archetypeId_idx",
+      "indexdef": "CREATE INDEX \"User_archetypeId_idx\" ON public.\"User\" USING btree (\"archetypeId\")"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_email_key",
+      "indexdef": "CREATE UNIQUE INDEX \"User_email_key\" ON public.\"User\" USING btree (email)"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_googleId_key",
+      "indexdef": "CREATE UNIQUE INDEX \"User_googleId_key\" ON public.\"User\" USING btree (\"googleId\")"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"User_pkey\" ON public.\"User\" USING btree (id)"
+    },
+    {
+      "tablename": "User",
+      "indexname": "User_role_idx",
+      "indexdef": "CREATE INDEX \"User_role_idx\" ON public.\"User\" USING btree (role)"
+    },
+    {
+      "tablename": "UserBrandAccess",
+      "indexname": "UserBrandAccess_brandId_idx",
+      "indexdef": "CREATE INDEX \"UserBrandAccess_brandId_idx\" ON public.\"UserBrandAccess\" USING btree (\"brandId\")"
+    },
+    {
+      "tablename": "UserBrandAccess",
+      "indexname": "UserBrandAccess_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"UserBrandAccess_pkey\" ON public.\"UserBrandAccess\" USING btree (\"userId\", \"brandId\")"
+    },
+    {
+      "tablename": "UserWorkProfile",
+      "indexname": "UserWorkProfile_pkey",
+      "indexdef": "CREATE UNIQUE INDEX \"UserWorkProfile_pkey\" ON public.\"UserWorkProfile\" USING btree (\"userId\", profile)"
+    },
+    {
+      "tablename": "UserWorkProfile",
+      "indexname": "UserWorkProfile_profile_idx",
+      "indexdef": "CREATE INDEX \"UserWorkProfile_profile_idx\" ON public.\"UserWorkProfile\" USING btree (profile)"
+    },
+    {
+      "tablename": "_prisma_migrations",
+      "indexname": "_prisma_migrations_pkey",
+      "indexdef": "CREATE UNIQUE INDEX _prisma_migrations_pkey ON public._prisma_migrations USING btree (id)"
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "\"Asset\"",
+      "name": "Asset_storage_check",
+      "definition": "CHECK (((data IS NOT NULL) <> (\"blobId\" IS NOT NULL)))"
+    },
+    {
+      "table_name": "\"BlobObject\"",
+      "name": "BlobObject_size_check",
+      "definition": "CHECK (((size > 0) AND (size <= 4194304) AND (attempts >= 0)))"
+    },
+    {
+      "table_name": "\"BlobObject\"",
+      "name": "BlobObject_state_check",
+      "definition": "CHECK ((state = ANY (ARRAY['STAGING'::text, 'ATTACHED'::text, 'DELETE_PENDING'::text, 'DELETED'::text])))"
+    },
+    {
+      "table_name": "\"ContentPlatform\"",
+      "name": "ContentPlatform_platform_check",
+      "definition": "CHECK ((platform = ANY (ARRAY['TIKTOK'::text, 'INSTAGRAM'::text, 'FACEBOOK'::text, 'YOUTUBE'::text, 'WHATSAPP'::text, 'OTRO'::text])))"
+    },
+    {
+      "table_name": "\"GenerationItem\"",
+      "name": "GenerationItem_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['QUEUED'::text, 'RUNNING'::text, 'COMPLETED'::text, 'FAILED'::text, 'CANCELLED'::text])))"
+    },
+    {
+      "table_name": "\"GenerationItem\"",
+      "name": "GenerationItem_usage_check",
+      "definition": "CHECK (((attempts >= 0) AND (attempts <= 3) AND (\"inputTokens\" >= 0) AND (\"outputTokens\" >= 0) AND (\"order\" >= 0)))"
+    },
+    {
+      "table_name": "\"GenerationJob\"",
+      "name": "GenerationJob_status_check",
+      "definition": "CHECK ((status = ANY (ARRAY['QUEUED'::text, 'RUNNING'::text, 'COMPLETED'::text, 'PARTIAL'::text, 'FAILED'::text, 'CANCELLED'::text])))"
+    },
+    {
+      "table_name": "\"Metric\"",
+      "name": "Metric_money_check",
+      "definition": "CHECK (((spend >= (0)::numeric) AND (spend <= ('1000000000000'::bigint)::numeric) AND (revenue >= (0)::numeric) AND (revenue <= ('1000000000000'::bigint)::numeric)))"
+    },
+    {
+      "table_name": "\"Metric\"",
+      "name": "Metric_period_check",
+      "definition": "CHECK ((period = ANY (ARRAY['LEGACY'::text, 'WEEKLY'::text])))"
+    },
+    {
+      "table_name": "\"Metric\"",
+      "name": "Metric_weekly_check",
+      "definition": "CHECK (((period <> 'WEEKLY'::text) OR ((platform = ANY (ARRAY['TIKTOK'::text, 'INSTAGRAM'::text, 'FACEBOOK'::text, 'YOUTUBE'::text, 'WHATSAPP'::text, 'OTRO'::text])) AND (EXTRACT(isodow FROM date) = (1)::numeric) AND ((date)::time without time zone = '12:00:00'::time without time zone) AND (views >= 0) AND (likes >= 0) AND (comments >= 0) AND (shares >= 0) AND (saves >= 0) AND (reach >= 0) AND (clicks >= 0) AND (leads >= 0) AND (orders >= 0) AND (((spend)::double precision >= (0)::double precision) AND ((spend)::double precision <= ('1000000000000'::numeric)::double precision)) AND (((revenue)::double precision >= (0)::double precision) AND ((revenue)::double precision <= ('1000000000000'::numeric)::double precision)) AND ((\"watchTimeSec\" >= (0)::double precision) AND (\"watchTimeSec\" <= ('1000000000000'::numeric)::double precision)) AND ((retention3s IS NULL) OR ((retention3s >= (0)::double precision) AND (retention3s <= (100)::double precision))))))"
+    },
+    {
+      "table_name": "\"UsageCounter\"",
+      "name": "UsageCounter_amount_check",
+      "definition": "CHECK ((amount >= 0))"
+    },
+    {
+      "table_name": "\"UserWorkProfile\"",
+      "name": "UserWorkProfile_profile_check",
+      "definition": "CHECK ((profile = ANY (ARRAY['STRATEGY'::text, 'WRITER'::text, 'PRODUCTION'::text, 'CAMERA'::text, 'TALENT'::text, 'EDITOR'::text, 'DESIGNER'::text, 'PUBLISHER'::text, 'ANALYST'::text])))"
+    }
+  ]
+}

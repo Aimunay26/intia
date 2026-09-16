@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {spawn,spawnSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
 import {PrismaClient} from '@prisma/client';
-import {chromium} from '@playwright/test';
+import {chromium,expect} from '@playwright/test';
 import bcrypt from 'bcryptjs';
 import {assertLocalDatabase} from './local-database-only.mjs';
 const url=assertLocalDatabase(), admin=new PrismaClient({datasourceUrl:url.href});
@@ -105,6 +105,32 @@ try{
    }
    await page.goto(base+'/equipo');await page.waitForURL(base+'/sin-acceso');
    const forbidden=await page.evaluate(async()=> (await fetch('/api/assets/foreign-asset')).status);assert.equal(forbidden,404);
+  }
+  if(['OWNER','STRATEGY'].includes(role)){
+   await page.goto(base+'/contenido/ready');
+   await page.locator('summary:visible').filter({hasText:/^Reabrir aprobación$/}).click();
+   await page.locator('input[name="reason"]:visible').fill('Corregir referencias antes de producir');
+   await page.getByRole('button',{name:'Retirar aprobación',exact:true}).click();
+   await expect.poll(async()=> (await db.checklistItem.findUniqueOrThrow({where:{id:'final'}})).done).toBe(false);
+   assert.ok(await db.auditLog.count({where:{entityId:'final',userId:role,summary:{contains:'Corregir referencias antes de producir'}}}));
+   await db.checklistItem.update({where:{id:'final'},data:{done:true,doneById:'OWNER'}});
+   report.reopenWithReason=true;
+  }
+  if(role==='OWNER'){
+   await page.goto(base+'/arquetipos');
+   await page.getByRole('button',{name:'Cargar informe de branding',exact:true}).click();
+   const choice=page.getByRole('dialog').getByRole('combobox',{name:/Lectura del documento/});
+   await expect(choice).toHaveValue('local');
+   await choice.selectOption('google');await expect(choice).toHaveValue('google');
+   report.explicitDocumentProvider=true;
+  }
+  if(role==='WRITER'){
+   await db.contentItem.update({where:{id:'assigned'},data:{status:'PROGRAMADO'}});
+   await page.goto(base+'/guiones/script');
+   assert.equal(await page.locator('summary:visible').filter({hasText:/^Añadir escena$/}).count(),0);
+   await db.contentItem.update({where:{id:'assigned'},data:{status:'IDEA'}});
+   await page.reload();await page.locator('summary:visible').filter({hasText:/^Añadir escena$/}).waitFor();
+   report.closedScriptControlsHidden=true;
   }
   report.profiles.push({role,checked:true});console.log(JSON.stringify({role,checked:true}));await context.close();
  }

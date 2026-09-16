@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ENV_KEY_NAMES, getSettings, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
 import { resolveAiModel } from "@/lib/ai-models";
 import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
+import type { AiRequest } from "@/lib/ai/request-budget";
 import { buildSystemPrompt, buildUserPrompt, type ReferenceDoc } from "@/lib/ai/context";
 import {
   AiError,
@@ -59,11 +60,11 @@ async function loadReferences(
     }));
 }
 
-export async function generateScript(input: GenerateInput): Promise<GenerateOutput> {
-  return withGenerationTrace({}, () => generateScriptWithTrace(input));
+export async function generateScript(input: GenerateInput, request: AiRequest): Promise<GenerateOutput> {
+  return withGenerationTrace({}, () => generateScriptWithTrace(input, request));
 }
 
-async function generateScriptWithTrace(input: GenerateInput): Promise<GenerateOutput> {
+async function generateScriptWithTrace(input: GenerateInput, request: AiRequest): Promise<GenerateOutput> {
   const { structure, brand, archetype, fitScore, fitNotes } = await generationStage("context_load", async () => {
     const structure = await prisma.structure.findUnique({
       where: { id: input.structureId },
@@ -226,6 +227,7 @@ async function generateScriptWithTrace(input: GenerateInput): Promise<GenerateOu
 
   return withGenerationTrace({ provider, model, keySource: source }, async () => {
     const call = {
+      request,
       apiKey: key,
       keySource: source,
       model,

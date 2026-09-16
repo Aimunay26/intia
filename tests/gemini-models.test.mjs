@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { load } from './load-module.mjs';
+import { simulatedRequest } from './ai-fixture.mjs';
 
 const { resolveAiModel, normalizeAiModel } = load('src/lib/ai-models.ts');
 
@@ -59,7 +60,7 @@ test('una selección explícita incompatible no llega a llamar al proveedor', as
   assert.equal(calls.length, 0);
 });
 
-const call = { apiKey: 'fixture-not-a-real-key', model: 'gemini-3.8-flash', system: 'Fixture', user: 'Fixture', temperature: 0.7 };
+const call = { request: simulatedRequest, apiKey: 'fixture-not-a-real-key', model: 'gemini-3.8-flash', system: 'Fixture', user: 'Fixture', temperature: 0.7 };
 function googleFixture(handler) {
   const requests = [], clients = [];
   class GoogleGenAI { constructor(options) { clients.push(options);this.models = { generateContent: async request => { requests.push(request); return handler(request); } }; } }

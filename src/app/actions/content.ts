@@ -1,7 +1,7 @@
 "use server";
 import { requirePermission } from "@/lib/auth";
-import { assertBrandPermission, assertPermission, contentStatusCapability, checklistCapability } from "@/lib/permissions";
-import { assertContentAccess, assertVideoOpen, assertAssignee, assertPublishable } from "@/lib/access-scope";
+import { assertBrandPermission, assertPermission, contentStatusCapability, checklistCapability, isFinalApproval } from "@/lib/permissions";
+import { assertContentAccess, assertVideoOpen, assertAssignee, assertPublishable, lockVideoLifecycle } from "@/lib/access-scope";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -249,7 +249,7 @@ export async function cambiarEstado(formData: FormData) {
     const id = field(formData, "id");
     const status = enumField(formData, "status", CONTENT_STATUS_MAP);
     await assertContentAccess(tx, user, id, contentStatusCapability(status));
-
+    await lockVideoLifecycle(tx, id);
     await lockRevision(tx, "ContentItem", id, formData);
     const before = await tx.contentItem.findUniqueOrThrow({
       where: { id },
@@ -394,6 +394,11 @@ export async function alternarCheck(formData: FormData) {
     });
     if (!check) return;
     await assertContentAccess(tx, user, check.contentItemId, checklistCapability(check.stage, check.label));
+    await lockVideoLifecycle(tx, check.contentItemId);
+    const current = await tx.checklistItem.findUniqueOrThrow({ where: { id } });
+    const reopening = current.done && !done && isFinalApproval(current.stage, current.label);
+    const reason = reopening ? field(formData, "reason").trim() : "";
+    if (reopening && (reason.length < 5 || reason.length > 1000)) throw new Error("Indica un motivo de reapertura de entre 5 y 1000 caracteres.");
     if (checklistCapability(check.stage, check.label) !== "content.approve" && check.stage !== "PUBLICACION") await assertVideoOpen(tx, user, check.contentItemId);
     if (check.stage === "PUBLICACION") await assertPublishable(tx, user, check.contentItemId);
 
@@ -412,7 +417,7 @@ export async function alternarCheck(formData: FormData) {
       brandId: check.contentItem.brandId,
       summary: `${done ? "Marcó" : "Reabrió"} el check "${check.label}" del video "${
         check.contentItem.title
-      }"`,
+      }"${reopening ? `. Motivo: ${reason}` : ""}`,
     });
 
     afterCommit(() => revalidar(check.contentItem.id));

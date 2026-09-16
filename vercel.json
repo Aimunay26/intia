@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "codex/backend-priorities-b01-b06": false,
       "codex/team-profile-permissions": false,
       "codex/predeploy-20260909": false,
       "codex/weekly-jobs-private-storage": false

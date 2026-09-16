@@ -1,0 +1,152 @@
+{
+  "checkedAt": "2026-09-16T17:56:35.991Z",
+  "scope": [
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06"
+  ],
+  "baselineCommit": "adbbc916dcccdb6a5fb3ef09d48ef3f5b217b812",
+  "environment": "local-fixtures",
+  "unit": {
+    "total": 121,
+    "perInvocation": [
+      110,
+      11
+    ],
+    "failed": 0
+  },
+  "postgres": {
+    "total": 87,
+    "perInvocation": [
+      13,
+      8,
+      3,
+      12,
+      16,
+      5,
+      13,
+      17
+    ],
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 62
+  },
+  "productionBuild": "passed",
+  "migration": {
+    "checkedAt": "2026-09-16T17:56:34.967Z",
+    "environment": "local-fixture",
+    "baselineMatchesNeon": true,
+    "invalidPreflightRolledBack": true,
+    "decimalPreflightRolledBack": true,
+    "exactMoneyPreserved": true,
+    "legacyValuesPreserved": true,
+    "noImplicitProfileGrants": true,
+    "profileGrantsRevokeSessions": true,
+    "prioritiesOrphanPreflightRolledBack": true,
+    "prioritiesInvalidJsonRolledBack": true,
+    "plannedStructureBackfillPreservesData": true,
+    "referencedStructuresProtected": true,
+    "restoreRowsAndSchemaMatch": true,
+    "tables": 32,
+    "backupBytes": 103035
+  },
+  "workflow": {
+    "checkedAt": "2026-09-16T17:49:02.514Z",
+    "environment": "local-production-build",
+    "workflowSdk": "4.8.7",
+    "actualQueueExecuted": true,
+    "persistedResponseRecovered": true,
+    "scriptsCreated": 1,
+    "auditCount": 1,
+    "generationTracesVerified": true,
+    "gemini38ProviderSwitch": true,
+    "legacyGoogleSettingResolved": true,
+    "liveAiCalls": 0,
+    "liveBlobCalls": 0
+  },
+  "browser": {
+    "environment": "local-production-build",
+    "profiles": [
+      {
+        "role": "OWNER",
+        "checked": true
+      },
+      {
+        "role": "STRATEGY",
+        "checked": true
+      },
+      {
+        "role": "WRITER",
+        "checked": true
+      },
+      {
+        "role": "PRODUCTION",
+        "checked": true
+      },
+      {
+        "role": "CAMERA",
+        "checked": true
+      },
+      {
+        "role": "TALENT",
+        "checked": true
+      },
+      {
+        "role": "EDITOR",
+        "checked": true
+      },
+      {
+        "role": "DESIGNER",
+        "checked": true
+      },
+      {
+        "role": "PUBLISHER",
+        "checked": true
+      },
+      {
+        "role": "ANALYST",
+        "checked": true
+      },
+      {
+        "role": "EMPTY",
+        "checked": true
+      }
+    ],
+    "errors": [],
+    "productionChanged": false,
+    "reopenWithReason": true,
+    "explicitDocumentProvider": true,
+    "closedScriptControlsHidden": true,
+    "preHydrationGuard": true
+  },
+  "externalAiCalls": 0,
+  "externalBlobCalls": 0,
+  "productionMigrated": false,
+  "deployed": false,
+  "committed": false,
+  "pushed": false,
+  "pendingPackages": [
+    "B07",
+    "B08",
+    "B09",
+    "B10",
+    "B11",
+    "B12",
+    "B13",
+    "B14",
+    "B15",
+    "B16",
+    "B17",
+    "B18",
+    "B19",
+    "B20",
+    "B21",
+    "B22"
+  ]
+}

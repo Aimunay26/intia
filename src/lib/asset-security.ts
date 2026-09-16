@@ -1,7 +1,7 @@
 import type { AppTransaction } from "@/lib/prisma";
 import type { SessionUser } from "@/lib/auth";
 import { assertBrandPermission, assertPermission } from "@/lib/permissions";
-import { archetypeScope, assertContentAccess } from "@/lib/access-scope";
+import { archetypeScope, assertContentAccess, assertVideoOpen } from "@/lib/access-scope";
 
 export function validateAssetContent(filename: string, bytes: Uint8Array): string {
   if (filename.length > 200 || /[\x00-\x1f\x7f/\\]/.test(filename)) throw new Error("El nombre del archivo no es válido.");
@@ -27,7 +27,10 @@ export function validateAssetContent(filename: string, bytes: Uint8Array): strin
 export async function assertAssetOwner(db: AppTransaction, type: string, id: string, user: SessionUser, write = false) {
   if (!id || id.length > 128) throw new Error("El propietario del archivo no es válido.");
   if (type === "brand") assertBrandPermission(user, id, write ? "brands.edit" : "brands.view");
-  else if (type === "content") await assertContentAccess(db, user, id, write ? "assets.write" : "content.view");
+  else if (type === "content") {
+    await assertContentAccess(db, user, id, write ? "assets.write" : "content.view");
+    if (write) await assertVideoOpen(db, user, id);
+  }
   else if (type === "structure") assertPermission(user, write ? "structures.edit" : "structures.view");
   else if (type === "archetype") {
     assertPermission(user, write ? "archetypes.edit" : "archetypes.view");

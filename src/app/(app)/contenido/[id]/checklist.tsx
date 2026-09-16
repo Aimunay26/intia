@@ -7,6 +7,8 @@ import { CHECKLIST_STAGES, CHECKLIST_STAGE_MAP } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Avatar, Card, CardHeader, EmptyState, Field, ProgressBar } from "@/components/ui";
 import { AutoSubmitCheckbox, Collapsible, SubmitButton } from "@/components/forms";
+import { ReopenApprovalForm } from "@/components/reopen-approval-form";
+import { isFinalApproval } from "@/lib/permissions";
 
 /**
  * Checklist de produccion del video, agrupado por etapa.
@@ -154,7 +156,7 @@ function CheckLinea({
     <div className="group flex items-start gap-2.5 rounded-lg py-1 pr-1">
       <form action={alternarCheck} className="mt-[3px] shrink-0">
         <input type="hidden" name="id" value={item.id} />
-        {canEdit ? (
+        {canEdit && !(item.done && isFinalApproval(item.stage, item.label)) ? (
           <AutoSubmitCheckbox name="done" defaultChecked={item.done} />
         ) : (
           <input
@@ -180,6 +182,7 @@ function CheckLinea({
             <span className="text-inkmuted ml-1.5 text-[10.5px] font-semibold">opcional</span>
           ) : null}
         </div>
+        {canEdit && item.done && isFinalApproval(item.stage, item.label) ? <ReopenApprovalForm id={item.id} /> : null}
 
         {item.done && item.doneByName ? (
           <div className="mt-1 flex items-center gap-1.5">

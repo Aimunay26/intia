@@ -54,14 +54,33 @@ export async function assertScriptAccess(db: AppTransaction, user: AccessUser, i
   assertPermission(user, capability);
   if (!await db.script.count({ where: { AND: [{ id }, scriptScope(user, capability)] } })) throw new Error("No tienes acceso a este guion.");
   if (user.role !== "OWNER" && capability === "scripts.write" && await db.script.count({ where: { id, status: "APROBADO" } })) throw new Error("Coordinación debe reabrir el guion aprobado antes de editarlo.");
+  if (capability === "scripts.write" && user.role !== "OWNER") {
+    await db.$queryRaw`SELECT id FROM "Script" WHERE id = ${id} FOR UPDATE`;
+    const videos = await db.contentItem.findMany({ where: { scriptId: id }, select: { id: true }, orderBy: { id: "asc" } });
+    for (const video of videos) await assertVideoOpen(db, user, video.id);
+  }
 }
 export async function assertTaskAccess(db: AppTransaction, user: AccessUser, id: string, capability: Capability = "tasks.work") {
   assertPermission(user, capability);
   if (!await db.task.count({ where: { AND: [{ id }, taskScope(user, capability)] } })) throw new Error("No tienes acceso a esta tarea.");
 }
 
+/** Compartido por aprobación y escrituras. Orden de locks: guion, después video. */
+export async function lockVideoLifecycle(db: AppTransaction, id: string) {
+  const before = await db.contentItem.findUnique({ where: { id }, select: { scriptId: true } });
+  if (before?.scriptId) await db.$queryRaw`SELECT id FROM "Script" WHERE id = ${before.scriptId} FOR UPDATE`;
+  const rows = await db.$queryRaw<{ scriptId: string | null }[]>`SELECT "scriptId" FROM "ContentItem" WHERE id = ${id} FOR UPDATE`;
+  if (!rows.length || rows[0].scriptId !== before?.scriptId) throw new Error("El video cambió. Recarga la página antes de continuar.");
+}
+
+export const closedVideoWhere: Prisma.ContentItemWhereInput = { OR: [
+  { status: { in: ["PROGRAMADO", "PUBLICADO"] } },
+  { checklist: { some: { stage: "POSTPRODUCCION", done: true, AND: [{ label: { contains: "final", mode: "insensitive" } }, { label: { contains: "aprobad", mode: "insensitive" } }] } } },
+] };
+
 export async function assertVideoOpen(db: AppTransaction, user: AccessUser, id: string) {
   if (user.role === "OWNER") return;
+  await lockVideoLifecycle(db, id);
   const checks = await db.checklistItem.findMany({ where: { contentItemId: id, stage: "POSTPRODUCCION", done: true }, select: { label: true, stage: true } });
   if (checks.some(c => isFinalApproval(c.stage, c.label)) || await db.contentItem.count({ where: { id, status: { in: ["PROGRAMADO", "PUBLICADO"] } } })) throw new Error("Coordinación debe retirar la aprobación final y reabrir el video antes de modificarlo.");
 }

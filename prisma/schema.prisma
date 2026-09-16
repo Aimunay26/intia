@@ -247,6 +247,8 @@ model Structure {
   scripts Script[]
   content ContentItem[]
   fits    ArchetypeFit[]
+  plannedContent ContentPlannedStructure[]
+  generationItems GenerationItem[]
 
   @@index([category])
   @@index([active])
@@ -521,12 +523,24 @@ model ContentItem {
   checklist   ChecklistItem[]
   metrics     Metric[]
   platformLinks ContentPlatform[]
+  plannedStructures ContentPlannedStructure[]
   comments    Comment[]
   events      CalendarEvent[]
 
   @@index([brandId, scheduledDate])
   @@index([status])
   @@index([scheduledDate])
+}
+
+/// Formatos previstos, con orden y FK; un trigger sincroniza structureIds en cada escritura.
+model ContentPlannedStructure {
+  contentItemId String
+  structureId String
+  order Int
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  structure Structure @relation(fields: [structureId], references: [id], onDelete: Restrict)
+  @@id([contentItemId, structureId])
+  @@index([structureId])
 }
 
 /// Índice relacional de las plataformas; la cadena antigua se conserva durante la transición.
@@ -577,6 +591,7 @@ model GenerationItem {
   jobId String
   job GenerationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
   structureId String
+  structure Structure @relation(fields: [structureId], references: [id], onDelete: Restrict)
   order Int
   status String @default("QUEUED")
   attempts Int @default(0)
@@ -585,6 +600,7 @@ model GenerationItem {
   availableAt DateTime @default(now())
   response Json?
   error String?
+  linkWarning String?
   inputTokens Int @default(0)
   outputTokens Int @default(0)
   createdAt DateTime @default(now())
@@ -592,6 +608,7 @@ model GenerationItem {
   script Script?
   @@unique([jobId, structureId])
   @@index([jobId, status, order])
+  @@index([structureId])
 }
 
 /// Cuotas por instalación y usuario hasta incorporar organizaciones.

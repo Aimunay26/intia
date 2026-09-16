@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { createRequire } from "node:module";
 
 import { load } from "./load-module.mjs";
+import { simulatedRequest, validScript } from "./ai-fixture.mjs";
 
 const require = createRequire(import.meta.url);
 const AnthropicSdk = require("@anthropic-ai/sdk");
@@ -203,8 +204,8 @@ function providersConGemini(respuestas) {
   return { ...mod, llamadas };
 }
 
-const respuestaValida = { text: JSON.stringify({ title: "Guion", scenes: [] }), usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 2 } };
-const llamadaGemini = { apiKey: "k", model: "gemini-3.8-flash", system: "s", user: "u", keySource: "env" };
+const respuestaValida = { text: JSON.stringify({ ...validScript, title: "Guion" }), usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 2 } };
+const llamadaGemini = { request: simulatedRequest, apiKey: "k", model: "gemini-3.8-flash", system: "s", user: "u", keySource: "env" };
 
 test("Gemini: un 429, un 401, un 5xx, un 400 de clave/modelo/configuración se reportan a la primera, sin gastar una segunda petición", async () => {
   for (const [error, code, mensaje] of [
@@ -322,6 +323,7 @@ function cargarProbarClave({ nivel, clave, sdkClaude, sdkGemini }) {
   }
   return load("src/app/actions/probar-clave.ts", {
     ...sinPrisma,
+    "@/lib/ai/request-budget": { createAiRequest: () => simulatedRequest },
     "@anthropic-ai/sdk": { __esModule: true, default: FakeAnthropic },
     "@google/genai": { ApiError: Genai.ApiError, GoogleGenAI: FakeGenAI },
     "@/lib/ai/providers": providers,

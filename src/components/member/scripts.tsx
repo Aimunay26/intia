@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { scriptScope, contentScope } from "@/lib/access-scope";
+import { scriptScope, contentScope, closedVideoWhere } from "@/lib/access-scope";
 import { allows } from "@/lib/permissions";
 import { getPageBrandContext } from "@/lib/render-context";
 import { loadPage } from "@/lib/list-pagination";
@@ -28,14 +28,15 @@ export async function MemberScripts({ user, id, query = {} }: MemberPageProps) {
     content: { where: contentScope(user), select: { id: true, title: true, status: true } },
   } });
   if (!script) notFound();
-  const editable = script.status !== "APROBADO" && allows(user, "scripts.write") && Boolean(await prisma.script.count({ where: { AND: [{ id }, scriptScope(user, "scripts.write")] } }));
+  const closed = Boolean(await prisma.contentItem.count({ where: { AND: [{ scriptId: id }, closedVideoWhere] } }));
+  const editable = !closed && script.status !== "APROBADO" && allows(user, "scripts.write") && Boolean(await prisma.script.count({ where: { AND: [{ id }, scriptScope(user, "scripts.write")] } }));
   const canApprove = allows(user, "scripts.approve");
   const [structures, videos] = editable ? await Promise.all([
     prisma.structure.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.contentItem.findMany({ where: { AND: [contentScope(user, "scripts.write"), { brandId: script.brandId ?? "", scriptId: null, status: { notIn: ["PROGRAMADO", "PUBLICADO"] } }] }, select: { id: true, title: true }, take: 100, orderBy: { updatedAt: "desc" } }),
+    prisma.contentItem.findMany({ where: { AND: [contentScope(user, "scripts.write"), { brandId: script.brandId ?? "", scriptId: null, status: { in: ["IDEA", "GUION"] }, NOT: closedVideoWhere }] }, select: { id: true, title: true }, take: 100, orderBy: { updatedAt: "desc" } }),
   ]) : [[], []];
   return <div className="space-y-4"><Link href="/guiones" className="text-brand">← Guiones</Link><PageHeader title={script.title} subtitle={`${script.brand?.name ?? ""} · ${SCRIPT_STATUS_MAP[script.status]?.label} · ${script.totalSeconds} s`} /><PrintButton />
-    <Card className="space-y-3 p-4"><p><strong>Enfoque:</strong> {script.focus}</p><p><strong>Hook:</strong> {script.hook}</p><p><strong>CTA:</strong> {script.cta}</p><p className="whitespace-pre-wrap">{script.notes}</p>
+    <Card className="space-y-3 p-4">{closed ? <p role="status">Coordinación debe reabrir los videos vinculados y retirar su aprobación final antes de editar este guion.</p> : null}<p><strong>Enfoque:</strong> {script.focus}</p><p><strong>Hook:</strong> {script.hook}</p><p><strong>CTA:</strong> {script.cta}</p><p className="whitespace-pre-wrap">{script.notes}</p>
       {editable || canApprove ? <EditForm action={cambiarEstadoGuion} className="flex gap-2"><HiddenId id={id} /><RevisionField value={script.updatedAt} /><select name="status" className="input" defaultValue={script.status} aria-label="Estado del guion">{SCRIPT_STATUSES.filter(s => s.value === script.status || (canApprove ? ["APROBADO", "BORRADOR", "REVISION"].includes(s.value) : editable && s.value !== "APROBADO")).map(s => <option key={s.value} value={s.value}>{s.label}</option>)}</select><button className="btn">Cambiar estado</button></EditForm> : null}
       {editable ? <><EditForm action={actualizarGuion} className="flex gap-2"><HiddenId id={id} /><RevisionField value={script.updatedAt} /><Input name="title" label="Título" value={script.title} required /><button className="btn">Guardar título</button></EditForm><ScriptSheetEditor script={{ id, updatedAt: script.updatedAt.toISOString(), brandId: script.brandId, structureId: script.structureId, avatar: script.avatar ?? "", focus: script.focus ?? "", hook: script.hook ?? "", cta: script.cta ?? "", notes: script.notes ?? "" }} brands={ctx.brands} structures={structures} /></> : null}
       {allows(user, "scripts.write") ? <EditForm action={duplicarGuion}><HiddenId id={id} /><button className="btn">Duplicar como borrador propio</button></EditForm> : null}

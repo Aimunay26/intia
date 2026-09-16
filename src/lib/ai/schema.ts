@@ -12,47 +12,47 @@ import { z } from "zod/v4";
  */
 
 export const ActorSchema = z.object({
-  role: z.string().describe("Cómo se le llama en el guion: Chica, Novio, Presentador, Voz narradora"),
-  archetype: z.string().describe("Qué arquetipo o perfil debería interpretarlo"),
-  notes: z.string().describe("Indicaciones de actuación para esta persona en esta escena"),
+  role: z.string().max(12000).describe("Cómo se le llama en el guion: Chica, Novio, Presentador, Voz narradora"),
+  archetype: z.string().max(12000).describe("Qué arquetipo o perfil debería interpretarlo"),
+  notes: z.string().max(12000).describe("Indicaciones de actuación para esta persona en esta escena"),
 });
 
 export const SceneSchema = z.object({
   beat: z
-    .string()
+    .string().max(12000)
     .describe("Nombre del beat de la estructura: Golpe visual, Tensión, Plot twist, CTA…"),
-  startSec: z.number().describe("Segundo en que empieza la escena"),
-  endSec: z.number().describe("Segundo en que termina la escena"),
+  startSec: z.number().int().min(0).max(690).describe("Segundo en que empieza la escena"),
+  endSec: z.number().int().min(1).max(690).describe("Segundo en que termina la escena"),
   voiceType: z
     .enum(["EN_CAMARA", "VOZ_EN_OFF", "DIALOGO", "TEXTO"])
     .describe("Cómo se entrega la línea"),
   voice: z
-    .string()
+    .string().max(12000)
     .describe("Lo que se dice, palabra por palabra, listo para leer. Sin acotaciones."),
   shot: z
-    .string()
+    .string().max(12000)
     .describe("Encuadre y movimiento de cámara: primer plano, plano medio, picada, transicion"),
-  action: z.string().describe("Qué pasa en la escena, la acción física concreta"),
-  actors: z.array(ActorSchema).describe("Quienes aparecen en esta escena"),
-  emotion: z.string().describe("Emoción que deben transmitir los actores en esta escena"),
-  props: z.array(z.string()).describe("Elementos visuales y utilería necesarios"),
-  lighting: z.string().describe("Iluminación concreta que refuerza esa emoción"),
-  sound: z.string().describe("Música, efectos de sonido y ambiente de esta escena"),
-  onScreenText: z.string().describe("Texto que aparece en pantalla. Vacío si no hay."),
-  location: z.string().describe("Dónde se graba"),
-  notes: z.string().describe("Cualquier detalle extra de producción"),
+  action: z.string().max(12000).describe("Qué pasa en la escena, la acción física concreta"),
+  actors: z.array(ActorSchema).max(30).describe("Quienes aparecen en esta escena"),
+  emotion: z.string().max(12000).describe("Emoción que deben transmitir los actores en esta escena"),
+  props: z.array(z.string().max(12000)).max(100).describe("Elementos visuales y utilería necesarios"),
+  lighting: z.string().max(12000).describe("Iluminación concreta que refuerza esa emoción"),
+  sound: z.string().max(12000).describe("Música, efectos de sonido y ambiente de esta escena"),
+  onScreenText: z.string().max(12000).describe("Texto que aparece en pantalla. Vacío si no hay."),
+  location: z.string().max(12000).describe("Dónde se graba"),
+  notes: z.string().max(12000).describe("Cualquier detalle extra de producción"),
 });
 
 export const GeneratedScriptSchema = z.object({
-  title: z.string().describe("Título corto y memorable del guion"),
-  avatar: z.string().describe("A quién le habla este video, en una frase"),
-  focus: z.string().describe("Enfoque de venta o de entretenimiento, en una frase"),
-  hook: z.string().describe("El gancho de los primeros 3 segundos, resumido"),
-  cta: z.string().describe("Llamado a la acción. Vacío si el video solo entretiene."),
-  totalSeconds: z.number().describe("Duración total estimada en segundos"),
-  castNotes: z.string().describe("Resumen de cuántas personas se necesitan y de qué perfil"),
-  propsSummary: z.array(z.string()).describe("Lista consolidada de TODO lo que hay que conseguir"),
-  scenes: z.array(SceneSchema).describe("Las escenas en orden, una por beat de la estructura"),
+  title: z.string().max(12000).describe("Título corto y memorable del guion"),
+  avatar: z.string().max(12000).describe("A quién le habla este video, en una frase"),
+  focus: z.string().max(12000).describe("Enfoque de venta o de entretenimiento, en una frase"),
+  hook: z.string().max(12000).describe("El gancho de los primeros 3 segundos, resumido"),
+  cta: z.string().max(12000).describe("Llamado a la acción. Vacío si el video solo entretiene."),
+  totalSeconds: z.number().int().min(1).max(690).describe("Duración total estimada en segundos"),
+  castNotes: z.string().max(12000).describe("Resumen de cuántas personas se necesitan y de qué perfil"),
+  propsSummary: z.array(z.string().max(12000)).max(100).describe("Lista consolidada de TODO lo que hay que conseguir"),
+  scenes: z.array(SceneSchema).min(1).max(80).describe("Las escenas en orden, una por beat de la estructura"),
 });
 
 export type GeneratedScript = z.infer<typeof GeneratedScriptSchema>;
@@ -60,96 +60,10 @@ export type GeneratedScene = z.infer<typeof SceneSchema>;
 
 /**
  * El mismo contrato en JSON Schema, para Gemini (responseJsonSchema).
- * Se mantiene a mano y a la par del Zod de arriba.
+ * Se deriva del mismo Zod para que sus límites no diverjan.
  */
-export const GENERATED_SCRIPT_JSON_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  required: [
-    "title",
-    "avatar",
-    "focus",
-    "hook",
-    "cta",
-    "totalSeconds",
-    "castNotes",
-    "propsSummary",
-    "scenes",
-  ],
-  properties: {
-    title: { type: "string", description: "Título corto y memorable del guion" },
-    avatar: { type: "string", description: "A quien le habla este video" },
-    focus: { type: "string", description: "Enfoque de venta o entretenimiento" },
-    hook: { type: "string", description: "El gancho de los primeros 3 segundos" },
-    cta: { type: "string", description: "Llamado a la accion. Vacio si solo entretiene." },
-    totalSeconds: { type: "number", description: "Duracion total en segundos" },
-    castNotes: { type: "string", description: "Cuantas personas y de que perfil" },
-    propsSummary: {
-      type: "array",
-      items: { type: "string" },
-      description: "Lista consolidada de todo lo que hay que conseguir",
-    },
-    scenes: {
-      type: "array",
-      description: "Las escenas en orden, una por beat de la estructura",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "beat",
-          "startSec",
-          "endSec",
-          "voiceType",
-          "voice",
-          "shot",
-          "action",
-          "actors",
-          "emotion",
-          "props",
-          "lighting",
-          "sound",
-          "onScreenText",
-          "location",
-          "notes",
-        ],
-        properties: {
-          beat: { type: "string", description: "Nombre del beat de la estructura" },
-          startSec: { type: "number" },
-          endSec: { type: "number" },
-          voiceType: {
-            type: "string",
-            enum: ["EN_CAMARA", "VOZ_EN_OFF", "DIALOGO", "TEXTO"],
-          },
-          voice: { type: "string", description: "Lo que se dice, palabra por palabra" },
-          shot: { type: "string", description: "Encuadre y movimiento de cámara" },
-          action: { type: "string", description: "Accion fisica concreta de la escena" },
-          actors: {
-            type: "array",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: ["role", "archetype", "notes"],
-              properties: {
-                role: { type: "string" },
-                archetype: { type: "string" },
-                notes: { type: "string" },
-              },
-            },
-          },
-          emotion: { type: "string", description: "Emocion que transmiten los actores" },
-          props: { type: "array", items: { type: "string" } },
-          lighting: { type: "string", description: "Iluminacion que refuerza la emocion" },
-          sound: { type: "string", description: "Musica, efectos y ambiente" },
-          onScreenText: { type: "string" },
-          location: { type: "string" },
-          notes: { type: "string" },
-        },
-      },
-    },
-  },
-} as const;
+export const GENERATED_SCRIPT_JSON_SCHEMA = z.toJSONSchema(GeneratedScriptSchema);
 
-/** Descripcion en texto del contrato, para reforzar en el prompt. */
 export const OUTPUT_CONTRACT_TEXT = `Devuelve UNICAMENTE un objeto JSON con esta forma exacta:
 
 {
@@ -182,4 +96,10 @@ export const OUTPUT_CONTRACT_TEXT = `Devuelve UNICAMENTE un objeto JSON con esta
   ]
 }
 
-Ningun campo puede faltar. Si algo no aplica, usa "" o [].`;
+Ningun campo puede faltar. Si algo opcional no aplica, usa "" o [].
+El título, cada beat, plano (shot) y acción (action) deben contener texto útil.
+En escenas TEXTO, onScreenText es obligatorio; en las demás, voice es obligatorio.
+Una escena por beat de la estructura, conservando su nombre y orden. Máximo 80 escenas.
+Tiempos enteros en segundos: empieza en 0, continúa sin huecos ni solapamientos y usa endSec > startSec.
+totalSeconds debe coincidir con la suma de las escenas. Respeta la duración pedida con tolerancia de 15% (mínimo 3 s).
+Ningún tiempo puede superar 690 segundos ni ningún campo de texto 12000 caracteres.`;

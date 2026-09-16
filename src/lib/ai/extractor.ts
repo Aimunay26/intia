@@ -5,7 +5,9 @@ import type { z } from "zod/v4";
 
 import { resolveAiModel } from "@/lib/ai-models";
 import { DEFAULT_MODEL } from "@/lib/constants";
-import { getSetting, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
+import { resolveApiKey } from "@/lib/settings";
+import { AiBudgetError, type AiRequest } from "@/lib/ai/request-budget";
+import { generationStage } from "@/lib/generation-trace";
 import { limpiarTextoInforme } from "@/lib/pdf";
 import {
   detectarTipoDocumento,
@@ -28,8 +30,8 @@ import {
 /**
  * Extractor de fichas desde el texto de un PDF.
  *
- * Primero pasa el parser determinista (que nunca inventa) y, si hay una clave
- * de IA configurada, le pide a un modelo barato SOLO la prosa: lema, descripción,
+ * Primero pasa el parser determinista y, con elección explícita de proveedor,
+ * clave y presupuesto, le pide a un modelo barato SOLO la prosa: lema, descripción,
  * identidad, propuestas de valor, palabras clave… Los datos exactos (colores,
  * @redes, arquetipos, vocabulario, paleta, índice de coherencia) los manda el
  * parser y la IA no los toca.
@@ -94,6 +96,8 @@ export const AVISO_SIN_IA = "Sin clave de IA válida: se rellenó lo que se pudo
 export async function extraerFicha(input: {
   tipo: TipoDocumento;
   text: string;
+  provider?: "google" | "anthropic";
+  request?: AiRequest;
 }): Promise<ResultadoExtraccion> {
   const texto = limpiarTextoInforme(input.text);
   const tipoDetectado = detectarTipoDocumento(texto);
@@ -130,6 +134,7 @@ export async function extraerFicha(input: {
       redactado,
     };
     const ia = await completarConIa({
+      provider: input.provider, request: input.request,
       schema: MarcaIaSchema,
       jsonSchema: MARCA_IA_JSON_SCHEMA,
       system: SISTEMA_MARCA,
@@ -157,6 +162,7 @@ export async function extraerFicha(input: {
     redactado: false,
   };
   const ia = await completarConIa({
+    provider: input.provider, request: input.request,
     schema: PersonaIaSchema,
     jsonSchema: PERSONA_IA_JSON_SCHEMA,
     system: SISTEMA_PERSONA,
@@ -251,6 +257,8 @@ function usuarioPersona(texto: string, borrador: PersonaCampos): string {
 /* ------------------------------------------------------------ PROVEEDOR -- */
 
 type Llamada<T> = {
+  provider?: "google" | "anthropic";
+  request?: AiRequest;
   schema: z.ZodType<T>;
   jsonSchema: unknown;
   system: string;
@@ -260,30 +268,16 @@ type Llamada<T> = {
 type RespuestaIa<T> = { ok: true; data: T; info: InfoIa } | { ok: false; aviso: string };
 
 /** Elige proveedor y clave. Devuelve null si no hay ninguna clave usable. */
-async function elegirProveedor(): Promise<{ provider: string; apiKey: string; model: string } | null> {
-  let preferido: string;
-  try {
-    preferido = (await getSetting(SETTING_KEYS.defaultProvider)) ?? "anthropic";
-  } catch {
-    preferido = "anthropic";
-  }
-  const orden = preferido === "google" ? ["google", "anthropic"] : ["anthropic", "google"];
-  for (const provider of orden) {
-    try {
-      const { key } = await resolveApiKey(provider);
-      if (key) return { provider, apiKey: key, model: modeloDeExtraccion(provider) };
-    } catch {
-      // seguimos con el otro proveedor
-    }
-  }
-  return null;
+async function elegirProveedor(provider: "google" | "anthropic") {
+  const { key } = await resolveApiKey(provider);
+  return key ? { provider, apiKey: key, model: modeloDeExtraccion(provider) } : null;
 }
 
 async function completarConIa<T>(llamada: Llamada<T>): Promise<RespuestaIa<T>> {
-  const proveedor = await elegirProveedor();
-  if (!proveedor) return { ok: false, aviso: AVISO_SIN_IA };
-
+  if (!llamada.provider || !llamada.request) return { ok: false, aviso: "Lectura local: el documento no se envió a ningún proveedor de IA." };
   try {
+    const proveedor = await elegirProveedor(llamada.provider);
+    if (!proveedor) return { ok: false, aviso: AVISO_SIN_IA };
     const data =
       proveedor.provider === "google"
         ? await completarConGemini(proveedor.apiKey, proveedor.model, llamada)
@@ -296,20 +290,22 @@ async function completarConIa<T>(llamada: Llamada<T>): Promise<RespuestaIa<T>> {
     }
     return { ok: true, data, info: { provider: proveedor.provider, model: proveedor.model } };
   } catch (error) {
-    return { ok: false, aviso: `${describirFallo(error, proveedor.provider)} Se usó solo la lectura directa del PDF.` };
+    return { ok: false, aviso: `${error instanceof AiBudgetError ? error.message : describirFallo(error, llamada.provider)} Se usó solo la lectura directa del PDF.` };
   }
 }
 
 async function completarConClaude<T>(apiKey: string, model: string, llamada: Llamada<T>): Promise<T | null> {
-  const client = new Anthropic({ apiKey, maxRetries: 1 });
+  const message = await llamada.request!(async ({ timeoutMs, signal }) => generationStage("provider_request", async () => {
+  const client = new Anthropic({ apiKey, maxRetries: 0, timeout: timeoutMs });
   const stream = client.messages.stream({
     model,
     max_tokens: MAX_TOKENS_SALIDA,
     system: llamada.system,
     messages: [{ role: "user", content: llamada.user }],
     output_config: { format: zodOutputFormat(llamada.schema) },
-  });
-  const message = await stream.finalMessage();
+  }, { signal });
+  return stream.finalMessage();
+  }, { provider: "anthropic", model, timeoutMs }));
   if (message.stop_reason === "refusal") return null;
 
   const parsed = message.parsed_output;
@@ -342,18 +338,17 @@ function esquemaGemini(schema: unknown): unknown {
 }
 
 async function completarConGemini<T>(apiKey: string, model: string, llamada: Llamada<T>): Promise<T | null> {
-  const ai = new GoogleGenAI({ apiKey });
-  const response = await ai.models.generateContent({
+  const response = await llamada.request!(({ timeoutMs, signal }) => generationStage("provider_request", () => new GoogleGenAI({ apiKey, httpOptions: { timeout: timeoutMs } }).models.generateContent({
     model,
     contents: llamada.user,
     config: {
+      abortSignal: signal,
       systemInstruction: llamada.system,
       responseMimeType: "application/json",
       responseJsonSchema: esquemaGemini(llamada.jsonSchema),
-      temperature: 0.2,
       maxOutputTokens: MAX_TOKENS_SALIDA,
     },
-  });
+  }), { provider: "google", model, timeoutMs }));
   return leerJson(response.text ?? "", llamada.schema);
 }
 

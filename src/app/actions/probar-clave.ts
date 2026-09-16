@@ -7,6 +7,8 @@ import { requirePermission } from "@/lib/auth";
 import { resolveAiModel } from "@/lib/ai-models";
 import { describeKeySource, resolveApiKey, type KeySource } from "@/lib/settings";
 import { toAiError, type AiErrorCode, type AiProviderId } from "@/lib/ai/providers";
+import { createAiRequest } from "@/lib/ai/request-budget";
+import { generationStage, withGenerationTrace } from "@/lib/generation-trace";
 
 export type TestKeyResult = {
   ok: boolean;
@@ -32,7 +34,7 @@ function esProveedor(value: string): value is AiProviderId {
 
 /**
  * Prueba en vivo una clave de API llamando al proveedor real.
- * No guarda nada en la base de datos; solo comprueba que la clave sirve.
+ * No guarda la clave. La petición mínima de Claude registra una unidad de cupo.
  *
  * - Con `apiKey` escrita: prueba esa clave (aún sin guardar).
  * - Sin `apiKey`: prueba la clave EN USO (la guardada en Ajustes o, si no hay,
@@ -50,7 +52,7 @@ export async function probarClaveIA(params: {
   /** Modelo de Gemini a consultar; vacío = el predeterminado del catálogo. */
   model?: string;
 }): Promise<TestKeyResult> {
-  await requirePermission("admin.settings");
+  const user = await requirePermission("admin.settings");
 
   if (!esProveedor(params.provider)) {
     return { ok: false, error: `Proveedor desconocido: ${params.provider}` };
@@ -100,12 +102,12 @@ export async function probarClaveIA(params: {
 
   try {
     if (provider === "anthropic") {
-      const client = new Anthropic({ apiKey: key, maxRetries: 0 });
-      await client.messages.create({
+      const request = createAiRequest({ user, deadlineAt: Date.now() + 15000 });
+      await withGenerationTrace({ provider, model: modelo }, () => request(({ timeoutMs, signal }) => generationStage("provider_request", () => new Anthropic({ apiKey: key, maxRetries: 0, timeout: timeoutMs }).messages.create({
         model: modelo,
         max_tokens: 1,
         messages: [{ role: "user", content: "ping" }],
-      });
+      }, { signal }))));
       const latencia = Date.now() - inicio;
       return {
         ok: true,

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { previsualizarDocumento } from "@/app/actions/importar-documento";
+import { DocumentAiChoice } from "@/components/document-ai-choice";
 import type { ResultadoImportacion } from "@/app/actions/archetypes";
 import type { ExtraccionMarca, ExtraccionPersona, ResultadoExtraccion } from "@/lib/ai/extractor";
 import {
@@ -376,10 +377,12 @@ export function ImportarDocumentoModal({
   const [error, setError] = useState<string | null>(null);
   const [vista, setVista] = useState<Vista | null>(null);
   const [nombreArchivo, setNombreArchivo] = useState("");
+  const [aiProvider, setAiProvider] = useState("local");
   const [sobrescribir, setSobrescribir] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const reiniciar = () => {
+    setAiProvider("local");
     setFile(null);
     setError(null);
     setVista(null);
@@ -402,6 +405,7 @@ export function ImportarDocumentoModal({
       fd.append("file", file);
       fd.append("tipo", tipo);
       fd.append("destino", destino);
+      fd.append("aiProvider", aiProvider);
       const res = await previsualizarDocumento(fd);
       if (!res.ok) {
         setError(res.error);
@@ -486,6 +490,7 @@ export function ImportarDocumentoModal({
                   : "El informe de branding de la persona, en PDF. Máximo 4 MB."
               }
             />
+            <DocumentAiChoice value={aiProvider} onChange={setAiProvider} disabled={pending} />
             <div className="flex items-center justify-end gap-2">
               <button type="button" onClick={cerrar} className="btn">
                 Cancelar

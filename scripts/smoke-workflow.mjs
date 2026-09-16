@@ -8,6 +8,7 @@ import { PrismaClient } from "@prisma/client";
 import { chromium, expect } from "@playwright/test";
 import bcrypt from "bcryptjs";
 import { assertLocalDatabase } from "./local-database-only.mjs";
+import { validScript } from "../tests/ai-fixture.mjs";
 
 const url = assertLocalDatabase(), admin = new PrismaClient({ datasourceUrl: url.href });
 const suffix = randomBytes(4).toString("hex"), name = `intia_workflow_${suffix}_test`, target = new URL(url);
@@ -23,10 +24,10 @@ try {
   const password = randomBytes(16).toString("hex");
   const user = await db.user.create({ data: { name: "Fixture", email: "workflow@example.test", role: "OWNER", passwordHash: await bcrypt.hash(password, 10) } });
   await db.appSetting.create({ data: { key: "security.bootstrap.complete", value: "1" } });
-  const structure = await db.structure.create({ data: { name: "Fixture", slug: "workflow", defaultProvider: "anthropic", defaultModel: "claude-opus-5" } });
+  const structure = await db.structure.create({ data: { name: "Fixture", slug: "workflow", defaultProvider: "anthropic", defaultModel: "claude-opus-5", defaultDurationSec: 5 } });
   await db.appSetting.create({ data: { key: 'ai.google.model', value: 'gemini-2.5-pro' } });
   await db.structure.createMany({ data: [1, 2, 3].map(n => ({ name: `Fixture ${n}`, slug: `workflow-${n}` })) });
-  const response = { script: { title: "Recuperado por Workflow", scenes: [{ beat: "Inicio", startSec: 0, endSec: 5, voiceType: "EN_CAMARA" }] }, provider: "anthropic", model: "fixture", raw: "fixture-response", systemPrompt: "fixture-prompt", userPrompt: "fixture", referencesUsed: [], inputTokens: 10, outputTokens: 20 };
+  const response = { script: { ...validScript, title: "Recuperado por Workflow" }, provider: "anthropic", model: "fixture", raw: "fixture-response", systemPrompt: "fixture-prompt", userPrompt: "fixture", referencesUsed: [], inputTokens: 10, outputTokens: 20 };
   const job = await db.generationJob.create({ data: { userId: user.id, sessionVersion: user.sessionVersion, requestKey: randomBytes(16).toString("hex"), fingerprint: "fixture", payload: { provider: "anthropic", request: "Fixture" }, items: { create: { structureId: structure.id, order: 0, response, attempts: 1 } } } });
   fs.writeFileSync(".audit/workflow-server.log", "");
   server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port), "-H", "127.0.0.1"], { env, windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { load } from './load-module.mjs';
+import { simulatedRequest } from './ai-fixture.mjs';
 
 const jobA = 'caaaaaaaaaaaaaaaaaaaaaaaa', jobB = 'cbbbbbbbbbbbbbbbbbbbbbbbb';
 async function capture(work) {
@@ -62,7 +63,7 @@ test('el SDK real identifica el 503 en provider_request sin llegar a parsear ni 
   const previousFetch = globalThis.fetch;let calls = 0;
   try {
     globalThis.fetch = async () => { calls++;return new Response(JSON.stringify({ error: { code: 503, message: 'This model is currently experiencing high demand. private-reference', status: 'UNAVAILABLE' } }), { status: 503, headers: { 'Content-Type': 'application/json' } }); };
-    const rows = await capture(async () => assert.rejects(trace.withGenerationTrace({ jobId: jobA, attempt: 1 }, () => provider.generateWithGemini({ apiKey: 'private-key', model: 'gemini-3.8-flash', user: 'private-request', system: 'private-system' })), e => e.retryable));
+    const rows = await capture(async () => assert.rejects(trace.withGenerationTrace({ jobId: jobA, attempt: 1 }, () => provider.generateWithGemini({ request: simulatedRequest, apiKey: 'private-key', model: 'gemini-3.8-flash', user: 'private-request', system: 'private-system' })), e => e.retryable));
     assert.equal(calls, 1);assert.equal(rows.filter(r => r.stage === 'provider_request' && r.state === 'error')[0].httpStatus, 503);
     assert.ok(rows.every(r => r.jobId === jobA));assert.equal(rows.filter(r => r.stage === 'response_parse').length, 0);
     assert.doesNotMatch(JSON.stringify(rows), /private-/);
@@ -72,7 +73,7 @@ test('el SDK real identifica el 503 en provider_request sin llegar a parsear ni 
 test('JSON inválido y fin por límite de tokens se localizan después de recibir la respuesta', async () => {
   class GoogleGenAI { constructor() { this.models = { generateContent: async () => ({ text: 'private-invalid-json', candidates: [{ finishReason: 'MAX_TOKENS' }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 20 } }) }; } }
   const provider = load('src/lib/ai/providers.ts', { '@google/genai': { GoogleGenAI } });
-  const rows = await capture(async () => assert.rejects(provider.generateWithGemini({ apiKey: 'private-key', model: 'gemini-3.8-flash', system: 'private-system', user: 'private-user' }), /formato esperado/));
+  const rows = await capture(async () => assert.rejects(provider.generateWithGemini({ request: simulatedRequest, apiKey: 'private-key', model: 'gemini-3.8-flash', system: 'private-system', user: 'private-user' }), /formato esperado/));
   assert.ok(rows.some(r => r.stage === 'provider_request' && r.state === 'success'));
   assert.ok(rows.some(r => r.stage === 'provider_response' && r.finishReason === 'MAX_TOKENS'));
   assert.ok(rows.some(r => r.stage === 'response_parse' && r.state === 'error'));

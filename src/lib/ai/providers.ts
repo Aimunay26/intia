@@ -10,6 +10,7 @@ import {
 } from "@/lib/ai/schema";
 import { describeKeySource, type KeySource } from "@/lib/settings";
 import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
+import { AiBudgetError, type AiRequest } from "@/lib/ai/request-budget";
 
 export type AiProviderId = "anthropic" | "google";
 
@@ -34,6 +35,7 @@ export type GenerationResult = {
 };
 
 export type ProviderCall = {
+  request: AiRequest;
   apiKey: string;
   model: string;
   system: string;
@@ -83,11 +85,10 @@ export async function generateWithClaude(call: ProviderCall): Promise<Generation
 }
 
 async function generateClaude(call: ProviderCall): Promise<GenerationResult> {
-  const client = new Anthropic({ apiKey: call.apiKey, maxRetries: 0, timeout: 240000 });
-
   let message;
   try {
-    message = await generationStage("provider_request", async () => {
+    message = await call.request(({ timeoutMs, signal }) => generationStage("provider_request", async () => {
+      const client = new Anthropic({ apiKey: call.apiKey, maxRetries: 0, timeout: timeoutMs });
       // Se usa stream + finalMessage porque max_tokens es alto: evita que la
       // peticion muera por timeout HTTP en guiones largos.
       const stream = client.messages.stream({
@@ -98,9 +99,9 @@ async function generateClaude(call: ProviderCall): Promise<GenerationResult> {
         output_config: {
           format: zodOutputFormat(GeneratedScriptSchema),
         },
-      }, { signal: AbortSignal.timeout(240000) });
+      }, { signal });
       return await stream.finalMessage();
-    }, { requestIndex: 1, timeoutMs: 240000, structured: true });
+    }, { requestIndex: 1, timeoutMs, structured: true }));
   } catch (error) {
     throw toAiError(error, "anthropic", call.keySource);
   }
@@ -164,7 +165,7 @@ function geminiSchema(): unknown {
     if (node && typeof node === "object") {
       const out: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
-        if (key === "additionalProperties") continue;
+        if (key === "additionalProperties" || key === "$schema") continue;
         out[key] = strip(value);
       }
       return out;
@@ -182,8 +183,6 @@ async function generateGemini(call: ProviderCall): Promise<GenerationResult> {
   // En @google/genai 1.52, retryOptions descarta el cuerpo y el status de
   // respuestas HTTP fallidas incluso con attempts: 1. Sin esta opción el SDK
   // hace un único fetch y conserva ApiError; los reintentos los gestiona el job.
-  const ai = new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: 240000 } });
-
   const baseConfig = {
     systemInstruction: call.system,
     responseMimeType: "application/json",
@@ -194,11 +193,11 @@ async function generateGemini(call: ProviderCall): Promise<GenerationResult> {
   let usage: { input?: number; output?: number } = {};
 
   try {
-    const response = await generationStage("provider_request", () => ai.models.generateContent({
+    const response = await call.request(({ timeoutMs, signal }) => generationStage("provider_request", () => new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: timeoutMs } }).models.generateContent({
       model: call.model,
       contents: call.user,
-      config: { ...baseConfig, responseJsonSchema: geminiSchema() },
-    }), { requestIndex: 1, structured: true, timeoutMs: 240000, maxOutputTokens: baseConfig.maxOutputTokens });
+      config: { ...baseConfig, abortSignal: signal, responseJsonSchema: geminiSchema() },
+    }), { requestIndex: 1, structured: true, timeoutMs, maxOutputTokens: baseConfig.maxOutputTokens }));
     generationEvent("provider_response", "info", { finishReason: response.candidates?.[0]?.finishReason, blockReason: response.promptFeedback?.blockReason, responseBytes: Buffer.byteLength(response.text ?? ""), inputTokens: response.usageMetadata?.promptTokenCount, outputTokens: response.usageMetadata?.candidatesTokenCount });
     text = response.text ?? "";
     usage = {
@@ -223,11 +222,11 @@ async function generateGemini(call: ProviderCall): Promise<GenerationResult> {
     }
     generationEvent("schema_fallback", "info", { requestIndex: 2, structured: false });
     try {
-      const response = await generationStage("provider_request", () => ai.models.generateContent({
+      const response = await call.request(({ timeoutMs, signal }) => generationStage("provider_request", () => new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: timeoutMs } }).models.generateContent({
         model: call.model,
         contents: call.user,
-        config: baseConfig,
-      }), { requestIndex: 2, structured: false, timeoutMs: 240000, maxOutputTokens: baseConfig.maxOutputTokens });
+        config: { ...baseConfig, abortSignal: signal },
+      }), { requestIndex: 2, structured: false, timeoutMs, maxOutputTokens: baseConfig.maxOutputTokens }));
       generationEvent("provider_response", "info", { finishReason: response.candidates?.[0]?.finishReason, blockReason: response.promptFeedback?.blockReason, responseBytes: Buffer.byteLength(response.text ?? ""), inputTokens: response.usageMetadata?.promptTokenCount, outputTokens: response.usageMetadata?.candidatesTokenCount });
       text = response.text ?? "";
       usage = {
@@ -503,6 +502,7 @@ export function toAiError(
   keySource?: KeySource | null
 ): AiError {
   if (error instanceof AiError) return error;
+  if (error instanceof AiBudgetError) return new AiError(error.message, undefined, "quota", false);
 
   const label = PROVIDER_LABEL[provider];
   const message = errorMessage(error);

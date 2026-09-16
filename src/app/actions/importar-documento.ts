@@ -6,11 +6,15 @@ import { leerArchivoImportado } from "@/lib/asset-import";
 import { extraerFicha, type ResultadoExtraccion } from "@/lib/ai/extractor";
 import { field } from "@/lib/utils";
 import type { TipoDocumento } from "@/lib/branding-parser";
+import { createHash } from "node:crypto";
+import { createAiRequest } from "@/lib/ai/request-budget";
+import { reserveUsage, usageDay } from "@/lib/resource-limits";
+import { generationStage, withGenerationTrace } from "@/lib/generation-trace";
 
 /**
  * Previsualización de un brief maestro o de un informe de branding.
  *
- * Es una acción de SOLO LECTURA: no crea el Asset ni toca Brand/Archetype.
+ * No crea el Asset ni toca Brand/Archetype; la mejora opcional registra su cupo.
  * Devuelve los campos propuestos con su origen (PDF / IA / vacío) y los
  * avisos, y la pantalla decide qué aplicar. Escribir es cosa del submit
  * normal del formulario (crearMarca, actualizarMarca, crearArquetipo…), que
@@ -41,7 +45,9 @@ export async function previsualizarDocumento(formData: FormData): Promise<Previs
   // Sin destino explícito se asume una persona (el informe de branding es lo
   // que más se importa); un brief solo tiene sentido para una marca.
   const destino = field(formData, "destino") || (tipo === "brief" ? "marca" : "persona");
-  await requirePermission(CAPACIDAD_POR_DESTINO[destino] ?? "brands.edit");
+  const user = await requirePermission(CAPACIDAD_POR_DESTINO[destino] ?? "brands.edit");
+  const choice = field(formData, "aiProvider") || "local";
+  if (!["local", "google", "anthropic"].includes(choice)) return { ok: false, error: "Elige lectura local, Gemini o Claude." };
 
   const lectura = await leerArchivoImportado(formData.get("file"));
   if (!lectura.ok) return { ok: false, error: lectura.error };
@@ -56,6 +62,11 @@ export async function previsualizarDocumento(formData: FormData): Promise<Previs
     };
   }
 
-  const resultado = await extraerFicha({ tipo, text: archivo.texto });
+  const provider = choice === "google" || choice === "anthropic" ? choice : undefined;
+  const hash = createHash("sha256").update(Buffer.from(archivo.buffer)).digest("hex");
+  const request = provider ? createAiRequest({ user, deadlineAt: Date.now() + 25000, authorize: async tx => {
+    await reserveUsage(tx, `ai:document:${user.id}:${hash}:${provider}:${usageDay()}`, 1, 1);
+  } }) : undefined;
+  const resultado = await withGenerationTrace({ provider }, () => generationStage("document_extract", () => extraerFicha({ tipo, text: archivo.texto!, provider, request })));
   return { ok: true, nombreArchivo: archivo.name, tipoPedido: tipo, resultado };
 }

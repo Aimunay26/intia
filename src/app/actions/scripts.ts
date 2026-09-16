@@ -671,7 +671,8 @@ export async function asignarGuionAVideo(formData: FormData) {
     if (!script || !video) return;
     if (script.brandId && script.brandId !== video.brandId) throw new Error("El guion y el video deben pertenecer a la misma marca.");
     if (video.scriptId) throw new Error("Ese video ya tiene un guion vinculado. Quítalo desde su ficha si quieres cambiarlo.");
-    if (!await vincularGuionAVideo(tx, user, scriptId, contentItemId)) throw new Error("No se pudo vincular el guion: la tarjeta cambió mientras tanto. Recarga la página.");
+    const link = await vincularGuionAVideo(tx, user, scriptId, contentItemId);
+    if (!link.linked) throw new Error(link.warning ?? "No se pudo vincular el guion. Recarga la página.");
 
     afterCommit(() => revalidatePath("/contenido"));
     afterCommit(() => revalidatePath(`/contenido/${contentItemId}`));

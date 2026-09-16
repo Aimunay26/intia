@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { load } from "./load-module.mjs";
+import { validScript } from "./ai-fixture.mjs";
 
 const url = process.env.SCALABILITY_TEST_DATABASE_URL;
 if (!url || !["localhost", "127.0.0.1"].includes(new URL(url).hostname) || !new URL(url).pathname.endsWith("_test")) throw new Error("Sólo fixtures locales.");
@@ -12,11 +13,11 @@ process.env.BLOB_PRIVATE_ENABLED = "true";
 process.env.BLOB_READ_WRITE_TOKEN = "fixture-not-a-real-token";
 class AiError extends Error { constructor(message, detail, retryable = false) { super(message); this.detail = detail; this.retryable = retryable; } }
 const output = {
-  script: { title: "Guion de prueba", scenes: [{ beat: "Inicio", startSec: 0, endSec: 5, voiceType: "EN_CAMARA" }] },
+  script: validScript,
   provider: "anthropic", model: "fixture", raw: "fixture-response", systemPrompt: "fixture-prompt", userPrompt: "fixture-request", referencesUsed: [], inputTokens: 12, outputTokens: 24,
 };
 let calls = 0, provider = async () => output;
-const mocks = { "@/lib/prisma": { prisma }, "@/lib/ai": { AiError, generateScript: async (...args) => { calls++; return provider(...args); }, normalizeSceneTimes: rows => rows } };
+const mocks = { "@/lib/prisma": { prisma }, "@/lib/ai": { AiError, generateScript: (input, request) => request(async () => { calls++; return provider(input); }), normalizeSceneTimes: rows => rows } };
 const jobs = load("src/lib/generation-jobs.ts", mocks);
 const limits = load("src/lib/resource-limits.ts", mocks);
 const money = load("src/lib/money.ts");
@@ -39,7 +40,7 @@ test("trabajos durables, cuotas, dinero y archivos con PostgreSQL real; IA/Blob 
   }
   member = {...await prisma.user.findUniqueOrThrow({where:{id:member.id}}), profiles:['WRITER'],brandIds:[brand.id]};
   other = {...await prisma.user.findUniqueOrThrow({where:{id:other.id}}), profiles:['WRITER'],brandIds:[brand.id]};
-  const structure = await prisma.structure.create({ data: { name: "Fixture", slug: "scalability" } });
+  const structure = await prisma.structure.create({ data: { name: "Fixture", slug: "scalability", defaultDurationSec: 5 } });
   const input = { request: "Guion para fixture", provider: "anthropic", brandId: brand.id };
   const enqueue = async (actor = owner, key = randomUUID()) => {
     // Las cuotas se prueban aparte; se resetean sólo los contadores de este fixture efímero.

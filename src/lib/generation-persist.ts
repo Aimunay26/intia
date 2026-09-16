@@ -4,6 +4,9 @@ import type { SessionUser } from "@/lib/auth";
 import type { AppTransaction } from "@/lib/prisma";
 import { AI_MODELS, CONTENT_STATUS_MAP, VOICE_TYPE_MAP } from "@/lib/constants";
 import { generationStage } from "@/lib/generation-trace";
+import { closedVideoWhere, contentScope } from "@/lib/access-scope";
+import type { Capability } from "@/lib/permissions";
+import { validateGeneratedScript } from "@/lib/ai/validate-script";
 
 /**
  * Lo que el trabajo de generación guarda además de la entrada del modelo:
@@ -23,13 +26,13 @@ export async function persistGeneratedScript(tx: AppTransaction, user: SessionUs
   const { structureId, brandId, archetypeId, productFocus, request, creativeAngle, variantHint, ctaTrigger, ctaActionType, ctaDetail, cta } = input;
   const durationSec = input.durationSec ?? 0;
   const ctaMode = input.ctaMode === "comunidad" ? "comunidad" : "venta";
-  const structure = await tx.structure.findUniqueOrThrow({ where: { id: structureId }, select: { name: true, defaultDurationSec: true } });
+  const structure = await tx.structure.findUniqueOrThrow({ where: { id: structureId }, select: { name: true, defaultDurationSec: true, beats: true } });
   // Solo para el brief legible: si la tarjeta desapareció mientras se generaba,
   // el guion se crea igual (suelto) y el vínculo se resuelve aparte.
   const video = input.contentItemId
     ? await tx.contentItem.findUnique({ where: { id: input.contentItemId }, select: { title: true } })
     : null;
-    const generated = result.script;
+    const generated = await generationStage("response_validate", () => validateGeneratedScript(result.script, { durationSec: input.durationSec ?? structure.defaultDurationSec, beats: structure.beats }));
     const scenes = Array.isArray(generated.scenes) ? generated.scenes : [];
     if (!scenes.length) throw new Error("La IA no devolvió escenas.");
 
@@ -157,7 +160,8 @@ export async function persistGeneratedScript(tx: AppTransaction, user: SessionUs
  * `asignarGuionAVideo` (desde la ficha del guion) como el trabajo de
  * generación (cuando el generador arrancó con un video elegido), para que la
  * regla viva en un solo sitio. Corre dentro de la transacción del llamador.
- * Devuelve false si algo no cuadra (no existe, marcas distintas) o si la
+ * Devuelve linked:false y un motivo si algo no cuadra (acceso, marca, revisión,
+ * estado o aprobación) o si la
  * tarjeta ya recibió otro guion entre la comprobación y la escritura: las dos
  * pantallas solo ofrecen tarjetas sin guion, y una generación en segundo plano
  * no debe pisar un vínculo hecho mientras tanto. En ese caso no se audita nada,
@@ -167,8 +171,16 @@ export async function vincularGuionAVideo(
   tx: AppTransaction,
   user: SessionUser,
   scriptId: string,
-  contentItemId: string
-): Promise<boolean> {
+  contentItemId: string,
+  options: { expectedUpdatedAt?: string | null; capability?: Capability } = {}
+): Promise<{ linked: boolean; warning?: string }> {
+  const blocked = (reason: string) => ({ linked: false, warning: `El guion se guardó por separado: ${reason}. Puedes revisar el video y vincularlo desde Guiones.` });
+  await tx.$queryRaw`SELECT id FROM "Script" WHERE id = ${scriptId} FOR UPDATE`;
+  // No se modifica un guion previo del video: si ya tiene uno, se conserva.
+  // Bloquear otro guion aquí permitiría locks cruzados entre dos vinculaciones.
+  await tx.$queryRaw`SELECT id FROM "ContentItem" WHERE id = ${contentItemId} FOR UPDATE`;
+  if (!await tx.contentItem.count({ where: { id: contentItemId } })) return blocked("el video ya no existe");
+  if (!await tx.contentItem.count({ where: { AND: [{ id: contentItemId }, contentScope(user, options.capability ?? "scripts.write")] } })) return blocked("ya no tienes acceso al video");
   const [script, video] = await Promise.all([
     tx.script.findUnique({
       where: { id: scriptId },
@@ -176,6 +188,7 @@ export async function vincularGuionAVideo(
         id: true,
         title: true,
         structureId: true,
+        updatedAt: true,
         brandId: true,
         structure: { select: { name: true } },
       },
@@ -194,9 +207,14 @@ export async function vincularGuionAVideo(
       },
     }),
   ]);
-  if (!script || !video) return false;
+  if (!script || !video) return blocked("el video o guion ya no existe");
   // Un guion escrito para otra marca no se cuelga de esta tarjeta.
-  if (script.brandId && script.brandId !== video.brandId) return false;
+  if (script.brandId && script.brandId !== video.brandId) return blocked("la marca del video cambió");
+  if (video.scriptId) return blocked("el video ya recibió otro guion");
+  if (!["IDEA", "GUION"].includes(video.status)) return blocked("el video ya no está en Idea o Guion");
+  if (await tx.contentItem.count({ where: { AND: [{ id: contentItemId }, closedVideoWhere] } })) return blocked("el video recibió la aprobación final");
+  const revision = await tx.contentItem.findUniqueOrThrow({ where: { id: contentItemId }, select: { updatedAt: true } });
+  if (options.expectedUpdatedAt !== undefined && revision.updatedAt.toISOString() !== options.expectedUpdatedAt) return blocked("la planificación del video cambió durante la generación");
 
   // El video hereda la estructura del guion: es la que se usó para escribirlo.
   // Y si la tarjeta seguía siendo una idea suelta, ya tiene guion.
@@ -204,16 +222,16 @@ export async function vincularGuionAVideo(
 
   // Escritura condicionada: solo si la tarjeta sigue sin guion en este
   // instante. Si otra pestaña o compañero se adelantó, count es 0 y se
-  // devuelve false sin auditar.
+  // devuelve linked:false sin auditar.
   const { count } = await tx.contentItem.updateMany({
-    where: { id: contentItemId, scriptId: null },
+    where: { id: contentItemId, scriptId: null, status: { in: ["IDEA", "GUION"] }, updatedAt: revision.updatedAt },
     data: {
       scriptId,
       structureId: script.structureId,
       status: nuevoEstado,
     },
   });
-  if (count === 0) return false;
+  if (count === 0) return blocked("el video cambió mientras se vinculaba");
 
   // `changes` lleva el VALOR DE LA COLUMNA (ids, IDEA/GUION); lo legible va en verAntes/verDespues.
   await auditInTransaction(tx, {
@@ -255,5 +273,5 @@ export async function vincularGuionAVideo(
     },
   });
 
-  return true;
+  return { linked: true };
 }

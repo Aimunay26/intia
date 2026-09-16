@@ -249,14 +249,15 @@ export async function eliminarEstructura(formData: FormData) {
         id: true,
         name: true,
         active: true,
-        _count: { select: { scripts: true, content: true } },
+        _count: { select: { scripts: true, content: true, plannedContent: true, generationItems: true } },
       },
     });
     if (!structure) return afterCommit(() => redirect("/estructuras"));
 
     const guiones = structure._count.scripts;
 
-    if (guiones > 0) {
+    const referencias = guiones + structure._count.content + structure._count.plannedContent + structure._count.generationItems;
+    if (referencias > 0) {
       if (structure.active) {
         await tx.structure.update({ where: { id }, data: { active: false } });
         await auditInTransaction(tx, {
@@ -264,9 +265,7 @@ export async function eliminarEstructura(formData: FormData) {
           action: "EDITAR",
           entity: "Structure",
           entityId: id,
-          summary: `Desactivó la estructura "${structure.name}" porque ya tiene ${guiones} ${
-            guiones === 1 ? "guion" : "guiones"
-          }`,
+          summary: `Desactivó la estructura "${structure.name}" porque está referenciada por guiones, videos o trabajos de generación`,
           changes: {
             active: { etiqueta: "Activa", antes: true, despues: false },
           },

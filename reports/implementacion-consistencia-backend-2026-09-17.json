@@ -8,7 +8,15 @@
   ],
   "branch": "codex/backend-consistency-b07-b10",
   "baselineCommit": "2761ead37fc93dc8de702df213cd0c84b50eedbd",
-  "gitStatus": "uncommitted-working-tree",
+  "gitStatusAtValidation": "uncommitted-working-tree",
+  "gitPublication": {
+    "checkedAt": "2026-09-17T16:29:15.827Z",
+    "implementationCommit": "608315e56b4fcf7729706322436209071d0c580f",
+    "remoteBranch": "origin/codex/backend-consistency-b07-b10",
+    "pushed": true,
+    "mergedToMain": false,
+    "ciStatus": "pending-pull-request-or-main-push"
+  },
   "environment": "local-fixtures",
   "unit": {
     "total": 127,
@@ -156,7 +164,7 @@
   "realAiCalls": 0,
   "realBlobCalls": 0,
   "ciRun": false,
-  "commitPushPending": true,
+  "commitPushPending": false,
   "deploymentPending": true,
   "nextImplementationBlock": "B11"
 }

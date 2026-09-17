@@ -20,7 +20,7 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 | B10 · Concurrencia uniforme | Implementado y validado localmente | Revisiones en importación de branding, ficha de usuario, compatibilidad, texto/referencia de adjuntos y ajustes; borradores conservados; pendiente Neon/Vercel |
 | B11–B22 | Pendiente | 12 paquetes restantes; se mantienen las prioridades y criterios del informe |
 
-Actualización: 17/09/2026. **B07–B10 están implementados en la rama local `codex/backend-consistency-b07-b10`; todavía no están publicados ni migrados en Neon.** La entrega B01–B06 del 16/09 conserva su estado registrado de despliegue y CI. Los apartados de diagnóstico que siguen conservan la evidencia anterior a estas correcciones.
+Actualización: 17/09/2026. **B07–B10 están implementados y subidos a GitHub en `codex/backend-consistency-b07-b10`, commit [`608315e`](https://github.com/conamormarket-lgtm/intia/commit/608315e56b4fcf7729706322436209071d0c580f); todavía no están integrados en `main`, migrados en Neon ni desplegados en producción.** Push confirmado el 17/09. La entrega B01–B06 del 16/09 conserva su estado registrado de despliegue y CI. Los apartados de diagnóstico que siguen conservan la evidencia anterior a estas correcciones.
 
 ### Entrega B07–B10 · 17/09/2026
 
@@ -63,7 +63,7 @@ Regresiones: [acciones y PostgreSQL](../tests/postgres-workflow.test.mjs), [matr
 
 ### Publicación pendiente de B07–B10
 
-1. Commit/push y CI sobre esta entrega; no confundirla con la versión desplegada del 16/09.
+1. Commit/push completados en `608315e`. Falta CI sobre esta entrega: el workflow se activa por pull request o push a `main`, no por subir esta rama. Su integración debe coordinarse con la migración; no confundirla con la versión desplegada del 16/09.
 2. Respaldo actual y ensayo sobre una copia de Neon. Ejecutar el [preflight de solo lectura](../prisma/operations/preflight-workflow-consistency.sql); resolver cualquier marca contradictoria con el responsable. La migración no corrige datos ambiguos automáticamente.
 3. Aplicar `20260917180000_workflow_consistency` y desplegar el mismo código de forma coordinada. La FK compuesta diferida y las guardas de evidencia viven en SQL: conservarlas en futuras migraciones.
 4. Recargar formularios antiguos. Las marcas históricas de aprobación se conservan, pero no autorizan nuevas publicaciones sin versión verificable: reabrir con motivo, revisar el guion y completar nuevamente las aprobaciones en sus etapas.

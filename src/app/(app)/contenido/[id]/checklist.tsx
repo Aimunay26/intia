@@ -1,4 +1,5 @@
 "use client";
+import { EditForm } from "@/components/edit-form";
 
 import { CheckSquare, Plus, X } from "lucide-react";
 
@@ -8,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { Avatar, Card, CardHeader, EmptyState, Field, ProgressBar } from "@/components/ui";
 import { AutoSubmitCheckbox, Collapsible, SubmitButton } from "@/components/forms";
 import { ReopenApprovalForm } from "@/components/reopen-approval-form";
-import { isFinalApproval } from "@/lib/permissions";
 
 /**
  * Checklist de produccion del video, agrupado por etapa.
@@ -16,6 +16,8 @@ import { isFinalApproval } from "@/lib/permissions";
  */
 
 export type CheckRow = {
+  kind: string;
+  approvalToken: string;
   id: string;
   label: string;
   stage: string;
@@ -154,9 +156,9 @@ function CheckLinea({
 }) {
   return (
     <div className="group flex items-start gap-2.5 rounded-lg py-1 pr-1">
-      <form action={alternarCheck} className="mt-[3px] shrink-0">
-        <input type="hidden" name="id" value={item.id} />
-        {canEdit && !(item.done && isFinalApproval(item.stage, item.label)) ? (
+      <EditForm action={alternarCheck} className="mt-[3px] shrink-0">
+        <input type="hidden" name="id" value={item.id} /><input type="hidden" name="expectedApproval" value={item.approvalToken} />
+        {canEdit && !(item.done && item.kind !== "TASK") ? (
           <AutoSubmitCheckbox name="done" defaultChecked={item.done} />
         ) : (
           <input
@@ -168,7 +170,7 @@ function CheckLinea({
             aria-label={item.label}
           />
         )}
-      </form>
+      </EditForm>
 
       <div className="min-w-0 flex-1">
         <div
@@ -182,7 +184,7 @@ function CheckLinea({
             <span className="text-inkmuted ml-1.5 text-[10.5px] font-semibold">opcional</span>
           ) : null}
         </div>
-        {canEdit && item.done && isFinalApproval(item.stage, item.label) ? <ReopenApprovalForm id={item.id} /> : null}
+        {canEdit && item.done && item.kind !== "TASK" ? <ReopenApprovalForm id={item.id} /> : null}
 
         {item.done && item.doneByName ? (
           <div className="mt-1 flex items-center gap-1.5">
@@ -192,7 +194,7 @@ function CheckLinea({
         ) : null}
       </div>
 
-      {canManage ? (
+      {canManage && item.kind === "TASK" ? (
         <form action={eliminarCheck} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
           <input type="hidden" name="id" value={item.id} />
           <button
@@ -225,7 +227,8 @@ function NuevoCheckForm({ contentItemId }: { contentItemId: string }) {
             autoFocus
           />
         </Field>
-        <Field label="Etapa">
+        <Field label="Tipo"><select name="kind" className="select"><option value="TASK">Tarea</option><option value="SCRIPT_APPROVAL">Aprobación de guion (preproducción)</option><option value="FINAL_APPROVAL">Aprobación final (postproducción)</option></select></Field>
+            <Field label="Etapa">
           <select name="stage" className="select" defaultValue="GENERAL">
             {CHECKLIST_STAGES.map((s) => (
               <option key={s.value} value={s.value}>

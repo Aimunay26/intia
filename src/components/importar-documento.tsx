@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -335,6 +335,7 @@ type PropsModal = {
   onAplicarMarca?: (a: AplicacionMarca) => void;
   onAplicarPersona?: (a: AplicacionPersona) => void;
   /** Server Action que guarda (modo «guardar»). Recibe branding, importado y sobrescribir. */
+  expectedUpdatedAt?: string;
   guardar?: (fd: FormData) => Promise<ResultadoImportacion | void>;
 };
 
@@ -370,9 +371,15 @@ export function ImportarDocumentoModal({
   actuales,
   onAplicarMarca,
   onAplicarPersona,
-  guardar,
+  guardar, expectedUpdatedAt,
 }: PropsModal) {
   const router = useRouter();
+  const [revision, setRevision] = useState(expectedUpdatedAt);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (open && !wasOpen.current) setRevision(expectedUpdatedAt);
+    wasOpen.current = open;
+  }, [open, expectedUpdatedAt]);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [vista, setVista] = useState<Vista | null>(null);
@@ -384,6 +391,7 @@ export function ImportarDocumentoModal({
   const reiniciar = () => {
     setAiProvider("local");
     setFile(null);
+    setRevision(expectedUpdatedAt);
     setError(null);
     setVista(null);
     setSobrescribir(false);
@@ -454,6 +462,7 @@ export function ImportarDocumentoModal({
       const fd = new FormData();
       fd.append("branding", file);
       fd.append("importado", JSON.stringify(vista.campos));
+      if (revision) fd.set("expectedUpdatedAt", revision);
       if (sobrescribir) fd.append("sobrescribir", "on");
       const res = await guardar(fd);
       if (res && "error" in res) {

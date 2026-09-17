@@ -125,7 +125,8 @@ test("seguridad sobre PostgreSQL real y sesiones firmadas", async t => {
     });
     await t.test("dos dueños no pueden rebajarse simultáneamente y dejar cero dueños", async () => {
       const second=await prisma.user.create({data:{name:"Segundo",email:`second-${suffix}@example.test`,passwordHash:await auth.hashPassword(password),role:"OWNER"}}), secondJar=await jarFor(second);
-      const results=await Promise.all([run(ownerJar,()=>team.actualizarUsuario(null,form({id:owner.id,name:owner.name,email:owner.email,role:"MEMBER"}))),run(secondJar,()=>team.actualizarUsuario(null,form({id:second.id,name:second.name,email:second.email,role:"MEMBER"})))]);
+      owner=await prisma.user.findUniqueOrThrow({where:{id:owner.id}});
+      const results=await Promise.all([run(ownerJar,()=>team.actualizarUsuario(null,form({id:owner.id,name:owner.name,email:owner.email,role:"MEMBER",expectedUpdatedAt:owner.updatedAt.toISOString()}))),run(secondJar,()=>team.actualizarUsuario(null,form({id:second.id,name:second.name,email:second.email,role:"MEMBER",expectedUpdatedAt:second.updatedAt.toISOString()})))]);
       assert.equal(results.filter(r=>r.ok).length,1); assert.equal(await prisma.user.count({where:{role:"OWNER",active:true}}),1);
       owner=await prisma.user.findFirstOrThrow({where:{role:"OWNER",active:true}}); ownerJar=await jarFor(owner);
     });

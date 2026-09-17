@@ -5,7 +5,7 @@ import { loadPage } from "@/lib/list-pagination";
 export type TeamFilters = { rol?: string; estado?: string; q?: string; pagina?: string };
 export const teamMemberSelect = {
   id: true, name: true, email: true, role: true, color: true, phone: true, bio: true,
-  active: true, archetypeId: true, createdAt: true, workProfiles: { select: { profile: true } }, brandAccess: { select: { brandId: true } }, archetype: { select: { id: true, name: true, color: true } },
+  active: true, archetypeId: true, createdAt: true, updatedAt: true, workProfiles: { select: { profile: true } }, brandAccess: { select: { brandId: true } }, archetype: { select: { id: true, name: true, color: true } },
 } satisfies Prisma.UserSelect;
 
 export function teamWhere(filters: TeamFilters): Prisma.UserWhereInput {

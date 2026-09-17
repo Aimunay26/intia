@@ -146,6 +146,7 @@ export default async function CalendarioPage({
         startAt: true,
         endAt: true,
         allDay: true,
+        contentItemId: true,
         location: true,
         brandId: true,
         brand: { select: { name: true } },
@@ -396,7 +397,7 @@ export default async function CalendarioPage({
                         endTime: e.endAt ? horaDe(e.endAt) : "",
                         allDay: e.allDay,
                         location: e.location ?? "",
-                        brandId: e.brandId ?? "",
+                        brandId: e.brandId ?? "", contentItemId: e.contentItemId ?? "",
                       }}
                     />
                   ) : null}

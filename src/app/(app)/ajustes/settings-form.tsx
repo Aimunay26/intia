@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { EditForm, RevisionTokenField } from "@/components/edit-form";
+import { useState } from "react";
 import { AlertCircle, CheckCircle2, KeyRound, Loader2, LogIn, Play, Save, Sparkles } from "lucide-react";
 
 import { guardarAjustes, type SettingsState } from "@/app/actions/app-settings";
@@ -19,6 +20,7 @@ export type ProviderStatus = {
 };
 
 export type SettingsFormProps = {
+  revision: string;
   orgName: string;
   defaultProvider: string;
   anthropicModel: string;
@@ -227,6 +229,7 @@ function BloqueProveedor({
 }
 
 export function SettingsForm({
+  revision,
   orgName,
   defaultProvider,
   anthropicModel,
@@ -236,13 +239,14 @@ export function SettingsForm({
   googleAuth,
   redirectUri,
 }: SettingsFormProps) {
-  const [state, formAction, pending] = useActionState<SettingsState, FormData>(
-    guardarAjustes,
-    null
-  );
+  const [state, setState] = useState<SettingsState>(null);
+  const formAction = async (fd: FormData) => {
+    const result = await guardarAjustes(null, fd); setState(result);
+    if (result?.error) throw new Error(result.error);
+  };
 
   return (
-    <form action={formAction} className="space-y-4">
+    <EditForm action={formAction} className="space-y-4"><RevisionTokenField value={revision} />
       <Card>
         <CardHeader
           title="Organización"
@@ -442,13 +446,12 @@ export function SettingsForm({
         <button
           type="submit"
           className="btn btn-primary"
-          disabled={pending}
           data-guia={GUIA_TARGETS.BTN_GUARDAR_AJUSTES}
         >
-          {pending ? <Loader2 size={14} className="spin" /> : <Save size={14} />}
-          {pending ? "Guardando…" : "Guardar ajustes"}
+          <Save size={14} />
+          Guardar ajustes
         </button>
       </div>
-    </form>
+    </EditForm>
   );
 }

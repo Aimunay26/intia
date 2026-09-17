@@ -1,3 +1,4 @@
+import { assertChecklistApproved, assertScriptApproved } from "@/lib/approvals";
 import type { Prisma } from "@prisma/client";
 import type { AppTransaction } from "@/lib/prisma";
 import { allows, assertPermission, capabilityScope, profileGrants, isFinalApproval, type AccessUser, type Capability } from "@/lib/permissions";
@@ -10,7 +11,7 @@ export function contentScope(user: AccessUser, capability: Capability = "content
   if (!allows(user, capability)) return none;
   if (user.role === "OWNER") return {};
   const scopes: Prisma.ContentItemWhereInput[] = profileGrants(user, capability).map(p => p.id === "PUBLISHER"
-    ? { checklist: { some: { stage: "POSTPRODUCCION", done: true, AND: [{ label: { contains: "final", mode: "insensitive" } }, { label: { contains: "aprobad", mode: "insensitive" } }] } } }
+    ? { checklist: { some: { kind: "FINAL_APPROVAL", done: true } } }
     : p.scope === "assigned" ? { assignments: { some: { userId: user.id } } } : {});
   return { brandId: { in: [...user.brandIds ?? []] }, ...(scopes.some(scope => Object.keys(scope).length === 0) ? {} : { OR: scopes }) };
 }
@@ -53,7 +54,7 @@ export async function assertContentAccess(db: AppTransaction, user: AccessUser, 
 export async function assertScriptAccess(db: AppTransaction, user: AccessUser, id: string, capability: Capability = "scripts.view") {
   assertPermission(user, capability);
   if (!await db.script.count({ where: { AND: [{ id }, scriptScope(user, capability)] } })) throw new Error("No tienes acceso a este guion.");
-  if (user.role !== "OWNER" && capability === "scripts.write" && await db.script.count({ where: { id, status: "APROBADO" } })) throw new Error("Coordinación debe reabrir el guion aprobado antes de editarlo.");
+  if (user.role !== "OWNER" && capability === "scripts.write" && await db.script.count({ where: { id, status: { in: ["APROBADO", "GRABADO"] } } })) throw new Error("Coordinación debe reabrir el guion aprobado antes de editarlo.");
   if (capability === "scripts.write" && user.role !== "OWNER") {
     await db.$queryRaw`SELECT id FROM "Script" WHERE id = ${id} FOR UPDATE`;
     const videos = await db.contentItem.findMany({ where: { scriptId: id }, select: { id: true }, orderBy: { id: "asc" } });
@@ -75,20 +76,21 @@ export async function lockVideoLifecycle(db: AppTransaction, id: string) {
 
 export const closedVideoWhere: Prisma.ContentItemWhereInput = { OR: [
   { status: { in: ["PROGRAMADO", "PUBLICADO"] } },
-  { checklist: { some: { stage: "POSTPRODUCCION", done: true, AND: [{ label: { contains: "final", mode: "insensitive" } }, { label: { contains: "aprobad", mode: "insensitive" } }] } } },
+  { checklist: { some: { kind: "FINAL_APPROVAL", done: true } } },
 ] };
 
 export async function assertVideoOpen(db: AppTransaction, user: AccessUser, id: string) {
-  if (user.role === "OWNER") return;
   await lockVideoLifecycle(db, id);
-  const checks = await db.checklistItem.findMany({ where: { contentItemId: id, stage: "POSTPRODUCCION", done: true }, select: { label: true, stage: true } });
-  if (checks.some(c => isFinalApproval(c.stage, c.label)) || await db.contentItem.count({ where: { id, status: { in: ["PROGRAMADO", "PUBLICADO"] } } })) throw new Error("Coordinación debe retirar la aprobación final y reabrir el video antes de modificarlo.");
+  if (user.role === "OWNER") return;
+  const checks = await db.checklistItem.findMany({ where: { contentItemId: id, kind: "FINAL_APPROVAL", done: true }, select: { kind: true } });
+  if (checks.some(c => isFinalApproval(c.kind)) || await db.contentItem.count({ where: { id, status: { in: ["PROGRAMADO", "PUBLICADO"] } } })) throw new Error("Coordinación debe retirar la aprobación final y reabrir el video antes de modificarlo.");
 }
 
-export async function assertPublishable(db: AppTransaction, user: AccessUser, id: string) {
-  if (user.role === "OWNER") return;
-  const checks = await db.checklistItem.findMany({ where: { contentItemId: id, stage: "POSTPRODUCCION", done: true }, select: { label: true, stage: true } });
-  if (!checks.some(c => isFinalApproval(c.stage, c.label))) throw new Error("Coordinación debe completar la revisión final aprobada antes de publicar.");
+export async function assertPublishable(db: AppTransaction, _user: AccessUser, id: string) {
+  const video = await db.contentItem.findUniqueOrThrow({ where: { id }, select: { scriptId: true } });
+  await assertScriptApproved(db, video.scriptId);
+  await assertChecklistApproved(db, id, "SCRIPT_APPROVAL");
+  await assertChecklistApproved(db, id, "FINAL_APPROVAL");
 }
 
 export async function assertAssignee(db: AppTransaction, id: string, brandId: string | null) {

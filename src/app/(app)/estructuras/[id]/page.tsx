@@ -552,7 +552,7 @@ async function ArquetiposTab({ structureId }: { structureId: string }) {
       summary: a.summary,
       active: a.active,
       score: a.fits[0]?.score ?? null,
-      notes: a.fits[0]?.notes ?? null,
+      notes: a.fits[0]?.notes ?? null, source: a.fits[0]?.source ?? null, revision: a.fits[0]?.revision ?? 0, updatedByName: a.fits[0]?.updatedByName ?? null,
     }))
     .sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || a.name.localeCompare(b.name));
 
@@ -604,7 +604,7 @@ async function ArquetiposTab({ structureId }: { structureId: string }) {
                     )}
                   </td>
                   <td className="text-[12.5px]">
-                    {f.notes ? f.notes : <span className="text-inkmuted">—</span>}
+                    {f.notes ? f.notes : <span className="text-inkmuted">—</span>}<p className="text-xs text-inkmuted">{f.source === "MANO" ? `Manual · revisión ${f.revision} · ${f.updatedByName ?? "autor histórico no registrado"}` : f.source ? "Sugerencia sin validar" : "Sin evaluar"}</p>
                   </td>
                   <td className="text-right">
                     <Link href={`/arquetipos/${f.id}`} className="btn btn-sm">
@@ -745,7 +745,7 @@ async function DocumentosTab({
       mimeType: true,
       size: true,
       useForAi: true,
-      extractedText: true,
+      extractedText: true, updatedAt: true,
       createdAt: true,
     },
   });
@@ -759,7 +759,7 @@ async function DocumentosTab({
     useForAi: a.useForAi,
     hasText: Boolean(a.extractedText && a.extractedText.trim().length > 0),
     textLength: a.extractedText?.length ?? 0,
-    extractedText: a.extractedText,
+    extractedText: a.extractedText, updatedAt: a.updatedAt,
     createdAt: a.createdAt,
   }));
 

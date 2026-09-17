@@ -1,6 +1,8 @@
 "use server";
+import { approveVersion, assertChecklistApproved, assertRequiredChecks, assertScriptApproved, reopenContentApprovals, reopeningReason, revokeVersion } from "@/lib/approvals";
+import { CONTENT_FLOW, transition, WorkflowError } from "@/lib/workflow-policy";
 import { requirePermission } from "@/lib/auth";
-import { assertBrandPermission, assertPermission, contentStatusCapability, checklistCapability, isFinalApproval } from "@/lib/permissions";
+import { assertBrandPermission, assertPermission, contentStatusCapability, checklistCapability } from "@/lib/permissions";
 import { assertContentAccess, assertVideoOpen, assertAssignee, assertPublishable, lockVideoLifecycle } from "@/lib/access-scope";
 
 import { revalidatePath } from "next/cache";
@@ -18,7 +20,7 @@ import {
 	PLATFORM_MAP,
 	PRIORITY_MAP,
 } from "@/lib/constants";
-import { lockRevision, withMutation } from "@/lib/mutations";
+import { lockRevision, withMutation, withWorkflowMutation } from "@/lib/mutations";
 import type { AppTransaction } from "@/lib/prisma";
 import {
 	boolField,
@@ -147,7 +149,7 @@ export async function crearVideo(formData: FormData) {
     const title = field(formData, "title");
     const brandId = field(formData, "brandId");
     assertBrandPermission(user, brandId, "content.plan");
-    if (user.role !== "OWNER" && !["", "IDEA"].includes(field(formData, "status"))) throw new Error("Los nuevos videos empiezan como idea.");
+    if (!["", "IDEA"].includes(field(formData, "status"))) throw new Error("Los nuevos videos empiezan como idea.");
     if (!title) throw new Error("El video necesita un título.");
     if (!brandId) throw new Error("Elige la marca del video.");
 
@@ -176,6 +178,7 @@ export async function crearVideo(formData: FormData) {
         checklist: {
           create: DEFAULT_CHECKLIST.map((item, index) => ({
             label: item.label,
+            kind: item.kind ?? "TASK",
             stage: item.stage,
             required: item.required,
             sortOrder: index,
@@ -245,20 +248,40 @@ export async function actualizarVideo(formData: FormData) {
 
 export async function cambiarEstado(formData: FormData) {
   const user = await requireLevel(LEVEL.MEMBER);
-  return withMutation(user, false, async (tx, afterCommit) => {
+  return withWorkflowMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     const status = enumField(formData, "status", CONTENT_STATUS_MAP);
-    await assertContentAccess(tx, user, id, contentStatusCapability(status));
+    await assertContentAccess(tx, user, id, "content.view");
     await lockVideoLifecycle(tx, id);
     await lockRevision(tx, "ContentItem", id, formData);
     const before = await tx.contentItem.findUniqueOrThrow({
       where: { id },
-      select: { title: true, status: true, brandId: true, publishedAt: true },
+      select: { title: true, status: true, brandId: true, publishedAt: true, scriptId: true, scheduledDate: true, publishedUrl: true },
     });
     if (before.status === status) return;
-    if (user.role !== "OWNER") {
+    const step = transition(CONTENT_FLOW, before.status, status, "CANCELADO");
+    await assertContentAccess(tx, user, id, step === "reopen" || step === "stop" ? "content.approve" : contentStatusCapability(status));
+    const override = user.role === "OWNER" && formData.get("override") === "1";
+    const reason = (override || step === "reopen" || step === "stop") ? reopeningReason(field(formData, "reason")) : "";
+    if (!override && step === "invalid") throw new WorkflowError("Avanza una etapa a la vez; completa sus requisitos antes de continuar.");
+    if (step === "reopen" || step === "stop" || (override && CONTENT_FLOW.indexOf(status) < CONTENT_FLOW.indexOf(before.status))) {
+      assertPermission(user, "content.approve");
+      await reopenContentApprovals(tx, id, user, reason, ["IDEA", "GUION", "CANCELADO"].includes(status));
+    }
+    if (!override && step === "advance") {
+      if (status === "GUION" && (!before.scriptId || !await tx.scriptScene.count({ where: { scriptId: before.scriptId } }))) throw new WorkflowError("Vincula un guion con escenas para pasar a Guion.");
+      if (["APROBADO", "GRABACION", "EDICION"].includes(status)) {
+        await assertScriptApproved(tx, before.scriptId);
+        await assertChecklistApproved(tx, id, "SCRIPT_APPROVAL");
+      }
+      if (status === "GRABACION") await assertRequiredChecks(tx, id, ["PREPRODUCCION"]);
+      if (status === "EDICION") await assertRequiredChecks(tx, id, ["PREPRODUCCION", "GRABACION"]);
       if (["PROGRAMADO", "PUBLICADO"].includes(status)) await assertPublishable(tx, user, id);
-      if (["PROGRAMADO", "PUBLICADO"].includes(before.status) && !["PROGRAMADO", "PUBLICADO"].includes(status)) assertPermission(user, "content.approve");
+      if (status === "PROGRAMADO" && !before.scheduledDate) throw new WorkflowError("Indica la fecha de programación.");
+      if (status === "PUBLICADO") {
+        if (!before.publishedUrl) throw new WorkflowError("Guarda el enlace público del video antes de publicarlo.");
+        await assertRequiredChecks(tx, id, ["PUBLICACION"]);
+      }
     }
 
     // Al publicar, si nadie puso fecha de publicacion, la ponemos nosotros.
@@ -275,7 +298,7 @@ export async function cambiarEstado(formData: FormData) {
       entity: "ContentItem",
       entityId: id,
       brandId: before.brandId,
-      summary: `Cambió el estado del video "${before.title}" a ${statusLabel(status)}`,
+      summary: `Cambió el estado del video "${before.title}" a ${statusLabel(status)}${reason ? `. ${override ? "Excepción del Dueño" : "Motivo"}: ${reason}` : ""}`,
       changes: {
         status: {
           etiqueta: "Estado",
@@ -351,6 +374,7 @@ export async function duplicarVideo(formData: FormData) {
         checklist: {
           create: origen.checklist.map((c) => ({
             label: c.label,
+            kind: c.kind,
             stage: c.stage,
             required: c.required,
             sortOrder: c.sortOrder,
@@ -384,7 +408,7 @@ export async function duplicarVideo(formData: FormData) {
 
 export async function alternarCheck(formData: FormData) {
   const user = await requireLevel(LEVEL.MEMBER);
-  return withMutation(user, false, async (tx, afterCommit) => {
+  return withWorkflowMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     const done = boolField(formData, "done");
 
@@ -393,20 +417,37 @@ export async function alternarCheck(formData: FormData) {
       include: { contentItem: { select: { id: true, title: true, brandId: true } } },
     });
     if (!check) return;
-    await assertContentAccess(tx, user, check.contentItemId, checklistCapability(check.stage, check.label));
+    await assertContentAccess(tx, user, check.contentItemId, checklistCapability(check.stage, check.label, check.kind));
     await lockVideoLifecycle(tx, check.contentItemId);
     const current = await tx.checklistItem.findUniqueOrThrow({ where: { id } });
-    const reopening = current.done && !done && isFinalApproval(current.stage, current.label);
-    const reason = reopening ? field(formData, "reason").trim() : "";
-    if (reopening && (reason.length < 5 || reason.length > 1000)) throw new Error("Indica un motivo de reapertura de entre 5 y 1000 caracteres.");
-    if (checklistCapability(check.stage, check.label) !== "content.approve" && check.stage !== "PUBLICACION") await assertVideoOpen(tx, user, check.contentItemId);
+    if (current.done === done) return;
+    const approvalKind = current.kind === "SCRIPT_APPROVAL" || current.kind === "FINAL_APPROVAL" ? current.kind : null;
+    const reopening = current.done && !done && Boolean(approvalKind);
+    const reason = reopening ? reopeningReason(field(formData, "reason")) : "";
+    if (checklistCapability(check.stage, check.label, check.kind) !== "content.approve" && check.stage !== "PUBLICACION") await assertVideoOpen(tx, user, check.contentItemId);
     if (check.stage === "PUBLICACION") await assertPublishable(tx, user, check.contentItemId);
 
+    let approvalId: string | null = null;
+    if (approvalKind && done) {
+      const video = await tx.contentItem.findUniqueOrThrow({ where: { id: check.contentItemId } });
+      if (approvalKind === "FINAL_APPROVAL" && video.status !== "EDICION") throw new WorkflowError("La aprobación final se completa en la etapa Edición.");
+      if (approvalKind === "SCRIPT_APPROVAL" && video.status !== "GUION") throw new WorkflowError("La aprobación del guion se completa en la etapa Guion.");
+      await assertScriptApproved(tx, video.scriptId);
+      if (approvalKind === "FINAL_APPROVAL") {
+        await assertChecklistApproved(tx, video.id, "SCRIPT_APPROVAL");
+        await assertRequiredChecks(tx, video.id, ["PREPRODUCCION", "GRABACION", "POSTPRODUCCION", "GENERAL"]);
+      }
+      approvalId = (await approveVersion(tx, user, approvalKind, video.id, field(formData, "expectedApproval"))).id;
+    }
+    if (reopening) {
+      await revokeVersion(tx, current.approvalId, user, reason);
+      if (approvalKind === "SCRIPT_APPROVAL") await reopenContentApprovals(tx, check.contentItemId, user, reason, false);
+    }
     await tx.checklistItem.update({
       where: { id },
       data: done
-        ? { done: true, doneById: user.id, doneAt: new Date() }
-        : { done: false, doneById: null, doneAt: null },
+        ? { done: true, doneById: user.id, doneAt: new Date(), approvalId }
+        : { done: false, doneById: null, doneAt: null, approvalId: null },
     });
 
     await auditInTransaction(tx, {
@@ -433,7 +474,13 @@ export async function crearCheck(formData: FormData) {
     const label = field(formData, "label");
     if (!label) return;
 
-    const stage = field(formData, "stage") || "GENERAL";
+    const stage = enumField(formData, "stage", CHECKLIST_STAGE_MAP, "GENERAL");
+    const kind = choice(field(formData, "kind") || "TASK", ["TASK", "SCRIPT_APPROVAL", "FINAL_APPROVAL"], "Tipo de paso");
+    if (kind !== "TASK") {
+      assertPermission(user, "content.approve");
+      if (stage !== (kind === "SCRIPT_APPROVAL" ? "PREPRODUCCION" : "POSTPRODUCCION")) throw new Error("La aprobación no corresponde a esa etapa.");
+      if (await tx.checklistItem.count({ where: { contentItemId, kind } })) throw new Error("Esta aprobación ya existe en el video.");
+    }
 
     const [item, ultimo] = await Promise.all([
       tx.contentItem.findUniqueOrThrow({
@@ -451,6 +498,7 @@ export async function crearCheck(formData: FormData) {
       data: {
         contentItemId,
         label,
+        kind,
         stage,
         required: boolField(formData, "required"),
         sortOrder: (ultimo?.sortOrder ?? -1) + 1,
@@ -485,6 +533,7 @@ export async function eliminarCheck(formData: FormData) {
     await assertContentAccess(tx, user, check.contentItemId, "content.plan");
     await assertVideoOpen(tx, user, check.contentItemId);
 
+    if (check.kind !== "TASK") throw new Error("Las aprobaciones se reabren con motivo; no se eliminan.");
     await tx.checklistItem.delete({ where: { id } });
 
     await auditInTransaction(tx, {

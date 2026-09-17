@@ -275,7 +275,7 @@ export function NuevoVideoBoton({
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label="Estado">
             <select name="status" className="select" defaultValue="IDEA">
-              {CONTENT_STATUSES.map((o) => (
+              {CONTENT_STATUSES.filter(o => o.value === "IDEA").map((o) => (
                 <option key={o.value} value={o.value}>
                   {o.label}
                 </option>

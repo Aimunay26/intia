@@ -7,8 +7,8 @@ import { can, LEVEL, requireUser } from "@/lib/auth";
 import { AI_PROVIDER_MAP, DEFAULT_MODEL } from "@/lib/constants";
 import { resolveAiModel } from "@/lib/ai-models";
 import { GOOGLE_SETTING_KEYS } from "@/lib/google";
-import { withMutation } from "@/lib/mutations";
-import { getSettings, setSetting, SETTING_KEYS } from "@/lib/settings";
+import { EDIT_CONFLICT, withMutation } from "@/lib/mutations";
+import { getSettingsSnapshot, setSetting, SETTING_KEYS } from "@/lib/settings";
 import { boolField, field } from "@/lib/utils";
 
 /**
@@ -41,10 +41,14 @@ export async function guardarAjustes(
   }
 
   return withMutation(actor, true, async (tx, afterCommit) => {
-  const actuales = await getSettings([
+  await tx.$queryRaw`SELECT pg_advisory_xact_lock(727106410)::text`;
+  const keys = [
     ...Object.values(SETTING_KEYS),
     ...Object.values(GOOGLE_SETTING_KEYS),
-  ], tx);
+  ];
+  const snapshot = await getSettingsSnapshot(keys, tx);
+  if (formData.get("expectedUpdatedAt") !== snapshot.revision) throw new Error(EDIT_CONFLICT);
+  const actuales = snapshot.values;
 
   const orgName = field(formData, "orgName");
   const defaultProvider = field(formData, "defaultProvider") || "anthropic";

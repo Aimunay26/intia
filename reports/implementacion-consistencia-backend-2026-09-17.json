@@ -1,0 +1,162 @@
+{
+  "checkedAt": "2026-09-17T14:30:33.295Z",
+  "scope": [
+    "B07",
+    "B08",
+    "B09",
+    "B10"
+  ],
+  "branch": "codex/backend-consistency-b07-b10",
+  "baselineCommit": "2761ead37fc93dc8de702df213cd0c84b50eedbd",
+  "gitStatus": "uncommitted-working-tree",
+  "environment": "local-fixtures",
+  "unit": {
+    "total": 127,
+    "perInvocation": [
+      116,
+      11
+    ],
+    "failed": 0,
+    "skipped": 0
+  },
+  "postgres": {
+    "total": 100,
+    "perInvocation": [
+      13,
+      8,
+      3,
+      12,
+      16,
+      5,
+      13,
+      17,
+      13
+    ],
+    "failed": 0,
+    "skipped": 0
+  },
+  "focusedPostgresAfterCoordinatorFix": {
+    "total": 43,
+    "perInvocation": [
+      13,
+      13,
+      17
+    ],
+    "failed": 0,
+    "skipped": 0
+  },
+  "typecheck": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 62
+  },
+  "productionBuild": "passed",
+  "profiles": {
+    "environment": "local-production-build",
+    "profiles": [
+      {
+        "role": "OWNER",
+        "checked": true
+      },
+      {
+        "role": "STRATEGY",
+        "checked": true
+      },
+      {
+        "role": "WRITER",
+        "checked": true
+      },
+      {
+        "role": "PRODUCTION",
+        "checked": true
+      },
+      {
+        "role": "CAMERA",
+        "checked": true
+      },
+      {
+        "role": "TALENT",
+        "checked": true
+      },
+      {
+        "role": "EDITOR",
+        "checked": true
+      },
+      {
+        "role": "DESIGNER",
+        "checked": true
+      },
+      {
+        "role": "PUBLISHER",
+        "checked": true
+      },
+      {
+        "role": "ANALYST",
+        "checked": true
+      },
+      {
+        "role": "EMPTY",
+        "checked": true
+      }
+    ],
+    "errors": [],
+    "productionChanged": false,
+    "revisionDraftsPreserved": [
+      "user",
+      "asset",
+      "settings"
+    ],
+    "workflowPrerequisiteVisible": true,
+    "reopenWithReason": true,
+    "explicitDocumentProvider": true,
+    "coordinatorReopenWithoutEditingGrant": true,
+    "closedScriptControlsHidden": true,
+    "preHydrationGuard": true,
+    "checklistRefreshWithoutReload": true
+  },
+  "workflow": {
+    "checkedAt": "2026-09-17T14:19:52.012Z",
+    "environment": "local-production-build",
+    "workflowSdk": "4.8.7",
+    "actualQueueExecuted": true,
+    "persistedResponseRecovered": true,
+    "scriptsCreated": 1,
+    "auditCount": 1,
+    "generationTracesVerified": true,
+    "gemini38ProviderSwitch": true,
+    "legacyGoogleSettingResolved": true,
+    "liveAiCalls": 0,
+    "liveBlobCalls": 0
+  },
+  "navigation": {
+    "checkedAt": "2026-09-17T14:23:41.268Z",
+    "environment": "local-staging",
+    "fixture": {
+      "brands": 6,
+      "videos": 60,
+      "weeklyMetrics": 600,
+      "tasks": 150
+    },
+    "samples": 362,
+    "editConflictPreservesDraft": true,
+    "productionTimingsMeasured": false
+  },
+  "migration": {
+    "name": "20260917180000_workflow_consistency",
+    "sha256CanonicalLF": "92adede3e1a34255fef73e413e92d7451b884237b41649787b569c8be6dfa4bc",
+    "checkedAt": "2026-09-17T14:20:30.885Z",
+    "baselineMatchesRecordedFingerprint": true,
+    "ambiguousEventPreflightRolledBack": true,
+    "legacyApprovalsPreservedWithoutInventedVersion": true,
+    "restoreRowsAndSchemaMatch": true,
+    "tables": 33,
+    "productionApplied": false
+  },
+  "productionChanged": false,
+  "realAiCalls": 0,
+  "realBlobCalls": 0,
+  "ciRun": false,
+  "commitPushPending": true,
+  "deploymentPending": true,
+  "nextImplementationBlock": "B11"
+}

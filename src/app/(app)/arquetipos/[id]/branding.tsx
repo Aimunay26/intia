@@ -56,7 +56,7 @@ function BotonInforme({ a, className, label }: { a: Archetype; className: string
       label={label}
       className={className}
       actuales={actualesDePersona(a)}
-      guardar={guardarInformeEnPersona.bind(null, a.id)}
+      expectedUpdatedAt={a.updatedAt.toISOString()} guardar={guardarInformeEnPersona.bind(null, a.id)}
     />
   );
 }

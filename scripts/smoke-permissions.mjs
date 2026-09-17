@@ -32,7 +32,7 @@ try{
  const structure=await db.structure.create({data:{id:'structure',name:'Formato creativo',slug:'format',beats:'[{"name":"Inicio","seconds":5}]'}});
  const script=await db.script.create({data:{id:'script',title:'Guion visible',brandId:'A',authorId:'WRITER',structureId:structure.id,scenes:{create:{order:0,beat:'Inicio',startSec:0,endSec:5,voice:'Diálogo de prueba'}}}});
  for(const [id,title,brandId]of [['assigned','Video asignado','A'],['unassigned','Video no asignado','A'],['ready','Video aprobado','A'],['foreign','VIDEO_SECRETO','B']])await db.contentItem.create({data:{id,title,brandId,scriptId:id==='assigned'?script.id:null,scheduledDate:day,shootDate:day}});
- await db.checklistItem.createMany({data:[{id:'final',contentItemId:'ready',stage:'POSTPRODUCCION',label:'Revisión final aprobada',done:true,doneById:'OWNER'},{id:'editing',contentItemId:'assigned',stage:'POSTPRODUCCION',label:'Editado'}]});
+ await db.checklistItem.createMany({data:[{id:'final',contentItemId:'ready',stage:'POSTPRODUCCION',label:'Revisión final aprobada',kind:'FINAL_APPROVAL',done:true,doneById:'OWNER'},{id:'editing',contentItemId:'assigned',stage:'POSTPRODUCCION',label:'Editado'}]});
  await db.taskColumn.createMany({data:[{id:'todo',name:'Pendiente'},{id:'done',name:'Terminado'}]});
  for(const id of roles){await db.assignment.create({data:{contentItemId:'assigned',userId:id,role:'EDITOR'}});await db.task.create({data:{id:'task-'+id,title:'Tarea '+id,columnId:'todo',brandId:'A',assigneeId:id}});}
  await db.asset.create({data:{id:'foreign-asset',ownerType:'content',ownerId:'foreign',filename:'private.txt',mimeType:'text/plain',size:7,data:Buffer.from('SECRETO')}});
@@ -63,6 +63,44 @@ try{
    assert.deepEqual(invited.workProfiles.map(p=>p.profile),['EDITOR']);assert.deepEqual(invited.brandAccess.map(b=>b.brandId),['A']);
    const audit=await db.auditLog.findFirstOrThrow({where:{entity:'User',entityId:invited.id,action:'CREAR'}});
    assert.ok(audit.changes.includes('EDITOR'));
+   // B10: un error de revisión conserva el borrador y mantiene abierto el editor.
+   phase='revision-conflicts';
+   await page.goto(base+'/mi-perfil');
+   await page.getByRole('button',{name:'Editar mis datos y contraseña',exact:true}).click();
+   const profileDialog=page.getByRole('dialog');
+   await profileDialog.locator('input[name="name"]').fill('Borrador de perfil retenido');
+   await db.user.update({where:{id:'OWNER'},data:{name:'Cambio ajeno de perfil'}});
+   await profileDialog.getByRole('button',{name:'Guardar datos',exact:true}).click();
+   await profileDialog.getByRole('alert').waitFor();
+   await expect(profileDialog.locator('input[name="name"]')).toHaveValue('Borrador de perfil retenido');
+   assert.equal((await db.user.findUniqueOrThrow({where:{id:'OWNER'}})).name,'Cambio ajeno de perfil');
+   await db.user.update({where:{id:'OWNER'},data:{name:'OWNER'}});
+   await db.asset.create({data:{id:'own-text',ownerType:'user',ownerId:'OWNER',filename:'borrador.txt',mimeType:'text/plain',data:Buffer.from('Texto'),size:5,extractedText:'Texto inicial'}});
+   await page.goto(base+'/mi-perfil');await page.getByTitle('Ver o editar el texto que lee la IA',{exact:true}).click();
+   const textDialog=page.getByRole('dialog');await textDialog.locator('textarea[name="extractedText"]').fill('Borrador de texto retenido');
+   await db.asset.update({where:{id:'own-text'},data:{extractedText:'Cambio ajeno de texto'}});
+   await textDialog.getByRole('button',{name:'Guardar texto',exact:true}).click();await textDialog.getByRole('alert').waitFor();
+   await expect(textDialog.locator('textarea[name="extractedText"]')).toHaveValue('Borrador de texto retenido');
+   assert.equal((await db.asset.findUniqueOrThrow({where:{id:'own-text'}})).extractedText,'Cambio ajeno de texto');
+   await page.goto(base+'/ajustes');await page.locator('input[name="orgName"]').fill('Borrador de ajustes retenido');
+   await db.appSetting.upsert({where:{key:'org.name'},create:{key:'org.name',value:'Cambio ajeno de ajustes'},update:{value:'Cambio ajeno de ajustes'}});
+   await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();await page.locator('main').getByRole('alert').waitFor();
+   await expect(page.locator('input[name="orgName"]')).toHaveValue('Borrador de ajustes retenido');
+   assert.equal((await db.appSetting.findUniqueOrThrow({where:{key:'org.name'}})).value,'Cambio ajeno de ajustes');
+   report.revisionDraftsPreserved=['user','asset','settings'];
+   // B09: las reglas llegan como mensajes visibles, sin perder el estado confirmado.
+   phase='workflow-transitions';
+   await page.goto(base+'/contenido/assigned');
+   await page.getByRole('combobox',{name:'Estado del video',exact:true}).selectOption('GUION');
+   await page.getByRole('button',{name:'Cambiar estado',exact:true}).click();
+   await expect.poll(async()=> (await db.contentItem.findUniqueOrThrow({where:{id:'assigned'}})).status).toBe('GUION');
+   await expect(page.getByRole('button',{name:'Cambiar estado',exact:true})).toBeEnabled();
+   await page.getByRole('combobox',{name:'Estado del video',exact:true}).selectOption('APROBADO');
+   await page.getByRole('button',{name:'Cambiar estado',exact:true}).click();
+   await expect(page.locator('main').getByRole('alert')).toContainText('todavía no está aprobado');
+   assert.equal((await db.contentItem.findUniqueOrThrow({where:{id:'assigned'}})).status,'GUION');
+   await db.contentItem.update({where:{id:'assigned'},data:{status:'IDEA'}});
+   report.workflowPrerequisiteVisible=true;phase='profile-navigation';
   }else{
    for(const route of ['/equipo','/actividad','/ajustes'])assert.equal(await aside.locator(`a[href="${route}"]`).count(),0,`${role} no muestra ${route}`);
    for(const route of nav[role])await aside.locator(`a[href="${route}"]`).waitFor();
@@ -108,7 +146,7 @@ try{
       report.checklistRefreshWithoutReload=true;
      } catch (error) {
       await page.screenshot({path:'.audit/profiles-failure.png',fullPage:true});
-      console.error(JSON.stringify({role,url:page.url(),failedRequests,pendingRequests:[...requests.values()],responses,consoleErrors,alerts:await page.getByRole('alert').allTextContents(),errors:report.errors,buttons:await page.getByRole('button').allTextContents(),check:await db.checklistItem.findUnique({where:{id:'editing'},select:{done:true}})}));
+      console.error(JSON.stringify({role,url:page.url(),failedRequests,pendingRequests:[...requests.values()],responses,consoleErrors,alerts:await page.locator('main').getByRole('alert').allTextContents(),errors:report.errors,buttons:await page.getByRole('button').allTextContents(),check:await db.checklistItem.findUnique({where:{id:'editing'},select:{done:true}})}));
       console.error(fs.readFileSync('.audit/profiles-ui-server.log','utf8').split('\n').slice(-45).join('\n'));
       throw error;
      }
@@ -125,12 +163,22 @@ try{
    const forbidden=await page.evaluate(async()=> (await fetch('/api/assets/foreign-asset')).status);assert.equal(forbidden,404);
   }
   if(['OWNER','STRATEGY'].includes(role)){
+   if(role==='STRATEGY')await db.contentItem.update({where:{id:'ready'},data:{status:'PROGRAMADO'}});
    await page.goto(base+'/contenido/ready');
    await page.locator('summary:visible').filter({hasText:/^Reabrir aprobación$/}).click();
    await page.locator('input[name="reason"]:visible').fill('Corregir referencias antes de producir');
    await page.getByRole('button',{name:'Retirar aprobación',exact:true}).click();
    await expect.poll(async()=> (await db.checklistItem.findUniqueOrThrow({where:{id:'final'}})).done).toBe(false);
    assert.ok(await db.auditLog.count({where:{entityId:'final',userId:role,summary:{contains:'Corregir referencias antes de producir'}}}));
+   if(role==='STRATEGY'){
+    await expect(page.getByRole('button',{name:'Cambiar estado',exact:true})).toBeEnabled();
+    await page.getByRole('combobox',{name:'Estado del video',exact:true}).selectOption('EDICION');
+    await page.getByRole('textbox',{name:'Motivo del cambio',exact:true}).fill('Corregir entrega desde coordinación');
+    await page.getByRole('button',{name:'Cambiar estado',exact:true}).click();
+    await expect.poll(async()=> (await db.contentItem.findUniqueOrThrow({where:{id:'ready'}})).status).toBe('EDICION');
+    report.coordinatorReopenWithoutEditingGrant=true;
+    await db.contentItem.update({where:{id:'ready'},data:{status:'IDEA'}});
+   }
    await db.checklistItem.update({where:{id:'final'},data:{done:true,doneById:'OWNER'}});
    report.reopenWithReason=true;
   }

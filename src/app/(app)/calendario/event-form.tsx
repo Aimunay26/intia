@@ -24,6 +24,7 @@ export type EventRow = {
   allDay: boolean;
   location: string;
   brandId: string;
+  contentItemId: string;
 };
 
 /** Campos compartidos entre el alta y la edición. */
@@ -38,10 +39,12 @@ function CamposEvento({
   defaultDate: string;
   value?: EventRow;
 }) {
+  const [linked, setLinked] = useState(Boolean(value?.contentItemId));
   const [allDay, setAllDay] = useState(value?.allDay ?? true);
 
   return (
     <>
+      {value?.contentItemId && <label className="text-sm"><input type="checkbox" checked={linked} onChange={e => setLinked(e.target.checked)} /> Mantener el vínculo con el video y su marca<input type="hidden" name="contentItemId" value={linked ? value.contentItemId : ""} /></label>}
       <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
         <Field label="Título" required>
           <input
@@ -118,7 +121,7 @@ function CamposEvento({
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Marca" hint="Opcional: déjalo vacío si es algo general.">
           <select
-            name="brandId"
+            name="brandId" disabled={linked}
             className="select"
             defaultValue={value?.brandId ?? defaultBrandId ?? ""}
           >

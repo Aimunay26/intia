@@ -380,12 +380,13 @@ export const CHECKLIST_STAGE_MAP = byValue(CHECKLIST_STAGES);
 
 /** Checklist que se crea automaticamente con cada video nuevo. */
 export const DEFAULT_CHECKLIST: {
+  kind?: string;
   label: string;
   stage: string;
   required: boolean;
 }[] = [
   { label: "Guion escrito y revisado", stage: "PREPRODUCCION", required: true },
-  { label: "Guion aprobado por la marca", stage: "PREPRODUCCION", required: true },
+  { kind: "SCRIPT_APPROVAL", label: "Guion aprobado por la marca", stage: "PREPRODUCCION", required: true },
   { label: "Actor asignado y confirmado", stage: "PREPRODUCCION", required: true },
   { label: "Props / vestuario conseguidos", stage: "PREPRODUCCION", required: true },
   { label: "Locación e iluminación listas", stage: "PREPRODUCCION", required: false },
@@ -395,7 +396,7 @@ export const DEFAULT_CHECKLIST: {
   { label: "Editado", stage: "POSTPRODUCCION", required: true },
   { label: "Subtítulos y textos en pantalla", stage: "POSTPRODUCCION", required: true },
   { label: "Música y efectos de sonido", stage: "POSTPRODUCCION", required: false },
-  { label: "Revisión final aprobada", stage: "POSTPRODUCCION", required: true },
+  { kind: "FINAL_APPROVAL", label: "Revisión final aprobada", stage: "POSTPRODUCCION", required: true },
   { label: "Copy y hashtags escritos", stage: "PUBLICACION", required: true },
   { label: "Subido a la plataforma", stage: "PUBLICACION", required: true },
   { label: "Link guardado en la ficha", stage: "PUBLICACION", required: false },

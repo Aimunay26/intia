@@ -41,9 +41,9 @@ test('publicación requiere aprobación final incluso combinada con cámara',()=
   const video={brandId:'A',assignments:[],checklist:[]};
   assert.equal(policy.allowsContentRecord(actor,'content.view',video),false);
   assert.equal(policy.allowsContentRecord(actor,'assets.write',video),false);
-  video.checklist.push({done:true,stage:'POSTPRODUCCION',label:'Revisión final aprobada'});
+  video.checklist.push({done:true,stage:'POSTPRODUCCION',label:'Revisión final aprobada',kind:'FINAL_APPROVAL'});
   assert.equal(policy.allowsContentRecord(actor,'content.view',video),true);
   assert.equal(policy.allowsContentRecord(actor,'content.shoot',video),false);
-  assert.equal(policy.checklistCapability('POSTPRODUCCION','Revisión final aprobada'),'content.approve');
+  assert.equal(policy.checklistCapability('POSTPRODUCCION','Revisión final aprobada','FINAL_APPROVAL'),'content.approve');
   assert.equal(policy.checklistCapability('POSTPRODUCCION','Miniatura lista'),'content.design');
 });

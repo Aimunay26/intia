@@ -1,4 +1,5 @@
 "use client";
+import { EditForm, RevisionField } from "@/components/edit-form";
 
 import { useActionState, useEffect, useState } from "react";
 import {
@@ -31,6 +32,7 @@ import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 export type ArchetypeOption = { id: string; name: string };
 
 export type TeamMember = {
+  updatedAt: Date;
   id: string;
   name: string;
   email: string;
@@ -311,10 +313,11 @@ export function EditUserButton({
 }) {
   const [open, setOpen] = useState(false);
 
-  const [datos, datosAction, datosPending] = useActionState<TeamState, FormData>(
-    actualizarUsuario,
-    null
-  );
+  const [datos, setDatos] = useState<TeamState>(null);
+  const datosAction = async (fd: FormData) => {
+    const result = await actualizarUsuario(null, fd); setDatos(result);
+    if (result?.error) throw new Error(result.error);
+  };
   const [clave, claveAction, clavePending] = useActionState<TeamState, FormData>(
     cambiarPassword,
     null
@@ -342,16 +345,16 @@ export function EditUserButton({
         }
         width={620}
       >
-        <form action={datosAction} className="space-y-3.5">
+        <EditForm action={datosAction} className="space-y-3.5"><RevisionField value={member.updatedAt} />
           <input type="hidden" name="id" value={member.id} />
           <input type="hidden" name="selfProfile" value={canManage ? "0" : "1"} /><CamposPersona member={member} archetypes={archetypes} brands={brands} canManage={canManage} />
           <Aviso state={datos} />
           <div className="flex justify-end">
-            <button type="submit" className="btn btn-primary" disabled={datosPending}>
-              {datosPending ? "Guardando…" : "Guardar datos"}
+            <button type="submit" className="btn btn-primary">
+              Guardar datos
             </button>
           </div>
-        </form>
+        </EditForm>
 
         <Divider label="Contraseña" />
 

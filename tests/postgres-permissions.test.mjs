@@ -1,3 +1,4 @@
+import { seedApprovals } from './approval-fixture.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -29,8 +30,8 @@ test('perfiles: autorizaciones reales con sesiones firmadas y PostgreSQL',async 
  }
  const date=new Date('2026-09-07T12:00:00Z');
  const videos=await Promise.all(['assigned','unassigned','ready','foreign'].map(id=>prisma.contentItem.create({data:{id,title:id,brandId:id==='foreign'?'B':'A',scheduledDate:date,status:id==='ready'?'EDICION':'IDEA'}})));
- await prisma.checklistItem.create({data:{id:'approval',contentItemId:'ready',stage:'POSTPRODUCCION',label:'Revisión final aprobada',done:true,doneById:owner.id}});
- await prisma.checklistItem.createMany({data:[{id:'edit-check',contentItemId:'assigned',stage:'POSTPRODUCCION',label:'Editado'},{id:'approve-check',contentItemId:'assigned',stage:'POSTPRODUCCION',label:'Revisión final aprobada'}]});
+ await prisma.checklistItem.create({data:{id:'approval',contentItemId:'ready',stage:'POSTPRODUCCION',label:'Revisión final aprobada',kind:'FINAL_APPROVAL',done:true,doneById:owner.id}});
+ await prisma.checklistItem.createMany({data:[{id:'edit-check',contentItemId:'assigned',stage:'POSTPRODUCCION',label:'Editado'},{id:'approve-check',contentItemId:'assigned',stage:'POSTPRODUCCION',label:'Revisión final aprobada',kind:'FINAL_APPROVAL'}]});
  for(const userId of ['CAMERA','TALENT','EDITOR','DESIGNER'])await prisma.assignment.create({data:{contentItemId:'assigned',userId,role:userId==='TALENT'?'ACTOR':userId==='CAMERA'?'CAMARA':userId==='DESIGNER'?'DISENO':'EDITOR'}});
  // Even an assignment to another brand never grants brand access.
  await prisma.assignment.create({data:{contentItemId:'foreign',userId:'EDITOR',role:'EDITOR'}});
@@ -73,6 +74,8 @@ test('perfiles: autorizaciones reales con sesiones firmadas y PostgreSQL',async 
   await t.test('publicación solo ve contenido con aprobación final y no puede aprobarse a sí misma',async()=>{
    await assert.rejects(as('PUBLISHER',()=>content.cambiarEstado(form({id:'unassigned',status:'PUBLICADO',expectedUpdatedAt:videos[1].updatedAt.toISOString()}))),/acceso/);
    await assert.rejects(as('PUBLISHER',()=>content.alternarCheck(form({id:'approval',done:'1'}))),/permiso/);
+   await seedApprovals(prisma,'ready','owner');
+   await prisma.contentItem.update({where:{id:'ready'},data:{status:'PROGRAMADO'}});
    const current=await prisma.contentItem.findUniqueOrThrow({where:{id:'ready'}});
    await as('PUBLISHER',()=>content.cambiarEstado(form({id:'ready',status:'PUBLICADO',expectedUpdatedAt:current.updatedAt.toISOString()})));
    assert.equal((await prisma.contentItem.findUniqueOrThrow({where:{id:'ready'}})).status,'PUBLICADO');
@@ -111,11 +114,11 @@ test('perfiles: autorizaciones reales con sesiones firmadas y PostgreSQL',async 
   });
   await t.test('el Dueño asigna perfiles y marcas, audita, revoca sesiones y guardar sin cambios es idempotente',async()=>{
    const jar=await jarFor('EMPTY'), old=await run(jar,()=>auth.requireUser());
-   const values={id:'EMPTY',name:'EMPTY',email:'EMPTY@permissions.test',role:'MEMBER',accessConfigured:'1',profiles:['WRITER','EDITOR'],brandIds:['A']};
+   const values={id:'EMPTY',name:'EMPTY',email:'EMPTY@permissions.test',role:'MEMBER',accessConfigured:'1',profiles:['WRITER','EDITOR'],brandIds:['A'],expectedUpdatedAt:(await prisma.user.findUniqueOrThrow({where:{id:'EMPTY'}})).updatedAt.toISOString()};
    const saved=await as('owner',()=>team.actualizarUsuario(null,form(values)));assert.ok(saved.ok);
    assert.equal(await run(jar,()=>auth.getSession()),null);
    await assert.rejects(mutations.withMutation(old,false,async()=>{}),/acceso cambió/);
-   const fresh=await prisma.user.findUniqueOrThrow({where:{id:'EMPTY'}});values.email=fresh.email;
+   const fresh=await prisma.user.findUniqueOrThrow({where:{id:'EMPTY'}});values.email=fresh.email;values.expectedUpdatedAt=fresh.updatedAt.toISOString();
    await as('owner',()=>team.actualizarUsuario(null,form(values)));
    assert.equal((await prisma.user.findUniqueOrThrow({where:{id:'EMPTY'}})).sessionVersion,fresh.sessionVersion);
    assert.ok(await prisma.auditLog.count({where:{entity:'User',entityId:'EMPTY'}}));

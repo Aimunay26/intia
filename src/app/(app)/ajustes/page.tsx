@@ -12,7 +12,7 @@ import { DEFAULT_MODEL } from "@/lib/constants";
 import { resolveAiModel } from "@/lib/ai-models";
 import { getGoogleConfig, GOOGLE_SETTING_KEYS, redirectUriFor } from "@/lib/google";
 import { getFeedToken } from "@/lib/ical";
-import { aiStatus, getSettings, SETTING_KEYS } from "@/lib/settings";
+import { aiStatus, getSettingsSnapshot, SETTING_KEYS } from "@/lib/settings";
 import { SettingsForm } from "./settings-form";
 import { VaciarEjemplo } from "./vaciar-ejemplo";
 
@@ -70,12 +70,13 @@ export default async function AjustesPage() {
     );
   }
 
-  const [settings, feedToken, headerList] = await Promise.all([
-    getSettings([...Object.values(SETTING_KEYS), ...Object.values(GOOGLE_SETTING_KEYS)]),
+  const [snapshot, feedToken, headerList] = await Promise.all([
+    getSettingsSnapshot([...Object.values(SETTING_KEYS), ...Object.values(GOOGLE_SETTING_KEYS)]),
     getFeedToken(),
     headers(),
   ]);
 
+  const settings = snapshot.values;
   const [status, googleAuth] = await Promise.all([aiStatus(settings), getGoogleConfig(settings)]);
 
   // La dirección pública del servidor, para armar las URLs que se copian.
@@ -118,7 +119,7 @@ export default async function AjustesPage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <SettingsForm
+          <SettingsForm revision={snapshot.revision}
             orgName={settings[SETTING_KEYS.orgName] ?? ""}
             defaultProvider={settings[SETTING_KEYS.defaultProvider] || "anthropic"}
             anthropicModel={

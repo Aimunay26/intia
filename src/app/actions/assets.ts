@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireLevel, LEVEL } from "@/lib/auth";
 import { auditInTransaction, diffFields } from "@/lib/audit";
+import { lockRevision, withMutation } from "@/lib/mutations";
 import { assertActor } from "@/lib/auth-transactions";
 import { assertAssetOwner } from "@/lib/asset-security";
 import { crearAssetDesdeArchivo, leerArchivoImportado, prepararArchivoPrivado, textoDeReferencia } from "@/lib/asset-import";
@@ -57,10 +58,10 @@ export async function deleteAsset(form: FormData) {
 }
 export async function toggleAssetAi(form: FormData) {
   const user = await requireLevel(LEVEL.MEMBER), id = field(form, "id"), useForAi = form.get("useForAi") === "on";
-  const owner = await prisma.$transaction(async tx => {
-    await assertActor(tx, user);
-    const asset = await tx.asset.findUniqueOrThrow({ where: { id }, select: { filename: true, label: true, ownerType: true, ownerId: true, useForAi: true } });
+  const owner = await withMutation(user, false, async tx => {
+        const asset = await tx.asset.findUniqueOrThrow({ where: { id }, select: { filename: true, label: true, ownerType: true, ownerId: true, useForAi: true } });
     await assertAssetOwner(tx, asset.ownerType, asset.ownerId, user, true);
+    await lockRevision(tx, "Asset", id, form);
     if (asset.useForAi !== useForAi) {
       await tx.asset.update({ where: { id }, data: { useForAi } });
       await auditInTransaction(tx, { user, action: "EDITAR", entity: "Asset", entityId: id, summary: `${useForAi ? "Activó" : "Desactivó"} "${asset.label ?? asset.filename}" como referencia para la IA`, changes: diffFields(asset, { useForAi }, { useForAi: "Se usa para la IA" }) });
@@ -72,10 +73,10 @@ export async function toggleAssetAi(form: FormData) {
 export async function updateAssetText(form: FormData) {
   const user = await requireLevel(LEVEL.MEMBER), id = field(form, "id"), text = field(form, "extractedText");
   if (text.length > 200_000) throw new Error("El texto no puede superar 200.000 caracteres.");
-  const owner = await prisma.$transaction(async tx => {
-    await assertActor(tx, user);
-    const asset = await tx.asset.findUniqueOrThrow({ where: { id }, select: { filename: true, label: true, ownerType: true, ownerId: true, extractedText: true, useForAi: true } });
+  const owner = await withMutation(user, false, async tx => {
+        const asset = await tx.asset.findUniqueOrThrow({ where: { id }, select: { filename: true, label: true, ownerType: true, ownerId: true, extractedText: true, useForAi: true } });
     await assertAssetOwner(tx, asset.ownerType, asset.ownerId, user, true);
+    await lockRevision(tx, "Asset", id, form);
     const data = { extractedText: text || null, useForAi: text.length > 0 };
     const changes = diffFields(asset, data, { extractedText: "Texto de referencia", useForAi: "Se usa para la IA" });
     if (changes) {

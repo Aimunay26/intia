@@ -2,6 +2,14 @@ import { Prisma } from "@prisma/client";
 import { prisma, type AppTransaction } from "@/lib/prisma";
 import { assertActor } from "@/lib/auth-transactions";
 import type { SessionUser } from "@/lib/auth";
+import { WorkflowError } from "@/lib/workflow-policy";
+
+/** Solo mensajes de reglas de negocio explícitas pueden viajar al cliente. */
+export async function withWorkflowMutation<T>(actor: SessionUser, owner: boolean,
+  work: (tx: AppTransaction, afterCommit: (effect: () => void) => void) => Promise<T>) {
+  try { return await withMutation(actor, owner, work); }
+  catch (error) { if (error instanceof WorkflowError) return { error: error.message }; throw error; }
+}
 
 export const EDIT_CONFLICT = "Otra persona cambió este registro. Recarga la página y revisa los cambios antes de guardar de nuevo.";
 
@@ -24,7 +32,8 @@ export async function withMutation<T>(actor: SessionUser, owner: boolean,
 }
 
 const TABLES = { Metric: '"Metric"', Brand: '"Brand"', BrandObjective: '"BrandObjective"', ContentItem: '"ContentItem"', Script: '"Script"',
-  CalendarEvent: '"CalendarEvent"', Structure: '"Structure"', Archetype: '"Archetype"', Task: '"Task"', TaskColumn: '"TaskColumn"' } as const;
+  CalendarEvent: '"CalendarEvent"', Structure: '"Structure"', Archetype: '"Archetype"', Task: '"Task"', TaskColumn: '"TaskColumn"',
+  User: '"User"', Asset: '"Asset"', ArchetypeFit: '"ArchetypeFit"' } as const;
 
 /** Bloquea el registro y compara con la revisión que vio el editor, nunca con una leída al enviar. */
 export async function lockRevision(tx: AppTransaction, model: keyof typeof TABLES, id: string, expected: FormData | string) {

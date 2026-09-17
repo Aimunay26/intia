@@ -361,6 +361,9 @@ model ArchetypeFit {
   source         String   @default("MANO")
   /// Desde que guion se fijo, cuando source es AUTO.
   sourceScriptId String?
+  updatedById    String?
+  updatedByName  String?
+  revision       Int      @default(1)
   /// El default es imprescindible: sin el, anadir un DateTime no nulo a filas
   /// que ya existen revienta el db push.
   updatedAt      DateTime @default(now()) @updatedAt
@@ -394,6 +397,7 @@ model Asset {
 
   uploadedById String?
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
   @@index([ownerType, ownerId])
 }
@@ -401,6 +405,8 @@ model Asset {
 // ---------------------------------------------------------------- GUIONES --
 
 model Script {
+  approvalId String? @unique
+  approval Approval? @relation("ScriptApproval", fields: [approvalId], references: [id], onDelete: SetNull)
   id      String  @id @default(cuid())
   title   String
   brandId String?
@@ -479,6 +485,7 @@ model ScriptScene {
 // ------------------------------------------------------- CALENDARIO/VIDEOS --
 
 model ContentItem {
+  @@unique([id, brandId])
   id      String @id @default(cuid())
   brandId String
   brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
@@ -643,6 +650,9 @@ model ChecklistItem {
   contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
 
   label     String
+  kind      String @default("TASK") // TASK | SCRIPT_APPROVAL | FINAL_APPROVAL
+  approvalId String? @unique
+  approval Approval? @relation("ChecklistApproval", fields: [approvalId], references: [id], onDelete: SetNull)
   stage     String  @default("GENERAL") // PREPRODUCCION | GRABACION | POSTPRODUCCION | PUBLICACION | GENERAL
   done      Boolean @default(false)
   required  Boolean @default(true)
@@ -655,6 +665,25 @@ model ChecklistItem {
   createdAt DateTime @default(now())
 
   @@index([contentItemId, sortOrder])
+}
+
+/// Versiones aprobadas: conservan la evidencia aunque se reabra o elimine el original.
+model Approval {
+  id String @id @default(cuid())
+  entityType String
+  entityId String
+  version Int
+  fingerprint String
+  snapshot Json
+  approvedById String
+  approvedByName String
+  approvedAt DateTime @default(now())
+  revokedAt DateTime?
+  revokedById String?
+  reason String?
+  script Script? @relation("ScriptApproval")
+  checklist ChecklistItem? @relation("ChecklistApproval")
+  @@unique([entityType, entityId, version])
 }
 
 model Metric {

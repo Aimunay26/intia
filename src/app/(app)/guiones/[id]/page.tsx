@@ -1,3 +1,5 @@
+import { ApprovalHistory } from "@/components/approval-history";
+import { WorkflowStatusFields } from "@/components/workflow-status-fields";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
@@ -35,7 +37,6 @@ import {
 	eliminarGuion,
 } from "@/app/actions/scripts";
 import {
-	AutoSubmitSelect,
 	CopyButton,
 	DeleteButton,
 	SubmitButton,
@@ -370,13 +371,7 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
             <EditForm action={cambiarEstadoGuion}>
 <RevisionField value={script.updatedAt} />
               <input type="hidden" name="id" value={script.id} />
-              <AutoSubmitSelect
-                name="status"
-                defaultValue={script.status}
-                ariaLabel="Estado del guion"
-                className="select h-[30px] w-[150px] text-[12px]"
-                options={SCRIPT_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
-              />
+              <WorkflowStatusFields value={script.status} owner script options={SCRIPT_STATUSES.map(o => ({ value: o.value, label: o.label }))} />
             </EditForm>
           ) : (
             <Badge option={SCRIPT_STATUS_MAP[script.status]} fallback={script.status} />
@@ -435,6 +430,7 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
+      <ApprovalHistory id={id} script />
       {/* ------------------------------------------------------ TRES TARJETAS */}
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
         <DatoCard label="Avatar objetivo" icon={<Users size={11} />}>

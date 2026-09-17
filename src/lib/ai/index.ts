@@ -91,8 +91,9 @@ async function generateScriptWithTrace(input: GenerateInput, request: AiRequest)
           },
         },
       });
-      fitScore = fit?.score ?? null;
-      fitNotes = fit?.notes ?? null;
+      // Las sugerencias iniciales o automáticas no equivalen a una evaluación humana.
+      fitScore = fit?.source === "MANO" ? fit.score : null;
+      fitNotes = fit?.source === "MANO" ? fit.notes : null;
     }
     return { structure, brand, archetype, fitScore, fitNotes };
   });

@@ -8,7 +8,7 @@ import { borrarAssetsDe } from "@/lib/assets-cleanup";
 import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
 import { LEVEL, requireLevel, requirePermission, type SessionUser } from "@/lib/auth";
 import { FIT_SCORES } from "@/lib/constants";
-import { lockRevision, withMutation } from "@/lib/mutations";
+import { EDIT_CONFLICT, lockRevision, withMutation } from "@/lib/mutations";
 import { PLANTILLA_POR_ID } from "@/lib/plantillas-persona";
 import { type AppTransaction } from "@/lib/prisma";
 import {
@@ -507,6 +507,7 @@ export async function guardarInformeEnPersona(
       // del perfil: un miembro con alcance «asignado» solo llega a su persona.
       const before = await tx.archetype.findFirst({ where: { AND: [{ id }, archetypeScope(user)] } });
       if (!before) throw new Error("La persona ya no existe o no tienes acceso a ella.");
+      await lockRevision(tx, "Archetype", id, formData);
 
       const propuesto = soloConValor(datosDesdeInforme(campos));
       const data: Partial<DatosDesdeInforme> = {};
@@ -720,20 +721,24 @@ export async function guardarCompatibilidad(formData: FormData) {
     const score = boundedNumber(intField(formData, "score", 2), 0, 3, "Puntuación", true);
     const notes = fieldOrNull(formData, "notes");
 
+    await tx.$queryRaw`SELECT id FROM "Archetype" WHERE id = ${archetypeId} FOR UPDATE`;
     const [arquetipo, estructura, anterior] = await Promise.all([
       tx.archetype.findUnique({ where: { id: archetypeId }, select: { name: true } }),
       tx.structure.findUnique({ where: { id: structureId }, select: { name: true } }),
       tx.archetypeFit.findUnique({
         where: { archetypeId_structureId: { archetypeId, structureId } },
-        select: { score: true, notes: true },
+        select: { id: true, score: true, notes: true, source: true, sourceScriptId: true, revision: true, updatedById: true, updatedByName: true },
       }),
     ]);
-    if (!arquetipo || !estructura) return;
+    if (!arquetipo || !estructura) throw new Error("La persona o la estructura ya no existe.");
+    if (anterior) await lockRevision(tx, "ArchetypeFit", anterior.id, formData);
+    else if (formData.get("expectedUpdatedAt") !== "new") throw new Error(EDIT_CONFLICT);
+    const provenance = { source: "MANO", sourceScriptId: null, updatedById: user.id, updatedByName: user.name };
 
     const fit = await tx.archetypeFit.upsert({
       where: { archetypeId_structureId: { archetypeId, structureId } },
-      create: { archetypeId, structureId, score, notes },
-      update: { score, notes },
+      create: { archetypeId, structureId, score, notes, ...provenance },
+      update: { score, notes, ...provenance, revision: { increment: 1 } },
     });
 
     await auditInTransaction(tx, {
@@ -743,15 +748,16 @@ export async function guardarCompatibilidad(formData: FormData) {
       entityId: fit.id,
       summary: `Marcó "${arquetipo.name}" como ${etiquetaFit(score)} para "${estructura.name}"`,
       changes: diffFields(
-        { score: anterior?.score ?? null, notes: anterior?.notes ?? null },
-        { score, notes },
-        { score: "Compatibilidad", notes: "Notas" }
+        { ...anterior, score: anterior?.score ?? null, notes: anterior?.notes ?? null },
+        { score, notes, ...provenance, revision: fit.revision },
+        { score: "Compatibilidad", notes: "Notas", source: "Origen", sourceScriptId: "Guion de origen", updatedById: "Autor", updatedByName: "Nombre del autor", revision: "Revisión" }
       ),
     });
 
     afterCommit(() => revalidatePath("/arquetipos"));
     afterCommit(() => revalidatePath(`/arquetipos/${archetypeId}`));
     afterCommit(() => revalidatePath(`/estructuras/${structureId}`));
+    return { updatedAt: fit.updatedAt.toISOString(), source: fit.source, revision: fit.revision, updatedByName: fit.updatedByName };
   });
 }
 

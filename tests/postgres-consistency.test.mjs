@@ -86,7 +86,9 @@ test('consistencia con PostgreSQL real: auditoría, revisiones, métricas y rela
     });
     await t.test('ajustes y claves se revierten si falla la auditoría; claves nunca se registran',async()=>{
       const settingsMocks={...mocks,'@/lib/auth':{...mocks['@/lib/auth'],requireUser:async()=>owner,can:()=>true}};
-      const values=form({orgName:'Organización de prueba',defaultProvider:'anthropic',anthropicKey:'fixture-secret-never-log'});
+      const lib=load('src/lib/settings.ts',mocks), google=load('src/lib/google.ts',mocks);
+      const snapshot=await lib.getSettingsSnapshot([...Object.values(lib.SETTING_KEYS),...Object.values(google.GOOGLE_SETTING_KEYS)]);
+      const values=form({expectedUpdatedAt:snapshot.revision,orgName:'Organización de prueba',defaultProvider:'anthropic',anthropicKey:'fixture-secret-never-log'});
       const broken=load('src/app/actions/app-settings.ts',{...settingsMocks,'@/lib/audit':{auditInTransaction:async()=>{throw new Error('Fallo audit');}}});
       await assert.rejects(broken.guardarAjustes(null,values),/Fallo audit/);
       assert.equal(await prisma.appSetting.findUnique({where:{key:'org.name'}}),null);

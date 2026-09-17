@@ -1061,7 +1061,7 @@ async function main() {
   if ((await prisma.contentItem.count({ where: { brandId: brand.id } })) === 0) {
     const CHECKLIST = [
       { label: "Guion escrito y revisado", stage: "PREPRODUCCION", required: true },
-      { label: "Guion aprobado por la marca", stage: "PREPRODUCCION", required: true },
+      { kind: "SCRIPT_APPROVAL", label: "Guion aprobado por la marca", stage: "PREPRODUCCION", required: true },
       { label: "Actor asignado y confirmado", stage: "PREPRODUCCION", required: true },
       { label: "Props / vestuario conseguidos", stage: "PREPRODUCCION", required: true },
       { label: "Locación e iluminación listas", stage: "PREPRODUCCION", required: false },
@@ -1071,7 +1071,7 @@ async function main() {
       { label: "Editado", stage: "POSTPRODUCCION", required: true },
       { label: "Subtítulos y textos en pantalla", stage: "POSTPRODUCCION", required: true },
       { label: "Música y efectos de sonido", stage: "POSTPRODUCCION", required: false },
-      { label: "Revisión final aprobada", stage: "POSTPRODUCCION", required: true },
+      { kind: "FINAL_APPROVAL", label: "Revisión final aprobada", stage: "POSTPRODUCCION", required: true },
       { label: "Copy y hashtags escritos", stage: "PUBLICACION", required: true },
       { label: "Subido a la plataforma", stage: "PUBLICACION", required: true },
       { label: "Link guardado en la ficha", stage: "PUBLICACION", required: false },
@@ -1111,6 +1111,7 @@ async function main() {
           checklist: {
             create: CHECKLIST.map((c, i) => ({
               label: c.label,
+              kind: c.kind ?? "TASK",
               stage: c.stage,
               required: c.required,
               sortOrder: i,

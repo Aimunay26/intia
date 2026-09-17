@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Check, Loader2, Shapes } from "lucide-react";
 
 import { guardarCompatibilidad } from "@/app/actions/archetypes";
@@ -16,6 +16,10 @@ export type FitRow = {
   summary: string | null;
   score: number | null;
   notes: string;
+  updatedAt: string;
+  source: string | null;
+  revision: number;
+  updatedByName: string | null;
 };
 
 type Estado = { score: number | null; notes: string };
@@ -38,10 +42,14 @@ export function FitMatrix({
     Object.fromEntries(rows.map((r) => [r.structureId, { score: r.score, notes: r.notes }]))
   );
   const [guardando, setGuardando] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
+  const busy = useRef(false);
+  const [error, setError] = useState<string | null>(null);
+  const [metadata, setMetadata] = useState(() => Object.fromEntries(rows.map(r => [r.structureId, r])));
 
   const guardar = (structureId: string, next: Estado) => {
-    if (next.score === null) return;
+    if (next.score === null || busy.current) return;
+    busy.current = true; setError(null);
     setEstado((prev) => ({ ...prev, [structureId]: next }));
     setGuardando(structureId);
 
@@ -50,10 +58,14 @@ export function FitMatrix({
     fd.set("structureId", structureId);
     fd.set("score", String(next.score));
     fd.set("notes", next.notes);
+    fd.set("expectedUpdatedAt", metadata[structureId].updatedAt);
 
     startTransition(async () => {
-      await guardarCompatibilidad(fd);
-      setGuardando(null);
+      try {
+        const saved = await guardarCompatibilidad(fd);
+        if (saved) setMetadata(prev => ({ ...prev, [structureId]: { ...prev[structureId], ...saved } }));
+      } catch { setError("No se pudo guardar. Conservamos tus cambios; recarga para comprobar si otra persona editó esta evaluación."); }
+      finally { busy.current = false; setGuardando(null); }
     });
   };
 
@@ -88,6 +100,7 @@ export function FitMatrix({
 
   return (
     <div className="space-y-4">
+      {error && <p role="alert" className="text-danger">{error}</p>}
       {/* Resumen por nivel */}
       <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
         {FIT_SCORES.map((f) => {
@@ -153,6 +166,7 @@ export function FitMatrix({
                           <Loader2 size={12} className="spin text-inkmuted" />
                         ) : null}
                       </div>
+                      <p className="text-xs text-inkmuted">{metadata[row.structureId].source === "MANO" ? `Evaluación manual · revisión ${metadata[row.structureId].revision}${metadata[row.structureId].updatedByName ? ` · ${metadata[row.structureId].updatedByName}` : " · autor histórico no registrado"}` : metadata[row.structureId].source ? "Sugerencia sin validar: no se envía como criterio humano a la IA" : "Sin evaluar"}</p>
                       {row.summary ? (
                         <p className="text-inkmuted mt-1 text-[12px] leading-relaxed">
                           {row.summary}
@@ -167,6 +181,7 @@ export function FitMatrix({
                           return (
                             <button
                               key={f.value}
+                              disabled={pending}
                               type="button"
                               onClick={() =>
                                 guardar(row.structureId, { score: f.value, notes: actual.notes })
@@ -215,7 +230,7 @@ export function FitMatrix({
                       className="input mt-2.5 h-8 text-[12.5px]"
                       defaultValue={row.notes}
                       placeholder="Notas: por qué encaja o por qué no (se le pasa a la IA)…"
-                      disabled={actual.score === null}
+                      disabled={actual.score === null || pending}
                       onBlur={(e) => {
                         const notes = e.target.value.trim();
                         if (notes === (actual.notes ?? "")) return;

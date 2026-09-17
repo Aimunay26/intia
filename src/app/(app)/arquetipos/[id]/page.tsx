@@ -80,7 +80,7 @@ export default async function ArquetipoPage({
 
   const arquetipo = await prisma.archetype.findUnique({
     where: { id },
-    include: { fits: { select: { structureId: true, score: true, notes: true } } },
+    include: { fits: { select: { structureId: true, score: true, notes: true, updatedAt: true, source: true, revision: true, updatedByName: true } } },
   });
   if (!arquetipo) notFound();
 
@@ -110,7 +110,7 @@ export default async function ArquetipoPage({
         mimeType: true,
         size: true,
         useForAi: true,
-        extractedText: true,
+        extractedText: true, updatedAt: true,
         createdAt: true,
       },
     }),
@@ -130,6 +130,7 @@ export default async function ArquetipoPage({
       summary: s.summary,
       score: fit ? fit.score : null,
       notes: fit?.notes ?? "",
+      updatedAt: fit?.updatedAt.toISOString() ?? "new", source: fit?.source ?? null, revision: fit?.revision ?? 0, updatedByName: fit?.updatedByName ?? null,
     };
   });
 
@@ -142,7 +143,7 @@ export default async function ArquetipoPage({
     useForAi: a.useForAi,
     hasText: Boolean(a.extractedText && a.extractedText.length > 0),
     textLength: a.extractedText?.length ?? 0,
-    extractedText: a.extractedText,
+    extractedText: a.extractedText, updatedAt: a.updatedAt,
     createdAt: a.createdAt,
   }));
 
@@ -198,6 +199,7 @@ export default async function ArquetipoPage({
                 label="Cargar informe de branding"
                 className="btn btn-primary btn-sm"
                 actuales={actualesDePersona(arquetipo)}
+                expectedUpdatedAt={arquetipo.updatedAt.toISOString()}
                 guardar={guardarInformeEnPersona.bind(null, arquetipo.id)}
               />
             ) : null}

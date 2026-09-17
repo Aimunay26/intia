@@ -1,3 +1,4 @@
+import { seedApprovals } from './approval-fixture.mjs';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -40,7 +41,7 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
     for (const [id, profile] of [['writer', 'WRITER'], ['strategy', 'STRATEGY']]) await prisma.user.create({ data: { id, name: id, email: id + '@p1.test', passwordHash: 'fixture', workProfiles: { create: { profile } }, brandAccess: { create: { brandId: 'A' } } } });
     await prisma.structure.create({ data: { id: 'format', name: 'Fixture', slug: 'fixture', defaultDurationSec: 5 } });
     await prisma.script.create({ data: { id: 'script', title: 'Guion protegido', authorId: 'writer', brandId: 'A', scenes: { create: { id: 'scene', order: 0, beat: 'Inicio', startSec: 0, endSec: 5, voice: 'Original' } } } });
-    await video('closed', { scriptId: 'script', status: 'PUBLICADO', checklist: { create: { id: 'approval', stage: 'POSTPRODUCCION', label: 'Revisión final aprobada', done: true, doneById: 'owner' } } });
+    await video('closed', { scriptId: 'script', status: 'PUBLICADO', checklist: { create: { id: 'approval', stage: 'POSTPRODUCCION', label: 'Revisión final aprobada', kind: 'FINAL_APPROVAL', done: true, doneById: 'owner' } } });
     await video('shared-open', { scriptId: 'script' });
     await prisma.asset.create({ data: { id: 'asset', ownerType: 'content', ownerId: 'closed', filename: 'fixture.txt', mimeType: 'text/plain', data: Buffer.from('x'), size: 1, extractedText: 'Original' } });
 
@@ -61,16 +62,16 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       assert.equal(await prisma.auditLog.count({ where: { userId: 'writer' } }), 0);
     });
     await check('B01: reapertura exige retirar aprobación y salir de publicado; dueño conserva excepción auditada', async () => {
-      await assert.rejects(as('strategy', () => content.alternarCheck(fd({ id: 'approval', done: '' }))), /motivo de reapertura/);
+      assert.match((await as('strategy', () => content.alternarCheck(fd({ id: 'approval', done: '' })))).error, /motivo de reapertura/);
       await as('strategy', () => content.alternarCheck(fd({ id: 'approval', done: '', reason: 'Corregir referencias de producción' })));
       assert.ok(await prisma.auditLog.count({ where: { entityId: 'approval', summary: { contains: 'Corregir referencias de producción' } } }));
       await assert.rejects(as('writer', () => assets.updateAssetText(fd({ id: 'asset', extractedText: 'Cambio' }))), /reabrir/);
       const row = await prisma.contentItem.findUniqueOrThrow({ where: { id: 'closed' } });
-      await as('strategy', () => content.cambiarEstado(fd({ id: 'closed', status: 'GUION', expectedUpdatedAt: row.updatedAt.toISOString() })));
-      await as('writer', () => assets.updateAssetText(fd({ id: 'asset', extractedText: 'Cambio permitido' })));
+      await as('strategy', () => content.cambiarEstado(fd({ id: 'closed', status: 'GUION', reason: 'Revisar producción nuevamente', expectedUpdatedAt: row.updatedAt.toISOString() })));
+      await as('writer', async () => assets.updateAssetText(fd({ id: 'asset', expectedUpdatedAt: (await prisma.asset.findUniqueOrThrow({where:{id:'asset'}})).updatedAt.toISOString(), extractedText: 'Cambio permitido' })));
       assert.equal((await prisma.checklistItem.findUniqueOrThrow({ where: { id: 'approval' } })).done, false);
-      await as('strategy', () => content.alternarCheck(fd({ id: 'approval', done: 'on' })));
-      await as('owner', () => assets.updateAssetText(fd({ id: 'asset', extractedText: 'Excepción del dueño' })));
+      await seedApprovals(prisma, 'closed', 'owner');
+      await as('owner', async () => assets.updateAssetText(fd({ id: 'asset', expectedUpdatedAt: (await prisma.asset.findUniqueOrThrow({where:{id:'asset'}})).updatedAt.toISOString(), extractedText: 'Excepción del dueño' })));
       assert.ok(await prisma.auditLog.count({ where: { entityId: 'asset', userId: 'owner' } }));
     });
     await check('B01: una escritura que espera la aprobación no puede pasar con una lectura obsoleta', async () => {
@@ -93,7 +94,7 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id } })).error, null);
     });
     await check('B02: aprobación ya cerrada impide encolar sin consumir cupos', async () => {
-      await video('approved-empty', { checklist: { create: { stage: 'POSTPRODUCCION', label: 'Revisión final aprobada', done: true } } });
+      await video('approved-empty', { checklist: { create: { stage: 'POSTPRODUCCION', label: 'Revisión final aprobada', kind: 'FINAL_APPROVAL', done: true } } });
       await assert.rejects(enqueue({ contentItemId: 'approved-empty' }), /Reabre la aprobación/);
       assert.equal(await prisma.usageCounter.count(), 0);
     });
@@ -101,7 +102,7 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       ['cancelled', id => prisma.contentItem.update({ where: { id }, data: { status: 'CANCELADO' } }), /Idea o Guion/],
       ['published', id => prisma.contentItem.update({ where: { id }, data: { status: 'PUBLICADO' } }), /Idea o Guion/],
       ['revision', id => prisma.contentItem.update({ where: { id }, data: { title: 'Otra planificación' } }), /planificación.*cambió/],
-      ['approval', id => prisma.checklistItem.create({ data: { contentItemId: id, stage: 'POSTPRODUCCION', label: 'Revisión final aprobada', done: true } }), /aprobación final/],
+      ['approval', id => prisma.checklistItem.create({ data: { contentItemId: id, stage: 'POSTPRODUCCION', label: 'Revisión final aprobada', kind: 'FINAL_APPROVAL', done: true } }), /aprobación final/],
       ['brand', id => prisma.contentItem.update({ where: { id }, data: { brandId: 'B' } }), /acceso/],
     ]) await check(`B02: ${kind} durante la llamada conserva el guion independiente con motivo`, async () => {
       const id = `late-${kind}`; await video(id);

@@ -9,6 +9,8 @@ import { auditInTransaction, diffFields } from "@/lib/audit";
 import { LEVEL, requireLevel } from "@/lib/auth";
 import { EVENT_KIND_MAP } from "@/lib/constants";
 import { lockRevision, withMutation } from "@/lib/mutations";
+import type { AppTransaction } from "@/lib/prisma";
+import type { SessionUser } from "@/lib/auth";
 import {
 	boolField,
 	field,
@@ -35,6 +37,7 @@ const LABELS: Record<string, string> = {
   allDay: "Todo el día",
   location: "Lugar",
   brandId: "Marca",
+  contentItemId: "Video vinculado",
 };
 
 function refrescar() {
@@ -85,14 +88,23 @@ function leerCampos(formData: FormData) {
   };
 }
 
+async function validarVinculo(tx: AppTransaction, user: SessionUser, datos: ReturnType<typeof leerCampos>) {
+  if (datos.contentItemId) {
+    await assertContentAccess(tx, user, datos.contentItemId, "calendar.edit");
+    const video = await tx.contentItem.findUniqueOrThrow({ where: { id: datos.contentItemId }, select: { brandId: true } });
+    if (datos.brandId && datos.brandId !== video.brandId) throw new Error("El evento y el video deben pertenecer a la misma marca.");
+    datos.brandId = video.brandId;
+  }
+  if (datos.brandId) assertBrandPermission(user, datos.brandId, "calendar.edit");
+}
+
 /* ------------------------------------------------------------------ ALTA -- */
 
 export async function crearEvento(formData: FormData) {
   const user = await requirePermission("calendar.edit");
   return withMutation(user, false, async (tx, afterCommit) => {
     const datos = leerCampos(formData);
-    if (datos.brandId) assertBrandPermission(user, datos.brandId, "calendar.edit");
-    if (datos.contentItemId) await assertContentAccess(tx, user, datos.contentItemId, "calendar.edit");
+    await validarVinculo(tx, user, datos);
 
     if (!datos.title) throw new Error("El evento necesita un título.");
     if (!datos.startAt) throw new Error("El evento necesita una fecha.");
@@ -143,8 +155,9 @@ export async function actualizarEvento(formData: FormData) {
     if (!before) return;
 
     const datos = leerCampos(formData);
-    if (datos.brandId) assertBrandPermission(user, datos.brandId, "calendar.edit");
-    if (datos.contentItemId) await assertContentAccess(tx, user, datos.contentItemId, "calendar.edit");
+    // Omitir el campo conserva el vínculo; enviarlo vacío lo elimina explícitamente.
+    if (!formData.has("contentItemId")) datos.contentItemId = before.contentItemId;
+    await validarVinculo(tx, user, datos);
     if (!datos.title) throw new Error("El evento necesita un título.");
     if (!datos.startAt) throw new Error("El evento necesita una fecha y hora válidas.");
 
@@ -161,6 +174,7 @@ export async function actualizarEvento(formData: FormData) {
       allDay: datos.allDay,
       location: datos.location,
       brandId: datos.brandId,
+      contentItemId: datos.contentItemId,
     };
 
     await tx.calendarEvent.update({ where: { id }, data });

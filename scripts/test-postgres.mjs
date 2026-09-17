@@ -4,9 +4,10 @@ import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { assertLocalDatabase } from "./local-database-only.mjs";
 const url=assertLocalDatabase(), admin=new PrismaClient({datasourceUrl:url.href});
-const suiteNames=process.argv.slice(2).length ? process.argv.slice(2) : ['security','navigation','demo','consistency','scalability','deployment','permissions','priorities'];
+const suiteNames=process.argv.slice(2).length ? process.argv.slice(2) : ['security','navigation','demo','consistency','scalability','deployment','permissions','priorities','workflow'];
 const targets={scalability:['tests/postgres-scalability.test.mjs','SCALABILITY_TEST_DATABASE_URL'],security:['tests/postgres-security.test.mjs','SECURITY_TEST_DATABASE_URL'],navigation:['tests/postgres-navigation.test.mjs','NAVIGATION_TEST_DATABASE_URL'],demo:['tests/postgres-demo.test.mjs','SECURITY_TEST_DATABASE_URL'],consistency:['tests/postgres-consistency.test.mjs','CONSISTENCY_TEST_DATABASE_URL']};
 targets.permissions=['tests/postgres-permissions.test.mjs','PERMISSIONS_TEST_DATABASE_URL'];
+targets.workflow=['tests/postgres-workflow.test.mjs','WORKFLOW_TEST_DATABASE_URL'];
 targets.priorities=['tests/postgres-priorities.test.mjs','PRIORITIES_TEST_DATABASE_URL'];
 targets.deployment=['tests/postgres-deployment.test.mjs','DEPLOYMENT_TEST_DATABASE_URL'];
 function run(args,env,quiet=false){

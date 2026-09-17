@@ -72,8 +72,8 @@ export function assertBrandPermission(user: AccessUser, brandId: string | null |
   assertPermission(user, capability);
   if (user.role !== "OWNER" && (!brandId || !user.brandIds?.includes(brandId))) throw new Error("No tienes acceso a esta marca.");
 }
-export function allowsContentRecord(user: AccessUser, capability: Capability, item: { brandId: string; assignments: readonly { userId: string }[]; checklist?: readonly { done: boolean; stage: string; label: string }[] }) {
-  return allows(user, capability) && (user.role === "OWNER" || Boolean(user.brandIds?.includes(item.brandId) && profileGrants(user, capability).some(p => p.id === "PUBLISHER" ? item.checklist?.some(c => c.done && isFinalApproval(c.stage, c.label)) : p.scope === "brand" || item.assignments.some(a => a.userId === user.id))));
+export function allowsContentRecord(user: AccessUser, capability: Capability, item: { brandId: string; assignments: readonly { userId: string }[]; checklist?: readonly { done: boolean; kind: string }[] }) {
+  return allows(user, capability) && (user.role === "OWNER" || Boolean(user.brandIds?.includes(item.brandId) && profileGrants(user, capability).some(p => p.id === "PUBLISHER" ? item.checklist?.some(c => c.done && isFinalApproval(c.kind)) : p.scope === "brand" || item.assignments.some(a => a.userId === user.id))));
 }
 export function contentStatusCapability(status: string): Capability {
   if (status === "APROBADO") return "content.approve";
@@ -82,11 +82,11 @@ export function contentStatusCapability(status: string): Capability {
   if (status === "EDICION") return "content.editing";
   return "content.plan";
 }
-export function checklistCapability(stage: string, label: string): Capability {
-  if (/aprobad|revisi[oó]n final/i.test(label)) return "content.approve";
+export function checklistCapability(stage: string, label: string, kind = "TASK"): Capability {
+  if (kind === "SCRIPT_APPROVAL" || kind === "FINAL_APPROVAL") return "content.approve";
   if (stage === "PUBLICACION") return "content.publish";
   if (stage === "POSTPRODUCCION") return /miniatura|portada|diseño/i.test(label) ? "content.design" : "content.editing";
   if (stage === "GRABACION" || stage === "PREPRODUCCION") return /guion escrito/i.test(label) ? "scripts.write" : "content.shoot";
   return "content.plan";
 }
-export function isFinalApproval(stage: string, label: string) { return stage === "POSTPRODUCCION" && /final/i.test(label) && /aprobad/i.test(label); }
+export function isFinalApproval(kind: string) { return kind === "FINAL_APPROVAL"; }

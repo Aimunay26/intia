@@ -177,7 +177,7 @@ export default async function MarcaPage({
               mimeType: true,
               size: true,
               useForAi: true,
-              extractedText: true,
+              extractedText: true, updatedAt: true,
               createdAt: true,
             },
           })
@@ -190,7 +190,7 @@ export default async function MarcaPage({
           useForAi: a.useForAi,
           hasText: Boolean(a.extractedText && a.extractedText.trim().length > 0),
           textLength: a.extractedText?.length ?? 0,
-          extractedText: a.extractedText,
+          extractedText: a.extractedText, updatedAt: a.updatedAt,
           createdAt: a.createdAt,
         }))
       : [];

@@ -116,6 +116,7 @@ export default async function GeneradorPage({
       },
     }),
     prisma.archetypeFit.findMany({
+      where: { source: "MANO" },
       select: { archetypeId: true, structureId: true, score: true, notes: true },
     }),
     prisma.asset.groupBy({

@@ -19,6 +19,6 @@ export function Paged({ data, href, query = {} }: { data: { total: number; page:
 export function Search({ query }: { query: MemberQuery }) { return <form className="flex gap-2"><input className="input" name="q" placeholder="Buscar" aria-label="Buscar" defaultValue={query.q} maxLength={200} /><button className="btn">Buscar</button></form>; }
 /** Llamar únicamente después de autorizar el recurso padre. No carga los bytes del archivo. */
 export async function MemberAssets({ type, id, canEdit }: { type: string; id: string; canEdit: boolean }) {
-  const rows = await prisma.asset.findMany({ where: { ownerType: type, ownerId: id }, select: { id: true, filename: true, label: true, mimeType: true, size: true, useForAi: true, extractedText: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 100 });
+  const rows = await prisma.asset.findMany({ where: { ownerType: type, ownerId: id }, select: { id: true, filename: true, label: true, mimeType: true, size: true, useForAi: true, extractedText: true, updatedAt: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 100 });
   return <AssetManager ownerType={type} ownerId={id} assets={rows.map(a => ({ ...a, hasText: Boolean(a.extractedText), textLength: a.extractedText?.length ?? 0 }))} canEdit={canEdit} canDelete={false} />;
 }

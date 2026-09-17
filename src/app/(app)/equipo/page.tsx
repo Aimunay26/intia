@@ -66,6 +66,7 @@ export default async function EquipoPage({
   const hayFiltros = Boolean(sp.rol || sp.estado || sp.q?.trim());
 
   const toMember = (p: (typeof personas)[number]): TeamMember => ({
+    updatedAt: p.updatedAt,
     id: p.id,
     name: p.name,
     email: p.email,

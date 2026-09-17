@@ -1,4 +1,5 @@
 "use server";
+import { EDIT_CONFLICT, lockRevision } from "@/lib/mutations";
 import { parseTeamAccess, saveTeamAccess } from "@/lib/team-access";
 
 import { revalidatePath } from "next/cache";
@@ -12,7 +13,7 @@ export type TeamState = { ok?: string; error?: string } | null;
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const LABELS = { ...FIELD_LABELS, name: "Nombre", email: "Correo", role: "Rol", color: "Color", phone: "Teléfono", bio: "Descripción", archetypeId: "Arquetipo" };
-const errorState = (error: unknown): TeamState => ({ error: error instanceof SecurityError ? error.message : "No se pudo guardar. Comprueba los datos y que el correo no esté ocupado." });
+const errorState = (error: unknown): TeamState => ({ error: error instanceof SecurityError || (error instanceof Error && error.message === EDIT_CONFLICT) ? error.message : "No se pudo guardar. Comprueba los datos y que el correo no esté ocupado." });
 function refresh(self = false) { revalidatePath("/mi-perfil"); revalidatePath("/equipo"); revalidatePath("/actividad"); if (self) revalidatePath("/", "layout"); }
 function profile(form: FormData) {
   const name = field(form, "name"), phone = fieldOrNull(form, "phone"), bio = fieldOrNull(form, "bio");
@@ -55,6 +56,7 @@ export async function actualizarUsuario(_prev: TeamState, formData: FormData): P
     const access = privileged ? parseTeamAccess(formData) : null;
     await withAuthLock(async tx => {
       await assertActor(tx, actor, admin);
+      await lockRevision(tx, "User", id, formData);
       const before = await tx.user.findUniqueOrThrow({ where: { id } });
       const raw = field(formData, "color");
       const data = { ...base, color: HEX_RE.test(raw) ? raw : before.color, ...(privileged ?? {}) };

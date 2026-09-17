@@ -1,3 +1,6 @@
+import { ApprovalHistory } from "@/components/approval-history";
+import { approvalToken } from "@/lib/approvals";
+import { WorkflowStatusFields } from "@/components/workflow-status-fields";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
@@ -18,7 +21,7 @@ import { notFound } from "next/navigation";
 
 import { cambiarEstado, comentar, duplicarVideo, eliminarVideo } from "@/app/actions/content";
 import { desvincularGuionDeVideo } from "@/app/actions/scripts";
-import { AutoSubmitSelect, DeleteButton, SubmitButton } from "@/components/forms";
+import { DeleteButton, SubmitButton } from "@/components/forms";
 import {
 	Avatar,
 	Badge,
@@ -119,7 +122,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
         orderBy: { sortOrder: "asc" },
         select: {
           id: true,
-          label: true,
+          label: true, kind: true,
           stage: true,
           done: true,
           required: true,
@@ -193,7 +196,10 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
 
   const estado = CONTENT_STATUS_MAP[item.status];
 
+  const [scriptApprovalToken, finalApprovalToken] = await Promise.all([approvalToken(prisma, "SCRIPT_APPROVAL", id), approvalToken(prisma, "FINAL_APPROVAL", id)]);
   const checks: CheckRow[] = item.checklist.map((c) => ({
+    kind: c.kind,
+    approvalToken: c.kind === "FINAL_APPROVAL" ? finalApprovalToken : scriptApprovalToken,
     id: c.id,
     label: c.label,
     stage: c.stage,
@@ -277,13 +283,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
             <EditForm action={cambiarEstado} className="flex items-center">
 <RevisionField value={item.updatedAt} />
               <input type="hidden" name="id" value={item.id} />
-              <AutoSubmitSelect
-                name="status"
-                defaultValue={item.status}
-                ariaLabel="Estado del video"
-                className="select h-[34px] w-[158px] text-[12.5px] font-semibold"
-                options={CONTENT_STATUSES.map((o) => ({ value: o.value, label: o.label }))}
-              />
+              <WorkflowStatusFields value={item.status} owner options={CONTENT_STATUSES.map(o => ({ value: o.value, label: o.label }))} />
             </EditForm>
 
             {item.publishedUrl ? (
@@ -354,6 +354,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
             />
           </Card>
 
+          <ApprovalHistory id={id} />
           <Checklist
             contentItemId={item.id}
             items={checks}

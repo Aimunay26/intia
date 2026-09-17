@@ -14,20 +14,71 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 | B04 · Importación documental | Corrección P1 desplegada | Lectura local inicial comprobada en producción; proveedor explícito, cupos y límite por documento; mejoras futuras detalladas abajo |
 | B05 · Referencias a estructuras | Migrado en Neon y desplegado | Cuatro preflight sin incidencias; respaldo/restauración real verificados; FK y backfill aplicados sin perder datos de negocio |
 | B06 · Validación del guion | Desplegado | Reglas semánticas, fallo terminal legible y sin repetir respuesta inválida; pruebas con respuestas simuladas |
-| B07–B22 | Pendiente | 16 paquetes restantes; se mantienen las prioridades y criterios del informe |
+| B07 · Integridad de agenda | Implementado y validado localmente | Marca derivada/validada, vínculo editable con semántica explícita, FK compuesta y protección ante cambios o borrado del video; pendiente Neon/Vercel |
+| B08 · Procedencia de compatibilidad | Implementado y validado localmente | Autor, revisión y fuente manual; origen anterior en auditoría; solo evaluaciones humanas llegan al prompt; pendiente Neon/Vercel |
+| B09 · Estados y aprobación explícita | Implementado y validado localmente | Flujo acordado, requisitos, tipos estables, copias inmutables de versiones aprobadas, reapertura y excepción auditada; pendiente Neon/Vercel |
+| B10 · Concurrencia uniforme | Implementado y validado localmente | Revisiones en importación de branding, ficha de usuario, compatibilidad, texto/referencia de adjuntos y ajustes; borradores conservados; pendiente Neon/Vercel |
+| B11–B22 | Pendiente | 12 paquetes restantes; se mantienen las prioridades y criterios del informe |
 
-Actualización: 16/09/2026. **Las correcciones P1 de B01–B06 están desplegadas en Vercel y su migración está aplicada en Neon. Pasaron las pruebas locales y CI. La comprobación productiva fue de lectura y acceso; no se efectuaron generaciones reales ni escrituras de negocio de prueba.** Los apartados de diagnóstico que siguen conservan la evidencia anterior a estas correcciones.
+Actualización: 17/09/2026. **B07–B10 están implementados e integrados en `main` desde `codex/backend-consistency-b07-b10`, commit de implementación [`608315e`](https://github.com/conamormarket-lgtm/intia/commit/608315e56b4fcf7729706322436209071d0c580f); todavía no están migrados en Neon ni desplegados en producción.** El merge pausa los despliegues Git de `main` y de esta rama mediante `vercel.json` para no publicar código que requiere el esquema nuevo. CI del merge pendiente de verificar. La entrega B01–B06 del 16/09 conserva su estado registrado de despliegue y CI. Los apartados de diagnóstico que siguen conservan la evidencia anterior a estas correcciones.
+
+### Entrega B07–B10 · 17/09/2026
+
+**Agenda.** Crear un evento ligado a un video deriva su marca cuando falta y rechaza una marca contradictoria. Al editar, omitir `contentItemId` conserva el vínculo, enviarlo vacío lo retira y enviar otro ID lo cambia después de comprobar permisos y marca. La interfaz permite conservar o retirar el vínculo existente; mientras se conserva, la marca se hereda del video. No se añadió un selector nuevo de videos al alta de eventos. La FK compuesta de PostgreSQL propaga futuros cambios de marca; borrar el video conserva el evento desvinculado. La validación diferida admite el borrado en cascada de una marca sin dejar cruces ni vínculos sin marca.
+
+**Compatibilidad.** Guardar manualmente una evaluación registra `MANO`, el ID/nombre del autor y una revisión incremental. Se retira `sourceScriptId` de la evaluación vigente y se conserva su valor anterior en la auditoría. La matriz y la ficha de estructura distinguen evaluación manual, sugerencia sin validar y autor histórico desconocido. Tanto el contexto de IA como el generador excluyen `SEED`/`AUTO` del criterio humano; sus datos se conservan y pueden validarse mediante una edición manual.
+
+**Flujo confirmado por el usuario:** Idea → Guion → Aprobado → Grabación → Edición → Programado → Publicado. Los nuevos videos empiezan como Idea. Los permisos del perfil y de la marca se verifican antes de evaluar el cambio de estado.
+
+| Paso | Requisito normal |
+|---|---|
+| Idea → Guion | Guion vinculado con escenas |
+| Guion → Aprobado | Guion aprobado con versión verificable y aprobación del guion en el checklist |
+| Aprobado → Grabación | Aprobaciones vigentes y tareas obligatorias de preproducción completas |
+| Grabación → Edición | Aprobaciones vigentes y tareas obligatorias de preproducción/grabación completas |
+| Revisión final en Edición | Guion aprobado, aprobación de guion vigente y tareas obligatorias anteriores a publicación completas |
+| Edición → Programado | Revisión final correspondiente a la versión actual y fecha prevista |
+| Programado → Publicado | Aprobaciones vigentes, enlace público y tareas obligatorias de publicación completas |
+| Retroceder o cancelar | Permiso de aprobación y motivo de 5–1000 caracteres; se retiran las aprobaciones que correspondan |
+| Excepción del Dueño | Selección explícita, motivo obligatorio y auditoría del salto; no crea una aprobación ficticia |
+
+El guion avanza Borrador → Revisión → Aprobado → Grabado, con archivo/reapertura justificados. `SCRIPT_APPROVAL` y `FINAL_APPROVAL` son tipos estables: escribir «Revisión final aprobada» en el nombre de una tarea no otorga aprobación. Las aprobaciones no pueden borrarse como tareas.
+
+Cada aprobación guarda una copia y una huella del contenido, autor, fecha y versión. PostgreSQL impide modificar o borrar esa evidencia; solo admite revocarla con autor/fecha/motivo. Aprobar un video exige la huella de lo que se mostró al revisor, y publicar vuelve a contrastar guion, tareas y adjuntos con las versiones aprobadas. Cambiar material o retirar la aprobación del guion impide publicar hasta revisar de nuevo. Las fichas muestran las últimas 20 aprobaciones. Esto cubre versiones **aprobadas**; no implementa todavía el historial de cada edición ni el editor de versiones de A04.
+
+**Ediciones simultáneas.** La importación con sobrescritura, la ficha de usuario, la compatibilidad y los adjuntos comparan la revisión capturada al abrir el formulario con la fila bloqueada. Los ajustes comparan una huella de claves y fechas de modificación, sin incluir secretos, y serializan las altas de ajustes antes ausentes. Los conflictos no se reintentan automáticamente. Las pruebas de navegador comprueban que el texto escrito permanece en usuario, adjunto y ajustes y que el modal de adjunto no se cierra por un fallo.
+
+Validación local:
+
+- `npm run test:unidad`: 127 pruebas correctas, incluyendo todas las combinaciones de transición de ambos flujos.
+- `npm run test:postgres`: 100 pruebas correctas en nueve suites, sin omisiones. Las 12 regresiones de B07–B10 más su contenedor de suite cubren acciones reales, permisos, SQL, carreras, importación y versiones.
+- `npm run typecheck`, lint sin errores (62 advertencias previas) y build de producción correctos; se conserva la comprobación del runtime React.
+- `npm run test:perfiles`: once perfiles, conservación de borradores, error de requisito visible, reapertura justificada y completar/reabrir/completar sin recargar. Coordinación vuelve a Edición con permiso de aprobación, sin recibir permisos de edición.
+- `npm run perf:local`: 362 muestras de navegación y conflicto de edición con borrador conservado. Es una comprobación local; no acredita tiempos ni ahorros en Vercel.
+- `npm run test:workflow`: cola local real y recuperación de respuesta persistida correctas; proveedor simulado.
+- Ensayo desde esquema antiguo: el preflight rechaza un evento ambiguo y revierte toda la migración. Conserva aprobaciones históricas sin inventar versiones. Respaldo y restauración coinciden en filas y esquema de 33 tablas.
+- Cero llamadas reales a proveedores de IA/Blob y ninguna modificación de producción. Estas comprobaciones no equivalen a CI ni a una validación en Neon/Vercel.
+
+Regresiones: [acciones y PostgreSQL](../tests/postgres-workflow.test.mjs), [matrices de transición](../tests/workflow-policy.test.mjs), [interfaz](../scripts/smoke-permissions.mjs). Evidencia: [resultados B07–B10](implementacion-consistencia-backend-2026-09-17.json).
+
+### Publicación pendiente de B07–B10
+
+1. Commit/push de la implementación completados en `608315e` e integración en `main` realizada. Verificar CI del merge, activada por el push a `main`. El despliegue automático está pausado en `vercel.json`; no confundir el merge con la versión desplegada del 16/09.
+2. Respaldo actual y ensayo sobre una copia de Neon. Ejecutar el [preflight de solo lectura](../prisma/operations/preflight-workflow-consistency.sql); resolver cualquier marca contradictoria con el responsable. La migración no corrige datos ambiguos automáticamente.
+3. Aplicar `20260917180000_workflow_consistency` y desplegar el mismo código de forma coordinada. Restaurar el despliegue Git de `main` en `vercel.json` solo después de confirmar la migración y CI. La FK compuesta diferida y las guardas de evidencia viven en SQL: conservarlas en futuras migraciones.
+4. Recargar formularios antiguos. Las marcas históricas de aprobación se conservan, pero no autorizan nuevas publicaciones sin versión verificable: reabrir con motivo, revisar el guion y completar nuevamente las aprobaciones en sus etapas.
+5. Comprobar en producción los accesos, el recorrido permitido, los rechazos y la conservación del borrador. Cualquier prueba con IA real sigue siendo independiente y consume cupo.
 
 ### Decisiones implementadas
 
-- **B01:** el equipo debe retirar la aprobación y salir de Programado/Publicado antes de editar. Retirar la revisión final exige un motivo de 5–1000 caracteres y registra auditoría. Se consideran todos los videos ligados a un guion, incluso si otro video del mismo guion sigue abierto. Los adjuntos del video se protegen tanto al cargar como al modificar, marcar para IA o borrar. La excepción administrativa del Dueño se mantiene auditada. Una aprobación inmutable ligada a una versión sigue en B09.
+- **B01:** el equipo debe retirar la aprobación y salir de Programado/Publicado antes de editar. Retirar la revisión final exige un motivo de 5–1000 caracteres y registra auditoría. Se consideran todos los videos ligados a un guion, incluso si otro video del mismo guion sigue abierto. Los adjuntos del video se protegen tanto al cargar como al modificar, marcar para IA o borrar. La excepción administrativa del Dueño se mantiene auditada. B09 añade las versiones aprobadas inmutables en la entrega local del 17/09.
 - **B02:** la revisión del destino se captura al encolar, sin confiar en una revisión enviada por el navegador. Al guardar se revalidan permisos, marca, estado, aprobación, ocupación y revisión. Se conserva el guion independiente con un aviso persistente si ya no puede vincularse. Los trabajos anteriores a esta versión, sin revisión capturada, también quedan independientes por precaución. No se repite la llamada por perder el vínculo.
 - **B03:** cada petición al SDK reserva una unidad global y personal, incluidos los fallbacks de esquema y las peticiones fallidas. Los errores locales de modelo/clave ocurren antes de reservar. Las peticiones de un intento comparten 240 s; la concesión dura 360 s. El contador de intentos sube una vez, aunque el fallback necesite una segunda petición. La prueba mínima de Claude comparte cupo con plazo de 15 s; la consulta de metadatos de Gemini sigue sin generar tokens. No se garantiza exactamente una llamada externa ante una caída entre la respuesta del proveedor y su persistencia.
 - **B04:** ambos formularios documentales comienzan en lectura local. La mejora con IA exige elegir Gemini o Claude, usa el interruptor y los cupos compartidos, limita la mejora a 25 s y reserva como máximo una llamada por archivo SHA-256/usuario/proveedor/día. Una repetición entrega lectura local con aviso; no cambia de proveedor ni repite la llamada silenciosamente. Hay trazas por operación y petición. **No se añadió una caché de prosa ni una cola de extracción larga:** la previsualización actual termina con el parser local si no alcanza el plazo; esas ampliaciones quedan fuera de este cierre P1.
 - **B05:** se añade ContentPlannedStructure con orden y FK, sincronizada transaccionalmente desde structureIds para mantener compatibilidad con los formularios. GenerationItem también referencia Structure mediante FK. Se conserva la estructura en el historial y se desactiva si está en uso; los trabajos previamente encolados pueden terminar y los nuevos no pueden usarla. No se eliminan referencias antiguas para hacer pasar la migración.
 - **B06:** Zod y el esquema enviado al proveedor comparten definición. Máximo 80 escenas, textos de hasta 12000 caracteres y tiempos enteros de hasta 690 s. Se exige título, beats en orden, continuidad temporal, plano, acción y voz o texto según el tipo. La tolerancia de duración es fija en esta entrega: 15%, mínimo 3 s; aún no hay ajuste por estructura en la interfaz. response_validate identifica el fallo; una salida inválida queda FAILED sin guion terminado ni regeneración automática, incluso si se recuperó de la DB. Esto comprueba consistencia técnica, no calidad editorial.
 
-### Validación de esta entrega
+### Validación de la entrega B01–B06 · 16/09/2026
 
 - TypeScript: correcto.
 - Lint: 0 errores; 62 advertencias previas.
@@ -45,7 +96,7 @@ Actualización: 16/09/2026. **Las correcciones P1 de B01–B06 están desplegada
 
 Pruebas reproducibles: [regresiones PostgreSQL](../tests/postgres-priorities.test.mjs), [reglas y plazo](../tests/backend-priorities.test.mjs), [ensayo de migración](../scripts/rehearse-migration.mjs), [interfaz por perfiles](../scripts/smoke-permissions.mjs), [Workflow](../scripts/smoke-workflow.mjs). Resultados resumidos: [evidencia de implementación](implementacion-prioridades-backend-2026-09-16.json). Las nueve reproducciones del diagnóstico original quedan como evidencia histórica; las regresiones nuevas exigen el comportamiento corregido.
 
-### Activación en producción: completada
+### Activación de B01–B06 en producción: completada el 16/09/2026
 
 - Aplicación integrada en `main`: `2f89f7d`. Vercel `READY`, dominio [Intia](https://intia-lovat.vercel.app) confirmado en el despliegue `dpl_3Kr1XCVXd5qk3HPKBdDMS8s6uYco`.
 - CI de este commit completada correctamente: [ejecución 35148321879](https://github.com/conamormarket-lgtm/intia/actions/runs/35148321879). Incluye pruebas unitarias, PostgreSQL, restauración/migración, build, Workflow e interfaz por perfiles.
@@ -54,7 +105,7 @@ Pruebas reproducibles: [regresiones PostgreSQL](../tests/postgres-priorities.tes
 - Verificados los controles HTTP sin sesión y las páginas autenticadas consignadas en la [evidencia de despliegue](despliegue-prioridades-backend-2026-09-16.json). La prueba productiva no alteró contenido ni consumió cupo de IA.
 - Restaurada la promoción automática de Vercel. Las URL de despliegues anteriores siguen protegidas. Los formularios de videos abiertos antes de la migración deben recargarse por el cambio de revisión.
 
-**Siguiente bloque del plan:** B07–B10 (coherencia de agenda, procedencia de datos, estados/aprobaciones y concurrencia), seguido de paridad funcional y rendimiento. B07–B22 siguen pendientes. Una generación real posterior a esta entrega requiere proveedor disponible y autorización para usar datos y cupo.
+**Siguiente bloque de implementación:** B11, paridad funcional por perfil, seguido de rendimiento y los demás paquetes pendientes. Antes de publicar B07–B10 faltan CI, migración en Neon y despliegue. Una generación real posterior requiere proveedor disponible y autorización para usar datos y cupo.
 
 ## Dictamen de la auditoría original
 

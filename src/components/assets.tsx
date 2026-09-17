@@ -1,4 +1,5 @@
 "use client";
+import { EditForm, RevisionField } from "@/components/edit-form";
 
 import { useActionState, useState } from "react";
 import {
@@ -27,6 +28,7 @@ import { Callout, EmptyState, Field } from "@/components/ui";
 import { DeleteButton, Modal, SubmitButton } from "@/components/forms";
 
 export type AssetRow = {
+  updatedAt: Date;
   id: string;
   filename: string;
   label: string | null;
@@ -219,7 +221,7 @@ function AssetRowItem({
 
         <div className="flex shrink-0 items-center gap-1.5">
           {canEdit ? (
-            <form action={toggleAssetAi}>
+            <EditForm action={toggleAssetAi}><RevisionField value={asset.updatedAt} />
               <input type="hidden" name="id" value={asset.id} />
               <input type="hidden" name="useForAi" value={asset.useForAi ? "" : "on"} />
               <button
@@ -238,7 +240,7 @@ function AssetRowItem({
                 <Bot size={13} />
                 {asset.useForAi ? "En la IA" : "Apagado"}
               </button>
-            </form>
+            </EditForm>
           ) : asset.useForAi ? (
             <span className="chip chip-plain">
               <Bot size={11} /> En la IA
@@ -288,7 +290,7 @@ function AssetRowItem({
         description={asset.label || asset.filename}
         width={720}
       >
-        <form action={updateAssetText} onSubmit={() => setEditing(false)}>
+        <EditForm action={updateAssetText} onSuccess={() => setEditing(false)}><RevisionField value={asset.updatedAt} />
           <input type="hidden" name="id" value={asset.id} />
           <Field
             hint="Este es exactamente el texto que se le inyecta al modelo. Puedes recortarlo para quitar índices y páginas legales, o pegarlo a mano si el PDF venía escaneado."
@@ -309,7 +311,7 @@ function AssetRowItem({
               Guardar texto
             </SubmitButton>
           </div>
-        </form>
+        </EditForm>
       </Modal>
     </li>
   );

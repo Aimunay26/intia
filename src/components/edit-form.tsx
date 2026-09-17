@@ -6,7 +6,7 @@ const SavedRevision = createContext(0);
 export function EditForm({ action, children, onSuccess, ...props }: Omit<React.FormHTMLAttributes<HTMLFormElement>, "action" | "onSubmit"> & {
   action: (data: FormData) => Promise<unknown>; onSuccess?: () => void;
 }) {
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [ready, setReady] = useState(false);
   useEffect(() => { setReady(true); }, []);
@@ -16,26 +16,33 @@ export function EditForm({ action, children, onSuccess, ...props }: Omit<React.F
     event.preventDefault();
     if (busy.current || pending || !ready) return;
     const data = new FormData(event.currentTarget, (event.nativeEvent as SubmitEvent).submitter);
-    busy.current = true; setError(false);
+    busy.current = true; setError(null);
     // Mantiene el formulario bloqueado hasta incorporar también la respuesta de servidor a la UI.
     startTransition(async () => {
       try {
-        await action(data);
+        const result = await action(data);
+        if (result && typeof result === "object" && "error" in result && typeof result.error === "string") {
+          setError(result.error); return;
+        }
         startTransition(() => {
           setSaved(version => version + 1);
           onSuccess?.();
         });
-      } catch { startTransition(() => setError(true)); }
+      } catch { startTransition(() => setError("No se pudo guardar. Conservamos lo que escribiste; recarga la página para comprobar si hubo cambios de otra persona antes de reintentar.")); }
       finally { busy.current = false; }
     });
   }} aria-busy={pending || !ready}>
     <SavedRevision.Provider value={saved}><fieldset disabled={pending || !ready} className="contents">{children}</fieldset></SavedRevision.Provider>
-    {error ? <p role="alert" className="text-danger text-sm mt-2">No se pudo guardar. Conservamos lo que escribiste; recarga la página para comprobar si hubo cambios de otra persona antes de reintentar.</p> : null}
+    {error ? <p role="alert" className="text-danger text-sm mt-2">{error}</p> : null}
   </form>;
 }
 
 export function RevisionField({ value }: { value: Date | string }) {
-  const iso = new Date(value).toISOString(), saved = useContext(SavedRevision);
+  return <RevisionTokenField value={new Date(value).toISOString()} />;
+}
+
+export function RevisionTokenField({ value: iso }: { value: string }) {
+  const saved = useContext(SavedRevision);
   const [captured, setCaptured] = useState(iso);
   const applied = useRef(0), awaiting = useRef(false);
   useEffect(() => {

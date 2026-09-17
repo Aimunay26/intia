@@ -65,7 +65,7 @@ try {
   await db.$disconnect();
   const exact=await db.metric.findUniqueOrThrow({where:{id:'upgrade-metric'}});
   assert.equal(exact.spend.toString(),'0.1');assert.equal(exact.revenue.toString(),'0.2');assert.equal(exact.views,123);
-  assert.equal(Buffer.from((await db.asset.findUniqueOrThrow({where:{id:'upgrade-asset'}})).data).toString(),'abc');
+  assert.equal(Buffer.from((await db.asset.findUniqueOrThrow({where:{id:'upgrade-asset'},select:{data:true}})).data).toString(),'abc');
   const member=await db.user.create({data:{id:'upgrade-member',name:'Miembro previo',email:'member@upgrade.test',passwordHash:'fixture-only'}});
   await db.authSession.create({data:{id:'upgrade-session',userId:member.id,expiresAt:new Date(Date.now()+60000)}});
   sql(source,fs.readFileSync('prisma/migrations/20260910010000_team_work_profiles/migration.sql'));
@@ -103,6 +103,16 @@ try {
   assert.deepEqual(await db.contentPlannedStructure.findMany(),[{contentItemId:'upgrade-video',structureId:'upgrade-format',order:0}]);
   assert.equal((await db.generationItem.findUniqueOrThrow({where:{id:'upgrade-item'}})).linkWarning,null);
   await assert.rejects(db.structure.delete({where:{id:'upgrade-format'}}));
+  const workflow=fs.readFileSync('prisma/migrations/20260917180000_workflow_consistency/migration.sql');
+  sql(source,`INSERT INTO "CalendarEvent" (id,title,"contentItemId","startAt","updatedAt") VALUES ('bad-workflow','Evento previo','upgrade-video',now(),now());
+    INSERT INTO "ChecklistItem" (id,"contentItemId",label,stage,done) VALUES ('legacy-final','upgrade-video','Revisión final aprobada','POSTPRODUCCION',true);`);
+  assert.throws(()=>sql(source,workflow),/Preflight B07/);
+  assert.equal((await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_name='Approval'`)[0].n,0);
+  sql(source,`UPDATE "CalendarEvent" SET "brandId"='upgrade-brand' WHERE id='bad-workflow';`);
+  sql(source,workflow);
+  const legacy=await db.checklistItem.findUniqueOrThrow({where:{id:'legacy-final'}});
+  assert.equal(legacy.kind,'FINAL_APPROVAL');assert.equal(legacy.done,true);assert.equal(legacy.approvalId,null);
+  assert.equal(await db.approval.count(),0,'No se inventa una versión histórica aprobada');
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);
@@ -110,7 +120,7 @@ try {
   const schemaDiff=sourceDefinitions.flatMap(row=>{const other=targetDefinitions.find(item=>item.key===row.key);return other?.value===row.value?[]:[{key:row.key,source:row.value,restored:other?.value}];});
   fs.writeFileSync('.audit/migration-schema-diff.json',JSON.stringify(schemaDiff,null,2));
   assert.deepEqual(await snapshot(restored),original);assert.deepEqual(await restored.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8')),originalSchema);
-  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
+  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,workflowPreflightRolledBack:true,legacyApprovalsPreservedWithoutInventedVersion:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
   fs.writeFileSync('.audit/migration-rehearsal.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 } finally {
   for(const db of clients)await db.$disconnect();

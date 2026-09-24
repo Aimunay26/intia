@@ -1,7 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
-      "main": false,
+      "main": true,
       "codex/backend-consistency-b07-b10": false,
       "codex/backend-priorities-b01-b06": false,
       "codex/team-profile-permissions": false,

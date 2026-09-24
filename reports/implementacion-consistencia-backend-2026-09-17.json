@@ -10,14 +10,20 @@
   "baselineCommit": "2761ead37fc93dc8de702df213cd0c84b50eedbd",
   "gitStatusAtValidation": "uncommitted-working-tree",
   "gitPublication": {
-    "checkedAt": "2026-09-17T16:29:15.827Z",
+    "checkedAt": "2026-09-24T20:20:50.045Z",
     "implementationCommit": "608315e56b4fcf7729706322436209071d0c580f",
     "remoteBranch": "origin/codex/backend-consistency-b07-b10",
     "pushed": true,
     "mergedToMain": true,
-    "ciStatus": "pending-main-merge-validation",
-    "vercelGitDeploymentPaused": ["main", "codex/backend-consistency-b07-b10"],
-    "deploymentUnpauseRequires": ["production-migration-verified", "ci-success"]
+    "ciStatus": "success",
+    "vercelGitDeploymentPaused": [
+      "codex/backend-consistency-b07-b10"
+    ],
+    "deploymentUnpauseRequires": [
+      "production-migration-verified",
+      "ci-success"
+    ],
+    "applicationCommit": "4ab0260cd2500399fe8e58bb40e8567944862d7d"
   },
   "environment": "local-fixtures",
   "unit": {
@@ -160,13 +166,20 @@
     "legacyApprovalsPreservedWithoutInventedVersion": true,
     "restoreRowsAndSchemaMatch": true,
     "tables": 33,
-    "productionApplied": false
+    "productionApplied": true,
+    "productionAppliedAtLocalValidation": false
   },
-  "productionChanged": false,
+  "productionChanged": true,
   "realAiCalls": 0,
   "realBlobCalls": 0,
-  "ciRun": false,
+  "ciRun": true,
   "commitPushPending": false,
-  "deploymentPending": true,
-  "nextImplementationBlock": "B11"
+  "deploymentPending": false,
+  "nextImplementationBlock": "B11",
+  "productionMigrated": true,
+  "deployed": true,
+  "deploymentEvidence": "despliegue-consistencia-backend-2026-09-24.json",
+  "productionChangedAtLocalValidation": false,
+  "ciRunAtLocalValidation": false,
+  "deploymentCheckedAt": "2026-09-24T20:20:50.045Z"
 }

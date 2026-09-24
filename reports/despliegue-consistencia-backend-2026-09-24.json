@@ -1,0 +1,258 @@
+{
+  "checkedAt": "2026-09-24T20:20:50.045Z",
+  "applicationCommit": "4ab0260cd2500399fe8e58bb40e8567944862d7d",
+  "deploymentId": "dpl_spXZR8jkMeWCDWiKJcejtHmE3NyJ",
+  "url": "https://intia-lovat.vercel.app",
+  "state": "READY",
+  "domainMatches": true,
+  "autoAssignCustomDomains": true,
+  "previousDeploymentProtected": true,
+  "discoveredBeforeRelease": {
+    "deployment": "dpl_BKhF8WPFzcqY5RAD6vbM6H1DSrgk",
+    "commit": "9691d37a7ac62c356ffaf17cfd8c74b1dfa88cde",
+    "productionAlreadyOnB07B10BeforeMigration": true,
+    "explanation": "El dominio ya apuntaba a 9691d37 al iniciar; Neon conservaba el esquema B01-B06. Se corrigió la diferencia de versiones."
+  },
+  "migration": {
+    "checkedAt": "2026-09-24T20:16:06.141Z",
+    "migration": "20260917180000_workflow_consistency",
+    "checksumMatches": true,
+    "legacyClassificationMatches": true,
+    "deferredEventConstraint": true,
+    "approvalImmutabilityInstalled": true,
+    "gate": [
+      {
+        "blocked": false,
+        "required_client": "intia-workflow-20260917"
+      }
+    ],
+    "originalBusinessTablesPreserved": 32,
+    "legacyApproved": {
+      "scripts": 4,
+      "checks": 17
+    }
+  },
+  "backup": {
+    "localPath": ".audit/production-consistency-predeploy-20260924.dump.dpapi",
+    "encryptedWith": "Windows DPAPI CurrentUser",
+    "sha256": "3473a173d6de8c0bfd11b00398a24283fd06e72040c4d857a3697debd7403ba6",
+    "bytes": 2724778,
+    "publicTables": 33,
+    "restoredRowsMatch": true,
+    "restoredSchemaMatches": true,
+    "actualNeonSnapshotRehearsed": true
+  },
+  "securityPatch": {
+    "workflow": "4.8.9",
+    "devalue": "5.9.2",
+    "auditVulnerabilities": 0,
+    "advisory": "https://github.com/advisories/GHSA-9rgm-9g3h-6x36",
+    "initialCiFailure": 36052499626
+  },
+  "ci": {
+    "checkedAt": "2026-09-24T20:15:19.655Z",
+    "sha": "4ab0260cd2500399fe8e58bb40e8567944862d7d",
+    "runId": 36053138901,
+    "url": "https://github.com/conamormarket-lgtm/intia/actions/runs/36053138901",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "verify",
+        "conclusion": "success",
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Initialize containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm ci",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm audit --audit-level=moderate",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run lint",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run typecheck",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm test",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run test:postgres",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Ensayar migración y restauración",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run db:migrate",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run build",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npx playwright install --with-deps chromium",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run test:workflow",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run npm run test:perfiles",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Navegación y conservación del borrador ante conflicto",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/setup-node@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Stop containers",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ]
+  },
+  "unauthenticatedChecks": [
+    {
+      "path": "/login",
+      "status": 200
+    },
+    {
+      "path": "/contenido",
+      "status": 307
+    },
+    {
+      "path": "/equipo",
+      "status": 307
+    },
+    {
+      "path": "/api/maintenance",
+      "status": 401
+    },
+    {
+      "path": "/api/assets/consistency-check-missing",
+      "status": 401
+    }
+  ],
+  "clientVersionChecks": {
+    "checkedAt": "2026-09-24T20:18:40.035Z",
+    "checks": [
+      {
+        "client": "intia-profiles-20260910",
+        "writeAccepted": false,
+        "rowsChanged": 0
+      },
+      {
+        "client": "intia-workflow-20260917",
+        "writeAccepted": true,
+        "rowsChanged": 0
+      }
+    ]
+  },
+  "transactionalProductionChecks": {
+    "checkedAt": "2026-09-24T20:17:36.089Z",
+    "environment": "production Neon via current pooled application client",
+    "scope": "real server actions and SQL inside transaction; auth and Next effects simulated",
+    "profileDenied": true,
+    "invalidTransitionsRejected": true,
+    "fullWorkflowWithThreeApprovals": true,
+    "immutableApproval": true,
+    "reasonedReopen": true,
+    "reopeningRevokesApproval": true,
+    "staleWriteRejected": true,
+    "crossBrandEventRejected": true,
+    "databaseCrossBrandConstraint": true,
+    "fixtureAndAuditRolledBack": true,
+    "businessRecordsModified": false,
+    "realAiCalls": 0,
+    "realBlobCalls": 0
+  },
+  "authenticatedBrowser": {
+    "checkedAt": "2026-09-24T20:20:49.982Z",
+    "environment": "production Vercel",
+    "sessionRole": "OWNER",
+    "pages": [
+      "/contenido",
+      "/contenido/cmtlzdz3b00g0soy4gc4v3h8n",
+      "/calendario",
+      "/arquetipos",
+      "/arquetipos/cmtlzcw2a000nsoy40nbn1c19?vista=compatibilidad"
+    ],
+    "rejectedTransition": true,
+    "serverError": "Vincula un guion con escenas para pasar a Guion.",
+    "draftPreserved": true,
+    "originalTitleAndIdeaStateConfirmedAfterReload": true,
+    "approvalHistoryVisible": true,
+    "unvalidatedSuggestionsLabelVisible": true,
+    "browserErrorsObserved": 0,
+    "allProfilesTestedInProduction": false,
+    "businessRecordsModified": false,
+    "realAiCalls": 0
+  },
+  "realAiCalls": 0,
+  "realBlobCalls": 0,
+  "businessTestDataPersisted": false
+}

@@ -14,13 +14,13 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 | B04 · Importación documental | Corrección P1 desplegada | Lectura local inicial comprobada en producción; proveedor explícito, cupos y límite por documento; mejoras futuras detalladas abajo |
 | B05 · Referencias a estructuras | Migrado en Neon y desplegado | Cuatro preflight sin incidencias; respaldo/restauración real verificados; FK y backfill aplicados sin perder datos de negocio |
 | B06 · Validación del guion | Desplegado | Reglas semánticas, fallo terminal legible y sin repetir respuesta inválida; pruebas con respuestas simuladas |
-| B07 · Integridad de agenda | Implementado y validado localmente | Marca derivada/validada, vínculo editable con semántica explícita, FK compuesta y protección ante cambios o borrado del video; pendiente Neon/Vercel |
-| B08 · Procedencia de compatibilidad | Implementado y validado localmente | Autor, revisión y fuente manual; origen anterior en auditoría; solo evaluaciones humanas llegan al prompt; pendiente Neon/Vercel |
-| B09 · Estados y aprobación explícita | Implementado y validado localmente | Flujo acordado, requisitos, tipos estables, copias inmutables de versiones aprobadas, reapertura y excepción auditada; pendiente Neon/Vercel |
-| B10 · Concurrencia uniforme | Implementado y validado localmente | Revisiones en importación de branding, ficha de usuario, compatibilidad, texto/referencia de adjuntos y ajustes; borradores conservados; pendiente Neon/Vercel |
+| B07 · Integridad de agenda | Migrado y desplegado | Marca derivada/validada, vínculo editable con semántica explícita, FK compuesta y protección ante cambios o borrado del video; verificado en Neon/Vercel |
+| B08 · Procedencia de compatibilidad | Migrado y desplegado | Autor, revisión y fuente manual; origen anterior en auditoría; solo evaluaciones humanas llegan al prompt; verificado en Neon/Vercel |
+| B09 · Estados y aprobación explícita | Migrado y desplegado | Flujo acordado, requisitos, tipos estables, copias inmutables de versiones aprobadas, reapertura y excepción auditada; verificado en Neon/Vercel |
+| B10 · Concurrencia uniforme | Migrado y desplegado | Revisiones en importación de branding, ficha de usuario, compatibilidad, texto/referencia de adjuntos y ajustes; borradores conservados; verificado en Neon/Vercel |
 | B11–B22 | Pendiente | 12 paquetes restantes; se mantienen las prioridades y criterios del informe |
 
-Actualización: 17/09/2026. **B07–B10 están implementados e integrados en `main` desde `codex/backend-consistency-b07-b10`, commit de implementación [`608315e`](https://github.com/conamormarket-lgtm/intia/commit/608315e56b4fcf7729706322436209071d0c580f); todavía no están migrados en Neon ni desplegados en producción.** El merge pausa los despliegues Git de `main` y de esta rama mediante `vercel.json` para no publicar código que requiere el esquema nuevo. CI del merge pendiente de verificar. La entrega B01–B06 del 16/09 conserva su estado registrado de despliegue y CI. Los apartados de diagnóstico que siguen conservan la evidencia anterior a estas correcciones.
+Actualización: 24/09/2026. **B07–B10 están integrados en main, migrados en Neon y desplegados en producción**, commit `4ab0260`. CI aprobada; despliegue Git y promoción automática restaurados. [Evidencia del despliegue](despliegue-consistencia-backend-2026-09-24.json). La entrega B01–B06 conserva su registro anterior y el diagnóstico original se mantiene como línea base.
 
 ### Entrega B07–B10 · 17/09/2026
 
@@ -61,13 +61,15 @@ Validación local:
 
 Regresiones: [acciones y PostgreSQL](../tests/postgres-workflow.test.mjs), [matrices de transición](../tests/workflow-policy.test.mjs), [interfaz](../scripts/smoke-permissions.mjs). Evidencia: [resultados B07–B10](implementacion-consistencia-backend-2026-09-17.json).
 
-### Publicación pendiente de B07–B10
+### Publicación de B07–B10: completada el 24/09/2026
 
-1. Commit/push de la implementación completados en `608315e` e integración en `main` realizada. Verificar CI del merge, activada por el push a `main`. El despliegue automático está pausado en `vercel.json`; no confundir el merge con la versión desplegada del 16/09.
-2. Respaldo actual y ensayo sobre una copia de Neon. Ejecutar el [preflight de solo lectura](../prisma/operations/preflight-workflow-consistency.sql); resolver cualquier marca contradictoria con el responsable. La migración no corrige datos ambiguos automáticamente.
-3. Aplicar `20260917180000_workflow_consistency` y desplegar el mismo código de forma coordinada. Restaurar el despliegue Git de `main` en `vercel.json` solo después de confirmar la migración y CI. La FK compuesta diferida y las guardas de evidencia viven en SQL: conservarlas en futuras migraciones.
-4. Recargar formularios antiguos. Las marcas históricas de aprobación se conservan, pero no autorizan nuevas publicaciones sin versión verificable: reabrir con motivo, revisar el guion y completar nuevamente las aprobaciones en sus etapas.
-5. Comprobar en producción los accesos, el recorrido permitido, los rechazos y la conservación del borrador. Cualquier prueba con IA real sigue siendo independiente y consume cupo.
+- Respaldo real cifrado con Windows DPAPI y restauración local comprobada: filas y esquema coinciden en las 33 tablas públicas previas. Ensayo sobre una copia real de Neon, sin contratar recursos adicionales.
+- Aplicada `20260917180000_workflow_consistency`, checksum comprobado y datos conservados en las 32 tablas de negocio. Sin discrepancias entre evento y marca. Se preservan 4 guiones y 17 checks con aprobación histórica sin inventar versiones ni autores.
+- Al iniciar, el dominio ya apuntaba a `9691d37`, pero Neon aún no tenía esta migración. Se corrigió esa diferencia con una pausa breve de escrituras. El control `intia-workflow-20260917` rechaza escrituras de despliegues anteriores, manteniendo las sesiones existentes.
+- Vercel READY, dominio confirmado en `dpl_spXZR8jkMeWCDWiKJcejtHmE3NyJ`, código `4ab0260`. [CI 36053138901](https://github.com/conamormarket-lgtm/intia/actions/runs/36053138901) aprobada. La primera CI de activación se detuvo por una vulnerabilidad transitiva: Workflow se actualizó a 4.8.9 y devalue a 5.9.2; auditoría sin vulnerabilidades reportadas.
+- Verificados controles HTTP sin sesión y páginas autenticadas. La interfaz rechaza avanzar sin guion y conserva la selección/borrador. Contra Neon se ejecutó el recorrido con tres aprobaciones, reapertura, inmutabilidad, rechazo por perfil, marca cruzada y revisión obsoleta **dentro de una transacción revertida**: no se conservaron registros de prueba ni auditoría. En esa prueba las acciones y SQL son reales; autenticación y efectos de Next están simulados. El acceso autenticado real se comprobó por separado en el navegador.
+- CI comprueba once perfiles y conservación de borradores ante conflicto. No se inició sesión en producción con todos los perfiles ni se ejecutó una generación real de IA. Cero llamadas reales a IA o Blob.
+- Despliegue automático de main y promoción automática restaurados; despliegues anteriores conservan protección de acceso. Los formularios abiertos antes del cambio deben recargarse. Las aprobaciones históricas se conservan, pero para nuevas publicaciones se requiere reabrir con motivo y aprobar una versión verificable.
 
 ### Decisiones implementadas
 
@@ -105,7 +107,7 @@ Pruebas reproducibles: [regresiones PostgreSQL](../tests/postgres-priorities.tes
 - Verificados los controles HTTP sin sesión y las páginas autenticadas consignadas en la [evidencia de despliegue](despliegue-prioridades-backend-2026-09-16.json). La prueba productiva no alteró contenido ni consumió cupo de IA.
 - Restaurada la promoción automática de Vercel. Las URL de despliegues anteriores siguen protegidas. Los formularios de videos abiertos antes de la migración deben recargarse por el cambio de revisión.
 
-**Siguiente bloque de implementación:** B11, paridad funcional por perfil, seguido de rendimiento y los demás paquetes pendientes. Antes de publicar B07–B10 faltan CI, migración en Neon y despliegue. Una generación real posterior requiere proveedor disponible y autorización para usar datos y cupo.
+**Siguiente bloque de implementación:** B11, paridad funcional por perfil, seguido de rendimiento y los demás paquetes pendientes. B07–B10 ya están publicados y verificados con el alcance anterior. Una generación real posterior requiere proveedor disponible y autorización para usar datos y cupo.
 
 ## Dictamen de la auditoría original
 

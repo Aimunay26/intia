@@ -85,7 +85,7 @@ try {
   await page.screenshot({ path: '.audit/gemini-3-8-selector.png', fullPage: true, animations: 'disabled' });
   await page.goto(base + '/ajustes');
   assert.equal(await page.getByRole('main').locator('input[name="googleModel"]:visible').inputValue(), 'gemini-3.8-flash');
-  const report = { checkedAt: new Date().toISOString(), environment: "local-production-build", workflowSdk: "4.8.7", actualQueueExecuted: true, persistedResponseRecovered: true, scriptsCreated: 1, auditCount: 1, generationTracesVerified: true, gemini38ProviderSwitch: true, legacyGoogleSettingResolved: true, liveAiCalls: 0, liveBlobCalls: 0 };
+  const report = { checkedAt: new Date().toISOString(), environment: "local-production-build", workflowSdk: JSON.parse(fs.readFileSync("node_modules/workflow/package.json", "utf8")).version, actualQueueExecuted: true, persistedResponseRecovered: true, scriptsCreated: 1, auditCount: 1, generationTracesVerified: true, gemini38ProviderSwitch: true, legacyGoogleSettingResolved: true, liveAiCalls: 0, liveBlobCalls: 0 };
   fs.writeFileSync(".audit/workflow-smoke.json", JSON.stringify(report, null, 2)); console.log(JSON.stringify(report));
 } finally {
   await browser?.close();

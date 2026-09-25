@@ -34,7 +34,7 @@ test("la clave guardada en Ajustes manda y la variable de entorno queda de respa
     delete process.env.GOOGLE_API_KEY;
     const filas = new Map([["ai.anthropic.apiKey", "db-claude"], ["ai.google.apiKey", ""]]);
     const prisma = { appSetting: { findUnique: async ({ where }) => (filas.has(where.key) ? { key: where.key, value: filas.get(where.key) } : null) } };
-    const { resolveApiKey, describeKeySource } = load("src/lib/settings.ts", { "@/lib/prisma": { prisma } });
+    const { resolveApiKey, describeKeySource } = load("src/lib/settings.ts", { "@/lib/prisma": { prisma }, "@/lib/secrets": { readSecret: async key => filas.get(key) || null } });
 
     assert.deepEqual(await resolveApiKey("anthropic"), { key: "db-claude", source: "db" });
     filas.set("ai.anthropic.apiKey", "");
@@ -259,8 +259,8 @@ test("Gemini: un 400 de esquema, o el 400 genérico «invalid argument», provoc
 test("el generador usa el 'Modelo por defecto' de Ajustes entre la estructura y el catálogo, y pasa keySource", async () => {
   const ajustes = new Map([["ai.anthropic.model", "claude-sonnet-5"], ["ai.anthropic.apiKey", "db-claude"]]);
   const prisma = {
-    structure: { findUnique: async () => ({ id: "s1", name: "E", category: "VENDE", family: "f", summary: "", beats: "[]", systemPrompt: "", rules: "[]", examples: "[]", defaultDurationSec: 30, defaultProvider: "anthropic", defaultModel: "", temperature: 0.7 }) },
-    asset: { findMany: async () => [] },
+    structure: { findUnique: async () => ({ id: "s1", updatedAt: new Date("2026-09-24T00:00:00Z"), name: "E", category: "VENDE", family: "f", summary: "", beats: "[]", systemPrompt: "", rules: "[]", examples: "[]", defaultDurationSec: 30, defaultProvider: "anthropic", defaultModel: "", temperature: 0.7 }) },
+    asset: { findMany: async () => [] }, $queryRaw: async () => [],
     appSetting: {
       findUnique: async ({ where }) => (ajustes.has(where.key) ? { key: where.key, value: ajustes.get(where.key) } : null),
       findMany: async ({ where }) => where.key.in.filter((k) => ajustes.has(k)).map((k) => ({ key: k, value: ajustes.get(k) })),
@@ -270,6 +270,7 @@ test("el generador usa el 'Modelo por defecto' de Ajustes entre la estructura y 
   const providers = cargarProviders({ "@/lib/prisma": { prisma } });
   const { generateScript } = load("src/lib/ai/index.ts", {
     "@/lib/prisma": { prisma },
+    "@/lib/secrets": { readSecret: async key => ajustes.get(key) || null },
     "@/lib/ai/providers": {
       ...providers,
       generateWithClaude: async (call) => { capturadas.push(call); return { script: { title: "x" }, raw: "{}", provider: "anthropic", model: call.model }; },

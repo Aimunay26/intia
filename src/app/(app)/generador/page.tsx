@@ -1,3 +1,5 @@
+import { singleQueryValues } from "@/lib/query-params";
+import { AiUsagePanel } from "@/components/operations-status";
 import { requirePageSection } from "@/lib/render-context";
 import { brandScope, contentScope } from "@/lib/access-scope";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -61,7 +63,7 @@ export default async function GeneradorPage({
   const user = await requirePageSection("generator");
   const maxBatch = resourceLimit("AI_MAX_BATCH", 3);
   const jobsEnabled = process.env.AI_JOBS_ENABLED === "true" && maxBatch > 0;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
   // La marca activa se necesita antes: filtra las tarjetas candidatas.
   const brandCtx = await getBrandContext();
   // Solo las tarjetas a las que esta persona puede unir un guion (el mismo
@@ -277,6 +279,7 @@ export default async function GeneradorPage({
 
   return (
     <>
+      <AiUsagePanel user={user} />
       <PageHeader
         title="Generador de guiones"
         subtitle="Elige el formato ganador, la marca y el arquetipo. La IA escribe el guion escena por escena, listo para grabar."

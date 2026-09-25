@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
@@ -21,7 +22,7 @@ import {
 	eliminarArquetipo,
 	guardarInformeEnPersona,
 } from "@/app/actions/archetypes";
-import { AssetManager, type AssetRow } from "@/components/assets";
+import { MemberAssets } from "@/components/member/shared";
 import { DeleteButton, SubmitButton } from "@/components/forms";
 import {
 	Avatar,
@@ -66,12 +67,12 @@ export default async function ArquetipoPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ vista?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const user = await requirePageSection("archetypes");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="archetypes" id={(await params).id} query={await searchParams} />;
   const { id } = await params;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
 
   const pedida = (sp.vista ?? "perfil") as Vista;
   const vista: Vista = VISTAS.includes(pedida) ? pedida : "perfil";
@@ -84,7 +85,7 @@ export default async function ArquetipoPage({
   });
   if (!arquetipo) notFound();
 
-  const [estructuras, personas, equipoActivo, assets] = await Promise.all([
+  const [estructuras, personas, equipoActivo, assetCount] = await Promise.all([
     prisma.structure.findMany({
       where: { active: true },
       orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -100,20 +101,7 @@ export default async function ArquetipoPage({
       orderBy: { name: "asc" },
       select: { id: true, name: true, role: true, archetypeId: true },
     }),
-    prisma.asset.findMany({
-      where: { ownerType: "archetype", ownerId: id },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        filename: true,
-        label: true,
-        mimeType: true,
-        size: true,
-        useForAi: true,
-        extractedText: true, updatedAt: true,
-        createdAt: true,
-      },
-    }),
+    prisma.asset.count({ where: { ownerType: "archetype", ownerId: id } }),
   ]);
 
   const asignables = equipoActivo.filter((u) => u.archetypeId !== id);
@@ -134,18 +122,6 @@ export default async function ArquetipoPage({
     };
   });
 
-  const documentos: AssetRow[] = assets.map((a) => ({
-    id: a.id,
-    filename: a.filename,
-    label: a.label,
-    mimeType: a.mimeType,
-    size: a.size,
-    useForAi: a.useForAi,
-    hasText: Boolean(a.extractedText && a.extractedText.length > 0),
-    textLength: a.extractedText?.length ?? 0,
-    extractedText: a.extractedText, updatedAt: a.updatedAt,
-    createdAt: a.createdAt,
-  }));
 
   const perfectos = filas.filter((f) => f.score === ENCAJA_PERFECTO).length;
   const evaluadas = filas.filter((f) => f.score !== null).length;
@@ -164,7 +140,7 @@ export default async function ArquetipoPage({
       value: "documentos",
       label: "Documentos",
       icon: <FileText size={14} />,
-      count: documentos.length,
+      count: assetCount,
     },
   ];
 
@@ -433,7 +409,7 @@ export default async function ArquetipoPage({
                   {evaluadas} de {filas.length}
                 </FilaDato>
                 <FilaDato label="Encaja perfecto">{perfectos}</FilaDato>
-                <FilaDato label="Documentos">{documentos.length}</FilaDato>
+                <FilaDato label="Documentos">{assetCount}</FilaDato>
               </dl>
             </Card>
           </div>
@@ -568,15 +544,7 @@ export default async function ArquetipoPage({
 
       {/* -------------------------------------------------------- DOCUMENTOS */}
       {vista === "documentos" ? (
-        <AssetManager
-          ownerType="archetype"
-          ownerId={arquetipo.id}
-          assets={documentos}
-          canEdit={editable}
-          canDelete={puedeEliminar}
-          title="Documentos de referencia del arquetipo"
-          description="Su informe de branding (cargado desde Marca personal), PDF o notas con ejemplos de sus mejores videos o su forma de hablar. El texto se le pasa a la IA al generar guiones para esta persona."
-        />
+        <MemberAssets type="archetype" id={id} canEdit={editable} canDelete={puedeEliminar} query={sp} />
       ) : null}
     </>
   );

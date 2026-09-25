@@ -1,5 +1,7 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
-import { MemberWorkspace } from "@/components/member-workspace";
+import { allows } from "@/lib/permissions";
+import { contentScope } from "@/lib/access-scope";
 import { Pagination } from "@/components/filters";
 import { SectionLoading } from "@/components/section-loading";
 import { getMetricBreakdowns, getMetricRanking, getMetricSeries, getMetricTotals, type MetricFilters } from "@/lib/metric-dashboard";
@@ -39,7 +41,6 @@ import {
 	SectionTitle,
 	Stat
 } from "@/components/ui";
-import { can, LEVEL } from "@/lib/auth";
 import { brandWhere } from "@/lib/brand-context";
 import { PLATFORM_MAP, PLATFORMS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -122,10 +123,10 @@ type MetricsSectionProps = { filters: MetricFilters; range: ReturnType<typeof me
 export default async function MetricasPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return measurePagePhase("page:/metricas", async () => {
   const user = await requirePageSection("metrics");
-  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="metrics" query={await searchParams} />;
-  const [brandCtx, sp] = await Promise.all([getBrandContext(), searchParams]);
+  const [brandCtx, raw] = await Promise.all([getBrandContext(), searchParams]);
+  const sp = singleQueryValues(raw);
   const range = metricDateRange(sp.desde, sp.hasta);
-  const filters: MetricFilters = { brandId: brandCtx.activeId, desde: range.desde, hasta: range.hasta, plataforma: sp.plataforma, estructura: sp.estructura, persona: sp.persona };
+  const filters: MetricFilters = { user, brandId: brandCtx.activeId, desde: range.desde, hasta: range.hasta, plataforma: sp.plataforma, estructura: sp.estructura, persona: sp.persona };
   const scope = JSON.stringify([filters, sp.orden, sp.pagina]);
   return <>
     <PageHeader title="Métricas" subtitle={`${formatDate(fromDateKey(range.desde))} — ${formatDate(fromDateKey(range.hasta))} · ${range.days / 7} semanas`} icon={<TrendingUp size={19} />} />
@@ -136,7 +137,7 @@ export default async function MetricasPage({ searchParams }: { searchParams: Pro
       <Suspense key={scope + "MetricsBreakdowns"} fallback={<SectionLoading label="comparaciones" />}><MetricsBreakdowns filters={filters} range={range} sp={sp} /></Suspense>
       <Suspense key={scope + "MetricsRanking"} fallback={<SectionLoading label="ranking de videos" />}><MetricsRanking filters={filters} range={range} sp={sp} /></Suspense>
     </div>
-    {can(user.role, LEVEL.MEMBER) ? <><SectionTitle>Cargar más datos</SectionTitle><Card className="overflow-hidden"><ImportForm /></Card></> : null}
+    {allows(user, "metrics.write") ? <><SectionTitle>Cargar más datos</SectionTitle><Card className="overflow-hidden"><ImportForm /></Card></> : null}
   </>;
 
   });
@@ -145,7 +146,7 @@ export default async function MetricasPage({ searchParams }: { searchParams: Pro
 async function MetricsFilters({ filters, range, sp }: MetricsSectionProps) {
   const [estructuras, personas] = await measurePhase("metrics.catalogs", () => Promise.all([
     getStructureChoices(false),
-    prisma.user.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.user.findMany({ where: { active: true, ...(filters.user.role === "OWNER" ? {} : { assignments: { some: { contentItem: contentScope(filters.user, "metrics.view") } } }) }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]));
   const desdeKey = range.desde, hastaKey = range.hasta;
   const etiquetasFiltro: Record<string, string> = {
@@ -189,8 +190,8 @@ async function MetricsFilters({ filters, range, sp }: MetricsSectionProps) {
 async function MetricsOverview({ filters, range }: MetricsSectionProps) {
   const [hoy, antes, totalEnBase, historical] = await measurePhase("metrics.summary", () => Promise.all([
     getMetricTotals(filters), getMetricTotals({ ...filters, desde: range.previousFrom, hasta: range.previousTo }),
-    prisma.metric.count({ where: { period: "WEEKLY", contentItem: brandWhere(filters.brandId) } }),
-    prisma.metric.count({ where: { period: "LEGACY", contentItem: brandWhere(filters.brandId) } }),
+    prisma.metric.count({ where: { period: "WEEKLY", contentItem: { AND: [brandWhere(filters.brandId), contentScope(filters.user, "metrics.view")] } } }),
+    prisma.metric.count({ where: { period: "LEGACY", contentItem: { AND: [brandWhere(filters.brandId), contentScope(filters.user, "metrics.view")] } } }),
   ]));
   return <section data-ready-block="metrics.summary">
     <p className="text-inkmuted mb-3 text-xs">Semanas completas de lunes a domingo. Las cifras pertenecen a la plataforma registrada. Retención: media simple por registro semanal; incluye 0 % y omite solo datos ausentes.</p>
@@ -212,9 +213,9 @@ async function MetricsOverview({ filters, range }: MetricsSectionProps) {
               accent="#ec4899"
             />
             <Stat
-              label="Alcance"
+              label="Suma de alcances"
               value={compactNumber(hoy.reach)}
-              sub={<Delta actual={hoy.reach} anterior={antes.reach} />}
+              sub={<span>No representa personas únicas entre semanas o plataformas.</span>}
               icon={<Radar size={15} />}
               accent="#0ea5e9"
             />

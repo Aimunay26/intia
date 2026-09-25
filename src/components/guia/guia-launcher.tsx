@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, Play, RotateCcw, Sparkles } from "lucide-react";
+import { Compass, Play, Sparkles } from "lucide-react";
 import { useGuia } from "./guia-context";
 import { cn } from "@/lib/utils";
 

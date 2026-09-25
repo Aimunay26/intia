@@ -322,7 +322,7 @@ test("el Asset se guarda con «data» o con «blobId», nunca ambos, y el Blob s
   const lectura = await assetImport.leerArchivoImportado(fd.get("file"));
   assert.equal(lectura.ok, true);
   const creados = [];
-  const tx = { asset: { create: async ({ data }) => { creados.push(data); return { id: `asset-${creados.length}` }; } } };
+  const tx = { $executeRaw: async () => 0, $queryRaw: async () => [{ bytes: 0n }], asset: { create: async ({ data }) => { creados.push(data); return { id: `asset-${creados.length}` }; } } };
   const user = { id: "u1", role: "OWNER" };
 
   // Flag apagado: no hay Blob y los bytes van en la fila.

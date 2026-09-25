@@ -1,5 +1,7 @@
 "use server";
 
+import { deleteSecret, writeSecret } from "@/lib/secrets";
+import { isSecretName, SecretConfigError } from "@/lib/secret-crypto";
 import { revalidatePath } from "next/cache";
 
 import { auditInTransaction, type Cambio } from "@/lib/audit";
@@ -40,7 +42,7 @@ export async function guardarAjustes(
     return { error: "Solo el dueño puede cambiar los ajustes." };
   }
 
-  return withMutation(actor, true, async (tx, afterCommit) => {
+  try { return await withMutation(actor, true, async (tx, afterCommit) => {
   await tx.$queryRaw`SELECT pg_advisory_xact_lock(727106410)::text`;
   const keys = [
     ...Object.values(SETTING_KEYS),
@@ -177,8 +179,9 @@ export async function guardarAjustes(
 
   for (const clave of claves) {
     if (clave.quitar) {
-      if ((actuales[clave.key] ?? "").length) {
-        await setSetting(clave.key, "", tx);
+      if (snapshot.secretKeys.includes(clave.key) || snapshot.legacySecretKeys.includes(clave.key) || (actuales[clave.key] ?? "").length) {
+        if (isSecretName(clave.key)) await deleteSecret(clave.key, tx);
+        else await setSetting(clave.key, "", tx);
         await auditInTransaction(tx, {
           user: actor,
           action: "EDITAR",
@@ -192,7 +195,8 @@ export async function guardarAjustes(
     // Campo vacío = "no la toques". Nunca borramos por omisión.
     if (!clave.valor) continue;
 
-    await setSetting(clave.key, clave.valor, tx);
+    if (isSecretName(clave.key)) await writeSecret(clave.key, clave.valor, tx);
+    else await setSetting(clave.key, clave.valor, tx);
     await auditInTransaction(tx, {
       user: actor,
       action: "EDITAR",
@@ -213,5 +217,5 @@ export async function guardarAjustes(
   afterCommit(() => revalidatePath("/", "layout"));
 
   return { ok: "Ajustes guardados." };
-  });
+  }); } catch (error) { if (error instanceof SecretConfigError) return { error: error.message }; throw error; }
 }

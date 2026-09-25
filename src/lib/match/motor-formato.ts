@@ -16,16 +16,7 @@
 
 import type { Beat } from "@/lib/ai/context";
 
-import {
-  afinidad,
-  bolsaDelFormato,
-  coincidencias,
-  energiaPedida,
-  fuerza,
-  norm,
-  tieneDialogo,
-  type FormatoMatch,
-} from "@/lib/match/lexico";
+import { afinidad, bolsaDelFormato, energiaPedida, fuerza, norm, tieneDialogo, type FormatoMatch } from "@/lib/match/lexico";
 import type { GuionMatch, PersonaMatch, Senal, Veredicto } from "@/lib/match/tipos";
 
 export type { FormatoMatch } from "@/lib/match/lexico";

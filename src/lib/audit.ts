@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { createHash } from "node:crypto";
 import { clientIp, type SessionUser } from "@/lib/auth";
 import type { AppTransaction } from "@/lib/prisma";
 
@@ -51,7 +52,7 @@ export async function auditInTransaction(tx: AppTransaction, input: AuditInput) 
   await tx.auditLog.create({ data: {
     userId: input.user?.id ?? null, userName: input.user?.name ?? "Sistema",
     action: input.action, entity: input.entity, entityId: input.entityId ?? null,
-    summary: input.summary, changes: input.changes ? JSON.stringify(input.changes) : null,
+    summary: input.summary, changes: input.changes ? JSON.stringify(compactAuditChanges(input.changes)) : null,
     brandId: input.brandId ?? null,
   } });
 }
@@ -66,7 +67,7 @@ export async function logAudit(input: AuditInput) {
         entity: input.entity,
         entityId: input.entityId ?? null,
         summary: input.summary,
-        changes: input.changes ? JSON.stringify(input.changes) : null,
+        changes: input.changes ? JSON.stringify(compactAuditChanges(input.changes)) : null,
         brandId: input.brandId ?? null,
         ip: await clientIp(),
       },
@@ -74,6 +75,15 @@ export async function logAudit(input: AuditInput) {
   } catch (error) {
     console.error("[audit] no se pudo registrar el movimiento:", error);
   }
+}
+
+/** Large document text is identified, not copied into every audit revision. */
+export function compactAuditChanges(changes: Record<string, Cambio>): Record<string, Cambio> {
+  const compact = (value: unknown) => {
+    const text = typeof value === "string" ? value : JSON.stringify(value);
+    return text && text.length > 2000 ? { characters: text.length, sha256: createHash("sha256").update(text).digest("hex"), summarized: true } : value;
+  };
+  return Object.fromEntries(Object.entries(changes).map(([key,c]) => [key, { ...c, antes: compact(c.antes), despues: compact(c.despues), ...(c.verAntes ? { verAntes: c.verAntes.slice(0,2000) } : {}), ...(c.verDespues ? { verDespues: c.verDespues.slice(0,2000) } : {}) }]));
 }
 
 /**

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { getGenerationStatus, cancelGenerationJob, resumeGenerationJob } from "@/app/actions/generation-jobs";
 
+const stages: Record<string,string> = { context_load: "Leyendo contexto", references_load: "Leyendo referencias", prompt_build: "Preparando instrucciones", model_resolve: "Validando modelo", key_resolve: "Validando configuración", provider_request: "Esperando al proveedor", response_parse: "Interpretando respuesta", response_saved: "Guardando guion", settings_load: "Leyendo configuración", script_save: "Validando y guardando guion", response_validate: "Validando contenido del guion", completed: "Finalizado" };
 const labels: Record<string, string> = { QUEUED: "En espera", RUNNING: "Generando", COMPLETED: "Completado", PARTIAL: "Completado parcialmente", FAILED: "No completado", CANCELLED: "Cancelado" };
 type Job = NonNullable<Awaited<ReturnType<typeof getGenerationStatus>>>;
 
@@ -48,11 +49,13 @@ export default function JobProgress({ initial }: { initial: Job }) {
     <h1 className="text-2xl font-bold">Generación de guiones</h1>
     <p>Puedes cambiar de sección o cerrar esta pestaña. Encontrarás aquí el avance y los guiones terminados.</p>
     <div className="card space-y-3 p-5" aria-live="polite">
-      <p className="font-semibold">{labels[job.status]} · {completed} de {job.items.length} guiones</p>
+      <p className="text-xs text-inkmuted">Código de seguimiento: {job.id}</p><p className="font-semibold">{labels[job.status]} · {completed} de {job.items.length} guiones</p>
       <progress className="w-full" value={completed} max={job.items.length} aria-label="Guiones completados" />
       {(error || job.error) && <p role="alert" className="text-amber-600">{error || job.error}</p>}
       {job.items.map(item => <div key={item.id} className="border-t border-line py-3">
         <p>Guion {item.order + 1} · {labels[item.status]}{item.attempts > 1 ? ` · intento ${item.attempts}/3` : ""}</p>
+        {item.stage && <p className="text-sm">Última etapa: {stages[item.stage] ?? "Procesando"}</p>}
+        {item.diagnostics && typeof item.diagnostics === "object" && !Array.isArray(item.diagnostics) && <p className="text-xs text-inkmuted">Modelo: {String(item.diagnostics.model ?? "—")} · Origen: {({ request: "selección", structure: "estructura", settings: "ajustes", catalog: "catálogo" } as Record<string,string>)[String(item.diagnostics.modelSource)] ?? "—"} · Referencias utilizadas: {Array.isArray(item.diagnostics.references) ? item.diagnostics.references.length : 0} de {String(item.diagnostics.availableReferences ?? 0)}</p>}
         {item.script && <Link className="text-brand font-semibold" href={`/guiones/${item.script.id}`}>{item.script.title} →</Link>}
         {item.error && <p className="text-sm text-inkmuted">{item.error}</p>}
       </div>)}

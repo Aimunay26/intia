@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -56,7 +57,7 @@ export default async function EstructurasPage({
   return measurePagePhase("page:/estructuras", async () => {
   const user = await requirePageSection("structures");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="structures" query={await searchParams} />;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
   const puedeEditar = can(user.role, LEVEL.MEMBER);
 
   const [structures, docTotals, docEnIa] = await Promise.all([

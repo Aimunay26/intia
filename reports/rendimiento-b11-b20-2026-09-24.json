@@ -1,0 +1,604 @@
+{
+  "environment": "ephemeral-local-postgresql",
+  "baseline": "6a17cc7",
+  "simulatedOrmRoundTripMs": 20,
+  "csvSamples": 3,
+  "caveat": "p95 with 3 CSV samples equals the maximum; injected delay per awaited Prisma operation and transaction boundary, not measured Neon network latency. Bytes are serialized query results, not wire traffic.",
+  "csv": [
+    {
+      "rows": 50,
+      "mode": "before",
+      "p50Ms": 14056,
+      "p95Ms": 14103,
+      "readings": [
+        {
+          "elapsedMs": 14103,
+          "queries": 452,
+          "serializedResultBytes": 1234031
+        },
+        {
+          "elapsedMs": 14056,
+          "queries": 451,
+          "serializedResultBytes": 1234031
+        },
+        {
+          "elapsedMs": 14053,
+          "queries": 452,
+          "serializedResultBytes": 1234031
+        }
+      ]
+    },
+    {
+      "rows": 500,
+      "mode": "before",
+      "p50Ms": 139691,
+      "p95Ms": 139708,
+      "readings": [
+        {
+          "elapsedMs": 139708,
+          "queries": 4510,
+          "serializedResultBytes": 2282731
+        },
+        {
+          "elapsedMs": 139601,
+          "queries": 4509,
+          "serializedResultBytes": 2282731
+        },
+        {
+          "elapsedMs": 139691,
+          "queries": 4511,
+          "serializedResultBytes": 2282731
+        }
+      ]
+    },
+    {
+      "rows": 50,
+      "mode": "after",
+      "p50Ms": 1045,
+      "p95Ms": 1063,
+      "readings": [
+        {
+          "elapsedMs": 1063,
+          "queries": 34,
+          "serializedResultBytes": 39989
+        },
+        {
+          "elapsedMs": 1044,
+          "queries": 34,
+          "serializedResultBytes": 39989
+        },
+        {
+          "elapsedMs": 1045,
+          "queries": 34,
+          "serializedResultBytes": 39989
+        }
+      ]
+    },
+    {
+      "rows": 500,
+      "mode": "after",
+      "p50Ms": 7795,
+      "p95Ms": 7796,
+      "readings": [
+        {
+          "elapsedMs": 7796,
+          "queries": 250,
+          "serializedResultBytes": 402779
+        },
+        {
+          "elapsedMs": 7795,
+          "queries": 251,
+          "serializedResultBytes": 402779
+        },
+        {
+          "elapsedMs": 7791,
+          "queries": 250,
+          "serializedResultBytes": 402779
+        }
+      ]
+    }
+  ],
+  "references": {
+    "before": {
+      "p50Ms": 140,
+      "p95Ms": 155,
+      "queries": 3,
+      "serializedResultBytes": 9006743,
+      "samples": 20
+    },
+    "after": {
+      "p50Ms": 62,
+      "p95Ms": 63,
+      "queries": 1,
+      "serializedResultBytes": 80709,
+      "samples": 20
+    }
+  },
+  "indexes": [
+    {
+      "name": "Task_columnId_order_id_idx",
+      "query": "SELECT id,title FROM \"Task\" WHERE \"columnId\"='column' ORDER BY \"order\",id LIMIT 30",
+      "before": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 0.72,
+          "Total Cost": 14.45,
+          "Plan Rows": 30,
+          "Plan Width": 24,
+          "Actual Startup Time": 0.039,
+          "Actual Total Time": 0.041,
+          "Actual Rows": 30,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Incremental Sort",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 0.72,
+              "Total Cost": 4648.04,
+              "Plan Rows": 10150,
+              "Plan Width": 24,
+              "Actual Startup Time": 0.038,
+              "Actual Total Time": 0.039,
+              "Actual Rows": 30,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Sort Key": [
+                "\"order\"",
+                "id"
+              ],
+              "Presorted Key": [
+                "\"order\""
+              ],
+              "Full-sort Groups": {
+                "Group Count": 1,
+                "Sort Methods Used": [
+                  "quicksort"
+                ],
+                "Sort Space Memory": {
+                  "Average Sort Space Used": 27,
+                  "Peak Sort Space Used": 27
+                }
+              },
+              "Shared Hit Blocks": 7,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "Task_order_idx",
+                  "Relation Name": "Task",
+                  "Alias": "Task",
+                  "Startup Cost": 0.29,
+                  "Total Cost": 4191.29,
+                  "Plan Rows": 10150,
+                  "Plan Width": 24,
+                  "Actual Startup Time": 0.01,
+                  "Actual Total Time": 0.029,
+                  "Actual Rows": 31,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Filter": "(\"columnId\" = 'column'::text)",
+                  "Rows Removed by Filter": 279,
+                  "Index Searches": 1,
+                  "Shared Hit Blocks": 7,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 59,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.187,
+        "Triggers": [],
+        "Execution Time": 0.054
+      },
+      "after": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 0.42,
+          "Total Cost": 11.69,
+          "Plan Rows": 30,
+          "Plan Width": 24,
+          "Actual Startup Time": 0.027,
+          "Actual Total Time": 0.035,
+          "Actual Rows": 30,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 3,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Scan Direction": "Forward",
+              "Index Name": "Task_columnId_order_id_idx",
+              "Relation Name": "Task",
+              "Alias": "Task",
+              "Startup Cost": 0.42,
+              "Total Cost": 3812.93,
+              "Plan Rows": 10150,
+              "Plan Width": 24,
+              "Actual Startup Time": 0.025,
+              "Actual Total Time": 0.032,
+              "Actual Rows": 30,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Index Cond": "(\"columnId\" = 'column'::text)",
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Shared Hit Blocks": 4,
+              "Shared Read Blocks": 3,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 23,
+          "Shared Read Blocks": 1,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.202,
+        "Triggers": [],
+        "Execution Time": 0.049
+      }
+    },
+    {
+      "name": "Task_columnId_brandId_order_id_idx",
+      "query": "SELECT id,title FROM \"Task\" WHERE \"columnId\"='column' AND \"brandId\"='A' ORDER BY \"order\",id LIMIT 30",
+      "before": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 170.81,
+          "Total Cost": 170.89,
+          "Plan Rows": 30,
+          "Plan Width": 24,
+          "Actual Startup Time": 0.761,
+          "Actual Total Time": 0.763,
+          "Actual Rows": 30,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 1002,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Sort",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 170.81,
+              "Total Cost": 171.08,
+              "Plan Rows": 107,
+              "Plan Width": 24,
+              "Actual Startup Time": 0.76,
+              "Actual Total Time": 0.761,
+              "Actual Rows": 30,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Sort Key": [
+                "\"order\"",
+                "id"
+              ],
+              "Sort Method": "top-N heapsort",
+              "Sort Space Used": 27,
+              "Sort Space Type": "Memory",
+              "Shared Hit Blocks": 1002,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "Task_brandId_idx",
+                  "Relation Name": "Task",
+                  "Alias": "Task",
+                  "Startup Cost": 0.29,
+                  "Total Cost": 167.65,
+                  "Plan Rows": 107,
+                  "Plan Width": 24,
+                  "Actual Startup Time": 0.012,
+                  "Actual Total Time": 0.684,
+                  "Actual Rows": 1000,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Index Cond": "(\"brandId\" = 'A'::text)",
+                  "Rows Removed by Index Recheck": 0,
+                  "Filter": "(\"columnId\" = 'column'::text)",
+                  "Rows Removed by Filter": 0,
+                  "Index Searches": 1,
+                  "Shared Hit Blocks": 1002,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 3,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.104,
+        "Triggers": [],
+        "Execution Time": 0.775
+      },
+      "after": {
+        "Plan": {
+          "Node Type": "Limit",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 0.42,
+          "Total Cost": 74.94,
+          "Plan Rows": 30,
+          "Plan Width": 24,
+          "Actual Startup Time": 0.028,
+          "Actual Total Time": 0.055,
+          "Actual Rows": 30,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 30,
+          "Shared Read Blocks": 3,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Index Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Scan Direction": "Forward",
+              "Index Name": "Task_columnId_brandId_order_id_idx",
+              "Relation Name": "Task",
+              "Alias": "Task",
+              "Startup Cost": 0.42,
+              "Total Cost": 266.23,
+              "Plan Rows": 107,
+              "Plan Width": 24,
+              "Actual Startup Time": 0.027,
+              "Actual Total Time": 0.052,
+              "Actual Rows": 30,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Index Cond": "((\"columnId\" = 'column'::text) AND (\"brandId\" = 'A'::text))",
+              "Rows Removed by Index Recheck": 0,
+              "Index Searches": 1,
+              "Shared Hit Blocks": 30,
+              "Shared Read Blocks": 3,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 26,
+          "Shared Read Blocks": 1,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.18,
+        "Triggers": [],
+        "Execution Time": 0.068
+      }
+    },
+    {
+      "name": "ContentItem_scriptId_idx",
+      "query": "SELECT id FROM \"ContentItem\" WHERE \"scriptId\"='script'",
+      "before": {
+        "Plan": {
+          "Node Type": "Seq Scan",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Relation Name": "ContentItem",
+          "Alias": "ContentItem",
+          "Startup Cost": 0,
+          "Total Cost": 558,
+          "Plan Rows": 2,
+          "Plan Width": 11,
+          "Actual Startup Time": 0.9,
+          "Actual Total Time": 0.901,
+          "Actual Rows": 2,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Filter": "(\"scriptId\" = 'script'::text)",
+          "Rows Removed by Filter": 19998,
+          "Shared Hit Blocks": 308,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning": {
+          "Shared Hit Blocks": 47,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.166,
+        "Triggers": [],
+        "Execution Time": 0.913
+      },
+      "after": {
+        "Plan": {
+          "Node Type": "Index Scan",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Scan Direction": "Forward",
+          "Index Name": "ContentItem_scriptId_idx",
+          "Relation Name": "ContentItem",
+          "Alias": "ContentItem",
+          "Startup Cost": 0.29,
+          "Total Cost": 8.32,
+          "Plan Rows": 2,
+          "Plan Width": 11,
+          "Actual Startup Time": 0.013,
+          "Actual Total Time": 0.014,
+          "Actual Rows": 2,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Index Cond": "(\"scriptId\" = 'script'::text)",
+          "Rows Removed by Index Recheck": 0,
+          "Index Searches": 1,
+          "Shared Hit Blocks": 1,
+          "Shared Read Blocks": 2,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning": {
+          "Shared Hit Blocks": 17,
+          "Shared Read Blocks": 1,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.106,
+        "Triggers": [],
+        "Execution Time": 0.024
+      }
+    }
+  ]
+}

@@ -23,3 +23,11 @@ export function resolveAiModel(provider: string, requested?: string | null, ...d
   }
   return DEFAULT_MODEL[provider];
 }
+
+/** Unlike legacy normalization, active configuration never silently ignores an invalid model. */
+export function effectiveAiModel(provider: string, requested?: string | null, structure?: string | null, setting?: string | null) {
+  for (const [source, candidate] of [["request", requested], ["structure", structure], ["settings", setting]] as const) {
+    if (candidate?.trim()) return { model: resolveAiModel(provider, candidate), source };
+  }
+  return { model: resolveAiModel(provider), source: "catalog" as const };
+}

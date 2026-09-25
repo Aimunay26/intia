@@ -2,7 +2,7 @@
 
 import { EditForm, RevisionTokenField } from "@/components/edit-form";
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, KeyRound, Loader2, LogIn, Play, Save, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle2, KeyRound, Loader2, LogIn, Play, Save } from "lucide-react";
 
 import { guardarAjustes, type SettingsState } from "@/app/actions/app-settings";
 import { probarClaveIA, type TestKeyResult } from "@/app/actions/probar-clave";

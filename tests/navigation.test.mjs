@@ -159,22 +159,20 @@ test("inicialización idempotente, con reintento de conflicto y una auditoría",
   assert.equal(columns.size, 5); assert.equal(audits, 1); assert.equal(attempts, 3);
 });
 
-test("leer el feed sin token no escribe y conserva tokens existentes", async () => {
-  let token = null;
-  const { getFeedToken } = load("src/lib/ical.ts", { "@/lib/settings": { getSetting: async () => token, setSetting: () => assert.fail("Una lectura no debe crear el token") } });
-  assert.equal(await getFeedToken(), null);
-  token = "existing-calendar-token-at-least-24-characters";
-  assert.equal(await getFeedToken(), token);
+test("un token de calendario ausente/malformado no consulta DB ni crea una suscripción", async () => {
+  const { resolveCalendarSubscription } = load("src/lib/calendar-subscriptions.ts", { "@/lib/prisma": { prisma: new Proxy({}, { get: () => assert.fail("No consultar DB") }) } });
+  assert.equal(await resolveCalendarSubscription(null), null);
+  assert.equal(await resolveCalendarSubscription("short"), null);
 });
 
-test("el snapshot de ajustes evita lecturas adicionales: la clave guardada manda y el entorno es respaldo", async () => {
+test("el estado de claves usa solo metadatos: la clave guardada manda y el entorno es respaldo", async () => {
   const names = ["ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"];
   const before = Object.fromEntries(names.map((key) => [key, process.env[key]]));
   try {
     names.forEach((key) => delete process.env[key]);
     const prisma = { appSetting: { findUnique: () => assert.fail("Lectura duplicada de ajustes") } };
     const { aiStatus } = load("src/lib/settings.ts", { "@/lib/prisma": { prisma } });
-    const snapshot = { "ai.anthropic.apiKey": "fixture-db-key", "auth.google.clientId": "fixture-id", "auth.google.clientSecret": "fixture-secret" };
+    const snapshot = ["ai.anthropic.apiKey", "auth.google.clientSecret"];
     assert.equal((await aiStatus(snapshot)).anthropic.source, "db");
     assert.equal((await aiStatus(snapshot)).anthropic.envDefined, false);
     // Con la variable definida, la guardada en Ajustes sigue mandando.
@@ -182,14 +180,14 @@ test("el snapshot de ajustes evita lecturas adicionales: la clave guardada manda
     assert.equal((await aiStatus(snapshot)).anthropic.source, "db");
     assert.equal((await aiStatus(snapshot)).anthropic.envDefined, true);
     // Sin clave guardada (o guardada en blanco), la variable es el respaldo.
-    assert.equal((await aiStatus({})).anthropic.source, "env");
-    assert.equal((await aiStatus({ "ai.anthropic.apiKey": "   " })).anthropic.source, "env");
+    assert.equal((await aiStatus([])).anthropic.source, "env");
+    assert.equal((await aiStatus([])).anthropic.source, "env");
     // La entrada con Google conserva su propia precedencia (entorno manda).
-    const { getGoogleConfig } = load("src/lib/google.ts", { "@/lib/settings": { getSetting: () => assert.fail("Lectura duplicada de OAuth") } });
-    assert.equal((await getGoogleConfig(snapshot)).source, "db");
+    const { googleConfigStatus } = load("src/lib/google.ts", { "@/lib/settings": { getSetting: () => assert.fail("Lectura duplicada de OAuth") } });
+    assert.equal((await googleConfigStatus({"auth.google.clientId":"fixture-id"}, snapshot)).source, "db");
     process.env.GOOGLE_CLIENT_ID = "fixture-env-id"; process.env.GOOGLE_CLIENT_SECRET = "fixture-env-secret";
-    assert.equal((await getGoogleConfig(snapshot)).source, "env");
-    assert.equal((await aiStatus({})).google.configured, false);
+    assert.equal((await googleConfigStatus({"auth.google.clientId":"fixture-id"}, snapshot)).source, "env");
+    assert.equal((await aiStatus([])).google.configured, false);
   } finally {
     for (const key of names) { if (before[key] === undefined) delete process.env[key]; else process.env[key] = before[key]; }
   }

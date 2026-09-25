@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -76,7 +77,7 @@ export default async function ContenidoPage({
   return measurePagePhase("page:/contenido", async () => {
   const user = await requirePageSection("content");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="content" query={await searchParams} />;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
 
   const where: Prisma.ContentItemWhereInput = {};
   if (sp.q) {
@@ -110,7 +111,7 @@ export default async function ContenidoPage({
   // Vistas rápidas del panel. Se aplican después de los filtros normales para
   // que el número que se ve en el panel cuadre con la lista que sale al pulsar.
   const ahora = new Date();
-  const [businessYear, businessMonth] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(ahora).split("-").map(Number);
+
   const inicioHoy = startOfDay(ahora);
   if (sp.vista === "produccion") {
     where.status = { in: ACTIVE_STATUSES };

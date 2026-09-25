@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { Pagination } from "@/components/filters";
@@ -52,8 +53,9 @@ function Avatar({
   photoUrl?: string | null;
 }) {
   if (photoUrl) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
+      // Avatar externo; se conserva la carga directa sin contratar transformación de imágenes.
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={photoUrl}
         alt=""
@@ -189,7 +191,7 @@ export default async function ArquetiposPage({
   return measurePagePhase("page:/arquetipos", async () => {
   const user = await requirePageSection("archetypes");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="archetypes" query={await searchParams} />;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
   const q = (sp.q ?? "").trim();
 
   const editable = can(user.role, LEVEL.MEMBER);

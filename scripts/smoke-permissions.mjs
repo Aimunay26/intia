@@ -6,11 +6,12 @@ import {randomBytes} from 'node:crypto';
 import {PrismaClient} from '@prisma/client';
 import {chromium,expect} from '@playwright/test';
 import bcrypt from 'bcryptjs';
+import {load} from '../tests/load-module.mjs';
 import {assertLocalDatabase} from './local-database-only.mjs';
 const url=assertLocalDatabase(), admin=new PrismaClient({datasourceUrl:url.href});
 const name=`intia_profiles_ui_${randomBytes(4).toString('hex')}_test`,target=new URL(url);target.pathname='/'+name;
 const port=3011,base=`http://127.0.0.1:${port}`;
-const env={...process.env,DATABASE_URL:target.href,AUTH_SECRET:randomBytes(32).toString('hex'),AI_JOBS_ENABLED:'false',BLOB_PRIVATE_ENABLED:'false',NODE_ENV:'production',WORKFLOW_LOCAL_RECOVER_ACTIVE_RUNS:'false'};
+const env={...process.env,DATABASE_URL:target.href,AUTH_SECRET:randomBytes(32).toString('hex'),APP_SECRETS_KEYS:JSON.stringify({fixture:randomBytes(32).toString('base64')}),APP_SECRETS_ACTIVE_KEY:'fixture',AI_JOBS_ENABLED:'false',BLOB_PRIVATE_ENABLED:'false',NODE_ENV:'production',WORKFLOW_LOCAL_RECOVER_ACTIVE_RUNS:'false'};
 const roles=['STRATEGY','WRITER','PRODUCTION','CAMERA','TALENT','EDITOR','DESIGNER','PUBLISHER','ANALYST'];
 const nav={STRATEGY:['/calendario','/contenido','/tareas','/marcas','/guiones','/estructuras','/arquetipos','/metricas'],WRITER:['/calendario','/contenido','/tareas','/marcas','/generador','/guiones','/estructuras','/arquetipos'],PRODUCTION:['/calendario','/contenido','/tareas','/guiones'],CAMERA:['/calendario','/contenido','/tareas','/guiones'],TALENT:['/calendario','/contenido','/tareas','/guiones','/arquetipos'],EDITOR:['/calendario','/contenido','/tareas','/guiones'],DESIGNER:['/contenido','/tareas','/marcas','/estructuras'],PUBLISHER:['/calendario','/contenido','/tareas','/marcas'],ANALYST:['/contenido','/tareas','/marcas','/metricas'],EMPTY:[]};
 let server,db,browser;const report={environment:'local-production-build',profiles:[],errors:[],productionChanged:false};
@@ -36,6 +37,13 @@ try{
  await db.taskColumn.createMany({data:[{id:'todo',name:'Pendiente'},{id:'done',name:'Terminado'}]});
  for(const id of roles){await db.assignment.create({data:{contentItemId:'assigned',userId:id,role:'EDITOR'}});await db.task.create({data:{id:'task-'+id,title:'Tarea '+id,columnId:'todo',brandId:'A',assigneeId:id}});}
  await db.asset.create({data:{id:'foreign-asset',ownerType:'content',ownerId:'foreign',filename:'private.txt',mimeType:'text/plain',size:7,data:Buffer.from('SECRETO')}});
+ await db.metric.createMany({data:[{contentItemId:'assigned',date:new Date('2026-09-07T12:00Z'),period:'WEEKLY',platform:'TIKTOK',views:37},{contentItemId:'foreign',date:new Date('2026-09-07T12:00Z'),period:'WEEKLY',platform:'TIKTOK',views:999999}]});
+ await db.brandObjective.create({data:{id:'auto-home',brandId:'A',name:'Automático visible en panel',unit:'vistas',metricKey:'views',calculationMode:'WEEKLY_SUM',calculationFrom:new Date('2026-09-07T12:00Z'),calculationTo:new Date('2026-09-13T12:00Z'),currentValue:999,targetValue:100,createdAt:new Date(Date.now()-100*86400000),deadline:new Date(Date.now()+86400000)}});
+ await db.comment.createMany({data:Array.from({length:35},(_,i)=>({id:'comment-'+String(i).padStart(2,'0'),contentItemId:'assigned',userId:'OWNER',body:'Comentario de página '+i}))});
+ const analyst={...await db.user.findUniqueOrThrow({where:{id:'ANALYST'}}),profiles:['ANALYST'],brandIds:['A']};
+ const imports=load('src/lib/metric-import-service.ts',{'@/lib/prisma':{prisma:db}});
+ const csvForm=new FormData();csvForm.set('csv','video,semana,plataforma,vistas\n'+Array.from({length:50},(_,i)=>{const d=new Date(Date.UTC(2024,0,1+i*7));return 'assigned,'+d.toISOString().slice(0,10)+',TIKTOK,3';}).join('\n'));
+ const pendingCsv=await imports.startMetricImport(analyst,csvForm);assert.equal(pendingCsv.processed,25);
  server=spawn(process.execPath,['node_modules/next/dist/bin/next','start','-p',String(port),'-H','127.0.0.1'],{env,windowsHide:true,stdio:['ignore','pipe','pipe']});
  for(const stream of [server.stdout,server.stderr])stream.on('data',chunk=>fs.appendFileSync('.audit/profiles-ui-server.log',chunk));
  let ready=false;for(let n=0;n<80;n++){try{if((await fetch(base+'/login')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,'Servidor local disponible');
@@ -46,8 +54,12 @@ try{
   let phase='profile-navigation';
   page.on('pageerror',error=>report.errors.push({role,url:page.url(),phase,error:error.message}));
   await page.goto(base+'/login');await page.locator('input[name="email"]').fill(`${role}@ui.fixture.test`);await page.locator('input[name="password"]').fill(password);await page.getByRole('button',{name:'Entrar',exact:true}).click();await page.waitForURL(base+'/');
-  const aside=page.locator('aside').first();
+  const aside=page.locator('aside').first(),main=page.getByRole('main');
   if(role==='OWNER'){
+   await expect(main.getByText('37 vistas de 100 vistas',{exact:true})).toBeVisible();
+   await page.goto(base+'/marcas');await expect(page.locator('main a.brand-strip[href="/marcas/A"]')).toContainText(/En riesgo\s*1/i);
+   report.calculatedObjectivesConsistentAcrossPages=true;
+   assert.equal((await page.goto(base+'/marcas?q=uno&q=dos')).status(),200);await expect(page.locator('main a.brand-strip[href="/marcas/A"]')).toBeVisible();
    for(const route of ['/equipo','/actividad','/ajustes'])await aside.locator(`a[href="${route}"]`).waitFor();
    await page.goto(base+'/equipo');await page.getByRole('button',{name:'Invitar persona'}).click();
    const dialog=page.getByRole('dialog');await dialog.locator('input[name="profiles"][value="WRITER"]').waitFor();assert.equal(await dialog.locator('input[name="profiles"]').count(),9);assert.equal(await dialog.locator('input[name="brandIds"]').count(),2);
@@ -76,18 +88,54 @@ try{
    assert.equal((await db.user.findUniqueOrThrow({where:{id:'OWNER'}})).name,'Cambio ajeno de perfil');
    await db.user.update({where:{id:'OWNER'},data:{name:'OWNER'}});
    await db.asset.create({data:{id:'own-text',ownerType:'user',ownerId:'OWNER',filename:'borrador.txt',mimeType:'text/plain',data:Buffer.from('Texto'),size:5,extractedText:'Texto inicial'}});
-   await page.goto(base+'/mi-perfil');await page.getByTitle('Ver o editar el texto que lee la IA',{exact:true}).click();
+   await page.goto(base+'/mi-perfil');
+   // Next may retain an off-screen streaming segment outside the mounted main.
+   // Keep strict uniqueness inside the rendered page instead of choosing a copy.
+   const editAssetText=main.getByTitle('Ver o editar el texto que lee la IA',{exact:true});
+   await expect(editAssetText).toHaveCount(1);await editAssetText.click();
    const textDialog=page.getByRole('dialog');await textDialog.locator('textarea[name="extractedText"]').fill('Borrador de texto retenido');
    await db.asset.update({where:{id:'own-text'},data:{extractedText:'Cambio ajeno de texto'}});
    await textDialog.getByRole('button',{name:'Guardar texto',exact:true}).click();await textDialog.getByRole('alert').waitFor();
    await expect(textDialog.locator('textarea[name="extractedText"]')).toHaveValue('Borrador de texto retenido');
    assert.equal((await db.asset.findUniqueOrThrow({where:{id:'own-text'}})).extractedText,'Cambio ajeno de texto');
-   await page.goto(base+'/ajustes');await page.locator('input[name="orgName"]').fill('Borrador de ajustes retenido');
+   await page.goto(base+'/ajustes');
+   // Streaming may briefly retain a hidden React segment; require one mounted form.
+   await expect(main.locator('input[name="orgName"]')).toHaveCount(1);
+   await main.locator('input[name="orgName"]').fill('Borrador de ajustes retenido');
    await db.appSetting.upsert({where:{key:'org.name'},create:{key:'org.name',value:'Cambio ajeno de ajustes'},update:{value:'Cambio ajeno de ajustes'}});
-   await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();await page.locator('main').getByRole('alert').waitFor();
-   await expect(page.locator('input[name="orgName"]')).toHaveValue('Borrador de ajustes retenido');
+   await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();await main.locator('form').filter({has:page.locator('input[name="orgName"]')}).getByRole('alert').waitFor();
+   await expect(main.locator('input[name="orgName"]')).toHaveValue('Borrador de ajustes retenido');
    assert.equal((await db.appSetting.findUniqueOrThrow({where:{key:'org.name'}})).value,'Cambio ajeno de ajustes');
    report.revisionDraftsPreserved=['user','asset','settings'];
+   const retention=main.locator('section').filter({has:page.getByRole('heading',{name:'Retención técnica',exact:true})});
+   await expect(retention.getByText(/La limpieza está desactivada/)).toBeVisible();
+   await expect(retention.getByRole('checkbox')).not.toBeChecked();
+   await retention.getByRole('button',{name:'Ver impacto sin borrar',exact:true}).click();
+   await expect(retention.getByText(/Registros candidatos:/)).toBeVisible();
+   assert.equal(await db.appSetting.count({where:{key:'ops.retention.policy'}}),0);
+   report.retentionPreviewWithoutActivation=true;
+   phase='secrets-and-calendar';await page.goto(base+'/ajustes');
+   await expect(main.locator('input[name="orgName"]')).toHaveCount(1);
+   await main.locator('input[name="googleKey"]').fill('b22-browser-secret-fixture');
+   await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();
+   await expect(main.getByText('Ajustes guardados.',{exact:true})).toBeVisible();
+   const encrypted=await db.appSecret.findUniqueOrThrow({where:{key:'ai.google.apiKey'}});
+   assert.ok(!encrypted.value.includes('b22-browser-secret-fixture'));
+   await page.goto(base+'/ajustes');assert.ok(!(await page.content()).includes('b22-browser-secret-fixture'));
+   const subscriptions=page.getByRole('region',{name:'Suscripciones de calendario',exact:true});
+   await subscriptions.locator('input[name="label"]').fill('Calendario QA');await subscriptions.locator('select[name="brandId"]').selectOption('A');
+   await subscriptions.getByRole('button',{name:'Crear enlace privado',exact:true}).click();
+   const privateLink=subscriptions.getByRole('textbox',{name:'Enlace privado de suscripción',exact:true});await expect(privateLink).toBeVisible();
+   const issued=await privateLink.inputValue();const download=await page.request.get(issued+'&marca=B');assert.equal(download.status(),200);const ics=await download.text();assert.ok(ics.includes('Video asignado'));assert.ok(!ics.includes('VIDEO_SECRETO'));
+   await page.goto(base+'/ajustes');await expect(privateLink).toHaveCount(0);
+   const row=subscriptions.getByRole('listitem').filter({hasText:'Calendario QA'});await row.getByRole('button',{name:'Renovar enlace',exact:true}).click();
+   await expect(row.getByRole('textbox',{name:'Enlace privado de suscripción',exact:true})).toBeVisible();
+   const renewed=await row.getByRole('textbox',{name:'Enlace privado de suscripción',exact:true}).inputValue();assert.equal((await page.request.get(issued)).status(),401);assert.equal((await page.request.get(renewed)).status(),200);
+   await row.getByRole('button',{name:'Revocar',exact:true}).click();await expect(row.getByText('Enlace revocado.',{exact:true})).toBeVisible();assert.equal((await page.request.get(renewed)).status(),401);
+   report.secretWriteEncryptedAndNotRendered=true;report.calendarCreateRotateRevokeAndScope=true;
+
+   assert.equal((await page.goto(base+'/actividad?pagina=Infinity&desde=2026-02-31&hasta=invalida')).status(),200);
+   assert.ok(!await page.getByText('Something went wrong').count());
    // B09: las reglas llegan como mensajes visibles, sin perder el estado confirmado.
    phase='workflow-transitions';
    await page.goto(base+'/contenido/assigned');
@@ -137,7 +185,7 @@ try{
       for (const done of [true,false,true]) {
        phase='checklist-'+done;
        const button=page.getByRole('button',{name:done?'Completar':'Reabrir',exact:true});
-       const form=page.locator('form').filter({has:button});
+       const form=main.locator('form').filter({has:button});
        await expect(form.locator('input[name="done"]')).toHaveValue(done?'1':'0');
        await button.click();
        await expect.poll(async()=> (await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done).toBe(done);
@@ -198,9 +246,46 @@ try{
    await page.reload();await page.locator('summary:visible').filter({hasText:/^Añadir escena$/}).waitFor();
    report.closedScriptControlsHidden=true;
   }
+  if(role==='STRATEGY'){
+   phase='objectives-and-planning';
+   await page.goto(base+'/marcas/A');await page.getByRole('button',{name:'Nuevo objetivo',exact:true}).click();
+   const form=main.locator('form').filter({has:page.locator('select[name="calculationMode"]')});
+   await form.locator('input[name="name"]').fill('Vistas de septiembre');await form.locator('select[name="calculationMode"]').selectOption('WEEKLY_SUM');
+   await form.locator('input[name="calculationFrom"]').fill('2026-09-07');await form.locator('input[name="calculationTo"]').fill('2026-09-13');
+   await form.locator('input[name="targetValue"]').fill('100');await form.getByRole('button',{name:'Añadir objetivo',exact:true}).click();
+   await expect(main.getByText('Vistas de septiembre',{exact:true})).toBeVisible();
+   await expect(page.getByRole('cell').filter({has:page.getByText('Vistas de septiembre',{exact:true})}).getByText(/Calculado · 2026-09-07 a 2026-09-13 · 1 registros/)).toBeVisible();
+   assert.equal((await db.brandObjective.findFirstOrThrow({where:{name:'Vistas de septiembre'}})).calculationMode,'WEEKLY_SUM');
+   await page.goto(base+'/contenido/assigned');await main.locator('summary').filter({hasText:/^Editar planificación$/}).click();
+   const planning=main.locator('form').filter({has:page.getByRole('button',{name:'Guardar planificación',exact:true})});
+   await planning.locator('input[name="structureIds"][value="structure"]').check();await planning.getByRole('button',{name:'Guardar planificación',exact:true}).click();
+   await expect.poll(async()=>await db.contentPlannedStructure.count({where:{contentItemId:'assigned',structureId:'structure'}})).toBe(1);
+   report.strategyObjectivesAndFormats=true;
+  }
+  if(role==='PRODUCTION'){
+   phase='shoot-date-only';await page.goto(base+'/contenido/assigned');
+   assert.equal(await main.locator('summary').filter({hasText:/^Editar planificación$/}).count(),0);
+   await main.locator('summary').filter({hasText:/^Fecha de grabación$/}).click();
+   const shoot=main.locator('form').filter({has:page.getByRole('button',{name:'Guardar grabación',exact:true})});
+   await shoot.locator('input[name="shootDate"]').fill('2026-10-05');await shoot.getByRole('button',{name:'Guardar grabación',exact:true}).click();
+   await expect.poll(async()=> (await db.contentItem.findUniqueOrThrow({where:{id:'assigned'}})).shootDate?.toISOString().slice(0,10)).toBe('2026-10-05');
+   assert.equal((await db.contentItem.findUniqueOrThrow({where:{id:'assigned'}})).title,'Video asignado');report.productionDateOnly=true;
+   await page.goto(base+'/contenido/assigned?comentarios=2');await expect(main.getByText('35 registros · Página 2 de 2',{exact:true})).toBeVisible();report.commentHistoryPagination=true;
+  }
+  if(role==='ANALYST'){
+   phase='analytics-and-csv-resume';await page.goto(base+'/metricas?desde=2026-09-07&hasta=2026-09-13');
+   await expect(page.getByRole('combobox',{name:'Todas las plataformas',exact:true})).toBeVisible();
+   // Ignore only React's off-screen streaming container, outside the mounted main.
+   await expect(page.getByRole('main').getByText('Suma de alcances',{exact:true})).toBeVisible();assert.ok(!(await page.locator('main').innerText()).includes('VIDEO_SECRETO'));
+   await page.getByRole('button',{name:/Importar métricas desde un CSV/}).click();await page.getByRole('button',{name:'Reanudar lote '+pendingCsv.batchId+' (25/50)',exact:true}).click();
+   await expect.poll(async()=> (await db.metricImportBatch.findUniqueOrThrow({where:{id:pendingCsv.batchId}})).status).toBe('COMPLETED');
+   await expect(page.getByText('Importación terminada',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Iniciar un lote nuevo',exact:true}).click();
+   await expect(page.locator('textarea[name="csv"]')).toBeEnabled();await expect(page.getByText('Importación terminada',{exact:true})).toHaveCount(0);
+   report.analystFullAnalyticsAndCsvResume=true;
+  }
   report.profiles.push({role,checked:true});console.log(JSON.stringify({role,checked:true}));await context.close();
  }
- assert.deepEqual(report.errors,[]);fs.writeFileSync('.audit/profiles-ui.json',JSON.stringify(report,null,2));
+ assert.deepEqual(report.errors,[]);report.checkedAt=new Date().toISOString();fs.writeFileSync('.audit/profiles-ui.json',JSON.stringify(report,null,2));
 }finally{
  await browser?.close();
  if(server){const exited=new Promise(r=>server.once('exit',r));server.kill();await exited;}

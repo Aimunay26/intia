@@ -1,13 +1,14 @@
 "use server";
-import { approveVersion, assertApprovedVersion, reopeningReason, revokeVersion } from "@/lib/approvals";
-import { SCRIPT_FLOW, transition, WorkflowError } from "@/lib/workflow-policy";
+import { transitionScript } from "@/lib/domain/lifecycle";
+
 import { requirePermission } from "@/lib/auth";
-import { allows, assertBrandPermission, assertPermission } from "@/lib/permissions";
+import { assertBrandPermission } from "@/lib/permissions";
 import { assertContentAccess, assertScriptAccess, assertVideoOpen, contentScope } from "@/lib/access-scope";
 
 import { enqueueGeneration } from "@/lib/generation-jobs";
 import { dispatchGeneration } from "@/lib/generation-dispatch";
 import { revalidatePath } from "next/cache";
+import { invalidateDomain } from "@/lib/view-invalidation";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -51,7 +52,7 @@ const SCENE_LABELS: Record<string, string> = {
 };
 
 function refrescar(scriptId?: string) {
-  revalidatePath("/guiones");
+  invalidateDomain("script");
   if (scriptId) revalidatePath(`/guiones/${scriptId}`);
 }
 
@@ -295,49 +296,7 @@ export async function cambiarEstadoGuion(formData: FormData) {
     const status = enumField(formData, "status", SCRIPT_STATUS_MAP);
     if (!id || !SCRIPT_STATUS_MAP[status]) return;
 
-    await assertScriptAccess(tx, user, id, status === "APROBADO" ? "scripts.approve" : "scripts.view");
-    await lockRevision(tx, "Script", id, formData);
-    const before = await tx.script.findUnique({
-      where: { id },
-      select: { title: true, status: true, brandId: true, approvalId: true },
-    });
-    if (!before || before.status === status) return;
-    if (before.status === "APROBADO" || status === "APROBADO") assertPermission(user, "scripts.approve");
-    else if (!allows(user, "scripts.approve")) await assertScriptAccess(tx, user, id, "scripts.write");
-
-    const step = transition(SCRIPT_FLOW, before.status, status, "ARCHIVADO");
-    const override = user.role === "OWNER" && formData.get("override") === "1";
-    const reason = step === "reopen" || step === "stop" || override ? reopeningReason(field(formData, "reason")) : "";
-    if (step === "invalid" && !override) throw new WorkflowError("Avanza una etapa a la vez: Borrador, Revisión, Aprobado y Grabado.");
-    let approvalId = before.approvalId;
-    if (step === "reopen" || step === "stop") {
-      if (approvalId || ["APROBADO", "GRABADO"].includes(before.status)) assertPermission(user, "scripts.approve");
-      await revokeVersion(tx, approvalId, user, reason); approvalId = null;
-    }
-    if (status === "APROBADO") {
-      if (!await tx.scriptScene.count({ where: { scriptId: id } })) throw new WorkflowError("El guion debe tener escenas antes de aprobarse.");
-      if (approvalId) await revokeVersion(tx, approvalId, user, reason || "Sustituida por una nueva aprobación explícita");
-      approvalId = (await approveVersion(tx, user, "SCRIPT", id)).id;
-    }
-    if (status === "GRABADO" && !override) await assertApprovedVersion(tx, "SCRIPT", id, approvalId);
-    await tx.script.update({ where: { id }, data: { status, approvalId } });
-
-    await auditInTransaction(tx, {
-      user,
-      action: "EDITAR",
-      entity: "Script",
-      entityId: id,
-      brandId: before.brandId,
-      summary: `Cambió el guion "${before.title}" a ${SCRIPT_STATUS_MAP[status].label}${reason ? `. ${override ? "Excepción del Dueño" : "Motivo"}: ${reason}` : ""}`,
-      changes: {
-        status: {
-          etiqueta: "Estado",
-          antes: before.status,
-          despues: status,
-        },
-      },
-    });
-
+    await transitionScript(tx, user, { id, status, expectedUpdatedAt: field(formData, "expectedUpdatedAt"), override: formData.get("override") === "1", reason: field(formData, "reason") });
     afterCommit(() => refrescar(id));
   });
 }

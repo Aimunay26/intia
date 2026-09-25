@@ -3,27 +3,7 @@
 import { Fragment, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Bot,
-  Check,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
-  FileText,
-  Film,
-  Layers,
-  Loader2,
-  Package,
-  RotateCcw,
-  Search,
-  Sparkles,
-  Tags,
-  Target,
-  UserSquare2,
-  Wand2,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, Check, Clock, FileText, Film, Layers, Loader2, Package, RotateCcw, Search, Sparkles, Tags, Target, UserSquare2, Wand2 } from "lucide-react";
 
 import { generarGuion, type GenerateState } from "@/app/actions/scripts";
 import {
@@ -37,19 +17,12 @@ import {
   modoDeGatillo,
   type CtaModo,
 } from "@/lib/script-angles";
-import {
-  AI_MODELS,
-  AI_PROVIDERS,
-  DEFAULT_MODEL,
-  FIT_SCORES,
-  STRUCTURE_CATEGORIES,
-  STRUCTURE_CATEGORY_MAP,
-} from "@/lib/constants";
+import { AI_MODELS, AI_PROVIDERS, DEFAULT_MODEL, FIT_SCORES, STRUCTURE_CATEGORY_MAP } from "@/lib/constants";
 import { resolveAiModel } from "@/lib/ai-models";
 import { cn, formatSeconds, withAlpha } from "@/lib/utils";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { getStructureReference } from "@/lib/structure-references";
-import { Callout, Card, CardHeader, Field, SectionTitle } from "@/components/ui";
+import { Callout, Card, CardHeader, Field } from "@/components/ui";
 
 /* ------------------------------------------------------------------ TIPOS -- */
 
@@ -558,7 +531,7 @@ export function GeneratorForm({
   const puedeAvanzarPaso1 = selectedStructureIds.length > 0;
   const puedeAvanzarPaso2 = Boolean(producto.trim().length > 0);
   const puedeAvanzarPaso3 = Boolean(peticion.trim().length >= 5);
-  const puedeAvanzarPaso4 = Boolean(cta.trim().length > 0);
+
 
   const irAlPaso = (paso: number) => {
     if (paso <= maxStepReached) {

@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
@@ -25,7 +26,7 @@ import {
 	type Beat,
 	type Example,
 } from "@/app/actions/structures";
-import { AssetManager, type AssetRow } from "@/components/assets";
+import { MemberAssets } from "@/components/member/shared";
 import { DeleteButton, SubmitButton } from "@/components/forms";
 import {
 	Avatar,
@@ -76,12 +77,12 @@ export default async function EstructuraPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ vista?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const user = await requirePageSection("structures");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="structures" id={(await params).id} query={await searchParams} />;
   const { id } = await params;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
   const puedeEditar = can(user.role, LEVEL.MEMBER);
   const puedeEliminar = can(user.role, LEVEL.OWNER);
 
@@ -261,11 +262,7 @@ export default async function EstructuraPage({
       {vista === "guiones" ? <GuionesTab structureId={structure.id} /> : null}
 
       {vista === "documentos" ? (
-        <DocumentosTab
-          structureId={structure.id}
-          canEdit={puedeEditar}
-          canDelete={puedeEliminar}
-        />
+        <MemberAssets type="structure" id={structure.id} canEdit={puedeEditar} canDelete={puedeEliminar} query={sp} />
       ) : null}
     </>
   );
@@ -720,58 +717,5 @@ async function GuionesTab({ structureId }: { structureId: string }) {
         </table>
       </div>
     </Card>
-  );
-}
-
-/* ------------------------------------------------------------ DOCUMENTOS -- */
-
-async function DocumentosTab({
-  structureId,
-  canEdit,
-  canDelete,
-}: {
-  structureId: string;
-  canEdit: boolean;
-  canDelete: boolean;
-}) {
-  // Nunca traemos 'data': son los bytes del archivo y no hacen falta aquí.
-  const assets = await prisma.asset.findMany({
-    where: { ownerType: "structure", ownerId: structureId },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      filename: true,
-      label: true,
-      mimeType: true,
-      size: true,
-      useForAi: true,
-      extractedText: true, updatedAt: true,
-      createdAt: true,
-    },
-  });
-
-  const rows: AssetRow[] = assets.map((a) => ({
-    id: a.id,
-    filename: a.filename,
-    label: a.label,
-    mimeType: a.mimeType,
-    size: a.size,
-    useForAi: a.useForAi,
-    hasText: Boolean(a.extractedText && a.extractedText.trim().length > 0),
-    textLength: a.extractedText?.length ?? 0,
-    extractedText: a.extractedText, updatedAt: a.updatedAt,
-    createdAt: a.createdAt,
-  }));
-
-  return (
-    <AssetManager
-      ownerType="structure"
-      ownerId={structureId}
-      assets={rows}
-      canEdit={canEdit}
-      canDelete={canDelete}
-      title="Documentos de referencia del formato"
-      description="PDFs, guiones transcritos o apuntes. Su texto se le inyecta a la IA cada vez que se genera un guion con esta estructura."
-    />
   );
 }

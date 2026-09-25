@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -69,7 +70,7 @@ export default async function CalendarioPage({
   return measurePagePhase("page:/calendario", async () => {
   const user = await requirePageSection("calendar");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="calendar" query={await searchParams} />;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
 
   const hoy = new Date();
   const [businessYear, businessMonth] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(hoy).split("-").map(Number);

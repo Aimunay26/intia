@@ -1,3 +1,5 @@
+import { singleQueryValues } from "@/lib/query-params";
+import { readBrandObjectives } from "@/lib/objective-service";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
@@ -23,7 +25,7 @@ import {
 	archivarMarca,
 	eliminarMarca,
 } from "@/app/actions/brands";
-import { AssetManager, type AssetRow } from "@/components/assets";
+import { MemberAssets } from "@/components/member/shared";
 import { ETIQUETA_DOCUMENTO } from "@/lib/branding-parser";
 import { SegmentedControl } from "@/components/filters";
 import { DeleteButton, SubmitButton } from "@/components/forms";
@@ -46,15 +48,7 @@ import {
 } from "@/lib/constants";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { prisma } from "@/lib/prisma";
-import {
-	dateKey,
-	formatDate,
-	formatNumber,
-	fromDateKey,
-	jsonToLines,
-	objectiveProgress,
-	parseList,
-} from "@/lib/utils";
+import { formatDate, formatNumber, fromDateKey, jsonToLines, objectiveProgress, parseList } from "@/lib/utils";
 import { BrandForm, type DocumentosMarca } from "../brand-form";
 import { ObjectivesPanel, type ObjectiveRow } from "./objectives";
 
@@ -75,12 +69,12 @@ export default async function MarcaPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ vista?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const user = await requirePageSection("brands");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="brands" id={(await params).id} query={await searchParams} />;
   const { id } = await params;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
 
   const vista: Vista = VISTAS.includes(sp.vista as Vista)
     ? (sp.vista as Vista)
@@ -89,7 +83,6 @@ export default async function MarcaPage({
   const brand = await prisma.brand.findUnique({
     where: { id },
     include: {
-      objectives: { orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] },
       _count: { select: { content: true, scripts: true } },
     },
   });
@@ -112,22 +105,7 @@ export default async function MarcaPage({
   const publicados = cuenta(["PUBLICADO"]);
   const enProduccion = cuenta(ACTIVE_STATUSES);
 
-  const objetivos: ObjectiveRow[] = brand.objectives.map((o) => ({
-    id: o.id, updatedAt: o.updatedAt.toISOString(),
-    name: o.name,
-    description: o.description,
-    metricKey: o.metricKey,
-    unit: o.unit,
-    currentValue: o.currentValue,
-    targetValue: o.targetValue,
-    baselineValue: o.baselineValue,
-    period: o.period,
-    deadline: o.deadline ? dateKey(o.deadline) : "",
-    createdAt: dateKey(o.createdAt),
-    status: o.status,
-    higherIsBetter: o.higherIsBetter,
-    sortOrder: o.sortOrder,
-  }));
+  const objetivos: ObjectiveRow[] = await readBrandObjectives(user, id);
 
   const objetivosEnRiesgo = objetivos.filter((o) => {
     if (o.status === "LOGRADO" || o.status === "PAUSADO") return false;
@@ -164,37 +142,6 @@ export default async function MarcaPage({
         })
       : [];
 
-  const assets: AssetRow[] =
-    vista === "documentos"
-      ? (
-          await prisma.asset.findMany({
-            where: { ownerType: "brand", ownerId: brand.id },
-            orderBy: { createdAt: "desc" },
-            select: {
-              id: true,
-              filename: true,
-              label: true,
-              mimeType: true,
-              size: true,
-              useForAi: true,
-              extractedText: true, updatedAt: true,
-              createdAt: true,
-            },
-          })
-        ).map((a) => ({
-          id: a.id,
-          filename: a.filename,
-          label: a.label,
-          mimeType: a.mimeType,
-          size: a.size,
-          useForAi: a.useForAi,
-          hasText: Boolean(a.extractedText && a.extractedText.trim().length > 0),
-          textLength: a.extractedText?.length ?? 0,
-          extractedText: a.extractedText, updatedAt: a.updatedAt,
-          createdAt: a.createdAt,
-        }))
-      : [];
-
   // Solo los PDF importados, sin los bytes: para el chip «ya cargado» del formulario.
   const documentos: DocumentosMarca = {};
   if (vista === "identidad") {
@@ -205,6 +152,7 @@ export default async function MarcaPage({
         label: { in: [ETIQUETA_DOCUMENTO.brief, ETIQUETA_DOCUMENTO.branding] },
       },
       orderBy: { createdAt: "desc" },
+      distinct: ["label"], take: 2,
       select: { label: true, filename: true, createdAt: true },
     });
     for (const a of importados) {
@@ -561,15 +509,7 @@ export default async function MarcaPage({
       ) : null}
 
       {vista === "documentos" ? (
-        <AssetManager
-          ownerType="brand"
-          ownerId={brand.id}
-          assets={assets}
-          canEdit={puedeGestionar}
-          canDelete={puedeEliminar}
-          title="Documentos de la marca"
-          description="Brand books, catálogos y referencias, incluidos el brief maestro y el informe de branding cargados desde Identidad. Su texto se le pasa a la IA al escribir para esta marca."
-        />
+        <MemberAssets type="brand" id={id} canEdit={puedeGestionar} canDelete={puedeEliminar} query={sp} />
       ) : null}
     </>
   );

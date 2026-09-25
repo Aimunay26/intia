@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { SessionUser } from "@/lib/auth";
@@ -8,7 +9,7 @@ import { getPageBrandContext } from "@/lib/render-context";
 import { Card, PageHeader } from "@/components/ui";
 import { MemberContent } from "@/components/member/content";
 import { MemberScripts } from "@/components/member/scripts";
-import { MemberTasks, MemberCalendar, MemberMetrics, MemberCatalog } from "@/components/member/sections";
+import { MemberTasks, MemberCalendar, MemberCatalog } from "@/components/member/sections";
 
 export type MemberQuery = Record<string, string | undefined>;
 export type MemberPageProps = { user: SessionUser; id?: string; query?: MemberQuery };
@@ -16,11 +17,11 @@ export type MemberPageProps = { user: SessionUser; id?: string; query?: MemberQu
 /** Entrada de servidor. Ninguna consulta del panel administrativo se ejecuta para miembros. */
 export async function MemberWorkspace({ user, section, id, query = {} }: MemberPageProps & { section: Section }) {
   assertPermission(user, SECTIONS[section].capability);
+  query = singleQueryValues(query);
   if (section === "content") return <MemberContent user={user} id={id} query={query} />;
   if (section === "scripts") return <MemberScripts user={user} id={id} query={query} />;
   if (section === "tasks") return <MemberTasks user={user} query={query} />;
   if (section === "calendar") return <MemberCalendar user={user} query={query} />;
-  if (section === "metrics") return <MemberMetrics user={user} query={query} />;
   if (["brands", "structures", "archetypes"].includes(section)) return <MemberCatalog user={user} id={id} query={query} section={section as "brands" | "structures" | "archetypes"} />;
   if (!["panel", "help"].includes(section)) notFound();
   const profiles = WORK_PROFILES.filter(p => user.profiles?.includes(p.id));

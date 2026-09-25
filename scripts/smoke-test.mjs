@@ -12,7 +12,6 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { randomBytes } from "node:crypto";
 
 const prisma = new PrismaClient();
 const BASE = process.env.BASE ?? "http://localhost:3000";
@@ -74,13 +73,15 @@ async function rutas() {
 async function feed() {
   titulo("Feed de calendario para Google");
 
-  const row = await prisma.appSetting.upsert({
-    where: { key: "calendar.feedToken" },
-    create: { key: "calendar.feedToken", value: randomBytes(24).toString("base64url") },
-    update: {},
-  });
-
-  const res = await fetch(`${BASE}/api/calendario.ics?token=${row.value}`);
+  const token = process.env.CALENDAR_SMOKE_TOKEN;
+  if (!token) {
+    const denied = await fetch(BASE + "/api/calendario.ics");
+    comprobar("Sin token rechaza el acceso", denied.status === 401);
+    comprobar("Respuesta sin caché pública", (denied.headers.get("cache-control") ?? "").includes("no-store"));
+    console.log("  Feed autorizado omitido: define CALENDAR_SMOKE_TOKEN de una suscripción de prueba. No se crean enlaces durante la lectura.");
+    return;
+  }
+  const res = await fetch(BASE + "/api/calendario.ics?token=" + encodeURIComponent(token));
   comprobar("Responde 200", res.status === 200, `${res.status}`);
   comprobar(
     "Tipo de contenido text/calendar",

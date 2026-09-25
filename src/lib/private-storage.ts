@@ -64,11 +64,12 @@ export async function readPrivateFile(pathname: string, size: number) {
   return result.stream;
 }
 
-export async function cleanupPrivateFiles(limit = 20) {
+export async function cleanupPrivateFiles(limit = 20, deadlineAt = Date.now() + 20000) {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return { deleted: 0, failed: 0 };
   configured();
   let deleted = 0, failed = 0;
   for (let n = 0; n < Math.min(20, limit); n++) {
+    if (deadlineAt - Date.now() < 6000) break;
     const item = await prisma.$transaction(async tx => {
       const [row] = await tx.$queryRaw<{ id: string; pathname: string; attempts: number }[]>`
         SELECT b."id", b."pathname", b."attempts" FROM "BlobObject" b
@@ -78,12 +79,15 @@ export async function cleanupPrivateFiles(limit = 20) {
         ORDER BY b."nextAttemptAt", b.id LIMIT 1 FOR UPDATE SKIP LOCKED`;
       if (!row) return null;
       await tx.blobObject.update({ where: { id: row.id }, data: { state: "DELETE_PENDING", attempts: { increment: 1 }, nextAttemptAt: new Date(Date.now() + 300000) } });
+      // del() is free per Vercel pricing. Track attempts separately; do not consume paid-op quotas.
+      const key = `blob:delete:${usageDay()}`;
+      await tx.usageCounter.upsert({ where: { key }, create: { key, amount: 1 }, update: { amount: { increment: 1 } } });
       return row;
-    });
+    }, { maxWait: 500, timeout: Math.max(1, Math.min(2000, deadlineAt - Date.now() - 5000)) });
     if (!item) break;
     try {
       if (!/^intia\/assets\/[0-9a-f-]{36}$/.test(item.pathname)) throw new Error("Ruta inválida");
-      await del(item.pathname, { abortSignal: AbortSignal.timeout(5000) });
+      await del(item.pathname, { abortSignal: AbortSignal.timeout(Math.max(1, Math.min(5000, deadlineAt - Date.now() - 500))) });
       await prisma.blobObject.update({ where: { id: item.id }, data: { state: "DELETED" } });
       deleted++;
     } catch {

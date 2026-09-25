@@ -1,3 +1,4 @@
+import { resolveObjectiveValues } from "@/lib/objective-service";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { SectionLoading } from "@/components/section-loading";
 import { measurePhase } from "@/lib/performance";
@@ -219,7 +220,7 @@ async function PanelStats() {
 }
 
 async function PanelPending() {
-  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const { soloMarca, hoy, limite7 } = await getPanelContext();
   const [pendientes] = await measurePhase("panel.pending", () => Promise.all([
     prisma.contentItem.findMany({
       where: {
@@ -374,8 +375,8 @@ async function PanelPending() {
 }
 
 async function PanelObjectives() {
-  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
-  const [objetivos] = await measurePhase("panel.objectives", () => Promise.all([
+  const { user, soloMarca } = await getPanelContext();
+  const [objetivosBase] = await measurePhase("panel.objectives", () => Promise.all([
     prisma.brandObjective.findMany({
       where: { ...soloMarca, status: { in: ["EN_CURSO", "EN_RIESGO"] } },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
@@ -383,7 +384,7 @@ async function PanelObjectives() {
         id: true,
         name: true,
         unit: true,
-        currentValue: true,
+        currentValue: true, brandId: true, calculationMode: true,
         targetValue: true,
         baselineValue: true,
         higherIsBetter: true,
@@ -393,6 +394,7 @@ async function PanelObjectives() {
       },
     })
   ]));
+  const objetivos = await resolveObjectiveValues(user, objetivosBase);
   const objetivosConAvance = objetivos
     .map((o) => ({
       ...o,
@@ -453,7 +455,7 @@ async function PanelObjectives() {
 }
 
 async function PanelFunnel() {
-  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const { soloMarca } = await getPanelContext();
   const [porEstado] = await measurePhase("panel.funnel", () => Promise.all([
     prisma.contentItem.groupBy({ by: ["status"], _count: { _all: true }, where: soloMarca })
   ]));
@@ -480,7 +482,7 @@ async function PanelFunnel() {
 }
 
 async function PanelActivity() {
-  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const { brandCtx } = await getPanelContext();
   const [actividad] = await measurePhase("panel.activity", () => Promise.all([
     prisma.auditLog.findMany({
       where: brandCtx.activeId ? { brandId: brandCtx.activeId } : {},
@@ -540,7 +542,7 @@ async function PanelActivity() {
 }
 
 async function PanelBrands() {
-  const { user, brandCtx, soloMarca, ahora, inicioMes, finMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const { brandCtx, soloMarca, inicioMes, finMes, publicadoEsteMes } = await getPanelContext();
   const [marcas, videosPorMarca, publicadosPorMarca, guionesPorMarca] = await measurePhase("panel.brands", () => Promise.all([
     prisma.brand.findMany({
       where: {

@@ -1,11 +1,13 @@
 "use server";
+import { transitionVideo } from "@/lib/domain/lifecycle";
 import { approveVersion, assertChecklistApproved, assertRequiredChecks, assertScriptApproved, reopenContentApprovals, reopeningReason, revokeVersion } from "@/lib/approvals";
-import { CONTENT_FLOW, transition, WorkflowError } from "@/lib/workflow-policy";
+import { WorkflowError } from "@/lib/workflow-policy";
 import { requirePermission } from "@/lib/auth";
-import { assertBrandPermission, assertPermission, contentStatusCapability, checklistCapability } from "@/lib/permissions";
+import { assertBrandPermission, assertPermission, checklistCapability } from "@/lib/permissions";
 import { assertContentAccess, assertVideoOpen, assertAssignee, assertPublishable, lockVideoLifecycle } from "@/lib/access-scope";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDomain } from "@/lib/view-invalidation";
 import { redirect } from "next/navigation";
 
 import { borrarAssetsDe } from "@/lib/assets-cleanup";
@@ -17,7 +19,6 @@ import {
 	CONTENT_STATUS_MAP,
 	DEFAULT_CHECKLIST,
 	PLATFORMS,
-	PLATFORM_MAP,
 	PRIORITY_MAP,
 } from "@/lib/constants";
 import { lockRevision, withMutation, withWorkflowMutation } from "@/lib/mutations";
@@ -48,32 +49,8 @@ import { saveWeeklyMetric } from "@/lib/weekly-metric-mutations";
 /* ---------------------------------------------------------------- APOYOS -- */
 
 function revalidar(id?: string | null) {
-  revalidatePath("/");
-  revalidatePath("/calendario");
-  revalidatePath("/contenido");
-  revalidatePath("/metricas");
-  revalidatePath("/actividad");
+  invalidateDomain("content");
   if (id) revalidatePath(`/contenido/${id}`);
-}
-
-const METRIC_LABELS: Record<string, string> = {
-  views: "Vistas",
-  likes: "Me gusta",
-  comments: "Comentarios",
-  shares: "Compartidos",
-  saves: "Guardados",
-  reach: "Alcance",
-  clicks: "Clics",
-  leads: "Leads",
-  orders: "Pedidos",
-  spend: "Inversión",
-  revenue: "Ingresos",
-  retention3s: "Retención 3s",
-  notes: "Notas",
-};
-
-function statusLabel(value: string) {
-  return CONTENT_STATUS_MAP[value]?.label ?? value;
 }
 
 function roleLabel(value: string) {
@@ -132,12 +109,6 @@ async function readStructureIds(tx: AppTransaction, formData: FormData, fallback
   // nombre; el navegador las envía en orden de DOM, no de marcado): el
   // generador usa el primero como formato de vista previa.
   return JSON.stringify(pedidas.filter((id) => validas.has(id)));
-}
-
-/** "TikTok, Instagram" — para que el log de actividad se lea en español. */
-function nombresRedes(platformsJson: string): string {
-  const nombres = parseList(platformsJson).map((p) => PLATFORM_MAP[p]?.label ?? p);
-  return nombres.length ? nombres.join(", ") : "sin red";
 }
 
 /* ----------------------------------------------------------------- VIDEO -- */
@@ -246,68 +217,29 @@ export async function actualizarVideo(formData: FormData) {
   });
 }
 
+/** Producción puede ajustar logística sin recibir edición del brief ni publicación. */
+export async function actualizarGrabacion(formData: FormData) {
+  const user = await requirePermission("content.scheduleShoot");
+  return withMutation(user, false, async (tx, afterCommit) => {
+    const id = field(formData, "id");
+    await assertContentAccess(tx, user, id, "content.scheduleShoot");
+    await assertVideoOpen(tx, user, id);
+    await lockRevision(tx, "ContentItem", id, formData);
+    const before = await tx.contentItem.findUniqueOrThrow({ where: { id }, select: { shootDate: true, brandId: true, title: true } });
+    const data = { shootDate: dateField(formData, "shootDate") };
+    await tx.contentItem.update({ where: { id }, data });
+    await auditInTransaction(tx, { user, action: "EDITAR", entity: "ContentItem", entityId: id, brandId: before.brandId,
+      summary: `Cambió la fecha de grabación de "${before.title}"`, changes: diffFields(before, data, FIELD_LABELS) });
+    afterCommit(() => revalidar(id));
+  });
+}
+
 export async function cambiarEstado(formData: FormData) {
   const user = await requireLevel(LEVEL.MEMBER);
   return withWorkflowMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     const status = enumField(formData, "status", CONTENT_STATUS_MAP);
-    await assertContentAccess(tx, user, id, "content.view");
-    await lockVideoLifecycle(tx, id);
-    await lockRevision(tx, "ContentItem", id, formData);
-    const before = await tx.contentItem.findUniqueOrThrow({
-      where: { id },
-      select: { title: true, status: true, brandId: true, publishedAt: true, scriptId: true, scheduledDate: true, publishedUrl: true },
-    });
-    if (before.status === status) return;
-    const step = transition(CONTENT_FLOW, before.status, status, "CANCELADO");
-    await assertContentAccess(tx, user, id, step === "reopen" || step === "stop" ? "content.approve" : contentStatusCapability(status));
-    const override = user.role === "OWNER" && formData.get("override") === "1";
-    const reason = (override || step === "reopen" || step === "stop") ? reopeningReason(field(formData, "reason")) : "";
-    if (!override && step === "invalid") throw new WorkflowError("Avanza una etapa a la vez; completa sus requisitos antes de continuar.");
-    if (step === "reopen" || step === "stop" || (override && CONTENT_FLOW.indexOf(status) < CONTENT_FLOW.indexOf(before.status))) {
-      assertPermission(user, "content.approve");
-      await reopenContentApprovals(tx, id, user, reason, ["IDEA", "GUION", "CANCELADO"].includes(status));
-    }
-    if (!override && step === "advance") {
-      if (status === "GUION" && (!before.scriptId || !await tx.scriptScene.count({ where: { scriptId: before.scriptId } }))) throw new WorkflowError("Vincula un guion con escenas para pasar a Guion.");
-      if (["APROBADO", "GRABACION", "EDICION"].includes(status)) {
-        await assertScriptApproved(tx, before.scriptId);
-        await assertChecklistApproved(tx, id, "SCRIPT_APPROVAL");
-      }
-      if (status === "GRABACION") await assertRequiredChecks(tx, id, ["PREPRODUCCION"]);
-      if (status === "EDICION") await assertRequiredChecks(tx, id, ["PREPRODUCCION", "GRABACION"]);
-      if (["PROGRAMADO", "PUBLICADO"].includes(status)) await assertPublishable(tx, user, id);
-      if (status === "PROGRAMADO" && !before.scheduledDate) throw new WorkflowError("Indica la fecha de programación.");
-      if (status === "PUBLICADO") {
-        if (!before.publishedUrl) throw new WorkflowError("Guarda el enlace público del video antes de publicarlo.");
-        await assertRequiredChecks(tx, id, ["PUBLICACION"]);
-      }
-    }
-
-    // Al publicar, si nadie puso fecha de publicacion, la ponemos nosotros.
-    const marcaPublicacion = status === "PUBLICADO" && !before.publishedAt;
-
-    await tx.contentItem.update({
-      where: { id },
-      data: { status, ...(marcaPublicacion ? { publishedAt: new Date() } : {}) },
-    });
-
-    await auditInTransaction(tx, {
-      user,
-      action: "EDITAR",
-      entity: "ContentItem",
-      entityId: id,
-      brandId: before.brandId,
-      summary: `Cambió el estado del video "${before.title}" a ${statusLabel(status)}${reason ? `. ${override ? "Excepción del Dueño" : "Motivo"}: ${reason}` : ""}`,
-      changes: {
-        status: {
-          etiqueta: "Estado",
-          antes: before.status,
-          despues: status,
-        },
-      },
-    });
-
+    await transitionVideo(tx, user, { id, status, expectedUpdatedAt: field(formData, "expectedUpdatedAt"), override: formData.get("override") === "1", reason: field(formData, "reason") });
     afterCommit(() => revalidar(id));
   });
 }

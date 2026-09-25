@@ -32,7 +32,7 @@ export async function persistGeneratedScript(tx: AppTransaction, user: SessionUs
   const video = input.contentItemId
     ? await tx.contentItem.findUnique({ where: { id: input.contentItemId }, select: { title: true } })
     : null;
-    const generated = await generationStage("response_validate", () => validateGeneratedScript(result.script, { durationSec: input.durationSec ?? structure.defaultDurationSec, beats: structure.beats }));
+    const generated = await generationStage("response_validate", () => validateGeneratedScript(result.script, result.validationContext ?? { durationSec: input.durationSec ?? structure.defaultDurationSec, beats: structure.beats }));
     const scenes = Array.isArray(generated.scenes) ? generated.scenes : [];
     if (!scenes.length) throw new Error("La IA no devolvió escenas.");
 

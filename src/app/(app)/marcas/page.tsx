@@ -1,3 +1,5 @@
+import { singleQueryValues } from "@/lib/query-params";
+import { resolveObjectiveValues } from "@/lib/objective-service";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -62,7 +64,7 @@ export default async function MarcasPage({
   return measurePagePhase("page:/marcas", async () => {
   const user = await requirePageSection("brands");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="brands" query={await searchParams} />;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
 
   const q = (sp.q ?? "").trim();
   const archivadas = sp.estado === "archivadas";
@@ -91,7 +93,7 @@ export default async function MarcasPage({
         _count: { select: { content: true, objectives: true } },
         objectives: {
           select: {
-            currentValue: true,
+            id: true, brandId: true, calculationMode: true, currentValue: true,
             targetValue: true,
             baselineValue: true,
             higherIsBetter: true,
@@ -115,6 +117,8 @@ export default async function MarcasPage({
     }),
     prisma.brand.count({ where: { archived: true } }),
   ]);
+  const resolved = new Map((await resolveObjectiveValues(user, brands.flatMap(b => b.objectives))).map(o => [o.id, o]));
+  for (const brand of brands) brand.objectives = brand.objectives.map(o => resolved.get(o.id)!);
   const publicadosPorMarca = new Map(
     publicadosMes.map((row) => [row.brandId, row._count._all])
   );

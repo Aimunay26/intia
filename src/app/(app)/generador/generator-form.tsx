@@ -1,9 +1,9 @@
 "use client";
 
-import { Fragment, useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Bot, Check, ChevronDown, Clock, FileText, Film, Layers, Loader2, Package, RotateCcw, Sparkles, Tags, Target, UserSquare2, Wand2 } from "lucide-react";
+import { ArrowLeft, Bot, Check, ChevronDown, Clock, FileText, Film, Layers, Loader2, Package, RotateCcw, Sparkles, Tags, Target, UserSquare2, Wand2 } from "lucide-react";
 
 import { generarGuion, type GenerateState } from "@/app/actions/scripts";
 import {
@@ -22,7 +22,9 @@ import { resolveAiModel } from "@/lib/ai-models";
 import { cn, withAlpha } from "@/lib/utils";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { FormatStep } from "./format-step";
-import { Callout, Card, CardHeader, Field } from "@/components/ui";
+import { Callout, Card, CardHeader } from "@/components/ui";
+import { StepCard, StepDetails, StepField, StepFooter } from "./step-ui";
+import stepStyles from "./step-ui.module.css";
 
 /* ------------------------------------------------------------------ TIPOS -- */
 
@@ -234,6 +236,7 @@ export function GeneratorForm({
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [maxStepReached, setMaxStepReached] = useState<number>(initialStructureId ? 2 : 1);
+  const [formatPage, setFormatPage] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState<string>("TODOS");
   const [searchStructure, setSearchStructure] = useState<string>("");
   // Con un video elegido, el producto y la petición arrancan desde la tarjeta
@@ -432,8 +435,8 @@ export function GeneratorForm({
     seguirModoDeEstructura(s);
   };
 
-  const seleccionarTodasFiltradas = () => {
-    const ids = structuresFiltradas.map((s) => s.id);
+  const seleccionarVisibles = (visible: GeneratorStructure[]) => {
+    const ids = visible.map((s) => s.id);
     setSelectedStructureIds((prev) => Array.from(new Set([...prev, ...ids])).slice(0, maxBatch));
   };
 
@@ -470,6 +473,7 @@ export function GeneratorForm({
   const gatillosDelModo = ctaCatalogo(ctaModo);
   const accionesDelModo = ctaAccionesDeModo(ctaModo);
   const gatilloActual = buscarGatillo(ctaTrigger);
+  const anguloActual = ANGULOS_CREATIVOS.find((angle) => angle.id === creativeAngle);
   const resumenCierre = `${etiquetaModo(ctaModo)} · ${gatilloActual?.shortLabel ?? "Sin gatillo"}`;
 
   // --- PASOS DEL ASISTENTE DE IDEACIÓN (GEMINI-STYLE) ---
@@ -559,7 +563,7 @@ export function GeneratorForm({
   }, [structures, categoryFilter, searchStructure]);
 
   return (
-    <div className={cn("grid gap-4", currentStep === 1 ? "mx-auto max-w-5xl" : "lg:grid-cols-[minmax(0,1fr)_368px]")}>
+    <div className="mx-auto grid max-w-5xl gap-4">
       {/* ------------------------------------------------- COLUMNA IZQUIERDA */}
       <form action={formAction} className="min-w-0 space-y-4">
         {/* CAMPOS OCULTOS PARA CONSERVAR EL BRIEFING COMPLETO EN TODAS LAS ETAPAS */}
@@ -597,8 +601,7 @@ export function GeneratorForm({
           </Callout>
         ) : null}
 
-        {/* Navegación compacta en Formato; las demás etapas conservan su presentación. */}
-        {currentStep === 1 ? (
+        {/* Las cinco etapas mantienen el mismo orden y navegación. */}
           <nav aria-label="Etapas de generación" className="flex flex-wrap gap-2" data-guia={GUIA_TARGETS.GENERADOR_STEPPER_BAR}>
             {PASOS.map((paso) => (
               <button key={paso.id} type="button" onClick={() => irAlPaso(paso.id)} disabled={paso.id > maxStepReached} aria-current={paso.id === currentStep ? "step" : undefined} title={`${paso.descripcion}: ${paso.resumen}`} className={cn("flex min-h-11 items-center gap-2 rounded-lg px-2 text-[13px]", paso.id === currentStep ? "text-brand font-bold" : "text-inkmuted disabled:opacity-60")}>
@@ -607,88 +610,6 @@ export function GeneratorForm({
               </button>
             ))}
           </nav>
-        ) : (
-        <div
-          className="card overflow-hidden p-3"
-          data-guia={GUIA_TARGETS.GENERADOR_STEPPER_BAR}
-        >
-          <div className="flex items-center justify-between gap-2 mb-2 px-1">
-            <div className="flex items-center gap-2">
-              <span className="chip chip-brand text-[11px] font-bold">
-                Etapa {currentStep} de 5
-              </span>
-              <span className="text-ink font-semibold text-[13px] hidden sm:inline">
-                {PASOS[currentStep - 1]?.titulo}
-              </span>
-            </div>
-            <span className="text-inkmuted text-[11px]">
-              {Math.round((currentStep / 5) * 100)}% del proceso
-            </span>
-          </div>
-
-          {/* Barra de progreso interactiva */}
-          <div className="w-full bg-surface2 h-1.5 rounded-full overflow-hidden mb-3">
-            <div
-              className="bg-brand h-full transition-all duration-300 rounded-full"
-              style={{ width: `${(currentStep / 5) * 100}%` }}
-            />
-          </div>
-
-          {/* Botones de navegación directa de etapas */}
-          <div className="grid grid-cols-5 gap-1 sm:gap-2">
-            {PASOS.map((p) => {
-              const esActivo = p.id === currentStep;
-              const esCompletado = p.id < currentStep || (p.completo && p.id !== currentStep);
-              const estaDesbloqueado = p.id <= maxStepReached;
-
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  disabled={!estaDesbloqueado}
-                  onClick={() => irAlPaso(p.id)}
-                  className={cn(
-                    "flex flex-col items-start p-2 rounded-lg text-left transition-all border relative",
-                    esActivo
-                      ? "border-brand bg-brandsoft/70 ring-1 ring-brand shadow-sm"
-                      : esCompletado
-                        ? "border-line bg-surface hover:bg-surface2 cursor-pointer"
-                        : "border-line/50 bg-surface/30 opacity-50 cursor-not-allowed"
-                  )}
-                  title={estaDesbloqueado ? `Ir a ${p.titulo}` : "Completa la etapa actual para desbloquear"}
-                >
-                  <div className="flex items-center gap-1.5 w-full">
-                    <span
-                      className={cn(
-                        "w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0",
-                        esActivo
-                          ? "bg-brand text-white"
-                          : esCompletado
-                            ? "bg-ok text-white"
-                            : "bg-surface2 text-inkmuted"
-                      )}
-                    >
-                      {esCompletado && !esActivo ? <Check size={10} /> : p.numero}
-                    </span>
-                    <span
-                      className={cn(
-                        "text-[11px] font-semibold truncate flex-1",
-                        esActivo ? "text-ink" : "text-inkmuted"
-                      )}
-                    >
-                      {p.titulo}
-                    </span>
-                  </div>
-                  <div className="text-[9.5px] text-inkmuted truncate w-full mt-1 hidden md:block">
-                    {p.resumen}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        )}
 
         {/* ------------------------------------------------------------------ */}
         {/* ETAPA 1: FORMATO / TIPO DE GUIÓN                                   */}
@@ -701,11 +622,13 @@ export function GeneratorForm({
             maxBatch={maxBatch}
             category={categoryFilter}
             search={searchStructure}
-            onCategoryChange={setCategoryFilter}
-            onSearchChange={setSearchStructure}
+            page={formatPage}
+            onPageChange={setFormatPage}
+            onCategoryChange={(value) => { setCategoryFilter(value); setFormatPage(1); }}
+            onSearchChange={(value) => { setSearchStructure(value); setFormatPage(1); }}
             onToggle={toggleEstructura}
             onSelectOnly={seleccionarSoloEsta}
-            onSelectVisible={seleccionarTodasFiltradas}
+            onSelectVisible={seleccionarVisibles}
             onClear={deseleccionarTodas}
             onContinue={() => avanzarPaso(2)}
           />
@@ -715,802 +638,166 @@ export function GeneratorForm({
         {/* ETAPA 2: IDENTIDAD, ACTOR Y PRODUCTO A GRABAR                      */}
         {/* ------------------------------------------------------------------ */}
         {currentStep === 2 && (
-          <Card>
-            <CardHeader
-              title="2 · Marca, arquetipo y producto a grabar"
-              subtitle="Define la identidad, quién saldrá en cámara y la descripción exhaustiva del producto."
-              icon={<Package size={15} />}
-            />
-            <div className="space-y-4 p-4">
-              <Field
-                label="¿Para qué video es?"
-                hint={
-                  videos.length
-                    ? "Solo tarjetas en Idea o Guion sin guion vinculado. Al generar, el guion se une a esa tarjeta y el video pasa a Guion."
-                    : "No hay tarjetas en Idea o Guion sin guion. Crea el video en Videos y vuelve, o genera un guion suelto."
-                }
-              >
-                <select
-                  className="select"
-                  value={videoId}
-                  onChange={(e) => elegirVideo(e.target.value)}
-                  data-guia={GUIA_TARGETS.SELECT_GENERADOR_VIDEO}
-                >
+          <StepCard title="¿Qué vamos a contar y para quién?" description="Define el producto, su marca y quién aparecerá en cámara.">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <StepField id="generator-video" label="Video al que se unirá" hint={videos.length ? "Opcional. Solo videos en Idea o Guion que aún no tienen guion." : "No hay videos disponibles. Puedes generar un guion independiente."}>
+                <select id="generator-video" className="select" value={videoId} onChange={(e) => elegirVideo(e.target.value)} data-guia={GUIA_TARGETS.SELECT_GENERADOR_VIDEO}>
                   <option value="">Guion suelto (sin video)</option>
-                  {videosVisibles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.title} · {v.brandName} · {v.dateLabel}
-                    </option>
-                  ))}
+                  {videosVisibles.map((v) => <option key={v.id} value={v.id}>{v.title} · {v.brandName} · {v.dateLabel}</option>)}
                 </select>
-              </Field>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field
-                  label="Marca"
-                  hint={
-                    video
-                      ? `Fijada por el video: el guion tiene que ser de ${video.brandName}.`
-                      : "Opcional, pero muy recomendado: sin marca la IA escribe genérico."
-                  }
-                >
-                  <select
-                    className="select"
-                    value={brandId}
-                    onChange={(e) => elegirMarca(e.target.value)}
-                    data-guia={GUIA_TARGETS.SELECT_GENERADOR_MARCA}
-                  >
-                    <option value="">Sin marca (generalista)</option>
-                    {brands.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-
-                <Field
-                  label="Producto o servicio del video"
-                  required
-                  hint="El nombre o título concreto de lo que se muestra o se vende."
-                >
-                  <input
-                    name="producto"
-                    className="input font-semibold"
-                    value={producto}
-                    onChange={(e) => setProducto(e.target.value)}
-                    placeholder="Ej. Ramo de rosas rojas con chocolates / App de gestión"
-                    data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO}
-                  />
-                </Field>
-              </div>
-
-              {/* Descripción profunda del producto */}
-              <Field
-                label="Descripción exhaustiva del producto o servicio (Contexto profundo)"
-                hint="Describe a fondo características, beneficios, precio, para qué sirve y objeciones que resuelve. Aunque por el tipo de guión (como Camaleón) el producto solo se mencione en los últimos 5 segundos, la IA necesita conocerlo a fondo para fundamentar todo el video con veracidad."
-              >
-                <textarea
-                  name="productoDetalle"
-                  rows={3}
-                  className="textarea text-[12px]"
-                  value={productoDetalle}
-                  onChange={(e) => setProductoDetalle(e.target.value)}
-                  placeholder="Ej. Producto elaborado 100% a mano con materiales premium. Resuelve el dolor de entregas a última hora con envío garantizado en 90 minutos. Incluye empaque de regalo y tarjeta personalizada. Precio regular S/ 120, pero en promoción solo por esta semana..."
-                  data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO_DESC}
-                />
-              </Field>
-
-              {/* Quién actúa */}
-              <div>
-                <label className="label">Quién actúa frente a cámara</label>
-                {archetypes.length === 0 ? (
-                  <div className="text-inkmuted text-[12.5px]">
-                    Todavía no hay nadie cargado.{" "}
-                    <Link href="/arquetipos" className="text-brand font-semibold">
-                      Añade a la primera persona
-                    </Link>
-                    .
-                  </div>
-                ) : (
-                  <div
-                    className="border-line no-scrollbar max-h-[190px] overflow-y-auto rounded-xl border"
-                    data-guia={GUIA_TARGETS.SELECT_GENERADOR_ARQUETIPO}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setArchetypeId("")}
-                      className={cn(
-                        "hover:bg-surface2 border-line flex w-full items-center gap-2.5 border-b px-3 py-2 text-left transition-colors",
-                        !archetypeId && "bg-brandsoft/60"
-                      )}
-                    >
-                      <UserSquare2 size={14} className="text-inkmuted shrink-0" />
-                      <span className="text-ink text-[12.5px] font-semibold">
-                        Sin asignar
-                      </span>
-                      <span className="text-inkmuted text-[11.5px]">
-                        La IA describirá qué perfil necesita cada escena
-                      </span>
-                    </button>
-
-                    {arquetiposOrdenados.map((a, i) => {
-                      const score = structure ? (a.fits[structure.id]?.score ?? null) : null;
-                      const activo = a.id === archetypeId;
-                      const abreGenericos =
-                        !a.isPerson && (i === 0 || arquetiposOrdenados[i - 1].isPerson);
-                      return (
-                        <Fragment key={a.id}>
-                          {abreGenericos ? (
-                            <div className="border-line bg-surface2 text-inkmuted border-b px-3 py-1 text-[10px] font-bold tracking-[0.08em] uppercase">
-                              Plantillas genéricas · no llevan la voz de nadie
-                            </div>
-                          ) : null}
-                          <button
-                            type="button"
-                            onClick={() => setArchetypeId(a.id)}
-                            className={cn(
-                              "hover:bg-surface2 border-line flex w-full items-center gap-2.5 border-b px-3 py-2 text-left transition-colors last:border-b-0",
-                              activo && "bg-brandsoft/60"
-                            )}
-                          >
-                            <span
-                              className="dot shrink-0"
-                              style={{ background: a.color }}
-                              aria-hidden
-                            />
-                            <span className="text-ink min-w-0 flex-1 truncate text-[12.5px] font-semibold">
-                              {a.name}
-                              {a.arquetipo || a.summary ? (
-                                <span className="text-inkmuted ml-1.5 font-normal">
-                                  {a.arquetipo || a.summary}
-                                </span>
-                              ) : null}
-                            </span>
-                            {a.isPerson && !a.tieneVoz ? (
-                              <span className="text-inkmuted shrink-0 text-[11px]">sin voz</span>
-                            ) : (
-                              <span className="text-inkmuted shrink-0 text-[11px]">
-                                energía {a.energyLevel}/5
-                              </span>
-                            )}
-                            {structure ? <FitBadge score={score} /> : null}
-                          </button>
-                        </Fragment>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {archetype && structure && fitActual !== null && fitActual <= 1 ? (
-                  <div className="mt-2.5">
-                    <Callout tone="danger" title="Este arquetipo no encaja con este formato">
-                      El video se va a ver forzado. {archetype.name} está marcado como{" "}
-                      <strong>{FIT_SCORES[fitActual].label}</strong> para «{structure.name}».
-                      {notaFit ? ` ${notaFit}` : ""} Elige otro arquetipo o cambia de estructura.
-                    </Callout>
-                  </div>
-                ) : null}
-              </div>
-
-              {/* Botones de navegación de la Etapa 2 */}
-              <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(1)}
-                  className="btn btn-plain"
-                >
-                  <ArrowLeft size={14} /> Volver a Formato
-                </button>
-
-                <div className="flex items-center gap-2">
-                  {!puedeAvanzarPaso2 && (
-                    <span className="text-warn text-[11px] font-medium hidden sm:inline">
-                      Escribe el producto o servicio a grabar.
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    disabled={!puedeAvanzarPaso2}
-                    onClick={() => avanzarPaso(3)}
-                    className="btn btn-primary"
-                    data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_2}
-                  >
-                    Continuar: Ángulo e Idea
-                    <ArrowRight size={14} />
-                  </button>
-                </div>
-              </div>
+              </StepField>
+              <StepField id="generator-brand" label="Marca" hint={video ? `El video pertenece a ${video.brandName}. Cambiar a otra marca desvincula el video.` : "Opcional. Aporta identidad y canales para el cierre."}>
+                <select id="generator-brand" className="select" value={brandId} onChange={(e) => elegirMarca(e.target.value)} data-guia={GUIA_TARGETS.SELECT_GENERADOR_MARCA}>
+                  <option value="">Sin marca (generalista)</option>
+                  {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </StepField>
             </div>
-          </Card>
+            <StepField id="generator-product" label="Producto o servicio del video" required>
+              <input id="generator-product" name="producto" className="input" value={producto} onChange={(e) => setProducto(e.target.value)} placeholder="Ej. Ramo de rosas con chocolates" data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO} />
+            </StepField>
+            <StepField id="generator-product-detail" label="Qué debe saber la IA sobre el producto" hint="Características, beneficios, precio y objeciones que resuelve. Usa datos reales.">
+              <textarea id="generator-product-detail" name="productoDetalle" rows={3} className="textarea" value={productoDetalle} onChange={(e) => setProductoDetalle(e.target.value)} placeholder="Describe qué ofrece, para quién sirve y qué lo hace diferente." data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO_DESC} />
+            </StepField>
+            <StepField id="generator-actor" label="Quién actúa frente a cámara" hint="Puedes dejarlo sin asignar para que la IA proponga los perfiles de cada escena.">
+              <select id="generator-actor" className="select" value={archetypeId} onChange={(e) => setArchetypeId(e.target.value)} data-guia={GUIA_TARGETS.SELECT_GENERADOR_ARQUETIPO}>
+                <option value="">Sin asignar</option>
+                {[true, false].map((isPerson) => {
+                  const people = arquetiposOrdenados.filter((a) => a.isPerson === isPerson);
+                  return people.length ? <optgroup key={String(isPerson)} label={isPerson ? "Personas del equipo" : "Plantillas genéricas · sin voz propia"}>
+                    {people.map((a) => {
+                      const score = structure ? a.fits[structure.id]?.score : undefined;
+                      return <option key={a.id} value={a.id}>{a.name} · {score === undefined ? "Sin evaluar" : FIT_SCORES[score]?.label ?? "Sin evaluar"}</option>;
+                    })}
+                  </optgroup> : null;
+                })}
+              </select>
+              {!archetypes.length ? <p className="text-inkmuted mt-2 text-sm">Todavía no hay nadie cargado. <Link href="/arquetipos" className="text-brand font-semibold">Añade a la primera persona</Link>.</p> : null}
+            </StepField>
+            {archetype && structure && fitActual !== null && fitActual <= 1 ? (
+              <Callout tone="danger" title="Este arquetipo no encaja con este formato">
+                {archetype.name} está marcado como <strong>{FIT_SCORES[fitActual].label}</strong> para «{structure.name}». {notaFit} Elige otro arquetipo o cambia de estructura.
+              </Callout>
+            ) : null}
+            {archetype ? <StepDetails title="Ver perfil y compatibilidad" summary={archetype.name}>
+              <div className="flex flex-wrap items-center gap-2 text-sm"><span className="dot" style={{ background: archetype.color }} aria-hidden="true" /><strong>{archetype.name}</strong><FitBadge score={fitActual} /></div>
+              {archetype.arquetipo ? <p className="text-sm">{archetype.arquetipo}</p> : null}
+              {archetype.summary ? <p className="text-inksoft text-sm">{archetype.summary}</p> : null}
+              <p className="text-inkmuted text-sm">Energía {archetype.energyLevel}/5 · {archetype.isPerson ? archetype.tieneVoz ? "Tono de voz disponible" : "Sin tono de voz cargado" : "Plantilla genérica: no lleva la voz de nadie"}</p>
+              {notaFit ? <p className="text-inksoft text-sm">{notaFit}</p> : null}
+            </StepDetails> : null}
+            <StepDetails title="Ayuda para describir el producto">
+              <p className="text-inksoft text-sm leading-relaxed">Incluye características, beneficios, precio, para qué sirve y objeciones que resuelve. Aunque el producto solo aparezca al final, la IA necesita conocerlo para fundamentar el video con veracidad.</p>
+            </StepDetails>
+            <StepFooter back="Volver a Formato" onBack={() => setCurrentStep(1)} next="Ángulo e idea" onNext={() => avanzarPaso(3)} disabled={!puedeAvanzarPaso2} reason="Escribe el producto o servicio para continuar." guide={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_2} />
+          </StepCard>
         )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* ETAPA 3: ÁNGULO CREATIVO E IDEA CENTRAL                             */}
-        {/* ------------------------------------------------------------------ */}
         {currentStep === 3 && (
-          <Card>
-            <CardHeader
-              title="3 · Ángulo creativo e idea central del video"
-              subtitle="De una misma idea y producto, este ángulo define el giro psicológico que atrapará al espectador."
-              icon={<Sparkles size={15} />}
-            />
-            <div className="space-y-4 p-4">
-              {/* Selector de Ángulos Creativos */}
-              <div className="space-y-2.5 rounded-xl border border-line bg-surface2/40 p-3.5" data-guia={GUIA_TARGETS.BOTONES_GENERADOR_ANGULOS}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="label mb-0 flex items-center gap-1.5 font-bold text-[13px]">
-                      <Sparkles size={14} className="text-brand" />
-                      Ángulo creativo (Versión de guion)
-                    </label>
-                    <p className="text-inkmuted text-[11.5px] mt-0.5">
-                      Presiona un botón para que la IA arme una versión específica con ese enfoque psicológico.
-                    </p>
-                  </div>
-                  {creativeAngle && (
-                    <button
-                      type="button"
-                      onClick={() => setCreativeAngle("")}
-                      className="text-inkmuted hover:text-ink text-[11px] underline shrink-0 ml-2"
-                    >
-                      Quitar ángulo (estándar)
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {ANGULOS_CREATIVOS.map((ang) => {
-                    const activo = creativeAngle === ang.id;
-                    return (
-                      <button
-                        key={ang.id}
-                        type="button"
-                        onClick={() => setCreativeAngle(activo ? "" : ang.id)}
-                        className={cn(
-                          "card-flat flex flex-col items-start p-2.5 text-left transition-all relative overflow-hidden",
-                          activo
-                            ? "border-brand bg-brandsoft/70 shadow-sm ring-1 ring-brand"
-                            : "hover:bg-surface2 hover:border-brand/40"
-                        )}
-                      >
-                        <div className="flex items-center gap-1.5 w-full">
-                          <span className="text-base">{ang.icon}</span>
-                          <span className="text-ink text-[12px] font-bold truncate flex-1">
-                            {ang.shortLabel}
-                          </span>
-                          <span className="chip chip-plain text-[9px] px-1 py-0 shrink-0">
-                            {ang.badge}
-                          </span>
-                        </div>
-                        <p className="text-inkmuted text-[10.5px] line-clamp-2 mt-1 leading-snug">
-                          {ang.description}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {creativeAngle && (() => {
-                  const sel = ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle);
-                  if (!sel) return null;
-                  return (
-                    <div className="border border-brand/30 bg-brand/5 rounded-xl p-3 text-[12px] flex items-start gap-2.5">
-                      <span className="text-base shrink-0 mt-0.5">{sel.icon}</span>
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="text-ink font-semibold flex items-center gap-2">
-                          <span>Versión activa: {sel.name}</span>
-                          <span className="chip chip-brand text-[10px]">{sel.badge}</span>
-                        </div>
-                        <p className="text-inkmuted text-[11.5px] leading-relaxed">
-                          {sel.description}
-                        </p>
-                        <div className="text-brand font-mono text-[11px] bg-surface2/80 rounded px-2 py-1 border border-brand/20">
-                          {sel.hookExample}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* Petición Central */}
-              <Field
-                label="Petición central (Idea o historia del video)"
-                required
-                hint="Habla como le hablarías a tu guionista: qué pasa, qué sensación buscas, qué tiene que quedar claro."
-              >
-                <textarea
-                  name="peticion"
-                  className="textarea"
-                  rows={4}
-                  required
-                  value={peticion}
-                  onChange={(e) => setPeticion(e.target.value)}
-                  placeholder="Ej. Quiero un video para vender nuestro servicio de mentoría. Que arranque con una escena que incomode a quien lo ve, que se sienta real, y que termine llamando a la acción."
-                  data-guia={GUIA_TARGETS.INPUT_GENERADOR_PETICION}
-                />
-              </Field>
-
-              <Field
-                label="Variante o nota adicional (Opcional)"
-                hint="Un giro concreto. Ej: «que sea de noche», «que el conflicto sea al pagar la cuenta»."
-              >
-                <input
-                  name="variante"
-                  className="input"
-                  value={variante}
-                  onChange={(e) => setVariante(e.target.value)}
-                  placeholder="Ej. que el golpe visual sea que se rompió algo"
-                />
-              </Field>
-
-              {/* Botones de navegación de la Etapa 3 */}
-              <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(2)}
-                  className="btn btn-plain"
-                >
-                  <ArrowLeft size={14} /> Volver a Identidad
-                </button>
-
-                <div className="flex items-center gap-2">
-                  {!puedeAvanzarPaso3 && (
-                    <span className="text-warn text-[11px] font-medium hidden sm:inline">
-                      Escribe la idea central del video.
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    disabled={!puedeAvanzarPaso3}
-                    onClick={() => avanzarPaso(4)}
-                    className="btn btn-primary"
-                    data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_3}
-                  >
-                    Continuar: Cierre y CTA
-                    <ArrowRight size={14} />
-                  </button>
-                </div>
-              </div>
+          <StepCard title="¿Cuál es la idea del video?" description="Cuenta qué sucede y qué quieres que sienta quien lo ve.">
+            <StepField id="generator-idea" label="Idea o historia principal" required hint="Escribe al menos cinco caracteres para continuar.">
+              <textarea id="generator-idea" name="peticion" className="textarea" rows={4} required value={peticion} onChange={(e) => setPeticion(e.target.value)} placeholder="Qué pasa, qué sensación buscas y qué debe quedar claro." data-guia={GUIA_TARGETS.INPUT_GENERADOR_PETICION} />
+            </StepField>
+            <div data-guia={GUIA_TARGETS.BOTONES_GENERADOR_ANGULOS}>
+              <StepField id="generator-angle" label="Ángulo creativo" hint="Opcional. Elige el enfoque de esta versión del guion.">
+                <select id="generator-angle" className="select" value={creativeAngle} onChange={(e) => setCreativeAngle(e.target.value)}>
+                  <option value="">Estándar · Sin forzar un ángulo</option>
+                  {ANGULOS_CREATIVOS.map((angle) => <option key={angle.id} value={angle.id}>{angle.icon} {angle.shortLabel}</option>)}
+                </select>
+              </StepField>
+              {anguloActual ? <div className="mt-3">
+                <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-inksoft text-sm">{anguloActual.description}</p><button type="button" className="text-brand py-1 text-xs font-semibold hover:underline" onClick={() => setCreativeAngle("")}>Quitar ángulo</button></div>
+                <StepDetails key={anguloActual.id} title="Ver ejemplo de este ángulo" summary={anguloActual.name}>
+                  <span className="chip chip-brand">{anguloActual.icon} {anguloActual.badge}</span>
+                  <blockquote className="border-line bg-surface2 rounded-lg border p-4 text-sm leading-relaxed">{anguloActual.hookExample}</blockquote>
+                </StepDetails>
+              </div> : null}
             </div>
-          </Card>
+            <StepDetails title="Añadir una variante o nota" summary={variante ? "Nota incluida" : "Opcional"}>
+              <StepField id="generator-variant" label="Variante o nota adicional" hint="Un giro concreto: por ejemplo, que sea de noche o que el conflicto ocurra al pagar.">
+                <input id="generator-variant" name="variante" className="input" value={variante} onChange={(e) => setVariante(e.target.value)} placeholder="Ej. Que el golpe visual sea que se rompió algo" />
+              </StepField>
+            </StepDetails>
+            <StepFooter back="Volver a Identidad" onBack={() => setCurrentStep(2)} next="Cierre y CTA" onNext={() => avanzarPaso(4)} disabled={!puedeAvanzarPaso3} reason="Escribe al menos cinco caracteres en la idea." guide={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_3} />
+          </StepCard>
         )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* ETAPA 4: CIERRE Y CTA CON GATILLOS DE ALEX HORMOZI                */}
-        {/* ------------------------------------------------------------------ */}
         {currentStep === 4 && (
-          <Card>
-            <CardHeader
-              title={
-                esComunidad
-                  ? "4 · Cierre y llamado a la acción (sin venta · comunidad)"
-                  : "4 · Cierre y llamado a la acción (Alex Hormozi)"
-              }
-              subtitle={
-                esComunidad
-                  ? "El video no vende: solo pide una acción de comunidad (seguir, guardar, enviar, comentar…) con un motivo que sale del contenido."
-                  : "Aplica los principios de $100M Offers y $100M Leads para que el espectador actúe ahora mismo."
-              }
-              icon={<Target size={15} />}
-            />
-            <div className="space-y-4 p-4">
-              {/* 0. Conmutador de modo: vender o solo comunidad */}
-              <div>
-                <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
-                  ¿Este video vende o solo construye comunidad?
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {CTA_MODOS.map((modo) => {
-                    const activo = ctaModo === modo.id;
-                    return (
-                      <button
-                        key={modo.id}
-                        type="button"
-                        onClick={() => aplicarModo(modo.id, true)}
-                        aria-pressed={activo}
-                        className={cn(
-                          "p-2.5 rounded-lg border text-left transition-all flex items-start gap-2",
-                          activo
-                            ? "border-brand bg-brandsoft/70 ring-1 ring-brand font-semibold text-ink shadow-sm"
-                            : "border-line bg-surface hover:bg-surface2 text-inksoft"
-                        )}
-                      >
-                        <span className="text-lg shrink-0 mt-0.5">{modo.icon}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[12px] font-bold leading-tight">{modo.label}</div>
-                          <div className="text-[10.5px] text-inkmuted leading-snug mt-0.5">
-                            {modo.description}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {!modoElegidoAMano && !cierreEditadoAMano ? (
-                  <p className="text-inkmuted text-[10.5px] mt-1">
-                    Sugerido por la estructura elegida ({structure?.category === "ENTRETIENE" ? "entretiene" : "vende"}). Cámbialo si este video pide otra cosa.
-                  </p>
-                ) : null}
-              </div>
-
-              {/* 1. Selector de Gatillo (el contenedor con data-guia existe en ambos modos) */}
-              <div>
-                <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
-                  {esComunidad
-                    ? "1 · Elige qué acción de comunidad pides"
-                    : "1 · Elige el gatillo psicológico de cierre"}
-                </div>
-                <div
-                  className="grid grid-cols-2 sm:grid-cols-3 gap-1.5"
-                  data-guia={GUIA_TARGETS.BOTONES_GENERADOR_CTA}
-                >
-                  {gatillosDelModo.map((gat) => {
-                    const activo = ctaTrigger === gat.id;
-                    return (
-                      <button
-                        key={gat.id}
-                        type="button"
-                        onClick={() => {
-                          setCierreEditadoAMano(true);
-                          aplicarGatillo(gat.id);
-                        }}
-                        className={cn(
-                          "p-2 rounded-lg border text-left transition-all flex items-start gap-2",
-                          activo
-                            ? "border-brand bg-brandsoft/70 ring-1 ring-brand font-semibold text-ink shadow-sm"
-                            : "border-line bg-surface hover:bg-surface2 text-inksoft"
-                        )}
-                      >
-                        <span className="text-base shrink-0 mt-0.5">{gat.icon}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="text-[11.5px] font-bold truncate leading-tight">
-                            {gat.shortLabel}
-                          </div>
-                          <div className="text-[9.5px] text-inkmuted truncate">
-                            {gat.badge}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 2. Selector de Acción */}
-              <div>
-                <div className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider mb-1.5">
-                  2 · Qué acción pides en redes
-                  {esComunidad ? " (una sola, sin enlace ni DM)" : ""}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {accionesDelModo.map((acc) => {
-                    const activo = ctaAction === acc.id;
-                    return (
-                      <button
-                        key={acc.id}
-                        type="button"
-                        onClick={() => {
-                          setCierreEditadoAMano(true);
-                          setCtaAction(acc.id);
-                          const nuevoTexto = armarCtaTexto(ctaTrigger, acc.id, ctaDetail);
-                          setCta(nuevoTexto);
-                        }}
-                        className={cn(
-                          "chip cursor-pointer text-[11px] transition-all",
-                          activo
-                            ? "chip-brand font-semibold ring-1 ring-brand"
-                            : "chip-plain hover:border-brand/40"
-                        )}
-                      >
-                        <span>{acc.icon}</span>
-                        <span>{acc.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 3. Presets y detalle específico */}
-              {(() => {
-                const gat = gatilloActual;
-                if (!gat) return null;
-                return (
-                  <div className="space-y-2 rounded-lg border border-line bg-surface2/30 p-2.5">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                      <span className="text-[10.5px] font-bold text-inkmuted uppercase tracking-wider">
-                        3 · {esComunidad ? "Frases de ejemplo" : "Fórmulas probadas"} ({gat.shortLabel})
-                      </span>
-                      <span className="text-[10px] text-inkmuted italic">
-                        {gat.explanation}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      {gat.presets.map((p, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setCierreEditadoAMano(true);
-                            setCtaAction(p.accion);
-                            setCtaDetail(p.detalle);
-                            setCta(p.textoCompleto);
-                          }}
-                          className="chip chip-plain hover:border-brand/50 hover:bg-brandsoft/30 text-[10.5px] cursor-pointer transition-all"
-                          title={p.textoCompleto}
-                        >
-                          ✨ {p.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <Field
-                      label={
-                        esComunidad
-                          ? "Motivo, destinatario o pregunta del pedido"
-                          : "Incentivo, límite o detalle específico"
-                      }
-                      hint={
-                        esComunidad
-                          ? "Lo que justifica el pedido y sale del video: para cuándo guardarlo, a quién enviárselo o qué preguntas. Sin precios ni promociones."
-                          : "Personaliza los números o la razón exacta: cupos disponibles, fecha límite o guía a regalar."
-                      }
-                    >
-                      <input
-                        className="input text-[12px]"
-                        value={ctaDetail}
-                        placeholder={gat.defaultDetailPlaceholder}
-                        onChange={(e) => {
-                          const nuevoDet = e.target.value;
-                          setCierreEditadoAMano(true);
-                          setCtaDetail(nuevoDet);
-                          setCta(armarCtaTexto(ctaTrigger, ctaAction, nuevoDet));
-                        }}
-                      />
-                    </Field>
-                  </div>
-                );
-              })()}
-
-              {/* 4. Texto final del CTA */}
-              <Field
-                label="Texto final del llamado a la acción (lo que dirá la última escena)"
-                hint="Puedes editarlo libremente si deseas cambiar alguna palabra."
-              >
-                <div className="space-y-1.5">
-                  <textarea
-                    name="cta"
-                    className="textarea font-medium text-[12px]"
-                    rows={3}
-                    value={cta}
-                    onChange={(e) => {
-                      setCierreEditadoAMano(true);
-                      setCta(e.target.value);
-                    }}
-                    placeholder={
-                      esComunidad
-                        ? "Ej. Mándaselo a tu pata que siempre dice que no sabe qué regalar."
-                        : "Ej. Si no me compras ahora solo puedo atender a 9 clientes..."
-                    }
-                  />
-                  <div className="flex items-center justify-between text-[11px] text-inkmuted">
-                    <span>
-                      {esComunidad
-                        ? "Este texto se inyecta en el prompt junto con la prohibición de vender: la IA no puede añadir precios, ofertas ni enlaces."
-                        : "Este texto exacto se inyectará en el pre-prompt de la IA para el cierre."}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCierreEditadoAMano(true);
-                        setCta(armarCtaTexto(ctaTrigger, ctaAction, ctaDetail));
-                      }}
-                      className="text-brand hover:underline flex items-center gap-1 font-semibold"
-                    >
-                      <RotateCcw size={11} /> Re-ensamblar fórmula
-                    </button>
-                  </div>
-                </div>
-              </Field>
-
-              {/* Botones de navegación de la Etapa 4 */}
-              <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(3)}
-                  className="btn btn-plain"
-                >
-                  <ArrowLeft size={14} /> Volver a Ángulo
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => avanzarPaso(5)}
-                  className="btn btn-primary"
-                  data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_4}
-                >
-                  Continuar: Motor y Generación
-                  <ArrowRight size={14} />
-                </button>
-              </div>
+          <StepCard title="¿Qué quieres que haga el espectador?" description="Elige el objetivo y ajusta la frase con la que termina el video.">
+            <div role="group" aria-label="Objetivo del cierre" className="grid gap-3 sm:grid-cols-2">
+              {CTA_MODOS.map((modo) => <button key={modo.id} type="button" onClick={() => aplicarModo(modo.id, true)} aria-pressed={ctaModo === modo.id} className={stepStyles.choice}>
+                <span className="text-sm font-bold">{modo.icon} {modo.label}</span><span className="text-inkmuted mt-2 block text-xs leading-relaxed">{modo.description}</span>
+              </button>)}
             </div>
-          </Card>
+            {!modoElegidoAMano && !cierreEditadoAMano ? <p className="text-inkmuted text-xs">Sugerido por la estructura elegida ({structure?.category === "ENTRETIENE" ? "entretiene" : "vende"}). Puedes cambiarlo.</p> : null}
+            <div className="grid gap-5 sm:grid-cols-2" data-guia={GUIA_TARGETS.BOTONES_GENERADOR_CTA}>
+              <StepField id="generator-trigger" label={esComunidad ? "Tipo de cierre de comunidad" : "Gatillo de venta"}>
+                <select id="generator-trigger" className="select" value={ctaTrigger} onChange={(e) => { setCierreEditadoAMano(true); aplicarGatillo(e.target.value); }}>
+                  {gatillosDelModo.map((gat) => <option key={gat.id} value={gat.id}>{gat.icon} {gat.shortLabel}</option>)}
+                </select>
+              </StepField>
+              <StepField id="generator-action" label="Acción que pides" hint={esComunidad ? "Una sola acción de comunidad, sin enlace comercial ni DM." : undefined}>
+                <select id="generator-action" className="select" value={ctaAction} onChange={(e) => { setCierreEditadoAMano(true); setCtaAction(e.target.value); setCta(armarCtaTexto(ctaTrigger, e.target.value, ctaDetail)); }}>
+                  {!ctaAction ? <option value="">Sin pedido explícito</option> : null}
+                  {accionesDelModo.map((action) => <option key={action.id} value={action.id}>{action.icon} {action.label}</option>)}
+                </select>
+              </StepField>
+            </div>
+            {gatilloActual ? <StepField id="generator-cta-detail" label={esComunidad ? "Motivo, destinatario o pregunta" : "Incentivo, límite o detalle"} hint={esComunidad ? "El motivo debe salir del contenido, sin precios ni promociones." : "Personaliza la razón para actuar con datos concretos."}>
+              <input id="generator-cta-detail" className="input" value={ctaDetail} placeholder={gatilloActual.defaultDetailPlaceholder} onChange={(e) => { setCierreEditadoAMano(true); setCtaDetail(e.target.value); setCta(armarCtaTexto(ctaTrigger, ctaAction, e.target.value)); }} />
+            </StepField> : null}
+            <StepField id="generator-cta" label="Texto final del cierre" hint={esComunidad ? "La IA recibe este cierre con la instrucción de no añadir precios, ofertas ni enlaces de venta." : "Puedes editar libremente lo que dirá la última escena."}>
+              <textarea id="generator-cta" name="cta" className="textarea" rows={3} value={cta} onChange={(e) => { setCierreEditadoAMano(true); setCta(e.target.value); }} placeholder={esComunidad ? "Ej. Envíalo a quien siempre dice que no sabe qué regalar." : "Escribe el llamado a la acción."} />
+              <button type="button" className="text-brand mt-3 inline-flex items-center gap-2 py-1 text-xs font-semibold hover:underline" onClick={() => { setCierreEditadoAMano(true); setCta(armarCtaTexto(ctaTrigger, ctaAction, ctaDetail)); }}><RotateCcw size={13} aria-hidden="true" /> Re-ensamblar fórmula</button>
+            </StepField>
+            {gatilloActual ? <StepDetails key={`${ctaModo}-${ctaTrigger}`} title={esComunidad ? "Explorar frases de ejemplo" : "Explorar fórmulas de venta"} summary={gatilloActual.shortLabel}>
+              <span className="chip chip-brand">{gatilloActual.badge}</span><p className="text-inksoft text-sm leading-relaxed">{gatilloActual.explanation}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {gatilloActual.presets.map((preset, index) => <button key={index} type="button" className={stepStyles.choice} aria-label={`Usar fórmula: ${preset.label}`} onClick={() => { setCierreEditadoAMano(true); setCtaAction(preset.accion); setCtaDetail(preset.detalle); setCta(preset.textoCompleto); }}>
+                  <span className="text-brand text-sm font-semibold">{preset.label}</span><span className="text-inksoft mt-2 block text-sm leading-relaxed">{preset.textoCompleto}</span>
+                </button>)}
+              </div>
+            </StepDetails> : null}
+            <StepFooter back="Volver a Idea" onBack={() => setCurrentStep(3)} next="Revisión y generación" onNext={() => avanzarPaso(5)} guide={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_4} />
+          </StepCard>
         )}
 
-        {/* ------------------------------------------------------------------ */}
-        {/* ETAPA 5: MOTOR DE IA, DURACIÓN Y GENERACIÓN FINAL                   */}
-        {/* ------------------------------------------------------------------ */}
         {currentStep === 5 && (
-          <Card>
-            <CardHeader
-              title="5 · Motor de IA y resumen de generación"
-              subtitle="Revisa el checklist final de ideación y genera el guion escena por escena."
-              icon={<Bot size={15} />}
-            />
-            <div className="space-y-4 p-4">
-              {/* Resumen Ejecutivo tipo Checklist Gemini */}
-              <div className="rounded-xl border border-line bg-surface2/40 p-3.5 space-y-2.5">
-                <div className="text-[11px] font-bold text-ink uppercase tracking-wider">
-                  Checklist de ideación completo
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
-                  <div className="p-2 rounded bg-surface border border-line">
-                    <span className="text-inkmuted text-[10px] uppercase font-bold block">1 · Formato:</span>
-                    <span className="text-ink font-semibold">{structure?.name ?? "No seleccionado"}</span>
-                    <span className="text-inkmuted block text-[11px]">{structure?.beats.length ?? 0} beats · ~{duracion}s</span>
-                  </div>
-                  <div className="p-2 rounded bg-surface border border-line">
-                    <span className="text-inkmuted text-[10px] uppercase font-bold block">2 · Identidad y Actor:</span>
-                    <span className="text-ink font-semibold">{brand?.name ?? "Sin marca"}</span>
-                    <span className="text-inkmuted block text-[11px]">{archetype?.name ?? "Sin actor asignado"}</span>
-                  </div>
-                  <div className="p-2 rounded bg-surface border border-line">
-                    <span className="text-inkmuted text-[10px] uppercase font-bold block">3 · Producto:</span>
-                    <span className="text-ink font-semibold truncate block">{producto || "No especificado"}</span>
-                    {productoDetalle ? (
-                      <span className="chip chip-brand text-[9.5px] mt-1">✓ Descripción profunda incluida</span>
-                    ) : null}
-                  </div>
-                  <div className="p-2 rounded bg-surface border border-line">
-                    <span className="text-inkmuted text-[10px] uppercase font-bold block">4 · Ángulo y CTA:</span>
-                    <span className="text-ink font-semibold">{creativeAngle ? ANGULOS_CREATIVOS.find((a) => a.id === creativeAngle)?.shortLabel : "Estándar"}</span>
-                    <span className="text-inkmuted block text-[11px]">Cierre: {resumenCierre}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Ajustes de Motor y Duración */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="label">Proveedor de IA</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {AI_PROVIDERS.map((p) => {
-                      const listo = Boolean(providersReady[p.value]);
-                      const activo = provider === p.value;
-                      return (
-                        <button
-                          key={p.value}
-                          type="button"
-                          disabled={!listo}
-                          onClick={() => {
-                            setProvider(p.value);
-                            setModel(resolveAiModel(p.value, undefined, defaultModels[p.value]));
-                          }}
-                          className={cn(
-                            "card-flat flex flex-col gap-1 p-2.5 text-left transition-all",
-                            activo && "border-brand bg-brandsoft/50",
-                            !listo && "cursor-not-allowed opacity-55"
-                          )}
-                          style={activo ? { boxShadow: "0 0 0 1px var(--brand)" } : undefined}
-                        >
-                          <span className="text-ink text-[12.5px] font-semibold">
-                            {p.label}
-                          </span>
-                          <span
-                            className={cn(
-                              "text-[11px] font-medium",
-                              listo ? "text-ok" : "text-warn"
-                            )}
-                          >
-                            {listo ? "Clave configurada" : "Sin clave"}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {!providersReady[provider] ? (
-                    <div className="hint mt-1">
-                      Falta la clave de este proveedor.{" "}
-                      <Link href="/ajustes" className="text-brand font-semibold">
-                        Configúrala en Ajustes
-                      </Link>
-                      .
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="space-y-3">
-                  <Field
-                    label="Modelo"
-                    hint="Elige un modelo del catálogo del proveedor."
-                  >
-                    <input
-                      name="modelo"
-                      className="input input-mono"
-                      list="modelos-ia"
-                      value={model}
-                      onChange={(e) => setModel(e.target.value)}
-                      placeholder={modelosSugeridos[0]?.value ?? "claude-opus-5"}
-                    />
-                    <datalist id="modelos-ia">
-                      {modelosSugeridos.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.label}
-                        </option>
-                      ))}
-                    </datalist>
-                  </Field>
-
-                  <Field label="Duración objetivo (segundos)" hint="Recomendado 30 a 60s.">
-                    <input
-                      name="duracion"
-                      type="number"
-                      min={10}
-                      max={300}
-                      className="input"
-                      value={duracion}
-                      onChange={(e) => setDuracion(e.target.value)}
-                    />
-                  </Field>
-                </div>
-              </div>
-
-              {sinClaves ? (
-                <Callout tone="warn" title="No hay ninguna clave de IA configurada">
-                  Para generar guiones necesitas cargar la clave de Claude o la de Gemini en{" "}
-                  <Link href="/ajustes" className="text-brand font-semibold">
-                    Ajustes
-                  </Link>
-                  .
-                </Callout>
-              ) : null}
-
-              {/* Botón de Lanzamiento */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-line mt-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep(4)}
-                  className="btn btn-plain order-2 sm:order-1"
-                >
-                  <ArrowLeft size={14} /> Volver a Cierre CTA
-                </button>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary btn-lg shrink-0 order-1 sm:order-2 w-full sm:w-auto"
-                  disabled={!puedeGenerar}
-                  data-guia={GUIA_TARGETS.BTN_GENERAR_GUION_SUBMIT}
-                >
-                  {pending ? (
-                    <Loader2 size={16} className="spin" />
-                  ) : (
-                    <Wand2 size={16} />
-                  )}
-                  {pending
-                    ? selectedStructureIds.length > 1
-                      ? `Generando ${selectedStructureIds.length} guiones con IA…`
-                      : "Generando guion con IA…"
-                    : selectedStructureIds.length > 1
-                      ? `✨ Generar ${selectedStructureIds.length} guiones con IA (Lote)${
-                          video ? " y vincular el primero al video" : ""
-                        }`
-                      : `✨ Generar guion con IA${video ? " y vincularlo al video" : ""}`}
-                </button>
+          <StepCard title="Revisa y genera tus guiones" description="Confirma el pedido y elige con qué modelo trabajará la IA.">
+            <section aria-label="Resumen del pedido">
+              <div className={stepStyles.reviewRow}><div><h3 className="text-inkmuted text-xs">Formatos</h3><p className="mt-1 text-sm font-semibold">{selectedStructureIds.map((id) => structures.find((s) => s.id === id)?.name ?? id).join(" · ") || "Sin formatos seleccionados"}</p><p className="text-inkmuted mt-1 text-xs">Un guion por formato · Duración objetivo: {duracion || 0}s</p></div><button type="button" className="btn btn-ghost" aria-label="Editar formatos" onClick={() => setCurrentStep(1)}>Editar</button></div>
+              <div className={stepStyles.reviewRow}><div><h3 className="text-inkmuted text-xs">Identidad y producto</h3><p className="mt-1 text-sm font-semibold">{producto || "Producto pendiente"}</p><p className="text-inksoft mt-1 text-sm">{brand?.name ?? "Sin marca"} · {archetype?.name ?? "Sin actor asignado"}</p>{productoDetalle ? <p className="text-inkmuted mt-1 text-xs">Descripción del producto incluida</p> : null}</div><button type="button" className="btn btn-ghost" aria-label="Editar identidad y producto" onClick={() => setCurrentStep(2)}>Editar</button></div>
+              <div className={stepStyles.reviewRow}><div><h3 className="text-inkmuted text-xs">Idea y ángulo</h3><p className="mt-1 text-sm">{peticion || "Idea pendiente"}</p><p className="text-inkmuted mt-1 text-xs">{anguloActual?.shortLabel ?? "Ángulo estándar"}{variante ? " · Variante incluida" : ""}</p></div><button type="button" className="btn btn-ghost" aria-label="Editar idea y ángulo" onClick={() => setCurrentStep(3)}>Editar</button></div>
+              <div className={stepStyles.reviewRow}><div><h3 className="text-inkmuted text-xs">Cierre · {resumenCierre}</h3><p className="mt-1 text-sm">{cta || "Cierre automático"}</p></div><button type="button" className="btn btn-ghost" aria-label="Editar cierre" onClick={() => setCurrentStep(4)}>Editar</button></div>
+            </section>
+            <div>
+              <h3 className="mb-3 text-sm font-semibold">Proveedor de IA</h3>
+              <div role="group" aria-label="Proveedor de IA" className="grid gap-3 sm:grid-cols-2">
+                {AI_PROVIDERS.map((p) => <button key={p.value} type="button" disabled={!providersReady[p.value]} aria-pressed={provider === p.value} onClick={() => { setProvider(p.value); setModel(resolveAiModel(p.value, undefined, defaultModels[p.value])); }} className={cn(stepStyles.choice, !providersReady[p.value] && "cursor-not-allowed opacity-60")}>
+                  <span className="text-sm font-semibold">{p.label}</span><span className={cn("mt-2 block text-xs", providersReady[p.value] ? "text-ok" : "text-warn")}>{providersReady[p.value] ? "Clave configurada" : "Sin clave"}</span>
+                </button>)}
               </div>
             </div>
-          </Card>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <StepField id="generator-model" label="Modelo">
+                <select id="generator-model" name="modelo" className="select" value={model} onChange={(e) => setModel(e.target.value)}>
+                  {modelosSugeridos.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </StepField>
+              <StepField id="generator-duration" label="Duración objetivo (segundos)" hint="Entre 10 y 300 segundos. Recomendado: 30 a 60.">
+                <input id="generator-duration" name="duracion" type="number" min={10} max={300} className="input" value={duracion} onChange={(e) => setDuracion(e.target.value)} />
+              </StepField>
+            </div>
+            {!providersReady[provider] ? <Callout tone="warn" title={sinClaves ? "No hay ninguna clave de IA configurada" : "Falta la clave de este proveedor"}>Configura la clave de Claude o Gemini en <Link href="/ajustes" className="text-brand font-semibold">Ajustes</Link> para generar.</Callout> : null}
+            <p className="text-inkmuted text-sm leading-relaxed">{video ? `El primer guion se unirá a «${video.title}».${selectedStructureIds.length > 1 ? " Los demás quedarán en la biblioteca." : ""} ` : "Los guiones quedarán en tu biblioteca. "}Puedes salir de la página y seguir el avance en Mis generaciones.</p>
+            <footer className="border-line flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <button type="button" className="btn btn-ghost" onClick={() => setCurrentStep(4)}><ArrowLeft size={15} aria-hidden="true" />Volver a Cierre</button>
+              <button type="submit" className="btn btn-primary min-h-11" disabled={!puedeGenerar} data-guia={GUIA_TARGETS.BTN_GENERAR_GUION_SUBMIT}>
+                {pending ? <Loader2 size={16} className="spin" /> : <Wand2 size={16} />}
+                {pending ? "Registrando solicitud…" : selectedStructureIds.length > 1 ? `Generar ${selectedStructureIds.length} guiones con IA` : "Generar guion con IA"}
+              </button>
+            </footer>
+          </StepCard>
         )}
 
         {/* ALERTA DE ERROR SI NO SE PUDO REGISTRAR LA SOLICITUD. Lo que falle
@@ -1527,11 +814,11 @@ export function GeneratorForm({
       </form>
 
       {/* --------------------------------------------------- COLUMNA DERECHA */}
-      <details key={currentStep === 1 ? "format-context" : "step-context"} open={currentStep === 1 ? undefined : true} className="min-w-0">
-        <summary className={cn("text-inkmuted cursor-pointer list-none rounded-xl border border-line bg-surface px-4 py-3 text-[13px] font-semibold", currentStep !== 1 && "hidden")}>
+      <details key={currentStep} className="min-w-0">
+        <summary className="text-inkmuted cursor-pointer list-none rounded-xl border border-line bg-surface px-4 py-3 text-[13px] font-semibold">
           <span className="flex items-center justify-between gap-3"><span>Lo que recibe la IA · Ver contexto completo</span><ChevronDown size={16} aria-hidden="true" /></span>
         </summary>
-        <div className={cn("space-y-4", currentStep === 1 ? "mt-3" : "lg:sticky lg:top-6")}>
+        <div className="mt-3 space-y-4">
           <Card>
             <CardHeader
               title="Lo que recibe la IA"

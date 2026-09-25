@@ -97,7 +97,7 @@ La integración se hizo de forma manual para adaptar componentes concretos sin s
 
 Estado: reorganizada y validada localmente. Despliegue productivo pendiente de comprobar.
 
-Se conservan las cinco etapas y sus campos. Formato ocupa el ancho disponible, con dos columnas en escritorio y una en móvil, tarjetas de descripción breve, casillas nativas y una única barra de selección al pie. El catálogo usa el desplazamiento de la página; el resumen no se superpone a las tarjetas. «Lo que recibe la IA» se puede desplegar en esta etapa y sigue abierto en las restantes.
+Se conservan las cinco etapas y sus campos. Formato ocupa el ancho disponible, con dos columnas en escritorio y una en móvil, tarjetas de descripción breve, casillas nativas y una única barra de selección al pie. El catálogo usa el desplazamiento de la página; el resumen no se superpone a las tarjetas. La ampliación descrita a continuación añade paginación y hace desplegable «Lo que recibe la IA» en todas las etapas.
 
 | Función anterior | Ubicación actual |
 |---|---|
@@ -118,3 +118,32 @@ Consultar una referencia tiene estado independiente: no cambia la selección, du
 Validación: 142 pruebas unitarias existentes, compilación, tipos y lint correctos. Comprobación adicional sobre el build de producción local, Chromium y PostgreSQL temporal: nueve grupos de interacción, las cinco etapas, conservación del cierre manual y del briefing, lote precargado desde un video, referencia completa, foco/teclado y ocho combinaciones de ancho/tema (320, 360, 768 y 1440 px; claro y oscuro). Sin errores de navegador ni solicitudes de generación. La base temporal se elimina al finalizar. Evidencia local en `.audit/format-ui-report.json`, `.audit/format-build.log` y `.audit/format-*.png`.
 
 La carga JS inicial informada por Next para `/generador` pasa de 151 kB en el build anterior a 145 kB al separar la referencia y el diálogo. Es tamaño de bundle local, no una medición de velocidad en producción. El build conserva el aviso preexistente de dependencia dinámica de `@vercel/queue`.
+
+## Todas las etapas y paginación de formatos · 25/09/2026
+
+Estado: implementado y validado localmente. Despliegue productivo de esta ampliación pendiente de comprobar.
+
+Se aplica la misma jerarquía a las cinco etapas: una tarjeta principal, campos prioritarios visibles, explicaciones y ejemplos desplegables, una acción de avance y el contexto completo cerrado inicialmente. Se mantienen el orden de las etapas, sus validaciones y el contenido del formulario al navegar.
+
+| Etapa | Reorganización | Opciones conservadas |
+|---|---|---|
+| Formato | Seis tarjetas por página, rango visible y Anterior/Siguiente | Todo el catálogo, búsqueda, categorías, referencias y selección entre páginas; «Más» distingue seleccionar la página visible de seleccionar resultados filtrados |
+| Identidad y producto | Video y marca juntos; producto y descripción como campos principales; selector de persona y perfil desplegable | Guion independiente o vinculado, todas las marcas/personas/plantillas, compatibilidad, voz, energía, notas y advertencia de incompatibilidad |
+| Ángulo e idea | La idea ocupa el primer lugar; selector de ángulo con ejemplo desplegable; variante opcional desplegable | Los 12 ángulos, sus descripciones y ejemplos, opción estándar, quitar ángulo y nota adicional |
+| Cierre CTA | Dos objetivos visibles, selectores de tipo y acción, texto editable y fórmulas desplegables | Venta y Comunidad, 18 tipos de cierre, 48 fórmulas, cinco acciones de venta y nueve de comunidad, detalle, reensamblado y cierre sin pedido explícito |
+| Generar IA | Resumen por sección con botones Editar; proveedor, modelo y duración debajo | Todos los modelos del catálogo aceptado por el servidor, proveedores configurados, duración de 10 a 300 segundos, generación por lote y vínculo del primer guion al video |
+
+La página de formatos se conserva al volver desde otra etapa y vuelve a la primera al cambiar búsqueda o categoría. La selección se mantiene aunque un formato quede fuera de la página o filtro actual. El tamaño de página (seis) es independiente del máximo de formatos por solicitud configurado por el servidor. Las acciones masivas respetan ese máximo y conservan el orden del lote.
+
+Los datos adicionales permanecen accesibles al desplegarlos. Consultar una referencia no modifica el pedido; cambiar formatos respeta un cierre ya editado manualmente. El selector de acción representa correctamente el valor vacío de las fórmulas «Sin pedido». El selector de modelos usa el catálogo que ya valida el backend. La guía mantiene sus objetivos `data-guia` y actualiza instrucciones y nombres de controles.
+
+### Validación de esta ampliación
+
+- `npm test`: 142 pruebas existentes correctas; `npm run typecheck`, lint y build correctos. El build final también verifica tipos y runtime de React.
+- Chromium sobre el build de producción local y PostgreSQL temporal: catálogo ficticio de 14 formatos, páginas de 6/6/2, acceso a todos, selección entre páginas, límites de acciones masivas, filtros, búsqueda vacía, referencia completa y retorno del foco.
+- Recorrido de las cinco etapas: personas y plantillas, compatibilidad, los 12 ángulos, los 18 tipos de cierre y cada una de sus 48 fórmulas, acciones y reensamblado, todos los modelos configurados, enlaces Editar y conservación del formulario completo.
+- Preselección desde un video, orden de sus formatos, contexto y cierre manual conservados.
+- 40 combinaciones visuales: cinco etapas × cuatro anchos (320, 360, 768 y 1440 px) × dos temas. Sin desbordes horizontales. Capturas reales revisadas en escritorio y móvil.
+- Cero errores de navegador y cero solicitudes de generación. La base temporal creada para estas pruebas fue eliminada; no se modificó Neon ni se consumió el cupo de IA.
+
+Evidencia local en `.audit/generator-stages-ui-report.json`, `.audit/generator-stages-{build,lint,tests,ui}.log` y `.audit/stages-*.png`. `/generador` informa 144 kB de JS inicial frente a 145 kB tras el cambio anterior; es tamaño del build, no una medida de latencia. Persisten los avisos preexistentes de `@vercel/queue` y de la configuración Prisma en `package.json`.

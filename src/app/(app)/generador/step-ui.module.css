@@ -1,0 +1,59 @@
+.step :global(.input),
+.step :global(.select) {
+  min-height: 44px;
+}
+
+.step :global(.textarea) {
+  font-size: 14px;
+}
+
+.details {
+  border-top: 1px solid var(--line);
+}
+
+.details[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.choice {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  background: var(--surface);
+  text-align: left;
+}
+
+.choice[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.reviewRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.reviewRow:last-child {
+  border-bottom: 0;
+}
+
+.reviewRow > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reviewRow > button {
+  flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .step :global(.input),
+  .step :global(.select),
+  .step :global(.textarea) {
+    font-size: 16px;
+  }
+}

@@ -379,7 +379,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         id: "m5-estructura",
         titulo: "Etapa 1: elige el formato",
         instruccion: "Marca uno o varios formatos de guion (Camaleón, Ellos vs Nosotros, PAS, UGC…).",
-        detalle: "Si marcas varios, la IA genera una versión por formato. «Ver ejemplo» abre la referencia sin cambiar tu selección; «Más» reúne las acciones del lote.",
+        detalle: "Hay seis formatos por página y tu selección se conserva al navegar. «Ver ejemplo» abre la referencia; «Más» permite seleccionar los visibles, los filtrados o limpiar el lote.",
         target: GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA,
         url: "/generador",
         fallbackTexto: "Las tarjetas de formato de la etapa 1 del generador.",
@@ -439,7 +439,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
       {
         id: "m5-continuar-2",
         titulo: "Pasa a la etapa 3",
-        instruccion: "Con el producto descrito (el botón se activa al hacerlo), pulsa «Continuar: Ángulo e Idea».",
+        instruccion: "Con el producto descrito, pulsa «Continuar» para pasar a Ángulo e idea.",
         target: GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_2,
         // Al pulsar Continuar cambia la etapa y el paso siguiente vive en ella: no pedir otro clic.
         avanzarAlInteractuar: true,
@@ -454,7 +454,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         detalle: "De una misma idea y producto, el ángulo define el giro que atrapa al espectador.",
         target: GUIA_TARGETS.BOTONES_GENERADOR_ANGULOS,
         url: "/generador",
-        fallbackTexto: "Botones de «Ángulo creativo» de la etapa 3.",
+        fallbackTexto: "Selector «Ángulo creativo» de la etapa 3. El ejemplo del ángulo se puede desplegar debajo.",
         posicionPreferida: "top",
       },
       {
@@ -470,7 +470,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
       {
         id: "m5-continuar-3",
         titulo: "Pasa a la etapa 4",
-        instruccion: "Con la idea escrita, pulsa «Continuar: Cierre y CTA».",
+        instruccion: "Con la idea escrita, pulsa «Continuar» para pasar a Cierre y CTA.",
         target: GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_3,
         // Al pulsar Continuar cambia la etapa y el paso siguiente vive en ella: no pedir otro clic.
         avanzarAlInteractuar: true,
@@ -491,7 +491,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
       {
         id: "m5-continuar-4",
         titulo: "Pasa a la etapa 5",
-        instruccion: "Pulsa «Continuar: Motor y Generación» para revisar el resumen y generar.",
+        instruccion: "Pulsa «Continuar» para revisar el resumen y elegir el modelo de IA.",
         target: GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_4,
         // Al pulsar Continuar cambia la etapa y el paso siguiente vive en ella: no pedir otro clic.
         avanzarAlInteractuar: true,
@@ -503,7 +503,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         id: "m5-generar",
         titulo: "Etapa 5: genera el guion",
         instruccion: "Revisa el resumen y haz clic en «Generar guion con IA».",
-        detalle: "En unos segundos tendrás el guion desglosado escena por escena, listo para rodar.",
+        detalle: "Se registra un trabajo y puedes seguir su avance en Mis generaciones. Si seleccionaste varios formatos, se crea un guion por formato.",
         target: GUIA_TARGETS.BTN_GENERAR_GUION_SUBMIT,
         url: "/generador",
         fallbackTexto: "Botón «Generar guion con IA» al pie del generador.",

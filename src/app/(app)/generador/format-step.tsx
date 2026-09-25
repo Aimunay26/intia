@@ -1,7 +1,7 @@
 "use client";
 
 import { lazy, Suspense, useRef, useState } from "react";
-import { ArrowRight, ChevronRight, MoreHorizontal, Search, X } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, MoreHorizontal, Search, X } from "lucide-react";
 import { Card } from "@/components/ui";
 import { STRUCTURE_CATEGORY_MAP } from "@/lib/constants";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
@@ -13,7 +13,7 @@ const FormatReference = lazy(() => import("./format-reference"));
 
 export function FormatStep({
   structures, filteredStructures, selectedIds, maxBatch,
-  category, search, onCategoryChange, onSearchChange,
+  category, search, page, onPageChange, onCategoryChange, onSearchChange,
   onToggle, onSelectOnly, onSelectVisible, onClear, onContinue,
 }: {
   structures: GeneratorStructure[];
@@ -22,11 +22,13 @@ export function FormatStep({
   maxBatch: number;
   category: string;
   search: string;
+  page: number;
+  onPageChange: (value: number) => void;
   onCategoryChange: (value: string) => void;
   onSearchChange: (value: string) => void;
   onToggle: (structure: GeneratorStructure) => void;
   onSelectOnly: (structure: GeneratorStructure) => void;
-  onSelectVisible: () => void;
+  onSelectVisible: (visible: GeneratorStructure[]) => void;
   onClear: () => void;
   onContinue: () => void;
 }) {
@@ -36,6 +38,11 @@ export function FormatStep({
   const referenceTrigger = useRef<HTMLButtonElement | null>(null);
   const selectionMenu = useRef<HTMLDetailsElement | null>(null);
   const inspected = structures.find((s) => s.id === inspectedId);
+  const pageSize = 6;
+  const pageCount = Math.max(1, Math.ceil(filteredStructures.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const offset = (currentPage - 1) * pageSize;
+  const visibleStructures = filteredStructures.slice(offset, offset + pageSize);
   const filters = [
     { value: "TODOS", label: "Todos", count: structures.length },
     ...["VENDE", "ENTRETIENE"].map((value) => ({
@@ -98,16 +105,17 @@ export function FormatStep({
             Más <MoreHorizontal size={16} aria-hidden="true" />
           </summary>
           <div className="border-line bg-surface absolute right-0 z-20 mt-1 w-64 max-w-[calc(100vw-3rem)] rounded-xl border p-1.5 shadow-[var(--shadow-2)]">
-            <button type="button" className="btn btn-ghost w-full justify-start text-left whitespace-normal" disabled={!filteredStructures.length} onClick={() => { setNotice(""); onSelectVisible(); closeSelectionMenu(); }}>
-              Seleccionar visibles (hasta {Math.min(maxBatch, filteredStructures.length)})
+            <button type="button" className="btn btn-ghost w-full justify-start text-left whitespace-normal" disabled={!visibleStructures.length} onClick={() => { setNotice(""); onSelectVisible(visibleStructures); closeSelectionMenu(); }}>
+              Seleccionar visibles (hasta {Math.min(maxBatch, visibleStructures.length)})
             </button>
+            {pageCount > 1 ? <button type="button" className="btn btn-ghost w-full justify-start text-left whitespace-normal" onClick={() => { setNotice(""); onSelectVisible(filteredStructures); closeSelectionMenu(); }}>Seleccionar filtrados (hasta {Math.min(maxBatch, filteredStructures.length)})</button> : null}
             <button type="button" className="btn btn-ghost w-full justify-start" disabled={!selectedIds.length} onClick={() => { setNotice(""); onClear(); closeSelectionMenu(); }}>Limpiar selección</button>
           </div>
         </details>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2" data-guia={GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA}>
-        {filteredStructures.map((structure) => {
+        {visibleStructures.map((structure) => {
           const selected = selectedIds.includes(structure.id);
           return (
             <article key={structure.id} data-selected={selected} className={cn(styles.formatCard, "card-flat flex min-w-0 flex-col transition-colors", !selected && "hover:border-linestrong")}>
@@ -134,6 +142,16 @@ export function FormatStep({
           </div>
         ) : null}
       </div>
+
+      {filteredStructures.length > 0 ? (
+        <nav aria-label="Paginación de formatos" className="mt-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-inkmuted text-xs" aria-live="polite">{offset + 1}–{offset + visibleStructures.length} de {filteredStructures.length} formatos · Página {currentPage} de {pageCount}</p>
+          {pageCount > 1 ? <div className="flex gap-2">
+            <button type="button" className="btn btn-ghost" disabled={currentPage === 1} onClick={() => onPageChange(currentPage - 1)} aria-label="Página anterior de formatos"><ChevronLeft size={15} aria-hidden="true" /> Anterior</button>
+            <button type="button" className="btn btn-ghost" disabled={currentPage === pageCount} onClick={() => onPageChange(currentPage + 1)} aria-label="Página siguiente de formatos">Siguiente <ChevronRight size={15} aria-hidden="true" /></button>
+          </div> : null}
+        </nav>
+      ) : null}
 
       <div className="border-line bg-surface mt-6 rounded-xl border p-4 shadow-[var(--shadow-1)] sm:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

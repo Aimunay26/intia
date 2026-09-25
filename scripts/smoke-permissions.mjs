@@ -54,9 +54,9 @@ try{
   let phase='profile-navigation';
   page.on('pageerror',error=>report.errors.push({role,url:page.url(),phase,error:error.message}));
   await page.goto(base+'/login');await page.locator('input[name="email"]').fill(`${role}@ui.fixture.test`);await page.locator('input[name="password"]').fill(password);await page.getByRole('button',{name:'Entrar',exact:true}).click();await page.waitForURL(base+'/');
-  const aside=page.locator('aside').first();
+  const aside=page.locator('aside').first(),main=page.getByRole('main');
   if(role==='OWNER'){
-   await expect(page.getByText('37 vistas de 100 vistas',{exact:true})).toBeVisible();
+   await expect(main.getByText('37 vistas de 100 vistas',{exact:true})).toBeVisible();
    await page.goto(base+'/marcas');await expect(page.locator('main a.brand-strip[href="/marcas/A"]')).toContainText(/En riesgo\s*1/i);
    report.calculatedObjectivesConsistentAcrossPages=true;
    assert.equal((await page.goto(base+'/marcas?q=uno&q=dos')).status(),200);await expect(page.locator('main a.brand-strip[href="/marcas/A"]')).toBeVisible();
@@ -91,7 +91,7 @@ try{
    await page.goto(base+'/mi-perfil');
    // Next may retain an off-screen streaming segment outside the mounted main.
    // Keep strict uniqueness inside the rendered page instead of choosing a copy.
-   const editAssetText=page.getByRole('main').getByTitle('Ver o editar el texto que lee la IA',{exact:true});
+   const editAssetText=main.getByTitle('Ver o editar el texto que lee la IA',{exact:true});
    await expect(editAssetText).toHaveCount(1);await editAssetText.click();
    const textDialog=page.getByRole('dialog');await textDialog.locator('textarea[name="extractedText"]').fill('Borrador de texto retenido');
    await db.asset.update({where:{id:'own-text'},data:{extractedText:'Cambio ajeno de texto'}});
@@ -100,14 +100,14 @@ try{
    assert.equal((await db.asset.findUniqueOrThrow({where:{id:'own-text'}})).extractedText,'Cambio ajeno de texto');
    await page.goto(base+'/ajustes');
    // Streaming may briefly retain a hidden React segment; require one mounted form.
-   await expect(page.locator('input[name="orgName"]')).toHaveCount(1);
-   await page.locator('input[name="orgName"]').fill('Borrador de ajustes retenido');
+   await expect(main.locator('input[name="orgName"]')).toHaveCount(1);
+   await main.locator('input[name="orgName"]').fill('Borrador de ajustes retenido');
    await db.appSetting.upsert({where:{key:'org.name'},create:{key:'org.name',value:'Cambio ajeno de ajustes'},update:{value:'Cambio ajeno de ajustes'}});
-   await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();await page.locator('form').filter({has:page.locator('input[name="orgName"]')}).getByRole('alert').waitFor();
-   await expect(page.locator('input[name="orgName"]')).toHaveValue('Borrador de ajustes retenido');
+   await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();await main.locator('form').filter({has:page.locator('input[name="orgName"]')}).getByRole('alert').waitFor();
+   await expect(main.locator('input[name="orgName"]')).toHaveValue('Borrador de ajustes retenido');
    assert.equal((await db.appSetting.findUniqueOrThrow({where:{key:'org.name'}})).value,'Cambio ajeno de ajustes');
    report.revisionDraftsPreserved=['user','asset','settings'];
-   const retention=page.locator('section').filter({has:page.getByRole('heading',{name:'Retención técnica',exact:true})});
+   const retention=main.locator('section').filter({has:page.getByRole('heading',{name:'Retención técnica',exact:true})});
    await expect(retention.getByText(/La limpieza está desactivada/)).toBeVisible();
    await expect(retention.getByRole('checkbox')).not.toBeChecked();
    await retention.getByRole('button',{name:'Ver impacto sin borrar',exact:true}).click();
@@ -115,10 +115,10 @@ try{
    assert.equal(await db.appSetting.count({where:{key:'ops.retention.policy'}}),0);
    report.retentionPreviewWithoutActivation=true;
    phase='secrets-and-calendar';await page.goto(base+'/ajustes');
-   await expect(page.locator('input[name="orgName"]')).toHaveCount(1);
-   await page.locator('input[name="googleKey"]').fill('b22-browser-secret-fixture');
+   await expect(main.locator('input[name="orgName"]')).toHaveCount(1);
+   await main.locator('input[name="googleKey"]').fill('b22-browser-secret-fixture');
    await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();
-   await expect(page.getByText('Ajustes guardados.',{exact:true})).toBeVisible();
+   await expect(main.getByText('Ajustes guardados.',{exact:true})).toBeVisible();
    const encrypted=await db.appSecret.findUniqueOrThrow({where:{key:'ai.google.apiKey'}});
    assert.ok(!encrypted.value.includes('b22-browser-secret-fixture'));
    await page.goto(base+'/ajustes');assert.ok(!(await page.content()).includes('b22-browser-secret-fixture'));
@@ -185,7 +185,7 @@ try{
       for (const done of [true,false,true]) {
        phase='checklist-'+done;
        const button=page.getByRole('button',{name:done?'Completar':'Reabrir',exact:true});
-       const form=page.locator('form').filter({has:button});
+       const form=main.locator('form').filter({has:button});
        await expect(form.locator('input[name="done"]')).toHaveValue(done?'1':'0');
        await button.click();
        await expect.poll(async()=> (await db.checklistItem.findUniqueOrThrow({where:{id:'editing'}})).done).toBe(done);
@@ -249,28 +249,28 @@ try{
   if(role==='STRATEGY'){
    phase='objectives-and-planning';
    await page.goto(base+'/marcas/A');await page.getByRole('button',{name:'Nuevo objetivo',exact:true}).click();
-   const form=page.locator('form').filter({has:page.locator('select[name="calculationMode"]')});
+   const form=main.locator('form').filter({has:page.locator('select[name="calculationMode"]')});
    await form.locator('input[name="name"]').fill('Vistas de septiembre');await form.locator('select[name="calculationMode"]').selectOption('WEEKLY_SUM');
    await form.locator('input[name="calculationFrom"]').fill('2026-09-07');await form.locator('input[name="calculationTo"]').fill('2026-09-13');
    await form.locator('input[name="targetValue"]').fill('100');await form.getByRole('button',{name:'Añadir objetivo',exact:true}).click();
-   await expect(page.getByText('Vistas de septiembre',{exact:true})).toBeVisible();
+   await expect(main.getByText('Vistas de septiembre',{exact:true})).toBeVisible();
    await expect(page.getByRole('cell').filter({has:page.getByText('Vistas de septiembre',{exact:true})}).getByText(/Calculado · 2026-09-07 a 2026-09-13 · 1 registros/)).toBeVisible();
    assert.equal((await db.brandObjective.findFirstOrThrow({where:{name:'Vistas de septiembre'}})).calculationMode,'WEEKLY_SUM');
-   await page.goto(base+'/contenido/assigned');await page.locator('summary').filter({hasText:/^Editar planificación$/}).click();
-   const planning=page.locator('form').filter({has:page.getByRole('button',{name:'Guardar planificación',exact:true})});
+   await page.goto(base+'/contenido/assigned');await main.locator('summary').filter({hasText:/^Editar planificación$/}).click();
+   const planning=main.locator('form').filter({has:page.getByRole('button',{name:'Guardar planificación',exact:true})});
    await planning.locator('input[name="structureIds"][value="structure"]').check();await planning.getByRole('button',{name:'Guardar planificación',exact:true}).click();
    await expect.poll(async()=>await db.contentPlannedStructure.count({where:{contentItemId:'assigned',structureId:'structure'}})).toBe(1);
    report.strategyObjectivesAndFormats=true;
   }
   if(role==='PRODUCTION'){
    phase='shoot-date-only';await page.goto(base+'/contenido/assigned');
-   assert.equal(await page.locator('summary').filter({hasText:/^Editar planificación$/}).count(),0);
-   await page.locator('summary').filter({hasText:/^Fecha de grabación$/}).click();
-   const shoot=page.locator('form').filter({has:page.getByRole('button',{name:'Guardar grabación',exact:true})});
+   assert.equal(await main.locator('summary').filter({hasText:/^Editar planificación$/}).count(),0);
+   await main.locator('summary').filter({hasText:/^Fecha de grabación$/}).click();
+   const shoot=main.locator('form').filter({has:page.getByRole('button',{name:'Guardar grabación',exact:true})});
    await shoot.locator('input[name="shootDate"]').fill('2026-10-05');await shoot.getByRole('button',{name:'Guardar grabación',exact:true}).click();
    await expect.poll(async()=> (await db.contentItem.findUniqueOrThrow({where:{id:'assigned'}})).shootDate?.toISOString().slice(0,10)).toBe('2026-10-05');
    assert.equal((await db.contentItem.findUniqueOrThrow({where:{id:'assigned'}})).title,'Video asignado');report.productionDateOnly=true;
-   await page.goto(base+'/contenido/assigned?comentarios=2');await expect(page.getByText('35 registros · Página 2 de 2',{exact:true})).toBeVisible();report.commentHistoryPagination=true;
+   await page.goto(base+'/contenido/assigned?comentarios=2');await expect(main.getByText('35 registros · Página 2 de 2',{exact:true})).toBeVisible();report.commentHistoryPagination=true;
   }
   if(role==='ANALYST'){
    phase='analytics-and-csv-resume';await page.goto(base+'/metricas?desde=2026-09-07&hasta=2026-09-13');

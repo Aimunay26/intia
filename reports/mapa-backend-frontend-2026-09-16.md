@@ -18,24 +18,24 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 | B08 · Procedencia de compatibilidad | Migrado y desplegado | Autor, revisión y fuente manual; origen anterior en auditoría; solo evaluaciones humanas llegan al prompt; verificado en Neon/Vercel |
 | B09 · Estados y aprobación explícita | Migrado y desplegado | Flujo acordado, requisitos, tipos estables, copias inmutables de versiones aprobadas, reapertura y excepción auditada; verificado en Neon/Vercel |
 | B10 · Concurrencia uniforme | Migrado y desplegado | Revisiones en importación de branding, ficha de usuario, compatibilidad, texto/referencia de adjuntos y ajustes; borradores conservados; verificado en Neon/Vercel |
-| B11 · Funciones por perfil | Implementado y validado localmente | Dashboard con alcance, objetivos de Estrategia, formatos previstos, filtros de tareas y fecha de grabación para Producción |
-| B12 · CSV escalable | Implementado y validado localmente | Lotes durables de 25 filas, reanudación, revisión y auditoría atómica; benchmark 50/500 filas |
-| B13 · Consultas e índices | Implementado y validado localmente | Referencias y adjuntos acotados, historiales paginados, planes EXPLAIN e índices con validación de definición |
-| B14 · Mantenimiento | Implementado y validado localmente | Recuperación prioritaria, presupuestos, fallo lento probado, alerta y caducidad de 72 h |
-| B15 · Configuración IA | Implementado y validado localmente | Modelos validados, etapa/modelo/procedencia/cupo visibles y contexto con huella; sin nuevas llamadas reales |
-| B16 · Analítica y objetivos | Implementado y validado localmente | Objetivos manuales o sumas semanales con período/plataforma; alcances y retención etiquetados |
-| B17 · Parámetros e invalidación | Implementado y validado localmente | Normalización de URLs e invalidación conjunta después de confirmar escrituras |
-| B18 · Retención y almacenamiento | Implementado y validado localmente | Limpieza técnica apagada con vista previa, historia preservada, huellas y cupos de almacenamiento |
-| B19 · Pruebas y CI | Implementado y validado localmente | 138 pruebas unitarias/CTA, 120 casos reportados PostgreSQL, UI de 11 perfiles, Workflow y lint limpio |
-| B20 · Servicios y contratos | Implementado y validado localmente | Servicios de dominio extraídos y matching legado en archivo de lectura; documentación de invariantes |
+| B11 · Funciones por perfil | Migrado y desplegado | Dashboard con alcance, objetivos de Estrategia, formatos previstos, filtros de tareas y fecha de grabación para Producción |
+| B12 · CSV escalable | Migrado y desplegado | Lotes durables de 25 filas, reanudación, revisión y auditoría atómica; benchmark 50/500 filas |
+| B13 · Consultas e índices | Migrado y desplegado | Referencias y adjuntos acotados, historiales paginados, planes EXPLAIN e índices con validación de definición |
+| B14 · Mantenimiento | Migrado y desplegado | Recuperación prioritaria, presupuestos, fallo lento probado, alerta y caducidad de 72 h |
+| B15 · Configuración IA | Migrado y desplegado | Modelos validados, etapa/modelo/procedencia/cupo visibles y contexto con huella; sin nuevas llamadas reales |
+| B16 · Analítica y objetivos | Migrado y desplegado | Objetivos manuales o sumas semanales con período/plataforma; alcances y retención etiquetados |
+| B17 · Parámetros e invalidación | Migrado y desplegado | Normalización de URLs e invalidación conjunta después de confirmar escrituras |
+| B18 · Retención y almacenamiento | Migrado y desplegado | Limpieza técnica apagada con vista previa, historia preservada, huellas y cupos de almacenamiento |
+| B19 · Pruebas y CI | Migrado y desplegado | 138 pruebas unitarias/CTA, 120 casos reportados PostgreSQL, UI de 11 perfiles, Workflow y lint limpio |
+| B20 · Servicios y contratos | Migrado y desplegado | Servicios de dominio extraídos y matching legado en archivo de lectura; documentación de invariantes |
 | B21 · Multiempresa | Pendiente | Aislamiento real entre organizaciones; mantiene sus criterios originales |
-| B22 · Secretos y calendario | Implementado y validado localmente | Almacén cifrado con rotación; suscripciones con alcance fijo, vencimiento/revocación y caché desactivada |
+| B22 · Secretos y calendario | Migrado y desplegado | Almacén cifrado con rotación; suscripciones con alcance fijo, vencimiento/revocación y caché desactivada |
 
 Actualización: 24/09/2026. **B07–B10 están integrados en main, migrados en Neon y desplegados en producción**, commit `4ab0260`. CI aprobada; despliegue Git y promoción automática restaurados. [Evidencia del despliegue](despliegue-consistencia-backend-2026-09-24.json). La entrega B01–B06 conserva su registro anterior y el diagnóstico original se mantiene como línea base.
 
 ### Entrega B11–B20 · 24/09/2026
 
-Implementación local completa con los criterios confirmados por el usuario: Producción solo edita grabación; retención como promedio simple; objetivos calculados solo para métricas sumables con período explícito; limpieza técnica apagada y conservación de historial. **Código incluido en la entrega conjunta B11–B20/B22; pendientes migración en Neon y despliegue.** No se modificó producción ni se consumieron llamadas reales de IA/Blob durante esta entrega.
+Implementación local completa con los criterios confirmados por el usuario: Producción solo edita grabación; retención como promedio simple; objetivos calculados solo para métricas sumables con período explícito; limpieza técnica apagada y conservación de historial. **Integrado en main, migrado en Neon y desplegado junto con B22**, commit `87a2162`. Respaldo/restauración y conservación de datos verificados. [Activación y comprobaciones](despliegue-b11-b22-2026-09-24.md). Cero llamadas reales de IA/Blob.
 
 [Detalle, matriz de permisos y mediciones](implementacion-b11-b20-2026-09-24.md) · [Evidencia de validación](validacion-b11-b20-2026-09-24.json) · [Procedimiento de publicación](despliegue-b11-b20.md) · [Contratos del backend](contratos-backend.md).
 
@@ -43,7 +43,7 @@ CSV de 500 filas: p50 local de 139,7 s a 7,8 s con 20 ms simulados por operació
 
 ### Entrega B22 · 24/09/2026
 
-Almacén de secretos separado y cifrado con claves fuera de la DB; migración/rotación transaccional. El Dueño emite suscripciones de calendario por marca o globales explícitas, con expiración, renovación y revocación. Los enlaces globales anteriores se invalidan al migrar. **Preparar cifrado y migraciones antes de integrar/promover a producción.** Rama de entrega: `codex/backend-b11-b22`.
+Almacén de secretos separado y cifrado con claves fuera de la DB; migración/rotación transaccional. El Dueño emite suscripciones de calendario por marca o globales explícitas, con expiración, renovación y revocación. Los enlaces globales anteriores se invalidan al migrar. **Cifrado preparado, secretos migrados y versión activada en producción**, commit `87a2162`. [Registro de activación](despliegue-b11-b22-2026-09-24.md). Los enlaces de calendario anteriores deben reemplazarse desde Ajustes.
 
 [Implementación y activación B22](implementacion-b22-2026-09-24.md) · [Evidencia local](validacion-b22-2026-09-24.json). B21 permanece pendiente.
 
@@ -132,7 +132,7 @@ Pruebas reproducibles: [regresiones PostgreSQL](../tests/postgres-priorities.tes
 - Verificados los controles HTTP sin sesión y las páginas autenticadas consignadas en la [evidencia de despliegue](despliegue-prioridades-backend-2026-09-16.json). La prueba productiva no alteró contenido ni consumió cupo de IA.
 - Restaurada la promoción automática de Vercel. Las URL de despliegues anteriores siguen protegidas. Los formularios de videos abiertos antes de la migración deben recargarse por el cambio de revisión.
 
-**Siguiente paso:** publicar la entrega conjunta B11–B20/B22 siguiendo la preparación de cifrado, migración y activación de B22. El paquete de implementación restante es B21; los módulos opcionales A01–A05 siguen sujetos a decisión de producto. B07–B10 conservan su registro de despliegue anterior. Una generación real posterior requiere proveedor disponible y autorización para los datos y cupo.
+**Siguiente paso:** definir e implementar B21 (multiempresa). B11–B20/B22 ya están migrados y desplegados; reemplazar las suscripciones de calendario antiguas cuando corresponda. Los módulos opcionales A01–A05 siguen sujetos a decisión de producto. B07–B10 conservan su registro de despliegue anterior. Una generación real posterior requiere proveedor disponible y autorización para los datos y cupo.
 
 ## Dictamen de la auditoría original
 

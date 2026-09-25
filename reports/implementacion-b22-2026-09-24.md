@@ -1,6 +1,8 @@
 # B22: secretos y suscripciones de calendario
 
-Entrega conjunta con B11–B20, basada en `6a17cc7`. La implementación se publica en `codex/backend-b11-b22`; la migración y activación en Neon/Vercel siguen pendientes. B21 (multiempresa) conserva su alcance pendiente. No se enviaron documentos a proveedores ni se hicieron llamadas reales de IA/Blob.
+**Actualización de producción · 24/09/2026:** entrega conjunta B11–B20/B22 migrada y desplegada. [Registro y límites de la verificación](despliegue-b11-b22-2026-09-24.md).
+
+Entrega conjunta con B11–B20, basada en `6a17cc7`. La implementación se publica en `codex/backend-b11-b22`; la migración y activación en Neon/Vercel quedaron completadas; consultar el registro anterior. B21 (multiempresa) conserva su alcance pendiente. No se enviaron documentos a proveedores ni se hicieron llamadas reales de IA/Blob.
 
 ## Secretos
 

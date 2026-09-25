@@ -1,6 +1,8 @@
 # Publicar B11–B20
 
-**Pendiente de ejecutar en Neon/Vercel.** El ensayo local no certifica producción. Esta entrega cambia columnas, crea `MetricImportBatch` y usa el identificador de escritura `intia-completion-20260924`.
+**Actualización de producción · 24/09/2026:** entrega conjunta B11–B20/B22 migrada y desplegada. [Registro y límites de la verificación](despliegue-b11-b22-2026-09-24.md).
+
+**Procedimiento ejecutado junto con B22.** La evidencia del entorno real se conserva en el registro de activación. Esta entrega cambia columnas, crea `MetricImportBatch` y usa el identificador de escritura `intia-completion-20260924`.
 
 > Esta rama incorpora también B22. Aplicar la [preparación de cifrado y activación final B22](implementacion-b22-2026-09-24.md): el escritor final es `intia-secrets-20260925`. Las instrucciones siguientes conservan el procedimiento propio de B11–B20.
 

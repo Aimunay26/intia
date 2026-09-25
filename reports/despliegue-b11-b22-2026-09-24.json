@@ -1,0 +1,208 @@
+{
+  "checkedAt": "2026-09-25T00:50:31.844Z",
+  "release": {
+    "commit": "87a21626ad4170ac9250e7081ad806f7d9c8aecc",
+    "implementation": "c5d0466d6af154df48e54f707c97a01a8fc9c278",
+    "ciFix": "1b62ce2131e34d43a1e30d048b58e4c8ee1607dd",
+    "pr": "https://github.com/conamormarket-lgtm/intia/pull/5",
+    "ci": "https://github.com/conamormarket-lgtm/intia/actions/runs/36078306245",
+    "mainCi": {
+      "checkedAt": "2026-09-25T00:49:54.465Z",
+      "sha": "87a21626ad4170ac9250e7081ad806f7d9c8aecc",
+      "event": "push",
+      "conclusion": "success",
+      "url": "https://github.com/conamormarket-lgtm/intia/actions/runs/36078848084"
+    }
+  },
+  "encryption": {
+    "activeKeyId": "prod-20260924",
+    "vercelVariables": [
+      {
+        "key": "APP_SECRETS_ACTIVE_KEY",
+        "type": "plain",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "APP_SECRETS_KEYS",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      }
+    ],
+    "recovery": "DPAPI CurrentUser, stored outside Git; this Windows user is required to recover it"
+  },
+  "backup": {
+    "encryptedWith": "Windows DPAPI CurrentUser",
+    "sha256": "fc376c9555c0d120b3f58b5a916408d43517f09cbe45d3b2e095aabde61a7384",
+    "bytes": 2734328,
+    "tables": 34,
+    "restoredRowsMatch": true,
+    "restoredSchemaMatches": true
+  },
+  "rehearsal": {
+    "migrationRehearsed": true,
+    "businessTablesPreserved": 33
+  },
+  "migration": {
+    "checkedAt": "2026-09-25T00:47:26.252Z",
+    "migrations": [
+      "00000000000000_baseline",
+      "20260909190000_weekly_consistency",
+      "20260909220000_jobs_private_storage_decimal",
+      "20260910010000_team_work_profiles",
+      "20260910120000_content_structure_ids",
+      "20260916180000_backend_priorities",
+      "20260917180000_workflow_consistency",
+      "20260924180000_backend_completion",
+      "20260925010000_secrets_calendar"
+    ],
+    "checksumsMatch": true,
+    "encryptedSecrets": 2,
+    "decryptionVerified": true,
+    "legacySecrets": 0,
+    "retentionEnabled": false,
+    "allTablesGuarded": true,
+    "moved": {
+      "migrated": 2,
+      "rotated": 0,
+      "removedLegacyRows": 2
+    },
+    "secretPlaintextPreserved": true,
+    "businessTablesPreserved": 33,
+    "gate": {
+      "blocked": true,
+      "required_client": "intia-secrets-20260925"
+    },
+    "final": {
+      "checkedAt": "2026-09-25T00:48:34.605Z",
+      "migrations": [
+        "00000000000000_baseline",
+        "20260909190000_weekly_consistency",
+        "20260909220000_jobs_private_storage_decimal",
+        "20260910010000_team_work_profiles",
+        "20260910120000_content_structure_ids",
+        "20260916180000_backend_priorities",
+        "20260917180000_workflow_consistency",
+        "20260924180000_backend_completion",
+        "20260925010000_secrets_calendar"
+      ],
+      "checksumsMatch": true,
+      "encryptedSecrets": 2,
+      "decryptionVerified": true,
+      "legacySecrets": 0,
+      "retentionEnabled": false,
+      "allTablesGuarded": true,
+      "gate": {
+        "blocked": false,
+        "required_client": "intia-secrets-20260925"
+      },
+      "writers": [
+        {
+          "client": "intia-workflow-20260917",
+          "writeAccepted": false,
+          "rowsChanged": 0
+        },
+        {
+          "client": "intia-secrets-20260925",
+          "writeAccepted": true,
+          "rowsChanged": 0
+        }
+      ]
+    }
+  },
+  "deployment": {
+    "checkedAt": "2026-09-25T00:48:37.283Z",
+    "id": "dpl_6wW65p8wjMzMUStJsmWki4omG3Jy",
+    "sha": "87a21626ad4170ac9250e7081ad806f7d9c8aecc",
+    "state": "READY",
+    "url": "https://intia-lovat.vercel.app",
+    "domainMatches": true,
+    "previousDeploymentProtected": true,
+    "autoAssignCustomDomains": true,
+    "checks": [
+      {
+        "path": "/login",
+        "status": 200,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      {
+        "path": "/contenido",
+        "status": 307,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      {
+        "path": "/equipo",
+        "status": 307,
+        "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate"
+      },
+      {
+        "path": "/api/maintenance",
+        "status": 401,
+        "cacheControl": "public, max-age=0, must-revalidate"
+      },
+      {
+        "path": "/api/assets/b22-check-missing",
+        "status": 401,
+        "cacheControl": "public, max-age=0, must-revalidate"
+      },
+      {
+        "path": "/api/calendario.ics?token=invalid-b22-check",
+        "status": 401,
+        "cacheControl": "private, no-store, max-age=0"
+      }
+    ],
+    "realAiCalls": 0
+  },
+  "productionSmoke": {
+    "checkedAt": "2026-09-25T00:49:09.283Z",
+    "environment": "production Neon with current pooled application writer",
+    "scope": "real server actions and route handler; auth and Next effects simulated; transaction rolled back",
+    "encryptedSaveAndAudit": true,
+    "calendarScopeAndNoCache": true,
+    "calendarRotateRevoke": true,
+    "tokensNotAudited": true,
+    "fixturesAndAuditRolledBack": true,
+    "originalSecretsUnchanged": true,
+    "realAiCalls": 0,
+    "realBlobCalls": 0
+  },
+  "browser": {
+    "checkedAt": "2026-09-25T00:50:31.774Z",
+    "environment": "production Vercel",
+    "sessionRole": "OWNER",
+    "pages": [
+      "/ajustes",
+      "/generador"
+    ],
+    "settingsLoaded": true,
+    "storedProviderCredentialsShown": 2,
+    "providerCredentialsFullyMasked": true,
+    "calendarSubscriptionManagerVisible": true,
+    "oldGlobalCalendarUrlAbsent": true,
+    "retentionEnabled": false,
+    "retentionPreview": {
+      "responses": 0,
+      "requests": 0,
+      "csv": 0,
+      "counters": 0
+    },
+    "generatorLoaded": true,
+    "visiblePersonalQuota": 5,
+    "visibleInstallationQuota": 20,
+    "browserWarningsOrErrorsObserved": 0,
+    "allProfilesTestedInProduction": false,
+    "persistentSettingsChanged": false,
+    "realAiCalls": 0
+  },
+  "limits": {
+    "allProfilesBrowsedInProduction": false,
+    "realProviderAvailabilityTested": false,
+    "realAiCalls": 0,
+    "realBlobCalls": 0,
+    "paidResourcesCreated": 0,
+    "retentionEnabled": false
+  }
+}

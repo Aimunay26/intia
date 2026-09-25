@@ -1,6 +1,8 @@
 # B11–B20: implementación y validación local
 
-Fecha: 24/09/2026. Base de comparación: `6a17cc7`. Estos cambios se incluyen en la entrega conjunta B11–B20/B22; aún requieren migración en Neon y despliegue. No se hicieron llamadas reales a IA ni se modificó producción durante esta entrega.
+**Actualización de producción · 24/09/2026:** entrega conjunta B11–B20/B22 migrada y desplegada. [Registro y límites de la verificación](despliegue-b11-b22-2026-09-24.md).
+
+Fecha: 24/09/2026. Base de comparación: `6a17cc7`. Estos cambios quedaron migrados y desplegados en la entrega conjunta B11–B20/B22. Este documento conserva la validación local; el registro de activación anterior contiene la evidencia de producción. No se hicieron llamadas reales a IA.
 
 ## Funciones entregadas
 

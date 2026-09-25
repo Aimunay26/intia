@@ -35,6 +35,8 @@ Actualización: 24/09/2026. **B07–B10 están integrados en main, migrados en N
 
 ### Descenso de modelo por saturación · 25/09/2026
 
+Botón de reintento manual añadido para B03/B15: crea un sucesor solo con los formatos fallidos/cancelados sin guion, conserva historial/éxitos y protege contra dobles envíos. [Implementación y validación](reintento-manual-guiones-2026-09-25.md). Activación productiva pendiente de comprobar.
+
 Extensión de B03/B15: el generador de guiones desciende automáticamente entre Gemini 3.8, 3.7 y 3.6 Flash ante un 503 de saturación, dentro de los tres intentos existentes. Persiste la alternativa por elemento para reanudar, muestra el modelo efectivo y registra `model_fallback`; conserva cuota, autorización, validación y guardado idempotente. Implementación local; publicación y comprobación productiva de este ajuste pendientes. [Detalle y validación](fallback-modelos-2026-09-25.md).
 
 ### Ajuste de consumo de IA · 24/09/2026

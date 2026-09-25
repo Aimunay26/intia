@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { getGenerationStatus, cancelGenerationJob, resumeGenerationJob } from "@/app/actions/generation-jobs";
+import { getGenerationStatus, cancelGenerationJob, resumeGenerationJob, retryFailedGenerationJob } from "@/app/actions/generation-jobs";
 import { readModelFallback } from "@/lib/ai/model-fallback";
 
 const stages: Record<string,string> = { context_load: "Leyendo contexto", references_load: "Leyendo referencias", prompt_build: "Preparando instrucciones", model_resolve: "Validando modelo", key_resolve: "Validando configuración", provider_request: "Esperando al proveedor", response_parse: "Interpretando respuesta", response_saved: "Guardando guion", settings_load: "Leyendo configuración", script_save: "Validando y guardando guion", response_validate: "Validando contenido del guion", completed: "Finalizado" };
@@ -16,6 +17,7 @@ function ModelFallbackNotice({ item }: { item: Job["items"][number] }) {
 }
 
 export default function JobProgress({ initial }: { initial: Job }) {
+  const router = useRouter();
   const [job, setJob] = useState(initial);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
@@ -40,9 +42,15 @@ export default function JobProgress({ initial }: { initial: Job }) {
     timer = setTimeout(refresh, delay);
     return () => { stopped = true; clearTimeout(timer); };
   }, [initial.id, active]);
-  function action(kind: "resume" | "cancel") {
+  function action(kind: "resume" | "cancel" | "retry") {
     startTransition(async () => {
       try {
+        if (kind === "retry") {
+          const result = await retryFailedGenerationJob(job.id);
+          if (!result.ok) { setError(result.error); return; }
+          router.push(`/generador/trabajos/${result.id}`);
+          return;
+        }
         if (kind === "cancel") await cancelGenerationJob(job.id);
         else await resumeGenerationJob(job.id);
         const next = await getGenerationStatus(job.id);
@@ -74,6 +82,11 @@ export default function JobProgress({ initial }: { initial: Job }) {
       <button className="btn btn-secondary" disabled={pending} onClick={() => action("cancel")}>Cancelar pendientes</button>
     </div>}
     {active && <p className="text-sm text-inkmuted">La recuperación se permite después de seis minutos sin avance. Cancelar conserva los guiones terminados; una llamada de IA ya iniciada puede consumir tokens.</p>}
+    {!active && job.retryableCount > 0 && <div className="space-y-2">
+      {job.retryJobId ? <Link href={`/generador/trabajos/${job.retryJobId}`} className="btn btn-primary">Ver reintento</Link>
+        : <button type="button" className="btn btn-primary" disabled={pending} onClick={() => action("retry")}>{pending ? "Registrando reintento…" : `Reintentar ${job.retryableCount === 1 ? "guion no generado" : `${job.retryableCount} guiones no generados`}`}</button>}
+      <p className="text-sm text-inkmuted">Se conserva lo ya generado. El reintento usa el mismo pedido con la configuración y las referencias actuales, y puede consumir llamadas de IA.</p>
+    </div>}
     <Link href="/generador" className="btn btn-primary">Nueva generación</Link>
   </div>;
 }

@@ -7,5 +7,5 @@ export default async function GenerationPage({ params }: { params: Promise<{ id:
   const user = await requirePermission("scripts.generate");
   const job = await generationStatus(user, (await params).id);
   if (!job) notFound();
-  return <JobProgress initial={job} />;
+  return <JobProgress key={job.id} initial={job} />;
 }

@@ -295,5 +295,103 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       await prisma.generationItem.updateMany({ where: { jobId: recovered }, data: { response: invalid, attempts: 1 } });
       await drain(recovered); assert.equal(calls, before + 1);
     });
+    await check('reintento manual: solo fallidos, doble clic idempotente, historial y vínculo del éxito intactos', async () => {
+      await prisma.structure.create({ data: { id: 'retry-format', name: 'Reintento', slug: 'retry-format', defaultDurationSec: 5 } });
+      await video('retry-partial-video');
+      const user = await actor('writer');
+      const sourceId = await jobs.enqueueGeneration(user, randomUUID(), ['format', 'retry-format'], { request: 'Pedido original con CTA', provider: 'google', model: 'gemini-3.8-flash', brandId: 'A', ctaMode: 'comunidad', contentItemId: 'retry-partial-video' });
+      run = async input => { if (input.structureId === 'retry-format') throw Error('fallo simulado'); return result(); };
+      await drain(sourceId);
+      const original = await prisma.generationJob.findUniqueOrThrow({ where: { id: sourceId }, include: { items: true } });
+      const linked = await prisma.contentItem.findUniqueOrThrow({ where: { id: 'retry-partial-video' } });
+      assert.equal(original.status, 'PARTIAL'); assert.ok(linked.scriptId);
+      const before = calls;
+      const ids = await Promise.all(Array.from({ length: 4 }, () => jobs.retryFailedGeneration(user, sourceId)));
+      assert.equal(new Set(ids).size, 1); const id = ids[0]; assert.notEqual(id, sourceId);
+      assert.equal(calls, before);
+      const child = await prisma.generationJob.findUniqueOrThrow({ where: { id }, include: { items: true } });
+      assert.equal(child.status, 'QUEUED'); assert.equal(child.runId, null);
+      assert.deepEqual(child.items.map(i => i.structureId), ['retry-format']); assert.equal(child.items[0].attempts, 0);
+      assert.equal(child.payload.contentItemId, undefined); assert.equal(child.payload.ctaMode, 'comunidad');
+      assert.equal(child.payload.request, original.payload.request); assert.equal(child.payload.model, original.payload.model); assert.equal(child.payload.retryOfJobId, sourceId);
+      assert.deepEqual(await prisma.generationJob.findUniqueOrThrow({ where: { id: sourceId }, include: { items: true } }), original);
+      assert.equal(await prisma.auditLog.count({ where: { entityId: id, summary: { contains: sourceId } } }), 1);
+      assert.equal((await jobs.generationStatus(user, sourceId)).retryJobId, id);
+      assert.equal(await jobs.retryFailedGeneration(await actor('owner'), sourceId), id);
+      run = async () => result(); await drain(id);
+      assert.equal(calls, before + 1);
+      assert.equal((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'retry-partial-video' } })).scriptId, linked.scriptId);
+      assert.equal(await prisma.script.count({ where: { generationItem: { jobId: { in: [sourceId, id] } } } }), 2);
+      assert.equal(await jobs.retryFailedGeneration(user, sourceId), id); assert.equal(calls, before + 1);
+      assert.equal((await jobs.generationStatus(user, id)).retryableCount, 0);
+    });
+    await check('reintento manual: cancelado crea un trabajo nuevo y un segundo fallo se reintenta desde su propio historial', async () => {
+      const user = await actor('writer'), sourceId = await enqueue();
+      await jobs.cancelGeneration(user, sourceId);
+      const first = await jobs.retryFailedGeneration(user, sourceId);
+      run = async () => { throw Error('fallo simulado'); }; await drain(first);
+      const second = await jobs.retryFailedGeneration(user, first); assert.notEqual(first, second);
+      run = async () => result(); await drain(second);
+      assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id: sourceId } })).status, 'CANCELLED');
+      assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id: first } })).status, 'FAILED');
+      assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id: second } })).status, 'COMPLETED');
+      assert.equal(await jobs.retryFailedGeneration(user, sourceId), first);
+    });
+    await check('reintento manual: vuelve a validar marca, autor, sesión y configuración antes de registrar', async () => {
+      await prisma.user.create({ data: { id: 'other-writer', name: 'Otro', email: 'other@p1.test', passwordHash: 'fixture', workProfiles: { create: { profile: 'WRITER' } }, brandAccess: { create: { brandId: 'A' } } } });
+      const user = await actor('writer'), sourceId = await enqueue(); await jobs.cancelGeneration(user, sourceId);
+      const total = await prisma.generationJob.count(), before = calls;
+      await assert.rejects(jobs.retryFailedGeneration(await actor('other-writer'), sourceId), /sin acceso/);
+      await prisma.user.update({ where: { id: 'writer' }, data: { sessionVersion: { increment: 1 } } });
+      await assert.rejects(jobs.retryFailedGeneration(user, sourceId), /acceso cambió/);
+      await prisma.userBrandAccess.deleteMany({ where: { userId: 'writer', brandId: 'A' } });
+      await assert.rejects(jobs.retryFailedGeneration(await actor('writer'), sourceId), /sin acceso/);
+      await prisma.userBrandAccess.create({ data: { userId: 'writer', brandId: 'A' } });
+      process.env.AI_JOBS_ENABLED = 'false';
+      try { await assert.rejects(jobs.retryFailedGeneration(await actor('writer'), sourceId), /no está habilitada/); }
+      finally { process.env.AI_JOBS_ENABLED = 'true'; }
+      await prisma.structure.update({ where: { id: 'format' }, data: { active: false } });
+      try { await assert.rejects(jobs.retryFailedGeneration(await actor('writer'), sourceId), /desactivada/); }
+      finally { await prisma.structure.update({ where: { id: 'format' }, data: { active: true } }); }
+      assert.equal(await prisma.generationJob.count(), total); assert.equal(calls, before);
+    });
+    await check('reintento manual: rechaza trabajos activos, completos, sin pedido y con dos pendientes', async () => {
+      const user = await actor('writer'), activeId = await enqueue();
+      await assert.rejects(jobs.retryFailedGeneration(user, activeId), /Espera a que termine/);
+      await drain(activeId);
+      await assert.rejects(jobs.retryFailedGeneration(user, activeId), /No hay guiones/);
+      // Incluso un estado inconsistente FAILED no duplica un guion ya persistido.
+      await prisma.generationJob.update({ where: { id: activeId }, data: { status: 'FAILED', items: { updateMany: { where: {}, data: { status: 'FAILED' } } } } });
+      await assert.rejects(jobs.retryFailedGeneration(user, activeId), /No hay guiones/);
+      const sourceId = await enqueue(); await jobs.cancelGeneration(user, sourceId);
+      const pending = [await enqueue(), await enqueue()];
+      await assert.rejects(jobs.retryFailedGeneration(user, sourceId), /dos generaciones pendientes/);
+      for (const id of pending) await jobs.cancelGeneration(user, id);
+      await prisma.generationJob.update({ where: { id: sourceId }, data: { payload: { brandId: 'A', redacted: true } } });
+      await assert.rejects(jobs.retryFailedGeneration(user, sourceId), /pedido original ya no está disponible/);
+    });
+    await check('reintento manual: si ningún guion salió, vuelve a validar y capturar el destino', async () => {
+      await video('retry-full-video');
+      const user = await actor('writer'), sourceId = await enqueue({ contentItemId: 'retry-full-video' });
+      await jobs.cancelGeneration(user, sourceId);
+      const id = await jobs.retryFailedGeneration(user, sourceId); await drain(id);
+      assert.ok((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'retry-full-video' } })).scriptId);
+      await video('retry-occupied-video');
+      const source2 = await enqueue({ contentItemId: 'retry-occupied-video' }); await jobs.cancelGeneration(user, source2);
+      await prisma.contentItem.update({ where: { id: 'retry-occupied-video' }, data: { scriptId: 'script' } });
+      await assert.rejects(jobs.retryFailedGeneration(user, source2), /ya tiene un guion/);
+      assert.equal((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'retry-occupied-video' } })).scriptId, 'script');
+    });
+    await check('acción de reintento: registra antes de despachar y nunca expone errores internos', async () => {
+      const sourceId = await enqueue(); await jobs.cancelGeneration(await actor('writer'), sourceId);
+      const dispatched = [];
+      const actions = load('src/app/actions/generation-jobs.ts', { ...mocks, '@/lib/generation-dispatch': { dispatchGeneration: async (id, recover) => { assert.ok(await prisma.generationJob.findUnique({ where: { id } })); dispatched.push({ id, recover }); } } });
+      const response = await as('writer', () => actions.retryFailedGenerationJob(sourceId));
+      assert.equal(response.ok, true); assert.deepEqual(dispatched, [{ id: response.id, recover: true }]);
+      await jobs.cancelGeneration(await actor('writer'), response.id);
+      const failing = load('src/app/actions/generation-jobs.ts', { ...mocks, '@/lib/generation-dispatch': { dispatchGeneration: async () => { throw Error('postgresql://PRIVATE-FIXTURE'); } } });
+      const error = await as('writer', () => failing.retryFailedGenerationJob(sourceId));
+      assert.equal(error.ok, false); assert.doesNotMatch(error.error, /PRIVATE-FIXTURE|postgresql/);
+    });
   } finally { globalThis.fetch = oldFetch; await prisma.$disconnect(); }
 });

@@ -32,6 +32,11 @@ const payloadSchema = z.object({
   ctaMode: z.enum(["venta", "comunidad"]).optional(),
 });
 const active = ["QUEUED", "RUNNING"];
+const retryableStatuses = ["FAILED", "CANCELLED"];
+const finishedStatuses = ["COMPLETED", "PARTIAL", "FAILED", "CANCELLED"];
+export class GenerationRequestError extends Error {}
+// ID opaco y estable: un único sucesor por trabajo, incluso con dos usuarios/pestañas.
+const retryJobId = (sourceId: string) => `c${createHash("sha256").update(`generation-retry:${sourceId}`).digest("hex").slice(0, 24)}`;
 /** Estados de la tarjeta en los que todavía admite guion (el mismo filtro que ofrece el generador). */
 const VIDEO_ABIERTO = ["IDEA", "GUION"];
 /** Motivo con que se anotan los formatos que quedan sin intentar cuando la clave es rechazada. */
@@ -48,20 +53,23 @@ export async function enqueueGeneration(user: SessionUser, requestKey: string, s
   }));
 }
 
-async function enqueueValidatedGeneration(user: SessionUser, requestKey: string, structures: string[], input: EnqueueInput) {
+async function enqueueValidatedGeneration(user: SessionUser, requestKey: string, structures: string[], input: EnqueueInput, retry?: { tx: AppTransaction; jobId: string; sourceId: string }) {
   assertBrandPermission(user, input.brandId, "scripts.generate");
-  if (process.env.AI_JOBS_ENABLED !== "true") throw new Error("La generación en segundo plano aún no está habilitada.");
+  if (process.env.AI_JOBS_ENABLED !== "true") throw new GenerationRequestError("La generación en segundo plano aún no está habilitada.");
   if (!z.string().uuid().safeParse(requestKey).success) throw new Error("Recarga el formulario antes de generar.");
   const parsed = payloadSchema.safeParse(input);
   if (!parsed.success) throw new Error("Revisa la petición, el modelo y la duración (máximo 600 segundos).");
   const payload = parsed.data;
   delete payload.expectedVideoUpdatedAt; // Solo el servidor captura la revisión del destino.
-  if (payload.model) resolveAiModel(payload.provider, payload.model);
+  if (payload.model) {
+    try { resolveAiModel(payload.provider, payload.model); }
+    catch { throw new GenerationRequestError("El modelo del pedido ya no está disponible. Inicia una nueva generación con un modelo del catálogo."); }
+  }
   const structureIds = [...new Set(structures)].sort();
   if (!structureIds.length || structureIds.length > resourceLimit("AI_MAX_BATCH", 3) || structureIds.some(id => id.length > 100)) throw new Error("Elige entre una y tres estructuras por generación.");
   if (Buffer.byteLength(JSON.stringify(payload)) > 48000) throw new Error("La petición es demasiado larga. Reduce los detalles antes de generar.");
   const fingerprint = createHash("sha256").update(JSON.stringify({ structureIds, payload })).digest("hex");
-  return prisma.$transaction(async tx => {
+  const enqueue = async (tx: AppTransaction) => {
     await assertActor(tx, user);
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`generation:${user.id}`}, 0))`;
     const previous = await tx.generationJob.findUnique({ where: { userId_requestKey: { userId: user.id, requestKey } } });
@@ -69,30 +77,65 @@ async function enqueueValidatedGeneration(user: SessionUser, requestKey: string,
       if (previous.fingerprint !== fingerprint) throw new Error("Este envío ya fue utilizado con otra petición. Recarga el formulario.");
       return previous.id;
     }
-    if (await tx.generationJob.count({ where: { userId: user.id, status: { in: active } } }) >= 2) throw new Error("Ya tienes dos generaciones pendientes. Espera a que terminen o cancela una.");
-    if (await tx.structure.count({ where: { id: { in: structureIds }, active: true } }) !== structureIds.length) throw new Error("Una estructura ya no existe o está desactivada.");
-    if (payload.brandId && !await tx.brand.count({ where: { id: payload.brandId } })) throw new Error("La marca ya no existe.");
-    if (payload.archetypeId && !await tx.archetype.count({ where: { id: payload.archetypeId } })) throw new Error("El arquetipo ya no existe.");
+    if (await tx.generationJob.count({ where: { userId: user.id, status: { in: active } } }) >= 2) throw new GenerationRequestError("Ya tienes dos generaciones pendientes. Espera a que terminen o cancela una.");
+    if (await tx.structure.count({ where: { id: { in: structureIds }, active: true } }) !== structureIds.length) throw new GenerationRequestError("Una estructura ya no existe o está desactivada. Inicia una nueva generación con los formatos disponibles.");
+    if (payload.brandId && !await tx.brand.count({ where: { id: payload.brandId } })) throw new GenerationRequestError("La marca ya no existe.");
+    if (payload.archetypeId && !await tx.archetype.count({ where: { id: payload.archetypeId } })) throw new GenerationRequestError("El arquetipo ya no existe.");
     if (payload.contentItemId) {
       // La guarda definitiva contra una pestaña vieja o un doble envío vive en
       // vincularGuionAVideo, que solo escribe si la tarjeta sigue libre; aquí se
       // evita registrar un trabajo (y gastar llamadas) que ya no puede unirse.
       const video = await tx.contentItem.findFirst({ where: { AND: [{ id: payload.contentItemId }, contentScope(user, "scripts.generate")] }, select: { brandId: true, status: true, scriptId: true, updatedAt: true } });
-      if (!video) throw new Error("Ese video ya no existe o no tienes acceso a él. Elige otra tarjeta o genera un guion suelto.");
-      if (video.scriptId) throw new Error("Ese video ya tiene un guion vinculado. Quítalo desde su ficha o genera un guion suelto.");
-      if (!VIDEO_ABIERTO.includes(video.status)) throw new Error("Ese video ya no admite guion: solo se vinculan tarjetas en Idea o Guion.");
-      if (await tx.contentItem.count({ where: { AND: [{ id: payload.contentItemId }, closedVideoWhere] } })) throw new Error("Reabre la aprobación final del video antes de generar su guion.");
-      if (payload.brandId !== video.brandId) throw new Error("La marca elegida no es la del video.");
+      if (!video) throw new GenerationRequestError("Ese video ya no existe o no tienes acceso a él. Elige otra tarjeta o genera un guion suelto.");
+      if (video.scriptId) throw new GenerationRequestError("Ese video ya tiene un guion vinculado. Quítalo desde su ficha o genera un guion suelto.");
+      if (!VIDEO_ABIERTO.includes(video.status)) throw new GenerationRequestError("Ese video ya no admite guion: solo se vinculan tarjetas en Idea o Guion.");
+      if (await tx.contentItem.count({ where: { AND: [{ id: payload.contentItemId }, closedVideoWhere] } })) throw new GenerationRequestError("Reabre la aprobación final del video antes de generar su guion.");
+      if (payload.brandId !== video.brandId) throw new GenerationRequestError("La marca elegida no es la del video.");
       payload.expectedVideoUpdatedAt = video.updatedAt.toISOString();
     }
     await recordUsage(tx, `ai:jobs:${usageDay()}`);
     const job = await tx.generationJob.create({ data: {
-      userId: user.id, sessionVersion: user.sessionVersion ?? 0, requestKey, fingerprint, payload: json(payload),
+      ...(retry ? { id: retry.jobId } : {}),
+      userId: user.id, sessionVersion: user.sessionVersion ?? 0, requestKey, fingerprint,
+      payload: json(retry ? { ...payload, retryOfJobId: retry.sourceId } : payload),
       items: { create: structureIds.map((structureId, order) => ({ structureId, order })) },
     } });
-    await auditInTransaction(tx, { user, action: "GENERAR", entity: "GenerationJob", entityId: job.id, brandId: payload.brandId, summary: `Solicitó ${structureIds.length} guiones en segundo plano` });
+    await auditInTransaction(tx, { user, action: "GENERAR", entity: "GenerationJob", entityId: job.id, brandId: payload.brandId,
+      summary: retry ? `Reintentó ${structureIds.length} guiones no generados del trabajo ${retry.sourceId}` : `Solicitó ${structureIds.length} guiones en segundo plano` });
     return job.id;
-  });
+  };
+  return retry ? enqueue(retry.tx) : prisma.$transaction(enqueue);
+}
+
+/** Nuevo trabajo: conserva el historial, los guiones existentes y las concesiones antiguas. */
+export async function retryFailedGeneration(user: SessionUser, sourceId: string) {
+  assertPermission(user, "scripts.generate");
+  return withGenerationTrace({ jobId: sourceId }, () => generationStage("manual_retry", () => prisma.$transaction(async tx => {
+    await assertActor(tx, user);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`generation:${user.id}`}, 0))`;
+    const source = await lockJob(tx, sourceId);
+    if (!source || !await tx.generationJob.count({ where: { AND: [{ id: sourceId }, generationScope(user)] } })) throw new GenerationRequestError("Generación no encontrada o sin acceso.");
+    const id = retryJobId(sourceId);
+    const previous = await tx.generationJob.findUnique({ where: { id }, select: { id: true } });
+    if (previous) {
+      if (!await tx.generationJob.count({ where: { AND: [{ id }, generationScope(user)] } })) throw new GenerationRequestError("Ya existe un reintento creado por otro usuario. Pide al Dueño que revise su avance.");
+      return id;
+    }
+    if (!finishedStatuses.includes(source.status)) throw new GenerationRequestError("Espera a que termine la generación antes de reintentar los guiones faltantes.");
+    const failed = await tx.generationItem.findMany({ where: { jobId: sourceId, status: { in: retryableStatuses }, script: { is: null } }, orderBy: { order: "asc" }, select: { structureId: true } });
+    if (!failed.length) throw new GenerationRequestError("No hay guiones pendientes de generar en este trabajo.");
+    const parsed = payloadSchema.safeParse(source.payload);
+    if (!parsed.success) throw new GenerationRequestError("El pedido original ya no está disponible. Inicia una nueva generación.");
+    const payload = parsed.data;
+    // El primer éxito del lote anterior ya resolvió el vínculo; los restantes son independientes.
+    if (source.items.some(item => item.status === "COMPLETED")) {
+      delete payload.contentItemId;
+      delete payload.expectedVideoUpdatedAt;
+    }
+    const created = await enqueueValidatedGeneration(user, randomUUID(), failed.map(item => item.structureId), payload, { tx, jobId: id, sourceId });
+    generationEvent("manual_retry", "info", { jobId: created, affectedRows: failed.length });
+    return created;
+  }, { timeout: 15000 })));
 }
 
 async function lockJob(tx: AppTransaction, id: string) {
@@ -299,10 +342,14 @@ async function avisoFinal(tx: AppTransaction, job: { payload: Prisma.JsonValue; 
 
 export async function generationStatus(user: SessionUser, id: string) {
   assertPermission(user, "scripts.generate");
-  return prisma.generationJob.findFirst({ where: { AND: [{ id }, generationScope(user)] }, select: {
+  const job = await prisma.generationJob.findFirst({ where: { AND: [{ id }, generationScope(user)] }, select: {
     id: true, status: true, error: true, createdAt: true, runId: true,
     items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, status: true, stage: true, diagnostics: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { where: scriptScope(user), select: { id: true, title: true } } } },
   } });
+  if (!job) return null;
+  const retryableCount = finishedStatuses.includes(job.status) ? job.items.filter(item => retryableStatuses.includes(item.status) && !item.script).length : 0;
+  const retry = retryableCount ? await prisma.generationJob.findFirst({ where: { AND: [{ id: retryJobId(id) }, generationScope(user)] }, select: { id: true } }) : null;
+  return { ...job, retryableCount, retryJobId: retry?.id ?? null };
 }
 
 export async function cancelGeneration(user: SessionUser, id: string) {

@@ -48,6 +48,7 @@ test('el avance distingue el modelo usado del pendiente y conserva la lectura de
   const { renderToStaticMarkup } = await import('react-dom/server');
   const { default: Progress } = load('src/app/(app)/generador/trabajos/[id]/progress.tsx', {
     '@/app/actions/generation-jobs': {},
+    'next/navigation': { useRouter: () => ({ push() {} }) },
     'next/link': ({ children, ...props }) => createElement('a', props, children),
   });
   const item = { id: 'fixture-item', order: 0, status: 'QUEUED', attempts: 1, stage: 'model_fallback', diagnostics: {
@@ -60,6 +61,22 @@ test('el avance distingue el modelo usado del pendiente y conserva la lectura de
   const completed = render('COMPLETED', { ...item, status: 'COMPLETED', stage: 'completed', attempts: 2, diagnostics: { ...item.diagnostics, model: 'gemini-3.7-flash', modelSource: 'fallback' } });
   assert.match(completed, /Modelo: gemini-3.7-flash/); assert.match(completed, /alternativa por saturación/); assert.doesNotMatch(completed, /El siguiente intento usará/);
   assert.doesNotMatch(render('FAILED', { ...item, status: 'FAILED', diagnostics: null }), /Alternativas por saturación/);
+});
+
+test('el botón de reintento solo aparece al terminar con faltantes y luego enlaza al sucesor', async () => {
+  const { createElement } = await import('react');
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const { default: Progress } = load('src/app/(app)/generador/trabajos/[id]/progress.tsx', {
+    '@/app/actions/generation-jobs': {}, 'next/navigation': { useRouter: () => ({ push() {} }) },
+    'next/link': ({ children, ...props }) => createElement('a', props, children),
+  });
+  const render = (status, retryableCount, retryJobId = null) => renderToStaticMarkup(createElement(Progress, { initial: { id: 'source', status, items: [], retryableCount, retryJobId } }));
+  assert.match(render('FAILED', 1), /Reintentar guion no generado/);
+  assert.match(render('PARTIAL', 2), /Reintentar 2 guiones no generados/);
+  assert.match(render('CANCELLED', 1), /Reintentar guion no generado/);
+  for (const status of ['QUEUED', 'RUNNING', 'COMPLETED']) assert.doesNotMatch(render(status, status === 'COMPLETED' ? 0 : 1), /Reintentar/);
+  const existing = render('PARTIAL', 1, 'next-job');
+  assert.match(existing, /href="\/generador\/trabajos\/next-job"/); assert.match(existing, /Ver reintento/); assert.doesNotMatch(existing, /Reintentar/);
 });
 
 test('Gemini 3.8 es el predeterminado y acepta configuraciones anteriores sin cambiar modelos de Claude', () => {

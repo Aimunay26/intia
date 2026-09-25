@@ -5,7 +5,7 @@ const stages = ["document_extract", "enqueue", "dispatch_claim", "dispatch_start
   "workflow_step", "cache_refresh", "process", "claim", "quota", "request_access", "generate",
   "context_load", "references_load", "prompt_build", "settings_load", "model_resolve", "key_resolve",
   "provider_request", "provider_response", "schema_fallback", "model_fallback", "response_parse",
-  "response_save", "response_validate", "script_save", "script_insert", "audit_save", "video_link", "failure_save", "retry", "job_state", "cancel"] as const;
+  "response_save", "response_validate", "script_save", "script_insert", "audit_save", "video_link", "failure_save", "retry", "manual_retry", "job_state", "cancel"] as const;
 type Stage = typeof stages[number];
 type State = "start" | "success" | "error" | "info";
 type Fields = {

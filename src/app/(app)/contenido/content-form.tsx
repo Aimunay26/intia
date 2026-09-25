@@ -312,8 +312,8 @@ export function NuevoVideoBoton({
         <div
           className="rounded-xl px-3.5 py-3 text-[12.5px] leading-relaxed"
           style={{
-            background: "rgba(91,83,232,.07)",
-            boxShadow: "inset 0 0 0 1px rgba(91,83,232,.2)",
+            background: "var(--brand-soft)",
+            boxShadow: "inset 0 0 0 1px var(--ring)",
           }}
         >
           <div className="text-brand mb-0.5 flex items-center gap-1.5 font-semibold">

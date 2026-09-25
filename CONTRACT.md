@@ -10,6 +10,7 @@ Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pi
 - **Server Components por defecto.** `"use client"` solo cuando hace falta estado o eventos.
 - **Server Actions** para escrituras del usuario. Los callbacks técnicos de autenticación, Workflow y mantenimiento usan rutas protegidas; no sustituyen los controles de sesión y permisos.
 - Iconos: `lucide-react`.
+- Identidad Intia: blanco y cobre, fuente Manrope local; tema oscuro y colores propios de marcas/estados conservados. shadcn/ui (Radix) selectivo en `src/components/ui/`; componentes de negocio compatibles en `src/components/ui.tsx`. No convertir toda la aplicación en cliente ni sustituir formularios nativos para cambiar su estilo. Ver `reports/identidad-intia-2026-09-25.md`.
 
 ## Idioma
 

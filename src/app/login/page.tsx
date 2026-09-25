@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertCircle, Sparkles } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { IntiaWordmark } from "@/components/intia-wordmark";
 
 import { getSession, needsBootstrap } from "@/lib/auth";
 import { isGoogleConfigured } from "@/lib/google";
 import { LoginForm } from "./login-form";
 
-export const metadata = { title: "Entrar - Marketing OS" };
+export const metadata = { title: "Entrar" };
 
 /** Mensajes de la vuelta de Google, en español y sin tecnicismos. */
 const ERRORES: Record<string, string> = {
@@ -44,13 +45,12 @@ export default async function LoginPage({
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="w-full max-w-[380px]">
+      <div className="w-full max-w-[420px]">
         <div className="mb-7 flex flex-col items-center text-center">
-          <span className="bg-brand text-brand-ink mb-3.5 flex h-11 w-11 items-center justify-center rounded-xl shadow-[var(--shadow-2)]">
-            <Sparkles size={21} strokeWidth={2.4} />
-          </span>
-          <h1 className="text-ink text-[19px] font-bold tracking-tight">
-            {bootstrap ? "Crea tu cuenta" : "Marketing OS"}
+          <IntiaWordmark className="mb-3 text-[48px]" />
+          <p className="text-brandtext mb-7 text-sm font-semibold">Ideas que se publican</p>
+          <h1 className="text-ink text-[24px] font-bold tracking-tight">
+            {bootstrap ? "Crea tu cuenta" : "Tu estudio, en un solo lugar"}
           </h1>
           <p className="text-inkmuted mt-1 text-[13px] leading-relaxed">
             {bootstrap
@@ -73,7 +73,7 @@ export default async function LoginPage({
           </div>
         ) : null}
 
-        <div className="card p-5">
+        <div className="card p-6 sm:p-7">
           {!bootstrap ? (
             <>
               <GoogleButton disponible={googleListo} />

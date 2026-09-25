@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@fontsource-variable/manrope";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -8,22 +9,24 @@
    ========================================================================== */
 
 :root {
-  --canvas: #f4f5f7;
+  --canvas: #f5f6f7;
   --surface: #ffffff;
-  --surface-2: #fafafb;
-  --surface-3: #f1f2f4;
-  --line: #e4e5e9;
-  --line-strong: #d3d5db;
-  --ink: #16171b;
-  --ink-soft: #4b4d57;
-  --ink-muted: #85879a;
-  --brand: #5b53e8;
-  --brand-soft: #eeecfe;
+  --surface-2: #fafbfc;
+  --surface-3: #e9eef1;
+  --line: #dfe3e6;
+  --line-strong: #bdc6cc;
+  --ink: #293238;
+  --ink-soft: #435964;
+  --ink-muted: #606b72;
+  --brand: #a34d2b;
+  --brand-soft: #f4e5dc;
+  --brand-text: #824021;
   --brand-ink: #ffffff;
-  --ok: #0f9d63;
-  --warn: #d97706;
+  --ok: #15734f;
+  --warn: #956015;
   --danger: #dc2f4b;
-  --ring: rgba(91, 83, 232, 0.28);
+  --ring: rgba(163, 77, 43, 0.22);
+  --radius: 0.75rem;
   --shadow-1: 0 1px 2px rgba(16, 17, 26, 0.05), 0 1px 3px rgba(16, 17, 26, 0.05);
   --shadow-2: 0 2px 4px rgba(16, 17, 26, 0.04), 0 8px 20px -6px rgba(16, 17, 26, 0.12);
   --shadow-3: 0 10px 40px -12px rgba(16, 17, 26, 0.24);
@@ -31,22 +34,23 @@
 }
 
 .dark {
-  --canvas: #0a0a0d;
-  --surface: #131319;
-  --surface-2: #17171e;
-  --surface-3: #1e1e27;
-  --line: #26262f;
-  --line-strong: #34343f;
-  --ink: #f2f2f5;
-  --ink-soft: #b4b6c4;
-  --ink-muted: #7c7e91;
-  --brand: #8b83ff;
-  --brand-soft: #1e1b3d;
-  --brand-ink: #0a0a0d;
+  --canvas: #1b1e22;
+  --surface: #262b30;
+  --surface-2: #2b3238;
+  --surface-3: #33424d;
+  --line: #414950;
+  --line-strong: #65717b;
+  --ink: #f2f4f5;
+  --ink-soft: #cddfe9;
+  --ink-muted: #b9c2c9;
+  --brand: #f1aa83;
+  --brand-soft: #49362d;
+  --brand-text: #f4bda0;
+  --brand-ink: #302017;
   --ok: #34d399;
   --warn: #fbbf24;
   --danger: #fb7185;
-  --ring: rgba(139, 131, 255, 0.3);
+  --ring: rgba(241, 170, 131, 0.28);
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.6);
   --shadow-3: 0 12px 48px -12px rgba(0, 0, 0, 0.8);
@@ -64,15 +68,37 @@
   --color-inksoft: var(--ink-soft);
   --color-inkmuted: var(--ink-muted);
   --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brandtext: var(--brand-text);
   --color-brandsoft: var(--brand-soft);
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+  --font-sans: "Manrope Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas,
     monospace;
+
+  /* shadcn/ui comparte los tokens de Intia; no hay un segundo tema. */
+  --color-background: var(--canvas);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--brand);
+  --color-primary-foreground: var(--brand-ink);
+  --color-secondary: var(--surface-3);
+  --color-secondary-foreground: var(--ink-soft);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--ink-muted);
+  --color-accent: var(--brand-soft);
+  --color-accent-foreground: var(--brand-text);
+  --color-destructive: var(--danger);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--brand);
 }
 
 /* ==========================================================================
@@ -142,14 +168,14 @@ body {
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
   box-shadow: var(--shadow-1);
 }
 
 .card-flat {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius);
 }
 
 .card-hd {
@@ -157,7 +183,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -220,7 +246,7 @@ body {
 .btn-primary:hover:not(:disabled) {
   background: var(--brand);
   border-color: transparent;
-  filter: brightness(1.08);
+  filter: brightness(0.96);
 }
 
 .btn-ghost {
@@ -312,6 +338,9 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2385879a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
+}
+[data-slot="native-select"] {
+  background-image: none;
 }
 .input:focus,
 .select:focus,
@@ -426,7 +455,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
+  padding: 7px 12px;
   border-radius: 9px;
   font-size: 13px;
   font-weight: 550;
@@ -442,13 +471,13 @@ body {
 }
 .nav-link[data-active="true"] {
   background: var(--brand-soft);
-  color: var(--brand);
-  font-weight: 620;
+  color: var(--brand-text);
+  font-weight: 700;
 }
 .nav-link[data-active="true"]::before {
   content: "";
   position: absolute;
-  left: -10px;
+  left: 0;
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
@@ -531,8 +560,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skel, .navigation-spinner {
+  .skel, .navigation-spinner, .fade-in, .spin {
     animation: none;
+  }
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

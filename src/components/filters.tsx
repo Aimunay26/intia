@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { NativeSelect } from "@/components/ui/native-select";
 
 /**
  * Filtros que viajan por la URL.
@@ -73,11 +74,11 @@ export function FilterSelect({
   const value = searchParams.get(param) ?? "";
 
   return (
-    <div className="relative flex items-center" style={{ width }}>
+    <div className="relative flex max-w-full items-center" style={{ width }}>
       {icon ? (
         <span className="text-inkmuted pointer-events-none absolute left-2.5 z-10">{icon}</span>
       ) : null}
-      <select
+      <NativeSelect
         className={cn("select h-[34px] text-[12.5px]", Boolean(icon) && "pl-8")}
         value={value}
         onChange={(e) => setParam({ [param]: e.target.value || null })}
@@ -93,7 +94,7 @@ export function FilterSelect({
             {o.label}
           </option>
         ))}
-      </select>
+      </NativeSelect>
     </div>
   );
 }
@@ -137,7 +138,7 @@ export function SearchInput({
   }, [value]);
 
   return (
-    <div className="relative flex items-center" style={{ width }}>
+    <div className="relative flex max-w-full items-center" style={{ width }}>
       <span className="text-inkmuted pointer-events-none absolute left-2.5">
         {pending ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
       </span>

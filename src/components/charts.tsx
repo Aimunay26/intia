@@ -370,7 +370,7 @@ export function FunnelBars({ data }: { data: Point[] }) {
               className="flex h-full items-center justify-end rounded-md px-2 transition-all duration-500"
               style={{
                 width: `${Math.max((d.value / max) * 100, d.value ? 8 : 0)}%`,
-                background: withAlpha(d.color ?? "#5b53e8", 0.85),
+                background: d.color ? withAlpha(d.color, 0.85) : "var(--brand)",
               }}
             >
               {d.value > 0 ? (

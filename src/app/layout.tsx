@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Marketing OS",
+  title: { default: "Intia · Ideas que se publican", template: "%s · Intia" },
   description:
     "Calendario de contenido, guiones con IA y métricas para múltiples marcas.",
 };
@@ -14,8 +14,8 @@ export const viewport: Viewport = {
   // vez de taparlo: así la tarjeta de la guía nunca queda debajo del teclado.
   interactiveWidget: "resizes-content",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f5f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0d" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f6f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#1b1e22" },
   ],
 };
 

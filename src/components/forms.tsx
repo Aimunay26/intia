@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { AlertTriangle, Check, Copy, Loader2, X } from "lucide-react";
+import { Check, Copy, Loader2, X } from "lucide-react";
+import dynamic from "next/dynamic";
 
 import { cn } from "@/lib/utils";
+
+// La confirmación se descarga al solicitarla, no al entrar en cada formulario.
+const DeleteConfirmation = dynamic(() => import("@/components/delete-confirmation"));
 
 /* ---------------------------------------------------------------- SUBMIT -- */
 
@@ -48,9 +52,20 @@ export function Modal({
   children: React.ReactNode;
   width?: number;
 }) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      // Una confirmación puede abrirse sobre el editor. Escape cierra solo la superior.
+      if (e.defaultPrevented) return;
+      const dialogs = document.querySelectorAll('[role="dialog"][aria-modal="true"]');
+      if (e.key === "Escape" && dialogs.item(dialogs.length - 1) === dialogRef.current) {
+        e.preventDefault();
+        onClose();
+      }
+    };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -66,15 +81,18 @@ export function Modal({
     <div className="no-print fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto p-4 sm:p-8">
       <div className="fixed inset-0 bg-black/45 backdrop-blur-[2px]" onClick={onClose} />
       <div
+        ref={dialogRef}
         className="card fade-in relative my-auto w-full shadow-[var(--shadow-3)]"
         style={{ maxWidth: width }}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
       >
         <div className="card-hd">
           <div className="min-w-0">
-            <div className="card-title">{title}</div>
-            {description ? <div className="card-sub mt-0.5">{description}</div> : null}
+            <div id={titleId} className="card-title">{title}</div>
+            {description ? <div id={descriptionId} className="card-sub mt-0.5">{description}</div> : null}
           </div>
           {/* type="button": el Modal vive dentro de formularios (marca, persona) y el aspa nunca debe enviar. */}
           <button type="button" onClick={onClose} className="btn btn-ghost btn-icon" aria-label="Cerrar">
@@ -150,33 +168,13 @@ export function DeleteButton({
   icon?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={className}>
-        {icon}
-        {label}
-      </button>
-      <Modal open={open} onClose={() => setOpen(false)} title={title} width={420}>
-        <div className="flex items-start gap-3">
-          <span
-            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-            style={{ background: "rgba(220,47,75,.1)", color: "var(--danger)" }}
-          >
-            <AlertTriangle size={16} />
-          </span>
-          <p className="text-inksoft text-[13px] leading-relaxed">{description}</p>
-        </div>
-        <form action={action} className="mt-5 flex justify-end gap-2">
-          <input type="hidden" name="id" value={id} />
-          <button type="button" onClick={() => setOpen(false)} className="btn">
-            Cancelar
-          </button>
-          <SubmitButton className="btn btn-primary" pendingLabel="Eliminando…">
-            Sí, eliminar
-          </SubmitButton>
-        </form>
-      </Modal>
+      <button ref={triggerRef} type="button" className={className} aria-label={label || title} aria-haspopup="dialog" onClick={() => { setLoaded(true); setOpen(true); }}>{icon}{label}</button>
+      {loaded ? <DeleteConfirmation open={open} action={action} id={id} title={title} description={description} onClose={() => setOpen(false)} returnFocusTo={triggerRef.current} /> : null}
     </>
   );
 }

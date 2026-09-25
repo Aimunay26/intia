@@ -6,6 +6,7 @@ import {
 	CheckSquare,
 	ChevronDown,
 	Film,
+	Clapperboard,
 	GraduationCap,
 	LayoutDashboard,
 	LogOut,
@@ -23,9 +24,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { BrandSwitcher } from "@/components/brand-switcher";
+import { IntiaWordmark } from "@/components/intia-wordmark";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { GUIA_TARGETS, GuiaOverlay, GuiaProvider } from "@/components/guia";
 import { NavigationMeasurements } from "@/components/navigation-measurements";
 import { NavigationPending } from "@/components/navigation-pending";
@@ -33,7 +36,6 @@ import { Avatar } from "@/components/ui";
 import type { BrandChoice } from "@/lib/brand-shared";
 import { USER_ROLE_MAP } from "@/lib/constants";
 import { allows, canAccessPath } from "@/lib/permissions";
-import { cn } from "@/lib/utils";
 
 const NAV_GUIA_MAP: Record<string, string> = {
   "/marcas": GUIA_TARGETS.NAV_MARCAS,
@@ -64,7 +66,7 @@ const NAV: NavGroup[] = [
     section: "Creación",
     items: [
       { href: "/generador", label: "Generador IA", icon: Sparkles },
-      { href: "/guiones", label: "Guiones", icon: Film },
+      { href: "/guiones", label: "Guiones", icon: Clapperboard },
       { href: "/estructuras", label: "Estructuras", icon: Shapes },
       { href: "/arquetipos", label: "Personas", icon: UserSquare2 },
     ],
@@ -128,26 +130,24 @@ export function Shell({
 
   const nav = (
     <>
-      <div className="flex h-14 shrink-0 items-center gap-2.5 px-4">
-        <span className="bg-brand text-brand-ink flex h-7 w-7 items-center justify-center rounded-lg">
-          <Sparkles size={15} strokeWidth={2.5} />
-        </span>
+      <div className="flex shrink-0 items-center gap-2.5 px-6 pt-6 pb-5">
         <div className="min-w-0">
-          <div className="text-ink truncate text-[13.5px] leading-tight font-bold">
-            {orgName}
-          </div>
-          <div className="text-inkmuted text-[10.5px] leading-tight font-medium">
-            Marketing OS
-          </div>
+          <Link href="/" aria-label="Intia · Ir al panel"><IntiaWordmark /></Link>
+          <p className="text-inkmuted mt-2 text-[10.5px] font-medium">Ideas que se publican</p>
         </div>
+        <div className="ml-auto lg:hidden">
         <button
+          type="button"
           onClick={() => setMobileOpen(false)}
-          className="btn btn-ghost btn-icon ml-auto lg:hidden"
+          className="btn btn-ghost btn-icon"
           aria-label="Cerrar menú"
         >
           <X size={16} />
         </button>
+        </div>
       </div>
+
+      <div className="text-inkmuted truncate px-6 pb-2 text-[11px] font-semibold" title={orgName}>{orgName}</div>
 
       <BrandSwitcher
         brands={brands}
@@ -155,7 +155,7 @@ export function Shell({
         canCreate={user.role === "OWNER"}
       />
 
-      <nav className="flex-1 overflow-y-auto px-3.5 pb-4">
+      <nav aria-label="Navegación principal" className="flex-1 overflow-y-auto px-3.5 pb-4">
         {NAV.map((group, gi) => {
           const items = group.items.filter(
             (i) => canAccessPath(user, i.href)
@@ -198,8 +198,9 @@ export function Shell({
     // está plegado en móvil.
     <GuiaProvider userLevel={user.level} abrirMenuMovil={() => setMobileOpen(true)}>
       <div className="flex min-h-screen">
+        <a href="#contenido-principal" className="bg-surface text-ink fixed top-2 left-2 z-[100] -translate-y-24 rounded-lg border px-4 py-2 focus:translate-y-0">Saltar al contenido</a>
         {/* Barra lateral fija en escritorio */}
-        <aside className="bg-surface border-line no-print hidden w-[236px] shrink-0 flex-col border-r lg:flex">
+        <aside className="bg-surface border-line no-print hidden w-[248px] shrink-0 flex-col border-r lg:flex">
           <div className="sticky top-0 flex h-screen flex-col">{nav}</div>
         </aside>
 
@@ -225,13 +226,14 @@ export function Shell({
             >
               <Menu size={18} />
             </button>
-            <span className="text-ink text-sm font-bold">{orgName}</span>
+            <Link href="/" aria-label="Intia · Ir al panel"><IntiaWordmark className="text-[24px]" /></Link>
+            <span className="text-inkmuted truncate text-xs">{orgName}</span>
             <div className="ml-auto">
               <ThemeToggle />
             </div>
           </header>
 
-          <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
+          <main id="contenido-principal" tabIndex={-1} className="min-w-0 flex-1 px-4 py-5 outline-none sm:px-6 lg:px-8 lg:py-8">
             <NavigationMeasurements enabled={performanceEnabled} release={release} environment={environment} />
             <div className="mx-auto w-full max-w-[1400px]">{children}</div>
           </main>
@@ -245,26 +247,18 @@ export function Shell({
 /* ------------------------------------------------------------ USUARIO -- */
 
 function UserMenu({ user }: { user: ShellUser }) {
-  const [open, setOpen] = useState(false);
+  const logoutForm = useRef<HTMLFormElement>(null);
   const role = USER_ROLE_MAP[user.role];
 
   return (
     <div className="border-line shrink-0 border-t p-3">
-      {open ? (
-        <div className="mb-2 space-y-0.5">
-          <Link href="/mi-perfil" className="nav-link"><Users size={15} /> <span>Mi perfil</span></Link>
-          {allows(user, "admin.team") ? <Link href="/equipo" className="nav-link"><Users size={15} /><span>Mi equipo</span></Link> : null}
-          <form action="/api/logout" method="post">
-            <button type="submit" className="nav-link text-danger w-full">
-              <LogOut size={15} /> <span>Cerrar sesión</span>
-            </button>
-          </form>
-        </div>
-      ) : null}
-
+      <form ref={logoutForm} action="/api/logout" method="post" />
       <div className="flex items-center gap-2">
+        <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
         <button
-          onClick={() => setOpen((v) => !v)}
+          type="button"
+          aria-label={`Menú de ${user.name}`}
           className="hover:bg-surface3 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors"
         >
           <Avatar name={user.name} color={user.color} size={28} />
@@ -278,9 +272,17 @@ function UserMenu({ user }: { user: ShellUser }) {
           </div>
           <ChevronDown
             size={14}
-            className={cn("text-inkmuted shrink-0 transition-transform", open && "rotate-180")}
+            className="text-inkmuted shrink-0"
           />
         </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="top" align="start" className="w-56">
+          <DropdownMenuItem asChild><Link href="/mi-perfil"><Users size={15} />Mi perfil</Link></DropdownMenuItem>
+          {allows(user, "admin.team") ? <DropdownMenuItem asChild><Link href="/equipo"><Users size={15} />Mi equipo</Link></DropdownMenuItem> : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-danger" onSelect={() => logoutForm.current?.requestSubmit()}><LogOut size={15} />Cerrar sesión</DropdownMenuItem>
+        </DropdownMenuContent>
+        </DropdownMenu>
         <ThemeToggle />
       </div>
     </div>
@@ -289,16 +291,21 @@ function UserMenu({ user }: { user: ShellUser }) {
 
 /* -------------------------------------------------------------- TEMA -- */
 
-export function ThemeToggle() {
-  const [dark, setDark] = useState(false);
+function subscribeTheme(notify: () => void) {
+  const observer = new MutationObserver(notify);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === "mos-theme") document.documentElement.classList.toggle("dark", event.newValue === "dark");
+  };
+  window.addEventListener("storage", onStorage);
+  return () => { observer.disconnect(); window.removeEventListener("storage", onStorage); };
+}
 
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-  }, []);
+export function ThemeToggle() {
+  const dark = useSyncExternalStore(subscribeTheme, () => document.documentElement.classList.contains("dark"), () => false);
 
   const toggle = () => {
     const next = !dark;
-    setDark(next);
     document.documentElement.classList.toggle("dark", next);
     try {
       localStorage.setItem("mos-theme", next ? "dark" : "light");
@@ -309,6 +316,7 @@ export function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={toggle}
       className="btn btn-ghost btn-icon shrink-0"
       aria-label={dark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}

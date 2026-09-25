@@ -8,6 +8,7 @@ import {chromium,expect} from '@playwright/test';
 import bcrypt from 'bcryptjs';
 import {load} from '../tests/load-module.mjs';
 import {assertLocalDatabase} from './local-database-only.mjs';
+import {checkDesignUi} from './check-design-ui.mjs';
 const url=assertLocalDatabase(), admin=new PrismaClient({datasourceUrl:url.href});
 const name=`intia_profiles_ui_${randomBytes(4).toString('hex')}_test`,target=new URL(url);target.pathname='/'+name;
 const port=3011,base=`http://127.0.0.1:${port}`;
@@ -56,6 +57,7 @@ try{
   await page.goto(base+'/login');await page.locator('input[name="email"]').fill(`${role}@ui.fixture.test`);await page.locator('input[name="password"]').fill(password);await page.getByRole('button',{name:'Entrar',exact:true}).click();await page.waitForURL(base+'/');
   const aside=page.locator('aside').first(),main=page.getByRole('main');
   if(role==='OWNER'){
+   phase='design-regression';report.design=await checkDesignUi(page,base,db);await page.goto(base+'/');phase='profile-navigation';
    await expect(main.getByText('37 vistas de 100 vistas',{exact:true})).toBeVisible();
    await page.goto(base+'/marcas');await expect(page.locator('main a.brand-strip[href="/marcas/A"]')).toContainText(/En riesgo\s*1/i);
    report.calculatedObjectivesConsistentAcrossPages=true;

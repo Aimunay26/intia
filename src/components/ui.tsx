@@ -242,13 +242,13 @@ export function Stat({
   href?: string;
 }) {
   const body = (
-    <div className="card h-full p-4 transition-shadow hover:shadow-[var(--shadow-2)]">
+    <div className="card h-full p-5 transition-shadow hover:shadow-[var(--shadow-2)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-inkmuted text-[11px] font-semibold tracking-wider uppercase">
             {label}
           </div>
-          <div className="text-ink mt-1.5 text-[22px] leading-none font-bold tracking-tight">
+          <div className="text-ink mt-2.5 text-[28px] leading-none font-bold tracking-tight tabular-nums">
             {value}
           </div>
           {sub ? <div className="text-inkmuted mt-1.5 text-xs leading-snug">{sub}</div> : null}
@@ -257,7 +257,7 @@ export function Stat({
           <span
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
             style={{
-              background: withAlpha(accent ?? "#5b53e8", 0.12),
+              background: accent ? withAlpha(accent, 0.12) : "var(--brand-soft)",
               color: accent ?? "var(--brand)",
             }}
           >
@@ -292,12 +292,12 @@ export function PageHeader({
   breadcrumb?: ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {breadcrumb ? <div className="mb-1.5">{breadcrumb}</div> : null}
         <div className="flex items-center gap-2.5">
           {icon ? <span className="text-brand shrink-0">{icon}</span> : null}
-          <h1 className="text-ink truncate text-[20px] leading-tight font-bold tracking-tight">
+          <h1 className="text-ink text-[24px] leading-tight font-bold tracking-[-0.035em] break-words sm:text-[28px]">
             {title}
           </h1>
         </div>
@@ -426,7 +426,7 @@ export function Callout({
   children?: ReactNode;
 }) {
   const tones = {
-    info: { bg: "rgba(91,83,232,.09)", fg: "var(--brand)", ring: "rgba(91,83,232,.25)" },
+    info: { bg: "var(--brand-soft)", fg: "var(--brand-text)", ring: "var(--ring)" },
     warn: { bg: "rgba(217,119,6,.1)", fg: "var(--warn)", ring: "rgba(217,119,6,.28)" },
     danger: { bg: "rgba(220,47,75,.09)", fg: "var(--danger)", ring: "rgba(220,47,75,.26)" },
     ok: { bg: "rgba(15,157,99,.09)", fg: "var(--ok)", ring: "rgba(15,157,99,.26)" },

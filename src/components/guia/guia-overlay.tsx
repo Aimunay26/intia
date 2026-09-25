@@ -811,9 +811,9 @@ export function GuiaOverlay() {
     <div className="guia-overlay-root pointer-events-none fixed inset-0 z-[9990] overflow-hidden">
       <style>{`
         @keyframes pulseRing {
-          0% { box-shadow: 0 0 0 0 rgba(91, 83, 232, 0.7); }
-          70% { box-shadow: 0 0 0 12px rgba(91, 83, 232, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(91, 83, 232, 0); }
+          0% { box-shadow: 0 0 0 0 var(--ring); }
+          70% { box-shadow: 0 0 0 12px transparent; }
+          100% { box-shadow: 0 0 0 0 transparent; }
         }
         @keyframes pulseRedRing {
           0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85); }
@@ -846,7 +846,7 @@ export function GuiaOverlay() {
             width: targetRect.width + 8,
             height: targetRect.height + 8,
             border: alertaRoja ? "3px solid #ef4444" : "2px solid var(--brand)",
-            backgroundColor: alertaRoja ? "rgba(239, 68, 68, 0.16)" : "rgba(91, 83, 232, 0.08)",
+            backgroundColor: alertaRoja ? "rgba(239, 68, 68, 0.16)" : "color-mix(in srgb, var(--brand) 8%, transparent)",
           }}
         />
       )}
@@ -868,7 +868,7 @@ export function GuiaOverlay() {
               <defs>
                 <linearGradient id="guiaGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="var(--brand)" />
-                  <stop offset="100%" stopColor="#ec4899" />
+                  <stop offset="100%" stopColor="var(--brand-text)" />
                 </linearGradient>
                 <marker id="guiaArrowhead" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto">
                   <path d="M 0 1 L 9 5 L 0 9 z" fill="url(#guiaGradient)" />

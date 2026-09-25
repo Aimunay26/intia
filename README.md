@@ -1,9 +1,12 @@
-# Marketing OS
+# Intia
 
 Sistema de operación de contenido para varias marcas: calendario y agenda, fichas de marca con
 su identidad y sus objetivos, checklist por video, asignación de quién actuó / grabó / escribió,
 métricas, log de auditoría, y un generador de guiones con IA afinado por formato y por la
 marca personal de quien actúa.
+
+Identidad visual: **Blanco y cobre**, Manrope y componentes shadcn/ui selectivos sobre
+Next.js y Tailwind. [Decisiones de diseño y validación](reports/identidad-intia-2026-09-25.md).
 
 Funciona con PostgreSQL tanto en desarrollo como en producción. La instalación publicada
 usa Neon en Vercel. Las consultas analíticas y la paginación requieren PostgreSQL;

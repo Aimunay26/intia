@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Check, ChevronsUpDown, Layers, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { cambiarMarcaActiva } from "@/app/actions/brand-context";
 import { TODAS, type BrandChoice } from "@/lib/brand-shared";
 import { cn, withAlpha } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 /**
  * Selector de marca activa.
@@ -25,24 +26,9 @@ export function BrandSwitcher({
   canCreate: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const boxRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const active = brands.find((b) => b.id === activeId) ?? null;
-
-  useEffect(() => {
-    if (!open) return;
-    const onClickOutside = (e: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onClickOutside);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClickOutside);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   const elegir = (id: string) => {
     setOpen(false);
@@ -54,17 +40,17 @@ export function BrandSwitcher({
   };
 
   return (
-    <div className="relative px-3.5 pb-3" ref={boxRef}>
+    <div className="relative px-3.5 pb-3">
       <form action={cambiarMarcaActiva} ref={formRef} className="hidden">
         <input type="hidden" name="brandId" defaultValue={TODAS} />
       </form>
 
+      <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+      <DropdownMenuTrigger asChild>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
         className="border-line hover:border-linestrong bg-surface2 flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors"
-        aria-haspopup="listbox"
-        aria-expanded={open}
+        aria-label={`Cambiar marca: ${active ? active.name : "Todas las marcas"}`}
       >
         <span
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
@@ -92,12 +78,11 @@ export function BrandSwitcher({
 
         <ChevronsUpDown size={14} className="text-inkmuted shrink-0" />
       </button>
+      </DropdownMenuTrigger>
 
-      {open ? (
-        <div className="card fade-in absolute right-3.5 left-3.5 z-50 mt-1.5 overflow-hidden p-1 shadow-[var(--shadow-3)]">
-          <button
-            type="button"
-            onClick={() => elegir(TODAS)}
+        <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+          <DropdownMenuItem
+            onSelect={() => elegir(TODAS)}
             className={cn(
               "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] transition-colors",
               !active ? "bg-brandsoft text-brand font-semibold" : "text-inksoft hover:bg-surface3"
@@ -106,20 +91,19 @@ export function BrandSwitcher({
             <Layers size={14} className="shrink-0" />
             <span className="flex-1">Todas las marcas</span>
             {!active ? <Check size={13} /> : null}
-          </button>
+          </DropdownMenuItem>
 
           {brands.length ? (
-            <div className="border-line my-1 border-t" />
+            <DropdownMenuSeparator />
           ) : null}
 
           <div className="max-h-[260px] overflow-y-auto">
             {brands.map((b) => {
               const esActiva = b.id === activeId;
               return (
-                <button
+                <DropdownMenuItem
                   key={b.id}
-                  type="button"
-                  onClick={() => elegir(b.id)}
+                  onSelect={() => elegir(b.id)}
                   className={cn(
                     "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[12.5px] transition-colors",
                     esActiva ? "bg-brandsoft text-brand font-semibold" : "text-inksoft hover:bg-surface3"
@@ -131,14 +115,15 @@ export function BrandSwitcher({
                   />
                   <span className="flex-1 truncate">{b.name}</span>
                   {esActiva ? <Check size={13} className="shrink-0" /> : null}
-                </button>
+                </DropdownMenuItem>
               );
             })}
           </div>
 
           {canCreate ? (
             <>
-              <div className="border-line my-1 border-t" />
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
               <Link
                 href="/marcas"
                 onClick={() => setOpen(false)}
@@ -147,10 +132,11 @@ export function BrandSwitcher({
                 <Plus size={14} className="shrink-0" />
                 Nueva marca
               </Link>
+              </DropdownMenuItem>
             </>
           ) : null}
-        </div>
-      ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

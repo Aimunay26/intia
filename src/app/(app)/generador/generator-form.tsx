@@ -3,7 +3,7 @@
 import { Fragment, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Bot, Check, Clock, FileText, Film, Layers, Loader2, Package, RotateCcw, Search, Sparkles, Tags, Target, UserSquare2, Wand2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, Check, ChevronDown, Clock, FileText, Film, Layers, Loader2, Package, RotateCcw, Sparkles, Tags, Target, UserSquare2, Wand2 } from "lucide-react";
 
 import { generarGuion, type GenerateState } from "@/app/actions/scripts";
 import {
@@ -19,9 +19,9 @@ import {
 } from "@/lib/script-angles";
 import { AI_MODELS, AI_PROVIDERS, DEFAULT_MODEL, FIT_SCORES, STRUCTURE_CATEGORY_MAP } from "@/lib/constants";
 import { resolveAiModel } from "@/lib/ai-models";
-import { cn, formatSeconds, withAlpha } from "@/lib/utils";
+import { cn, withAlpha } from "@/lib/utils";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
-import { getStructureReference } from "@/lib/structure-references";
+import { FormatStep } from "./format-step";
 import { Callout, Card, CardHeader, Field } from "@/components/ui";
 
 /* ------------------------------------------------------------------ TIPOS -- */
@@ -528,7 +528,6 @@ export function GeneratorForm({
     },
   ];
 
-  const puedeAvanzarPaso1 = selectedStructureIds.length > 0;
   const puedeAvanzarPaso2 = Boolean(producto.trim().length > 0);
   const puedeAvanzarPaso3 = Boolean(peticion.trim().length >= 5);
 
@@ -559,11 +558,8 @@ export function GeneratorForm({
     });
   }, [structures, categoryFilter, searchStructure]);
 
-  const countVende = structures.filter((s) => s.category === "VENDE").length;
-  const countEntretiene = structures.filter((s) => s.category === "ENTRETIENE").length;
-
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_368px]">
+    <div className={cn("grid gap-4", currentStep === 1 ? "mx-auto max-w-5xl" : "lg:grid-cols-[minmax(0,1fr)_368px]")}>
       {/* ------------------------------------------------- COLUMNA IZQUIERDA */}
       <form action={formAction} className="min-w-0 space-y-4">
         {/* CAMPOS OCULTOS PARA CONSERVAR EL BRIEFING COMPLETO EN TODAS LAS ETAPAS */}
@@ -601,7 +597,17 @@ export function GeneratorForm({
           </Callout>
         ) : null}
 
-        {/* BARRA SUPERIOR DE ETAPAS (STEPPER GEMINI-STYLE) */}
+        {/* Navegación compacta en Formato; las demás etapas conservan su presentación. */}
+        {currentStep === 1 ? (
+          <nav aria-label="Etapas de generación" className="flex flex-wrap gap-2" data-guia={GUIA_TARGETS.GENERADOR_STEPPER_BAR}>
+            {PASOS.map((paso) => (
+              <button key={paso.id} type="button" onClick={() => irAlPaso(paso.id)} disabled={paso.id > maxStepReached} aria-current={paso.id === currentStep ? "step" : undefined} title={`${paso.descripcion}: ${paso.resumen}`} className={cn("flex min-h-11 items-center gap-2 rounded-lg px-2 text-[13px]", paso.id === currentStep ? "text-brand font-bold" : "text-inkmuted disabled:opacity-60")}>
+                <span className={cn("flex h-6 w-6 items-center justify-center rounded-full text-xs", paso.id === currentStep ? "bg-brand text-primary-foreground" : "bg-surface")}>{paso.numero}</span>
+                {paso.titulo}
+              </button>
+            ))}
+          </nav>
+        ) : (
         <div
           className="card overflow-hidden p-3"
           data-guia={GUIA_TARGETS.GENERADOR_STEPPER_BAR}
@@ -682,290 +688,27 @@ export function GeneratorForm({
           </div>
         </div>
 
+        )}
+
         {/* ------------------------------------------------------------------ */}
         {/* ETAPA 1: FORMATO / TIPO DE GUIÓN                                   */}
         {/* ------------------------------------------------------------------ */}
         {currentStep === 1 && (
-          <Card>
-            <CardHeader
-              title="1 · Elige el tipo de guion (Estructuras ganadoras)"
-              subtitle={`Selecciona hasta ${maxBatch} estructuras para obtener un guion por formato.`}
-              icon={<Layers size={15} />}
-              actions={
-                selectedStructureIds.length > 0 ? (
-                  <div className="flex items-center gap-1.5">
-                    <span className="chip chip-brand font-semibold text-[11px]">
-                      ✓ {selectedStructureIds.length} formato{selectedStructureIds.length > 1 ? "s" : ""}
-                    </span>
-                    {selectedStructureIds.length > 1 ? (
-                      <span className="chip chip-plain text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10">
-                        Lote activo
-                      </span>
-                    ) : null}
-                  </div>
-                ) : null
-              }
-            />
-            <div className="space-y-3.5 p-4">
-              {/* Filtros de Categoría y Búsqueda */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setCategoryFilter("TODOS")}
-                    className={cn(
-                      "chip cursor-pointer text-[11px] transition-all",
-                      categoryFilter === "TODOS" ? "chip-brand font-bold" : "chip-plain hover:bg-surface2"
-                    )}
-                  >
-                    Todos ({structures.length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCategoryFilter("VENDE")}
-                    className={cn(
-                      "chip cursor-pointer text-[11px] transition-all",
-                      categoryFilter === "VENDE" ? "chip-brand font-bold" : "chip-plain hover:bg-surface2"
-                    )}
-                  >
-                    💰 Vende ({countVende})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCategoryFilter("ENTRETIENE")}
-                    className={cn(
-                      "chip cursor-pointer text-[11px] transition-all",
-                      categoryFilter === "ENTRETIENE" ? "chip-brand font-bold" : "chip-plain hover:bg-surface2"
-                    )}
-                  >
-                    🎭 Entretiene ({countEntretiene})
-                  </button>
-                </div>
-
-                <div className="relative min-w-[200px]">
-                  <Search size={13} className="text-inkmuted absolute left-2.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={searchStructure}
-                    onChange={(e) => setSearchStructure(e.target.value)}
-                    placeholder="Buscar formato (ej. Camaleón, PAS)..."
-                    className="input pl-8 py-1 text-[11.5px]"
-                  />
-                </div>
-              </div>
-
-              {/* Barra de Acciones Rápidas de Selección Múltiple */}
-              <div className="flex items-center justify-between gap-2 pt-1 border-b border-line/60 pb-2 text-[11.5px]">
-                <div className="flex items-center gap-2">
-                  <span className="text-ink font-semibold">
-                    {selectedStructureIds.length} de {maxBatch} formatos permitidos por solicitud
-                  </span>
-                  {selectedStructureIds.length > 1 && (
-                    <span className="text-inkmuted hidden sm:inline">
-                      · Se generará un guion independiente para cada formato
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={seleccionarTodasFiltradas}
-                    className="btn btn-ghost btn-xs text-[11px]"
-                  >
-                    Seleccionar visibles (hasta {Math.min(maxBatch, structuresFiltradas.length)})
-                  </button>
-                  {selectedStructureIds.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={deseleccionarTodas}
-                      className="btn btn-ghost btn-xs text-[11px] text-inkmuted hover:text-danger"
-                    >
-                      Limpiar
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Grid de Formatos con Checkboxes Interactivos */}
-              <div
-                className="grid gap-2 sm:grid-cols-2 max-h-[380px] overflow-y-auto pr-1 no-scrollbar"
-                data-guia={GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA}
-              >
-                {structuresFiltradas.map((s) => {
-                  const isSelected = selectedStructureIds.includes(s.id);
-                  const isInspecting = previewStructureId === s.id;
-                  const ref = getStructureReference(s.name);
-
-                  return (
-                    <div
-                      key={s.id}
-                      onClick={() => toggleEstructura(s)}
-                      className={cn(
-                        "card-flat w-full p-3 text-left transition-all relative overflow-hidden cursor-pointer group",
-                        isSelected
-                          ? "border-brand bg-brandsoft/60 ring-1 ring-brand shadow-sm"
-                          : "hover:border-linestrong hover:bg-surface2/60",
-                        isInspecting && !isSelected && "ring-1 ring-brand/40"
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <div
-                            className={cn(
-                              "w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 mt-0.5",
-                              isSelected
-                                ? "bg-brand border-brand text-white"
-                                : "border-line bg-surface text-transparent group-hover:border-brand/60"
-                            )}
-                          >
-                            <Check size={11} className={isSelected ? "stroke-[3]" : "opacity-0"} />
-                          </div>
-                          <span className="text-ink text-[13px] leading-snug font-bold truncate">
-                            {s.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-inkmuted text-[11px] font-semibold font-mono">
-                            {formatSeconds(s.defaultDurationSec)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => seleccionarSoloEsta(s, e)}
-                            className="chip chip-plain hover:chip-brand text-[9.5px] px-1.5 py-0.5 opacity-60 hover:opacity-100 transition-opacity"
-                            title="Seleccionar únicamente este formato"
-                          >
-                            Solo este
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 pl-6">
-                        {s.family ? <span className="chip chip-plain text-[10px]">{s.family}</span> : null}
-                        <span className="text-inkmuted text-[10.5px]">{s.beats.length} beats</span>
-
-                        <span className="chip chip-brand text-[9.5px] font-semibold bg-brand/10 text-brand">
-                          {ref.badge}
-                        </span>
-                        {isInspecting && (
-                          <span className="text-[9.5px] text-brand font-medium">
-                            · Viendo referencia ↓
-                          </span>
-                        )}
-                      </div>
-
-                      {s.summary ? (
-                        <p className="text-inkmuted text-[11px] mt-1.5 pl-6 line-clamp-2 leading-relaxed">
-                          {s.summary}
-                        </p>
-                      ) : null}
-
-                      {s.beats.length ? (
-                        <div className="text-inkmuted mt-1.5 pl-6 text-[10.5px] truncate font-mono">
-                          {s.beats.map((b) => b.name).join(" → ")}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Selector de referencia para inspección cuando hay múltiples seleccionados */}
-              {selectedStructureIds.length > 1 && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar border-t border-line/50">
-                  <span className="text-[11px] font-bold text-inkmuted shrink-0">Inspeccionar referencia:</span>
-                  {selectedStructureIds.map((id) => {
-                    const est = structures.find((x) => x.id === id);
-                    if (!est) return null;
-                    const inspecting = est.id === previewStructureId;
-                    return (
-                      <button
-                        key={est.id}
-                        type="button"
-                        onClick={() => setPreviewStructureId(est.id)}
-                        className={cn(
-                          "chip text-[10.5px] shrink-0 transition-all",
-                          inspecting ? "chip-brand font-bold" : "chip-plain hover:bg-surface2"
-                        )}
-                      >
-                        {est.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Ficha de Referencia Enriquecida del Formato en Inspección */}
-              {structure && (() => {
-                const ref = getStructureReference(structure.name);
-                return (
-                  <div className="rounded-xl border border-brand/40 bg-brandsoft/30 p-3.5 space-y-2.5 transition-all">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-brand">{ref.badge}</span>
-                        <span className="text-[13px] font-bold text-ink">Referencia: {structure.name}</span>
-                        <span className="chip chip-plain text-[10px] uppercase font-semibold">
-                          {structure.category === "VENDE" ? "💰 Vende" : "🎭 Entretiene"}
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-mono text-inkmuted font-semibold">
-                        {structure.beats.length} beats · ~{formatSeconds(structure.defaultDurationSec)}
-                      </span>
-                    </div>
-
-                    <p className="text-[12px] text-ink leading-relaxed">
-                      <strong>Modelo Mental:</strong> {ref.mentalModel}
-                    </p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11.5px]">
-                      <div className="rounded-lg bg-surface/80 border border-line p-2.5 space-y-1">
-                        <span className="text-brand font-bold block">🎣 Gancho (Segundos 0-3):</span>
-                        <p className="text-inkmuted leading-snug">{ref.hookStrategy}</p>
-                        <p className="text-ink font-medium italic text-[11px] mt-1 bg-surface2/60 p-1.5 rounded">
-                          {ref.hookExample}
-                        </p>
-                      </div>
-
-                      <div className="rounded-lg bg-surface/80 border border-line p-2.5 space-y-1">
-                        <span className="text-ink font-bold block">🔒 Regla de Oro y Retención:</span>
-                        <p className="text-inkmuted leading-snug">{ref.keyRule}</p>
-                        <p className="text-brand font-medium text-[11px] mt-1">
-                          💡 Retención: {ref.retentionSecret}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Botón de Validación para Continuar al Paso 2 */}
-              <div className="flex items-center justify-between pt-3 border-t border-line mt-2">
-                <div className="text-[12px] text-inkmuted">
-                  {selectedStructureIds.length > 0 ? (
-                    <span className="text-ink font-semibold">
-                      ✓ {selectedStructureIds.length === 1
-                        ? `Seleccionado: ${structure?.name}`
-                        : `${selectedStructureIds.length} formatos seleccionados (generación por lote)`}
-                    </span>
-                  ) : (
-                    <span className="text-warn font-medium">
-                      Elige al menos una estructura para poder continuar.
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  disabled={!puedeAvanzarPaso1}
-                  onClick={() => avanzarPaso(2)}
-                  className="btn btn-primary"
-                  data-guia={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_1}
-                >
-                  Continuar: Identidad y Producto
-                  <ArrowRight size={14} />
-                </button>
-              </div>
-            </div>
-          </Card>
+          <FormatStep
+            structures={structures}
+            filteredStructures={structuresFiltradas}
+            selectedIds={selectedStructureIds}
+            maxBatch={maxBatch}
+            category={categoryFilter}
+            search={searchStructure}
+            onCategoryChange={setCategoryFilter}
+            onSearchChange={setSearchStructure}
+            onToggle={toggleEstructura}
+            onSelectOnly={seleccionarSoloEsta}
+            onSelectVisible={seleccionarTodasFiltradas}
+            onClear={deseleccionarTodas}
+            onContinue={() => avanzarPaso(2)}
+          />
         )}
 
         {/* ------------------------------------------------------------------ */}
@@ -1784,8 +1527,11 @@ export function GeneratorForm({
       </form>
 
       {/* --------------------------------------------------- COLUMNA DERECHA */}
-      <div className="min-w-0">
-        <div className="lg:sticky lg:top-6 space-y-4">
+      <details key={currentStep === 1 ? "format-context" : "step-context"} open={currentStep === 1 ? undefined : true} className="min-w-0">
+        <summary className={cn("text-inkmuted cursor-pointer list-none rounded-xl border border-line bg-surface px-4 py-3 text-[13px] font-semibold", currentStep !== 1 && "hidden")}>
+          <span className="flex items-center justify-between gap-3"><span>Lo que recibe la IA · Ver contexto completo</span><ChevronDown size={16} aria-hidden="true" /></span>
+        </summary>
+        <div className={cn("space-y-4", currentStep === 1 ? "mt-3" : "lg:sticky lg:top-6")}>
           <Card>
             <CardHeader
               title="Lo que recibe la IA"
@@ -2049,7 +1795,7 @@ export function GeneratorForm({
             </Callout>
           ) : null}
         </div>
-      </div>
+      </details>
 
       {pending ? (
         <div className="no-print fixed inset-x-0 bottom-0 z-40 flex justify-center p-4">

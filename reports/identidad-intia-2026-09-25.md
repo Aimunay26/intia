@@ -92,3 +92,29 @@ Las pruebas se ejecutan sobre el build de producción en localhost y PostgreSQL 
 - [Temas mediante variables CSS](https://ui.shadcn.com/docs/theming).
 
 La integración se hizo de forma manual para adaptar componentes concretos sin sobrescribir los estilos ni la estructura del sistema.
+
+## Etapa Formato del generador · 25/09/2026
+
+Estado: reorganizada y validada localmente. Despliegue productivo pendiente de comprobar.
+
+Se conservan las cinco etapas y sus campos. Formato ocupa el ancho disponible, con dos columnas en escritorio y una en móvil, tarjetas de descripción breve, casillas nativas y una única barra de selección al pie. El catálogo usa el desplazamiento de la página; el resumen no se superpone a las tarjetas. «Lo que recibe la IA» se puede desplegar en esta etapa y sigue abierto en las restantes.
+
+| Función anterior | Ubicación actual |
+|---|---|
+| Todas las estructuras y sus categorías | Catálogo completo, con contadores en Todos / Vende / Entretiene |
+| Buscar por nombre, familia o descripción | Buscador del catálogo; conserva los mismos criterios |
+| Elegir varios formatos hasta el máximo configurado | Casillas y contador único; los seleccionados se conservan al filtrar |
+| Seleccionar visibles y limpiar | Menú «Más», respetando el máximo de la solicitud |
+| Seleccionar únicamente un formato | «Solo este», dentro de su referencia |
+| Consultar cualquiera de los seleccionados | Nombre del formato en el resumen; el botón de quitar es independiente |
+| Familia y descripción completa | Ventana «Ver ejemplo» |
+| Gancho, modelo mental, etiqueta, regla de oro y retención | Referencia; los detalles adicionales se despliegan a petición |
+| Beats, tiempos, objetivos y documentos | Detalle de referencia y contexto completo; se muestran también las notas de cada beat |
+| Preselección desde un video, orden del lote y configuración de generación | Mismos campos y manejadores del formulario; las otras etapas conservan su funcionamiento |
+| Guía interactiva | Mismos objetivos `data-guia`; instrucciones actualizadas para «Continuar» y «Más» |
+
+Consultar una referencia tiene estado independiente: no cambia la selección, duración, modelo, proveedor ni CTA. El diálogo se carga al abrirlo, permite teclado/Escape y devuelve el foco al control de origen. Los estilos específicos de Formato están aislados para respetar los componentes y temas existentes.
+
+Validación: 142 pruebas unitarias existentes, compilación, tipos y lint correctos. Comprobación adicional sobre el build de producción local, Chromium y PostgreSQL temporal: nueve grupos de interacción, las cinco etapas, conservación del cierre manual y del briefing, lote precargado desde un video, referencia completa, foco/teclado y ocho combinaciones de ancho/tema (320, 360, 768 y 1440 px; claro y oscuro). Sin errores de navegador ni solicitudes de generación. La base temporal se elimina al finalizar. Evidencia local en `.audit/format-ui-report.json`, `.audit/format-build.log` y `.audit/format-*.png`.
+
+La carga JS inicial informada por Next para `/generador` pasa de 151 kB en el build anterior a 145 kB al separar la referencia y el diálogo. Es tamaño de bundle local, no una medición de velocidad en producción. El build conserva el aviso preexistente de dependencia dinámica de `@vercel/queue`.

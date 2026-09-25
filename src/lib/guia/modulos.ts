@@ -379,7 +379,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         id: "m5-estructura",
         titulo: "Etapa 1: elige el formato",
         instruccion: "Marca uno o varios formatos de guion (Camaleón, Ellos vs Nosotros, PAS, UGC…).",
-        detalle: "Si marcas varios, la IA genera una versión de tu idea por cada formato.",
+        detalle: "Si marcas varios, la IA genera una versión por formato. «Ver ejemplo» abre la referencia sin cambiar tu selección; «Más» reúne las acciones del lote.",
         target: GUIA_TARGETS.SELECT_GENERADOR_ESTRUCTURA,
         url: "/generador",
         fallbackTexto: "Las tarjetas de formato de la etapa 1 del generador.",
@@ -388,7 +388,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
       {
         id: "m5-continuar-1",
         titulo: "Pasa a la etapa 2",
-        instruccion: "Con al menos un formato marcado, pulsa «Continuar: Identidad y Producto».",
+        instruccion: "Con al menos un formato marcado, pulsa «Continuar» para pasar a Identidad y producto.",
         detalle: "Cada etapa se desbloquea con su botón Continuar; la guía te lo va señalando.",
         target: GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_1,
         // Al pulsar Continuar cambia la etapa y el paso siguiente vive en ella: no pedir otro clic.

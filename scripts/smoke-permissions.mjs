@@ -88,7 +88,11 @@ try{
    assert.equal((await db.user.findUniqueOrThrow({where:{id:'OWNER'}})).name,'Cambio ajeno de perfil');
    await db.user.update({where:{id:'OWNER'},data:{name:'OWNER'}});
    await db.asset.create({data:{id:'own-text',ownerType:'user',ownerId:'OWNER',filename:'borrador.txt',mimeType:'text/plain',data:Buffer.from('Texto'),size:5,extractedText:'Texto inicial'}});
-   await page.goto(base+'/mi-perfil');await page.getByTitle('Ver o editar el texto que lee la IA',{exact:true}).click();
+   await page.goto(base+'/mi-perfil');
+   // Next may retain an off-screen streaming segment outside the mounted main.
+   // Keep strict uniqueness inside the rendered page instead of choosing a copy.
+   const editAssetText=page.getByRole('main').getByTitle('Ver o editar el texto que lee la IA',{exact:true});
+   await expect(editAssetText).toHaveCount(1);await editAssetText.click();
    const textDialog=page.getByRole('dialog');await textDialog.locator('textarea[name="extractedText"]').fill('Borrador de texto retenido');
    await db.asset.update({where:{id:'own-text'},data:{extractedText:'Cambio ajeno de texto'}});
    await textDialog.getByRole('button',{name:'Guardar texto',exact:true}).click();await textDialog.getByRole('alert').waitFor();

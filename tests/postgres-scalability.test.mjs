@@ -135,12 +135,17 @@ test("trabajos durables, cuotas, dinero y archivos con PostgreSQL real; IA/Blob 
       assert.equal((await prisma.usageCounter.findUnique({ where: { key: "fixture:quota" } })).amount, 3n);
       await assert.rejects(prisma.usageCounter.create({ data: { key: "bad", amount: -1 } }));
     });
-    await t.test("cuota cero impide la llamada antes de consumir IA", async () => {
-      const id = await enqueue(), before = calls;
-      process.env.AI_DAILY_CALLS = "0";
-      await drain(id); delete process.env.AI_DAILY_CALLS;
-      assert.equal(calls, before);
-      assert.equal((await prisma.generationJob.findUnique({ where: { id } })).status, "FAILED");
+    await t.test("los antiguos cupos diarios no bloquean trabajos ni llamadas; la telemetría sigue contando", async () => {
+      process.env.AI_DAILY_CALLS = "0"; process.env.AI_DAILY_JOBS = "0";
+      try {
+        const day = limits.usageDay(), before = calls;
+        await prisma.usageCounter.upsert({ where: { key: `ai:jobs:${day}` }, create: { key: `ai:jobs:${day}`, amount: 100 }, update: { amount: 100 } });
+        const id = await jobs.enqueueGeneration(owner, randomUUID(), [structure.id], input);
+        await drain(id);
+        assert.equal(calls, before + 1);
+        assert.equal((await prisma.generationJob.findUnique({ where: { id } })).status, "COMPLETED");
+        assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:jobs:${day}` } })).amount, 101n);
+      } finally { delete process.env.AI_DAILY_CALLS; delete process.env.AI_DAILY_JOBS; }
     });
     await t.test("despacho concurrente arranca un workflow y conserva su ID aunque termine antes de responder", async () => {
       const id = await enqueue(); let starts = 0;
@@ -150,16 +155,18 @@ test("trabajos durables, cuotas, dinero y archivos con PostgreSQL real; IA/Blob 
       const row = await prisma.generationJob.findUniqueOrThrow({ where: { id } });
       assert.equal(row.status, "COMPLETED"); assert.equal(row.runId, "fixture-run");
     });
-    await t.test("fallo de despacho deja el trabajo recuperable; límite móvil frena nuevos despachos", async () => {
-      const id = await enqueue();
-      const dispatch = load("src/lib/generation-dispatch.ts", { ...mocks, "@/workflows/generate-scripts": { generateScriptsWorkflow: () => {} }, "workflow/api": { start: async () => { throw new Error("fixture queue failure"); } } });
+    await t.test("fallo de despacho deja el trabajo recuperable; cupos históricos no bloquean su recuperación", async () => {
+      const id = await enqueue(); let starts = 0;
+      const dispatch = load("src/lib/generation-dispatch.ts", { ...mocks, "@/workflows/generate-scripts": { generateScriptsWorkflow: () => {} }, "workflow/api": { start: async () => { starts++; throw new Error("fixture queue failure"); } } });
       await dispatch.dispatchGeneration(id);
       const row = await prisma.generationJob.findUniqueOrThrow({ where: { id } });
       assert.equal(row.status, "QUEUED"); assert.match(row.error, /guardada/);
       await prisma.generationJob.update({ where: { id }, data: { updatedAt: new Date(0) } });
-      process.env.AI_32D_DISPATCHES = "0";
-      await assert.rejects(dispatch.dispatchGeneration(id, true), /32 días/);
-      delete process.env.AI_32D_DISPATCHES;
+      process.env.AI_32D_DISPATCHES = "0"; process.env.AI_DAILY_DISPATCHES = "0";
+      try { await dispatch.dispatchGeneration(id, true); }
+      finally { delete process.env.AI_32D_DISPATCHES; delete process.env.AI_DAILY_DISPATCHES; }
+      assert.equal(starts, 2);
+      assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:dispatch:${limits.usageDay()}` } })).amount, 2n);
       await drain(id);
     });
     const video = await prisma.contentItem.create({ data: { brandId: brand.id, title: "Video", scheduledDate: new Date(), platforms: '["TIKTOK","INSTAGRAM","TIKTOK"]' } });

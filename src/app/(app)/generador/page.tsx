@@ -1,5 +1,4 @@
 import { singleQueryValues } from "@/lib/query-params";
-import { AiUsagePanel } from "@/components/operations-status";
 import { requirePageSection } from "@/lib/render-context";
 import { brandScope, contentScope } from "@/lib/access-scope";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -279,7 +278,6 @@ export default async function GeneradorPage({
 
   return (
     <>
-      <AiUsagePanel user={user} />
       <PageHeader
         title="Generador de guiones"
         subtitle="Elige el formato ganador, la marca y el arquetipo. La IA escribe el guion escena por escena, listo para grabar."

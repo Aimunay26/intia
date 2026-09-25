@@ -6,7 +6,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { PrismaClient } from '@prisma/client';
 import { load } from './load-module.mjs';
-import { validScript } from './ai-fixture.mjs';
+import { geminiQuotaBody, validScript } from './ai-fixture.mjs';
 
 const url = process.env.PRIORITIES_TEST_DATABASE_URL;
 if (!url || !['localhost', '127.0.0.1'].includes(new URL(url).hostname) || !new URL(url).pathname.endsWith('_test')) throw Error('Solo DB local efímera _test.');
@@ -119,7 +119,7 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
     let providerCalls = 0, response = async () => ({ text: JSON.stringify(validScript) }), key = 'fake-key';
     const engineMocks = { ...mocks, '@/lib/settings': { ...settings, resolveApiKey: async () => ({ key, source: 'db' }) }, '@google/genai': { ...Genai, GoogleGenAI: class { models = { generateContent: async (...args) => { providerCalls++; return response(...args); } }; } } };
     const engine = load('src/lib/generation-jobs.ts', engineMocks);
-    await check('B03: probar Claude también respeta interruptor, cupo y plazo', async () => {
+    await check('B03: probar Claude respeta interruptor y plazo, y registra la petición', async () => {
       let probes = 0;
       const probe = load('src/app/actions/probar-clave.ts', { ...engineMocks, '@anthropic-ai/sdk': { __esModule: true, default: class {
         constructor(options) { assert.equal(options.maxRetries, 0); assert.ok(options.timeout <= 15000); }
@@ -144,16 +144,34 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       assert.equal(diagnosticItem.diagnostics.provider,'google');assert.ok(diagnosticItem.diagnostics.modelSource);assert.ok(diagnosticItem.diagnostics.structureRevision);
       assert.doesNotMatch(JSON.stringify(diagnosticItem.diagnostics),/fake-key|systemPrompt|userPrompt/);
     });
-    await check('B03: un solo cupo impide fallback, y clave ausente falla sin reservar llamada', async () => {
-      process.env.AI_DAILY_CALLS = '1'; const before = providerCalls;
-      response = async () => { throw new Genai.ApiError({ status: 400, message: 'responseJsonSchema is not supported' }); };
-      try { const id = await enqueue({}, engine); await drain(id, engine); assert.equal(providerCalls - before, 1); assert.match((await prisma.generationJob.findUniqueOrThrow({ where: { id } })).status, /FAILED/); }
-      finally { delete process.env.AI_DAILY_CALLS; }
+    await check('B03: los antiguos cupos no bloquean llamadas ni fallback; clave ausente no envía petición', async () => {
+      process.env.AI_DAILY_CALLS = '0'; process.env.AI_USER_DAILY_CALLS = '0'; const before = providerCalls;
+      const day = limits.usageDay();
+      await prisma.usageCounter.createMany({ data: [{ key: `ai:calls:${day}`, amount: 100 }, { key: `ai:user:writer:${day}`, amount: 100 }] });
+      response = async () => { if (providerCalls === before + 1) throw new Genai.ApiError({ status: 400, message: 'responseJsonSchema is not supported' }); return { text: JSON.stringify(validScript) }; };
+      try {
+        const id = await enqueue({}, engine); await drain(id, engine);
+        assert.equal(providerCalls - before, 2);
+        assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id } })).status, 'COMPLETED');
+        assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:calls:${day}` } })).amount, 102n);
+        assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:user:writer:${day}` } })).amount, 102n);
+      } finally { delete process.env.AI_DAILY_CALLS; delete process.env.AI_USER_DAILY_CALLS; }
       await prisma.usageCounter.deleteMany(); key = null;
       try { const id = await enqueue({}, engine); await drain(id, engine); assert.equal(await prisma.usageCounter.count({ where: { key: { startsWith: 'ai:calls:' } } }), 0); }
       finally { key = 'fake-key'; }
     });
-    await check('B04: local no llama IA; selección explícita respeta apagado/cupo/deduplicación diaria', async () => {
+    await check('B03: cuota gratuita agotada guarda aviso de facturación sin reintentar ni crear un guion', async () => {
+      const before = providerCalls;
+      response = async () => { throw new Genai.ApiError({ status: 429, message: geminiQuotaBody() }); };
+      const id = await enqueue({}, engine); await drain(id, engine); await drain(id, engine);
+      assert.equal(providerCalls, before + 1);
+      const item = await prisma.generationItem.findFirstOrThrow({ where: { jobId: id } });
+      assert.equal(item.status, 'FAILED'); assert.equal(item.attempts, 1);
+      assert.match(item.error, /agotó la cuota diaria gratuita.*facturación habilitada.*Ajustes/);
+      assert.doesNotMatch(item.error + JSON.stringify(item.diagnostics), /PRIVATE-FIXTURE|QuotaFailure|fake-key/);
+      assert.equal(await prisma.script.count({ where: { generationItem: { jobId: id } } }), 0);
+    });
+    await check('B04: local no llama IA; respeta apagado y permite repetir una extracción explícita sin cupos diarios', async () => {
       response = async () => ({ text: '{}' });
       const preview = load('src/app/actions/importar-documento.ts', engineMocks);
       const form = fd({ tipo: 'brief', destino: 'marca' });
@@ -164,11 +182,20 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       try { assert.equal((await as('strategy', () => preview.previsualizarDocumento(form))).ok, true); assert.equal(providerCalls, before); }
       finally { process.env.AI_JOBS_ENABLED = 'true'; }
       process.env.AI_DAILY_CALLS = '0';
-      try { await as('strategy', () => preview.previsualizarDocumento(form)); assert.equal(providerCalls, before); }
+      try { await as('strategy', () => preview.previsualizarDocumento(form)); assert.equal(providerCalls, before + 1); }
       finally { delete process.env.AI_DAILY_CALLS; }
-      await as('strategy', () => preview.previsualizarDocumento(form)); assert.equal(providerCalls, before + 1);
-      await as('strategy', () => preview.previsualizarDocumento(form)); assert.equal(providerCalls, before + 1);
-      assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:calls:${limits.usageDay()}` } })).amount, 1n);
+      await as('strategy', () => preview.previsualizarDocumento(form)); assert.equal(providerCalls, before + 2);
+      await as('strategy', () => preview.previsualizarDocumento(form)); assert.equal(providerCalls, before + 3);
+      assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:calls:${limits.usageDay()}` } })).amount, 3n);
+    });
+    await check('B04: extracción sin cuota gratuita conserva lectura local y muestra facturación', async () => {
+      response = async () => { throw new Genai.ApiError({ status: 429, message: geminiQuotaBody() }); };
+      const preview = load('src/app/actions/importar-documento.ts', engineMocks);
+      const form = fd({ tipo: 'brief', destino: 'marca', aiProvider: 'google' });
+      form.set('file', new File(['BRIEF MAESTRO\nMarca ficticia. Texto suficientemente largo para comprobar lectura local sin información privada.'], 'fixture.txt'));
+      const before = providerCalls, result = await as('strategy', () => preview.previsualizarDocumento(form));
+      assert.equal(result.ok, true); assert.equal(providerCalls, before + 1); assert.equal(result.resultado.ia, null);
+      assert.match(result.resultado.avisos.join(' '), /cuota diaria gratuita.*facturación habilitada.*lectura directa/);
     });
     await check('B05: relación prevista sincronizada; referencias y cola impiden borrar estructura', async () => {
       await prisma.structure.create({ data: { id: 'planned-format', name: 'Previsto', slug: 'planned', defaultDurationSec: 5 } });

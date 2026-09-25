@@ -101,6 +101,7 @@ try{
    await page.goto(base+'/ajustes');
    // Streaming may briefly retain a hidden React segment; require one mounted form.
    await expect(main.locator('input[name="orgName"]')).toHaveCount(1);
+   await expect(main.getByRole('heading',{name:'Cupo de IA de hoy',exact:true})).toHaveCount(0);
    await main.locator('input[name="orgName"]').fill('Borrador de ajustes retenido');
    await db.appSetting.upsert({where:{key:'org.name'},create:{key:'org.name',value:'Cambio ajeno de ajustes'},update:{value:'Cambio ajeno de ajustes'}});
    await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();await main.locator('form').filter({has:page.locator('input[name="orgName"]')}).getByRole('alert').waitFor();
@@ -156,6 +157,7 @@ try{
     const response=await page.goto(base+route);assert.equal(response.status(),200,`${role}:${route}`);
     assert.ok(!await page.getByText('Something went wrong').count());
     const text=await page.locator('main').innerText();assert.ok(!text.includes('MARCA_SECRETA')&&!text.includes('VIDEO_SECRETO'),`${role}:${route} sin datos externos`);
+    if(route==='/generador')assert.ok(!text.includes('Cupo de IA de hoy')&&!text.includes('peticiones personales disponibles'));
    }
    if(role!=='EMPTY'){
     await page.goto(base+'/contenido');const text=await page.locator('main').innerText();

@@ -17,7 +17,7 @@ Estado: B11–B20, 24/09/2026. Una organización por instalación. Los filtros d
 | `metric-dashboard` | Toda agregación tiene alcance obligatorio | `MetricFilters.user` del servidor; ausencia o falta de permiso implica cero filas, también en ranking y comparativas. |
 | `objective-policy` / `objective-service` | Solo sumas compatibles en períodos completos | Valida configuración; SQL agregado en lectura, sin mantener contadores derivados que puedan quedar obsoletos. |
 | `ai/index` / `ai/references` | Construcción reproducible y acotada del contexto | Lecturas limitadas, configuración validada, procedencia persistida antes de gastar una llamada. |
-| `ai/request-budget` / `ai/providers` | Cupo por solicitud HTTP real y plazo compartido | Incluye fallback; proveedor nunca se invoca desde el render de una pantalla. |
+| `ai/request-budget` / `ai/providers` | Autorización, telemetría por petición y plazo compartido; sin cupos internos | Incluye fallback; errores de cuota del proveedor distinguen límite temporal, cuota diaria y facturación. El render no invoca proveedores. |
 | `generation-jobs` / `generation-persist` | Concesión, reintentos, respuesta recuperable y persistencia única | Worker vuelve a comprobar acceso/estado. Respuesta recibida se guarda antes de crear guion; validación semántica antes de insertarlo. |
 | `private-storage` / `asset-import` | Inventario, checksum, vínculo, cuota, limpieza recuperable | Red fuera de transacción; DB valida asociación. Alternativa binaria DB protegida por cupo y bloqueo. |
 | `maintenance` / `retention` | Recuperación prioritaria, presupuesto y conservación | Borrados acotados; retención técnica apagada de inicio. No purga registros de negocio ni datos activos. |

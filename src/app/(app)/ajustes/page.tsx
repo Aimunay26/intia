@@ -1,4 +1,4 @@
-import { OperationsStatus, AiUsagePanel } from "@/components/operations-status";
+import { OperationsStatus } from "@/components/operations-status";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -105,7 +105,7 @@ export default async function AjustesPage() {
         icon={<Settings size={19} />}
       />
 
-      <AiUsagePanel user={user} /><OperationsStatus />
+      <OperationsStatus />
       {snapshot.legacySecretKeys.length > 0 && <Callout tone="danger" title="Migración de secretos pendiente">Completa B22 antes de usar las claves guardadas. No se leerán valores antiguos sin cifrar.</Callout>}
       {secretoDebil ? (
         <div className="mb-4">

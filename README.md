@@ -366,10 +366,19 @@ Las claves se consiguen en `console.anthropic.com` → API keys y en `aistudio.g
 Get API key. Los errores de IA dicen qué pasó y qué hacer, y cuando la clave es rechazada
 dicen además **de dónde salió la que se usó** («guardada en Ajustes» o «de la variable de
 entorno GEMINI_API_KEY del servidor»): está revocada o mal copiada, así que genera otra y
-pégala en Ajustes, que manda sobre la variable de entorno. Si Gemini responde «agotó la cuota del
-proyecto», es el límite por minuto o por día del plan gratuito: espera un minuto, pide menos
-estructuras o activa facturación en el proyecto de Google (la cuota es por proyecto y se
-reinicia a medianoche, hora del Pacífico).
+pégala en Ajustes, que manda sobre la variable de entorno.
+
+**Intia no impone cupos diarios de IA:** registra las peticiones, pero no las bloquea por
+cantidad de llamadas, trabajos, despachos ni repeticiones de un documento. El proveedor
+aplica sus propias cuotas. Si confirma que se agotó la cuota diaria gratuita, la app indica
+que puedes usar un proyecto de API con facturación habilitada y actualizar su clave en
+Ajustes, o esperar la renovación. La falta de saldo también requiere revisar facturación.
+Los límites temporales se muestran como tales; un 429 sin detalle no permite afirmar que se
+agotó el plan gratuito. Los errores de cuota diaria y facturación no se reintentan automáticamente.
+
+Las antiguas variables `AI_DAILY_CALLS`, `AI_USER_DAILY_CALLS`, `AI_DAILY_JOBS`,
+`AI_DAILY_DISPATCHES` y `AI_32D_DISPATCHES` ya no tienen efecto. Se conservan autorización,
+idempotencia, plazo compartido, tamaño del lote y controles de concurrencia/reintentos.
 
 **El modelo se elige del catálogo** de `src/lib/constants.ts` (`AI_MODELS`): Claude Opus 5,
 Sonnet 5 y Haiku 4.5; Gemini 3.8 Flash. Manda lo elegido en el generador; si no, el modelo de

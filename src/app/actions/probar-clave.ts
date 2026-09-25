@@ -35,7 +35,7 @@ function esProveedor(value: string): value is AiProviderId {
 
 /**
  * Prueba en vivo una clave de API llamando al proveedor real.
- * No guarda la clave. La petición mínima de Claude registra una unidad de cupo.
+ * No guarda la clave. La petición mínima de Claude registra su uso sin cupos internos.
  *
  * - Con `apiKey` escrita: prueba esa clave (aún sin guardar).
  * - Sin `apiKey`: prueba la clave EN USO (la guardada en Ajustes o, si no hay,

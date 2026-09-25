@@ -1,18 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { resourceLimit, usageDay } from "@/lib/resource-limits";
+import { resourceLimit } from "@/lib/resource-limits";
 import { RetentionSettings } from "@/components/retention-settings";
 import { readRetentionPolicy } from "@/lib/retention";
-import type { AccessUser } from "@/lib/permissions";
-
-/** Database-only status. Rendering never probes a provider or consumes AI quota. */
-export async function AiUsagePanel({ user }: { user: AccessUser }) {
-  const day = usageDay();
-  const keys = [`ai:calls:${day}`,`ai:user:${user.id}:${day}`];
-  const rows = await prisma.usageCounter.findMany({ where: { key: { in: keys } }, select: { key: true, amount: true } });
-  const used = (key: string) => Number(rows.find(r=>r.key===key)?.amount ?? 0);
-  return <aside className="card mb-4 space-y-2 p-4"><h2 className="font-semibold">Cupo de IA de hoy</h2><p>{Math.max(0,resourceLimit("AI_USER_DAILY_CALLS",5)-used(keys[1]))} peticiones personales disponibles · {Math.max(0,resourceLimit("AI_DAILY_CALLS",20)-used(keys[0]))} disponibles en la instalación.</p><p className="text-xs text-inkmuted">Día de Perú: {day}. Incluye intentos fallidos y respuestas alternativas. El cupo del proveedor es independiente. {process.env.AI_JOBS_ENABLED !== "true" && "Las llamadas están deshabilitadas."}</p></aside>;
-}
 
 export async function OperationsStatus() {
   // Rendered only behind the owner settings page. No secrets included in these reads.

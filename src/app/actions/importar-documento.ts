@@ -6,15 +6,13 @@ import { leerArchivoImportado } from "@/lib/asset-import";
 import { extraerFicha, type ResultadoExtraccion } from "@/lib/ai/extractor";
 import { field } from "@/lib/utils";
 import type { TipoDocumento } from "@/lib/branding-parser";
-import { createHash } from "node:crypto";
 import { createAiRequest } from "@/lib/ai/request-budget";
-import { reserveUsage, usageDay } from "@/lib/resource-limits";
 import { generationStage, withGenerationTrace } from "@/lib/generation-trace";
 
 /**
  * Previsualización de un brief maestro o de un informe de branding.
  *
- * No crea el Asset ni toca Brand/Archetype; la mejora opcional registra su cupo.
+ * No crea el Asset ni toca Brand/Archetype; la mejora opcional registra su uso.
  * Devuelve los campos propuestos con su origen (PDF / IA / vacío) y los
  * avisos, y la pantalla decide qué aplicar. Escribir es cosa del submit
  * normal del formulario (crearMarca, actualizarMarca, crearArquetipo…), que
@@ -63,10 +61,7 @@ export async function previsualizarDocumento(formData: FormData): Promise<Previs
   }
 
   const provider = choice === "google" || choice === "anthropic" ? choice : undefined;
-  const hash = createHash("sha256").update(Buffer.from(archivo.buffer)).digest("hex");
-  const request = provider ? createAiRequest({ user, deadlineAt: Date.now() + 25000, authorize: async tx => {
-    await reserveUsage(tx, `ai:document:${user.id}:${hash}:${provider}:${usageDay()}`, 1, 1);
-  } }) : undefined;
+  const request = provider ? createAiRequest({ user, deadlineAt: Date.now() + 25000 }) : undefined;
   const resultado = await withGenerationTrace({ provider }, () => generationStage("document_extract", () => extraerFicha({ tipo, text: archivo.texto!, provider, request })));
   return { ok: true, nombreArchivo: archivo.name, tipoPedido: tipo, resultado };
 }

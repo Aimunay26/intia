@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { createRequire } from "node:module";
 
 import { load } from "./load-module.mjs";
-import { simulatedRequest, validScript } from "./ai-fixture.mjs";
+import { geminiQuotaBody, simulatedRequest, validScript } from "./ai-fixture.mjs";
 
 const require = createRequire(import.meta.url);
 const AnthropicSdk = require("@anthropic-ai/sdk");
@@ -105,10 +105,10 @@ test("un 429 de Gemini se explica como cuota del proyecto con los pasos a seguir
   const { toAiError, esErrorDeCuota, esErrorDeAutenticacion } = cargarProviders();
   const e = toAiError(errorGemini(429, "Resource has been exhausted (e.g. check quota)."), "google", "env");
   assert.equal(e.code, "quota");
-  assert.match(e.message, /Gemini está limitando las peticiones o agotó la cuota del proyecto/);
-  assert.match(e.detail, /menos estructuras/);
-  assert.match(e.detail, /activa facturación/);
-  assert.match(e.detail, /medianoche/);
+  assert.match(e.message, /Gemini está limitando las peticiones/);
+  assert.match(e.detail, /No especificó si es un límite temporal o de consumo/);
+  assert.match(e.detail, /aistudio.google.com/);
+  assert.doesNotMatch(e.message + e.detail, /agotó.*gratuita|activa facturación|medianoche/);
   assert.equal(esErrorDeCuota(e), true);
   assert.equal(esErrorDeAutenticacion(e), false);
   // Lo que mira el trabajo en segundo plano: cuota se reintenta; el diagnóstico solo lleva metadatos.
@@ -117,7 +117,7 @@ test("un 429 de Gemini se explica como cuota del proyecto con los pasos a seguir
 
   const claude = toAiError(errorClaude(429, "rate_limit_error", "rate limited"), "anthropic", "db");
   assert.equal(claude.code, "quota");
-  assert.match(claude.message, /Claude está limitando las peticiones o la cuenta se quedó sin saldo/);
+  assert.match(claude.message, /Claude está limitando temporalmente las peticiones/);
   assert.equal(claude.retryable, true);
 
   // Clave y modelo no se reintentan; servidor y timeout sí.
@@ -133,6 +133,48 @@ test("un 429 de Gemini se explica como cuota del proyecto con los pasos a seguir
   assert.equal(transporte.diagnostic.code, "UND_ERR_HEADERS_TIMEOUT");
 });
 
+test("cuota diaria gratuita agotada indica facturación y no dispara reintentos automáticos", () => {
+  const { toAiError } = cargarProviders();
+  const e = toAiError(errorGemini(429, geminiQuotaBody()), "google", "db");
+  assert.equal(e.code, "quota"); assert.equal(e.retryable, false);
+  assert.match(e.message, /agotó la cuota diaria gratuita/);
+  assert.match(e.detail, /facturación habilitada.*clave en Ajustes/);
+  assert.doesNotMatch(e.message + e.detail + JSON.stringify(e.diagnostic), /PRIVATE-FIXTURE|QuotaFailure|quotaDimensions/);
+});
+
+test("un límite por minuto del plan gratuito sigue siendo temporal y no se atribuye a facturación", () => {
+  const { toAiError } = cargarProviders();
+  const e = toAiError(errorGemini(429, geminiQuotaBody('GenerateRequestsPerMinutePerProjectPerModel-FreeTier')), "google");
+  assert.equal(e.code, "quota"); assert.equal(e.retryable, true);
+  assert.match(e.message, /temporalmente/);
+  assert.doesNotMatch(e.message, /agotó|facturación/);
+});
+
+test("cuota diaria de pago, cuota gratuita cero, región sin plan gratis y facturación 402 tienen avisos distintos", () => {
+  const { toAiError } = cargarProviders();
+  const daily = toAiError(errorGemini(429, geminiQuotaBody('GenerateRequestsPerDayPerProjectPerModel', 'generate_content_requests')), 'google');
+  assert.equal(daily.retryable, false); assert.match(daily.message, /cuota diaria del proyecto/); assert.doesNotMatch(daily.message, /gratuita/);
+  const zero = toAiError(errorGemini(429, 'Quota exceeded for metric: generate_content_free_tier_requests, limit: 0'), 'google');
+  assert.equal(zero.retryable, false); assert.match(zero.message, /no tiene cuota gratuita disponible/);
+  const region = toAiError(errorGemini(400, 'Free tier is not available in your country. Please enable billing.'), 'google');
+  assert.equal(region.code, 'quota'); assert.equal(region.retryable, false); assert.match(region.detail, /facturación habilitada/);
+  const billing = toAiError(errorClaude(402, 'billing_error', 'Payment required'), 'anthropic');
+  assert.equal(billing.code, 'quota'); assert.equal(billing.retryable, false); assert.match(billing.detail, /console.anthropic.com/);
+  const spend = toAiError(errorClaude(429, 'rate_limit_error', 'Your monthly spend limit has been exceeded'), 'anthropic');
+  assert.equal(spend.retryable, false); assert.match(spend.detail, /límite de gasto/);
+});
+
+test("los errores anidados se clasifican sin exponer contenido y no ocultan autenticación o fallos de servidor", () => {
+  const { toAiError } = cargarProviders();
+  const e = toAiError({ status: 429, error: JSON.parse(geminiQuotaBody()).error }, 'google');
+  assert.match(e.message, /cuota diaria gratuita/); assert.equal(e.retryable, false);
+  for (const [status, code] of [[403, 'auth'], [503, 'server']]) {
+    assert.equal(toAiError(errorGemini(status, geminiQuotaBody()), 'google').code, code);
+  }
+  const circular = { status: 429 }; circular.error = circular;
+  assert.equal(toAiError(circular, 'google').retryable, true);
+});
+
 test("Claude avisa la falta de saldo como 400 invalid_request_error y se clasifica como cuota", () => {
   const { toAiError, clasificarError, esErrorDeCuota } = cargarProviders();
   const sinSaldo = errorClaude(
@@ -145,7 +187,8 @@ test("Claude avisa la falta de saldo como 400 invalid_request_error y se clasifi
   assert.equal(esErrorDeCuota(sinSaldo), true);
   const e = toAiError(sinSaldo, "anthropic", "db");
   assert.equal(e.code, "quota");
-  assert.match(e.message, /la cuenta se quedó sin saldo/);
+  assert.match(e.message, /falta de saldo/);
+  assert.equal(e.retryable, false);
   assert.match(e.detail, /console\.anthropic\.com → Billing/);
 
   // El mismo texto por la rama genérica de status 400 (envoltorio sin clase del SDK).
@@ -415,7 +458,7 @@ test("probar una clave escrita no la guarda y usa el mismo criterio de errores q
 
   const gemini = await mod.probarClaveIA({ provider: "google", apiKey: "AIza-escrita" });
   assert.equal(gemini.code, "quota");
-  assert.match(gemini.error, /limitando las peticiones o agotó la cuota del proyecto/);
+  assert.match(gemini.error, /limitando las peticiones/);
 
   const raro = await mod.probarClaveIA({ provider: "otro", apiKey: "x" });
   assert.match(raro.error, /Proveedor desconocido/);
@@ -433,7 +476,7 @@ test("probar la clave: el 400 sin saldo de Claude avisa de saldo, y un error sin
   const sinSaldo = await mod.probarClaveIA({ provider: "anthropic" });
   assert.equal(sinSaldo.ok, false);
   assert.equal(sinSaldo.code, "quota");
-  assert.match(sinSaldo.error, /la cuenta se quedó sin saldo/);
+  assert.match(sinSaldo.error, /falta de saldo/);
   assert.match(sinSaldo.error, /console\.anthropic\.com → Billing/);
   assert.doesNotMatch(sinSaldo.error, /credit balance|generación/);
 

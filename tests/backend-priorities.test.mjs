@@ -28,12 +28,12 @@ for (const [name, mutate] of [
   const script = structuredClone(validScript); mutate(script);
   assert.throws(() => validateGeneratedScript(script, target), /necesita revisión/);
 });
-test('B03: cada petición usa el tiempo restante y no se reserva tras vencer', async () => {
+test('B03: cada petición usa el tiempo restante y no se envía ni registra tras vencer', async () => {
   let reservations = 0, now = 1000;
   const old = Date.now; Date.now = () => now;
   const { createAiRequest } = load('src/lib/ai/request-budget.ts', {
     '@/lib/prisma': { prisma: { $transaction: fn => fn({}) } }, '@/lib/auth-transactions': { assertActor: async () => {} },
-    '@/lib/resource-limits': { usageDay: () => 'fixture', resourceLimit: (_, fallback) => fallback, reserveUsage: async () => { reservations++; } },
+    '@/lib/resource-limits': { usageDay: () => 'fixture', recordUsage: async () => { reservations++; } },
   });
   const before = process.env.AI_JOBS_ENABLED; process.env.AI_JOBS_ENABLED = 'true';
   try {

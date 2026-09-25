@@ -7,6 +7,7 @@ import { resolveAiModel } from "@/lib/ai-models";
 import { DEFAULT_MODEL } from "@/lib/constants";
 import { resolveApiKey } from "@/lib/settings";
 import { AiBudgetError, type AiRequest } from "@/lib/ai/request-budget";
+import { classifyProviderQuota, providerQuotaMessage } from "@/lib/ai/provider-quota";
 import { generationStage } from "@/lib/generation-trace";
 import { limpiarTextoInforme } from "@/lib/pdf";
 import {
@@ -381,11 +382,12 @@ function describirFallo(error: unknown, provider: string): string {
     error && typeof error === "object" && "status" in error
       ? Number((error as { status?: unknown }).status)
       : undefined;
-  if (status === 401 || status === 403 || /api[_ -]?key|unauthorized|permission/i.test(message)) {
+  if (status === 401 || status === 403 || (status !== 429 && /api[_ -]?key|unauthorized|permission/i.test(message))) {
     return `La clave de ${etiqueta} no es válida o no tiene permisos.`;
   }
-  if (status === 429 || /rate|quota|resource[_ ]exhausted/i.test(message)) {
-    return `${etiqueta} está limitando las peticiones.`;
+  if (classifyProviderQuota(error)) {
+    const quota = providerQuotaMessage(error, provider === "google" ? "google" : "anthropic");
+    return `${quota.message} ${quota.detail}`;
   }
   if (status === 404 || /model|not found/i.test(message)) {
     return `${etiqueta} no reconoce el modelo de extracción.`;

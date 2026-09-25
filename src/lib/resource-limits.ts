@@ -13,7 +13,14 @@ export function usageDay(now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
 }
 
-/** Serializa reservas, incluyendo llamadas fallidas; nunca devuelve cupo tras un resultado incierto. */
+/** Telemetría de IA sin cupos internos. El proveedor decide si acepta la petición. */
+export async function recordUsage(tx: AppTransaction, key: string, amount = 1) {
+  if (!Number.isSafeInteger(amount) || amount < 1) throw new Error("Registro de uso inválido.");
+  const value = BigInt(amount);
+  await tx.usageCounter.upsert({ where: { key }, create: { key, amount: value }, update: { amount: { increment: value } } });
+}
+
+/** Serializa reservas de almacenamiento; nunca devuelve cupo tras un resultado incierto. */
 export async function reserveUsage(tx: AppTransaction, key: string, amount: number, limit: number) {
   if (!Number.isSafeInteger(amount) || amount < 1 || !Number.isSafeInteger(limit) || limit < 0) throw new Error("Reserva de cupo inválida.");
   const value = BigInt(amount);

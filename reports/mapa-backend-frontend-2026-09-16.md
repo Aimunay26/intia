@@ -10,8 +10,8 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 |---|---|---|
 | B01 · Protección de aprobados | Desplegado | Guiones compartidos, adjuntos, concurrencia, motivo de reapertura y auditoría; regresiones locales y CI correctas |
 | B02 · Destino de la generación | Desplegado | Revisión, permisos, aprobación y estado; conserva guion independiente con motivo; generación real posterior pendiente |
-| B03 · Presupuesto de IA | Desplegado | Cuota por petición, fallback bloqueado sin cupo, plazo compartido y prueba de clave de Claude; pruebas con SDK simulado |
-| B04 · Importación documental | Corrección P1 desplegada | Lectura local inicial comprobada en producción; proveedor explícito, cupos y límite por documento; mejoras futuras detalladas abajo |
+| B03 · Peticiones de IA | Base desplegada; ajuste validado localmente | Se retiran cupos internos; telemetría, autorización y plazo compartido conservados. Avisos según cuota/facturación del proveedor; publicación pendiente |
+| B04 · Importación documental | Base desplegada; ajuste validado localmente | Proveedor explícito, lectura local inicial y plazo conservados; sin bloqueo por archivo/día. Cuota del proveedor con aviso y lectura local de respaldo; publicación pendiente |
 | B05 · Referencias a estructuras | Migrado en Neon y desplegado | Cuatro preflight sin incidencias; respaldo/restauración real verificados; FK y backfill aplicados sin perder datos de negocio |
 | B06 · Validación del guion | Desplegado | Reglas semánticas, fallo terminal legible y sin repetir respuesta inválida; pruebas con respuestas simuladas |
 | B07 · Integridad de agenda | Migrado y desplegado | Marca derivada/validada, vínculo editable con semántica explícita, FK compuesta y protección ante cambios o borrado del video; verificado en Neon/Vercel |
@@ -22,7 +22,7 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 | B12 · CSV escalable | Migrado y desplegado | Lotes durables de 25 filas, reanudación, revisión y auditoría atómica; benchmark 50/500 filas |
 | B13 · Consultas e índices | Migrado y desplegado | Referencias y adjuntos acotados, historiales paginados, planes EXPLAIN e índices con validación de definición |
 | B14 · Mantenimiento | Migrado y desplegado | Recuperación prioritaria, presupuestos, fallo lento probado, alerta y caducidad de 72 h |
-| B15 · Configuración IA | Migrado y desplegado | Modelos validados, etapa/modelo/procedencia/cupo visibles y contexto con huella; sin nuevas llamadas reales |
+| B15 · Configuración IA | Base desplegada; ajuste validado localmente | Etapa/modelo/procedencia y contexto con huella conservados; se retira «Cupo de IA de hoy» de Ajustes y Generador; publicación pendiente |
 | B16 · Analítica y objetivos | Migrado y desplegado | Objetivos manuales o sumas semanales con período/plataforma; alcances y retención etiquetados |
 | B17 · Parámetros e invalidación | Migrado y desplegado | Normalización de URLs e invalidación conjunta después de confirmar escrituras |
 | B18 · Retención y almacenamiento | Migrado y desplegado | Limpieza técnica apagada con vista previa, historia preservada, huellas y cupos de almacenamiento |
@@ -32,6 +32,10 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 | B22 · Secretos y calendario | Migrado y desplegado | Almacén cifrado con rotación; suscripciones con alcance fijo, vencimiento/revocación y caché desactivada |
 
 Actualización: 24/09/2026. **B07–B10 están integrados en main, migrados en Neon y desplegados en producción**, commit `4ab0260`. CI aprobada; despliegue Git y promoción automática restaurados. [Evidencia del despliegue](despliegue-consistencia-backend-2026-09-24.json). La entrega B01–B06 conserva su registro anterior y el diagnóstico original se mantiene como línea base.
+
+### Ajuste de consumo de IA · 24/09/2026
+
+Por decisión del usuario, Intia deja de imponer cupos diarios de llamadas, trabajos y despachos, el tope móvil de 32 días y el bloqueo por documento/día. Los contadores quedan como telemetría; autorización, plazos, idempotencia y concurrencia se conservan. La aplicación avisa según el error del proveedor: cuota gratuita diaria agotada → API con facturación o esperar renovación; falta de saldo → revisar facturación; límites temporales → esperar y reintentar. No se interpreta todo HTTP 429 como fin del plan gratuito. Este cambio sustituye los criterios originales de cupos de B03/B04/B15 que se conservan más abajo como historial. [Implementación y validación](ia-sin-cupos-internos-2026-09-24.md). Publicación de este ajuste pendiente.
 
 ### Entrega B11–B20 · 24/09/2026
 

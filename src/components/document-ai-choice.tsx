@@ -7,6 +7,6 @@ export function DocumentAiChoice({ value, onChange, disabled = false }: { value:
       <option value="google">Mejorar con Gemini</option>
       <option value="anthropic">Mejorar con Claude</option>
     </select>
-    <span className="hint">La mejora envía el texto al proveedor elegido y usa el cupo compartido de IA. Una llamada por archivo, proveedor y día. Si falla, se conserva la lectura local.</span>
+    <span className="hint">La mejora envía el texto al proveedor elegido, que aplica sus cuotas y facturación. Si falla, se conserva la lectura local y se muestra el motivo.</span>
   </label>;
 }

@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 
 const stages = ["document_extract", "enqueue", "dispatch_claim", "dispatch_start", "dispatch_save", "dispatch",
-  "workflow_step", "cache_refresh", "process", "claim", "quota", "generate",
+  "workflow_step", "cache_refresh", "process", "claim", "quota", "request_access", "generate",
   "context_load", "references_load", "prompt_build", "settings_load", "model_resolve", "key_resolve",
   "provider_request", "provider_response", "schema_fallback", "response_parse",
   "response_save", "response_validate", "script_save", "script_insert", "audit_save", "video_link", "failure_save", "retry", "job_state", "cancel"] as const;
@@ -73,7 +73,7 @@ function errorFields(error: unknown): Fields {
   if (status === 503 && /high demand|overload/i.test(message)) fields.reason = "provider_overloaded";
   if (/cupo de uso configurado/i.test(message)) fields.reason = "quota_limit";
   if (e.name === "GeneratedScriptValidationError") fields.reason = "invalid_response";
-  if (e.name === "AiBudgetError") fields.errorCode = "quota";
+  if (e.name === "AiBudgetError") fields.errorCode = e.code === "timeout" ? "timeout" : "server";
   if (e.name === "AbortError" || e.name === "TimeoutError" || /timeout|timed out/i.test(message)) fields.errorCode = "timeout";
   return fields;
 }

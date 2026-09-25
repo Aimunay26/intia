@@ -10,7 +10,7 @@ import { generateScript, AiError, type GenerateInput, type GenerateOutput } from
 import { esErrorDeAutenticacion } from "@/lib/ai/providers";
 import { persistGeneratedScript, vincularGuionAVideo } from "@/lib/generation-persist";
 import { revalidatePath } from "next/cache";
-import { reserveUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
+import { recordUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
 import { allows, assertBrandPermission, assertPermission } from "@/lib/permissions";
 import { contentScope, generationScope, scriptScope, closedVideoWhere } from "@/lib/access-scope";
 import { generationEvent, generationStage, withGenerationTrace, withGenerationObserver } from "@/lib/generation-trace";
@@ -84,7 +84,7 @@ async function enqueueValidatedGeneration(user: SessionUser, requestKey: string,
       if (payload.brandId !== video.brandId) throw new Error("La marca elegida no es la del video.");
       payload.expectedVideoUpdatedAt = video.updatedAt.toISOString();
     }
-    await reserveUsage(tx, `ai:jobs:${usageDay()}`, 1, resourceLimit("AI_DAILY_JOBS", 20));
+    await recordUsage(tx, `ai:jobs:${usageDay()}`);
     const job = await tx.generationJob.create({ data: {
       userId: user.id, sessionVersion: user.sessionVersion ?? 0, requestKey, fingerprint, payload: json(payload),
       items: { create: structureIds.map((structureId, order) => ({ structureId, order })) },
@@ -111,7 +111,7 @@ async function actorForJob(tx: AppTransaction, job: { userId: string; sessionVer
 
 export type GenerationProgress = { done: boolean; retryAt?: number };
 
-/** Cada petición reserva cupo; las peticiones del intento comparten plazo menor que su concesión. */
+/** Cada petición registra su uso; las peticiones del intento comparten plazo menor que su concesión. */
 export async function processGeneration(jobId: string): Promise<GenerationProgress> {
   return withGenerationTrace({ jobId }, () => generationStage("process", () => processGenerationStep(jobId)));
 }
@@ -182,7 +182,9 @@ async function processGenerationStep(jobId: string): Promise<GenerationProgress>
           status: retry ? "QUEUED" : "FAILED", httpStatus: error instanceof AiError ? error.diagnostic?.status : undefined });
         await generationStage("failure_save", async () => {
           await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: {
-            status: retry ? "QUEUED" : "FAILED", error: error instanceof AiError || error instanceof AiBudgetError ? error.message : "No se pudo generar. Revisa el cupo disponible y los datos de la petición.",
+            status: retry ? "QUEUED" : "FAILED", error: error instanceof AiError && error.code === "quota"
+              ? [error.message, error.detail].filter(Boolean).join(" ")
+              : error instanceof AiError || error instanceof AiBudgetError ? error.message : "No se pudo generar. Revisa la conexión y los datos de la petición.",
             availableAt: new Date(Date.now() + 30000 * (item.attempts + 1)), leaseToken: null, leaseUntil: null,
           } });
           // Con la clave rechazada, cada formato siguiente fallaría igual: se

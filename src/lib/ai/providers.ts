@@ -11,6 +11,7 @@ import {
 import { describeKeySource, type KeySource } from "@/lib/settings";
 import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
 import { AiBudgetError, type AiRequest } from "@/lib/ai/request-budget";
+import { classifyProviderQuota, providerQuotaMessage } from "@/lib/ai/provider-quota";
 
 export type AiProviderId = "anthropic" | "google";
 
@@ -346,7 +347,8 @@ function repair(data: unknown): unknown {
 /* --------------------------------------------------- CLASIFICAR ERRORES -- */
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  const message = errorFields(error).message;
+  return typeof message === "string" ? message : String(error);
 }
 
 function errorFields(error: unknown): Record<string, unknown> {
@@ -420,6 +422,7 @@ export function clasificarError(error: unknown): AiErrorCode | null {
   if (error instanceof Anthropic.NotFoundError) return "model";
   if (error instanceof Anthropic.InternalServerError) return "server";
   if (error instanceof Anthropic.APIConnectionError) return "server";
+  if (classifyProviderQuota(error)) return "quota";
   if (error instanceof Anthropic.BadRequestError) {
     // Anthropic devuelve la falta de saldo como 400 invalid_request_error
     // («credit balance is too low»), no como 429: hay que mirar el texto.
@@ -494,7 +497,7 @@ export function esErrorDeEsquema(e: unknown): boolean {
  * Convierte cualquier error del proveedor en un AiError con un mensaje que
  * dice qué pasó y qué hacer, incluido de dónde salió la clave que se usó.
  * `retryable` y `diagnostic` son para el trabajo en segundo plano: cuota,
- * servidor y timeout se reintentan; clave, modelo y esquema no.
+ * temporal, servidor y timeout se reintentan; saldo y cuota diaria agotados no.
  */
 export function toAiError(
   error: unknown,
@@ -502,7 +505,7 @@ export function toAiError(
   keySource?: KeySource | null
 ): AiError {
   if (error instanceof AiError) return error;
-  if (error instanceof AiBudgetError) return new AiError(error.message, undefined, "quota", false);
+  if (error instanceof AiBudgetError) return new AiError(error.message, undefined, error.code, false);
 
   const label = PROVIDER_LABEL[provider];
   const message = errorMessage(error);
@@ -523,18 +526,10 @@ export function toAiError(
         `La clave de ${label} fue rechazada: está revocada o mal copiada.`,
         `Se usó la clave ${origen}. Genera una nueva en ${CONSOLE_HINT[provider]} y pégala en Ajustes: la guardada ahí manda sobre la variable de entorno.`
       );
-    case "quota":
-      return provider === "google"
-        ? fallo(
-            "Gemini está limitando las peticiones o agotó la cuota del proyecto (por minuto o por día del plan gratuito).",
-            "Espera un minuto y vuelve a intentar con menos estructuras, o activa facturación en aistudio.google.com. La cuota es por proyecto y se reinicia a medianoche (hora del Pacífico).",
-            true
-          )
-        : fallo(
-            "Claude está limitando las peticiones o la cuenta se quedó sin saldo.",
-            "Espera un minuto y vuelve a intentar con menos estructuras, o revisa el saldo y los límites en console.anthropic.com → Billing.",
-            true
-          );
+    case "quota": {
+      const quota = providerQuotaMessage(error, provider);
+      return fallo(quota.message, quota.detail, quota.retryable);
+    }
     case "model":
       return fallo(
         `${label} no reconoce ese modelo.`,
@@ -548,7 +543,7 @@ export function toAiError(
     case "timeout":
       return fallo(
         `${label} tardó demasiado en responder.`,
-        "Se reintentará dentro del límite de intentos y del cupo disponible.",
+        "Se reintentará dentro del límite de intentos de este trabajo.",
         true
       );
     case "server":

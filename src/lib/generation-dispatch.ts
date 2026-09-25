@@ -2,7 +2,7 @@ import { start } from "workflow/api";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { generateScriptsWorkflow } from "@/workflows/generate-scripts";
-import { reserveUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
+import { recordUsage, usageDay } from "@/lib/resource-limits";
 import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
 
 /** La fila precede a la cola. Un envío incierto se puede repetir sin duplicar guiones. */
@@ -19,11 +19,7 @@ async function dispatchJob(jobId: string, recover: boolean) {
     if (!job || !["QUEUED", "RUNNING"].includes(job.status) || (!recover && job.runId)) return false;
     // También limita recuperaciones manuales repetidas y carreras con el mantenimiento diario.
     if (job.runId && Date.now() - job.updatedAt.getTime() < 360000) return false;
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(781240121)`;
-    const since = usageDay(new Date(Date.now() - 31 * 86400000));
-    const used = await tx.usageCounter.aggregate({ where: { key: { startsWith: "ai:dispatch:", gte: `ai:dispatch:${since}` } }, _sum: { amount: true } });
-    if ((used._sum.amount ?? 0n) >= BigInt(resourceLimit("AI_32D_DISPATCHES", 80))) throw new Error("Se alcanzó el cupo de ejecuciones de los últimos 32 días.");
-    await reserveUsage(tx, `ai:dispatch:${usageDay()}`, 1, resourceLimit("AI_DAILY_DISPATCHES", 40));
+    await recordUsage(tx, `ai:dispatch:${usageDay()}`);
     await tx.generationJob.update({ where: { id: jobId }, data: { runId: dispatchToken, error: null } });
     return true;
   }));

@@ -56,6 +56,20 @@ test('fallos del logger y desactivación no interrumpen la generación', async (
   } finally { console.info = info;console.warn = warn;if (prior === undefined) delete process.env.GENERATION_LOGS;else process.env.GENERATION_LOGS = prior; }
 });
 
+test('el error envuelto conserva saturación y el cambio de modelo solo registra campos permitidos', async () => {
+  const trace = load('src/lib/generation-trace.ts');
+  const { toAiError } = load('src/lib/ai/providers.ts');
+  const error = toAiError({ status: 503, message: 'high demand private-key' }, 'google');
+  const rows = await capture(() => trace.withGenerationTrace({ jobId: jobA }, async () => {
+    await assert.rejects(trace.generationStage('generate', () => { throw error; }), e => e === error);
+    trace.generationEvent('model_fallback', 'info', { model: 'gemini-3.8-flash', nextModel: 'gemini-3.7-flash', reason: 'provider_overloaded', prompt: 'private-prompt' });
+    trace.generationEvent('model_fallback', 'info', { nextModel: 'private-key' });
+  }));
+  assert.equal(rows[1].reason, 'provider_overloaded'); assert.equal(rows[1].httpStatus, 503);
+  assert.equal(rows[2].nextModel, 'gemini-3.7-flash'); assert.equal(rows[3].nextModel, undefined);
+  assert.doesNotMatch(JSON.stringify(rows), /private-/);
+});
+
 test('el SDK real identifica el 503 en provider_request sin llegar a parsear ni filtrar el pedido', async () => {
   const registry = new Map();
   const trace = load('src/lib/generation-trace.ts', {}, registry);

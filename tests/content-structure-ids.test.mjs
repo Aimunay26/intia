@@ -396,7 +396,7 @@ function jobFixture({ job, video, unido = false, generateScript }) {
   };
   const mod = load("src/lib/generation-jobs.ts", mocks(prisma, {
     "@/lib/ai": { ...NORMALIZAR, AiError: FakeAiError, generateScript: (input, request) => request(() => generateScript ? generateScript(input) : assert.fail("la IA no debería llamarse en esta prueba")) },
-    "@/lib/ai/providers": { esErrorDeAutenticacion: (e) => e instanceof FakeAiError && e.code === "auth" },
+    "@/lib/ai/providers": { esErrorDeAutenticacion: (e) => e instanceof FakeAiError && e.code === "auth", esErrorDeSaturacion: () => false },
     "@/lib/auth-transactions": { assertActor: async () => {} },
   }));
   return { ...mod, calls, job };

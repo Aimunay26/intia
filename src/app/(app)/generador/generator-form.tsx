@@ -779,7 +779,7 @@ export function GeneratorForm({
               </div>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
-              <StepField id="generator-model" label="Modelo">
+              <StepField id="generator-model" label="Modelo" hint={provider === "google" ? "Si se satura, probaremos la siguiente alternativa disponible: 3.8 → 3.7 → 3.6 Flash. Máximo tres intentos por guion." : undefined}>
                 <select id="generator-model" name="modelo" className="select" value={model} onChange={(e) => setModel(e.target.value)}>
                   {modelosSugeridos.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>

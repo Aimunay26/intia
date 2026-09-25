@@ -5,6 +5,63 @@ import { simulatedRequest } from './ai-fixture.mjs';
 
 const { resolveAiModel, normalizeAiModel } = load('src/lib/ai-models.ts');
 
+test('el descenso por saturación solo recorre los Flash aprobados y nunca sube de modelo', () => {
+  const { nextOverloadModel } = load('src/lib/ai-models.ts');
+  assert.equal(nextOverloadModel('google', 'gemini-3.8-flash'), 'gemini-3.7-flash');
+  assert.equal(nextOverloadModel('google', 'gemini-3.7-flash'), 'gemini-3.6-flash');
+  for (const model of ['gemini-3.6-flash', 'gemini-2.5-pro', 'unknown', 'claude-opus-5']) assert.equal(nextOverloadModel('google', model), undefined);
+  assert.equal(nextOverloadModel('anthropic', 'claude-opus-5'), undefined);
+  for (const model of ['gemini-3.7-flash', 'gemini-3.6-flash']) assert.equal(resolveAiModel('google', model), model);
+});
+
+test('el modelo alternativo y su origen sobreviven a reanudaciones sin alterar el diagnóstico anterior', () => {
+  const { modelForRetry, planModelFallback, retryDiagnostics, readModelFallback } = load('src/lib/ai/model-fallback.ts');
+  const original = { provider: 'google', model: 'gemini-3.8-flash', modelSource: 'settings', contextHash: 'fixture' };
+  const planned = planModelFallback(original);
+  assert.equal(original.modelFallback, undefined);
+  assert.equal(modelForRetry('google', planned), 'gemini-3.7-flash');
+  const retried = retryDiagnostics({ ...original, model: 'gemini-3.7-flash', modelSource: 'request' }, JSON.parse(JSON.stringify(planned)));
+  assert.equal(retried.modelSource, 'fallback'); assert.equal(retried.modelFallback.originalSource, 'settings');
+  const next = planModelFallback(retried);
+  assert.deepEqual(next.modelFallback.models, ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash']);
+  assert.equal(planModelFallback(retryDiagnostics({ ...original, model: 'gemini-3.6-flash' }, next)), undefined);
+  assert.equal(modelForRetry('anthropic', next), undefined);
+  assert.equal(readModelFallback({ ...next, modelFallback: { ...next.modelFallback, models: ['gemini-3.6-flash', 'gemini-3.8-flash'] } }), undefined);
+  assert.equal(readModelFallback({ ...next, modelFallback: { ...next.modelFallback, models: ['gemini-3.8-flash', 'private-model'] } }), undefined);
+});
+
+test('solo un 503 de saturación habilita el descenso; cuota, clave, timeout y otros fallos conservan su tratamiento', () => {
+  const { toAiError, esErrorDeSaturacion } = load('src/lib/ai/providers.ts');
+  const raw = { status: 503, message: 'This model is currently experiencing high demand. PRIVATE-FIXTURE' };
+  const wrapped = toAiError(raw, 'google', 'db');
+  assert.equal(esErrorDeSaturacion(raw), true); assert.equal(esErrorDeSaturacion(wrapped), true);
+  assert.equal(esErrorDeSaturacion(JSON.parse(JSON.stringify(wrapped))), true);
+  assert.equal(wrapped.retryable, true); assert.match(wrapped.message, /saturado/);
+  assert.doesNotMatch(JSON.stringify(wrapped), /PRIVATE-FIXTURE/);
+  for (const [status, message] of [[401, 'overloaded'], [403, 'high demand'], [429, 'capacity'], [500, 'overloaded'], [503, 'temporarily unavailable'], [503, 'timeout'], [400, 'responseJsonSchema is not supported']]) {
+    assert.equal(esErrorDeSaturacion(toAiError({ status, message }, 'google')), false, `${status}: ${message}`);
+  }
+});
+
+test('el avance distingue el modelo usado del pendiente y conserva la lectura de trabajos anteriores', async () => {
+  const { createElement } = await import('react');
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const { default: Progress } = load('src/app/(app)/generador/trabajos/[id]/progress.tsx', {
+    '@/app/actions/generation-jobs': {},
+    'next/link': ({ children, ...props }) => createElement('a', props, children),
+  });
+  const item = { id: 'fixture-item', order: 0, status: 'QUEUED', attempts: 1, stage: 'model_fallback', diagnostics: {
+    provider: 'google', model: 'gemini-3.8-flash', modelSource: 'request',
+    modelFallback: { originalSource: 'request', models: ['gemini-3.8-flash', 'gemini-3.7-flash'] },
+  } };
+  const render = (status, row) => renderToStaticMarkup(createElement(Progress, { initial: { id: 'fixture-job', status, items: [row] } }));
+  const queued = render('RUNNING', item);
+  assert.match(queued, /Modelo: gemini-3.8-flash/); assert.match(queued, /El siguiente intento usará/);
+  const completed = render('COMPLETED', { ...item, status: 'COMPLETED', stage: 'completed', attempts: 2, diagnostics: { ...item.diagnostics, model: 'gemini-3.7-flash', modelSource: 'fallback' } });
+  assert.match(completed, /Modelo: gemini-3.7-flash/); assert.match(completed, /alternativa por saturación/); assert.doesNotMatch(completed, /El siguiente intento usará/);
+  assert.doesNotMatch(render('FAILED', { ...item, status: 'FAILED', diagnostics: null }), /Alternativas por saturación/);
+});
+
 test('Gemini 3.8 es el predeterminado y acepta configuraciones anteriores sin cambiar modelos de Claude', () => {
   assert.equal(resolveAiModel('google'), 'gemini-3.8-flash');
   for (const value of ['gemini-2.5-pro', 'gemini-2.5-flash', ' models/gemini-3.8-flash ']) {

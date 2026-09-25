@@ -1,5 +1,14 @@
 import { AI_MODELS, DEFAULT_MODEL } from "@/lib/constants";
 
+/** Orden explícito: cambiar el orden del selector no debe alterar los reintentos. */
+export function nextOverloadModel(provider: string, current: string): string | undefined {
+  if (provider !== "google") return;
+  const chain = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash"];
+  const index = chain.indexOf(current);
+  const next = index >= 0 ? chain[index + 1] : undefined;
+  return AI_MODELS[provider]?.some(model => model.value === next) ? next : undefined;
+}
+
 /** Compatibilidad con configuraciones y trabajos anteriores, sin reescribir el historial. */
 export function normalizeAiModel(provider: string, value?: string | null): string {
   const model = value?.trim().replace(/^models\//, "") ?? "";

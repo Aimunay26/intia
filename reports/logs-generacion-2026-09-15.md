@@ -20,6 +20,7 @@ Los eventos anteriores al despliegue no se reconstruyen retroactivamente.
 | `provider_request` | Llamada al proveedor: duración, modelo, intento, timeout y código HTTP o de transporte si falla. |
 | `provider_response` | Respuesta recibida: tamaño, tokens y motivo de finalización/bloqueo reconocido. |
 | `schema_fallback` | Segunda petición sin esquema cuando el adaptador existente la permite; `requestIndex: 2` la distingue del primer envío. |
+| `model_fallback` | Descenso por saturación guardado en la cola: `model`, `nextModel`, `attempt`, HTTP 503 y `reason: provider_overloaded`. No es una llamada adicional del mismo intento. |
 | `response_parse` | Interpretación/validación del resultado y número de escenas. |
 | `response_save` | Persistencia de la respuesta antes de crear el guion. |
 | `script_save` | Transacción de guion, escenas, auditoría y vínculo con video, si corresponde. |

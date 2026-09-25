@@ -33,6 +33,10 @@ Este documento es el plan de trabajo acordado. El diagnóstico original se conse
 
 Actualización: 24/09/2026. **B07–B10 están integrados en main, migrados en Neon y desplegados en producción**, commit `4ab0260`. CI aprobada; despliegue Git y promoción automática restaurados. [Evidencia del despliegue](despliegue-consistencia-backend-2026-09-24.json). La entrega B01–B06 conserva su registro anterior y el diagnóstico original se mantiene como línea base.
 
+### Descenso de modelo por saturación · 25/09/2026
+
+Extensión de B03/B15: el generador de guiones desciende automáticamente entre Gemini 3.8, 3.7 y 3.6 Flash ante un 503 de saturación, dentro de los tres intentos existentes. Persiste la alternativa por elemento para reanudar, muestra el modelo efectivo y registra `model_fallback`; conserva cuota, autorización, validación y guardado idempotente. Implementación local; publicación y comprobación productiva de este ajuste pendientes. [Detalle y validación](fallback-modelos-2026-09-25.md).
+
 ### Ajuste de consumo de IA · 24/09/2026
 
 Por decisión del usuario, Intia deja de imponer cupos diarios de llamadas, trabajos y despachos, el tope móvil de 32 días y el bloqueo por documento/día. Los contadores quedan como telemetría; autorización, plazos, idempotencia y concurrencia se conservan. La aplicación avisa según el error del proveedor: cuota gratuita diaria agotada → API con facturación o esperar renovación; falta de saldo → revisar facturación; límites temporales → esperar y reintentar. No se interpreta todo HTTP 429 como fin del plan gratuito. Este cambio sustituye los criterios originales de cupos de B03/B04/B15 que se conservan más abajo como historial. [Implementación y validación](ia-sin-cupos-internos-2026-09-24.md). Publicación de este ajuste pendiente.

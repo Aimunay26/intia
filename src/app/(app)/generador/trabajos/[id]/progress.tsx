@@ -2,10 +2,18 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { getGenerationStatus, cancelGenerationJob, resumeGenerationJob } from "@/app/actions/generation-jobs";
+import { readModelFallback } from "@/lib/ai/model-fallback";
 
 const stages: Record<string,string> = { context_load: "Leyendo contexto", references_load: "Leyendo referencias", prompt_build: "Preparando instrucciones", model_resolve: "Validando modelo", key_resolve: "Validando configuración", provider_request: "Esperando al proveedor", response_parse: "Interpretando respuesta", response_saved: "Guardando guion", settings_load: "Leyendo configuración", script_save: "Validando y guardando guion", response_validate: "Validando contenido del guion", completed: "Finalizado" };
 const labels: Record<string, string> = { QUEUED: "En espera", RUNNING: "Generando", COMPLETED: "Completado", PARTIAL: "Completado parcialmente", FAILED: "No completado", CANCELLED: "Cancelado" };
+stages.model_fallback = "Esperando para probar un modelo alternativo";
 type Job = NonNullable<Awaited<ReturnType<typeof getGenerationStatus>>>;
+
+function ModelFallbackNotice({ item }: { item: Job["items"][number] }) {
+  const fallback = readModelFallback(item.diagnostics);
+  if (!fallback) return null;
+  return <p className="text-xs text-inkmuted">Alternativas por saturación: {fallback.models.join(" → ")}.{item.stage === "model_fallback" && item.status === "QUEUED" ? " El siguiente intento usará el último modelo de esta secuencia." : ""}</p>;
+}
 
 export default function JobProgress({ initial }: { initial: Job }) {
   const [job, setJob] = useState(initial);
@@ -55,7 +63,8 @@ export default function JobProgress({ initial }: { initial: Job }) {
       {job.items.map(item => <div key={item.id} className="border-t border-line py-3">
         <p>Guion {item.order + 1} · {labels[item.status]}{item.attempts > 1 ? ` · intento ${item.attempts}/3` : ""}</p>
         {item.stage && <p className="text-sm">Última etapa: {stages[item.stage] ?? "Procesando"}</p>}
-        {item.diagnostics && typeof item.diagnostics === "object" && !Array.isArray(item.diagnostics) && <p className="text-xs text-inkmuted">Modelo: {String(item.diagnostics.model ?? "—")} · Origen: {({ request: "selección", structure: "estructura", settings: "ajustes", catalog: "catálogo" } as Record<string,string>)[String(item.diagnostics.modelSource)] ?? "—"} · Referencias utilizadas: {Array.isArray(item.diagnostics.references) ? item.diagnostics.references.length : 0} de {String(item.diagnostics.availableReferences ?? 0)}</p>}
+        {item.diagnostics && typeof item.diagnostics === "object" && !Array.isArray(item.diagnostics) && <p className="text-xs text-inkmuted">Modelo: {String(item.diagnostics.model ?? "—")} · Origen: {({ request: "selección", structure: "estructura", settings: "ajustes", catalog: "catálogo", fallback: "alternativa por saturación" } as Record<string,string>)[String(item.diagnostics.modelSource)] ?? "—"} · Referencias utilizadas: {Array.isArray(item.diagnostics.references) ? item.diagnostics.references.length : 0} de {String(item.diagnostics.availableReferences ?? 0)}</p>}
+        <ModelFallbackNotice item={item} />
         {item.script && <Link className="text-brand font-semibold" href={`/guiones/${item.script.id}`}>{item.script.title} →</Link>}
         {item.error && <p className="text-sm text-inkmuted">{item.error}</p>}
       </div>)}

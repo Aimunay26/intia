@@ -552,6 +552,8 @@ export const AI_MODELS: Record<string, { value: string; label: string }[]> = {
   ],
   google: [
     { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash - rápido, con nivel gratuito" },
+    { value: "gemini-3.7-flash", label: "Gemini 3.7 Flash" },
+    { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash" },
   ],
 };
 

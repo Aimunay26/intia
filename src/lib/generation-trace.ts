@@ -4,12 +4,12 @@ import { randomUUID } from "node:crypto";
 const stages = ["document_extract", "enqueue", "dispatch_claim", "dispatch_start", "dispatch_save", "dispatch",
   "workflow_step", "cache_refresh", "process", "claim", "quota", "request_access", "generate",
   "context_load", "references_load", "prompt_build", "settings_load", "model_resolve", "key_resolve",
-  "provider_request", "provider_response", "schema_fallback", "response_parse",
+  "provider_request", "provider_response", "schema_fallback", "model_fallback", "response_parse",
   "response_save", "response_validate", "script_save", "script_insert", "audit_save", "video_link", "failure_save", "retry", "job_state", "cancel"] as const;
 type Stage = typeof stages[number];
 type State = "start" | "success" | "error" | "info";
 type Fields = {
-  jobId?: string; itemId?: string; runId?: string; attempt?: number; provider?: string; model?: string;
+  jobId?: string; itemId?: string; runId?: string; attempt?: number; provider?: string; model?: string; nextModel?: string;
   keySource?: string | null; requestIndex?: number; structured?: boolean; durationMs?: number;
   referenceCount?: number; promptBytes?: number; responseBytes?: number; sceneCount?: number;
   inputTokens?: number; outputTokens?: number; maxOutputTokens?: number; timeoutMs?: number;
@@ -51,7 +51,10 @@ function safeFields(fields: Fields): Record<string, string | number | boolean> {
     const value = fields[key];
     if (typeof value === "string" && /^(?:c[a-z0-9]{20,32}|[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}|wrun_[A-Z0-9]{26})$/.test(value)) out[key] = value;
   }
-  if (fields.model && /^(?:gemini-\d+(?:\.\d+)?-(?:flash|pro|flash-lite)(?:-preview)?|claude-(?:opus|sonnet|haiku)-\d+(?:-\d+)*)$/.test(fields.model) && fields.model.length < 80) out.model = fields.model;
+  for (const key of ["model", "nextModel"] as const) {
+    const value = fields[key];
+    if (value && /^(?:gemini-\d+(?:\.\d+)?-(?:flash|pro|flash-lite)(?:-preview)?|claude-(?:opus|sonnet|haiku)-\d+(?:-\d+)*)$/.test(value) && value.length < 80) out[key] = value;
+  }
   if (fields.databaseCode && /^(?:P\d{4}|[0-9A-Z]{5})$/.test(fields.databaseCode)) out.databaseCode = fields.databaseCode;
   return out;
 }
@@ -70,7 +73,7 @@ function errorFields(error: unknown): Fields {
   };
   // El texto sólo se clasifica; nunca se incluye en el registro.
   const message = typeof e.message === "string" ? e.message : "";
-  if (status === 503 && /high demand|overload/i.test(message)) fields.reason = "provider_overloaded";
+  if (status === 503 && (diagnostic.reason === "provider_overloaded" || /high demand|overload|capacity/i.test(message))) fields.reason = "provider_overloaded";
   if (/cupo de uso configurado/i.test(message)) fields.reason = "quota_limit";
   if (e.name === "GeneratedScriptValidationError") fields.reason = "invalid_response";
   if (e.name === "AiBudgetError") fields.errorCode = e.code === "timeout" ? "timeout" : "server";

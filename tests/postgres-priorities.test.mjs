@@ -119,6 +119,77 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
     let providerCalls = 0, response = async () => ({ text: JSON.stringify(validScript) }), key = 'fake-key';
     const engineMocks = { ...mocks, '@/lib/settings': { ...settings, resolveApiKey: async () => ({ key, source: 'db' }) }, '@google/genai': { ...Genai, GoogleGenAI: class { models = { generateContent: async (...args) => { providerCalls++; return response(...args); } }; } } };
     const engine = load('src/lib/generation-jobs.ts', engineMocks);
+    const readyForRetry = id => prisma.generationItem.updateMany({ where: { jobId: id, status: 'QUEUED' }, data: { availableAt: new Date(Date.now() - 1000) } });
+    const overload = () => new Genai.ApiError({ status: 503, message: 'This model is currently experiencing high demand. PRIVATE-FIXTURE' });
+    await check('saturación: 3.8 → 3.7 → 3.6 persiste entre procesos y crea un solo guion con el modelo real', async () => {
+      const requests = [], before = providerCalls;
+      response = async request => { requests.push(request); if (requests.length < 3) throw overload(); return { text: JSON.stringify(validScript) }; };
+      const id = await enqueue({}, engine);
+      await engine.processGeneration(id);
+      let item = await prisma.generationItem.findFirstOrThrow({ where: { jobId: id } });
+      assert.equal(item.status, 'QUEUED'); assert.equal(item.stage, 'model_fallback'); assert.equal(item.attempts, 1);
+      assert.equal(item.diagnostics.model, 'gemini-3.8-flash');
+      assert.equal(item.diagnostics.modelFallback.models.at(-1), 'gemini-3.7-flash');
+      const originalSource = item.diagnostics.modelSource;
+      assert.ok((await engine.processGeneration(id)).retryAt > Date.now()); assert.equal(providerCalls, before + 1);
+      await readyForRetry(id);
+      const resumed = load('src/lib/generation-jobs.ts', engineMocks);
+      await Promise.all([resumed.processGeneration(id), resumed.processGeneration(id)]);
+      assert.equal(providerCalls, before + 2);
+      await readyForRetry(id); await drain(id, load('src/lib/generation-jobs.ts', engineMocks));
+      item = await prisma.generationItem.findFirstOrThrow({ where: { jobId: id } });
+      assert.equal(item.status, 'COMPLETED'); assert.equal(item.attempts, 3);
+      assert.deepEqual(requests.map(r => r.model), ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash']);
+      assert.equal(new Set(requests.map(r => r.contents)).size, 1);
+      assert.equal(new Set(requests.map(r => r.config.systemInstruction)).size, 1);
+      assert.equal(item.diagnostics.modelSource, 'fallback'); assert.equal(item.diagnostics.modelFallback.originalSource, originalSource);
+      assert.equal(item.diagnostics.model, 'gemini-3.6-flash'); assert.doesNotMatch(JSON.stringify(item.diagnostics), /PRIVATE-FIXTURE|fake-key/);
+      const job = await prisma.generationJob.findUniqueOrThrow({ where: { id } });
+      assert.equal(job.status, 'COMPLETED'); assert.equal(job.payload.model, undefined);
+      const savedScripts = await prisma.script.findMany({ where: { generationItem: { jobId: id } } });
+      assert.equal(savedScripts.length, 1); assert.equal(savedScripts[0].model, 'gemini-3.6-flash');
+      assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:calls:${limits.usageDay()}` } })).amount, 3n);
+      await drain(id, resumed); assert.equal(providerCalls, before + 3);
+    });
+    await check('saturación persistente: empieza en 3.7, llega a 3.6 y se detiene al tercer intento sin subir', async () => {
+      const models = [];
+      response = async request => { models.push(request.model); throw overload(); };
+      const id = await enqueue({ model: 'gemini-3.7-flash' }, engine);
+      for (let i = 0; i < 3; i++) { await readyForRetry(id); await engine.processGeneration(id); }
+      await drain(id, engine); await drain(id, engine);
+      assert.deepEqual(models, ['gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.6-flash']);
+      assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id } })).status, 'FAILED');
+      assert.equal(await prisma.script.count({ where: { generationItem: { jobId: id } } }), 0);
+    });
+    await check('un 500 después del descenso conserva el modelo alternativo y no regresa al inicial', async () => {
+      const models = [];
+      response = async request => { models.push(request.model); if (models.length === 1) throw overload(); if (models.length === 2) throw new Genai.ApiError({ status: 500, message: 'Server error' }); return { text: JSON.stringify(validScript) }; };
+      const id = await enqueue({ model: 'gemini-3.8-flash' }, engine);
+      for (let i = 0; i < 3; i++) { await readyForRetry(id); await load('src/lib/generation-jobs.ts', engineMocks).processGeneration(id); }
+      await drain(id, engine);
+      assert.deepEqual(models, ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.7-flash']);
+      assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id } })).status, 'COMPLETED');
+    });
+    await check('el fallback de esquema y el descenso por saturación registran cada llamada sin sumar intentos ocultos', async () => {
+      const requests = [];
+      response = async request => { requests.push(request); if (requests.length === 1) throw new Genai.ApiError({ status: 400, message: 'responseJsonSchema is not supported' }); if (requests.length === 2) throw overload(); return { text: JSON.stringify(validScript) }; };
+      const id = await enqueue({}, engine); await engine.processGeneration(id); await readyForRetry(id); await drain(id, engine);
+      assert.deepEqual(requests.map(r => r.model), ['gemini-3.8-flash', 'gemini-3.8-flash', 'gemini-3.7-flash']);
+      assert.ok(requests[0].config.responseJsonSchema); assert.equal(requests[1].config.responseJsonSchema, undefined); assert.ok(requests[2].config.responseJsonSchema);
+      assert.equal((await prisma.generationItem.findFirstOrThrow({ where: { jobId: id } })).attempts, 2);
+      assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:calls:${limits.usageDay()}` } })).amount, 3n);
+    });
+    for (const stop of ['cancel', 'revoke']) await check(`el descenso respeta ${stop} antes del siguiente intento`, async () => {
+      const before = providerCalls;
+      response = async () => { throw overload(); };
+      const id = await enqueue({}, engine); await engine.processGeneration(id); await readyForRetry(id);
+      if (stop === 'cancel') await engine.cancelGeneration(await actor('writer'), id);
+      else await prisma.user.update({ where: { id: 'writer' }, data: { sessionVersion: { increment: 1 } } });
+      await drain(id, load('src/lib/generation-jobs.ts', engineMocks));
+      assert.equal(providerCalls, before + 1);
+      assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id } })).status, 'CANCELLED');
+      assert.equal(await prisma.script.count({ where: { generationItem: { jobId: id } } }), 0);
+    });
     await check('B03: probar Claude respeta interruptor y plazo, y registra la petición', async () => {
       let probes = 0;
       const probe = load('src/app/actions/probar-clave.ts', { ...engineMocks, '@anthropic-ai/sdk': { __esModule: true, default: class {

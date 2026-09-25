@@ -62,7 +62,7 @@ export type AiErrorCode = "auth" | "quota" | "model" | "server" | "schema" | "ti
  * Solo metadatos para el registro del trabajo: proveedor, código HTTP y
  * código de transporte conocido. Nunca claves, prompts ni el mensaje crudo.
  */
-export type AiDiagnostic = { provider: string; status?: number; code?: string };
+export type AiDiagnostic = { provider: string; status?: number; code?: string; reason?: "provider_overloaded" };
 
 /** Error legible para mostrar en la interfaz. */
 export class AiError extends Error {
@@ -488,6 +488,17 @@ export function esErrorDeCuota(e: unknown): boolean {
   return clasificarError(e) === "quota";
 }
 
+/** Una cuota agotada, un timeout o un 500 genérico no justifican cambiar de modelo. */
+export function esErrorDeSaturacion(error: unknown): boolean {
+  const fields = errorFields(error);
+  const diagnostic = errorFields(fields.diagnostic);
+  if (fields.name === "AiError") {
+    return fields.code === "server" && diagnostic.status === 503 && diagnostic.reason === "provider_overloaded";
+  }
+  return errorStatus(error) === 503 && clasificarError(error) === "server"
+    && /high demand|overload|capacity/i.test(errorMessage(error));
+}
+
 /** Gemini rechazó el esquema de salida (400): se puede reintentar sin él. */
 export function esErrorDeEsquema(e: unknown): boolean {
   return clasificarError(e) === "schema";
@@ -516,6 +527,7 @@ export function toAiError(
     provider: label,
     status: status !== undefined && status >= 400 && status <= 599 ? status : undefined,
     code: transportCode(error),
+    reason: esErrorDeSaturacion(error) ? "provider_overloaded" : undefined,
   };
   const fallo = (resumen: string, detalle: string, retryable = false) =>
     new AiError(resumen, detalle, code ?? undefined, retryable, diagnostic);
@@ -548,7 +560,7 @@ export function toAiError(
       );
     case "server":
       return fallo(
-        `${label} tuvo un error de servidor o de conexión.`,
+        diagnostic.reason === "provider_overloaded" ? `${label} está saturado temporalmente.` : `${label} tuvo un error de servidor o de conexión.`,
         "Suele ser temporal. Intenta de nuevo en unos segundos.",
         true
       );

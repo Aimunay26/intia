@@ -113,7 +113,7 @@ test("un 429 de Gemini se explica como cuota del proyecto con los pasos a seguir
   assert.equal(esErrorDeAutenticacion(e), false);
   // Lo que mira el trabajo en segundo plano: cuota se reintenta; el diagnóstico solo lleva metadatos.
   assert.equal(e.retryable, true);
-  assert.deepEqual(e.diagnostic, { provider: "Gemini", status: 429, code: undefined });
+  assert.deepEqual(e.diagnostic, { provider: "Gemini", status: 429, code: undefined, reason: undefined });
 
   const claude = toAiError(errorClaude(429, "rate_limit_error", "rate limited"), "anthropic", "db");
   assert.equal(claude.code, "quota");
@@ -254,7 +254,7 @@ test("Gemini: un 429, un 401, un 5xx, un 400 de clave/modelo/configuración se r
   for (const [error, code, mensaje] of [
     [errorGemini(429, "quota exceeded"), "quota", /limitando/],
     [errorGemini(403, "PERMISSION_DENIED"), "auth", /clave/],
-    [errorGemini(503, "overloaded"), "server", /error de servidor/],
+    [errorGemini(503, "overloaded"), "server", /saturado temporalmente/],
     [errorGemini(400, "API key not valid. Please pass a valid API key."), "auth", /clave/],
     [errorGemini(404, "models/gemini-9 is not found for API version v1beta"), "model", /no reconoce/],
     // Un 400 de configuración (parámetro que el modelo no acepta) no es esquema ni modelo desconocido.

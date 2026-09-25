@@ -7,7 +7,8 @@ import type { SessionUser } from "@/lib/auth";
 import { auditInTransaction } from "@/lib/audit";
 import { resolveAiModel } from "@/lib/ai-models";
 import { generateScript, AiError, type GenerateInput, type GenerateOutput } from "@/lib/ai";
-import { esErrorDeAutenticacion } from "@/lib/ai/providers";
+import { esErrorDeAutenticacion, esErrorDeSaturacion } from "@/lib/ai/providers";
+import { modelForRetry, planModelFallback, retryDiagnostics } from "@/lib/ai/model-fallback";
 import { persistGeneratedScript, vincularGuionAVideo } from "@/lib/generation-persist";
 import { revalidatePath } from "next/cache";
 import { recordUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
@@ -156,10 +157,13 @@ async function processGenerationStep(jobId: string): Promise<GenerationProgress>
   }));
   if (claim.done !== undefined) return { done: claim.done, retryAt: claim.retryAt };
   const { item, input, leaseToken } = claim;
+  const retryModel = modelForRetry(input.provider, item.diagnostics);
+  const attemptInput = retryModel ? { ...input, model: retryModel } : input;
   return withGenerationTrace({ itemId: item.id, attempt: item.response ? item.attempts : item.attempts + 1 }, async () => {
     let result = item.response as GenerateOutput | null;
     generationEvent("job_state", "info", { status: "RUNNING", reused: Boolean(result) });
     if (!result) {
+      let attemptDiagnostics: Record<string, unknown> | undefined;
       try {
         const request = createAiRequest({ user: claim.user, deadlineAt: claim.deadlineAt, authorize: async (tx, requestIndex) => {
           const job = await lockJob(tx, jobId);
@@ -170,23 +174,31 @@ async function processGenerationStep(jobId: string): Promise<GenerationProgress>
         } });
         result = await withGenerationObserver(async stage => {
           await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING" }, data: { stage } });
-        }, () => generationStage("generate", () => generateScript(input, request, async diagnostics => {
+        }, () => generationStage("generate", () => generateScript(attemptInput, request, async diagnostics => {
           // Durable provenance precedes the paid request. Failure here makes no provider call.
-          const saved = await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING" }, data: { diagnostics: json(diagnostics) } });
+          attemptDiagnostics = retryDiagnostics(diagnostics, item.diagnostics);
+          const saved = await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING" }, data: { diagnostics: json(attemptDiagnostics) } });
           if (!saved.count) throw new AiBudgetError("La concesión de generación cambió antes de llamar al proveedor.");
         })));
+        if (attemptDiagnostics) result = { ...result, diagnostics: attemptDiagnostics };
       } catch (error) {
         const claveRechazada = esErrorDeAutenticacion(error);
         const retry = !claveRechazada && error instanceof AiError && error.retryable && item.attempts + 1 < 3;
+        const fallback = retry && esErrorDeSaturacion(error) ? planModelFallback(attemptDiagnostics) : undefined;
         generationEvent("retry", "info", { retry, waitMs: retry ? 30000 * (item.attempts + 1) : 0,
           status: retry ? "QUEUED" : "FAILED", httpStatus: error instanceof AiError ? error.diagnostic?.status : undefined });
         await generationStage("failure_save", async () => {
-          await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: {
+          const saved = await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: {
             status: retry ? "QUEUED" : "FAILED", error: error instanceof AiError && error.code === "quota"
               ? [error.message, error.detail].filter(Boolean).join(" ")
               : error instanceof AiError || error instanceof AiBudgetError ? error.message : "No se pudo generar. Revisa la conexión y los datos de la petición.",
             availableAt: new Date(Date.now() + 30000 * (item.attempts + 1)), leaseToken: null, leaseUntil: null,
+            ...(fallback ? { diagnostics: json(fallback), stage: "model_fallback" } : {}),
           } });
+          if (saved.count && fallback) generationEvent("model_fallback", "info", {
+            provider: input.provider, model: String(fallback.model), nextModel: modelForRetry(input.provider, fallback),
+            reason: "provider_overloaded", httpStatus: 503, retry: true,
+          });
           // Con la clave rechazada, cada formato siguiente fallaría igual: se
           // cortan aquí en vez de gastar intentos. Lo ya creado se conserva y el
           // aviso final dice cuáles no se intentaron y por qué.

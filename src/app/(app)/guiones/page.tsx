@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { loadPage } from "@/lib/list-pagination";
@@ -35,7 +36,7 @@ export default async function GuionesPage({
   return measurePagePhase("page:/guiones", async () => {
   const user = await requirePageSection("scripts");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="scripts" query={await searchParams} />;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
 
   const q = sp.q?.trim() ?? "";
   const brandCtx = await getBrandContext();

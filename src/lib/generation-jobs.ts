@@ -13,7 +13,7 @@ import { revalidatePath } from "next/cache";
 import { reserveUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
 import { allows, assertBrandPermission, assertPermission } from "@/lib/permissions";
 import { contentScope, generationScope, scriptScope, closedVideoWhere } from "@/lib/access-scope";
-import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
+import { generationEvent, generationStage, withGenerationTrace, withGenerationObserver } from "@/lib/generation-trace";
 import { createAiRequest, AiBudgetError } from "@/lib/ai/request-budget";
 import { GeneratedScriptValidationError } from "@/lib/ai/validate-script";
 
@@ -124,7 +124,7 @@ async function processGenerationStep(jobId: string): Promise<GenerationProgress>
       return { done: true } as const;
     }
     const user = await actorForJob(tx, job);
-    if (!user || Date.now() - job.createdAt.getTime() > 86400000 || process.env.AI_JOBS_ENABLED !== "true") {
+    if (!user || Date.now() - job.createdAt.getTime() > resourceLimit("AI_JOB_MAX_AGE_HOURS", 72) * 3600000 || process.env.AI_JOBS_ENABLED !== "true") {
       await tx.generationJob.update({ where: { id: jobId }, data: { status: "CANCELLED", error: "La generación expiró o su acceso fue revocado." } });
       await tx.generationItem.updateMany({ where: { jobId, status: { in: active } }, data: { status: "CANCELLED", response: Prisma.DbNull } });
       generationEvent("job_state", "info", { status: "CANCELLED", reason: "access_revoked_or_expired" });
@@ -168,7 +168,13 @@ async function processGenerationStep(jobId: string): Promise<GenerationProgress>
           if (current?.leaseToken !== leaseToken || !current.leaseUntil || current.leaseUntil.getTime() <= Date.now()) throw new AiBudgetError("Otro proceso recuperó esta generación o venció su tiempo.");
           if (requestIndex === 1) await tx.generationItem.update({ where: { id: item.id }, data: { attempts: { increment: 1 } } });
         } });
-        result = await generationStage("generate", () => generateScript(input, request));
+        result = await withGenerationObserver(async stage => {
+          await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING" }, data: { stage } });
+        }, () => generationStage("generate", () => generateScript(input, request, async diagnostics => {
+          // Durable provenance precedes the paid request. Failure here makes no provider call.
+          const saved = await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING" }, data: { diagnostics: json(diagnostics) } });
+          if (!saved.count) throw new AiBudgetError("La concesión de generación cambió antes de llamar al proveedor.");
+        })));
       } catch (error) {
         const claveRechazada = esErrorDeAutenticacion(error);
         const retry = !claveRechazada && error instanceof AiError && error.retryable && item.attempts + 1 < 3;
@@ -187,12 +193,13 @@ async function processGenerationStep(jobId: string): Promise<GenerationProgress>
         return { done: false };
       }
       // Se conserva antes de crear el guion: una caída de DB posterior no obliga a pagar otra respuesta.
-      const saved = await generationStage("response_save", () => prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: { response: json(result), inputTokens: result!.inputTokens ?? 0, outputTokens: result!.outputTokens ?? 0 } }));
+      const saved = await generationStage("response_save", () => prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: { response: json(result), stage: "response_saved", inputTokens: result!.inputTokens ?? 0, outputTokens: result!.outputTokens ?? 0 } }));
       if (!saved.count) {
         generationEvent("job_state", "info", { reason: "lease_lost" });
         return { done: false };
       }
     }
+    await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING" }, data: { stage: "script_save" } });
     try { await generationStage("script_save", () => prisma.$transaction(async tx => {
       const job = await lockJob(tx, jobId);
       if (!job || !active.includes(job.status)) { generationEvent("job_state", "info", { reason: "not_runnable" }); return; }
@@ -205,7 +212,7 @@ async function processGenerationStep(jobId: string): Promise<GenerationProgress>
         return;
       }
       const scriptId = await persistGeneratedScript(tx, user, item.id, input, result!);
-      await tx.generationItem.update({ where: { id: item.id }, data: { status: "COMPLETED", response: Prisma.DbNull, leaseToken: null, leaseUntil: null, error: null } });
+      await tx.generationItem.update({ where: { id: item.id }, data: { status: "COMPLETED", stage: "completed", response: Prisma.DbNull, leaseToken: null, leaseUntil: null, error: null } });
       generationEvent("job_state", "info", { status: "COMPLETED" });
       // La tarjeta solo admite un guion: se une el PRIMERO que sale del lote en
       // cuanto existe, no al final, para que el video tenga guion aunque el resto
@@ -226,7 +233,7 @@ async function processGenerationStep(jobId: string): Promise<GenerationProgress>
       if (!(error instanceof GeneratedScriptValidationError)) throw error;
       // Una respuesta inválida guardada no se vuelve a intentar ni vuelve a gastar proveedor.
       await prisma.generationItem.updateMany({ where: { id: item.id, leaseToken, status: "RUNNING", job: { status: { in: active } } }, data: {
-        status: "FAILED", error: error.message, response: Prisma.DbNull, leaseToken: null, leaseUntil: null,
+        status: "FAILED", stage: "response_validate", error: error.message, response: Prisma.DbNull, leaseToken: null, leaseUntil: null,
       } });
     }
     return { done: false };
@@ -280,7 +287,7 @@ export async function generationStatus(user: SessionUser, id: string) {
   assertPermission(user, "scripts.generate");
   return prisma.generationJob.findFirst({ where: { AND: [{ id }, generationScope(user)] }, select: {
     id: true, status: true, error: true, createdAt: true, runId: true,
-    items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, status: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { where: scriptScope(user), select: { id: true, title: true } } } },
+    items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, status: true, stage: true, diagnostics: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { where: scriptScope(user), select: { id: true, title: true } } } },
   } });
 }
 

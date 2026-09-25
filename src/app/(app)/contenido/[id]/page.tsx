@@ -1,3 +1,5 @@
+import { loadPage } from "@/lib/list-pagination";
+import { Paged } from "@/components/member/shared";
 import { ApprovalHistory } from "@/components/approval-history";
 import { approvalToken } from "@/lib/approvals";
 import { WorkflowStatusFields } from "@/components/workflow-status-fields";
@@ -77,12 +79,13 @@ function fechaCorta(value: Date) {
   return `${Number(dateKey(value).slice(8))} ${MESES_CORTOS[Number(dateKey(value).slice(5,7))-1]}`;
 }
 
-export default async function VideoPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function VideoPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
+  const query = await searchParams;
   const user = await requirePageSection("content");
-  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="content" id={(await params).id} />;
+  if (user.role !== "OWNER") return <MemberWorkspace user={user} section="content" id={(await params).id} query={query} />;
   const { id } = await params;
 
-  const item = await prisma.contentItem.findUnique({
+  const record = await prisma.contentItem.findUnique({
     where: { id },
     include: {
       brand: { select: { id: true, name: true, colorPrimary: true } },
@@ -130,21 +133,16 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
           doneBy: { select: { name: true, color: true } },
         },
       },
-      metrics: { orderBy: { date: "desc" } },
-      comments: {
-        orderBy: { createdAt: "desc" },
-        take: 40,
-        select: {
-          id: true,
-          body: true,
-          createdAt: true,
-          user: { select: { name: true, color: true } },
-        },
-      },
+
     },
   });
 
-  if (!item) notFound();
+  if (!record) notFound();
+  const [metricPage, commentPage] = await Promise.all([
+    loadPage(query.metricas, 30, () => prisma.metric.count({ where: { contentItemId: id } }), range => prisma.metric.findMany({ where: { contentItemId: id }, ...range, orderBy: [{ date: "desc" }, { id: "asc" }] })),
+    loadPage(query.comentarios, 30, () => prisma.comment.count({ where: { contentItemId: id } }), range => prisma.comment.findMany({ where: { contentItemId: id }, ...range, orderBy: [{ createdAt: "desc" }, { id: "asc" }], select: { id: true, body: true, createdAt: true, user: { select: { name: true, color: true } } } })),
+  ]);
+  const item = { ...record, metrics: metricPage.items, comments: commentPage.items };
 
   // La estructura definitiva (structureId) y el guion llegan al vincular un
   // guion, desde Guiones o desde el generador. Lo que sí se edita aquí son los
@@ -167,27 +165,15 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
   const admiteGuion = item.status === "IDEA" || item.status === "GUION";
 
   // Historial: lo del video mas lo de sus checks, asignaciones, metricas y comentarios.
-  const logs = await prisma.auditLog.findMany({
-    where: {
-      OR: [
-        { entity: "ContentItem", entityId: id },
-        { entity: "ChecklistItem", entityId: { in: item.checklist.map((c) => c.id) } },
-        { entity: "Assignment", entityId: { in: item.assignments.map((a) => a.id) } },
-        { entity: "Metric", entityId: { in: item.metrics.map((m) => m.id) } },
-        { entity: "Comment", entityId: { in: item.comments.map((c) => c.id) } },
-      ],
-    },
-    orderBy: { createdAt: "desc" },
-    take: 10,
-    select: {
-      id: true,
-      action: true,
-      summary: true,
-      userName: true,
-      createdAt: true,
-      user: { select: { name: true, color: true } },
-    },
-  });
+  const logIds = await prisma.$queryRaw<{ id: string }[]>`SELECT a.id FROM "AuditLog" a WHERE
+    (a.entity='ContentItem' AND a."entityId"=${id}) OR
+    (a.entity='ChecklistItem' AND a."entityId" IN (SELECT id FROM "ChecklistItem" WHERE "contentItemId"=${id})) OR
+    (a.entity='Assignment' AND a."entityId" IN (SELECT id FROM "Assignment" WHERE "contentItemId"=${id})) OR
+    (a.entity='Metric' AND a."entityId" IN (SELECT id FROM "Metric" WHERE "contentItemId"=${id})) OR
+    (a.entity='Comment' AND a."entityId" IN (SELECT id FROM "Comment" WHERE "contentItemId"=${id}))
+    ORDER BY a."createdAt" DESC, a.id LIMIT 10`;
+  const logs = await prisma.auditLog.findMany({ where: { id: { in: logIds.map(r => r.id) } },
+    orderBy: [{ createdAt: "desc" },{ id: "asc" }], select: { id: true, action: true, summary: true, userName: true, createdAt: true, user: { select: { name: true, color: true } } } });
 
   const canEdit = can(user.role, LEVEL.MEMBER);
   // Mover cosas (checks, asignaciones) es del equipo; eliminar es del dueño.
@@ -531,7 +517,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
                 description="Aquí queda la conversación del equipo sobre este video."
               />
             )}
-          </Card>
+          <Paged data={commentPage} href={`/contenido/${id}`} query={query} param="comentarios" /></Card>
         </div>
 
         {/* -------------------------------------------------------- lateral -- */}
@@ -553,7 +539,7 @@ export default async function VideoPage({ params }: { params: Promise<{ id: stri
             todayKey={dateKey(new Date())}
             canEdit={canEdit}
             canManage={puedeEliminar}
-          />
+          /><Paged data={metricPage} href={`/contenido/${id}`} query={query} param="metricas" />
 
           <Card>
             <CardHeader

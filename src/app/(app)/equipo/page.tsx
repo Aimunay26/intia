@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { Pagination } from "@/components/filters";
@@ -48,7 +49,7 @@ export default async function EquipoPage({
   return measurePagePhase("page:/equipo", async () => {
   const user = await requirePageSection("team");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="team" query={await searchParams} />;
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
   const canManage = can(user.role, LEVEL.OWNER);
 
   const [page, archetypes, stats, yo, brands] = await Promise.all([

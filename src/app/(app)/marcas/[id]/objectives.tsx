@@ -1,4 +1,6 @@
 "use client";
+import { OBJECTIVE_METRICS } from "@/lib/objective-policy";
+import { PLATFORMS } from "@/lib/constants";
 import { EditForm, RevisionField } from "@/components/edit-form";
 
 import { AlertTriangle, Pencil, Plus, Target, Trash2, X } from "lucide-react";
@@ -25,6 +27,11 @@ import {
 } from "@/lib/utils";
 
 export type ObjectiveRow = {
+  calculationMode: string;
+  calculationFrom: string;
+  calculationTo: string;
+  calculationPlatform: string | null;
+  records: number | null;
   updatedAt: string;
   id: string;
   name: string;
@@ -74,6 +81,7 @@ function num(value: number) {
 /* ------------------------------------------------------------- CAMPOS -- */
 
 function ObjectiveFields({ value }: { value?: ObjectiveRow }) {
+  const [mode, setMode] = useState(value?.calculationMode ?? "MANUAL");
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -94,14 +102,15 @@ function ObjectiveFields({ value }: { value?: ObjectiveRow }) {
             placeholder="seguidores"
           />
         </Field>
-        <Field label="Métrica" hint="views, followers, leads, roas…">
+        <Field label="Cálculo"><select className="select" name="calculationMode" value={mode} onChange={e => setMode(e.target.value)}><option value="MANUAL">Valor manual</option><option value="WEEKLY_SUM">Suma semanal automática</option></select></Field>
+        {mode === "WEEKLY_SUM" ? <><Field label="Métrica sumable"><select name="metricKey" className="select" defaultValue={value?.metricKey ?? "views"}>{Object.entries(OBJECTIVE_METRICS).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></Field><Field label="Desde (lunes)"><input className="input" type="date" name="calculationFrom" required defaultValue={value?.calculationFrom} /></Field><Field label="Hasta (domingo)"><input className="input" type="date" name="calculationTo" required defaultValue={value?.calculationTo} /></Field><Field label="Plataforma"><select className="select" name="calculationPlatform" defaultValue={value?.calculationPlatform ?? ""}><option value="">Todas</option>{PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}</select></Field></> : <Field label="Métrica" hint="Etiqueta del indicador manual">
           <input
             name="metricKey"
             className="input input-mono"
             defaultValue={value?.metricKey ?? ""}
             placeholder="followers"
           />
-        </Field>
+        </Field>}
 
         <Field label="Punto de partida">
           <input
@@ -112,11 +121,11 @@ function ObjectiveFields({ value }: { value?: ObjectiveRow }) {
             defaultValue={value?.baselineValue ?? 0}
           />
         </Field>
-        <Field label="Valor actual">
+        <Field label="Valor actual" hint={mode === "WEEKLY_SUM" ? "Se calcula con los registros semanales del período." : "Actualizado manualmente"}>
           <input
             type="number"
             step="any"
-            name="currentValue"
+            name="currentValue" disabled={mode === "WEEKLY_SUM"}
             className="input"
             defaultValue={value?.currentValue ?? 0}
           />
@@ -246,9 +255,9 @@ export function ObjectivesPanel({
       </div>
 
       {adding && canEdit ? (
-        <form
+        <EditForm
           action={crearObjetivo}
-          onSubmit={() => setAdding(false)}
+          onSuccess={() => setAdding(false)}
           className="border-line bg-surface2 fade-in border-b p-4"
         >
           <input type="hidden" name="brandId" value={brandId} />
@@ -261,7 +270,7 @@ export function ObjectivesPanel({
               Añadir objetivo
             </SubmitButton>
           </div>
-        </form>
+        </EditForm>
       ) : null}
 
       {objectives.length === 0 ? (
@@ -342,7 +351,7 @@ export function ObjectivesPanel({
                 return (
                   <tr key={o.id}>
                     <td>
-                      <div className="text-ink font-semibold">{o.name}</div>
+                      <div className="text-ink font-semibold">{o.name}</div><p className="text-xs text-inkmuted">{o.calculationMode === "WEEKLY_SUM" ? `Calculado · ${o.calculationFrom} a ${o.calculationTo} · ${o.records ?? 0} registros semanales` : "Valor manual"}</p>
                       {o.description ? (
                         <div className="text-inkmuted mt-0.5 text-[11.5px] leading-snug">
                           {o.description}

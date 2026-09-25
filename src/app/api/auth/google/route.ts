@@ -7,7 +7,10 @@ import { buildAuthUrl, getGoogleConfig, GOOGLE_STATE_COOKIE } from "@/lib/google
 /** Paso 1: manda a la persona a Google. */
 export async function GET(request: Request) {
   const origin = new URL(request.url).origin;
-  const config = await getGoogleConfig();
+  const config = await getGoogleConfig().catch(() => {
+    console.error("[google] No se pudo abrir la configuración de acceso.");
+    return null;
+  });
 
   if (!config) {
     return NextResponse.redirect(

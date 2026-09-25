@@ -139,6 +139,10 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       assert.equal((await prisma.usageCounter.findUniqueOrThrow({ where: { key: `ai:calls:${limits.usageDay()}` } })).amount, 2n);
       assert.equal((await prisma.generationItem.findFirstOrThrow({ where: { jobId: id } })).attempts, 1);
       assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id } })).status, 'COMPLETED');
+      const diagnosticItem=await prisma.generationItem.findFirstOrThrow({where:{jobId:id}});
+      assert.equal(diagnosticItem.stage,'completed');assert.match(diagnosticItem.diagnostics.contextHash,/^[a-f0-9]{64}$/);
+      assert.equal(diagnosticItem.diagnostics.provider,'google');assert.ok(diagnosticItem.diagnostics.modelSource);assert.ok(diagnosticItem.diagnostics.structureRevision);
+      assert.doesNotMatch(JSON.stringify(diagnosticItem.diagnostics),/fake-key|systemPrompt|userPrompt/);
     });
     await check('B03: un solo cupo impide fallback, y clave ausente falla sin reservar llamada', async () => {
       process.env.AI_DAILY_CALLS = '1'; const before = providerCalls;
@@ -188,7 +192,7 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       await drain(id); await drain(id);
       assert.equal(calls, before + 1); assert.equal(await prisma.script.count({ where: { generationItem: { jobId: id } } }), 0);
       const item = await prisma.generationItem.findFirstOrThrow({ where: { jobId: id } });
-      assert.equal(item.status, 'FAILED'); assert.equal(item.response, null); assert.match(item.error, /necesita revisión/);
+      assert.equal(item.status, 'FAILED'); assert.equal(item.stage, 'response_validate'); assert.equal(item.response, null); assert.match(item.error, /necesita revisión/);
       const recovered = await enqueue();
       await prisma.generationItem.updateMany({ where: { jobId: recovered }, data: { response: invalid, attempts: 1 } });
       await drain(recovered); assert.equal(calls, before + 1);

@@ -1,4 +1,6 @@
-import { getSetting, setSetting } from "@/lib/settings";
+import { readSecret } from "@/lib/secrets";
+import { prisma } from "@/lib/prisma";
+import { getSetting } from "@/lib/settings";
 
 /**
  * Entrada con la cuenta de Google (Gmail).
@@ -29,7 +31,7 @@ export type GoogleConfig = {
 };
 
 /** Devuelve la configuración de Google, o null si todavía no está puesta. */
-export async function getGoogleConfig(settings?: Record<string, string>): Promise<GoogleConfig | null> {
+export async function getGoogleConfig(): Promise<GoogleConfig | null> {
   const envId = process.env.GOOGLE_CLIENT_ID?.trim();
   const envSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
   if (envId && envSecret) {
@@ -37,8 +39,8 @@ export async function getGoogleConfig(settings?: Record<string, string>): Promis
   }
 
   const [dbId, dbSecret] = await Promise.all([
-    settings ? settings[GOOGLE_SETTING_KEYS.clientId] : getSetting(GOOGLE_SETTING_KEYS.clientId),
-    settings ? settings[GOOGLE_SETTING_KEYS.clientSecret] : getSetting(GOOGLE_SETTING_KEYS.clientSecret),
+    getSetting(GOOGLE_SETTING_KEYS.clientId),
+    readSecret(GOOGLE_SETTING_KEYS.clientSecret),
   ]);
   if (dbId?.trim() && dbSecret?.trim()) {
     return { clientId: dbId.trim(), clientSecret: dbSecret.trim(), source: "db" };
@@ -47,14 +49,14 @@ export async function getGoogleConfig(settings?: Record<string, string>): Promis
   return null;
 }
 
-export async function isGoogleConfigured() {
-  return (await getGoogleConfig()) !== null;
+export async function googleConfigStatus(settings?: Record<string, string>, storedKeys?: string[]) {
+  if (process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim()) return { configured: true, source: "env" as const };
+  const id = settings ? settings[GOOGLE_SETTING_KEYS.clientId] : await getSetting(GOOGLE_SETTING_KEYS.clientId);
+  const saved = storedKeys ? storedKeys.includes(GOOGLE_SETTING_KEYS.clientSecret) : Boolean(await prisma.appSecret.findUnique({ where: { key: GOOGLE_SETTING_KEYS.clientSecret }, select: { key: true } }));
+  return { configured: Boolean(id?.trim() && saved), source: id?.trim() && saved ? "db" as const : null };
 }
 
-export async function saveGoogleConfig(clientId: string, clientSecret: string) {
-  if (clientId) await setSetting(GOOGLE_SETTING_KEYS.clientId, clientId);
-  if (clientSecret) await setSetting(GOOGLE_SETTING_KEYS.clientSecret, clientSecret);
-}
+export async function isGoogleConfigured() { return (await googleConfigStatus()).configured; }
 
 /** La URL que hay que registrar en Google Cloud como "URI de redirección". */
 export function redirectUriFor(origin: string) {
@@ -102,9 +104,8 @@ export async function exchangeCodeForProfile(
   });
 
   if (!tokenResponse.ok) {
-    const detalle = await tokenResponse.text().catch(() => "");
     throw new Error(
-      `Google rechazó el intercambio del código (${tokenResponse.status}). ${detalle.slice(0, 200)}`
+      `Google rechazó el intercambio del código (${tokenResponse.status}).`
     );
   }
 

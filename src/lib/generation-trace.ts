@@ -18,6 +18,11 @@ type Fields = {
   errorCode?: string; databaseCode?: string; transportCode?: string;
 };
 const context = new AsyncLocalStorage<Fields & { traceId: string }>();
+const observer = new AsyncLocalStorage<(stage: string) => Promise<void>>();
+const visibleStages = new Set<Stage>(["context_load", "references_load", "prompt_build", "settings_load", "model_resolve", "key_resolve", "provider_request", "response_parse"]);
+export function withGenerationObserver<T>(listener: (stage: string) => Promise<void>, work: () => T): T {
+  return observer.run(listener, work);
+}
 const enumFields: Partial<Record<keyof Fields, readonly string[]>> = {
   provider: ["google", "anthropic", "Gemini", "Claude"], keySource: ["db", "env"],
   status: ["QUEUED", "RUNNING", "COMPLETED", "PARTIAL", "FAILED", "CANCELLED"],
@@ -96,6 +101,9 @@ export async function generationStage<T>(stage: Stage, work: () => PromiseLike<T
     const started = performance.now();
     generationEvent(stage, "start");
     try {
+      if (visibleStages.has(stage)) {
+        try { await observer.getStore()?.(stage); } catch { /* Diagnostics must not turn a successful provider call into a retry. */ }
+      }
       const result = await work();
       generationEvent(stage, "success", { durationMs: performance.now() - started });
       return result;

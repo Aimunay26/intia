@@ -30,7 +30,7 @@ test('el modelo heredado incompatible se omite y se respetan los ajustes del pro
 function engineFixture(structure, settings = {}) {
   const calls = [];
   const engine = load('src/lib/ai/index.ts', {
-    '@/lib/prisma': { prisma: { structure: { findUnique: async () => ({ id: 'structure', name: 'Fixture', ...structure }) }, asset: { findMany: async () => [] } } },
+    '@/lib/prisma': { prisma: { $queryRaw: async () => [], structure: { findUnique: async () => ({ id: 'structure', name: 'Fixture', updatedAt: new Date('2026-09-24T00:00:00Z'), ...structure }) }, asset: { findMany: async () => [] } } },
     '@/lib/settings': { SETTING_KEYS: { defaultGoogleModel: 'google.model', defaultAnthropicModel: 'anthropic.model', googleKey: 'google.key', anthropicKey: 'anthropic.key' }, getSettings: async () => settings, resolveApiKey: async () => ({ key: 'fixture-not-a-real-key' }) },
     '@/lib/ai/context': { buildSystemPrompt: () => 'Instrucciones ficticias', buildUserPrompt: () => 'Petición ficticia' },
     '@/lib/ai/providers': { AiError: class extends Error {}, generateWithGemini: async call => { calls.push({ provider: 'google', ...call }); return { model: call.model, provider: 'google' }; }, generateWithClaude: async call => { calls.push({ provider: 'anthropic', ...call }); return { model: call.model, provider: 'anthropic' }; } },

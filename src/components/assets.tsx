@@ -2,24 +2,14 @@
 import { EditForm, RevisionField } from "@/components/edit-form";
 
 import { useActionState, useState } from "react";
-import {
-  AlertTriangle,
-  Bot,
-  CheckCircle2,
-  Download,
-  FileText,
-  Loader2,
-  Paperclip,
-  Pencil,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { AlertTriangle, Bot, CheckCircle2, Download, FileText, Paperclip, Pencil, Trash2, Upload } from "lucide-react";
 
 import {
   deleteAsset,
   toggleAssetAi,
   updateAssetText,
   uploadAsset,
+  readAssetText,
   type AssetState,
 } from "@/app/actions/assets";
 import { ACCEPTED_UPLOAD_TYPES } from "@/lib/pdf";
@@ -37,7 +27,7 @@ export type AssetRow = {
   useForAi: boolean;
   hasText: boolean;
   textLength: number;
-  extractedText: string | null;
+  extractedText?: string | null;
   createdAt: Date | string;
 };
 
@@ -184,6 +174,15 @@ function AssetRowItem({
   canDelete: boolean;
 }) {
   const [editing, setEditing] = useState(false);
+  const [loaded, setLoaded] = useState<{ text: string; revision: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [readError, setReadError] = useState("");
+  async function openEditor() {
+    setLoading(true); setReadError("");
+    try { setLoaded(await readAssetText(asset.id)); setEditing(true); }
+    catch { setReadError("No se pudo leer el texto. Comprueba tu acceso e inténtalo de nuevo."); }
+    finally { setLoading(false); }
+  }
 
   return (
     <li className="hover:bg-surface2 px-4 py-3 transition-colors">
@@ -261,7 +260,7 @@ function AssetRowItem({
             <>
               <button
                 type="button"
-                onClick={() => setEditing(true)}
+                onClick={openEditor} disabled={loading}
                 className="btn btn-ghost btn-icon"
                 title="Ver o editar el texto que lee la IA"
               >
@@ -283,6 +282,7 @@ function AssetRowItem({
         </div>
       </div>
 
+      {readError && <p role="alert">{readError}</p>}
       <Modal
         open={editing}
         onClose={() => setEditing(false)}
@@ -290,7 +290,7 @@ function AssetRowItem({
         description={asset.label || asset.filename}
         width={720}
       >
-        <EditForm action={updateAssetText} onSuccess={() => setEditing(false)}><RevisionField value={asset.updatedAt} />
+        {loaded && <EditForm action={updateAssetText} onSuccess={() => setEditing(false)}><RevisionField value={loaded.revision} />
           <input type="hidden" name="id" value={asset.id} />
           <Field
             hint="Este es exactamente el texto que se le inyecta al modelo. Puedes recortarlo para quitar índices y páginas legales, o pegarlo a mano si el PDF venía escaneado."
@@ -299,7 +299,7 @@ function AssetRowItem({
               name="extractedText"
               className="textarea input-mono"
               rows={18}
-              defaultValue={asset.extractedText ?? ""}
+              defaultValue={loaded.text}
               placeholder="Pega aquí el contenido del documento…"
             />
           </Field>
@@ -311,7 +311,7 @@ function AssetRowItem({
               Guardar texto
             </SubmitButton>
           </div>
-        </EditForm>
+        </EditForm>}
       </Modal>
     </li>
   );

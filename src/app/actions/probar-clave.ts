@@ -1,5 +1,6 @@
 "use server";
 
+import { SecretConfigError } from "@/lib/secret-crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenAI } from "@google/genai";
 
@@ -67,7 +68,11 @@ export async function probarClaveIA(params: {
     key = escrita;
     origen = "input";
   } else {
-    const efectiva = await resolveApiKey(provider);
+    let efectiva;
+    try { efectiva = await resolveApiKey(provider); } catch (error) {
+      if (error instanceof SecretConfigError) return { ok: false, code: "server", error: error.message };
+      throw error;
+    }
     if (!efectiva.key || !efectiva.source) {
       return {
         ok: false,

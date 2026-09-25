@@ -1,48 +1,4 @@
 import { dateKey } from "@/lib/utils";
-import { randomBytes, timingSafeEqual } from "node:crypto";
-
-import { getSetting, setSetting } from "@/lib/settings";
-
-/**
- * Feed iCal para Google Calendar.
- *
- * Google Calendar (y Outlook, y el calendario del iPhone) saben suscribirse a
- * una URL que devuelve un archivo .ics y refrescarla sola cada pocas horas.
- * Así todo lo que hay aquí —videos programados, días de grabación, reuniones y
- * pendientes— aparece en el calendario del equipo sin que nadie copie nada.
- *
- * Como Google pide la URL desde sus servidores, sin cookies, la dirección lleva
- * un token secreto. Quien tenga esa URL ve la agenda: se puede rotar cuando
- * haga falta desde Ajustes.
- */
-
-const FEED_TOKEN_KEY = "calendar.feedToken";
-
-export async function getFeedToken(): Promise<string | null> {
-  const existente = await getSetting(FEED_TOKEN_KEY);
-  if (existente && existente.length >= 24) return existente;
-
-  return null;
-}
-
-export async function rotarFeedToken(): Promise<string> {
-  const nuevo = randomBytes(24).toString("base64url");
-  await setSetting(FEED_TOKEN_KEY, nuevo);
-  return nuevo;
-}
-
-export async function tokenEsValido(token: string | null): Promise<boolean> {
-  if (!token) return false;
-  const actual = await getSetting(FEED_TOKEN_KEY);
-  if (!actual) return false;
-
-  // Comparación de tiempo constante: un `===` normal corta en el primer
-  // carácter distinto y filtra información por el tiempo de respuesta.
-  const a = Buffer.from(actual, "utf8");
-  const b = Buffer.from(token, "utf8");
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
-}
 
 /* ------------------------------------------------------------ FORMATO ICS -- */
 
@@ -52,7 +8,7 @@ function esc(text: string): string {
     .replace(/\\/g, "\\\\")
     .replace(/;/g, "\\;")
     .replace(/,/g, "\\,")
-    .replace(/\r?\n/g, "\\n");
+    .replace(/\r\n|\r|\n/g, "\\n");
 }
 
 /** 20260314T153000Z */

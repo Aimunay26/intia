@@ -1,4 +1,5 @@
 import type { AppTransaction } from "@/lib/prisma";
+import { resourceLimit } from "@/lib/resource-limits";
 import type { SessionUser } from "@/lib/auth";
 import { auditInTransaction } from "@/lib/audit";
 import { assertActor } from "@/lib/auth-transactions";
@@ -105,6 +106,11 @@ export async function crearAssetDesdeArchivo(tx: AppTransaction, input: NuevoAss
   await assertActor(tx, input.user);
   await assertAssetOwner(tx, input.ownerType, input.ownerId, input.user, true);
   if (input.blobId) await attachPrivateFile(tx, input.blobId);
+  else {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(781240122)`;
+    const [usage] = await tx.$queryRaw<{ bytes: bigint }[]>`SELECT COALESCE(SUM(octet_length(data)),0)::bigint AS bytes FROM "Asset" WHERE data IS NOT NULL`;
+    if (usage.bytes + BigInt(input.archivo.buffer.byteLength) > BigInt(resourceLimit("DB_ASSET_STORAGE_LIMIT",100_000_000))) throw new Error("El almacenamiento de archivos en la base alcanzó su cupo reservado. Libera archivos o utiliza el almacenamiento privado.");
+  }
   const asset = await tx.asset.create({
     data: {
       ownerType: input.ownerType,

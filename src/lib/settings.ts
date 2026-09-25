@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { prisma, type AppTransaction } from "@/lib/prisma";
+import { isSecretName, SECRET_KEYS } from "@/lib/secret-crypto";
+import { readSecret } from "@/lib/secrets";
 
 /**
  * Ajustes de la aplicacion guardados en base de datos.
@@ -54,21 +56,30 @@ export const SETTING_KEYS = {
 } as const;
 
 export async function getSetting(key: string): Promise<string | null> {
+  if (isSecretName(key) || key === "calendar.feedToken") throw new Error("Usa el almacén de secretos.");
   const row = await prisma.appSetting.findUnique({ where: { key } });
   return row?.value ?? null;
 }
 
 export async function getSettings(keys: string[], db: AppTransaction = prisma): Promise<Record<string, string>> {
-  const rows = await db.appSetting.findMany({ where: { key: { in: keys } } });
+  if (keys.some(key => isSecretName(key) || key === "calendar.feedToken")) throw new Error("Los ajustes ordinarios no incluyen secretos.");
+  const rows = await db.appSetting.findMany({ where: { key: { in: keys } } } );
   return Object.fromEntries(rows.map((r) => [r.key, r.value]));
 }
 
 export async function getSettingsSnapshot(keys: string[], db: AppTransaction = prisma) {
-  const rows = await db.appSetting.findMany({ where: { key: { in: keys } }, orderBy: { key: "asc" } });
-  return { values: Object.fromEntries(rows.map(r => [r.key, r.value])), revision: createHash("sha256").update(JSON.stringify(rows.map(r => [r.key, r.updatedAt.toISOString()]))).digest("hex") };
+  const ordinary = keys.filter(key => !isSecretName(key) && key !== "calendar.feedToken");
+  const [rows, secrets, legacy] = await Promise.all([
+    db.appSetting.findMany({ where: { key: { in: ordinary } }, orderBy: { key: "asc" } }),
+    db.appSecret.findMany({ select: { key: true, keyId: true, updatedAt: true }, orderBy: { key: "asc" } }),
+    db.appSetting.findMany({ where: { key: { in: [...SECRET_KEYS] } }, select: { key: true, updatedAt: true }, orderBy: { key: "asc" } }),
+  ]);
+  return { values: Object.fromEntries(rows.map(r => [r.key, r.value])), secretKeys: secrets.map(r => r.key), legacySecretKeys: legacy.map(r => r.key),
+    revision: createHash("sha256").update(JSON.stringify([rows, secrets, legacy].map(group => group.map(r => [r.key, r.updatedAt.toISOString()])))).digest("hex") };
 }
 
 export async function setSetting(key: string, value: string, db: AppTransaction = prisma) {
+  if (isSecretName(key) || key === "calendar.feedToken") throw new Error("Usa el almacén de secretos.");
   await db.appSetting.upsert({
     where: { key },
     create: { key, value },
@@ -97,12 +108,11 @@ function settingKeyFor(provider: string): string | undefined {
  */
 export async function resolveApiKey(
   provider: string,
-  settings?: Record<string, string>,
 ): Promise<{ key: string | null; source: KeySource | null }> {
   const settingKey = settingKeyFor(provider);
   if (!settingKey) return { key: null, source: null };
 
-  const db = (settings ? settings[settingKey] : await getSetting(settingKey))?.trim();
+  const db = isSecretName(settingKey) ? (await readSecret(settingKey))?.trim() : null;
   if (db) return { key: db, source: "db" };
 
   const env = envKeyFor(provider);
@@ -118,24 +128,14 @@ export function maskKey(key: string | null) {
   return `${key.slice(0, 6)}${"•".repeat(12)}${key.slice(-4)}`;
 }
 
-export async function aiStatus(settings?: Record<string, string>) {
-  const [anthropic, google] = await Promise.all([
-    resolveApiKey("anthropic", settings),
-    resolveApiKey("google", settings),
-  ]);
-  return {
-    anthropic: {
-      configured: Boolean(anthropic.key),
-      source: anthropic.source,
-      masked: maskKey(anthropic.key),
-      /** Si además existe la variable de entorno (queda de respaldo cuando manda la guardada). */
-      envDefined: Boolean(envKeyFor("anthropic")),
-    },
-    google: {
-      configured: Boolean(google.key),
-      source: google.source,
-      masked: maskKey(google.key),
-      envDefined: Boolean(envKeyFor("google")),
-    },
+/** Status checks do not decrypt credentials. */
+export async function aiStatus(storedKeys?: string[]) {
+  const keys = storedKeys ?? (await prisma.appSecret.findMany({ select: { key: true } })).map(row => row.key);
+  const status = (provider: string) => {
+    const stored = keys.includes(settingKeyFor(provider) ?? "");
+    const env = envKeyFor(provider);
+    return { configured: stored || Boolean(env), source: stored ? "db" as const : env ? "env" as const : null,
+      masked: stored ? "••••••••••••" : maskKey(env ?? null), envDefined: Boolean(env) };
   };
+  return { anthropic: status("anthropic"), google: status("google") };
 }

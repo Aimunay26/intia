@@ -60,8 +60,8 @@ test("O06: configuración explícita del pool, sin confundir texto de la contras
   const {databaseUrl}=load("src/lib/database-url.ts");
   const plain=new URL(databaseUrl({DATABASE_URL:"postgresql://user:my-pooler-password@localhost/db"}));
   assert.equal(plain.searchParams.has("pgbouncer"),false);
-  assert.equal(plain.searchParams.get("application_name"),'intia-workflow-20260917');
-  assert.equal(new URL(databaseUrl({DATABASE_URL:plain.href.replace('intia-workflow-20260917','old-client')})).searchParams.get('application_name'),'intia-workflow-20260917');
+  assert.equal(plain.searchParams.get("application_name"),'intia-secrets-20260925');
+  assert.equal(new URL(databaseUrl({DATABASE_URL:plain.href.replace('intia-secrets-20260925','old-client')})).searchParams.get('application_name'),'intia-secrets-20260925');
   const pooled=new URL(databaseUrl({DATABASE_URL:"postgresql://user:pass@ep-test-pooler.neon.tech/db?sslmode=require",DB_CONNECTION_LIMIT:"4",DB_POOL_TIMEOUT_SECONDS:"12"}));
   assert.equal(pooled.searchParams.get("pgbouncer"),"true");assert.equal(pooled.searchParams.get("connection_limit"),"4");assert.equal(pooled.searchParams.get("sslmode"),"require");
   assert.throws(()=>databaseUrl({DATABASE_URL:plain.href,DB_CONNECTION_LIMIT:"0"}),/entero/);

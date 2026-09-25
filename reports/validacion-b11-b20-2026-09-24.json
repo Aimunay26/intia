@@ -1,0 +1,178 @@
+{
+  "checkedAt": "2026-09-24T23:01:54.225Z",
+  "baseCommit": "6a17cc7",
+  "scope": "B11-B20",
+  "environment": "local-disposable-postgresql-and-production-next-build",
+  "productionChanged": false,
+  "committed": false,
+  "pushed": false,
+  "deployed": false,
+  "realAiCalls": 0,
+  "realBlobCalls": 0,
+  "unit": {
+    "command": "npm test",
+    "mainTests": 124,
+    "ctaTests": 11,
+    "failed": 0,
+    "notes": "Full npm test passed after the final production build; CI now builds before the compiled-server startup tests."
+  },
+  "postgres": {
+    "command": "node scripts/test-postgres.mjs",
+    "suites": [
+      "security",
+      "navigation",
+      "demo",
+      "consistency",
+      "scalability",
+      "deployment",
+      "permissions",
+      "priorities",
+      "workflow",
+      "completion"
+    ],
+    "reportedTests": [
+      13,
+      8,
+      3,
+      12,
+      16,
+      7,
+      13,
+      17,
+      13,
+      11
+    ],
+    "totalReportedTests": 113,
+    "failed": 0,
+    "notes": "Node totals include suite parent tests. Completion suite rerun after unifying objective reads across home, brand cards and detail."
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 0
+  },
+  "typecheck": "passed",
+  "build": {
+    "status": "passed",
+    "knownWarnings": [
+      "Dynamic dependency in @vercel/queue via Workflow",
+      "Prisma package.json configuration deprecation"
+    ]
+  },
+  "profiles": {
+    "environment": "local-production-build",
+    "profiles": [
+      {
+        "role": "OWNER",
+        "checked": true
+      },
+      {
+        "role": "STRATEGY",
+        "checked": true
+      },
+      {
+        "role": "WRITER",
+        "checked": true
+      },
+      {
+        "role": "PRODUCTION",
+        "checked": true
+      },
+      {
+        "role": "CAMERA",
+        "checked": true
+      },
+      {
+        "role": "TALENT",
+        "checked": true
+      },
+      {
+        "role": "EDITOR",
+        "checked": true
+      },
+      {
+        "role": "DESIGNER",
+        "checked": true
+      },
+      {
+        "role": "PUBLISHER",
+        "checked": true
+      },
+      {
+        "role": "ANALYST",
+        "checked": true
+      },
+      {
+        "role": "EMPTY",
+        "checked": true
+      }
+    ],
+    "errors": [],
+    "productionChanged": false,
+    "calculatedObjectivesConsistentAcrossPages": true,
+    "revisionDraftsPreserved": [
+      "user",
+      "asset",
+      "settings"
+    ],
+    "retentionPreviewWithoutActivation": true,
+    "workflowPrerequisiteVisible": true,
+    "reopenWithReason": true,
+    "explicitDocumentProvider": true,
+    "coordinatorReopenWithoutEditingGrant": true,
+    "strategyObjectivesAndFormats": true,
+    "closedScriptControlsHidden": true,
+    "productionDateOnly": true,
+    "commentHistoryPagination": true,
+    "preHydrationGuard": true,
+    "checklistRefreshWithoutReload": true,
+    "analystFullAnalyticsAndCsvResume": true,
+    "checkedAt": "2026-09-24T23:01:21.696Z",
+    "streamingCheck": "Exactly one settings form after the hidden React streaming segment is removed; no page errors."
+  },
+  "workflow": {
+    "checkedAt": "2026-09-24T22:44:16.736Z",
+    "environment": "local-production-build",
+    "workflowSdk": "4.8.9",
+    "actualQueueExecuted": true,
+    "persistedResponseRecovered": true,
+    "scriptsCreated": 1,
+    "auditCount": 1,
+    "generationTracesVerified": true,
+    "gemini38ProviderSwitch": true,
+    "legacyGoogleSettingResolved": true,
+    "liveAiCalls": 0,
+    "liveBlobCalls": 0
+  },
+  "migrationRehearsal": {
+    "checkedAt": "2026-09-24T22:42:46.160Z",
+    "environment": "local-fixture",
+    "baselineMatchesNeon": true,
+    "invalidPreflightRolledBack": true,
+    "decimalPreflightRolledBack": true,
+    "exactMoneyPreserved": true,
+    "legacyValuesPreserved": true,
+    "noImplicitProfileGrants": true,
+    "profileGrantsRevokeSessions": true,
+    "prioritiesOrphanPreflightRolledBack": true,
+    "prioritiesInvalidJsonRolledBack": true,
+    "plannedStructureBackfillPreservesData": true,
+    "referencedStructuresProtected": true,
+    "workflowPreflightRolledBack": true,
+    "legacyApprovalsPreservedWithoutInventedVersion": true,
+    "completionManualObjectivesPreserved": true,
+    "completionLegacyMatchingPreservedReadOnly": true,
+    "completionDefaultsSafe": true,
+    "completionIndexDriftRolledBack": true,
+    "restoreRowsAndSchemaMatch": true,
+    "tables": 34,
+    "backupBytes": 118852
+  },
+  "retentionDefaultEnabled": false,
+  "pending": [
+    "Commit and push",
+    "Neon backup/rehearsal and migration",
+    "Activate writer intia-completion-20260924 and install new-table deployment guard",
+    "Deploy and validate production",
+    "B21 and B22"
+  ]
+}

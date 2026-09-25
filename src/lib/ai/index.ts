@@ -1,9 +1,12 @@
+import { SecretConfigError } from "@/lib/secret-crypto";
+import { createHash } from "node:crypto";
+import { loadGenerationReferences } from "@/lib/ai/references";
 import { prisma } from "@/lib/prisma";
 import { ENV_KEY_NAMES, getSettings, resolveApiKey, SETTING_KEYS } from "@/lib/settings";
-import { resolveAiModel } from "@/lib/ai-models";
+import { effectiveAiModel } from "@/lib/ai-models";
 import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
 import type { AiRequest } from "@/lib/ai/request-budget";
-import { buildSystemPrompt, buildUserPrompt, type ReferenceDoc } from "@/lib/ai/context";
+import { buildSystemPrompt, buildUserPrompt } from "@/lib/ai/context";
 import {
   AiError,
   generateWithClaude,
@@ -38,46 +41,22 @@ export type GenerateOutput = GenerationResult & {
   userPrompt: string;
   /** Nombres de los documentos que se le inyectaron a la IA. */
   referencesUsed: string[];
+  diagnostics?: Record<string, unknown>;
+  validationContext?: { durationSec: number; beats: string };
 };
 
-/** Trae el texto de los PDFs de una entidad, sin cargar los bytes del archivo. */
-async function loadReferences(
-  ownerType: string,
-  ownerId: string,
-  source: string
-): Promise<ReferenceDoc[]> {
-  const assets = await prisma.asset.findMany({
-    where: { ownerType, ownerId, useForAi: true, NOT: { extractedText: null } },
-    select: { label: true, filename: true, extractedText: true },
-    orderBy: { createdAt: "asc" },
-  });
-  return assets
-    .filter((a) => (a.extractedText ?? "").trim().length > 0)
-    .map((a) => ({
-      label: a.label?.trim() || a.filename,
-      source,
-      text: a.extractedText as string,
-    }));
+export async function generateScript(input: GenerateInput, request: AiRequest, prepared?: (diagnostics: Record<string, unknown>) => Promise<void>): Promise<GenerateOutput> {
+  return withGenerationTrace({}, () => generateScriptWithTrace(input, request, prepared));
 }
 
-export async function generateScript(input: GenerateInput, request: AiRequest): Promise<GenerateOutput> {
-  return withGenerationTrace({}, () => generateScriptWithTrace(input, request));
-}
-
-async function generateScriptWithTrace(input: GenerateInput, request: AiRequest): Promise<GenerateOutput> {
+async function generateScriptWithTrace(input: GenerateInput, request: AiRequest, prepared?: (diagnostics: Record<string, unknown>) => Promise<void>): Promise<GenerateOutput> {
   const { structure, brand, archetype, fitScore, fitNotes } = await generationStage("context_load", async () => {
-    const structure = await prisma.structure.findUnique({
-      where: { id: input.structureId },
-    });
+    const [structure, brand, archetype] = await Promise.all([
+      prisma.structure.findUnique({ where: { id: input.structureId } }),
+      input.brandId ? prisma.brand.findUnique({ where: { id: input.brandId } }) : null,
+      input.archetypeId ? prisma.archetype.findUnique({ where: { id: input.archetypeId } }) : null,
+    ]);
     if (!structure) throw new AiError("No se encontró la estructura seleccionada.");
-
-    const brand = input.brandId
-      ? await prisma.brand.findUnique({ where: { id: input.brandId } })
-      : null;
-
-    const archetype = input.archetypeId
-      ? await prisma.archetype.findUnique({ where: { id: input.archetypeId } })
-      : null;
 
     // Compatibilidad arquetipo <-> estructura: el segundo fine tuning.
     let fitScore: number | null = null;
@@ -98,11 +77,7 @@ async function generateScriptWithTrace(input: GenerateInput, request: AiRequest)
     return { structure, brand, archetype, fitScore, fitNotes };
   });
 
-  const references: ReferenceDoc[] = await generationStage("references_load", async () => [
-    ...(await loadReferences("structure", structure.id, "Estructura")),
-    ...(archetype ? await loadReferences("archetype", archetype.id, "Arquetipo") : []),
-    ...(brand ? await loadReferences("brand", brand.id, "Marca") : []),
-  ]);
+  const references = await generationStage("references_load", () => loadGenerationReferences(structure.id, archetype?.id, brand?.id));
   generationEvent("references_load", "info", { referenceCount: references.length });
 
   const durationSec = input.durationSec ?? structure.defaultDurationSec ?? 45;
@@ -204,15 +179,17 @@ async function generateScriptWithTrace(input: GenerateInput, request: AiRequest)
   // catálogo falla aquí, antes de gastar una llamada.
   const provider = input.provider || structure.defaultProvider || "anthropic";
   const modelKey = provider === "google" ? SETTING_KEYS.defaultGoogleModel : SETTING_KEYS.defaultAnthropicModel;
-  const apiKeySetting = provider === "google" ? SETTING_KEYS.googleKey : SETTING_KEYS.anthropicKey;
-  const settings = await generationStage("settings_load", () => getSettings([modelKey, apiKeySetting]));
-  const model = await generationStage("model_resolve", () => resolveAiModel(provider, input.model,
-    structure.defaultProvider === provider ? structure.defaultModel : null, settings[modelKey]));
+  const settings = await generationStage("settings_load", () => getSettings([modelKey]));
+  const effective = await generationStage("model_resolve", () => { try { return effectiveAiModel(provider, input.model,
+    structure.defaultProvider === provider ? structure.defaultModel : null, settings[modelKey]); } catch { throw new AiError("El modelo configurado no está en el catálogo. Revisa Ajustes y la estructura.", undefined, "model"); } });
+  const model = effective.model;
+  const diagnostics = { provider, model, modelSource: effective.source, contextHash: createHash("sha256").update(systemPrompt + "\n" + userPrompt).digest("hex"), structureRevision: structure.updatedAt.toISOString(), brandRevision: brand?.updatedAt.toISOString(), archetypeRevision: archetype?.updatedAt.toISOString(), references: references.map(r => ({ id: r.id, revision: r.updatedAt.toISOString(), usedCharacters: r.text.length, truncated: r.truncated })), availableReferences: references[0]?.total ?? 0 };
+  await prepared?.(diagnostics);
 
   // La clave guardada en Ajustes manda; la variable de entorno es el respaldo.
   // `source` viaja al proveedor para que el error diga de dónde salió la clave.
   const { key, source } = await generationStage("key_resolve", async () => {
-    const { key, source } = await resolveApiKey(provider, settings);
+    const { key, source } = await resolveApiKey(provider).catch(error => { if (error instanceof SecretConfigError) throw new AiError(error.message, "Contacta al Dueño para revisar el cifrado del servidor.", "server", false); throw error; });
     if (!key) {
       const envName = ENV_KEY_NAMES[provider] ?? "correspondiente";
       throw new AiError(
@@ -245,6 +222,8 @@ async function generateScriptWithTrace(input: GenerateInput, request: AiRequest)
       systemPrompt,
       userPrompt,
       referencesUsed: references.map((r) => `[${r.source}] ${r.label}`),
+      diagnostics,
+      validationContext: { durationSec, beats: structure.beats },
     };
   });
 }

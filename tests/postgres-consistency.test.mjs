@@ -52,7 +52,7 @@ test('consistencia con PostgreSQL real: auditoría, revisiones, métricas y rela
       await content.guardarMetrica(form({...base,date:'2026-09-14',views:50,retention3s:''}));
       await assert.rejects(content.guardarMetrica(form(base))); // alta duplicada no sobreescribe
       assert.deepEqual(await prisma.metric.findUniqueOrThrow({where:{id:legacy.id}}),legacy);
-      const filter={brandId:brand.id,desde:'2026-09-01',hasta:'2026-09-30'};
+      const filter={ user:owner, brandId:brand.id,desde:'2026-09-01',hasta:'2026-09-30'};
       const all=await dashboard.getMetricTotals(filter);assert.equal(all.views,350);assert.equal(all.records,3);assert.equal(all.retention,50);
       assert.equal((await dashboard.getMetricTotals({...filter,plataforma:'INSTAGRAM'})).views,200);
       const by=await dashboard.getMetricBreakdowns(filter);assert.equal(by.platforms.reduce((sum,row)=>sum+row.views,0),350);
@@ -93,9 +93,11 @@ test('consistencia con PostgreSQL real: auditoría, revisiones, métricas y rela
       await assert.rejects(broken.guardarAjustes(null,values),/Fallo audit/);
       assert.equal(await prisma.appSetting.findUnique({where:{key:'org.name'}}),null);
       assert.equal(await prisma.appSetting.findUnique({where:{key:'ai.anthropic.apiKey'}}),null);
+      assert.equal(await prisma.appSecret.count(),0);
       const settings=load('src/app/actions/app-settings.ts',settingsMocks);
       assert.ok((await settings.guardarAjustes(null,values)).ok);
-      assert.equal((await prisma.appSetting.findUniqueOrThrow({where:{key:'ai.anthropic.apiKey'}})).value,'fixture-secret-never-log');
+      assert.equal(await load('src/lib/secrets.ts',mocks).readSecret('ai.anthropic.apiKey'),'fixture-secret-never-log');
+      assert.equal(await prisma.appSetting.count({where:{key:'ai.anthropic.apiKey'}}),0);
       assert.ok(!JSON.stringify(await prisma.auditLog.findMany()).includes('fixture-secret-never-log'));
     });
     await t.test('vínculo hereda estructura y rechaza otra marca, también fuera de acciones',async()=>{

@@ -32,13 +32,16 @@ export async function GET(request: Request) {
   if (!esperado || esperado !== state) return volverConError("google_state");
   if (!await consumeAccessAttempt("google")) return volverConError("acceso_limitado");
 
-  const config = await getGoogleConfig();
+  const config = await getGoogleConfig().catch(() => {
+    console.error("[google] No se pudo abrir la configuración de acceso.");
+    return null;
+  });
   if (!config) return volverConError("google_no_configurado");
 
   let perfil;
   try {
     perfil = await exchangeCodeForProfile(config, origin, code);
-  } catch (error) {
+  } catch {
     console.error("[google] Falló el intercambio de autorización.");
     return volverConError("google_fallo");
   }

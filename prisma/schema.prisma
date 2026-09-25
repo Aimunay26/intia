@@ -18,6 +18,7 @@ datasource db {
 // ---------------------------------------------------------------- USUARIOS --
 
 model User {
+  calendarSubscriptions CalendarSubscription[]
   id           String  @id @default(cuid())
   name         String
   email        String  @unique
@@ -47,6 +48,7 @@ model User {
   checkedItems   ChecklistItem[] @relation("CheckedBy")
   createdContent ContentItem[]   @relation("ContentCreatedBy")
   comments       Comment[]
+  metricImports  MetricImportBatch[]
   events         CalendarEvent[] @relation("EventCreatedBy")
   tasks          Task[]          @relation("TaskAssignee")
   generationJobs GenerationJob[]
@@ -141,6 +143,7 @@ model CalendarEvent {
 // ------------------------------------------------------------------ MARCAS --
 
 model Brand {
+  calendarSubscriptions CalendarSubscription[]
   id       String  @id @default(cuid())
   name     String
   slug     String  @unique
@@ -193,6 +196,10 @@ model BrandObjective {
   name          String
   description   String?
   metricKey     String? // views | followers | leads | ventas | roas | ...
+  calculationMode String @default("MANUAL") // MANUAL | WEEKLY_SUM
+  calculationFrom DateTime?
+  calculationTo DateTime?
+  calculationPlatform String?
   unit          String    @default("") // %, S/, seguidores, videos...
   currentValue  Float     @default(0)
   targetValue   Float     @default(0)
@@ -537,6 +544,7 @@ model ContentItem {
   @@index([brandId, scheduledDate])
   @@index([status])
   @@index([scheduledDate])
+  @@index([scriptId])
 }
 
 /// Formatos previstos, con orden y FK; un trigger sincroniza structureIds en cada escritura.
@@ -610,6 +618,8 @@ model GenerationItem {
   linkWarning String?
   inputTokens Int @default(0)
   outputTokens Int @default(0)
+  stage String?
+  diagnostics Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   script Script?
@@ -623,6 +633,26 @@ model GenerationItem {
 model UsageCounter {
   key String @id
   amount BigInt @default(0)
+}
+
+/// Resumable CSV batches. Receipt and metric writes commit in the same transaction.
+model MetricImportBatch {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, map: "MetricImportBatch_user_fkey")
+  requestKey String
+  fingerprint String
+  rows Json
+  issues Json
+  processed Int @default(0)
+  total Int
+  created Int @default(0)
+  updated Int @default(0)
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, requestKey])
+  @@index([userId, createdAt])
 }
 
 /// Quien hizo que en cada video: guionista, actor, camara, editor, voz.
@@ -773,6 +803,8 @@ model AppSetting {
 /// Una corrida del motor automatico: la IA leyo un guion y dijo quien puede
 /// actuarlo. Se guarda entera porque abrir la pantalla NO puede volver a
 /// llamar a la IA: eso seria pagar cada vez que alguien mira.
+/// LEGACY ARCHIVE B20: read-only; no active matching feature writes this table.
+/// Retained for existing evidence and demo-provenance checks. SQL rejects new writes.
 model MatchRun {
   id String @id @default(cuid())
 
@@ -833,6 +865,7 @@ model MatchRun {
 }
 
 /// El veredicto sobre UNA persona dentro de una corrida.
+/// LEGACY ARCHIVE B20: see MatchRun. Deletion follows existing parent FK semantics.
 model MatchRow {
   id String @id @default(cuid())
 
@@ -914,4 +947,30 @@ model Task {
   @@index([brandId])
   @@index([kind])
   @@index([order])
+  @@index([columnId, order, id])
+  @@index([columnId, brandId, order, id])
+}
+
+model AppSecret {
+  key String @id
+  value String
+  keyId String
+  updatedAt DateTime @updatedAt
+}
+
+model CalendarSubscription {
+  id String @id @default(cuid())
+  label String
+  tokenHash String @unique
+  scope String
+  brandId String?
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+  revokedAt DateTime?
+  @@index([createdById, createdAt])
+  @@index([brandId])
 }

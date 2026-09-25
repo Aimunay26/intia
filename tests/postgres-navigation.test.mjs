@@ -40,7 +40,7 @@ test("PostgreSQL: agregados, páginas, cursores e inicialización concurrente", 
     const content = await prisma.contentItem.findMany({ where: { brandId: { in: [id("A"),id("B")] } }, orderBy: { id: "asc" } });
     await prisma.metric.createMany({ data: content.flatMap((row,index) => [0,1,2].map(day => ({ contentItemId: row.id, period: "WEEKLY", platform: "TIKTOK", date: new Date(Date.UTC(2026,8,7+day*7,12)), views: index === 61 ? 999999 : 10 + index, likes: 2, comments: 1, spend: day === 0 ? 10 : 0, revenue: 20, retention3s: day === 0 ? 50 : day === 1 ? 100 : 0 }))) });
     await prisma.assignment.createMany({ data: ["ACTOR","EDITOR"].map(role => ({ contentItemId: content[0].id, userId: owner.id, role })) });
-    const filters = { brandId: id("A"), desde: "2026-09-01", hasta: "2026-09-30" };
+    const filters = { user:owner, brandId: id("A"), desde: "2026-09-01", hasta: "2026-09-30" };
     await t.test("resúmenes y series coinciden con filas reales sin duplicar roles ni marcas", async () => {
       const rows = await prisma.metric.findMany({ where: { contentItem: { brandId: id("A") } } });
       const totalViews = rows.reduce((sum,row) => sum+row.views,0);

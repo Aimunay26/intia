@@ -1,6 +1,8 @@
 "use server";
+import { objectiveCalculation } from "@/lib/objective-policy";
 import { assertBrandPermission } from "@/lib/permissions";
 
+import { invalidateDomain } from "@/lib/view-invalidation";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -95,6 +97,7 @@ async function uniqueSlug(tx: AppTransaction, base: string, ignoreId?: string): 
 }
 
 function revalidateBrand(id: string) {
+  invalidateDomain("objective");
   revalidatePath("/marcas");
   revalidatePath(`/marcas/${id}`);
   revalidatePath("/");
@@ -376,7 +379,7 @@ export async function eliminarMarca(formData: FormData) {
 
 /* ------------------------------------------------------------ OBJETIVOS -- */
 
-type ObjectiveWrite = {
+type ObjectiveWrite = ReturnType<typeof objectiveCalculation> & {
   name: string;
   description: string | null;
   metricKey: string | null;
@@ -393,6 +396,7 @@ type ObjectiveWrite = {
 
 function readObjectiveFields(fd: FormData): ObjectiveWrite {
   return {
+    ...objectiveCalculation(fd),
     name: field(fd, "name"),
     description: fieldOrNull(fd, "description"),
     metricKey: fieldOrNull(fd, "metricKey"),

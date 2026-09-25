@@ -1,17 +1,18 @@
+import { OperationsStatus, AiUsagePanel } from "@/components/operations-status";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
-import { CalendarDays, Database, Lock, RefreshCw, Settings, ShieldAlert } from "lucide-react";
+import { Database, Lock, Settings, ShieldAlert } from "lucide-react";
 import { headers } from "next/headers";
 
-import { rotarTokenCalendario } from "@/app/actions/calendar-feed";
-import { CopyButton, SubmitButton } from "@/components/forms";
-import { Callout, Card, CardHeader, EmptyState, Field, PageHeader } from "@/components/ui";
+import { CalendarSubscriptions } from "@/components/calendar-subscriptions";
+import { listCalendarSubscriptions } from "@/lib/calendar-subscriptions";
+import { prisma } from "@/lib/prisma";
+import { Callout, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
 import { authSecretIsWeak, can, LEVEL } from "@/lib/auth";
 import { DEFAULT_MODEL } from "@/lib/constants";
 import { resolveAiModel } from "@/lib/ai-models";
-import { getGoogleConfig, GOOGLE_SETTING_KEYS, redirectUriFor } from "@/lib/google";
-import { getFeedToken } from "@/lib/ical";
+import { googleConfigStatus, GOOGLE_SETTING_KEYS, redirectUriFor } from "@/lib/google";
 import { aiStatus, getSettingsSnapshot, SETTING_KEYS } from "@/lib/settings";
 import { SettingsForm } from "./settings-form";
 import { VaciarEjemplo } from "./vaciar-ejemplo";
@@ -70,27 +71,27 @@ export default async function AjustesPage() {
     );
   }
 
-  const [snapshot, feedToken, headerList] = await Promise.all([
+  const [snapshot, subscriptions, brands, headerList] = await Promise.all([
     getSettingsSnapshot([...Object.values(SETTING_KEYS), ...Object.values(GOOGLE_SETTING_KEYS)]),
-    getFeedToken(),
+    listCalendarSubscriptions(),
+    prisma.brand.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     headers(),
   ]);
 
   const settings = snapshot.values;
-  const [status, googleAuth] = await Promise.all([aiStatus(settings), getGoogleConfig(settings)]);
+  const [status, googleAuth] = await Promise.all([aiStatus(snapshot.secretKeys), googleConfigStatus(settings, snapshot.secretKeys)]);
 
   // La dirección pública del servidor, para armar las URLs que se copian.
   const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "localhost:3000";
   const proto =
     headerList.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   const origen = `${proto}://${host}`;
-  const feedUrl = `${origen}/api/calendario.ics?token=${feedToken}`;
 
   // Si hay credenciales de Google guardadas en la base, se ofrece quitarlas
   // aunque ahora mande una variable de entorno.
   const googleOauthGuardado = Boolean(
     (settings[GOOGLE_SETTING_KEYS.clientId] ?? "").trim() ||
-      (settings[GOOGLE_SETTING_KEYS.clientSecret] ?? "").trim()
+      snapshot.secretKeys.includes(GOOGLE_SETTING_KEYS.clientSecret)
   );
 
   const secretoDebil = authSecretIsWeak();
@@ -104,6 +105,8 @@ export default async function AjustesPage() {
         icon={<Settings size={19} />}
       />
 
+      <AiUsagePanel user={user} /><OperationsStatus />
+      {snapshot.legacySecretKeys.length > 0 && <Callout tone="danger" title="Migración de secretos pendiente">Completa B22 antes de usar las claves guardadas. No se leerán valores antiguos sin cifrar.</Callout>}
       {secretoDebil ? (
         <div className="mb-4">
           <Callout tone="danger" title="Define AUTH_SECRET antes de publicar en internet">
@@ -128,12 +131,12 @@ export default async function AjustesPage() {
             googleModel={resolveAiModel("google", undefined, settings[SETTING_KEYS.defaultGoogleModel])}
             status={status}
             guardada={{
-              anthropic: Boolean((settings[SETTING_KEYS.anthropicKey] ?? "").trim()),
-              google: Boolean((settings[SETTING_KEYS.googleKey] ?? "").trim()),
+              anthropic: snapshot.secretKeys.includes(SETTING_KEYS.anthropicKey),
+              google: snapshot.secretKeys.includes(SETTING_KEYS.googleKey),
               googleOauth: googleOauthGuardado,
             }}
             googleAuth={{
-              configured: Boolean(googleAuth),
+              configured: googleAuth.configured,
               source: googleAuth?.source ?? null,
             }}
             redirectUri={redirectUriFor(origen)}
@@ -141,80 +144,7 @@ export default async function AjustesPage() {
         </div>
 
         <div className="space-y-4">
-          <Card>
-            <CardHeader
-              title="Google Calendar"
-              subtitle="Para ver aquí todo lo de la app."
-              icon={<CalendarDays size={15} />}
-            />
-            <div className="space-y-3 p-4 text-[12.5px] leading-relaxed">
-              <p className="text-inkmuted">
-                Esta dirección publica el calendario completo: videos programados, días de
-                grabación, reuniones y pendientes. Google la relee sola cada pocas horas.
-              </p>
-
-              {feedToken ? <>
-              <Field label="Dirección del calendario">
-                <input
-                  className="input input-mono text-[11.5px]"
-                  value={feedUrl}
-                  readOnly
-                />
-              </Field>
-              <div className="flex flex-wrap gap-2">
-                <CopyButton text={feedUrl} label="Copiar dirección" className="btn btn-sm" />
-                <a
-                  href="https://calendar.google.com/calendar/u/0/r/settings/addbyurl"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-sm"
-                >
-                  Abrir Google Calendar
-                </a>
-              </div>
-
-              <div className="border-line space-y-1.5 border-t pt-2.5">
-                <p className="text-inksoft font-semibold">Cómo suscribirse</p>
-                <p className="text-inkmuted">
-                  En Google Calendar: <strong>Otros calendarios</strong> →{" "}
-                  <strong>Suscribirse a un calendario</strong> →{" "}
-                  <strong>Desde URL</strong>, y pega la dirección de arriba.
-                </p>
-                <p className="text-inkmuted">
-                  Para ver solo una marca, añade <code className="kbd">&amp;marca=ID</code> al
-                  final. El identificador sale de la dirección de la ficha de la marca.
-                </p>
-              </div>
-
-              <div className="border-line space-y-2 border-t pt-2.5">
-                <p className="text-inkmuted">
-                  Quien tenga esta dirección puede ver la agenda sin entrar a la aplicación. Si se
-                  filtró, cámbiala: las suscripciones antiguas dejarán de funcionar y habrá que
-                  volver a añadirla.
-                </p>
-                <form action={rotarTokenCalendario}>
-                  <SubmitButton className="btn btn-sm" pendingLabel="Cambiando…">
-                    <RefreshCw size={13} /> Cambiar la dirección
-                  </SubmitButton>
-                </form>
-              </div>
-
-              </> : (
-                <form action={rotarTokenCalendario} className="space-y-3">
-                  <p>Activa una dirección para suscribirte desde Google Calendar.</p>
-                  <SubmitButton className="btn btn-sm" pendingLabel="Activando…">Activar calendario</SubmitButton>
-                </form>
-              )}
-
-              {motor.nombre === "SQLite" ? (
-                <p className="text-inkmuted border-line border-t pt-2.5">
-                  Ahora mismo el servidor solo existe en esta computadora, así que Google todavía
-                  no puede alcanzar esta dirección. Funcionará en cuanto publiques la aplicación
-                  en internet.
-                </p>
-              ) : null}
-            </div>
-          </Card>
+          <CalendarSubscriptions rows={subscriptions} brands={brands} />
 
           <Card>
             <CardHeader

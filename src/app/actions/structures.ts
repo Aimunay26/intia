@@ -1,4 +1,5 @@
 "use server";
+import { resolveAiModel } from "@/lib/ai-models";
 import { requirePermission } from "@/lib/auth";
 
 import { revalidatePath } from "next/cache";
@@ -106,7 +107,7 @@ export async function crearEstructura(
         active: boolField(formData, "active"),
         defaultDurationSec: boundedNumber(intField(formData, "defaultDurationSec", 45), 5, 600, "Duración", true),
         defaultProvider: provider,
-        defaultModel: field(formData, "defaultModel"),
+        defaultModel: field(formData, "defaultModel") ? resolveAiModel(safeProvider(field(formData, "defaultProvider")), field(formData, "defaultModel")) : "",
         temperature: boundedNumber(numField(formData, "temperature", 1), 0, 2, "Temperatura"),
       },
       select: { id: true, name: true, category: true },
@@ -167,7 +168,7 @@ export async function actualizarEstructura(
       active: boolField(formData, "active"),
       defaultDurationSec: boundedNumber(intField(formData, "defaultDurationSec", 45), 5, 600, "Duración", true),
       defaultProvider: safeProvider(field(formData, "defaultProvider")),
-      defaultModel: field(formData, "defaultModel"),
+      defaultModel: field(formData, "defaultModel") ? resolveAiModel(safeProvider(field(formData, "defaultProvider")), field(formData, "defaultModel")) : "",
       temperature: boundedNumber(numField(formData, "temperature", 1), 0, 2, "Temperatura"),
     };
 
@@ -415,7 +416,7 @@ export async function guardarPrompt(formData: FormData) {
     const data = {
       systemPrompt: field(formData, "systemPrompt"),
       defaultProvider: safeProvider(field(formData, "defaultProvider")),
-      defaultModel: field(formData, "defaultModel"),
+      defaultModel: field(formData, "defaultModel") ? resolveAiModel(safeProvider(field(formData, "defaultProvider")), field(formData, "defaultModel")) : "",
       defaultDurationSec: boundedNumber(intField(formData, "defaultDurationSec", 45), 5, 600, "Duración", true),
       temperature: boundedNumber(numField(formData, "temperature", 1), 0, 2, "Temperatura"),
     };

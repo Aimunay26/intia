@@ -1,8 +1,9 @@
 import { loadPage } from "@/lib/list-pagination";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { allows, profileGrants, type AccessUser } from "@/lib/permissions";
 
-export type MetricFilters = { brandId: string | null; desde: string; hasta: string; plataforma?: string; estructura?: string; persona?: string };
+export type MetricFilters = { user: AccessUser; brandId: string | null; desde: string; hasta: string; plataforma?: string; estructura?: string; persona?: string };
 export type MetricTotals = { views: number; interactions: number; reach: number; spend: number; revenue: number; retention: number | null; roas: number; records: number; videos: number };
 export type MetricVideo = { id: string; title: string; platforms: string; fecha: Date; brandName: string; brandColor: string; views: number; interactions: number; spend: number; revenue: number; retSum: number; retCount: number };
 
@@ -10,6 +11,13 @@ export type MetricVideo = { id: string; title: string; platforms: string; fecha:
 export function metricSource(filters: MetricFilters) {
   const conditions = [Prisma.sql`m."period" = 'WEEKLY'`, Prisma.sql`m."date" >= ${new Date(`${filters.desde}T00:00:00.000Z`)}`,
     Prisma.sql`m."date" < ${new Date(new Date(`${filters.hasta}T00:00:00.000Z`).getTime() + 86400000)}`];
+  const user = filters.user;
+  if (!user || !allows(user, "metrics.view")) conditions.push(Prisma.sql`FALSE`);
+  else if (user.role !== "OWNER") {
+    conditions.push(user.brandIds?.length ? Prisma.sql`ci."brandId" IN (${Prisma.join([...user.brandIds])})` : Prisma.sql`FALSE`);
+    const grants = profileGrants(user, "metrics.view");
+    if (!grants.some(p => p.scope === "brand")) conditions.push(Prisma.sql`EXISTS (SELECT 1 FROM "Assignment" scope_a WHERE scope_a."contentItemId" = ci.id AND scope_a."userId" = ${user.id})`);
+  }
   if (filters.brandId) conditions.push(Prisma.sql`ci."brandId" = ${filters.brandId}`);
   if (filters.plataforma) conditions.push(Prisma.sql`m."platform" = ${filters.plataforma}`);
   if (filters.estructura) conditions.push(Prisma.sql`ci."structureId" = ${filters.estructura}`);

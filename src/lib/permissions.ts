@@ -30,13 +30,13 @@ export const SECTIONS = {
   help: { href: "/tutorial", label: "Cómo se usa", capability: "help.view" },
 } as const;
 export type Section = keyof typeof SECTIONS;
-export type Capability = typeof SECTIONS[Section]["capability"] | "brands.edit" | "content.plan" | "content.assign" | "content.approve" | "content.shoot" | "content.editing" | "content.design" | "content.publish" | "content.comment" | "scripts.write" | "scripts.approve" | "structures.edit" | "archetypes.edit" | "calendar.edit" | "tasks.manage" | "tasks.work" | "metrics.write" | "assets.write";
+export type Capability = typeof SECTIONS[Section]["capability"] | "brands.edit" | "content.plan" | "content.scheduleShoot" | "content.assign" | "content.approve" | "content.shoot" | "content.editing" | "content.design" | "content.publish" | "content.comment" | "scripts.write" | "scripts.approve" | "structures.edit" | "archetypes.edit" | "calendar.edit" | "tasks.manage" | "tasks.work" | "metrics.write" | "assets.write";
 type Scope = "brand" | "assigned";
 const common = ["calendar.view", "content.view", "tasks.view", "scripts.view", "content.comment", "tasks.work"] as const;
 const profiles: Record<WorkProfile, { scope: Scope; grants: readonly Capability[] }> = {
   STRATEGY: { scope: "brand", grants: [...common, "brands.view", "brands.edit", "content.plan", "content.assign", "content.approve", "scripts.approve", "structures.view", "structures.edit", "archetypes.view", "archetypes.edit", "calendar.edit", "tasks.manage", "metrics.view", "assets.write"] },
   WRITER: { scope: "brand", grants: [...common, "brands.view", "scripts.generate", "scripts.write", "structures.view", "archetypes.view", "assets.write"] },
-  PRODUCTION: { scope: "brand", grants: [...common, "content.assign", "content.shoot", "calendar.edit", "tasks.manage", "assets.write"] },
+  PRODUCTION: { scope: "brand", grants: [...common, "content.scheduleShoot", "content.assign", "content.shoot", "calendar.edit", "tasks.manage", "assets.write"] },
   CAMERA: { scope: "assigned", grants: [...common, "content.shoot", "assets.write"] },
   TALENT: { scope: "assigned", grants: [...common, "archetypes.view"] },
   EDITOR: { scope: "assigned", grants: [...common, "content.editing", "assets.write"] },

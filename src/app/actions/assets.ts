@@ -17,6 +17,17 @@ function refresh(type: string, id: string) {
   if (type === "user") revalidatePath("/mi-perfil");
 }
 
+/** Lazy editor read, with authorization and revision captured with the text. */
+export async function readAssetText(id: string) {
+  const user = await requireLevel(LEVEL.MEMBER);
+  return withMutation(user, false, async tx => {
+    const parent = await tx.asset.findUniqueOrThrow({ where: { id }, select: { ownerType: true, ownerId: true } });
+    await assertAssetOwner(tx, parent.ownerType, parent.ownerId, user, true);
+    const row = await tx.asset.findUniqueOrThrow({ where: { id }, select: { extractedText: true, updatedAt: true } });
+    return { text: row.extractedText ?? "", revision: row.updatedAt.toISOString() };
+  });
+}
+
 export async function uploadAsset(_prev: AssetState, form: FormData): Promise<AssetState> {
   const user = await requireLevel(LEVEL.MEMBER);
   const ownerType = field(form, "ownerType"), ownerId = field(form, "ownerId"), label = fieldOrNull(form, "label");

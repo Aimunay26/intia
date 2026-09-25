@@ -8,6 +8,8 @@ if(!source||!['localhost','127.0.0.1'].includes(new URL(source).hostname)||!new 
 const connection=name=>{const url=new URL(source);url.searchParams.set('application_name',name);return url.href;};
 const operatorUrl=connection('intia-migrator-20260909');
 const operator=new PrismaClient({datasourceUrl:operatorUrl}), legacy=new PrismaClient({datasourceUrl:source}), previous=new PrismaClient({datasourceUrl:connection('intia-schema-20260909')}), current=new PrismaClient({datasourceUrl:connection('intia-profiles-20260910')}), workflow=new PrismaClient({datasourceUrl:connection('intia-workflow-20260917')});
+const secrets=new PrismaClient({datasourceUrl:connection('intia-secrets-20260925')});
+const completion=new PrismaClient({datasourceUrl:connection('intia-completion-20260924')});
 const install=()=>{const result=spawnSync(process.execPath,['node_modules/prisma/build/index.js','db','execute','--file','prisma/operations/deployment-gate.sql','--schema','prisma/schema.prisma'],{env:{...process.env,DATABASE_URL:operatorUrl},encoding:'utf8'});assert.equal(result.status,0,result.stderr);};
 test('control de versiones y mantenimiento con conexiones reales',async t=>{
   try{
@@ -69,5 +71,39 @@ test('control de versiones y mantenimiento con conexiones reales',async t=>{
       await workflow.brand.update({where:{id:'gate-brand'},data:{name:'Flujo nuevo'}});
       assert.equal((await operator.brand.findUniqueOrThrow({where:{id:'gate-brand'}})).name,'Flujo nuevo');
     });
-  }finally{await Promise.all([operator.$disconnect(),legacy.$disconnect(),previous.$disconnect(),current.$disconnect(),workflow.$disconnect()]);}
+    await t.test('B11–B20 protege importaciones nuevas y rechaza los escritores B07–B10',async()=>{
+      const activate=()=>spawnSync(process.execPath,['node_modules/prisma/build/index.js','db','execute','--file','prisma/operations/activate-backend-completion.sql','--schema','prisma/schema.prisma'],{env:{...process.env,DATABASE_URL:operatorUrl},encoding:'utf8'});
+      assert.notEqual(activate().status,0);
+      await operator.$executeRaw`UPDATE intia_ops.deployment_gate SET blocked=true WHERE singleton`;
+      install();const activated=activate();assert.equal(activated.status,0,activated.stderr);
+      assert.equal(await operator.authSession.count({where:{id:'workflow-session'}}),1);
+      const batch={userId:'gate-owner',requestKey:'fixture',fingerprint:'fixture',rows:[],issues:[],total:1};
+      await assert.rejects(completion.metricImportBatch.create({data:batch}),/Actualización del sistema/);
+      await operator.$executeRaw`UPDATE intia_ops.deployment_gate SET blocked=false WHERE singleton`;
+      await assert.rejects(workflow.brand.update({where:{id:'gate-brand'},data:{name:'Anterior'}}),/versión del sistema/);
+      await assert.rejects(workflow.metricImportBatch.create({data:batch}),/versión del sistema/);
+      await completion.metricImportBatch.create({data:batch});
+      assert.equal(await completion.metricImportBatch.count(),1);
+    });
+    await t.test('B22 exige secretos migrados y protege ambas tablas nuevas',async()=>{
+      const activate=()=>spawnSync(process.execPath,['node_modules/prisma/build/index.js','db','execute','--file','prisma/operations/activate-secrets-calendar.sql','--schema','prisma/schema.prisma'],{env:{...process.env,DATABASE_URL:operatorUrl},encoding:'utf8'});
+      assert.notEqual(activate().status,0);
+      await operator.$executeRaw`UPDATE intia_ops.deployment_gate SET blocked=true WHERE singleton`;
+      // Simulate a pre-migration row to exercise the activation preflight, in this disposable DB only.
+      await operator.$executeRawUnsafe('ALTER TABLE "AppSetting" DISABLE TRIGGER "AppSetting_no_plaintext_secret"');
+      await operator.appSetting.create({data:{key:'ai.google.apiKey',value:'legacy-fixture'}});
+      await operator.$executeRawUnsafe('ALTER TABLE "AppSetting" ENABLE TRIGGER "AppSetting_no_plaintext_secret"');
+      assert.notEqual(activate().status,0);
+      await operator.appSetting.delete({where:{key:'ai.google.apiKey'}});
+      install();assert.equal(activate().status,0);
+      const subscription={label:'Fixture',scope:'BRAND',brandId:'gate-brand',createdById:'gate-owner',tokenHash:'a'.repeat(64),expiresAt:new Date(Date.now()+86400000)};
+      await assert.rejects(secrets.calendarSubscription.create({data:subscription}),/Actualización del sistema/);
+      await operator.$executeRaw`UPDATE intia_ops.deployment_gate SET blocked=false WHERE singleton`;
+      await assert.rejects(completion.calendarSubscription.create({data:subscription}),/versión del sistema/);
+      await assert.rejects(completion.appSecret.deleteMany(),/versión del sistema/);
+      await secrets.calendarSubscription.create({data:subscription});
+      assert.equal(await secrets.calendarSubscription.count(),1);
+      assert.equal(await operator.authSession.count({where:{id:'workflow-session'}}),1);
+    });
+  }finally{await Promise.all([secrets.$disconnect(),completion.$disconnect(),operator.$disconnect(),legacy.$disconnect(),previous.$disconnect(),current.$disconnect(),workflow.$disconnect()]);}
 });

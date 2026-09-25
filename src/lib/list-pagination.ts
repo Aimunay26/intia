@@ -1,3 +1,4 @@
+import { pageNumber } from "@/lib/query-params";
 /** Consulta conteo y filas en paralelo; corrige enlaces a páginas que ya no existen. */
 export async function loadPage<T>(
   requested: string | undefined,
@@ -5,8 +6,7 @@ export async function loadPage<T>(
   count: () => PromiseLike<number>,
   read: (range: { skip: number; take: number }) => PromiseLike<T[]>,
 ) {
-  const number = Number(requested);
-  const requestedPage = Number.isSafeInteger(number) && number > 0 && number <= 1_000_000 ? number : 1;
+  const requestedPage = pageNumber(requested);
   const [total, firstItems] = await Promise.all([
     count(),
     read({ skip: (requestedPage - 1) * pageSize, take: pageSize }),

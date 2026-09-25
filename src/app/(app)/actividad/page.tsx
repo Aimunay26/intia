@@ -1,4 +1,5 @@
 import { requirePageSection } from "@/lib/render-context";
+import { pageNumber, optionalDateRange, queryText, singleQueryValues } from "@/lib/query-params";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
 import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
@@ -97,10 +98,11 @@ export default async function ActividadPage({
   return measurePagePhase("page:/actividad", async () => {
   const user = await requirePageSection("activity");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="activity" query={await searchParams} />;
-  const sp = await searchParams;
+  const raw = singleQueryValues(await searchParams);
+  const sp = { ...raw, ...optionalDateRange(raw.desde, raw.hasta) };
 
-  const q = (sp.q ?? "").trim();
-  const pagina = Math.max(1, Number(sp.pagina) || 1);
+  const q = queryText(sp.q);
+  const pagina = pageNumber(sp.pagina);
 
   const [personas, brandCtx] = await Promise.all([
     prisma.user.findMany({
@@ -132,7 +134,7 @@ export default async function ActividadPage({
     prisma.auditLog.count({ where }),
     prisma.auditLog.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
       skip: (pagina - 1) * POR_PAGINA,
       take: POR_PAGINA,
       select: {

@@ -38,7 +38,6 @@ jobs:
       - run: npm audit --audit-level=moderate
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
       - run: npm run test:postgres
       - name: Ensayar migración y restauración
         run: npm run db:ensayo
@@ -46,6 +45,8 @@ jobs:
           PG_TEST_CONTAINER: ${{ job.services.postgres.id }}
       - run: npm run db:migrate
       - run: npm run build
+      # The security startup test exercises the compiled production server.
+      - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npm run test:workflow
       - run: npm run test:perfiles

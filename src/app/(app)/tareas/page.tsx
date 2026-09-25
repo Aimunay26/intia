@@ -1,3 +1,4 @@
+import { singleQueryValues } from "@/lib/query-params";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
@@ -20,7 +21,7 @@ export default async function TareasPage({ searchParams }: { searchParams: Promi
   const brandCtx = await getBrandContext();
   const activeBrandId = brandCtx.activeId;
 
-  const sp = await searchParams;
+  const sp = singleQueryValues(await searchParams);
   const filters = normalizeTaskFilters(sp);
 
   const [columns, users, brands] = await Promise.all([

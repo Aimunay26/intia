@@ -71,7 +71,7 @@ export default function JobProgress({ initial, providersReady = {}, defaultModel
   }
   const completed = job.items.filter(item => item.status === "COMPLETED").length;
   return <div className="mx-auto max-w-3xl space-y-5">
-    <Link href="/generador/trabajos" className="text-brand">← Mis generaciones</Link>
+    <Link href="/generador/trabajos" className="text-brand">← Generaciones pendientes</Link>
     <h1 className="text-2xl font-bold">Generación de guiones</h1>
     <p>Puedes cambiar de sección o cerrar esta pestaña. Encontrarás aquí el avance y los guiones terminados.</p>
     <div className="card space-y-3 p-5" aria-live="polite">

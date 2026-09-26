@@ -429,7 +429,7 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       else assert.match(child.payload.model, /^claude-/);
       await jobs.cancelGeneration(user, id);
     });
-    await check('historial: permisos, filtros, paginación, sucesor y estado público sin pedido privado', async () => {
+    await check('pendientes: permisos, filtro y paginación después de excluir ancestros y éxitos', async () => {
       const { generationHistory } = load('src/lib/generation-history.ts', mocks);
       await prisma.user.create({ data: { id: 'history-writer', name: 'Historial', email: 'history@p1.test', passwordHash: 'fixture', workProfiles: { create: { profile: 'WRITER' } }, brandAccess: { create: { brandId: 'A' } } } });
       const user = await actor('history-writer');
@@ -440,11 +440,13 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       } });
       const successor = await jobs.retryFailedGeneration(user, 'history-22', 'anthropic');
       const first = await generationHistory(user, '1', true), second = await generationHistory(user, '2', true);
-      assert.equal(first.jobs.length, 20); assert.equal(first.hasNext, true); assert.equal(second.jobs.length, 3); assert.equal(second.hasNext, false);
-      assert.equal(new Set([...first.jobs, ...second.jobs].map(j => j.id)).size, 23);
-      assert.deepEqual(first.jobs[0].retry, { id: successor, status: 'QUEUED' });
+      assert.equal(first.jobs.length, 20); assert.equal(first.hasNext, true); assert.equal(second.jobs.length, 2); assert.equal(second.hasNext, false);
+      assert.equal(first.total, 22); assert.equal(first.pages, 2);
+      assert.equal(new Set([...first.jobs, ...second.jobs].map(j => j.id)).size, 22);
+      assert.equal(first.jobs.some(j => j.id === 'history-22' || j.id === successor), false, 'El activo y sus ancestros no aparecen en Por reintentar');
       assert.equal(first.jobs[0].missing, 1); assert.deepEqual(first.jobs[0].formats, ['Fixture']);
-      const all = await generationHistory(user); assert.equal(all.jobs[0].id, successor);
+      const all = await generationHistory(user); assert.equal(all.jobs[0].id, successor); assert.equal(all.total, 23);
+      const last = await generationHistory(user, '999', true); assert.equal(last.page, 2); assert.equal(last.jobs.length, 2);
       assert.equal((await generationHistory(user, '-5', true)).page, 1);
       const publicStatus = await jobs.generationStatus(user, 'history-22');
       assert.equal(publicStatus.requestedProvider, 'google'); assert.equal(publicStatus.requestedModel, 'gemini-3.7-flash');
@@ -457,11 +459,56 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       await prisma.generationJob.update({ where: { id: 'history-0' }, data: { status: 'COMPLETED', items: { updateMany: { where: {}, data: { status: 'COMPLETED' } } } } });
       const persisted = await prisma.generationItem.findFirstOrThrow({ where: { jobId: 'history-1' } });
       await prisma.script.create({ data: { title: 'Éxito conservado', authorId: user.id, brandId: 'A', generationItemId: persisted.id } });
-      assert.equal((await generationHistory(user, '2', true)).jobs.length, 1);
+      const reduced = await generationHistory(user, '2', true);
+      assert.equal(reduced.page, 1); assert.equal(reduced.pages, 1); assert.equal(reduced.total, 20); assert.equal(reduced.jobs.length, 20);
       await jobs.cancelGeneration(user, successor);
+      assert.equal((await generationHistory(user, '2', true)).jobs.length, 1);
+      assert.equal((await generationHistory({ ...user, brandIds: ["A') OR TRUE --"] })).total, 0);
       await prisma.userBrandAccess.deleteMany({ where: { userId: user.id } });
       assert.equal((await generationHistory(await actor(user.id))).jobs.length, 0);
       await assert.rejects(generationHistory({ ...user, profiles: ['PRODUCTION'] }), /permiso|acceso/i);
+    });
+    await check('pendientes: una sola tarjeta por cadena, solo formatos faltantes y desaparece al completarse', async () => {
+      const { generationHistory } = load('src/lib/generation-history.ts', mocks);
+      await prisma.user.create({ data: { id: 'pending-writer', name: 'Pendientes', email: 'pending@p1.test', passwordHash: 'fixture', workProfiles: { create: { profile: 'WRITER' } }, brandAccess: { create: { brandId: 'A' } } } });
+      await prisma.structure.create({ data: { id: 'pending-third', name: 'Tercero', slug: 'pending-third', defaultDurationSec: 5 } });
+      const user = await actor('pending-writer');
+      const input = { request: 'Pedido único ficticio', provider: 'google', brandId: 'A' };
+      const source = await jobs.enqueueGeneration(user, randomUUID(), ['format', 'retry-format', 'pending-third'], input);
+      run = async input => { if (input.structureId !== 'format') throw Error('Fallo ficticio'); return result(); }; await drain(source);
+      let list = await generationHistory(user, '1', true);
+      assert.equal(list.total, 1); assert.equal(list.jobs[0].id, source); assert.equal(list.jobs[0].missing, 2);
+      assert.deepEqual(new Set(list.jobs[0].formats), new Set(['Reintento', 'Tercero']));
+      const first = await jobs.retryFailedGeneration(user, source, 'google');
+      assert.equal((await generationHistory(user, '1', true)).total, 0, 'Un reintento activo no deja el error antiguo como pendiente de reintentar');
+      assert.equal((await generationHistory(user)).jobs[0].id, first);
+      run = async input => { if (input.structureId !== 'retry-format') throw Error('Fallo ficticio'); return result(); }; await drain(first);
+      list = await generationHistory(user); assert.equal(list.total, 1); assert.equal(list.jobs[0].id, first);
+      assert.deepEqual(list.jobs[0].formats, ['Tercero']); assert.equal(list.jobs[0].missing, 1);
+      const second = await jobs.retryFailedGeneration(user, first, 'anthropic');
+      run = async () => { throw Error('Fallo ficticio'); }; await drain(second);
+      // La agrupación también funciona con recibos antiguos cuyo payload fue redactado.
+      await prisma.generationJob.updateMany({ where: { id: { in: [source, first] } }, data: { payload: { redacted: true, brandId: 'A' } } });
+      list = await generationHistory(user, '1', true); assert.equal(list.total, 1); assert.equal(list.jobs[0].id, second);
+      const third = await jobs.retryFailedGeneration(user, second, 'google');
+      run = async () => result(); await drain(third);
+      for (const failedOnly of [true, false]) {
+        list = await generationHistory(user, '900', failedOnly);
+        assert.equal(list.total, 0); assert.equal(list.page, 1); assert.equal(list.pages, 1); assert.deepEqual(list.jobs, []);
+      }
+      assert.equal(await prisma.script.count({ where: { authorId: user.id } }), 3, 'Los guiones completados siguen en la biblioteca');
+      const before = calls; assert.equal(await jobs.retryFailedGeneration(user, source), first); assert.equal(calls, before, 'El recibo antiguo evita otro despacho');
+      // Dos solicitudes independientes con el mismo texto son pedidos diferentes.
+      const separate = [];
+      for (let i = 0; i < 2; i++) {
+        const id = await jobs.enqueueGeneration(user, randomUUID(), ['format'], input);
+        await jobs.cancelGeneration(user, id); separate.push(id);
+      }
+      assert.equal((await generationHistory(user)).total, 2);
+      // Si el Dueño asume un reintento, el miembro no recibe datos ni una acción duplicada.
+      const owned = await jobs.retryFailedGeneration(await actor('owner'), separate[0], 'google');
+      list = await generationHistory(user); assert.equal(list.total, 1); assert.equal(list.jobs[0].id, separate[1]);
+      await drain(owned); assert.equal((await generationHistory(user)).total, 1);
     });
     await check('acción de reintento: registra antes de despachar y nunca expone errores internos', async () => {
       const sourceId = await enqueue(); await jobs.cancelGeneration(await actor('writer'), sourceId);

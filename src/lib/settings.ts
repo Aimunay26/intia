@@ -137,8 +137,8 @@ export function maskKey(key: string | null) {
 }
 
 /** Status checks do not decrypt credentials. */
-export async function aiStatus(storedKeys?: string[]) {
-  const keys = storedKeys ?? (await prisma.appSecret.findMany({ select: { key: true } })).map(row => row.key);
+export async function aiStatus(storedKeys?: string[], db: AppTransaction = prisma) {
+  const keys = storedKeys ?? (await db.appSecret.findMany({ select: { key: true } })).map(row => row.key);
   const status = (provider: string) => {
     const stored = keys.includes(settingKeyFor(provider) ?? "");
     const env = envKeyFor(provider);

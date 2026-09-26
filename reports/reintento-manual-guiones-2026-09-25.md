@@ -2,6 +2,8 @@
 
 Fecha: 25/09/2026 (Perú). Implementado y validado localmente; activación productiva pendiente de comprobar. No requiere migración de Neon.
 
+Actualización del 26/09: se añadió acceso desde el menú y la biblioteca, filtro de fallos y selección de Claude/Gemini al reintentar. El comportamiento actual y sus verificaciones están en [Historial y proveedor de reintento](historial-reintentos-proveedor-2026-09-26.md); este documento conserva el alcance y resultados de la implementación inicial.
+
 ## Uso
 
 En **Generador IA → Mis generaciones → detalle**, al terminar un trabajo con guiones faltantes aparece **Reintentar guion no generado** o **Reintentar N guiones no generados**. Incluye fallidos y cancelados que no tengan un guion persistido. No aparece mientras el trabajo sigue en curso ni cuando todo está generado.

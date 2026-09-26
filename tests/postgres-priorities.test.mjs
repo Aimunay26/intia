@@ -33,6 +33,8 @@ const video = (id, extra = {}) => prisma.contentItem.create({ data: { id, title:
 test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async t => {
   process.env.AUTH_SECRET = randomBytes(32).toString('hex'); process.env.AI_JOBS_ENABLED = 'true'; process.env.BLOB_PRIVATE_ENABLED = 'false';
   const oldFetch = globalThis.fetch;
+  const oldKeys = { GEMINI_API_KEY: process.env.GEMINI_API_KEY, ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY };
+  process.env.GEMINI_API_KEY = 'fixture-gemini-never-sent'; process.env.ANTHROPIC_API_KEY = 'fixture-claude-never-sent';
   globalThis.fetch = async () => { throw Error('HTTP externo prohibido en esta suite'); };
   const check = (name, fn) => t.test(name, async () => { await prisma.usageCounter.deleteMany(); run = async () => result(); await fn(); });
   try {
@@ -382,16 +384,100 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       await assert.rejects(jobs.retryFailedGeneration(user, source2), /ya tiene un guion/);
       assert.equal((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'retry-occupied-video' } })).scriptId, 'script');
     });
+    await check('reintento con proveedor: cambia modelo y proveedor, conserva pedido y no hereda el modelo de formato', async () => {
+      const user = await actor('writer');
+      const sourceId = await enqueue({ model: 'gemini-3.8-flash', ctaMode: 'comunidad' });
+      await jobs.cancelGeneration(user, sourceId);
+      await prisma.appSetting.upsert({ where: { key: 'ai.anthropic.model' }, create: { key: 'ai.anthropic.model', value: 'claude-haiku-4-5' }, update: { value: 'claude-haiku-4-5' } });
+      const id = await jobs.retryFailedGeneration(user, sourceId, 'anthropic');
+      const child = await prisma.generationJob.findUniqueOrThrow({ where: { id } });
+      assert.equal(child.payload.provider, 'anthropic'); assert.equal(child.payload.model, 'claude-haiku-4-5');
+      assert.equal(child.payload.request, 'Datos ficticios'); assert.equal(child.payload.ctaMode, 'comunidad');
+      assert.equal(child.payload.retryOfJobId, sourceId);
+      assert.equal(await jobs.retryFailedGeneration(user, sourceId, 'anthropic'), id);
+      await assert.rejects(jobs.retryFailedGeneration(user, sourceId, 'google'), /otro proveedor/);
+      const inputs = []; run = async input => { inputs.push(input); throw Error('Fallo ficticio'); };
+      await drain(id);
+      assert.equal(inputs.length, 1); assert.equal(inputs[0].provider, 'anthropic'); assert.equal(inputs[0].model, 'claude-haiku-4-5');
+      // El segundo intento puede volver a Gemini; el historial previo no se reescribe.
+      const nextId = await jobs.retryFailedGeneration(user, id, 'google');
+      const next = await prisma.generationJob.findUniqueOrThrow({ where: { id: nextId } });
+      assert.equal(next.payload.provider, 'google'); assert.match(next.payload.model, /^gemini-/);
+      await jobs.cancelGeneration(user, nextId);
+      assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id: sourceId } })).payload.model, 'gemini-3.8-flash');
+      await prisma.appSetting.delete({ where: { key: 'ai.anthropic.model' } });
+    });
+    await check('reintento con proveedor: rechaza claves ausentes o proveedor inválido sin crear trabajos', async () => {
+      const user = await actor('writer'), sourceId = await enqueue(); await jobs.cancelGeneration(user, sourceId);
+      const total = await prisma.generationJob.count(), before = calls;
+      await assert.rejects(jobs.retryFailedGeneration(user, sourceId, 'otro'), /Elige Claude o Gemini/);
+      const key = process.env.ANTHROPIC_API_KEY; delete process.env.ANTHROPIC_API_KEY;
+      try { await assert.rejects(jobs.retryFailedGeneration(user, sourceId, 'anthropic'), /no tiene una clave de Claude/); }
+      finally { process.env.ANTHROPIC_API_KEY = key; }
+      assert.equal(await prisma.generationJob.count(), total); assert.equal(calls, before);
+    });
+    await check('reintento con proveedor: dos pestañas con distinta elección crean un solo sucesor', async () => {
+      const user = await actor('writer'), sourceId = await enqueue({ model: 'gemini-3.7-flash' }); await jobs.cancelGeneration(user, sourceId);
+      const total = await prisma.generationJob.count();
+      const results = await Promise.allSettled(['google', 'anthropic'].map(provider => jobs.retryFailedGeneration(user, sourceId, provider)));
+      assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
+      const rejected = results.find(r => r.status === 'rejected'); assert.match(rejected.reason.message, /otro proveedor/);
+      const id = results.find(r => r.status === 'fulfilled').value;
+      assert.equal(await prisma.generationJob.count(), total + 1);
+      const child = await prisma.generationJob.findUniqueOrThrow({ where: { id } });
+      if (child.payload.provider === 'google') assert.equal(child.payload.model, 'gemini-3.7-flash');
+      else assert.match(child.payload.model, /^claude-/);
+      await jobs.cancelGeneration(user, id);
+    });
+    await check('historial: permisos, filtros, paginación, sucesor y estado público sin pedido privado', async () => {
+      const { generationHistory } = load('src/lib/generation-history.ts', mocks);
+      await prisma.user.create({ data: { id: 'history-writer', name: 'Historial', email: 'history@p1.test', passwordHash: 'fixture', workProfiles: { create: { profile: 'WRITER' } }, brandAccess: { create: { brandId: 'A' } } } });
+      const user = await actor('history-writer');
+      for (let index = 0; index < 23; index++) await prisma.generationJob.create({ data: {
+        id: `history-${index}`, userId: user.id, sessionVersion: 0, requestKey: randomUUID(), fingerprint: 'fixture', status: 'FAILED',
+        createdAt: new Date(Date.UTC(2026, 8, 1, 0, index)), payload: { provider: 'google', model: 'gemini-3.7-flash', request: 'PRIVATE-PROMPT-FIXTURE', brandId: 'A' },
+        items: { create: { order: 0, structureId: 'format', status: 'FAILED' } },
+      } });
+      const successor = await jobs.retryFailedGeneration(user, 'history-22', 'anthropic');
+      const first = await generationHistory(user, '1', true), second = await generationHistory(user, '2', true);
+      assert.equal(first.jobs.length, 20); assert.equal(first.hasNext, true); assert.equal(second.jobs.length, 3); assert.equal(second.hasNext, false);
+      assert.equal(new Set([...first.jobs, ...second.jobs].map(j => j.id)).size, 23);
+      assert.deepEqual(first.jobs[0].retry, { id: successor, status: 'QUEUED' });
+      assert.equal(first.jobs[0].missing, 1); assert.deepEqual(first.jobs[0].formats, ['Fixture']);
+      const all = await generationHistory(user); assert.equal(all.jobs[0].id, successor);
+      assert.equal((await generationHistory(user, '-5', true)).page, 1);
+      const publicStatus = await jobs.generationStatus(user, 'history-22');
+      assert.equal(publicStatus.requestedProvider, 'google'); assert.equal(publicStatus.requestedModel, 'gemini-3.7-flash');
+      assert.equal(publicStatus.items[0].structure.name, 'Fixture'); assert.equal(publicStatus.retryJobId, successor);
+      assert.equal(Object.hasOwn(publicStatus, 'payload'), false);
+      assert.doesNotMatch(JSON.stringify({ first, second, publicStatus }), /PRIVATE-PROMPT-FIXTURE|fixture-gemini|fixture-claude/);
+      assert.equal((await generationHistory(await actor('owner'))).jobs.length, 0, 'Incluso el historial del Dueño muestra sus propias solicitudes');
+      assert.equal(await jobs.generationStatus(await actor('other-writer'), 'history-22'), null);
+      // COMPLETED no aparece; tampoco un FAILED inconsistente que ya tenga guion.
+      await prisma.generationJob.update({ where: { id: 'history-0' }, data: { status: 'COMPLETED', items: { updateMany: { where: {}, data: { status: 'COMPLETED' } } } } });
+      const persisted = await prisma.generationItem.findFirstOrThrow({ where: { jobId: 'history-1' } });
+      await prisma.script.create({ data: { title: 'Éxito conservado', authorId: user.id, brandId: 'A', generationItemId: persisted.id } });
+      assert.equal((await generationHistory(user, '2', true)).jobs.length, 1);
+      await jobs.cancelGeneration(user, successor);
+      await prisma.userBrandAccess.deleteMany({ where: { userId: user.id } });
+      assert.equal((await generationHistory(await actor(user.id))).jobs.length, 0);
+      await assert.rejects(generationHistory({ ...user, profiles: ['PRODUCTION'] }), /permiso|acceso/i);
+    });
     await check('acción de reintento: registra antes de despachar y nunca expone errores internos', async () => {
       const sourceId = await enqueue(); await jobs.cancelGeneration(await actor('writer'), sourceId);
       const dispatched = [];
       const actions = load('src/app/actions/generation-jobs.ts', { ...mocks, '@/lib/generation-dispatch': { dispatchGeneration: async (id, recover) => { assert.ok(await prisma.generationJob.findUnique({ where: { id } })); dispatched.push({ id, recover }); } } });
-      const response = await as('writer', () => actions.retryFailedGenerationJob(sourceId));
+      const response = await as('writer', () => actions.retryFailedGenerationJob(sourceId, 'anthropic'));
       assert.equal(response.ok, true); assert.deepEqual(dispatched, [{ id: response.id, recover: true }]);
+      assert.equal((await prisma.generationJob.findUniqueOrThrow({ where: { id: response.id } })).payload.provider, 'anthropic');
       await jobs.cancelGeneration(await actor('writer'), response.id);
       const failing = load('src/app/actions/generation-jobs.ts', { ...mocks, '@/lib/generation-dispatch': { dispatchGeneration: async () => { throw Error('postgresql://PRIVATE-FIXTURE'); } } });
       const error = await as('writer', () => failing.retryFailedGenerationJob(sourceId));
       assert.equal(error.ok, false); assert.doesNotMatch(error.error, /PRIVATE-FIXTURE|postgresql/);
     });
-  } finally { globalThis.fetch = oldFetch; await prisma.$disconnect(); }
+  } finally {
+    globalThis.fetch = oldFetch;
+    for (const [key, value] of Object.entries(oldKeys)) { if (value === undefined) delete process.env[key]; else process.env[key] = value; }
+    await prisma.$disconnect();
+  }
 });

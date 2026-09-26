@@ -21,10 +21,10 @@ export async function resumeGenerationJob(id: string) {
   await dispatchGeneration(id, true);
 }
 
-export async function retryFailedGenerationJob(id: string) {
+export async function retryFailedGenerationJob(id: string, provider?: string) {
   const user = await requirePermission("scripts.generate");
   try {
-    const nextId = await retryFailedGeneration(user, id);
+    const nextId = await retryFailedGeneration(user, id, provider);
     await dispatchGeneration(nextId, true);
     revalidatePath("/generador/trabajos");
     revalidatePath(`/generador/trabajos/${id}`);

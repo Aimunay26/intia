@@ -6,6 +6,8 @@ import { assertActor } from "@/lib/auth-transactions";
 import type { SessionUser } from "@/lib/auth";
 import { auditInTransaction } from "@/lib/audit";
 import { resolveAiModel } from "@/lib/ai-models";
+import { retryJobId } from "@/lib/generation-history";
+import { aiStatus, getSettings, SETTING_KEYS } from "@/lib/settings";
 import { generateScript, AiError, type GenerateInput, type GenerateOutput } from "@/lib/ai";
 import { esErrorDeAutenticacion, esErrorDeSaturacion } from "@/lib/ai/providers";
 import { modelForRetry, planModelFallback, retryDiagnostics } from "@/lib/ai/model-fallback";
@@ -35,8 +37,6 @@ const active = ["QUEUED", "RUNNING"];
 const retryableStatuses = ["FAILED", "CANCELLED"];
 const finishedStatuses = ["COMPLETED", "PARTIAL", "FAILED", "CANCELLED"];
 export class GenerationRequestError extends Error {}
-// ID opaco y estable: un único sucesor por trabajo, incluso con dos usuarios/pestañas.
-const retryJobId = (sourceId: string) => `c${createHash("sha256").update(`generation-retry:${sourceId}`).digest("hex").slice(0, 24)}`;
 /** Estados de la tarjeta en los que todavía admite guion (el mismo filtro que ofrece el generador). */
 const VIDEO_ABIERTO = ["IDEA", "GUION"];
 /** Motivo con que se anotan los formatos que quedan sin intentar cuando la clave es rechazada. */
@@ -108,17 +108,24 @@ async function enqueueValidatedGeneration(user: SessionUser, requestKey: string,
 }
 
 /** Nuevo trabajo: conserva el historial, los guiones existentes y las concesiones antiguas. */
-export async function retryFailedGeneration(user: SessionUser, sourceId: string) {
+export async function retryFailedGeneration(user: SessionUser, sourceId: string, requestedProvider?: string) {
   assertPermission(user, "scripts.generate");
+  if (requestedProvider !== undefined && requestedProvider !== "google" && requestedProvider !== "anthropic") {
+    throw new GenerationRequestError("Elige Claude o Gemini para reintentar.");
+  }
   return withGenerationTrace({ jobId: sourceId }, () => generationStage("manual_retry", () => prisma.$transaction(async tx => {
     await assertActor(tx, user);
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`generation:${user.id}`}, 0))`;
     const source = await lockJob(tx, sourceId);
     if (!source || !await tx.generationJob.count({ where: { AND: [{ id: sourceId }, generationScope(user)] } })) throw new GenerationRequestError("Generación no encontrada o sin acceso.");
     const id = retryJobId(sourceId);
-    const previous = await tx.generationJob.findUnique({ where: { id }, select: { id: true } });
+    const previous = await tx.generationJob.findUnique({ where: { id }, select: { id: true, payload: true } });
     if (previous) {
       if (!await tx.generationJob.count({ where: { AND: [{ id }, generationScope(user)] } })) throw new GenerationRequestError("Ya existe un reintento creado por otro usuario. Pide al Dueño que revise su avance.");
+      const previousPayload = payloadSchema.safeParse(previous.payload);
+      if (requestedProvider && (!previousPayload.success || previousPayload.data.provider !== requestedProvider)) {
+        throw new GenerationRequestError("Ya existe un reintento con otro proveedor. Abre «Ver reintento» para revisar su avance y, si falla, reinténtalo desde allí.");
+      }
       return id;
     }
     if (!finishedStatuses.includes(source.status)) throw new GenerationRequestError("Espera a que termine la generación antes de reintentar los guiones faltantes.");
@@ -127,6 +134,15 @@ export async function retryFailedGeneration(user: SessionUser, sourceId: string)
     const parsed = payloadSchema.safeParse(source.payload);
     if (!parsed.success) throw new GenerationRequestError("El pedido original ya no está disponible. Inicia una nueva generación.");
     const payload = parsed.data;
+    const provider = requestedProvider ?? payload.provider;
+    const status = await aiStatus(undefined, tx);
+    if (!status[provider].configured) throw new GenerationRequestError(`La organización no tiene una clave de ${provider === "google" ? "Gemini" : "Claude"} configurada. Elige el otro proveedor o pide al Dueño configurarla en Ajustes.`);
+    if (provider !== payload.provider) {
+      const modelKey = provider === "google" ? SETTING_KEYS.defaultGoogleModel : SETTING_KEYS.defaultAnthropicModel;
+      const settings = await getSettings([modelKey], tx);
+      payload.provider = provider;
+      payload.model = resolveAiModel(provider, undefined, settings[modelKey]);
+    }
     // El primer éxito del lote anterior ya resolvió el vínculo; los restantes son independientes.
     if (source.items.some(item => item.status === "COMPLETED")) {
       delete payload.contentItemId;
@@ -343,13 +359,17 @@ async function avisoFinal(tx: AppTransaction, job: { payload: Prisma.JsonValue; 
 export async function generationStatus(user: SessionUser, id: string) {
   assertPermission(user, "scripts.generate");
   const job = await prisma.generationJob.findFirst({ where: { AND: [{ id }, generationScope(user)] }, select: {
-    id: true, status: true, error: true, createdAt: true, runId: true,
-    items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, status: true, stage: true, diagnostics: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { where: scriptScope(user), select: { id: true, title: true } } } },
+    id: true, status: true, error: true, createdAt: true, runId: true, payload: true,
+    items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, structure: { select: { name: true } }, status: true, stage: true, diagnostics: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { where: scriptScope(user), select: { id: true, title: true } } } },
   } });
   if (!job) return null;
   const retryableCount = finishedStatuses.includes(job.status) ? job.items.filter(item => retryableStatuses.includes(item.status) && !item.script).length : 0;
   const retry = retryableCount ? await prisma.generationJob.findFirst({ where: { AND: [{ id: retryJobId(id) }, generationScope(user)] }, select: { id: true } }) : null;
-  return { ...job, retryableCount, retryJobId: retry?.id ?? null };
+  const { payload, ...publicJob } = job;
+  const parsed = payloadSchema.safeParse(payload);
+  return { ...publicJob, requestedProvider: parsed.success ? parsed.data.provider : null,
+    requestedModel: parsed.success ? parsed.data.model ?? null : null,
+    retryableCount, retryJobId: retry?.id ?? null };
 }
 
 export async function cancelGeneration(user: SessionUser, id: string) {

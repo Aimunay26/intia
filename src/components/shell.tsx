@@ -8,6 +8,7 @@ import {
 	Film,
 	Clapperboard,
 	GraduationCap,
+  History,
 	LayoutDashboard,
 	LogOut,
 	Menu,
@@ -66,6 +67,7 @@ const NAV: NavGroup[] = [
     section: "Creación",
     items: [
       { href: "/generador", label: "Generador IA", icon: Sparkles },
+      { href: "/generador/trabajos", label: "Generaciones", icon: History },
       { href: "/guiones", label: "Guiones", icon: Clapperboard },
       { href: "/estructuras", label: "Estructuras", icon: Shapes },
       { href: "/arquetipos", label: "Personas", icon: UserSquare2 },
@@ -125,8 +127,10 @@ export function Shell({
     setMobileOpen(false);
   }, [pathname]);
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const activeHref = NAV.flatMap(group => group.items).filter(item =>
+    pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"))
+  ).sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const isActive = (href: string) => href === activeHref;
 
   const nav = (
     <>

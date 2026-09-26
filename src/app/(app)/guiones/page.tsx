@@ -98,10 +98,10 @@ export default async function GuionesPage({
         icon={<Film size={19} />}
         actions={
           puedeCrear ? (
-            <Link href="/generador" className="btn btn-primary">
+            <><Link href="/generador/trabajos?estado=fallidos" className="btn">Guiones no generados</Link><Link href="/generador" className="btn btn-primary">
               <Sparkles size={14} />
               Generar guion nuevo
-            </Link>
+            </Link></>
           ) : null
         }
       />

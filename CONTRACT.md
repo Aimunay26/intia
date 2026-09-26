@@ -155,6 +155,17 @@ de marca por página: el selector de la barra lateral es el único mando. Para l
 también necesita el navegador (la constante `TODAS`, el tipo `BrandChoice`), usa
 `@/lib/brand-shared`: `brand-context.ts` lee cookies y no puede llegar al cliente.
 
+## Visualización de guiones
+
+Las fichas de Dueño y Equipo usan «Escena en foco»: índice en escritorio,
+selector en móvil y vistas Escenas / Producción / Ficha e historial. Las
+páginas mantienen la autorización y entregan contenido al visor cliente;
+cambiar de vista no modifica datos ni consulta IA. La selección sigue el ID
+de escena al reordenar. Imprimir debe incluir todas las escenas y sus detalles,
+aunque estén ocultas en pantalla. Conservar acciones, revisiones, permisos y
+anclas de la guía al modificar esta presentación. Ver
+`reports/visor-guiones-escena-foco-2026-09-26.md`.
+
 ## Las tres fases de un video
 
 Está separado a propósito y hay que respetarlo:

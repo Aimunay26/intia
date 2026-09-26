@@ -248,7 +248,8 @@ export function SceneEditor({
   return (
     <div className="no-print flex shrink-0 items-center gap-1">
       <EditForm action={moverEscena}>
-<RevisionField value={scene.scriptUpdatedAt} />
+        {/* Acción inmediata, sin borrador: usa la revisión que muestra la ficha. */}
+        <input type="hidden" name="expectedUpdatedAt" value={scene.scriptUpdatedAt} />
         <input type="hidden" name="id" value={scene.id} />
         <input type="hidden" name="direccion" value="arriba" />
         <button
@@ -262,7 +263,7 @@ export function SceneEditor({
       </EditForm>
 
       <EditForm action={moverEscena}>
-<RevisionField value={scene.scriptUpdatedAt} />
+        <input type="hidden" name="expectedUpdatedAt" value={scene.scriptUpdatedAt} />
         <input type="hidden" name="id" value={scene.id} />
         <input type="hidden" name="direccion" value="abajo" />
         <button

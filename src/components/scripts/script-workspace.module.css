@@ -1,0 +1,50 @@
+.workspace { min-width: 0; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+.tab { padding: 12px 16px; border-bottom: 2px solid transparent; color: var(--ink-muted); font-size: 14px; cursor: pointer; }
+.tab[aria-selected="true"] { border-bottom-color: var(--brand); color: var(--brand-text); font-weight: 700; }
+.panel[hidden], .scenePanel[hidden] { display: none; }
+.layout { display: grid; grid-template-columns: 205px minmax(0, 1fr); gap: 24px; align-items: start; }
+.index { min-width: 0; }
+.sceneButton { display: flex; gap: 10px; width: 100%; text-align: left; padding: 14px 12px; border: 1px solid transparent; border-radius: var(--radius); font-size: 13px; overflow-wrap: anywhere; cursor: pointer; }
+.sceneButton:hover { background: var(--surface-2); }
+.sceneButton[aria-current="step"] { background: var(--brand-soft); border-color: var(--brand); }
+.number { color: var(--brand-text); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.sceneFooter { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 20px; }
+.addScene { display: flex; align-items: start; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.addScene > :last-child { flex: 1; min-width: 0; }
+.mobilePicker { display: none; }
+.sceneCard { padding: 28px; overflow-wrap: anywhere; }
+.sceneHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.sceneMain { padding-top: 24px; display: grid; gap: 24px; }
+.voice { font-size: 19px; line-height: 1.8; white-space: pre-wrap; }
+.detailGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.details { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 18px; }
+.details > summary { color: var(--brand-text); font-size: 13px; font-weight: 600; cursor: pointer; }
+.details[open] > summary { margin-bottom: 22px; }
+.label { display: block; margin-bottom: 7px; color: var(--ink-muted); font-size: 12px; font-weight: 600; }
+.detail { min-width: 0; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+@media (max-width: 767px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .index { display: none; }
+  .mobilePicker { display: block; margin-bottom: 18px; }
+  .sceneCard { padding: 20px; }
+  .detailGrid { grid-template-columns: minmax(0, 1fr); }
+  .voice { font-size: 17px; }
+  .tab { padding: 12px 10px; font-size: 13px; }
+  .sceneFooter :global(.btn) { min-height: 44px; padding-inline: 10px; }
+}
+@media print {
+  .layout { display: block; }
+  .scenePanel { margin-bottom: 20px; break-inside: avoid; }
+  .sceneCard { padding: 18px; }
+  .voice { font-size: 14px; }
+  .details::details-content { display: block; content-visibility: visible; }
+  .details > :not(summary) { display: block; }
+  .details .detailGrid { display: grid; }
+}
+/* Preflight oculta [hidden] con !important en base; la excepción debe competir en esa misma capa. */
+@layer base {
+  @media print {
+    .workspace .panel[hidden], .workspace .scenePanel[hidden] { display: block !important; }
+  }
+}

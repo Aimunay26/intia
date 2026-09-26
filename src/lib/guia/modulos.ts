@@ -545,7 +545,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
       {
         id: "m6-select",
         titulo: "Elige la tarjeta de video",
-        instruccion: "Selecciona la idea de video que creaste en el Módulo 3.",
+        instruccion: "En «Ficha e historial», selecciona la idea de video que creaste en el Módulo 3.",
         detalle: "Al unirlos, el video hereda la estructura del guion y pasa de «Idea» a «Guion».",
         target: GUIA_TARGETS.SELECT_ASIGNAR_VIDEO,
         url: "/guiones",
@@ -561,7 +561,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         detalle: "Marca definida, video programado y guion asignado: el ciclo completo.",
         target: GUIA_TARGETS.BTN_ASIGNAR_GUION,
         url: "/guiones",
-        fallbackTexto: "Botón «Asignar» junto al selector de tarjeta dentro del guion.",
+        fallbackTexto: "Botón «Asignar» junto al selector de tarjeta en «Ficha e historial» del guion.",
         posicionPreferida: "left",
       },
       {
@@ -571,7 +571,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         detalle: "Así se mueve una idea en Intia: de cero al set de grabación.",
         target: GUIA_TARGETS.VIDEO_VINCULADO_CARD,
         url: "/guiones",
-        fallbackTexto: "La tarjeta del video asignado, arriba en la ficha del guion.",
+        fallbackTexto: "La tarjeta del video asignado, en «Ficha e historial» del guion.",
         posicionPreferida: "bottom",
       },
     ],

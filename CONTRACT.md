@@ -249,6 +249,15 @@ intentó.
 
 ## IA: claves, modelos y errores
 
+- **Las claves de IA pertenecen a la organización, no al usuario ni a la marca.**
+  La instalación actual representa un único tenant lógico. Todos los usuarios
+  autorizados consumen la misma credencial de cada proveedor a través del servidor;
+  solo el Dueño la administra. Compartirla no amplía permisos ni mezcla historiales.
+  No copiar secretos a usuarios, sesiones, trabajos, respuestas o logs. Cada ejecución
+  resuelve la clave vigente. Esto no implementa aislamiento entre tenants: antes de
+  habilitar otro se deben acotar secretos, ajustes, trabajos y membresías por tenant,
+  sin heredar claves de la organización actual ni su respaldo de entorno. Ver
+  `reports/claves-ia-organizacion-2026-09-26.md`.
 - **La clave guardada en Ajustes manda; la variable de entorno es el respaldo**
   (`resolveApiKey` en `src/lib/settings.ts` devuelve `{ key, source: "db" | "env" }`). Ajustes
   y el generador dicen de dónde sale la clave en uso. Guardar o quitar una clave se audita solo

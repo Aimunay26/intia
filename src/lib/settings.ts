@@ -4,7 +4,14 @@ import { isSecretName, SECRET_KEYS } from "@/lib/secret-crypto";
 import { readSecret } from "@/lib/secrets";
 
 /**
- * Ajustes de la aplicacion guardados en base de datos.
+ * Ajustes de la organización actual guardados en base de datos.
+ *
+ * Esta instalación representa un único tenant: las credenciales pertenecen a
+ * la organización, nunca al usuario que las guardó ni a la marca seleccionada.
+ * Los llamadores autorizan al usuario antes de ejecutar IA; este módulo solo
+ * resuelve la configuración compartida. Al introducir tenants reales habrá que
+ * exigir su contexto de servidor y sustituir AppSecret por un almacén acotado.
+ * Ver reports/claves-ia-organizacion-2026-09-26.md.
  *
  * Las claves de IA se resuelven en este orden:
  *   1. Valor guardado desde la pantalla de Ajustes (manda siempre que exista).
@@ -103,7 +110,8 @@ function settingKeyFor(provider: string): string | undefined {
 }
 
 /**
- * Devuelve la clave del proveedor y de dónde salió.
+ * Devuelve la clave compartida de la organización y de dónde salió, solo al servidor.
+ * No se guarda en la sesión ni en el trabajo: cada ejecución lee la clave vigente.
  * La guardada en Ajustes manda; la variable de entorno es solo el respaldo.
  */
 export async function resolveApiKey(

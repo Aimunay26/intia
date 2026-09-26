@@ -952,6 +952,9 @@ model Task {
 }
 
 model AppSecret {
+  // Configuración cifrada de la única organización de esta instalación.
+  // Las claves de IA no pertenecen al usuario que las guardó ni a una marca.
+  // Tenants reales requieren otra clave compuesta y contexto de acceso verificado.
   key String @id
   value String
   keyId String

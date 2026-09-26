@@ -303,8 +303,9 @@ export default async function GeneradorPage({
           />
         </Card>
       ) : (
-        <><div className="mb-4"><Link href="/generador/trabajos" className="text-brand font-semibold">Mis generaciones →</Link><p className="text-sm text-inkmuted">Hasta {maxBatch} estructuras por solicitud. Las llamadas a tu proveedor de IA conservan su tarifa.</p></div>
+        <><div className="mb-4"><Link href="/generador/trabajos" className="text-brand font-semibold">Mis generaciones →</Link><p className="text-sm text-inkmuted">Hasta {maxBatch} estructuras por solicitud. Se usa la clave de IA de la organización y la tarifa de su proveedor.</p></div>
       <GeneratorForm
+          canManageAi={user.role === "OWNER"}
           defaultModels={{ google: resolveAiModel("google", undefined, modelSettings[SETTING_KEYS.defaultGoogleModel]), anthropic: resolveAiModel("anthropic", undefined, modelSettings[SETTING_KEYS.defaultAnthropicModel]) }}
           maxBatch={maxBatch}
           structures={structureOptions}

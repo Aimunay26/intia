@@ -27,8 +27,8 @@ export type SettingsState = { ok?: string; error?: string } | null;
 
 /** Nombre de cada clave para el log de auditoria. */
 const KEY_LABELS: Record<string, string> = {
-  anthropic: "la clave de Claude",
-  google: "la clave de Gemini",
+  anthropic: "la clave de Claude de la organización",
+  google: "la clave de Gemini de la organización",
   googleClientId: "el identificador de cliente de Google",
   googleClientSecret: "el secreto de cliente de Google",
 };
@@ -216,6 +216,6 @@ export async function guardarAjustes(
   // El nombre de la organización vive en la barra lateral.
   afterCommit(() => revalidatePath("/", "layout"));
 
-  return { ok: "Ajustes guardados." };
+  return { ok: "Ajustes de la organización guardados." };
   }); } catch (error) { if (error instanceof SecretConfigError) return { error: error.message }; throw error; }
 }

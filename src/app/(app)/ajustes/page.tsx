@@ -101,7 +101,7 @@ export default async function AjustesPage() {
     <>
       <PageHeader
         title="Ajustes"
-        subtitle="Nombre de la organización, claves de inteligencia artificial y estado técnico de la instalación."
+        subtitle="Nombre de la organización, claves de IA compartidas por el equipo y estado técnico de la instalación."
         icon={<Settings size={19} />}
       />
 

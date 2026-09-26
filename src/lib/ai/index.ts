@@ -194,9 +194,9 @@ async function generateScriptWithTrace(input: GenerateInput, request: AiRequest,
       const envName = ENV_KEY_NAMES[provider] ?? "correspondiente";
       throw new AiError(
         provider === "anthropic"
-          ? "Falta la clave de Claude (Anthropic)."
-          : "Falta la clave de Gemini (Google).",
-        `Pégala en Ajustes (o, como respaldo, define la variable de entorno ${envName} en el servidor).`,
+          ? "Falta la clave de Claude (Anthropic) de la organización."
+          : "Falta la clave de Gemini (Google) de la organización.",
+        `El Dueño debe configurarla en Ajustes para todo el equipo (o, como respaldo, definir ${envName} en el servidor). No necesitas una clave personal.`,
         "auth"
       );
     }

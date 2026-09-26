@@ -36,7 +36,7 @@ export type SettingsFormProps = {
 
 const ORIGEN: Record<string, string> = {
   env: "Viene de la variable de entorno del servidor, porque no hay ninguna guardada aquí.",
-  db: "Es la que está guardada aquí, en Ajustes.",
+  db: "Es la clave compartida de la organización, guardada en Ajustes.",
 };
 
 function EstadoClave({ status }: { status: ProviderStatus }) {
@@ -58,7 +58,7 @@ function EstadoClave({ status }: { status: ProviderStatus }) {
     >
       {status.source === "env"
         ? "En uso · variable de entorno (respaldo)"
-        : "En uso · guardada en Ajustes"}
+        : "En uso · organización"}
     </span>
   );
 }
@@ -133,8 +133,8 @@ function BloqueProveedor({
       </p>
 
       <Field
-        label="Pegar una clave nueva"
-        hint="Si lo dejas en blanco, la clave que ya existe se queda como está. La que guardes aquí manda sobre la variable de entorno."
+        label="Nueva clave de la organización"
+        hint="Al guardarla se usará en las próximas solicitudes de todo el equipo. Déjalo vacío para conservar la actual."
       >
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
@@ -198,7 +198,7 @@ function BloqueProveedor({
             name={campoQuitar}
             className="accent-brand h-3.5 w-3.5 cursor-pointer"
           />
-          Quitar la clave guardada en la aplicación
+          Quitar la clave compartida de la organización
         </label>
       ) : null}
 
@@ -268,11 +268,17 @@ export function SettingsForm({
 
       <Card>
         <CardHeader
-          title="Inteligencia artificial"
-          subtitle="Claves y modelos con los que se generan los guiones."
+          title="Inteligencia artificial de la organización"
+          subtitle="Una configuración compartida para todo el equipo."
           icon={<KeyRound size={15} />}
         />
         <div className="space-y-3.5 p-4">
+          <Callout tone="info" title="El equipo usa la misma clave">
+            Quien tenga permiso para generar guiones o leer documentos con IA usará estas
+            claves sin tener que ingresar una propia. Solo el Dueño puede configurarlas,
+            reemplazarlas o quitarlas. El consumo de todo el equipo corresponde al proyecto
+            del proveedor vinculado a la clave.
+          </Callout>
           <Field
             label="Proveedor por defecto"
             hint="Es el que aparece preseleccionado en el generador. Cada estructura puede pedir otro."
@@ -287,7 +293,7 @@ export function SettingsForm({
           </Field>
 
           <Divider />
-          <SectionTitle>Claves por proveedor</SectionTitle>
+          <SectionTitle>Claves compartidas por proveedor</SectionTitle>
 
           <div className="grid gap-3 lg:grid-cols-2">
             <BloqueProveedor
@@ -315,13 +321,13 @@ export function SettingsForm({
           </div>
 
           <Callout tone="info" title="La clave guardada aquí manda">
-            Lo que pegues en esta pantalla es lo que usa el generador. Las variables de entorno
+            Esta configuración se comparte entre los usuarios y las marcas de la organización.
+            Las claves se guardan cifradas y nunca se muestran al equipo. Las variables de entorno
             del servidor (<code className="kbd">ANTHROPIC_API_KEY</code>,{" "}
             <code className="kbd">GEMINI_API_KEY</code>) solo se usan como respaldo cuando no hay
-            ninguna clave guardada. Así, si una clave se revoca, basta con crear otra y pegarla
-            aquí, sin tocar el servidor. Ten en cuenta que la clave guardada vive en la base de
-            datos y viaja en sus copias de seguridad: si prefieres no guardarla, quítala con la
-            casilla y deja solo la variable de entorno.
+            ninguna clave guardada. Si quitas una clave y no hay respaldo, ese proveedor
+            dejará de estar disponible para todos. Las solicitudes que ya se enviaron al
+            proveedor terminarán con la clave que usaron al empezar.
           </Callout>
         </div>
       </Card>

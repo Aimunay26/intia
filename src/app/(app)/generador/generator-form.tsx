@@ -187,6 +187,7 @@ export function GeneratorForm({
   initialRequest,
   initialAngle,
   maxBatch = 3,
+  canManageAi = false,
 }: {
   structures: GeneratorStructure[];
   brands: GeneratorBrand[];
@@ -209,6 +210,8 @@ export function GeneratorForm({
   initialRequest?: string;
   initialAngle?: string;
   maxBatch?: number;
+  /** Solo controla la ayuda visible; las acciones verifican permisos en el servidor. */
+  canManageAi?: boolean;
 }) {
   const router = useRouter();
   const submission = useRef({ fingerprint: "", key: "" });
@@ -772,9 +775,10 @@ export function GeneratorForm({
             </section>
             <div>
               <h3 className="mb-3 text-sm font-semibold">Proveedor de IA</h3>
+              <p className="text-inkmuted mb-3 text-sm">Usarás la clave compartida de la organización. No necesitas configurar una clave personal.</p>
               <div role="group" aria-label="Proveedor de IA" className="grid gap-3 sm:grid-cols-2">
                 {AI_PROVIDERS.map((p) => <button key={p.value} type="button" disabled={!providersReady[p.value]} aria-pressed={provider === p.value} onClick={() => { setProvider(p.value); setModel(resolveAiModel(p.value, undefined, defaultModels[p.value])); }} className={cn(stepStyles.choice, !providersReady[p.value] && "cursor-not-allowed opacity-60")}>
-                  <span className="text-sm font-semibold">{p.label}</span><span className={cn("mt-2 block text-xs", providersReady[p.value] ? "text-ok" : "text-warn")}>{providersReady[p.value] ? "Clave configurada" : "Sin clave"}</span>
+                  <span className="text-sm font-semibold">{p.label}</span><span className={cn("mt-2 block text-xs", providersReady[p.value] ? "text-ok" : "text-warn")}>{providersReady[p.value] ? "Disponible para el equipo" : "Sin clave compartida"}</span>
                 </button>)}
               </div>
             </div>
@@ -788,7 +792,7 @@ export function GeneratorForm({
                 <input id="generator-duration" name="duracion" type="number" min={10} max={300} className="input" value={duracion} onChange={(e) => setDuracion(e.target.value)} />
               </StepField>
             </div>
-            {!providersReady[provider] ? <Callout tone="warn" title={sinClaves ? "No hay ninguna clave de IA configurada" : "Falta la clave de este proveedor"}>Configura la clave de Claude o Gemini en <Link href="/ajustes" className="text-brand font-semibold">Ajustes</Link> para generar.</Callout> : null}
+            {!providersReady[provider] ? <Callout tone="warn" title={sinClaves ? "La organización aún no tiene una clave de IA" : "Falta la clave compartida de este proveedor"}>{canManageAi ? <>Configura la clave para todo el equipo en <Link href="/ajustes" className="text-brand font-semibold">Ajustes</Link>.</> : "Pide al Dueño que configure la clave de este proveedor para la organización."}</Callout> : null}
             <p className="text-inkmuted text-sm leading-relaxed">{video ? `El primer guion se unirá a «${video.title}».${selectedStructureIds.length > 1 ? " Los demás quedarán en la biblioteca." : ""} ` : "Los guiones quedarán en tu biblioteca. "}Puedes salir de la página y seguir el avance en Mis generaciones.</p>
             <footer className="border-line flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
               <button type="button" className="btn btn-ghost" onClick={() => setCurrentStep(4)}><ArrowLeft size={15} aria-hidden="true" />Volver a Cierre</button>

@@ -4,13 +4,15 @@ import { EditForm, RevisionField } from "@/components/edit-form";
 import {
 	ArrowDown,
 	ArrowUp,
+	MoreVertical,
 	Pencil,
 	Plus,
 	Printer,
 	Trash2,
 	X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
 
 import {
 	actualizarEscena,
@@ -18,11 +20,26 @@ import {
 	eliminarEscena,
 	moverEscena,
 } from "@/app/actions/scripts";
-import { DeleteButton, Modal, SubmitButton } from "@/components/forms";
+import { Modal, SubmitButton } from "@/components/forms";
 import { Field } from "@/components/ui";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import styles from "@/components/scripts/script-workspace.module.css";
 import { VOICE_TYPES } from "@/lib/constants";
 import { CTA_COMUNIDAD, CTA_TRIGGERS } from "@/lib/script-angles";
 import { formatSeconds } from "@/lib/utils";
+
+// La confirmación se descarga al solicitarla, igual que en DeleteButton.
+const DeleteConfirmation = dynamic(() => import("@/components/delete-confirmation"));
+
+/** Pie de los modales: en móvil queda fijo abajo para no tener que desplazarse hasta él. */
+const MODAL_FOOTER =
+  "border-line flex justify-end gap-2 border-t pt-4 max-md:bg-surface max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-5 max-md:px-5 max-md:pb-4";
 
 /* ------------------------------------------------------------------ TIPOS -- */
 
@@ -75,17 +92,34 @@ export type ScriptSheet = {
   notes: string;
 };
 
-/** Modal con lo que enmarca el video: avatar, enfoque, gancho, CTA y reparto. */
-export function ScriptSheetEditor({
-  script,
-  brands,
-  structures,
-}: {
+type SheetProps = {
   script: ScriptSheet;
   brands: { id: string; name: string }[];
   structures: { id: string; name: string }[];
-}) {
+};
+
+/** Botón «Editar ficha» con su modal. */
+export function ScriptSheetEditor({ className = "btn btn-sm", ...props }: SheetProps & { className?: string }) {
   const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className={className}>
+        <Pencil size={13} />
+        Editar ficha
+      </button>
+      <ScriptSheetModal {...props} open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+/** Modal con lo que enmarca el video: avatar, enfoque, gancho, CTA y reparto. */
+export function ScriptSheetModal({
+  script,
+  brands,
+  structures,
+  open,
+  onClose,
+}: SheetProps & { open: boolean; onClose: () => void }) {
   const [cta, setCta] = useState(script.cta ?? "");
 
   useEffect(() => {
@@ -93,22 +127,16 @@ export function ScriptSheetEditor({
   }, [script.cta]);
 
   return (
-    <>
-      <button type="button" onClick={() => setOpen(true)} className="btn btn-sm">
-        <Pencil size={13} />
-        Editar ficha
-      </button>
-
       <Modal
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={onClose}
         title="Ficha del guion"
         description="Lo que enmarca el video: a quién le habla, qué vende y con qué termina."
         width={640}
       >
         <EditForm
           action={actualizarGuion}
-          onSuccess={() => setOpen(false)}
+          onSuccess={onClose}
           className="space-y-3"
         >
 <RevisionField value={script.updatedAt} />
@@ -204,8 +232,8 @@ export function ScriptSheetEditor({
             <textarea name="notes" className="textarea" rows={3} defaultValue={script.notes} />
           </Field>
 
-          <div className="border-line flex justify-end gap-2 border-t pt-4">
-            <button type="button" onClick={() => setOpen(false)} className="btn">
+          <div className={MODAL_FOOTER}>
+            <button type="button" onClick={onClose} className="btn">
               Cancelar
             </button>
             <SubmitButton className="btn btn-primary" pendingLabel="Guardando…">
@@ -214,7 +242,6 @@ export function ScriptSheetEditor({
           </div>
         </EditForm>
       </Modal>
-    </>
   );
 }
 
@@ -233,6 +260,22 @@ export function SceneEditor({
 }) {
   const [open, setOpen] = useState(false);
   const [actors, setActors] = useState<SceneActor[]>(scene.actors);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoaded, setDeleteLoaded] = useState(false);
+  const [returnFocus, setReturnFocus] = useState<HTMLButtonElement | null>(null);
+  const upRef = useRef<HTMLButtonElement>(null);
+  const downRef = useRef<HTMLButtonElement>(null);
+  const trashRef = useRef<HTMLButtonElement>(null);
+  const moreRef = useRef<HTMLButtonElement>(null);
+  const keepFocus = useRef(false);
+  const first = scene.order === 0;
+  const last = scene.order >= totalScenes - 1;
+
+  const pedirBorrado = (origen: HTMLButtonElement | null) => {
+    setReturnFocus(origen);
+    setDeleteLoaded(true);
+    setDeleteOpen(true);
+  };
 
   const abrir = () => {
     setActors(scene.actors.length ? scene.actors : []);
@@ -247,16 +290,19 @@ export function SceneEditor({
 
   return (
     <div className="no-print flex shrink-0 items-center gap-1">
+      {/* En móvil los botones de mover se ocultan y el menú «⋯» los pulsa: mismo formulario y revisión. */}
       <EditForm action={moverEscena}>
         {/* Acción inmediata, sin borrador: usa la revisión que muestra la ficha. */}
         <input type="hidden" name="expectedUpdatedAt" value={scene.scriptUpdatedAt} />
         <input type="hidden" name="id" value={scene.id} />
         <input type="hidden" name="direccion" value="arriba" />
         <button
+          ref={upRef}
           type="submit"
-          className="btn btn-ghost btn-icon"
+          className={`btn btn-ghost btn-icon ${styles.desktopOnly}`}
           title="Subir la escena"
-          disabled={scene.order === 0}
+          aria-label="Subir la escena"
+          disabled={first}
         >
           <ArrowUp size={14} />
         </button>
@@ -267,10 +313,12 @@ export function SceneEditor({
         <input type="hidden" name="id" value={scene.id} />
         <input type="hidden" name="direccion" value="abajo" />
         <button
+          ref={downRef}
           type="submit"
-          className="btn btn-ghost btn-icon"
+          className={`btn btn-ghost btn-icon ${styles.desktopOnly}`}
           title="Bajar la escena"
-          disabled={scene.order >= totalScenes - 1}
+          aria-label="Bajar la escena"
+          disabled={last}
         >
           <ArrowDown size={14} />
         </button>
@@ -282,14 +330,79 @@ export function SceneEditor({
       </button>
 
       {canDelete ? (
-        <DeleteButton
-          action={async fd => { fd.set("expectedUpdatedAt", scene.scriptUpdatedAt); await eliminarEscena(fd); }}
+        <button
+          ref={trashRef}
+          type="button"
+          className={`btn btn-ghost btn-icon text-danger ${styles.desktopOnly}`}
+          title="Eliminar la escena"
+          aria-label="Eliminar la escena"
+          aria-haspopup="dialog"
+          onClick={() => pedirBorrado(trashRef.current)}
+        >
+          <Trash2 size={14} />
+        </button>
+      ) : null}
+
+      {totalScenes > 1 || canDelete ? (
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <button
+              ref={moreRef}
+              type="button"
+              className={`btn btn-ghost btn-icon ${styles.mobileOnly}`}
+              aria-label="Más acciones de la escena"
+            >
+              <MoreVertical size={16} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            onCloseAutoFocus={(event) => {
+              if (keepFocus.current) {
+                event.preventDefault();
+                keepFocus.current = false;
+              }
+            }}
+          >
+            <DropdownMenuItem disabled={first} onSelect={() => upRef.current?.click()}>
+              <ArrowUp size={15} />
+              Subir escena
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={last} onSelect={() => downRef.current?.click()}>
+              <ArrowDown size={15} />
+              Bajar escena
+            </DropdownMenuItem>
+            {canDelete ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-danger data-[highlighted]:text-danger"
+                  onSelect={() => {
+                    keepFocus.current = true;
+                    pedirBorrado(moreRef.current);
+                  }}
+                >
+                  <Trash2 size={15} />
+                  Eliminar escena
+                </DropdownMenuItem>
+              </>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
+
+      {canDelete && deleteLoaded ? (
+        <DeleteConfirmation
+          open={deleteOpen}
+          action={async (fd) => {
+            fd.set("expectedUpdatedAt", scene.scriptUpdatedAt);
+            await eliminarEscena(fd);
+          }}
           id={scene.id}
-          label=""
-          icon={<Trash2 size={14} />}
-          className="btn btn-ghost btn-icon text-danger"
           title="¿Eliminar esta escena?"
           description={`Se borrará la escena ${scene.order + 1} "${scene.beat}". Las demás escenas se vuelven a numerar y los tiempos se recalculan solos.`}
+          onClose={() => setDeleteOpen(false)}
+          returnFocusTo={returnFocus}
         />
       ) : null}
 
@@ -461,7 +574,7 @@ export function SceneEditor({
             <textarea name="notes" className="textarea" rows={2} defaultValue={scene.notes} />
           </Field>
 
-          <div className="border-line flex justify-end gap-2 border-t pt-4">
+          <div className={MODAL_FOOTER}>
             <button type="button" onClick={() => setOpen(false)} className="btn">
               Cancelar
             </button>

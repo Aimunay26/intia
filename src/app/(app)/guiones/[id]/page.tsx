@@ -1,5 +1,9 @@
 import { ScriptWorkspace } from "@/components/scripts/script-workspace";
 import { ScriptScene } from "@/components/scripts/script-scene";
+import { ScriptHeader, headerButton } from "@/components/scripts/script-header";
+import { ScriptActionsMenu } from "@/components/scripts/script-actions-menu";
+import { fitModeEnabled } from "@/components/scripts/viewer-state";
+import viewer from "@/components/scripts/script-workspace.module.css";
 import { ApprovalHistory } from "@/components/approval-history";
 import { WorkflowStatusFields } from "@/components/workflow-status-fields";
 import { requirePageSection } from "@/lib/render-context";
@@ -7,15 +11,10 @@ import { MemberWorkspace } from "@/components/member-workspace";
 import { EditForm, RevisionField } from "@/components/edit-form";
 import {
 	Clapperboard,
-	Copy,
-	Film,
 	Link as LinkIcon,
-	Mic,
+	MapPin,
 	Package,
 	Plus,
-	Sparkles,
-	Trash2,
-	Type,
 	Unlink,
 	UserSquare2,
 	Users,
@@ -29,17 +28,13 @@ import {
 	asignarGuionAVideo,
 	cambiarEstadoGuion,
 	desvincularGuionDeVideo,
-	duplicarGuion,
-	eliminarGuion,
 } from "@/app/actions/scripts";
 import {
 	CopyButton,
-	DeleteButton,
 	SubmitButton,
 } from "@/components/forms";
 import {
 	Badge,
-	Breadcrumb,
 	Card,
 	CardHeader,
 	ColorChip,
@@ -58,7 +53,6 @@ import {
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { prisma } from "@/lib/prisma";
 import {
-	cn,
 	formatDate,
 	formatDateTime,
   formatRange,
@@ -76,45 +70,13 @@ import {
 
 /* ------------------------------------------------------------- AUXILIARES -- */
 
-function Bloque({
-  icon,
-  label,
-  children,
-  className,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
+/** Rótulo de columna en «Ficha e historial». */
+function ColumnTitle({ children, actions }: { children: React.ReactNode; actions?: React.ReactNode }) {
   return (
-    <div className={cn("min-w-0", className)}>
-      <div className="text-inkmuted mb-1 flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">
-        <span className="shrink-0">{icon}</span>
-        {label}
-      </div>
-      <div className="text-inksoft text-[12.5px] leading-relaxed break-words">{children}</div>
+    <div className="mb-3 flex items-center justify-between gap-2">
+      <h2 className="text-ink text-[13px] font-bold">{children}</h2>
+      {actions}
     </div>
-  );
-}
-
-function DatoCard({
-  label,
-  children,
-  icon,
-}: {
-  label: string;
-  children: React.ReactNode;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <Card className="p-4">
-      <div className="text-inkmuted flex items-center gap-1.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">
-        {icon}
-        {label}
-      </div>
-      <div className="text-ink mt-1.5 text-[13px] leading-relaxed">{children}</div>
-    </Card>
   );
 }
 
@@ -305,341 +267,344 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
       body: <ScriptScene scene={data} editor={canEdit ? <SceneEditor scene={data} totalScenes={escenas.length} beatNames={beatNames} canDelete={canDelete} /> : undefined} /> };
   });
 
-  return <>
-    <header className="mb-6">
-      <div className="no-print"><Breadcrumb items={[{ label: "Guiones", href: "/guiones" }, { label: script.title }]} /></div>
-      <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0"><h1 className="text-ink text-2xl font-bold tracking-tight break-words sm:text-3xl">{script.title}</h1>
-          <div className="text-inkmuted mt-3 flex flex-wrap items-center gap-2 text-xs">
-            {script.brand ? <ColorChip color={script.brand.colorPrimary} href={`/marcas/${script.brand.id}`}>{script.brand.name}</ColorChip> : <span>Sin marca</span>}
-            {script.structure ? <Link href={`/estructuras/${script.structure.id}`}>{script.structure.name}{script.structure.family ? ` · ${script.structure.family}` : ""}</Link> : null}
-            {archetype ? <ColorChip color={archetype.color} href={`/arquetipos/${archetype.id}`}><UserSquare2 size={12} />{archetype.name}</ColorChip> : null}
-            <span>{formatSeconds(duracionTotal)} · {escenas.length} escenas</span>
-            <Badge option={SCRIPT_STATUS_MAP[script.status]} fallback={script.status} />
-            {script.version > 1 ? <span>v{script.version}</span> : null}
-          </div>
-        </div>
-        <div className="no-print flex shrink-0 flex-wrap gap-2"><CopyButton text={textoPlano} label="Copiar guion" /><PrintButton /></div>
-      </div>
-    </header>
-    <ScriptWorkspace key={script.id} scenes={focusScenes}
+  const sheet = {
+    script: {
+      id: script.id,
+      updatedAt: script.updatedAt.toISOString(),
+      brandId: script.brandId,
+      structureId: script.structureId,
+      avatar: script.avatar ?? "",
+      focus: script.focus ?? "",
+      hook: script.hook ?? "",
+      cta: script.cta ?? "",
+      notes: script.notes ?? "",
+    },
+    brands,
+    structures,
+  };
+  const variarHref = `/generador?estructura=${script.structureId ?? ""}&marca=${script.brandId ?? ""}&producto=${encodeURIComponent(script.focus ?? "")}&peticion=${encodeURIComponent(script.hook ? `Misma idea: ${script.hook}` : script.title)}`;
+  const escenasTexto = `${escenas.length} ${escenas.length === 1 ? "escena" : "escenas"}`;
+
+  const header = (
+    <ScriptHeader
+      title={script.title}
+      meta={<>
+        {script.brand ? <ColorChip color={script.brand.colorPrimary} href={`/marcas/${script.brand.id}`}>{script.brand.name}</ColorChip> : <span>Sin marca</span>}
+        {script.structure ? <Link href={`/estructuras/${script.structure.id}`} className="whitespace-nowrap">{script.structure.name}{script.structure.family ? ` · ${script.structure.family}` : ""}</Link> : null}
+        {archetype ? <ColorChip color={archetype.color} href={`/arquetipos/${archetype.id}`}><UserSquare2 size={12} />{archetype.name}</ColorChip> : null}
+        <span className="whitespace-nowrap">{formatSeconds(duracionTotal)} · {escenasTexto}</span>
+        <Badge option={SCRIPT_STATUS_MAP[script.status]} fallback={script.status} />
+        {script.version > 1 ? <span>v{script.version}</span> : null}
+      </>}
+      actions={<>
+        <CopyButton text={textoPlano} label="Copiar guion" className={`btn btn-sm ${headerButton.iconMobile}`} />
+        <PrintButton className={`btn btn-sm ${headerButton.desktopOnly}`} />
+        <ScriptActionsMenu
+          sheet={canEdit ? sheet : undefined}
+          variarHref={canEdit ? variarHref : undefined}
+          duplicateId={canEdit ? script.id : undefined}
+          remove={canDelete ? { id: script.id, title: "¿Eliminar este guion?", description: `Se borrará "${script.title}" con sus ${escenas.length} escenas. Los videos que lo tengan vinculado se quedarán sin guion.` } : undefined}
+        />
+      </>}
+    />
+  );
+
+  return (
+    <ScriptWorkspace key={script.id} scenes={focusScenes} header={header}
+      fit={fitModeEnabled(process.env.GUIONES_AJUSTE_PANTALLA)}
       empty={<Card><EmptyState icon={<Clapperboard size={19} />} title="Este guion no tiene escenas" description="Añade una escena para empezar o crea otro guion desde el generador." action={canEdit ? <Link href="/generador" className="btn btn-primary">Ir al generador</Link> : undefined} /></Card>}
-      addScene={canEdit ? <EditForm action={anadirEscena}><input type="hidden" name="expectedUpdatedAt" value={script.updatedAt.toISOString()} /><input type="hidden" name="scriptId" value={script.id} /><SubmitButton className="btn btn-sm" pendingLabel="Añadiendo…"><Plus size={13} />Añadir escena</SubmitButton></EditForm> : undefined}
-      production={<>      {/* -------------------------------------------------- LISTA DE PRODUCCION */}
-      <div className="mt-5 grid gap-3 lg:grid-cols-2">
-        <Card>
-          <CardHeader
-            title="Lista de producción"
-            subtitle="Todo lo que hay que tener el día de la grabación."
-            icon={<Package size={15} />}
-            actions={<span className="chip chip-plain">{utileria.length}</span>}
-          />
-          {utileria.length === 0 && locaciones.length === 0 ? (
-            <EmptyState
-              icon={<Package size={19} />}
-              title="Sin utilería registrada"
-              description="Ninguna escena tiene elementos anotados. Edita las escenas para ir armando la lista."
+      addScene={canEdit ? <EditForm action={anadirEscena}><input type="hidden" name="expectedUpdatedAt" value={script.updatedAt.toISOString()} /><input type="hidden" name="scriptId" value={script.id} /><SubmitButton className="btn btn-sm w-full" pendingLabel="Añadiendo…"><Plus size={13} />Añadir escena</SubmitButton></EditForm> : undefined}
+      production={
+        <div className={`grid gap-3 lg:grid-cols-3 ${viewer.fillGrid}`}>
+          {/* ------------------------------------------------ LISTA DE PRODUCCIÓN */}
+          <Card className={viewer.column}>
+            <CardHeader
+              title="Lista de producción"
+              subtitle="Todo lo que hay que tener el día de la grabación."
+              icon={<Package size={15} />}
+              actions={<span className="chip chip-plain">{utileria.length}</span>}
             />
-          ) : (
-            <div className="space-y-3.5 p-4">
-              {utileria.length ? (
-                <div>
-                  <div className="text-inkmuted mb-1.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                    Utilería y elementos
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {utileria.map((prop, i) => (
-                      <span key={i} className="chip chip-plain">
-                        {prop}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {locaciones.length ? (
-                <div>
-                  <div className="text-inkmuted mb-1.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                    Locaciones
-                  </div>
-                  <div className="text-inksoft text-[12.5px] leading-relaxed">
-                    {locaciones.join(" · ")}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Reparto"
-            subtitle="Cuánta gente hace falta y de qué perfil."
-            icon={<Users size={15} />}
-            actions={<span className="chip chip-plain">{reparto.size}</span>}
-          />
-          {reparto.size === 0 && !script.notes ? (
-            <EmptyState
-              icon={<Users size={19} />}
-              title="Sin reparto definido"
-              description="Cuando las escenas tengan actores, aquí se arma la lista de quién hace falta."
-            />
-          ) : (
-            <div className="space-y-3.5 p-4">
-              {reparto.size ? (
-                <ul className="divide-line divide-y">
-                  {[...reparto.entries()].map(([papel, arquetipo]) => (
-                    <li
-                      key={papel}
-                      className="flex items-center justify-between gap-3 py-1.5 first:pt-0 last:pb-0"
-                    >
-                      <span className="text-ink text-[12.5px] font-semibold">{papel}</span>
-                      <span className="text-inkmuted text-[12px]">{arquetipo || "—"}</span>
+            {utileria.length === 0 ? (
+              <EmptyState
+                icon={<Package size={19} />}
+                title="Sin utilería registrada"
+                description="Ninguna escena tiene elementos anotados. Edita las escenas para ir armando la lista."
+              />
+            ) : (
+              <div className="p-4">
+                <ul className={viewer.propList}>
+                  {utileria.map((prop, i) => (
+                    <li key={i} className={`chip chip-plain ${viewer.prop}`}>
+                      {prop}
                     </li>
                   ))}
                 </ul>
-              ) : null}
-              {script.notes ? (
-                <div className="border-line border-t pt-3">
-                  <div className="text-inkmuted mb-1 text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                    Notas de reparto
-                  </div>
-                  <p className="prose-narrow">{script.notes}</p>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </Card>
-      </div>
+              </div>
+            )}
+          </Card>
 
-</>}
-      record={<>
-        <Card className="mb-4 p-5">
-          <div className="text-inkmuted mb-4 flex flex-wrap gap-3 text-sm">{script.author ? <span>Por {script.author.name}</span> : null}<span>{formatDateTime(script.createdAt)}</span></div>
-          {canEdit ? <div className="no-print space-y-5">
-            <EditForm action={actualizarGuion} className="flex flex-wrap items-end gap-2"><RevisionField value={script.updatedAt} /><input type="hidden" name="id" value={script.id} /><Field label="Título del guion" className="min-w-0 flex-1"><input name="title" aria-label="Título del guion" defaultValue={script.title} className="input w-full" required /></Field><SubmitButton className="btn" pendingLabel="Guardando…">Guardar título</SubmitButton></EditForm>
-            <EditForm action={cambiarEstadoGuion}><RevisionField value={script.updatedAt} /><input type="hidden" name="id" value={script.id} /><WorkflowStatusFields value={script.status} owner script options={SCRIPT_STATUSES.map(o => ({ value: o.value, label: o.label }))} /></EditForm>
-            <div className="flex flex-wrap gap-2"><ScriptSheetEditor script={{ id: script.id, updatedAt: script.updatedAt.toISOString(), brandId: script.brandId, structureId: script.structureId, avatar: script.avatar ?? "", focus: script.focus ?? "", hook: script.hook ?? "", cta: script.cta ?? "", notes: script.notes ?? "" }} brands={brands} structures={structures} />
-              <Link href={`/generador?estructura=${script.structureId ?? ""}&marca=${script.brandId ?? ""}&producto=${encodeURIComponent(script.focus ?? "")}&peticion=${encodeURIComponent(script.hook ? `Misma idea: ${script.hook}` : script.title)}`} className="btn btn-sm"><Sparkles size={13} />Variar ángulo</Link>
-              <form action={duplicarGuion}><input type="hidden" name="id" value={script.id} /><SubmitButton className="btn btn-sm" pendingLabel="Duplicando…"><Copy size={13} />Duplicar</SubmitButton></form>
-              {canDelete ? <DeleteButton action={eliminarGuion} id={script.id} label="Eliminar" icon={<Trash2 size={13} />} className="btn btn-danger btn-sm" title="¿Eliminar este guion?" description={`Se borrará "${script.title}" con sus ${escenas.length} escenas. Los videos que lo tengan vinculado se quedarán sin guion.`} /> : null}
-            </div>
-          </div> : null}
-        </Card>
-              {/* ------------------------------------------------------ TRES TARJETAS */}
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
-        <DatoCard label="Avatar objetivo" icon={<Users size={11} />}>
-          {script.avatar || <span className="text-inkmuted">—</span>}
-        </DatoCard>
-        <DatoCard label="Enfoque" icon={<Clapperboard size={11} />}>
-          {script.focus || <span className="text-inkmuted">—</span>}
-        </DatoCard>
-        <DatoCard label="Duración estimada" icon={<Film size={11} />}>
-          <span className="font-mono text-[18px] font-bold">{formatSeconds(duracionTotal)}</span>
-          <span className="text-inkmuted ml-2 text-[12px]">
-            {escenas.length} {escenas.length === 1 ? "escena" : "escenas"} ·{" "}
-            {duracionTotal} s
-          </span>
-        </DatoCard>
-      </div>
-
-      {script.hook || script.cta ? (
-        <Card className="mb-4 grid gap-3 p-4 sm:grid-cols-2">
-          {script.hook ? (
-            <Bloque icon={<Mic size={11} />} label="Gancho de los primeros 3 segundos">
-              {script.hook}
-            </Bloque>
-          ) : null}
-          {script.cta ? (
-            <Bloque icon={<Type size={11} />} label="Llamado a la acción">
-              {script.cta}
-            </Bloque>
-          ) : null}
-        </Card>
-      ) : null}
-
-
-              {/* --------------------------------------- ASIGNACIÓN A UNA TARJETA */}
-      <Card className="no-print mb-4">
-        <CardHeader
-          title="Videos donde se graba este guion"
-          subtitle="La tarjeta hereda la estructura del guion y pasa de Idea a Guion."
-          icon={<Clapperboard size={14} />}
-        />
-
-        <div className="p-4">
-          {script.content.length ? (
-            <ul className="mb-3 space-y-1.5">
-              {script.content.map((video, i) => {
-                const estadoVideo = CONTENT_STATUS_MAP[video.status];
-                return (
-                  <li
-                    key={video.id}
-                    data-guia={i === 0 ? GUIA_TARGETS.VIDEO_VINCULADO_CARD : undefined}
-                    className="bg-surface2 flex flex-wrap items-center gap-2.5 rounded-lg px-3 py-2"
-                  >
-                    <Link
-                      href={`/contenido/${video.id}`}
-                      className="text-ink hover:text-brand min-w-0 flex-1 truncate text-[13px] font-semibold transition-colors"
-                    >
-                      {video.title}
-                    </Link>
-                    {estadoVideo ? <Badge option={estadoVideo} /> : null}
-                    <span className="text-inkmuted text-[11.5px] whitespace-nowrap">
-                      {formatDate(video.scheduledDate)}
-                    </span>
-                    {canEdit ? (
-                      <form action={desvincularGuionDeVideo}>
-                        <input type="hidden" name="contentItemId" value={video.id} />
-                        <SubmitButton
-                          className="btn btn-ghost btn-sm text-danger"
-                          pendingLabel="Quitando…"
-                        >
-                          <Unlink size={13} /> Quitar
-                        </SubmitButton>
-                      </form>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="text-inkmuted mb-3 text-[13px] leading-relaxed">
-              Este guion todavía no está asignado a ninguna tarjeta del calendario.
-            </p>
-          )}
-
-          {canEdit ? (
-            candidatos.length ? (
-              <form action={asignarGuionAVideo} className="flex flex-wrap items-end gap-2">
-                <input type="hidden" name="scriptId" value={script.id} />
-                <Field
-                  label="Asignar a un video"
-                  className="min-w-0 w-full flex-1"
-                  hint={
-                    script.brand
-                      ? `Solo se listan las tarjetas de ${script.brand.name} que aún no tienen guion.`
-                      : "Solo se listan las tarjetas que aún no tienen guion."
-                  }
-                >
-                  <select
-                    name="contentItemId"
-                    className="select"
-                    defaultValue=""
-                    required
-                    data-guia={GUIA_TARGETS.SELECT_ASIGNAR_VIDEO}
-                  >
-                    <option value="" disabled>
-                      Elige la tarjeta…
-                    </option>
-                    {candidatos.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {formatDate(c.scheduledDate)} · {c.title}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <SubmitButton
-                  className="btn btn-primary"
-                  pendingLabel="Asignando…"
-                  data-guia={GUIA_TARGETS.BTN_ASIGNAR_GUION}
-                >
-                  <LinkIcon size={14} /> Asignar
-                </SubmitButton>
-              </form>
+          {/* ------------------------------------------------------ LOCACIONES */}
+          <Card className={viewer.column}>
+            <CardHeader
+              title="Locaciones"
+              subtitle="Dónde se graba cada escena."
+              icon={<MapPin size={15} />}
+              actions={<span className="chip chip-plain">{locaciones.length}</span>}
+            />
+            {locaciones.length ? (
+              <ul className="divide-line divide-y px-4 py-2">
+                {locaciones.map((loc) => (
+                  <li key={loc} className="text-inksoft py-2 text-[12.5px] leading-relaxed [overflow-wrap:anywhere]">{loc}</li>
+                ))}
+              </ul>
             ) : (
-              <p className="text-inkmuted text-[12.5px] leading-relaxed">
-                No hay tarjetas libres{script.brand ? ` de ${script.brand.name}` : ""}. Crea la
-                idea primero en{" "}
-                <Link href="/calendario" className="text-brand hover:underline">
-                  Calendario
-                </Link>{" "}
-                y vuelve aquí a asignarle este guion.
-              </p>
-            )
-          ) : null}
-        </div>
-      </Card>
+              <p className="text-inkmuted p-4 text-[12.5px] leading-relaxed">Ninguna escena tiene locación anotada.</p>
+            )}
+          </Card>
 
-
-        <ApprovalHistory id={id} script />
-              {/* --------------------------------------------------- COMO SE GENERO */}
-      <details className="card no-print mt-4 p-4">
-        <summary className="text-ink cursor-pointer text-[12.5px] font-semibold select-none">
-          Cómo se generó este guion
-        </summary>
-
-        <div className="mt-4 space-y-4">
-          <div className="grid gap-3 sm:grid-cols-4">
-            <div>
-              <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                Proveedor
+          {/* --------------------------------------------------------- REPARTO */}
+          <Card className={viewer.column}>
+            <CardHeader
+              title="Reparto"
+              subtitle="Cuánta gente hace falta y de qué perfil."
+              icon={<Users size={15} />}
+              actions={<span className="chip chip-plain">{reparto.size}</span>}
+            />
+            {reparto.size === 0 && !script.notes ? (
+              <EmptyState
+                icon={<Users size={19} />}
+                title="Sin reparto definido"
+                description="Cuando las escenas tengan actores, aquí se arma la lista de quién hace falta."
+              />
+            ) : (
+              <div className="space-y-3.5 p-4">
+                {reparto.size ? (
+                  <ul className="divide-line divide-y">
+                    {[...reparto.entries()].map(([papel, arquetipo]) => (
+                      <li
+                        key={papel}
+                        className="flex items-center justify-between gap-3 py-1.5 first:pt-0 last:pb-0"
+                      >
+                        <span className="text-ink text-[12.5px] font-semibold">{papel}</span>
+                        <span className="text-inkmuted text-[12px]">{arquetipo || "—"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {script.notes ? (
+                  <div className="border-line border-t pt-3">
+                    <div className="text-inkmuted mb-1 text-[10.5px] font-bold tracking-[0.08em] uppercase">
+                      Notas de reparto
+                    </div>
+                    <p className="prose-narrow">{script.notes}</p>
+                  </div>
+                ) : null}
               </div>
-              <div className="mt-1">
-                {script.provider ? (
-                  <Badge
-                    option={AI_PROVIDER_MAP[script.provider]}
-                    fallback={script.provider}
-                  />
+            )}
+          </Card>
+        </div>
+      }
+      record={
+        <div className={`grid gap-3 md:grid-cols-2 xl:grid-cols-3 ${viewer.fillGrid}`}>
+          {/* ------------------------------------------------ A · FICHA Y ESTADO */}
+          <Card className={`p-4 ${viewer.column}`}>
+            <ColumnTitle actions={canEdit ? <div className="no-print"><ScriptSheetEditor {...sheet} /></div> : undefined}>Ficha del guion</ColumnTitle>
+            {canEdit ? <div className="no-print border-line mb-4 space-y-3 border-b pb-4">
+              <EditForm action={actualizarGuion} className="flex flex-wrap items-end gap-2"><RevisionField value={script.updatedAt} /><input type="hidden" name="id" value={script.id} /><Field label="Título del guion" className="min-w-0 flex-1"><input name="title" aria-label="Título del guion" defaultValue={script.title} className="input w-full" required /></Field><SubmitButton className="btn" pendingLabel="Guardando…">Guardar título</SubmitButton></EditForm>
+              <EditForm action={cambiarEstadoGuion}><RevisionField value={script.updatedAt} /><input type="hidden" name="id" value={script.id} /><WorkflowStatusFields value={script.status} owner script options={SCRIPT_STATUSES.map(o => ({ value: o.value, label: o.label }))} /></EditForm>
+            </div> : null}
+            <dl className={viewer.facts}>
+              <dt>A quién le habla</dt><dd>{script.avatar || "—"}</dd>
+              <dt>Enfoque</dt><dd>{script.focus || "—"}</dd>
+              <dt>Gancho (3 s)</dt><dd>{script.hook || "—"}</dd>
+              <dt>Llamado a la acción</dt><dd>{script.cta || "—"}</dd>
+              <dt>Duración</dt><dd><span className="font-mono font-bold">{formatSeconds(duracionTotal)}</span> · {escenasTexto} · {duracionTotal} s</dd>
+              <dt>Autor</dt><dd>{script.author ? `Por ${script.author.name} · ` : ""}{formatDateTime(script.createdAt)}</dd>
+            </dl>
+          </Card>
+
+          {/* --------------------------------------- B · ASIGNACIÓN A UNA TARJETA */}
+          <Card className={`no-print ${viewer.column}`}>
+            <CardHeader
+              title="Videos donde se graba este guion"
+              subtitle="La tarjeta hereda la estructura del guion y pasa de Idea a Guion."
+              icon={<Clapperboard size={14} />}
+            />
+
+            <div className="p-4">
+              {script.content.length ? (
+                <ul className="mb-3 space-y-1.5">
+                  {script.content.map((video, i) => {
+                    const estadoVideo = CONTENT_STATUS_MAP[video.status];
+                    return (
+                      <li
+                        key={video.id}
+                        data-guia={i === 0 ? GUIA_TARGETS.VIDEO_VINCULADO_CARD : undefined}
+                        className="bg-surface2 flex flex-wrap items-center gap-2.5 rounded-lg px-3 py-2"
+                      >
+                        <Link
+                          href={`/contenido/${video.id}`}
+                          className="text-ink hover:text-brand min-w-0 flex-1 truncate text-[13px] font-semibold transition-colors"
+                        >
+                          {video.title}
+                        </Link>
+                        {estadoVideo ? <Badge option={estadoVideo} /> : null}
+                        <span className="text-inkmuted text-[11.5px] whitespace-nowrap">
+                          {formatDate(video.scheduledDate)}
+                        </span>
+                        {canEdit ? (
+                          <form action={desvincularGuionDeVideo}>
+                            <input type="hidden" name="contentItemId" value={video.id} />
+                            <SubmitButton
+                              className="btn btn-ghost btn-sm text-danger"
+                              pendingLabel="Quitando…"
+                            >
+                              <Unlink size={13} /> Quitar
+                            </SubmitButton>
+                          </form>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-inkmuted mb-3 text-[13px] leading-relaxed">
+                  Este guion todavía no está asignado a ninguna tarjeta del calendario.
+                </p>
+              )}
+
+              {canEdit ? (
+                candidatos.length ? (
+                  <form action={asignarGuionAVideo} className="flex flex-wrap items-end gap-2">
+                    <input type="hidden" name="scriptId" value={script.id} />
+                    <Field
+                      label="Asignar a un video"
+                      className="min-w-0 w-full flex-1"
+                      hint={
+                        script.brand
+                          ? `Solo se listan las tarjetas de ${script.brand.name} que aún no tienen guion.`
+                          : "Solo se listan las tarjetas que aún no tienen guion."
+                      }
+                    >
+                      <select
+                        name="contentItemId"
+                        className="select"
+                        defaultValue=""
+                        required
+                        data-guia={GUIA_TARGETS.SELECT_ASIGNAR_VIDEO}
+                      >
+                        <option value="" disabled>
+                          Elige la tarjeta…
+                        </option>
+                        {candidatos.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {formatDate(c.scheduledDate)} · {c.title}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <SubmitButton
+                      className="btn btn-primary"
+                      pendingLabel="Asignando…"
+                      data-guia={GUIA_TARGETS.BTN_ASIGNAR_GUION}
+                    >
+                      <LinkIcon size={14} /> Asignar
+                    </SubmitButton>
+                  </form>
                 ) : (
-                  <span className="text-inkmuted text-[12.5px]">Escrito a mano</span>
-                )}
-              </div>
+                  <p className="text-inkmuted text-[12.5px] leading-relaxed">
+                    No hay tarjetas libres{script.brand ? ` de ${script.brand.name}` : ""}. Crea la
+                    idea primero en{" "}
+                    <Link href="/calendario" className="text-brand hover:underline">
+                      Calendario
+                    </Link>{" "}
+                    y vuelve aquí a asignarle este guion.
+                  </p>
+                )
+              ) : null}
             </div>
-            <div>
-              <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                Modelo
-              </div>
-              <div className="text-inksoft mt-1 font-mono text-[12px]">
-                {script.model || "—"}
-              </div>
-            </div>
-            <div>
-              <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                Generado
-              </div>
-              <div className="text-inksoft mt-1 text-[12.5px]">
-                {script.generatedAt ? formatDateTime(script.generatedAt) : "—"}
-              </div>
-            </div>
-            <div>
-              <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                Autor
-              </div>
-              <div className="text-inksoft mt-1 text-[12.5px]">
-                {script.author?.name ?? "—"}
-              </div>
-            </div>
-          </div>
+          </Card>
 
-          {script.briefInput ? (
-            <div>
-              <div className="text-inkmuted mb-1.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                Lo que se pidió
-              </div>
-              <p className="prose-narrow bg-surface2 border-line rounded-xl border p-3">
-                {script.briefInput}
-              </p>
-            </div>
-          ) : null}
+          {/* ------------------------------------- C · HISTORIAL Y CÓMO SE GENERÓ */}
+          <div className={`space-y-3 md:col-span-2 xl:col-span-1 ${viewer.column}`}>
+            <ApprovalHistory id={id} script wideOpen className="my-0" />
+            <details className="card no-print p-4">
+              <summary className="text-ink cursor-pointer text-[12.5px] font-semibold select-none">
+                Cómo se generó este guion
+              </summary>
 
-          {script.promptUsed ? (
-            <div>
-              <div className="mb-1.5 flex items-center justify-between gap-3">
-                <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
-                  Prompt del sistema que se usó
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
+                      Proveedor
+                    </div>
+                    <div className="mt-1">
+                      {script.provider ? (
+                        <Badge
+                          option={AI_PROVIDER_MAP[script.provider]}
+                          fallback={script.provider}
+                        />
+                      ) : (
+                        <span className="text-inkmuted text-[12.5px]">Escrito a mano</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
+                      Modelo
+                    </div>
+                    <div className="text-inksoft mt-1 font-mono text-[12px] break-words">
+                      {script.model || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
+                      Generado
+                    </div>
+                    <div className="text-inksoft mt-1 text-[12.5px]">
+                      {script.generatedAt ? formatDateTime(script.generatedAt) : "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
+                      Autor
+                    </div>
+                    <div className="text-inksoft mt-1 text-[12.5px]">
+                      {script.author?.name ?? "—"}
+                    </div>
+                  </div>
                 </div>
-                <CopyButton text={script.promptUsed} label="Copiar prompt" />
-              </div>
-              <pre className="bg-surface2 border-line input-mono text-inksoft max-h-[420px] overflow-auto rounded-xl border p-3 whitespace-pre-wrap">
-                {script.promptUsed}
-              </pre>
-            </div>
-          ) : null}
-        </div>
-      </details>
 
-      </>}
+                {script.briefInput ? (
+                  <div>
+                    <div className="text-inkmuted mb-1.5 text-[10.5px] font-bold tracking-[0.08em] uppercase">
+                      Lo que se pidió
+                    </div>
+                    <p className="prose-narrow bg-surface2 border-line rounded-xl border p-3">
+                      {script.briefInput}
+                    </p>
+                  </div>
+                ) : null}
+
+                {script.promptUsed ? (
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <div className="text-inkmuted text-[10.5px] font-bold tracking-[0.08em] uppercase">
+                        Prompt del sistema que se usó
+                      </div>
+                      <CopyButton text={script.promptUsed} label="Copiar prompt" />
+                    </div>
+                    <pre className="bg-surface2 border-line input-mono text-inksoft max-h-[420px] overflow-auto rounded-xl border p-3 whitespace-pre-wrap">
+                      {script.promptUsed}
+                    </pre>
+                  </div>
+                ) : null}
+              </div>
+            </details>
+          </div>
+        </div>
+      }
     />
-  </>;
+  );
 }

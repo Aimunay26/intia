@@ -1,0 +1,20 @@
+/*
+ * Biblioteca de guiones (/guiones). Filas compactas de una o dos líneas y, en
+ * escritorio con GUIONES_AJUSTE_PANTALLA activo, la tabla se desplaza por dentro
+ * (cabecera fija) para que la paginación quede siempre a la vista.
+ */
+
+/* .tbl es global y sin capa: la clase doble le gana sin !important. */
+.table:global(.tbl) thead th { padding: 8px 12px; }
+.table:global(.tbl) tbody td { padding: 7px 12px; vertical-align: middle; }
+
+.titleBox { width: clamp(260px, 22vw, 420px); }
+.structBox { width: clamp(120px, 11vw, 200px); }
+.authorName { max-width: 140px; }
+.line { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub { margin-top: 1px; color: var(--ink-muted); font-size: 11.5px; line-height: 1.35; }
+
+/* 264 px = main (32 + 32) + cabecera (≈60 + 16) + filtros (≈58 + 16) + paginación (≈46) + bordes. */
+@media screen and (min-width: 1024px) and (min-height: 600px) {
+  .scroll[data-fit="on"] { max-height: calc(100dvh - 264px); min-height: 240px; overflow-y: auto; overscroll-behavior: contain; }
+}

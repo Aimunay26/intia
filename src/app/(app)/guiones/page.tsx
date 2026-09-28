@@ -8,7 +8,9 @@ import { getStructureChoices } from "@/lib/structure-choices";
 import { Clapperboard, Film, Search, Sparkles } from "lucide-react";
 import Link from "next/link";
 
-import { ActiveFilters, FilterBar, FilterSelect, Pagination, SearchInput } from "@/components/filters";
+import { ActiveFilters, FilterBar, FilterDisclosure, FilterSelect, Pagination, SearchInput } from "@/components/filters";
+import { fitModeEnabled } from "@/components/scripts/viewer-state";
+import lib from "@/components/scripts/script-library.module.css";
 import { GUIA_TARGETS } from "@/components/guia";
 import { Avatar, Badge, Card, ColorChip, EmptyState, PageHeader } from "@/components/ui";
 import { can, LEVEL } from "@/lib/auth";
@@ -88,10 +90,13 @@ export default async function GuionesPage({
   const { items: scripts, total, page, pageCount } = listing;
 
   const hayFiltros = Boolean(q || estructura || estado || proveedor);
+  const filtrosActivos = [estructura, estado, proveedor].filter(Boolean).length;
+  const ajuste = fitModeEnabled(process.env.GUIONES_AJUSTE_PANTALLA);
   const puedeCrear = can(user.role, LEVEL.MEMBER);
 
   return (
     <>
+      <div className="*:mb-4">
       <PageHeader
         title="Guiones"
         subtitle={`${total} ${total === 1 ? "guion escrito" : "guiones escritos"} · el desglose completo de cada uno, listo para el set.`}
@@ -105,28 +110,34 @@ export default async function GuionesPage({
           ) : null
         }
       />
+      </div>
 
       <FilterBar>
-        <SearchInput placeholder="Buscar por título, gancho o avatar…" width={260} />
-        <FilterSelect
-          param="estructura"
-          allLabel="Todas las estructuras"
-          options={structures.map((s) => ({ value: s.id, label: s.name }))}
-          width={200}
-        />
-        <FilterSelect
-          param="estado"
-          allLabel="Todos los estados"
-          options={SCRIPT_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
-          width={160}
-        />
-        <FilterSelect
-          param="proveedor"
-          allLabel="Todos los motores"
-          options={AI_PROVIDERS.map((p) => ({ value: p.value, label: p.label }))}
-          width={170}
-        />
-        <div className="ml-auto">
+        <SearchInput placeholder="Buscar por título, gancho o avatar…" width={260} responsive />
+        <FilterDisclosure count={filtrosActivos}>
+          <FilterSelect
+            param="estructura"
+            allLabel="Todas las estructuras"
+            options={structures.map((s) => ({ value: s.id, label: s.name }))}
+            width={200}
+            responsive
+          />
+          <FilterSelect
+            param="estado"
+            allLabel="Todos los estados"
+            options={SCRIPT_STATUSES.map((s) => ({ value: s.value, label: s.label }))}
+            width={160}
+            responsive
+          />
+          <FilterSelect
+            param="proveedor"
+            allLabel="Todos los motores"
+            options={AI_PROVIDERS.map((p) => ({ value: p.value, label: p.label }))}
+            width={170}
+            responsive
+          />
+        </FilterDisclosure>
+        <div className="ml-auto max-md:w-full">
           <ActiveFilters
             labels={{
               q: `Búsqueda: ${truncate(q, 24)}`,
@@ -162,125 +173,151 @@ export default async function GuionesPage({
             />
           )
         ) : (
-          <div className="overflow-x-auto">
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Guion</th>
-                  <th>Marca</th>
-                  <th>Estructura</th>
-                  <th>Estado</th>
-                  <th className="text-right">Duración</th>
-                  <th className="text-right">Escenas</th>
-                  <th>Motor</th>
-                  <th>Autor</th>
-                  <th>Creado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scripts.map((script, i) => (
-                  <tr key={script.id}>
-                    <td className="max-w-[320px]">
-                      <Link
-                        href={`/guiones/${script.id}`}
-                        data-guia={i === 0 ? GUIA_TARGETS.GUION_PRIMERA_FILA : undefined}
-                        className="text-ink hover:text-brand text-[13px] font-semibold transition-colors"
-                      >
-                        {script.title}
-                      </Link>
-                      {script.avatar ? (
-                        <div className="text-inkmuted mt-0.5 text-[11.5px] leading-snug">
-                          {truncate(script.avatar, 90)}
-                        </div>
-                      ) : null}
-                      {script._count.content > 0 ? (
-                        <div className="text-inkmuted mt-0.5 text-[11px]">
-                          Vinculado a {script._count.content}{" "}
-                          {script._count.content === 1 ? "video" : "videos"}
-                        </div>
-                      ) : null}
-                    </td>
-                    <td>
-                      {script.brand ? (
-                        <ColorChip
-                          color={script.brand.colorPrimary}
-                          href={`/marcas/${script.brand.id}`}
-                        >
+          <>
+            {/* Móvil: tarjetas de una columna. */}
+            <ul className="divide-line divide-y md:hidden">
+              {scripts.map((script, i) => (
+                <li key={script.id} className="hover:bg-surface2 relative px-4 py-3 transition-colors">
+                  <Link
+                    href={`/guiones/${script.id}`}
+                    data-guia={i === 0 ? GUIA_TARGETS.GUION_PRIMERA_FILA : undefined}
+                    className="text-ink line-clamp-2 text-[15px] leading-snug font-semibold after:absolute after:inset-0"
+                  >
+                    {script.title}
+                  </Link>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[12px]">
+                    {script.brand ? (
+                      <span className="relative z-[1]">
+                        <ColorChip color={script.brand.colorPrimary} href={`/marcas/${script.brand.id}`}>
                           {script.brand.name}
                         </ColorChip>
-                      ) : (
-                        <span className="text-inkmuted">—</span>
-                      )}
-                    </td>
-                    <td className="max-w-[190px]">
-                      {script.structure ? (
-                        <Link
-                          href={`/estructuras/${script.structure.id}`}
-                          className="hover:text-ink text-[12.5px] transition-colors"
-                        >
-                          {script.structure.name}
-                          {script.structure.family ? (
-                            <span className="text-inkmuted block text-[11px]">
-                              {script.structure.family}
-                            </span>
-                          ) : null}
-                        </Link>
-                      ) : (
-                        <span className="text-inkmuted">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <Badge option={SCRIPT_STATUS_MAP[script.status]} fallback={script.status} />
-                    </td>
-                    <td className="text-right font-mono text-[12.5px] whitespace-nowrap">
-                      {script.totalSeconds ? formatSeconds(script.totalSeconds) : "—"}
-                    </td>
-                    <td className="text-right font-mono text-[12.5px]">
-                      {script._count.scenes}
-                    </td>
-                    <td className="whitespace-nowrap">
-                      {script.provider ? (
-                        <>
-                          <Badge
-                            option={AI_PROVIDER_MAP[script.provider]}
-                            fallback={script.provider}
-                          />
-                          {script.model ? (
-                            <span className="text-inkmuted mt-0.5 block font-mono text-[10.5px]">
-                              {script.model}
-                            </span>
-                          ) : null}
-                        </>
-                      ) : (
-                        <span className="text-inkmuted">Manual</span>
-                      )}
-                    </td>
-                    <td>
-                      {script.author ? (
-                        <span className="flex items-center gap-1.5">
-                          <Avatar
-                            name={script.author.name}
-                            color={script.author.color}
-                            size={20}
-                          />
-                          <span className="text-[12px]">{script.author.name}</span>
-                        </span>
-                      ) : (
-                        <span className="text-inkmuted">—</span>
-                      )}
-                    </td>
-                    <td className="text-[12px] whitespace-nowrap">
-                      {formatDate(script.createdAt)}
-                    </td>
+                      </span>
+                    ) : null}
+                    <Badge option={SCRIPT_STATUS_MAP[script.status]} fallback={script.status} />
+                    <span className="text-inksoft font-mono whitespace-nowrap">
+                      {script.totalSeconds ? formatSeconds(script.totalSeconds) : "—"} · {script._count.scenes} esc.
+                    </span>
+                  </div>
+                  <div className="text-inkmuted mt-1 truncate text-[12px]">
+                    {[script.structure?.name, script.author?.name, formatDate(script.createdAt)].filter(Boolean).join(" · ")}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {/* Escritorio: tabla compacta; con el ajuste de pantalla se desplaza por dentro. */}
+            <div key={page} className={`hidden overflow-x-auto md:block ${lib.scroll}`} data-fit={ajuste ? "on" : "off"}>
+              <table className={`tbl ${lib.table}`}>
+                <thead>
+                  <tr>
+                    <th>Guion</th>
+                    <th>Marca</th>
+                    <th>Estructura</th>
+                    <th>Estado</th>
+                    <th className="text-right">Duración · esc.</th>
+                    <th>Motor</th>
+                    <th>Autor</th>
+                    <th>Creado</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {scripts.map((script, i) => {
+                    const detalle = [
+                      script._count.content > 0
+                        ? `Vinculado a ${script._count.content} ${script._count.content === 1 ? "video" : "videos"}`
+                        : "",
+                      script.avatar ?? "",
+                    ].filter(Boolean).join(" · ");
+                    return (
+                      <tr key={script.id}>
+                        <td>
+                          <div className={lib.titleBox}>
+                            <Link
+                              href={`/guiones/${script.id}`}
+                              data-guia={i === 0 ? GUIA_TARGETS.GUION_PRIMERA_FILA : undefined}
+                              title={script.title}
+                              className={`text-ink hover:text-brand text-[13px] font-semibold transition-colors ${lib.line}`}
+                            >
+                              {script.title}
+                            </Link>
+                            {detalle ? (
+                              <span className={`${lib.line} ${lib.sub}`} title={script.avatar ?? undefined}>
+                                {detalle}
+                              </span>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td>
+                          {script.brand ? (
+                            <ColorChip
+                              color={script.brand.colorPrimary}
+                              href={`/marcas/${script.brand.id}`}
+                            >
+                              {script.brand.name}
+                            </ColorChip>
+                          ) : (
+                            <span className="text-inkmuted">—</span>
+                          )}
+                        </td>
+                        <td>
+                          {script.structure ? (
+                            <Link
+                              href={`/estructuras/${script.structure.id}`}
+                              title={script.structure.family ? `${script.structure.name} · ${script.structure.family}` : script.structure.name}
+                              className={`hover:text-ink text-[12.5px] transition-colors ${lib.line} ${lib.structBox}`}
+                            >
+                              {script.structure.name}
+                            </Link>
+                          ) : (
+                            <span className="text-inkmuted">—</span>
+                          )}
+                        </td>
+                        <td>
+                          <Badge option={SCRIPT_STATUS_MAP[script.status]} fallback={script.status} />
+                        </td>
+                        <td className="text-right font-mono text-[12.5px] whitespace-nowrap">
+                          {script.totalSeconds ? formatSeconds(script.totalSeconds) : "—"} · {script._count.scenes}
+                        </td>
+                        <td className="whitespace-nowrap">
+                          {script.provider ? (
+                            <span title={script.model ?? undefined}>
+                              <Badge
+                                option={AI_PROVIDER_MAP[script.provider]}
+                                fallback={script.provider}
+                              />
+                            </span>
+                          ) : (
+                            <span className="text-inkmuted">Manual</span>
+                          )}
+                        </td>
+                        <td>
+                          {script.author ? (
+                            <span className="flex items-center gap-1.5 whitespace-nowrap">
+                              <Avatar
+                                name={script.author.name}
+                                color={script.author.color}
+                                size={20}
+                              />
+                              <span className={`text-[12px] ${lib.line} ${lib.authorName}`} title={script.author.name}>{script.author.name}</span>
+                            </span>
+                          ) : (
+                            <span className="text-inkmuted">—</span>
+                          )}
+                        </td>
+                        <td className="text-[12px] whitespace-nowrap">
+                          {formatDate(script.createdAt)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </Card>
 
-      <Pagination page={page} pageCount={pageCount} total={total} />
+      <Pagination page={page} pageCount={pageCount} total={total} scrollToTop />
     </>
   );
 

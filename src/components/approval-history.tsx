@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 
-/** El llamador ya autoriza la ficha. Consulta acotada; no expone el snapshot privado completo. */
-export async function ApprovalHistory({ id, script = false }: { id: string; script?: boolean }) {
+/**
+ * El llamador ya autoriza la ficha. Consulta acotada; no expone el snapshot privado completo.
+ * `wideOpen`: el visor de guiones lo despliega solo en pantallas anchas (columna propia).
+ */
+export async function ApprovalHistory({ id, script = false, className, wideOpen = false }: { id: string; script?: boolean; className?: string; wideOpen?: boolean }) {
   const records = await prisma.approval.findMany({ where: { entityId: id, entityType: { in: script ? ["SCRIPT"] : ["SCRIPT_APPROVAL", "FINAL_APPROVAL"] } }, orderBy: [{ approvedAt: "desc" }, { id: "desc" }], take: 20,
     select: { id: true, entityType: true, version: true, approvedByName: true, approvedAt: true, revokedAt: true, reason: true } });
-  return <details className="card my-3 p-3 text-sm">
+  return <details className={cn("card p-3 text-sm", className ?? "my-3")} data-wide-open={wideOpen ? "" : undefined}>
     <summary className="cursor-pointer font-semibold">Historial de aprobaciones</summary>
     <p className="text-inkmuted my-2">Cada aprobación conserva una copia de lo revisado. Los cambios posteriores exigen volver a aprobar antes de publicar.</p>
     {records.length ? <ul className="space-y-2">{records.map(r => <li key={r.id}>

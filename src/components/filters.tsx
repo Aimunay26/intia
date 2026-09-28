@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Search, X } from "lucide-react";
+import { Loader2, Search, SlidersHorizontal, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -19,7 +19,7 @@ function useSetParam() {
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
 
-  const setParam = (updates: Record<string, string | null>) => {
+  const setParam = (updates: Record<string, string | null>, options: { scroll?: boolean } = {}) => {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(updates)) {
       if (value === null || value === "") params.delete(key);
@@ -28,7 +28,7 @@ function useSetParam() {
     // Al cambiar cualquier filtro volvemos a la primera página.
     if (!("pagina" in updates)) params.delete("pagina");
     const qs = params.toString();
-    startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
+    startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: options.scroll ?? false }));
   };
 
   return { setParam, pending, searchParams };
@@ -63,23 +63,28 @@ export function FilterSelect({
   allLabel = "Todos",
   icon,
   width = 168,
+  responsive = false,
+  className,
 }: {
   param: string;
   options: { value: string; label: string }[];
   allLabel?: string;
   icon?: React.ReactNode;
   width?: number;
+  /** Ancho completo y campo táctil (44 px, 16 px) en móvil; `width` desde md. */
+  responsive?: boolean;
+  className?: string;
 }) {
   const { setParam, searchParams } = useSetParam();
   const value = searchParams.get(param) ?? "";
 
   return (
-    <div className="relative flex max-w-full items-center" style={{ width }}>
+    <div className={cn("relative flex max-w-full items-center", responsive && "w-full md:w-[var(--filter-w)]", className)} style={responsiveWidth(width, responsive)}>
       {icon ? (
         <span className="text-inkmuted pointer-events-none absolute left-2.5 z-10">{icon}</span>
       ) : null}
       <NativeSelect
-        className={cn("select h-[34px] text-[12.5px]", Boolean(icon) && "pl-8")}
+        className={cn("select h-[34px] text-[12.5px]", responsive && "max-md:h-11! max-md:text-[16px]!", Boolean(icon) && "pl-8")}
         value={value}
         onChange={(e) => setParam({ [param]: e.target.value || null })}
         aria-label={allLabel}
@@ -105,10 +110,15 @@ export function SearchInput({
   param = "q",
   placeholder = "Buscar…",
   width = 240,
+  responsive = false,
+  className,
 }: {
   param?: string;
   placeholder?: string;
   width?: number;
+  /** Ancho completo y campo táctil (44 px, 16 px) en móvil; `width` desde md. */
+  responsive?: boolean;
+  className?: string;
 }) {
   const { setParam, searchParams, pending } = useSetParam();
   const initial = searchParams.get(param) ?? "";
@@ -138,14 +148,15 @@ export function SearchInput({
   }, [value]);
 
   return (
-    <div className="relative flex max-w-full items-center" style={{ width }}>
+    <div className={cn("relative flex max-w-full items-center", responsive && "w-full md:w-[var(--filter-w)]", className)} style={responsiveWidth(width, responsive)}>
       <span className="text-inkmuted pointer-events-none absolute left-2.5">
         {pending ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
       </span>
       <input
-        className="input h-[34px] pr-8 pl-8 text-[12.5px]"
+        className={cn("input h-[34px] pr-8 pl-8 text-[12.5px]", responsive && "max-md:h-11! max-md:text-[16px]!")}
         value={value}
         placeholder={placeholder}
+        aria-label={responsive ? placeholder : undefined}
         onChange={(e) => setValue(e.target.value)}
       />
       {value ? (
@@ -159,6 +170,49 @@ export function SearchInput({
         </button>
       ) : null}
     </div>
+  );
+}
+
+/** Ancho fijo (API original) o variable CSS para el ancho desde md. */
+function responsiveWidth(width: number, responsive: boolean): React.CSSProperties {
+  return responsive ? ({ "--filter-w": `${width}px` } as React.CSSProperties) : { width };
+}
+
+/* ------------------------------------------------------ FILTROS PLEGABLES -- */
+
+/**
+ * En móvil agrupa los selectores tras un botón «Filtros (n)» y los muestra a
+ * ancho completo; desde md quedan en línea, como siempre.
+ */
+export function FilterDisclosure({
+  count = 0,
+  label = "Filtros",
+  children,
+}: {
+  count?: number;
+  label?: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <div className="w-full md:hidden">
+        <button
+          type="button"
+          className="btn w-full min-h-11 justify-between!"
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal size={15} aria-hidden="true" />
+            {label}
+            {count ? ` (${count})` : ""}
+          </span>
+          <span className="text-inkmuted text-[12px]">{open ? "Ocultar" : "Mostrar"}</span>
+        </button>
+      </div>
+      <div className={cn(open ? "grid w-full gap-2" : "hidden", "md:contents")}>{children}</div>
+    </>
   );
 }
 
@@ -271,17 +325,22 @@ export function Pagination({
   pageCount,
   total,
   param = "pagina",
+  scrollToTop = false,
+  className,
 }: {
   page: number;
   pageCount: number;
   total: number;
   param?: string;
+  /** Al cambiar de página, vuelve al inicio de la página. */
+  scrollToTop?: boolean;
+  className?: string;
 }) {
   const { setParam } = useSetParam();
   if (pageCount <= 1) return null;
 
   return (
-    <div className="text-inkmuted mt-4 flex items-center justify-between gap-3 text-[12.5px]">
+    <div className={cn("text-inkmuted mt-4 flex flex-wrap items-center justify-between gap-3 text-[12.5px]", className)}>
       <span>
         Página {page} de {pageCount} · {total} en total
       </span>
@@ -289,14 +348,14 @@ export function Pagination({
         <button
           className="btn btn-sm"
           disabled={page <= 1}
-          onClick={() => setParam({ [param]: String(page - 1) })}
+          onClick={() => setParam({ [param]: String(page - 1) }, { scroll: scrollToTop })}
         >
           Anterior
         </button>
         <button
           className="btn btn-sm"
           disabled={page >= pageCount}
-          onClick={() => setParam({ [param]: String(page + 1) })}
+          onClick={() => setParam({ [param]: String(page + 1) }, { scroll: scrollToTop })}
         >
           Siguiente
         </button>

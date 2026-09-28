@@ -15,13 +15,24 @@ import { z } from "zod";
 import { normalizeSceneTimes } from "@/lib/ai";
 import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
 import { LEVEL, requireLevel, type SessionUser } from "@/lib/auth";
-import { CONTENT_STATUS_MAP, SCRIPT_STATUS_MAP, VOICE_TYPE_MAP } from "@/lib/constants";
+import { CONTENT_STATUS_MAP, SCRIPT_STATUS_MAP, VOICE_TYPE_MAP, isProductKind } from "@/lib/constants";
 import { vincularGuionAVideo } from "@/lib/generation-persist";
 import { lockRevision, withMutation, withWorkflowMutation } from "@/lib/mutations";
 import { prisma, type AppTransaction } from "@/lib/prisma";
 import { coherenciaCta, type CtaModo } from "@/lib/script-angles";
 import { field, fieldOrNull, intField, linesToJson } from "@/lib/utils";
 import { boundedNumber, enumField } from "@/lib/validation";
+import type { Prisma } from "@prisma/client";
+import {
+  CATALOG_COMBO_SELECT,
+  CATALOG_PRODUCT_SELECT,
+  PRODUCT_LIMITS,
+  construirFocoDeProducto,
+  lineaDeTipo,
+  productCatalogEnabled,
+  toCatalogCombo,
+  toCatalogProduct,
+} from "@/lib/product-catalog";
 
 /**
  * Guiones: generacion con IA, edicion del guion y edicion escena por escena.
@@ -97,6 +108,85 @@ export type GenerateState = {
   detail?: string;
 } | null;
 
+/** El combo con la ficha completa de cada producto: sus listas entran en el texto para la IA. */
+const COMBO_CON_PRODUCTOS = {
+  ...CATALOG_COMBO_SELECT,
+  items: {
+    orderBy: CATALOG_COMBO_SELECT.items.orderBy,
+    select: { productId: true, quantity: true, product: { select: CATALOG_PRODUCT_SELECT } },
+  },
+} satisfies Prisma.BrandComboSelect;
+
+const PRODUCTO_CAMBIO = "El producto cambió mientras preparabas el guion. Recarga para usar la versión nueva.";
+
+type ProductoDelCatalogo = { productFocus: string; ids: { productId: string } | { comboId: string } };
+
+/**
+ * Ficha del catálogo elegida en el paso 2 (solo con PRODUCT_CATALOG_ENABLED).
+ * Se lee de la base de datos filtrada por la marca ya decidida y activa; si su
+ * revisión no es la que vio el formulario, se pide recargar. El texto para la
+ * IA se arma aquí: el nombre y el tipo que manda el cliente no cuentan, solo
+ * "Qué debe saber la IA" (pre-llenado con la ficha y editable para este video).
+ * Sin productoId ni comboId devuelve null y generarGuion sigue con el texto libre.
+ */
+async function productoDelCatalogo(
+  user: SessionUser,
+  formData: FormData,
+  brandId: string | null,
+  detalle: string
+): Promise<ProductoDelCatalogo | { error: string; detail?: string } | null> {
+  const productId = fieldOrNull(formData, "productoId");
+  const comboId = fieldOrNull(formData, "comboId");
+  if (!productId && !comboId) return null;
+  if (!brandId) {
+    return { error: "Elige la marca del producto antes de generar.", detail: "Los productos del catálogo pertenecen a una marca." };
+  }
+  try {
+    assertBrandPermission(user, brandId, "scripts.generate");
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "No tienes acceso a esta marca." };
+  }
+  const revision = field(formData, "productoRevision");
+  // El detalle de una ficha tiene el mismo límite que "Qué debe saber la IA" en el catálogo:
+  // así cabe entero en el texto para la IA y nunca se corta en silencio.
+  if (detalle.length > PRODUCT_LIMITS.aiNotes) {
+    return { error: `"Qué debe saber la IA" admite hasta ${PRODUCT_LIMITS.aiNotes} caracteres (tiene ${detalle.length}).` };
+  }
+
+  if (productId) {
+    const row = await prisma.brandProduct.findFirst({ where: { id: productId, brandId, active: true }, select: CATALOG_PRODUCT_SELECT });
+    if (!row) {
+      return {
+        error: "Ese producto ya no está en el catálogo de la marca.",
+        detail: "Quizá lo archivaron o es de otra marca. Recarga el generador y elige otro, o cárgalo como producto nuevo.",
+      };
+    }
+    if (row.updatedAt.toISOString() !== revision) return { error: PRODUCTO_CAMBIO };
+    const product = toCatalogProduct(row);
+    return { productFocus: construirFocoDeProducto({ type: "product", product }, detalle), ids: { productId: product.id } };
+  }
+
+  const row = await prisma.brandCombo.findFirst({ where: { id: comboId as string, brandId, active: true }, select: COMBO_CON_PRODUCTOS });
+  if (!row) {
+    return {
+      error: "Ese combo ya no está en el catálogo de la marca.",
+      detail: "Quizá lo archivaron o es de otra marca. Recarga el generador y elige otro.",
+    };
+  }
+  if (row.updatedAt.toISOString() !== revision) return { error: PRODUCTO_CAMBIO };
+  // Un producto archivado ya no se vende: el combo que lo incluye no se ofrece hasta reactivarlo o quitarlo.
+  const archivado = row.items.find((item) => !item.product.active);
+  if (archivado) {
+    return {
+      error: "Ese combo incluye un producto archivado.",
+      detail: `Reactiva "${archivado.product.name}" o quítalo del combo en la marca, y recarga el generador.`,
+    };
+  }
+  const combo = toCatalogCombo(row);
+  const products = row.items.map((item) => toCatalogProduct(item.product));
+  return { productFocus: construirFocoDeProducto({ type: "combo", combo, products }, detalle), ids: { comboId: combo.id } };
+}
+
 /**
  * El corazon del producto: valida el pedido, registra el trabajo de
  * generación (un guion por estructura) y lo despacha a segundo plano.
@@ -127,7 +217,7 @@ export async function generarGuion(
   const request = field(formData, "peticion");
   const productName = field(formData, "producto");
   const productDetail = field(formData, "productoDetalle");
-  const productFocus = [
+  let productFocus = [
     productName ? `Producto/Servicio: ${productName}` : "",
     productDetail ? `Detalle y descripción profunda:\n${productDetail}` : "",
   ]
@@ -205,11 +295,36 @@ export async function generarGuion(
     brandId = tarjeta.brandId;
   }
 
+  // Catálogo de productos (kill-switch PRODUCT_CATALOG_ENABLED): con una ficha
+  // elegida, el texto del producto sale de la base de datos y el trabajo guarda
+  // su id. Apagado, o sin ficha, el pedido es exactamente el de siempre.
+  let catalogo: ProductoDelCatalogo["ids"] | null = null;
+  if (productCatalogEnabled()) {
+    const elegido = await productoDelCatalogo(user, formData, brandId, productDetail);
+    if (elegido && "error" in elegido) return elegido;
+    if (elegido) {
+      productFocus = elegido.productFocus;
+      catalogo = elegido.ids;
+    } else {
+      // Texto libre ("Cargar un nuevo producto") con el tipo elegido: la IA recibe la misma
+      // línea "Tipo:" que con una ficha. Sin tipo válido, el texto de siempre.
+      const tipo = field(formData, "productoTipo");
+      if (productName && isProductKind(tipo)) {
+        productFocus = [
+          `Producto/Servicio: ${productName}\n${lineaDeTipo(tipo)}`,
+          productDetail ? `Detalle y descripción profunda:\n${productDetail}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+      }
+    }
+  }
+
   try {
     const jobId = await enqueueGeneration(user, field(formData, "requestKey"), structureIds, {
       brandId, archetypeId, request, productFocus, variantHint, durationSec: durationSec || undefined,
       provider, model: model || undefined, cta, creativeAngle, ctaMode, ctaTrigger, ctaActionType, ctaDetail,
-      contentItemId,
+      contentItemId, ...catalogo,
     });
     try { await dispatchGeneration(jobId); }
     catch {

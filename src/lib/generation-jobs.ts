@@ -19,6 +19,7 @@ import { contentScope, generationScope, scriptScope, closedVideoWhere } from "@/
 import { generationEvent, generationStage, withGenerationTrace, withGenerationObserver } from "@/lib/generation-trace";
 import { createAiRequest, AiBudgetError } from "@/lib/ai/request-budget";
 import { GeneratedScriptValidationError } from "@/lib/ai/validate-script";
+import { productCatalogEnabled } from "@/lib/product-catalog";
 
 const text = z.string().max(12000).optional();
 const payloadSchema = z.object({
@@ -32,6 +33,14 @@ const payloadSchema = z.object({
   expectedVideoUpdatedAt: z.string().datetime().optional(),
   /** Cierre con venta (Hormozi) o sin venta (comunidad). Ausente = venta. */
   ctaMode: z.enum(["venta", "comunidad"]).optional(),
+  /**
+   * Ficha del catálogo de la marca (PRODUCT_CATALOG_ENABLED) de la que salió
+   * productFocus. El texto ya viaja completo en productFocus: los reintentos lo
+   * reusan y no releen el catálogo. Ausentes en los pedidos de texto libre, así
+   * que la huella de esos pedidos no cambia.
+   */
+  productId: z.string().max(100).nullable().optional(),
+  comboId: z.string().max(100).nullable().optional(),
 });
 const active = ["QUEUED", "RUNNING"];
 const retryableStatuses = ["FAILED", "CANCELLED"];
@@ -42,7 +51,13 @@ const VIDEO_ABIERTO = ["IDEA", "GUION"];
 /** Motivo con que se anotan los formatos que quedan sin intentar cuando la clave es rechazada. */
 const MOTIVO_CLAVE_RECHAZADA = "No se intentó: la clave fue rechazada. Corrige la clave en Ajustes y vuelve a generar solo este formato.";
 
-export type EnqueueInput = Omit<GenerateInput, "structureId"> & { contentItemId?: string | null; ctaMode?: "venta" | "comunidad" };
+export type EnqueueInput = Omit<GenerateInput, "structureId"> & {
+  contentItemId?: string | null;
+  ctaMode?: "venta" | "comunidad";
+  /** Ficha del catálogo elegida en el generador; se comprueba que sea de la marca del pedido. */
+  productId?: string | null;
+  comboId?: string | null;
+};
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 
 export async function enqueueGeneration(user: SessionUser, requestKey: string, structures: string[], input: EnqueueInput) {
@@ -61,6 +76,12 @@ async function enqueueValidatedGeneration(user: SessionUser, requestKey: string,
   if (!parsed.success) throw new Error("Revisa la petición, el modelo y la duración (máximo 600 segundos).");
   const payload = parsed.data;
   delete payload.expectedVideoUpdatedAt; // Solo el servidor captura la revisión del destino.
+  // Kill-switch del catálogo: apagado, los ids no entran a la huella ni se comprueban contra
+  // las tablas nuevas. El producto ya viaja completo como texto en productFocus.
+  if (!productCatalogEnabled()) {
+    delete payload.productId;
+    delete payload.comboId;
+  }
   if (payload.model) {
     try { resolveAiModel(payload.provider, payload.model); }
     catch { throw new GenerationRequestError("El modelo del pedido ya no está disponible. Inicia una nueva generación con un modelo del catálogo."); }
@@ -81,6 +102,9 @@ async function enqueueValidatedGeneration(user: SessionUser, requestKey: string,
     if (await tx.structure.count({ where: { id: { in: structureIds }, active: true } }) !== structureIds.length) throw new GenerationRequestError("Una estructura ya no existe o está desactivada. Inicia una nueva generación con los formatos disponibles.");
     if (payload.brandId && !await tx.brand.count({ where: { id: payload.brandId } })) throw new GenerationRequestError("La marca ya no existe.");
     if (payload.archetypeId && !await tx.archetype.count({ where: { id: payload.archetypeId } })) throw new GenerationRequestError("El arquetipo ya no existe.");
+    // Solo con una ficha del catálogo: tiene que ser de la marca del pedido (sin marca no hay ficha válida).
+    if (payload.productId && (!payload.brandId || !await tx.brandProduct.count({ where: { id: payload.productId, brandId: payload.brandId } }))) throw new GenerationRequestError("Ese producto ya no existe o no es de la marca elegida. Recarga el generador y vuelve a elegirlo.");
+    if (payload.comboId && (!payload.brandId || !await tx.brandCombo.count({ where: { id: payload.comboId, brandId: payload.brandId } }))) throw new GenerationRequestError("Ese combo ya no existe o no es de la marca elegida. Recarga el generador y vuelve a elegirlo.");
     if (payload.contentItemId) {
       // La guarda definitiva contra una pestaña vieja o un doble envío vive en
       // vincularGuionAVideo, que solo escribe si la tarjeta sigue libre; aquí se
@@ -148,6 +172,14 @@ export async function retryFailedGeneration(user: SessionUser, sourceId: string,
       delete payload.contentItemId;
       delete payload.expectedVideoUpdatedAt;
     }
+    // El producto ya viaja como texto en productFocus: si su ficha se borró después, el reintento sigue sin su id.
+    // Con el catálogo apagado los ids se sueltan sin consultar las tablas nuevas.
+    if (!productCatalogEnabled()) {
+      delete payload.productId;
+      delete payload.comboId;
+    }
+    if (payload.productId && (!payload.brandId || !await tx.brandProduct.count({ where: { id: payload.productId, brandId: payload.brandId } }))) delete payload.productId;
+    if (payload.comboId && (!payload.brandId || !await tx.brandCombo.count({ where: { id: payload.comboId, brandId: payload.brandId } }))) delete payload.comboId;
     const created = await enqueueValidatedGeneration(user, randomUUID(), failed.map(item => item.structureId), payload, { tx, jobId: id, sourceId });
     generationEvent("manual_retry", "info", { jobId: created, affectedRows: failed.length });
     return created;

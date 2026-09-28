@@ -103,7 +103,9 @@ export async function ProductionPanel({ user, videoId }: { user: SessionUser; vi
                 ) : null}
 
                 {canWrite && step.status !== "CANCELADO" ? (
-                  <EditForm action={marcarPaso} className="flex">
+                  // Sin borrador que conservar: al cambiar el paso (p. ej. se guardó el enlace)
+                  // el botón se vuelve a montar con la revisión nueva en vez de dar conflicto.
+                  <EditForm key={new Date(step.updatedAt).toISOString()} action={marcarPaso} className="flex">
                     <RevisionField value={step.updatedAt} />
                     <input type="hidden" name="id" value={step.id} />
                     <input type="hidden" name="done" value={step.status === "HECHO" ? "0" : "1"} />

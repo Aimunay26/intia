@@ -323,12 +323,15 @@ export function scheduleRecording(tx: AppTransaction, actor: ProductionActor, vi
  * (sábado → lunes). `recordedNow` la toma como terminada hoy (checks, estado o paso
  * marcados); sin él (mantenimiento) cuenta desde la fecha de grabación.
  */
-export function assignEditing(tx: AppTransaction, actor: ProductionActor, videoId: string, options: Options & { recordedNow?: boolean; requireRecordingChecks?: boolean } = {}): Promise<FlowResult> {
+export function assignEditing(tx: AppTransaction, actor: ProductionActor, videoId: string, options: Options & { recordedNow?: boolean; requireRecordingChecks?: boolean; markedByPerson?: boolean } = {}): Promise<FlowResult> {
   return guarded(tx, "assign_editing", async () => {
     const now = options.now ?? new Date();
     const video = await readVideo(tx, videoId);
     if (!video) return skip("video_missing");
-    if (!OPEN_FOR.EDICION.includes(video.status)) return skip("video_status");
+    // Si una persona marca la grabación como hecha, la edición se asigna aunque el video
+    // no haya avanzado de estado en la app; el barrido diario sigue exigiendo el estado.
+    const open = options.markedByPerson ? [...OPEN_FOR.GRABACION, ...OPEN_FOR.EDICION] : OPEN_FOR.EDICION;
+    if (!open.includes(video.status)) return skip("video_status");
     const key = automationKey(video.id, "EDICION");
     if (await tx.productionStep.findUnique({ where: { automationKey: key }, select: { id: true } })) return skip("exists");
     if (options.requireRecordingChecks && await tx.checklistItem.count({ where: { contentItemId: video.id, stage: "GRABACION", kind: "TASK", required: true, done: false } })) return skip("recording_open");
@@ -524,5 +527,5 @@ export async function onShootDateChanged(tx: AppTransaction, actor: ProductionAc
 /** Paso de grabación marcado hecho por el filmmaker o coordinación: la edición arranca ya. */
 export async function onStepCompleted(tx: AppTransaction, actor: ProductionActor, step: { contentItemId: string; step: string }) {
   if (!productionFlowEnabled()) return;
-  if (step.step === "GRABACION") await assignEditing(tx, actor, step.contentItemId, { recordedNow: true });
+  if (step.step === "GRABACION") await assignEditing(tx, actor, step.contentItemId, { recordedNow: true, markedByPerson: true });
 }

@@ -4,15 +4,12 @@ import { MemberWorkspace } from "@/components/member-workspace";
 import { measurePagePhase } from "@/lib/performance-page";
 import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { getStructureChoices } from "@/lib/structure-choices";
-import { endOfDay, startOfDay, timeKey } from "@/lib/utils";
+import { startOfDay } from "@/lib/utils";
 import type { Prisma } from "@prisma/client";
 import {
 	AlertTriangle,
-	CalendarClock,
 	CalendarDays,
 	CheckCircle2,
-	ChevronLeft,
-	ChevronRight,
 	Clapperboard,
 	Film,
 	User as UserIcon,
@@ -20,16 +17,28 @@ import {
 import Link from "next/link";
 
 import { ActiveFilters, FilterBar, FilterSelect } from "@/components/filters";
-import { Badge, Card, CardHeader, EmptyState, PageHeader, Stat } from "@/components/ui";
+import { Card, EmptyState, PageHeader, Stat } from "@/components/ui";
 import { LEVEL, can } from "@/lib/auth";
 import { brandWhere } from "@/lib/brand-context";
+import {
+	calendarioMensualActivo,
+	currentMonth,
+	eventOverlapWhere,
+	eventTouches,
+	itemsOfDay,
+	monthOfDay,
+	monthWindow,
+	parseDayKey,
+	resolveMonth,
+	videoDateWhere,
+	videoEntries,
+} from "@/lib/calendar-view";
 import {
 	ACTIVE_STATUSES,
 	CONTENT_STATUSES,
 	CONTENT_STATUS_MAP,
 	DEAD_STATUSES,
 	DONE_STATUSES,
-	EVENT_KIND_MAP,
 	PLATFORMS,
 	PLATFORM_MAP,
 	platformFilter,
@@ -38,23 +47,20 @@ import { prisma } from "@/lib/prisma";
 import {
 	dateKey,
 	endOfMonth,
-	formatDate,
-	monthGrid,
 	monthLabel,
 	parseList,
 	startOfMonth,
 } from "@/lib/utils";
 import { NuevoVideoBoton } from "../contenido/content-form";
-import {
-	CalendarGrid,
-	type CalendarAgendaItem,
-	type CalendarVideo,
-} from "./calendar-grid";
-import { EditarEventoBoton, NuevoEventoBoton } from "./event-form";
+import { AgendaDelMes, DayPanel, MonthNav } from "./calendar-day";
+import { CalendarGrid, type CalendarAgendaItem } from "./calendar-grid";
+import { NuevoEventoBoton } from "./event-form";
 
 type SearchParams = {
   anio?: string;
   mes?: string;
+  /** Detalle de un día: AAAA-MM-DD. */
+  dia?: string;
   estado?: string;
   plataforma?: string;
   persona?: string;
@@ -72,13 +78,14 @@ export default async function CalendarioPage({
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="calendar" query={await searchParams} />;
   const sp = singleQueryValues(await searchParams);
 
+  // CALENDARIO_MENSUAL=false vuelve a la rejilla anterior: solo publicación,
+  // sin detalle por día ni lista en móvil.
+  const mensual = calendarioMensualActivo();
   const hoy = new Date();
-  const [businessYear, businessMonth] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(hoy).split("-").map(Number);
-  const anioPedido = Number(sp.anio);
-  const mesPedido = Number(sp.mes);
-  const year = Number.isInteger(anioPedido) && anioPedido >= 1900 && anioPedido <= 9998 ? anioPedido : businessYear;
-  const month =
-    Number.isInteger(mesPedido) && mesPedido >= 0 && mesPedido <= 11 ? mesPedido : (businessMonth - 1);
+  const actual = currentMonth(hoy);
+  // El detalle de un día abre el mes que lo contiene.
+  const dia = mensual ? parseDayKey(sp.dia) : null;
+  const { year, month } = dia ? monthOfDay(dia) : resolveMonth(sp.anio, sp.mes, hoy);
 
   /* -------------------------------------------------------------- enlaces -- */
 
@@ -109,19 +116,19 @@ export default async function CalendarioPage({
   if (sp.plataforma) where.platformLinks = platformFilter(sp.plataforma);
   if (sp.persona) where.assignments = { some: { userId: sp.persona } };
 
-  const grid = monthGrid(year, month);
-  const desde = startOfDay(grid[0]);
-  const hasta = endOfDay(grid[41]);
+  const { desde, hasta } = monthWindow(year, month);
 
   const [filas, brands, people, eventosBase, structures] = await Promise.all([
     prisma.contentItem.findMany({
-      where: { ...where, scheduledDate: { gte: desde, lte: hasta } },
+      // Con la vista mensual, un video entra por su grabación o por su publicación.
+      where: { AND: [where, videoDateWhere(desde, hasta, mensual)] },
       select: {
         id: true,
         title: true,
         status: true,
         platforms: true,
         scheduledDate: true,
+        shootDate: true,
         brand: { select: { name: true, colorPrimary: true } },
       },
       orderBy: [{ scheduledDate: "asc" }, { title: "asc" }],
@@ -134,8 +141,10 @@ export default async function CalendarioPage({
     }),
     prisma.calendarEvent.findMany({
       where: {
-        startAt: { gte: desde, lte: hasta },
-        ...brandWhere(brandCtx.activeId),
+        AND: [
+          brandWhere(brandCtx.activeId),
+          mensual ? eventOverlapWhere(desde, hasta) : { startAt: { gte: desde, lte: hasta } },
+        ],
       },
       orderBy: { startAt: "asc" },
       select: {
@@ -157,22 +166,27 @@ export default async function CalendarioPage({
     getStructureChoices(false),
   ]);
 
-  const videos: CalendarVideo[] = filas.map((f) => ({
-    id: f.id,
-    title: f.title,
-    status: f.status,
-    platforms: parseList(f.platforms),
-    scheduledDate: f.scheduledDate,
-    brandName: f.brand.name,
-    brandColor: f.brand.colorPrimary,
-  }));
+  const videos = videoEntries(
+    filas.map((f) => ({
+      id: f.id,
+      title: f.title,
+      status: f.status,
+      platforms: parseList(f.platforms),
+      scheduledDate: f.scheduledDate,
+      shootDate: f.shootDate,
+      brandName: f.brand.name,
+      brandColor: f.brand.colorPrimary,
+    })),
+    { grabacion: mensual, desde, hasta }
+  );
 
   /* -------------------------------------------------------------- resumen -- */
 
   const inicioMes = startOfMonth(year, month);
   const finMes = endOfMonth(year, month);
+  // Los totales del mes se cuentan por publicación, como siempre.
   const delMes = videos.filter(
-    (v) => v.scheduledDate >= inicioMes && v.scheduledDate <= finMes
+    (v) => v.kind === "PUBLICACION" && v.scheduledDate >= inicioMes && v.scheduledDate <= finMes
   );
   const inicioHoy = startOfDay(hoy);
 
@@ -202,13 +216,10 @@ export default async function CalendarioPage({
   const puedeCrear = can(user.role, LEVEL.MEMBER);
   const puedeBorrar = can(user.role, LEVEL.OWNER);
   const fechaPorDefecto =
-    year === businessYear && month === (businessMonth - 1)
-      ? dateKey(hoy)
-      : dateKey(startOfMonth(year, month));
+    dia ??
+    (year === actual.year && month === actual.month ? dateKey(hoy) : dateKey(startOfMonth(year, month)));
 
   /* --------------------------------------------------------------- agenda -- */
-
-  const horaDe = timeKey;
 
   const agenda: CalendarAgendaItem[] = eventosBase.map((e) => ({
     id: e.id, updatedAt: e.updatedAt.toISOString(),
@@ -221,9 +232,10 @@ export default async function CalendarioPage({
     brandName: e.brand?.name ?? null,
   }));
 
-  const agendaDelMes = eventosBase.filter(
-    (e) => e.startAt >= inicioMes && e.startAt <= finMes
+  const agendaDelMes = eventosBase.filter((e) =>
+    mensual ? eventTouches(e, inicioMes, finMes) : e.startAt >= inicioMes && e.startAt <= finMes
   );
+  const delDia = dia ? itemsOfDay(dia, videos, agenda) : null;
 
   const brandOptions = brands.map((b) => ({ id: b.id, name: b.name }));
 
@@ -249,30 +261,11 @@ export default async function CalendarioPage({
         icon={<CalendarDays size={19} />}
         actions={
           <>
-            <div className="flex items-center gap-1">
-              <Link
-                href={href({ anio: String(anterior.getFullYear()), mes: String(anterior.getMonth()) })}
-                className="btn btn-icon"
-                aria-label="Mes anterior"
-                title="Mes anterior"
-              >
-                <ChevronLeft size={16} />
-              </Link>
-              <Link href={href({ anio: undefined, mes: undefined })} className="btn btn-sm">
-                Hoy
-              </Link>
-              <Link
-                href={href({
-                  anio: String(siguiente.getFullYear()),
-                  mes: String(siguiente.getMonth()),
-                })}
-                className="btn btn-icon"
-                aria-label="Mes siguiente"
-                title="Mes siguiente"
-              >
-                <ChevronRight size={16} />
-              </Link>
-            </div>
+            <MonthNav
+              prevHref={href({ anio: String(anterior.getFullYear()), mes: String(anterior.getMonth()) })}
+              todayHref={href({ anio: undefined, mes: undefined })}
+              nextHref={href({ anio: String(siguiente.getFullYear()), mes: String(siguiente.getMonth()) })}
+            />
             {puedeCrear ? (
               <>
                 <NuevoEventoBoton
@@ -323,12 +316,27 @@ export default async function CalendarioPage({
         </div>
       </FilterBar>
 
+      {delDia ? (
+        <DayPanel
+          dia={delDia.key}
+          videos={delDia.videos}
+          eventos={delDia.eventos}
+          cerrarHref={href({ anio: String(year), mes: String(month) })}
+        />
+      ) : null}
+
       <CalendarGrid
         year={year}
         month={month}
         videos={videos}
         eventos={agenda}
-        hrefDia={(key) => `/contenido?desde=${key}&hasta=${key}`}
+        hrefDia={
+          mensual
+            ? (key) => href({ dia: key })
+            : (key) => `/contenido?desde=${key}&hasta=${key}`
+        }
+        mensual={mensual}
+        diaSeleccionado={dia}
       />
 
       {porMarca.length > 1 ? (
@@ -354,60 +362,12 @@ export default async function CalendarioPage({
         </Card>
       ) : null}
 
-      {agendaDelMes.length ? (
-        <Card className="mt-4">
-          <CardHeader
-            title="Agenda del mes"
-            subtitle={`${agendaDelMes.length} ${agendaDelMes.length === 1 ? "cosa agendada" : "cosas agendadas"} además de los videos`}
-            icon={<CalendarClock size={15} />}
-          />
-          <ul className="divide-line divide-y">
-            {agendaDelMes.map((e) => {
-              const tipo = EVENT_KIND_MAP[e.kind];
-              return (
-                <li
-                  key={e.id}
-                  className="hover:bg-surface2 flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2.5 transition-colors"
-                >
-                  <span className="text-inkmuted w-[104px] shrink-0 text-[12px] font-semibold tabular-nums">
-                    {formatDate(e.startAt)}
-                    {!e.allDay ? ` · ${horaDe(e.startAt)}` : ""}
-                  </span>
-                  {tipo ? <Badge option={tipo} /> : null}
-                  <span className="text-ink min-w-0 flex-1 truncate text-[13px] font-medium">
-                    {e.title}
-                  </span>
-                  {e.brand ? (
-                    <span className="text-inkmuted text-[11.5px]">{e.brand.name}</span>
-                  ) : null}
-                  {e.location ? (
-                    <span className="text-inkmuted text-[11.5px]">{e.location}</span>
-                  ) : null}
-                  {puedeCrear ? (
-                    <EditarEventoBoton
-                      brands={brandOptions}
-                      canDelete={puedeBorrar}
-                      evento={{
-                        id: e.id, updatedAt: e.updatedAt.toISOString(),
-                        title: e.title,
-                        description: e.description ?? "",
-                        kind: e.kind,
-                        startDate: dateKey(e.startAt),
-                        startTime: horaDe(e.startAt),
-                        endDate: e.endAt ? dateKey(e.endAt) : "",
-                        endTime: e.endAt ? horaDe(e.endAt) : "",
-                        allDay: e.allDay,
-                        location: e.location ?? "",
-                        brandId: e.brandId ?? "", contentItemId: e.contentItemId ?? "",
-                      }}
-                    />
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
-      ) : null}
+      <AgendaDelMes
+        eventos={agendaDelMes.map((e) => ({ ...e, brandName: e.brand?.name ?? null }))}
+        brands={brandOptions}
+        puedeEditar={puedeCrear}
+        puedeBorrar={puedeBorrar}
+      />
 
       {videos.length === 0 ? (
         <Card className="mt-4">

@@ -80,11 +80,11 @@ function CamposEvento({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Empieza" required>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               type="date"
               name="startDate"
-              className="input"
+              className="input min-w-[9.5rem] flex-1"
               defaultValue={value?.startDate ?? defaultDate}
               required
             />
@@ -92,25 +92,25 @@ function CamposEvento({
               <input
                 type="time"
                 name="startTime"
-                className="input w-[110px]"
+                className="input min-w-[6.5rem] flex-1 sm:flex-[0_0_110px]"
                 defaultValue={value?.startTime || "10:00"}
               />
             ) : null}
           </div>
         </Field>
         <Field label="Termina" hint="Déjalo vacío si es de un solo día.">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               type="date"
               name="endDate"
-              className="input"
+              className="input min-w-[9.5rem] flex-1"
               defaultValue={value?.endDate}
             />
             {!allDay ? (
               <input
                 type="time"
                 name="endTime"
-                className="input w-[110px]"
+                className="input min-w-[6.5rem] flex-1 sm:flex-[0_0_110px]"
                 defaultValue={value?.endTime || "11:00"}
               />
             ) : null}

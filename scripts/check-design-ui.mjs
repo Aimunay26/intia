@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { expect } from '@playwright/test';
 
-const sections=['/','/calendario','/contenido','/tareas','/marcas','/generador','/guiones','/estructuras','/arquetipos','/metricas','/tutorial','/equipo','/actividad','/ajustes'];
+const sections=['/','/calendario','/contenido','/tareas','/marcas','/generador','/guiones','/estructuras','/arquetipos','/metricas','/manual','/tutorial','/equipo','/actividad','/ajustes'];
 
 export async function checkDesignUi(page, base, db) {
   const checks={routes:[],viewports:[],interactions:[]};
@@ -11,14 +11,14 @@ export async function checkDesignUi(page, base, db) {
   await expect(desktopNav.locator('a')).toHaveCount(sections.length);
   await expect(page.getByRole('button',{name:'Cerrar menú',exact:true})).toHaveCount(0);
   assert.deepEqual((await desktopNav.locator('a').evaluateAll(links=>links.map(link=>link.getAttribute('href')))).sort(),[...sections].sort());
-  for(const route of [...sections,'/generador/trabajos','/guiones/script','/contenido/assigned','/marcas/A','/estructuras/structure','/arquetipos/person','/mi-perfil']) {
+  for(const route of [...sections,'/generador/trabajos','/guiones/script','/contenido/assigned','/marcas/A','/estructuras/structure','/arquetipos/person','/mi-perfil','/manual/filmmaker','/manual/filmmaker/fm-p2']) {
     const response=await page.goto(base+route);
     assert.equal(response.status(),200,route);
     await expect(main.locator('h1')).toBeVisible();
     await expect(main).not.toContainText('Something went wrong');
     checks.routes.push(route);
   }
-  console.log('[design] 21 rutas y navegación conservadas');
+  console.log(`[design] ${checks.routes.length} rutas y navegación conservadas`);
 
   // Teclado y cookies: el menú conserva la acción de cambiar el alcance de marca.
   const brandTrigger=page.locator('aside').first().getByRole('button',{name:/Cambiar marca:/});

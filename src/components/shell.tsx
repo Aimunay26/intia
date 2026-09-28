@@ -2,6 +2,7 @@
 
 import {
 	Activity,
+	BookOpen,
 	CalendarDays,
 	CheckSquare,
 	ChevronDown,
@@ -78,8 +79,11 @@ const NAV: NavGroup[] = [
     items: [{ href: "/metricas", label: "Métricas", icon: TrendingUp }],
   },
   {
-    section: "Ayuda",
-    items: [{ href: "/tutorial", label: "Cómo se usa", icon: GraduationCap }],
+    section: "Formación",
+    items: [
+      { href: "/manual", label: "Manual de procedimientos", icon: BookOpen },
+      { href: "/tutorial", label: "Cómo se usa", icon: GraduationCap },
+    ],
   },
   {
     section: "Equipo",
@@ -109,6 +113,7 @@ export function Shell({
   performanceEnabled = false,
   release = "local",
   environment = "unknown",
+  manualEnabled = true,
   children,
 }: {
   user: ShellUser;
@@ -118,6 +123,8 @@ export function Shell({
   performanceEnabled?: boolean;
   release?: string;
   environment?: string;
+  /** Kill-switch MANUAL_PROCEDIMIENTOS_ENABLED, resuelto en el servidor (layout). */
+  manualEnabled?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -162,7 +169,7 @@ export function Shell({
       <nav aria-label="Navegación principal" className="flex-1 overflow-y-auto px-3.5 pb-4">
         {NAV.map((group, gi) => {
           const items = group.items.filter(
-            (i) => canAccessPath(user, i.href)
+            (i) => canAccessPath(user, i.href) && (manualEnabled || i.href !== "/manual")
           );
           if (!items.length) return null;
           return (

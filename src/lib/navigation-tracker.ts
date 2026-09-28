@@ -4,7 +4,7 @@ export type NavigationSample = {
   visualMs: number | null; routeMs: number | null; firstBlockMs: number | null; readyMs: number | null;
   status: "complete" | "cancelled" | "timeout" | "error"; requestIds: string[]; renderedBeforeStart: boolean;
 };
-const ROUTES = new Set(["/", "/calendario", "/contenido", "/tareas", "/marcas", "/generador", "/guiones", "/estructuras", "/arquetipos", "/metricas", "/tutorial", "/equipo", "/actividad", "/ajustes"]);
+const ROUTES = new Set(["/", "/calendario", "/contenido", "/tareas", "/marcas", "/generador", "/guiones", "/estructuras", "/arquetipos", "/metricas", "/manual", "/tutorial", "/equipo", "/actividad", "/ajustes"]);
 const routeName = (path: string) => ROUTES.has(path) ? path : "detail";
 
 /** Máquina independiente del DOM para poder probar cancelaciones y callbacks antiguos. */

@@ -18,7 +18,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { GuiaLauncherBoton } from "@/components/guia";
+import { ManualCard } from "@/components/manual/manual-card";
 import { Callout, Card, CardHeader, PageHeader } from "@/components/ui";
+import { manualEnabled } from "@/lib/manual";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -163,6 +165,8 @@ export default async function TutorialPage() {
           />
         }
       />
+
+      <ManualCard user={user} className="mb-5" />
 
       <div className="mb-5 rounded-xl border border-[var(--brand)]/30 bg-[var(--brand)]/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -457,6 +461,7 @@ export default async function TutorialPage() {
             <CardHeader title="Dónde está cada cosa" />
             <ul className="divide-line divide-y text-[13px]">
               {[
+                ...(manualEnabled() ? [["/manual", "Manual de procedimientos", "Cómo se hace el trabajo de cada rol", BookOpen]] : []),
                 ["/", "Panel", "Qué se está logrando y qué está atrasado", TrendingUp],
                 ["/calendario", "Calendario", "Videos, reuniones y días de grabación", CalendarDays],
                 ["/contenido", "Videos", "Las tarjetas, con su checklist y su equipo", Film],

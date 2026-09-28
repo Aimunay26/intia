@@ -14,6 +14,8 @@ export type WorkProfile = typeof WORK_PROFILES[number]["id"];
 export type AccessUser = { id: string; role: string; archetypeId?: string | null; profiles?: readonly string[]; brandIds?: readonly string[] };
 export const SECTIONS = {
   panel: { href: "/", label: "Panel", capability: "home.view" },
+  // Formación: todas las cuentas (base «help.view»). MANUAL_PROCEDIMIENTOS_ENABLED=false lo oculta en páginas y menú.
+  manual: { href: "/manual", label: "Manual de procedimientos", capability: "help.view" },
   calendar: { href: "/calendario", label: "Calendario", capability: "calendar.view" },
   content: { href: "/contenido", label: "Videos", capability: "content.view" },
   tasks: { href: "/tareas", label: "Tareas", capability: "tasks.view" },

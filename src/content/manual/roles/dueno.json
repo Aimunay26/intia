@@ -1,0 +1,2658 @@
+{
+ "id": "DUENO",
+ "slug": "dueno",
+ "name": "Dueño de negocio",
+ "fullName": "Dueño de negocio (OWNER)",
+ "mission": "Dirigir el sistema de contenido de cada marca para que los videos generen ventas rentables. El dueño fija objetivos, presupuesto y ofertas. Le da al equipo identidad, catálogo, roles y reglas claras. Decide con números cada semana y protege la marca legalmente, hasta que el sistema funcione sin depender de él en el día a día.",
+ "responsibilities": [
+  "Definir un objetivo de negocio medible por marca (pedidos, reservas, citas) y los KPIs que lo siguen, y cargarlos en Marcas > Objetivos.",
+  "Cargar y mantener la identidad de cada marca en Intia: descripción, identidad, brief operativo, tono de voz, público, propuestas de valor, lista de no hacer, palabras clave, colores, logo, enlaces y Personas.",
+  "Aprobar precios, ofertas y garantías (con bonus, escasez y urgencia reales) y entregar a ATC y al guionista las fichas de producto y las ofertas vigentes antes de publicar.",
+  "Aprobar el presupuesto mensual de producción y de pauta, y vigilar la rentabilidad: costo por video, margen de contribución, ROAS de equilibrio y costo por pedido.",
+  "Aprobar o devolver la estrategia mensual que propone coordinación (mix de formatos, cantidad de videos, fechas comerciales, ofertas y capacidad del equipo).",
+  "Organizar el equipo con una matriz RACI y una tabla de decisiones con límites en S/, dar perfiles y marcas con acceso mínimo en Equipo, y retirar accesos el mismo día en que alguien sale.",
+  "Contratar con pruebas pagadas, hacer la inducción con el manual del puesto, evaluar cada mes con tarjetas de KPIs por rol y corregir o reemplazar cuando no se cumple el estándar.",
+  "Dirigir el ritual semanal de 45 minutos: tablero de números, prioridades, problemas resueltos de raíz y tareas con responsable en Intia.",
+  "Leer el panel de Métricas cada semana y decidir qué se replica, qué se pauta y qué se deja de hacer.",
+  "Asegurar el cumplimiento legal: autorizaciones de imagen y voz, publicidad veraz e identificada, promociones y sorteos con condiciones claras, Libro de Reclamaciones virtual, consentimiento para enviar promociones y contratos con cesión de derechos.",
+  "Proteger la marca: registro en Indecopi, cuentas a nombre de la empresa con 2FA y acceso de socio, vigilancia de cuentas falsas, plan de crisis y auditoría trimestral de accesos.",
+  "Escalar con procesos: manuales por puesto con responsable, delegación según el valor de su hora, prioridades trimestrales, contratos con clientes y rentabilidad por marca o cliente.",
+  "Controlar el uso de la IA: claves compartidas en Ajustes, historial de Generaciones y aprobación humana de todo guion antes de grabar."
+ ],
+ "sop": [
+  "ARRANQUE DE MARCA (una vez y cada vez que algo cambie): en Marcas completar descripción, identidad, brief operativo (tiempos de producción, envíos por zona, formas de pago y garantía), tono, público, propuestas de valor, no hacer, palabras clave, colores, logo y enlaces. Cargar de 2 a 3 Personas a partir de chats reales y entregar a ATC y al guionista las fichas de producto con precios finales en S/. Verificar que las cuentas de Meta, TikTok y WhatsApp Business estén a nombre de la empresa, con 2FA y al menos 2 administradores.",
+  "CIERRE MENSUAL (primer día hábil, de 2 a 3 h): revisar en Métricas y en Objetivos el resultado del mes (logrado, en curso, en riesgo). Fijar el objetivo del mes por marca, aprobar el presupuesto de producción y pauta, aprobar las ofertas del mes y aprobar o devolver con un máximo de 3 cambios la estrategia de coordinación. Hacer las evaluaciones de 20 minutos con la tarjeta de KPIs de cada rol y enviar el informe a cada cliente dentro de los 5 primeros días hábiles.",
+  "LUNES 9:00 · RITUAL SEMANAL (45 min): buenas noticias, tablero de 5 a 7 números (en camino o fuera de camino), prioridades del trimestre, titulares de ATC, community y jefe de editores, revisión de tareas, los 3 problemas principales resueltos de raíz y cierre con tareas en Intia.",
+  "DIARIO (15 min, misma hora): Panel y Tareas. Resolver solo los bloqueos escalados, los videos detenidos más de 48 h en un mismo estado y las alertas de crisis de nivel 3. No microgestionar.",
+  "ETAPA IDEA: validar solo los pilares del mes y los temas sensibles (lanzamientos, precios, sorteos, temas delicados). Las ideas normales las decide coordinación.",
+  "ETAPA GUION → APROBADO: coordinación marca 'Guion aprobado por la marca'. El dueño revisa por muestreo 1 de cada 5 guiones y el 100% de los que traen una oferta, precio, garantía, sorteo o promesa nueva, y verifica que sean veraces y cumplibles. En las marcas de clientes, aprueba el cliente según su contrato.",
+  "ETAPA GRABACIÓN: asegurar que la autorización de imagen del talento esté firmada antes de grabar, y que haya producto correcto y stock suficiente. Las autorizaciones de terceros (Cámara Escondida, vía pública) se firman al terminar y se archivan antes de pasar a EDICIÓN. El dueño no dirige en el set.",
+  "ETAPA EDICIÓN: el jefe de editores revisa la calidad y coordinación marca 'Revisión final aprobada' (hoy solo Coordinación o el dueño pueden marcarla en Intia). El dueño revisa personalmente solo las piezas que irán a pauta y las que llevan oferta.",
+  "PROGRAMADO/PUBLICADO: confirmar que la promo tiene vigencia, stock y condiciones visibles y es cumplible, que las colaboraciones con creadores llevan #Publicidad y que ATC recibió la oferta y la ficha antes de publicar. Intia solo deja publicar al community los videos con Revisión final aprobada.",
+  "POST-PUBLICACIÓN: ATC registra el origen de cada venta por DM o WhatsApp (cerradas y perdidas) y el analista carga las métricas semanales (vistas, compartidos, guardados, leads, pedidos, ingresos, inversión) antes del lunes a las 9:00. El dueño decide qué ganadores pautar y qué perdedores cortar.",
+  "JUEVES (30 min): leer una muestra de 10 chats de ATC para escuchar objeciones reales y alimentar guiones y ofertas.",
+  "VIERNES (30 min): revisar el tablero preliminar y armar la lista de problemas para el lunes.",
+  "SALIDA DE UN INTEGRANTE (el mismo día): quitar perfiles y marcas en Equipo, retirar accesos en Meta, TikTok y carpetas, cambiar las contraseñas compartidas, pedir los archivos fuente y revisar Actividad.",
+  "TRIMESTRAL: definir de 3 a 5 prioridades del trimestre, calcular la rentabilidad por marca o cliente, auditar accesos (Equipo y Actividad en Intia, Meta, TikTok y carpetas), revisar contratos, licencias y autorizaciones por vencer, buscar cuentas falsas de la marca y actualizar los manuales por puesto."
+ ],
+ "receivesFrom": [
+  "Coordinación (STRATEGY): propuesta de estrategia mensual, plan de videos, capacidad del equipo y reporte de avance semanal.",
+  "Analista (ANALYST): métricas semanales cargadas en Intia y tablero de números antes del lunes a las 9:00.",
+  "ATC: ventas con su origen por video (cerradas y perdidas), tasa de cierre, objeciones frecuentes, reclamos del Libro de Reclamaciones y registro de consentimientos.",
+  "Jefe de editores: tiempos de entrega, % de videos aprobados sin segunda corrección y matriz de variaciones de los videos ganadores.",
+  "Community manager (PUBLISHER): calendario publicado, comentarios relevantes, alertas de crisis y cuentas falsas detectadas.",
+  "Producción (PRODUCTION): plan de grabación por lotes, necesidades de producto y props, y costos de insumos.",
+  "Guionista (WRITER) y coordinación: guiones con ofertas, precios, sorteos o promesas nuevas para validar.",
+  "Clientes de la agencia: briefs, aprobaciones y comentarios dentro de los plazos del contrato.",
+  "Contabilidad: costos, recibos por honorarios de los locadores, márgenes y rentabilidad por marca."
+ ],
+ "deliversTo": [
+  "Coordinación: objetivos por marca, presupuesto aprobado, ofertas del mes, decisión sobre la estrategia mensual y tabla de límites de decisión.",
+  "Todo el equipo: manual de procedimientos, matriz RACI, prioridades del trimestre, acuerdos de comunicación y tareas del ritual semanal.",
+  "Guionista e IA (vía Marcas y Personas): identidad, tono, público, no hacer, palabras clave, catálogo y ofertas vigentes.",
+  "ATC: política comercial (precios, descuentos permitidos, tiempos de entrega por zona, garantía), ofertas antes de publicar, guion de consentimiento para promociones y protocolo de reclamos.",
+  "Community manager: tono de respuesta, niveles de crisis, a quién escalar y canales oficiales de la marca.",
+  "Jefe de editores, filmmaker y diseñador: estándar del producto en cámara, zonas seguras y manual de marca (logo y colores).",
+  "Talentos, editores, filmmakers y creadores: contratos, autorizaciones de imagen y licencias de uso.",
+  "Clientes de la agencia: contrato con alcance, informe mensual de resultados y plan del mes siguiente."
+ ],
+ "kpis": [
+  "Cumplimiento del objetivo mensual por marca (% de la meta alcanzada; objetivos en estado LOGRADO frente a EN_RIESGO).",
+  "Pedidos e ingresos (S/) atribuidos a videos por semana, con al menos el 80% de las ventas con origen identificado.",
+  "Costo por video producido por formato (S/) y costo por pedido.",
+  "ROAS real frente a ROAS de equilibrio (1 ÷ margen %) por producto o campaña.",
+  "Tasa de cierre de ATC (pedidos ÷ conversaciones iniciadas).",
+  "Cadencia: videos publicados frente a videos planificados (≥ 90%).",
+  "Tiempo de ciclo de un video, de IDEA a PUBLICADO (días).",
+  "Tareas del ritual semanal cumplidas (≥ 90%).",
+  "Rentabilidad por marca o cliente (margen % mensual).",
+  "Cumplimiento legal: 100% de videos con autorización de imagen archivada, 100% de colaboraciones pagadas identificadas, 100% de reclamos respondidos en 15 días hábiles y 0 envíos promocionales sin consentimiento.",
+  "Accesos: 0 excolaboradores con acceso activo y 2FA activo en el 100% de los portafolios de Meta y cuentas clave.",
+  "Rotación del equipo y % de integrantes que cumplen su tarjeta de KPIs mensual."
+ ],
+ "tools": [
+  "Intia: Panel, Marcas (identidad y Objetivos), Videos, Calendario, Tareas, Métricas, Equipo, Actividad, Ajustes (solo el dueño), Generador IA, Generaciones, Guiones, Estructuras, Personas y Cómo se usa",
+  "Meta Business Suite y Administrador de anuncios (portafolio comercial, acceso de socio, 2FA, anuncios a WhatsApp, anuncios de colaboración)",
+  "Biblioteca de anuncios de Meta (referencias y detección de cuentas falsas)",
+  "Panel profesional de Instagram (estadísticas de Reels y etiqueta de colaboración pagada)",
+  "TikTok Ads Manager, Business Center y Creative Center (tendencias, Top Ads, Commercial Music Library, Spark Ads, interruptor de contenido de marca)",
+  "YouTube Studio (retención de Shorts)",
+  "WhatsApp Business (etiquetas, catálogo, PIN de verificación en dos pasos, listas de difusión solo con consentimiento)",
+  "Hoja de cálculo: costo por video, márgenes, ROAS de equilibrio, registro de ventas por chat, tablero semanal y rentabilidad por marca",
+  "Carpeta compartida de contratos, autorizaciones de imagen y licencias (con registro de vencimientos)",
+  "Gestor de contraseñas con 2FA",
+  "Indecopi: búsqueda y registro de marca, Libro de Reclamaciones virtual",
+  "gob.pe: Ministerio del Interior (autorización de promociones comerciales) y Autoridad Nacional de Protección de Datos Personales",
+  "SUNAT: recibos por honorarios electrónicos de locadores"
+ ],
+ "levels": [
+  {
+   "level": "PRINCIPIANTE",
+   "goal": "Montar la base: marca cargada en Intia, objetivo claro por marca, equipo con roles, permisos y cuentas seguras, ritual semanal funcionando y el mínimo legal cubierto.",
+   "modules": [
+    {
+     "id": "dueno-p1",
+     "slug": "dueno-p1",
+     "title": "Tu rol de dueño",
+     "summary": "Conocer Intia y el flujo de un video, y saber qué decisiones son del dueño, para no convertirse en el cuello de botella.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=YS4UksBueo0",
+       "title": "Cómo crear contenido para marcas y vivir de esto (RÓBATE MI PROCESO y conoce cómo lo hago)",
+       "channel": "Ana de Agencia Rosa",
+       "language": "es",
+       "why": "Muestra el proceso completo de una agencia que produce contenido para marcas, de la idea a la entrega. Sirve para que el dueño vea el flujo IDEA-GUION-GRABACIÓN-EDICIÓN-PUBLICACIÓN y en qué pasos le toca decidir."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=oJfqgfcTJ_k",
+       "title": "4 pasos para DELEGAR sin perder el control en tu empresa",
+       "channel": "Alejandro Izquierdo Acelerador de Negocios",
+       "language": "es",
+       "why": "Método práctico para delegar sin dejar de supervisar. Apoya la lección de no ser el cuello de botella en aprobaciones."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=wjjvMhUE3m4",
+       "title": "📆 Como ORGANIZAR tu TIEMPO y tener MEJORES RESULTADOS ⏰ TIME BLOCKING ✅ el METODO que usa ELON MUSK",
+       "channel": "Misecretariacom",
+       "language": "es",
+       "why": "Explica el time blocking para ordenar la semana por bloques. Sirve para reservar horarios fijos de revisión y aprobación en Intia."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-p1-l4",
+       "title": "Recorrido por Intia",
+       "objective": "Conocer las pantallas que usa el dueño y para qué sirve cada una.",
+       "procedure": [
+        "Panel: resumen de pendientes y estado general.",
+        "Marcas: identidad, brief operativo, Objetivos y enlaces de cada marca.",
+        "Videos y Calendario: estado, fechas y lista de control de cada pieza.",
+        "Tareas: pendientes por persona.",
+        "Métricas: resultados semanales por video y plataforma. Además del dueño, solo la ven Coordinación y Analista.",
+        "Generador IA, Generaciones, Guiones, Estructuras y Personas: cómo se crean los guiones, con qué formatos y para qué clientes tipo.",
+        "Equipo, Actividad y Ajustes son solo del dueño: Equipo invita y asigna perfiles y marcas; Actividad muestra quién hizo qué; Ajustes guarda la seguridad y las claves de IA.",
+        "Cómo se usa: tutoriales y este manual de procedimientos."
+       ],
+       "commonMistakes": [
+        "Compartir la cuenta de dueño con otra persona para que le sea más fácil.",
+        "No revisar nunca Actividad.",
+        "Tocar Ajustes sin saber qué cambia.",
+        "Confundir Personas (clientes tipo) con el equipo."
+       ],
+       "checklist": [
+        "Entré a todas las secciones del menú.",
+        "Sé para qué sirve cada una.",
+        "Sé que Equipo, Actividad y Ajustes son exclusivas del dueño.",
+        "Ubiqué Métricas y los Objetivos de cada marca."
+       ],
+       "practice": "En Con Amor, encuentra el objetivo vigente, el último video publicado, la tarea más atrasada y el último cambio registrado en Actividad.",
+       "passCriteria": "Encuentra los 4 datos en menos de 5 minutos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p1-l1",
+       "title": "Mapa del flujo",
+       "objective": "Recorrer el camino completo de un video en Intia y ubicar quién es responsable en cada estado.",
+       "procedure": [
+        "Abre Videos y filtra una marca (por ejemplo, Con Amor).",
+        "Identifica los estados: IDEA → GUION → APROBADO → GRABACIÓN → EDICIÓN → PROGRAMADO → PUBLICADO. PAUSADO y CANCELADO son salidas del flujo.",
+        "Anota el responsable de cada estado: IDEA y GUION, guionista con coordinación; APROBADO, coordinación marca 'Guion aprobado por la marca'; GRABACIÓN, producción, filmmaker y talento; EDICIÓN, editor y jefe de editores, y coordinación marca 'Revisión final aprobada'; PROGRAMADO y PUBLICADO, community; ventas por DM o WhatsApp, ATC; métricas semanales, analista.",
+        "Abre un video ya publicado y revisa su lista de control por etapa: preproducción, grabación, postproducción y publicación.",
+        "Marca en rojo los estados donde hoy el equipo te pide permiso a ti: son tus cuellos de botella.",
+        "Anota al lado de cada uno si debe seguir siendo tuyo o delegarse (lo decides en la lección Qué decide el dueño)."
+       ],
+       "commonMistakes": [
+        "Aprobar personalmente cada guion y cada edición.",
+        "Permitir que un video salte estados.",
+        "Creer que el community puede publicar sin la Revisión final: Intia no lo permite.",
+        "Creer que el video termina al publicarse, cuando faltan las ventas y las métricas.",
+        "No saber quién es responsable de un video atascado."
+       ],
+       "checklist": [
+        "Conozco los 7 estados del flujo y las 2 salidas.",
+        "Sé qué perfil trabaja en cada estado.",
+        "Ubiqué las 2 aprobaciones obligatorias: guion y revisión final.",
+        "Identifiqué dónde el equipo me espera a mí.",
+        "Sé dónde se registran las ventas (ATC) y las métricas (analista)."
+       ],
+       "practice": "Elige 3 videos de Con Amor en estados distintos y dibuja su recorrido con responsables y fechas. Cuenta cuántos días pasó cada uno en cada estado.",
+       "passCriteria": "Explica el flujo completo en 2 minutos sin mirar la app, nombra el responsable de cada estado y de las 2 aprobaciones, y detecta al menos 1 estado donde él mismo es el cuello de botella.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p1-l2",
+       "title": "Qué decide el dueño",
+       "objective": "Separar las decisiones que solo toma el dueño de las que delega, con límites claros en soles o condiciones.",
+       "procedure": [
+        "Lista las decisiones de un mes: objetivos, presupuesto de producción y pauta, precios, descuentos, ofertas y sorteos, contrataciones, aprobación de guiones y ediciones, respuestas a reclamos y crisis.",
+        "Clasifica cada una como RESERVADA (solo el dueño), CON LÍMITE (el equipo decide hasta un tope) o DELEGADA.",
+        "Reservadas típicas: objetivo del mes, presupuesto total, precios y ofertas nuevas, sorteos, contratos y crisis de nivel 3.",
+        "Con límite (ejemplos): ATC puede dar hasta 10% de descuento o envío gratis desde S/ 150; coordinación puede mover hasta S/ 300 de pauta entre videos; el jefe de editores da el visto bueno de calidad y coordinación marca la Revisión final, salvo en las piezas de pauta u oferta, que revisa el dueño.",
+        "Delegadas: ideas, guiones sin oferta nueva, calendario de publicación y respuestas a comentarios normales.",
+        "Publica la tabla en una tarea fija o en el brief de la marca y explícala en el ritual semanal."
+       ],
+       "commonMistakes": [
+        "Dejar los límites implícitos, con lo que todos consultan todo.",
+        "Dar un límite y luego desautorizar a la persona en público.",
+        "No actualizar la tabla cuando crece el equipo.",
+        "Usar la misma tabla para la marca propia y para los clientes, que suelen aprobar ellos mismos."
+       ],
+       "checklist": [
+        "La tabla tiene 3 columnas: reservada, con límite y delegada.",
+        "Cada decisión con límite tiene un monto en S/ o una condición concreta.",
+        "El equipo conoce la tabla.",
+        "Tiene fecha de próxima revisión."
+       ],
+       "practice": "Llena la plantilla para Con Amor, para un cliente de servicios (por ejemplo, un estudio contable) y para un restaurante. Compara qué cambia entre la marca propia y los clientes.",
+       "passCriteria": "La tabla tiene al menos 12 decisiones clasificadas, cada límite tiene una cifra y el equipo resuelve 3 casos de prueba sin consultar al dueño.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p1-l3",
+       "title": "Tu semana tipo",
+       "objective": "Reservar en el calendario el tiempo para dirigir el sistema y no pasar el día apagando incendios.",
+       "procedure": [
+        "Lunes 9:00, 45 min: ritual semanal con coordinación, analista, jefe de editores, community y ATC.",
+        "Todos los días, 15 min a la misma hora: Panel y Tareas; resolver solo los bloqueos escalados.",
+        "Martes o miércoles, 60 min: revisión de las piezas de pauta y de las ofertas que están en EDICIÓN.",
+        "Jueves, 30 min: leer una muestra de 10 chats de ATC para escuchar al cliente.",
+        "Viernes, 30 min: revisar Métricas y preparar los temas del lunes.",
+        "Primer día hábil del mes, de 2 a 3 h: resultados, objetivos, ofertas, aprobación de la estrategia y evaluaciones.",
+        "Crea los bloques como eventos repetitivos con recordatorio."
+       ],
+       "commonMistakes": [
+        "Entrar a la app a cada rato sin agenda.",
+        "Cancelar el ritual cuando hay mucho trabajo.",
+        "No leer nunca chats reales de clientes.",
+        "Decidir el presupuesto sin mirar las métricas del mes."
+       ],
+       "checklist": [
+        "Los bloques están creados como eventos repetitivos.",
+        "El ritual semanal tiene hora fija.",
+        "La lectura de chats está agendada.",
+        "El cierre mensual está agendado."
+       ],
+       "practice": "Crea tu semana tipo y cúmplela 2 semanas seguidas. Anota cuántas veces te interrumpieron fuera de los bloques.",
+       "passCriteria": "Cumple el 100% de los bloques 2 semanas seguidas y tiene menos interrupciones en la segunda semana que en la primera.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "dueno-p2",
+     "slug": "dueno-p2",
+     "title": "Marca e identidad",
+     "summary": "Cargar en Intia lo que el equipo y la IA necesitan para hablar como la marca, pensar en el cliente real y vender el producto correcto con datos exactos.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=lqpsojxVudo",
+       "title": "Como hacer un Manual de Marca - Yo si muestro ejemplos",
+       "channel": "Zeta Viez",
+       "language": "es",
+       "why": "Qué lleva un manual de marca, con ejemplos reales. Sirve de base para llenar la ficha de marca en Intia: logo, colores, tipografías y usos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=orKs7Jbedwc",
+       "title": "Voz y Tono de Marca: Descubre Tu Brand Voice [12 EJEMPLOS]",
+       "channel": "Ivo Fiz Eꜱᴄᴜᴇʟᴀ ᴅᴇ Cᴏᴘʏᴡʀɪᴛɪɴɢ ʏ Cᴏɴᴛᴇɴɪᴅᴏꜱ",
+       "language": "es",
+       "why": "Cómo definir la voz y el tono de marca, con 12 ejemplos. Es justo lo que la IA y el guionista necesitan para hablar como la marca."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Fq7kE3mRx5c",
+       "title": "El curso de BRANDING más corto del mundo",
+       "channel": "Eze Cichello",
+       "language": "es",
+       "why": "Introducción al branding en menos de 5 minutos. Sirve para que el dueño entienda qué es la identidad de marca antes de cargarla."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-p2-l1",
+       "title": "Cargar la marca",
+       "objective": "Completar la ficha de la marca en Intia para que los guiones de IA y el equipo usen la misma información.",
+       "procedure": [
+        "Entra a Marcas y abre o crea la marca.",
+        "Descripción en 2 líneas: qué vende y a quién. Ejemplo: Con Amor, regalos personalizados (poleras de algodón afranelado, tazas, casacas) para Lima y la sierra, con precios en S/.",
+        "Identidad: la personalidad en 3 adjetivos (por ejemplo, cálida, cercana y detallista).",
+        "Brief operativo con lo permanente: tiempos de producción, zonas y tiempos de envío, formas de pago (Yape, Plin, transferencia, contraentrega) y garantía.",
+        "Completa tono de voz, público, propuestas de valor (3 a 5), palabras clave y lista de no hacer (se detallan en las lecciones siguientes).",
+        "Completa colores (primario, secundario y acento), logo y enlaces (web, Instagram, TikTok y WhatsApp).",
+        "Genera un guion de prueba en el Generador IA y verifica que use tu tono y tus datos."
+       ],
+       "commonMistakes": [
+        "Llenar con frases genéricas como calidad y buen servicio.",
+        "Olvidar los tiempos de entrega y las zonas de envío.",
+        "Poner en el brief permanente precios u ofertas que cambian cada semana.",
+        "No actualizar la ficha después de un cambio de producto o de política."
+       ],
+       "checklist": [
+        "Descripción en 2 líneas.",
+        "3 adjetivos de identidad.",
+        "Brief con entrega, pago y garantía.",
+        "3 a 5 propuestas de valor.",
+        "Lista de no hacer.",
+        "Colores y logo.",
+        "4 enlaces."
+       ],
+       "practice": "Llena la ficha de Con Amor y la de un restaurante cliente (por ejemplo, una pollería en Huancayo). Genera un guion de prueba para cada una.",
+       "passCriteria": "El guion de prueba menciona correctamente el producto, el tono y el CTA a WhatsApp sin tener que corregir datos de la marca.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p2-l5",
+       "title": "Público y personas",
+       "objective": "Describir al cliente real para que la IA y el guionista escriban pensando en él.",
+       "procedure": [
+        "Lee con ATC 30 chats de venta y anota quién compra, para quién, por qué y qué objeción pone.",
+        "No copies nombres, teléfonos ni fotos de clientes: anota solo patrones y frases (Ley 29733).",
+        "Define de 2 a 3 personas. Ejemplos: una hija de 28 años en Lima que le regala a su mamá en Huancayo; una mamá de 45 años en Cusco que compra una polera en promoción para su hijo; una empresa que pide 20 tazas con su logo.",
+        "Para cada persona anota su deseo o dolor, sus objeciones, frases literales de los chats y dónde ve contenido.",
+        "Cárgalas en Personas y resume el público en el campo Público de la marca."
+       ],
+       "commonMistakes": [
+        "Inventar el público sin leer chats.",
+        "Definir el público como todos de 18 a 65 años.",
+        "Olvidar que en un regalo quien paga no es quien lo recibe.",
+        "Copiar datos personales de clientes en Intia o en la IA."
+       ],
+       "checklist": [
+        "30 chats revisados.",
+        "2 a 3 personas con frases literales.",
+        "Objeciones listadas.",
+        "Sin datos personales de clientes.",
+        "Personas cargadas en Intia."
+       ],
+       "practice": "Con los chats de una semana de Con Amor, arma 2 personas y pide a la IA un guion para cada una.",
+       "passCriteria": "Los 2 guiones son claramente distintos en el gancho y en la objeción que resuelven.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-p2-l2",
+       "title": "Tono de voz",
+       "objective": "Definir cómo habla la marca, con ejemplos de sí y de no para guionistas, talentos, community y ATC.",
+       "procedure": [
+        "Elige 3 rasgos. Ejemplo para Con Amor: cariñosa, alegre y peruana sin jerga vulgar.",
+        "Para cada rasgo escribe qué es y qué no es (cariñosa, pero no empalagosa).",
+        "Escribe 3 frases modelo: un gancho, un cierre de venta y una respuesta a un reclamo.",
+        "Define las palabras propias de la marca (por ejemplo, detallazo o regalo con nombre) y las prohibidas.",
+        "Define si se habla de tú o de usted según el canal: tú en los Reels y usted en ATC con público adulto de la sierra, si así lo prefieren.",
+        "Carga todo en el campo Tono de voz de la marca."
+       ],
+       "commonMistakes": [
+        "Que el video y el chat de ATC suenen a marcas distintas.",
+        "Copiar el tono de otra marca.",
+        "Usar jerga limeña que no conecta en la sierra.",
+        "Describir el tono sin dar ejemplos concretos."
+       ],
+       "checklist": [
+        "3 rasgos con su es y no es.",
+        "3 frases modelo.",
+        "Palabras propias y prohibidas.",
+        "Tú o usted definido por canal."
+       ],
+       "practice": "Escribe el tono de Con Amor, de un servicio (por ejemplo, una clínica dental) y de un restaurante. Pide a 2 personas del equipo que escriban un gancho con cada uno.",
+       "passCriteria": "2 personas distintas escriben ganchos que suenan a la misma marca y respetan las palabras prohibidas.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p2-l3",
+       "title": "Lista de no hacer",
+       "objective": "Proteger la marca con límites claros que ni el equipo ni la IA deben cruzar.",
+       "procedure": [
+        "Revisa los comentarios negativos y reclamos pasados y anota qué los causó.",
+        "Prohibiciones de contenido: burlas a regiones, acentos o costumbres; dobles sentidos; comparar con otras marcas por su nombre.",
+        "Prohibiciones comerciales: prometer entrega en 24 h si no es real, decir 100% algodón si es mezcla, inventar testimonios, poner últimas unidades si no es cierto.",
+        "Prohibiciones visuales y de audio: logo deformado, producto con defectos y música comercial sin licencia. En las cuentas de empresa de TikTok se usa la Commercial Music Library, también en orgánico.",
+        "Prohibiciones legales: publicidad pagada sin identificar, contenido Camaleón en cuentas de terceros sin #Publicidad y usar la imagen de personas sin autorización.",
+        "Cárgalas en el campo No hacer de la marca: máximo 10 puntos claros."
+       ],
+       "commonMistakes": [
+        "Listas de 40 puntos que nadie lee.",
+        "Prohibiciones vagas, como no ser ofensivos.",
+        "Usar canciones de moda en la cuenta de empresa porque todos lo hacen.",
+        "No actualizar la lista después de una crisis."
+       ],
+       "checklist": [
+        "Máximo 10 puntos.",
+        "Cada punto se puede verificar en un video.",
+        "Incluye prohibiciones comerciales, de música y legales.",
+        "Está cargada en la marca."
+       ],
+       "practice": "Revisa 5 videos ya publicados y marca cuáles romperían alguna regla de la lista.",
+       "passCriteria": "La lista se aplica a los 5 videos sin dudas de interpretación.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p2-l4",
+       "title": "Catálogo y ofertas",
+       "objective": "Entregar fichas de producto y ofertas vigentes para que los guiones y ATC vendan con datos exactos.",
+       "procedure": [
+        "Para cada producto anota nombre, precio final en S/ (con impuestos incluidos), variantes (tallas y colores), material exacto según la ficha del proveedor (por ejemplo, algodón afranelado), tiempo de producción, envío a Lima y provincias, y garantía.",
+        "Agrega el beneficio emocional y la prueba (por ejemplo, una foto real del estampado después de varios lavados, solo si lo comprobaste).",
+        "Para cada oferta vigente anota qué incluye, fecha de inicio y fin, stock y condiciones.",
+        "Servicios: paquete, duración, qué incluye y cómo se agenda. Restaurante: platos estrella, precios, horarios, zonas de delivery y recargo.",
+        "Guarda lo permanente en el brief de la marca y la oferta del mes en la tarea de la campaña, porque cambia.",
+        "Entrega la ficha y la oferta a ATC antes de publicar."
+       ],
+       "commonMistakes": [
+        "Tener un precio en el video y otro en el chat.",
+        "Anunciar un precio sin IGV y cobrar otro al cerrar.",
+        "Publicar ofertas sin fecha de fin.",
+        "Prometer stock que no existe.",
+        "No avisar a ATC antes de publicar."
+       ],
+       "checklist": [
+        "Cada ficha tiene precio final y tiempos.",
+        "Cada oferta tiene fechas, stock y condiciones.",
+        "ATC tiene la misma versión.",
+        "Los claims se pueden comprobar."
+       ],
+       "practice": "Crea 3 fichas: polera personalizada, taza mágica y el combo del restaurante. Crea 1 oferta de Día de la Madre con fechas y stock.",
+       "passCriteria": "ATC y el guionista responden sin errores 5 preguntas de cliente (precio, tiempos, tallas, envío y garantía) usando solo la ficha.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "dueno-p3",
+     "slug": "dueno-p3",
+     "title": "Objetivos y KPIs",
+     "summary": "Fijar un objetivo de negocio por marca, cargarlo en Intia y elegir los pocos números que dicen si vas bien.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=aOqNiyVpvxo",
+       "title": "✅¿Qué son los OKR? El mejor resumen de los OKR con caso práctico y ejemplos de OKR",
+       "channel": "OKR University",
+       "language": "es",
+       "why": "Resume los OKR con un caso práctico. Sirve para fijar un objetivo de negocio por marca y sus resultados clave medibles."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=u_BmGi4RxRQ",
+       "title": "Qué KPIs Analizar en Redes Sociales l Métricas Clave",
+       "channel": "Cyberclick • Marketing Digital",
+       "language": "es",
+       "why": "Qué métricas de redes importan y cuáles son de vanidad. Sirve para elegir los pocos números que dicen si vas bien."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=3r3X0aCDo8w",
+       "title": "Objetivos SMART para Plan de Marketing - ¿Qué son?",
+       "channel": "Cyberclick • Marketing Digital",
+       "language": "es",
+       "why": "Cómo redactar objetivos SMART para marketing. Complementa los OKR con metas concretas, con fecha y medibles."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-p3-l1",
+       "title": "Objetivo del mes",
+       "objective": "Escribir un objetivo de negocio medible por marca para el mes.",
+       "procedure": [
+        "Parte del negocio, no de las redes: ventas, clientes nuevos, reservas o citas.",
+        "Toma la línea base del mes anterior.",
+        "Fija una meta realista. Ejemplos: Con Amor, pasar de 120 a 150 pedidos por WhatsApp atribuidos a videos; restaurante, 200 reservas; servicio, 40 citas.",
+        "Agrega 2 o 3 resultados clave de apoyo (por ejemplo, 20 videos publicados y 600 conversaciones).",
+        "Asigna un responsable del objetivo (normalmente coordinación) y una fecha.",
+        "Comunícalo en el ritual del primer lunes del mes."
+       ],
+       "commonMistakes": [
+        "Objetivos como crecer en redes.",
+        "Metas sin línea base.",
+        "Tener 5 objetivos a la vez.",
+        "Cambiar la meta a mitad de mes."
+       ],
+       "checklist": [
+        "1 objetivo de negocio.",
+        "Línea base.",
+        "Meta numérica.",
+        "Fecha.",
+        "Responsable.",
+        "2 o 3 resultados clave."
+       ],
+       "practice": "Escribe el objetivo del próximo mes para Con Amor y para un cliente.",
+       "passCriteria": "Otra persona lee el objetivo y, al final del mes, puede decir si se logró sin tener que interpretarlo.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p3-l3",
+       "title": "Cargar objetivos",
+       "objective": "Registrar los objetivos en Intia con el modo de cálculo correcto para seguir su avance.",
+       "procedure": [
+        "Entra a Marcas, abre la marca, ve a Objetivos y crea uno nuevo.",
+        "Escribe el objetivo y la unidad (pedidos, S/, reservas, citas).",
+        "Elige el cálculo. Suma semanal automática: suma lo que el analista carga en Métricas y admite vistas, likes, comentarios, compartidos, guardados, alcance, clics, leads, pedidos, inversión e ingresos, con filtro opcional por plataforma. Valor manual: para seguidores, ROAS u otros indicadores que no se suman.",
+        "En la suma automática, el periodo va de lunes a domingo, entre 1 y 52 semanas.",
+        "Completa el punto de partida, la meta, el periodo y la fecha límite.",
+        "Cada lunes revisa el estado: en curso, en riesgo, logrado o pausado."
+       ],
+       "commonMistakes": [
+        "Poner una meta sin punto de partida.",
+        "Buscar ROAS o seguidores en la suma automática: se cargan en modo manual.",
+        "Usar la suma semanal de alcances como si fueran personas únicas.",
+        "Usar el cálculo automático sin que el analista cargue las métricas.",
+        "No marcar el objetivo en riesgo a tiempo."
+       ],
+       "checklist": [
+        "Objetivo y unidad.",
+        "Modo de cálculo correcto.",
+        "Punto de partida y meta.",
+        "Periodo de lunes a domingo.",
+        "Estado revisado cada semana."
+       ],
+       "practice": "Carga el objetivo del mes de Con Amor como suma semanal de pedidos y verifica que avance después de la carga semanal de métricas.",
+       "passCriteria": "El objetivo muestra un avance correcto después de la primera carga semanal.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-p3-l2",
+       "title": "KPIs por embudo",
+       "objective": "Elegir pocos indicadores por etapa del embudo para saber dónde se rompe la venta.",
+       "procedure": [
+        "Atención: vistas, alcance y retención a 3 segundos (en Instagram, las vistas reemplazaron a las impresiones).",
+        "Interés: compartidos, guardados y comentarios (compartidos y guardados pesan más que los likes).",
+        "Conversación: DMs y chats de WhatsApp iniciados (leads).",
+        "Venta: pedidos, ingresos en S/ y ticket promedio.",
+        "Eficiencia: inversión en pauta, costo por conversación y costo por pedido.",
+        "Deja un máximo de 7 números en el tablero semanal."
+       ],
+       "commonMistakes": [
+        "Medir solo likes y seguidores.",
+        "No medir conversaciones ni pedidos.",
+        "Tener demasiados KPIs.",
+        "Comparar vistas entre plataformas sin contexto."
+       ],
+       "checklist": [
+        "1 o 2 KPIs por etapa.",
+        "Incluye leads y pedidos.",
+        "Incluye costos.",
+        "Máximo 7 números."
+       ],
+       "practice": "Arma el tablero de 7 números de Con Amor con los datos de la última semana.",
+       "passCriteria": "El tablero cubre las 5 etapas del embudo y cada número indica su fuente (Métricas, ATC o Ads Manager).",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p3-l4",
+       "title": "Métricas de vanidad",
+       "objective": "Distinguir los números que alimentan el ego de los que pagan la planilla.",
+       "procedure": [
+        "Mira los videos de referencia sobre métricas de vanidad.",
+        "Toma tus 5 videos con más likes y tus 5 videos con más pedidos.",
+        "Compara las dos listas: ¿son los mismos videos?",
+        "Anota qué tienen en común los que venden (formato, CTA y oferta).",
+        "Ajusta el tablero para que priorice pedidos y conversaciones."
+       ],
+       "commonMistakes": [
+        "Celebrar un video viral que no vendió.",
+        "Pautar el video con más likes.",
+        "Castigar un video con pocas vistas pero muchas ventas."
+       ],
+       "checklist": [
+        "Comparé el top de likes con el top de pedidos.",
+        "Anoté los patrones de los videos que venden.",
+        "El tablero prioriza las ventas."
+       ],
+       "practice": "Presenta la comparación en el ritual con 1 conclusión y 1 decisión.",
+       "passCriteria": "Toma una decisión concreta basada en pedidos y no en likes (por ejemplo, replicar el formato Testimonio con cierre de garantía).",
+       "mediaType": "VIDEO_REFERENCIA"
+      }
+     ]
+    },
+    {
+     "id": "dueno-p4",
+     "slug": "dueno-p4",
+     "title": "Equipo y accesos",
+     "summary": "Definir qué entrega cada integrante, quién decide cada cosa, qué acceso tiene cada persona en Intia y cómo se protegen las cuentas de la marca.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=9ZU90s5rIuY",
+       "title": "¿Qué es una matriz RACI? Organiza tus proyectos 💪",
+       "channel": "Semrush en español",
+       "language": "es",
+       "why": "Explica la matriz RACI (responsable, aprobador, consultado, informado). Sirve para dejar claro quién decide cada paso del flujo del video."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=E4QXniT14vU",
+       "title": "Roles en un equipo de marketing digital | Serie Marketing ep. 02",
+       "channel": "Coderhouse",
+       "language": "es",
+       "why": "Repasa los roles de un equipo de marketing digital y qué entrega cada uno. Sirve para mapearlos a los perfiles de Intia."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=h1pkrDdQYwQ",
+       "title": "Dar accesos en Meta Business Suite a empleado o administrador",
+       "channel": "Inteligente Digital",
+       "language": "es",
+       "why": "Tutorial para dar accesos por nivel (empleado o administrador) en Meta. Aplica el mínimo privilegio a cada colaborador."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-p4-l1",
+       "title": "Mapa de roles",
+       "objective": "Saber qué entrega cada integrante y qué necesita recibir.",
+       "procedure": [
+        "Lista los roles: coordinación, guionista, producción, filmmaker, talento, editor, jefe de editores, diseñador, community, analista y ATC.",
+        "Para cada rol escribe su entregable principal y su estándar. Ejemplos: filmmaker, material crudo con los checks de grabación completos; editor, video listo para la Revisión final; ATC, ventas registradas con su origen.",
+        "Anota de quién recibe y a quién entrega cada rol.",
+        "Detecta los huecos: tareas sin dueño (por ejemplo, nadie registra de qué video vino la venta).",
+        "Asigna cada hueco a un rol."
+       ],
+       "commonMistakes": [
+        "Una persona que cubre 5 roles sin saberlo.",
+        "Nadie responsable de las métricas.",
+        "ATC fuera del sistema de contenido."
+       ],
+       "checklist": [
+        "11 roles listados.",
+        "Un entregable por rol.",
+        "Cadena de quién recibe y a quién entrega.",
+        "Huecos asignados."
+       ],
+       "practice": "Dibuja la cadena de un video de Con Amor, desde la idea hasta la venta, con nombres reales.",
+       "passCriteria": "Ningún paso de la cadena queda sin nombre.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p4-l2",
+       "title": "Matriz RACI",
+       "objective": "Definir para cada tarea quién la hace, quién responde por ella, a quién se consulta y a quién se informa.",
+       "procedure": [
+        "En las filas pon las tareas: objetivos de marca, estrategia mensual, guion, aprobación del guion, grabación, edición, revisión final, publicación, respuesta a comentarios, venta por chat, métricas y presupuesto de pauta.",
+        "En las columnas pon los roles.",
+        "Marca R (lo hace), A (responde por el resultado), C (se le consulta) e I (se le informa).",
+        "Regla de oro: un solo A por fila.",
+        "Ejemplos: guion, R guionista, A coordinación, C dueño solo si hay oferta nueva, I filmmaker y talento. Calidad de edición, R editor, A jefe de editores. Revisión final en Intia, R jefe de editores (revisa), A coordinación (marca el check). Presupuesto de pauta, R coordinación, A dueño.",
+        "Revísala 30 minutos con el equipo y publícala."
+       ],
+       "commonMistakes": [
+        "Dos A en la misma fila.",
+        "El dueño como A de todo.",
+        "Poner C e I en todas las casillas.",
+        "No revisarla con el equipo."
+       ],
+       "checklist": [
+        "Un solo A por fila.",
+        "El dueño es A en 3 o 4 filas como máximo.",
+        "Revisada con el equipo.",
+        "Publicada."
+       ],
+       "practice": "Arma la RACI de Con Amor y otra para un restaurante cliente donde el propio cliente aprueba los guiones.",
+       "passCriteria": "Cada fila tiene exactamente un A y el equipo responde quién decide en 5 casos elegidos al azar.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p4-l3",
+       "title": "Invitar y dar permisos",
+       "objective": "Dar a cada persona solo los perfiles y las marcas que necesita en Intia.",
+       "procedure": [
+        "Entra a Equipo e invita a la persona.",
+        "Asigna los perfiles según la RACI: Coordinación (STRATEGY), Guionista (WRITER), Producción (PRODUCTION), Filmmaker (CAMERA), Talento (TALENT), Editor (EDITOR), Diseñador (DESIGNER), Community (PUBLISHER) o Analista (ANALYST).",
+        "Asigna solo las marcas en las que trabaja esa persona. Filmmaker, Talento, Editor y Diseñador solo ven los videos que les asignan; los demás perfiles ven toda la marca.",
+        "Ningún perfil da administración: Equipo, Actividad y Ajustes son solo del dueño. Solo Coordinación y el dueño pueden marcar 'Guion aprobado por la marca' y 'Revisión final aprobada'.",
+        "Roles nuevos, mientras no tengan perfil propio. Jefe de editores: con el perfil Editor solo ve lo asignado y no marca la Revisión final; asígnale los videos en edición de sus marcas y que coordinación marque la aprobación, o dale Coordinación solo si la RACI lo hace A de la edición (ese perfil también aprueba guiones y edita la marca). ATC: trabaja con la ficha y la planilla de ventas; si carga los pedidos semanales, el perfil más cercano es Analista.",
+        "Cuando alguien se va, quítale el acceso ese mismo día y revisa Actividad."
+       ],
+       "commonMistakes": [
+        "Dar todas las marcas a todos.",
+        "Compartir la cuenta del dueño.",
+        "No retirar el acceso a excolaboradores.",
+        "Dar Coordinación a alguien solo para que pueda aprobar, sin ver todo lo que ese perfil habilita."
+       ],
+       "checklist": [
+        "Perfil asignado según la RACI.",
+        "Marcas mínimas.",
+        "Nadie usa la cuenta del dueño.",
+        "Roles nuevos resueltos con el perfil más cercano.",
+        "Procedimiento de salida definido."
+       ],
+       "practice": "Configura un editor freelance que solo trabaja con Con Amor y un community que maneja Con Amor y el restaurante.",
+       "passCriteria": "El editor solo ve los videos de Con Amor que le asignaron y el community no puede publicar un video sin Revisión final aprobada.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-p4-l5",
+       "title": "Cuentas seguras con 2FA",
+       "objective": "Evitar el robo de cuentas y la pérdida de páginas, anuncios, perfiles y el WhatsApp de ventas.",
+       "procedure": [
+        "Las cuentas de Meta, TikTok, WhatsApp Business e Intia están a nombre de la empresa y el dueño es el administrador principal.",
+        "Mantén al menos 2 administradores de confianza en el portafolio comercial de Meta y en el Business Center de TikTok para no quedar bloqueado.",
+        "Activa la verificación en dos pasos (2FA) obligatoria para todo el portafolio, de preferencia con una app de autenticación y no por SMS.",
+        "En WhatsApp Business activa la verificación en dos pasos con PIN y nunca compartas el código de 6 dígitos que llega por SMS: pedirlo por error es la estafa más común para robar cuentas.",
+        "Da acceso a agencias, freelancers o clientes como socio y con permisos parciales. No compartas contraseñas.",
+        "Usa un gestor de contraseñas y guarda los códigos de recuperación en un lugar seguro."
+       ],
+       "commonMistakes": [
+        "Tener un solo administrador.",
+        "Compartir la contraseña de Instagram por WhatsApp.",
+        "Dejar la página a nombre del community o de la agencia.",
+        "Desactivar el 2FA porque es incómodo.",
+        "Enviar un código de verificación a quien lo pidió por error."
+       ],
+       "checklist": [
+        "2 administradores o más en Meta y TikTok.",
+        "2FA obligatorio.",
+        "PIN de WhatsApp Business activo.",
+        "Acceso de socio para terceros.",
+        "Gestor de contraseñas y códigos de recuperación guardados."
+       ],
+       "practice": "Configura el portafolio de Meta de Con Amor con 2FA obligatorio y acceso de socio para el community freelance, y activa el PIN del WhatsApp de ventas.",
+       "passCriteria": "El 100% de los usuarios tiene 2FA, el WhatsApp de ventas tiene PIN y ningún tercero conoce contraseñas.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p4-l4",
+       "title": "Canales y tiempos",
+       "objective": "Acordar dónde se comunica cada cosa y en cuánto tiempo se responde.",
+       "procedure": [
+        "El trabajo de los videos se comenta dentro de Intia (comentarios y tareas).",
+        "El grupo de WhatsApp del equipo es solo para bloqueos del día.",
+        "Las decisiones se registran en la tarea o en el video, no en audios sueltos.",
+        "Tiempos de respuesta: bloqueo en grabación, 2 h; revisión de guion, 24 h; revisión final, 24 h; reclamo de cliente, según su prioridad.",
+        "Alerta de crisis (un comentario o reclamo que se viraliza o tiene riesgo legal): llamada al dueño dentro de 1 h. El plan completo se arma en el nivel avanzado.",
+        "Define el horario de atención del equipo y el del dueño."
+       ],
+       "commonMistakes": [
+        "Aprobar por audio de WhatsApp sin que quede registro.",
+        "No acordar tiempos de respuesta.",
+        "Enterarse de una crisis al día siguiente.",
+        "Escribir al equipo a medianoche."
+       ],
+       "checklist": [
+        "Un canal por tipo de tema.",
+        "Tiempos de respuesta acordados.",
+        "Regla de escalamiento de crisis.",
+        "Horarios definidos.",
+        "Decisiones registradas en la app."
+       ],
+       "practice": "Escribe el acuerdo en 1 página y léelo en el ritual.",
+       "passCriteria": "En 2 semanas, el 90% de las aprobaciones queda registrado en Intia.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "dueno-p5",
+     "slug": "dueno-p5",
+     "title": "Ritual semanal",
+     "summary": "Una reunión fija de 45 minutos con un tablero de números que convierte datos en tareas.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=-SkpPzze0Uk",
+       "title": "La Reunión Nivel 10: El Sistema de 90 Minutos para Equipos Directivos",
+       "channel": "Joselo González",
+       "language": "es",
+       "why": "Explica en español la reunión Nivel 10 de EOS: agenda fija, tablero de números y resolución de temas. Es la base del ritual semanal adaptado a 45 minutos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=SIbosTdqkH0",
+       "title": "You Can't Manage What You Don't Measure: The EOS Scorecard Explained",
+       "channel": "EOS Worldwide",
+       "language": "en",
+       "why": "Canal oficial de EOS explicando el scorecard semanal en poco más de 2 minutos. Sirve para armar el tablero de números de la reunión."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=5WXkRDaMINw",
+       "title": "¿Cómo aplicar la metodología 5 Porqués?",
+       "channel": "SPC Consulting Group",
+       "language": "es",
+       "why": "Técnica corta de los 5 porqués para llegar a la causa raíz. Sirve para convertir un número malo en una tarea con responsable."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-p5-l1",
+       "title": "Reunión de 45 minutos",
+       "objective": "Hacer cada lunes una reunión corta y fija que convierta los números en decisiones.",
+       "procedure": [
+        "5 min · Buenas noticias: una personal y una de trabajo por persona.",
+        "5 min · Tablero: cada dueño de número dice solo en camino o fuera de camino.",
+        "5 min · Prioridades del trimestre: en camino o fuera de camino.",
+        "5 min · Titulares: ATC trae objeciones y reclamos, el community trae comentarios y el jefe de editores trae retrasos.",
+        "5 min · Tareas de la semana pasada: hecha o no hecha.",
+        "15 min · Resolver los 3 problemas principales.",
+        "5 min · Cierre: tareas nuevas con responsable y fecha, qué se comunica al resto y nota del 1 al 10 a la reunión."
+       ],
+       "commonMistakes": [
+        "Cambiar la agenda cada semana.",
+        "Explicar cada número durante el tablero.",
+        "Discutirlo todo sin resolver nada.",
+        "Terminar sin tareas asignadas."
+       ],
+       "checklist": [
+        "Misma hora y misma agenda.",
+        "Tablero listo antes de empezar.",
+        "Problemas priorizados.",
+        "Tareas con responsable y fecha.",
+        "Nota de la reunión."
+       ],
+       "practice": "Haz la reunión 4 lunes seguidos con la agenda y un cronómetro.",
+       "passCriteria": "4 reuniones seguidas de 50 minutos o menos, con al menos el 90% de las tareas cumplidas a la semana siguiente.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p5-l2",
+       "title": "Tablero de 7 números",
+       "objective": "Tener cada semana de 5 a 7 números con responsable que muestren el pulso del negocio.",
+       "procedure": [
+        "Elige de 5 a 7 números semanales y asigna un responsable a cada uno.",
+        "Ejemplo para Con Amor: videos publicados frente al plan (community); vistas totales y retención a 3 s promedio (analista); compartidos más guardados (analista); conversaciones por WhatsApp y DM (ATC); pedidos y ventas en S/ (ATC); inversión en pauta y costo por pedido (coordinación).",
+        "Pon una meta semanal a cada número.",
+        "Anota la fuente de cada uno: Métricas de Intia, reporte de ATC o Ads Manager.",
+        "El analista lo llena antes del lunes a las 9:00.",
+        "Un número bajo su meta es rojo y pasa a la lista de problemas."
+       ],
+       "commonMistakes": [
+        "Números sin responsable.",
+        "Números sin meta.",
+        "Llenar el tablero durante la reunión.",
+        "Cambiar los números cada semana."
+       ],
+       "checklist": [
+        "De 5 a 7 números.",
+        "Cada uno con responsable y meta.",
+        "Fuente indicada.",
+        "Lleno antes de la reunión."
+       ],
+       "practice": "Llena el tablero 4 semanas seguidas y mira la tendencia.",
+       "passCriteria": "4 semanas completas sin casillas vacías.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p5-l3",
+       "title": "Resolver problemas",
+       "objective": "Resolver los problemas de raíz en la reunión con el método Identificar, Discutir y Solucionar.",
+       "procedure": [
+        "Durante la semana, cualquiera puede agregar temas a la lista de problemas.",
+        "En la reunión elijan los 3 más importantes.",
+        "Identificar: quien trae el problema lo dice en una frase (por ejemplo, los videos de tazas no generan chats).",
+        "Discutir hasta llegar a la causa raíz con los 5 porqués: ¿el gancho, la oferta o el precio?",
+        "Solucionar: una acción con responsable y fecha.",
+        "Pasen al siguiente problema. Lo que no alcance queda para la semana siguiente."
+       ],
+       "commonMistakes": [
+        "Discutir síntomas en lugar de causas.",
+        "Que el dueño hable el 80% del tiempo.",
+        "Salir sin responsable.",
+        "Reabrir problemas que ya se resolvieron."
+       ],
+       "checklist": [
+        "Top 3 elegidos.",
+        "Causa raíz escrita.",
+        "Acción con responsable y fecha.",
+        "Problema cerrado."
+       ],
+       "practice": "Resuelve con este método 3 problemas reales de Con Amor.",
+       "passCriteria": "Los 3 problemas se cierran y sus acciones se cumplen dentro de la semana.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p5-l4",
+       "title": "Tareas con dueño",
+       "objective": "Convertir cada decisión del ritual en una tarea visible en Intia.",
+       "procedure": [
+        "Crea las tareas en Tareas durante la misma reunión.",
+        "El título empieza con un verbo (por ejemplo, Grabar 3 ganchos nuevos para la taza mágica).",
+        "Asigna un solo responsable.",
+        "Pon una fecha dentro de los próximos 7 días.",
+        "Vincula la tarea a la marca y al video, si aplica.",
+        "El lunes siguiente revisa si está hecha o no."
+       ],
+       "commonMistakes": [
+        "Tareas sin fecha.",
+        "Poner a todos como responsables.",
+        "Tareas gigantes como mejorar las ventas.",
+        "No revisarlas la semana siguiente."
+       ],
+       "checklist": [
+        "Verbo en el título.",
+        "Un responsable.",
+        "Fecha en 7 días o menos.",
+        "Vinculada a la marca o al video.",
+        "Revisada al lunes siguiente."
+       ],
+       "practice": "Registra en Intia, durante la reunión, todas las tareas del ritual.",
+       "passCriteria": "El 100% de los acuerdos del ritual tiene su tarea en Intia antes de terminar la reunión.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "dueno-p6",
+     "slug": "dueno-p6",
+     "title": "Legal básico",
+     "summary": "El mínimo legal en Perú para publicar y vender por redes sin multas: imagen, publicidad veraz e identificada, promociones y sorteos, reclamos y datos personales. No reemplaza la asesoría de un abogado.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=x3l03ig-AGw",
+       "title": "Influencers y creadores de contenido en el Perú: Guía completa para una publicidad responsable 🚀",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Video oficial de Indecopi sobre la Guía de Publicidad para Influencers. Aplica directo a UGC, testimonios y contenido Camaleón con marca integrada."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=WUDZNdxPdsw",
+       "title": "¡Ya lo sabes!: Publicidad engañosa",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Explicación oficial y breve de qué es publicidad engañosa en Perú. Sirve para evitar multas con precios, promociones y escasez."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=_jMRQx8wYXE",
+       "title": "📕 Libro de Reclamaciones 2025: ¿Para qué sirve y qué debes saber? ⚠️ | Términos y conclusiones 🎧🎙️",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Indecopi explica el Libro de Reclamaciones: obligaciones, plazos y diferencia entre reclamo y queja. Clave al vender por redes y WhatsApp."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-p6-l1",
+       "title": "Autorización de imagen",
+       "objective": "Tener la autorización escrita de cada persona que aparece en un video antes de publicarlo.",
+       "procedure": [
+        "El artículo 15 del Código Civil exige autorización expresa para aprovechar la imagen y la voz de una persona. Un video de marca es un uso comercial.",
+        "Usa un formato de 1 página con: nombre, DNI, video o campaña, uso (orgánico, pauta o ambos), plataformas, plazo, pago o gratuidad, firma y fecha.",
+        "Talentos y trabajadores firman antes de grabar.",
+        "En Cámara Escondida y en la vía pública, pide la firma al terminar de grabar. Si la persona no firma, difumina su rostro y su voz, o no publiques.",
+        "Menores de edad: firma el padre, la madre o el tutor. Evita menores en Cámara Escondida.",
+        "Agrega en la lista de control del video el paso 'Autorizaciones firmadas' (etapa Grabación) y guarda el PDF o la foto del formato en los archivos del video."
+       ],
+       "commonMistakes": [
+        "Confiar en un permiso verbal.",
+        "Pautar un video que solo estaba autorizado para uso orgánico.",
+        "Publicar una Cámara Escondida sin firma.",
+        "Perder los formatos firmados."
+       ],
+       "checklist": [
+        "Formato firmado por cada persona.",
+        "Uso, plataformas y plazo claros.",
+        "Menores con firma del tutor.",
+        "Paso agregado en la lista de control.",
+        "Formato archivado junto al video."
+       ],
+       "practice": "Prepara el formato y llénalo para el próximo video de Cámara Escondida.",
+       "passCriteria": "El 100% de los videos publicados en el mes tiene su autorización archivada.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p6-l2",
+       "title": "Publicidad veraz",
+       "objective": "Publicar solo afirmaciones verdaderas y comprobables, como exige Indecopi.",
+       "procedure": [
+        "Todo lo que se afirma debe poder probarse antes de publicar: material, tiempos de entrega, resultados y cantidad de clientes.",
+        "Un precio tachado o un antes S/ 89 solo vale si ese precio se cobró de verdad antes de la oferta.",
+        "Los testimonios deben ser reales y actuales. Un Sketch o una Cámara Escondida actuada no se presentan como un cliente o una reacción real.",
+        "Antes y Después: muestra el mismo producto, con la misma luz y sin retoques que cambien el resultado.",
+        "Sectores con advertencias obligatorias: en bebidas alcohólicas (por ejemplo, el pisco sour del restaurante) va la frase 'Tomar bebidas alcohólicas en exceso es dañino'; en alimentos procesados, los octógonos; en salud, revisa además las reglas de su colegio profesional.",
+        "Guarda la prueba de cada afirmación en la carpeta de la marca."
+       ],
+       "commonMistakes": [
+        "Anunciar un descuento sobre un precio inflado.",
+        "Inventar testimonios o presentar fotos de bancos de imágenes como clientes.",
+        "Presentar una escena actuada como real.",
+        "Olvidar la advertencia en un video del bar del restaurante."
+       ],
+       "checklist": [
+        "Cada afirmación tiene prueba.",
+        "El precio anterior es real.",
+        "Los testimonios son reales.",
+        "Las escenas actuadas no se presentan como reales.",
+        "Las advertencias del sector están incluidas."
+       ],
+       "practice": "Revisa 5 videos publicados (3 de Con Amor, 1 de un servicio y 1 del restaurante) y corrige los que no cumplan.",
+       "passCriteria": "Los 5 videos pasan la lista y cada afirmación tiene su prueba archivada.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p6-l5",
+       "title": "Publicidad identificada",
+       "objective": "Identificar como publicidad todo contenido pagado o con canje que publiquen creadores, influencers o cuentas que no son de la marca.",
+       "procedure": [
+        "Hay relación comercial cuando se paga con dinero, producto gratis, canje u otro beneficio. En ese caso el contenido es publicidad y debe identificarse.",
+        "Usa términos claros al inicio del texto y, si se puede, dentro del video: #Publicidad o #AnuncioContratado. La Guía de Publicidad para Influencers de Indecopi (2.ª edición, 2024) considera insuficientes #Publi, #Ad o #Embajador.",
+        "Activa además la herramienta de cada red: la etiqueta de colaboración pagada en Instagram y el interruptor de contenido de marca en TikTok.",
+        "Contenido Camaleón o UGC publicado en la cuenta del creador o en páginas de humor lleva la identificación. En la cuenta oficial de la marca ya se sabe quién anuncia.",
+        "Escribe la regla en el contrato del creador y revisa la publicación antes de pagar."
+       ],
+       "commonMistakes": [
+        "Pagar a un creador para que recomiende sin identificar la publicidad.",
+        "Usar #Ad o #Publi.",
+        "Creer que el canje de producto no cuenta como pago.",
+        "Publicar un Camaleón en una página de terceros como si fuera contenido espontáneo."
+       ],
+       "checklist": [
+        "Relación comercial identificada.",
+        "#Publicidad o #AnuncioContratado visibles.",
+        "Herramienta de contenido de marca activada.",
+        "Regla escrita en el contrato.",
+        "Publicación revisada antes de pagar."
+       ],
+       "practice": "Revisa las 3 últimas colaboraciones de Con Amor con creadores y corrige las que no estén identificadas.",
+       "passCriteria": "El 100% de las colaboraciones del mes está identificada con un término válido y con la herramienta de la red activada.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p6-l6",
+       "title": "Promociones y sorteos",
+       "objective": "Lanzar promociones y sorteos con condiciones claras y cumplibles.",
+       "procedure": [
+        "Toda promoción muestra vigencia (fecha de inicio y fin), stock (cantidad de unidades) y condiciones. Lo anunciado puede ser exigido por el cliente.",
+        "Escasez y urgencia solo si son reales: solo 50 poleras significa que hay 50 y que la oferta se cierra al llegar a 50.",
+        "Si las condiciones no caben en el video, ponlas completas en la descripción o en un enlace y di en el video dónde verlas.",
+        "Sorteos: publica las bases (mecánica, premio, fechas, cómo se elige y se anuncia al ganador y plazo de entrega del premio).",
+        "Antes de lanzar un sorteo, revisa en gob.pe (Ministerio del Interior, autorización de promociones comerciales) si requiere autorización previa y el pago de una tasa.",
+        "Informa a ATC las condiciones y entrega el premio en el plazo prometido, con evidencia."
+       ],
+       "commonMistakes": [
+        "Poner últimas unidades de forma permanente.",
+        "Promociones sin fecha de fin.",
+        "Sorteos sin bases ni evidencia de la elección.",
+        "No entregar el premio a tiempo."
+       ],
+       "checklist": [
+        "Vigencia, stock y condiciones visibles.",
+        "Escasez y urgencia reales.",
+        "Bases del sorteo publicadas.",
+        "Autorización revisada.",
+        "ATC informado."
+       ],
+       "practice": "Arma la promoción de Día de la Madre de Con Amor y las bases de un sorteo de 3 tazas personalizadas.",
+       "passCriteria": "La promoción y las bases responden sin dudas qué, cuánto, hasta cuándo y cómo, y ATC las explica igual que el video.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-p6-l3",
+       "title": "Libro de reclamaciones",
+       "objective": "Cumplir con el Libro de Reclamaciones virtual cuando se vende por internet.",
+       "procedure": [
+        "Si vendes por web, app o redes sociales con cobro, habilita un Libro de Reclamaciones virtual con un enlace visible.",
+        "Pon el enlace en la web, en la bio y en las respuestas rápidas de ATC.",
+        "El cliente registra su reclamo o queja en el libro. ATC le envía el enlace y lo ayuda si lo pide, sin llenarlo por él, y luego lo deriva al responsable.",
+        "Responde por escrito, al correo o dirección que indicó el cliente, dentro de los 15 días hábiles.",
+        "Conserva las hojas y las respuestas (mínimo 2 años) y lleva un registro mensual de causas al ritual."
+       ],
+       "commonMistakes": [
+        "Tener el enlace escondido o roto.",
+        "Responder fuera de plazo.",
+        "Contestar solo por chat, sin respuesta escrita formal.",
+        "No analizar las causas repetidas."
+       ],
+       "checklist": [
+        "Enlace visible en web y bio.",
+        "ATC conoce el procedimiento.",
+        "Respuesta en 15 días hábiles o menos.",
+        "Hojas y respuestas archivadas.",
+        "Registro mensual de causas."
+       ],
+       "practice": "Verifica que el enlace se abra desde el celular en 3 toques o menos y haz un simulacro de reclamo.",
+       "passCriteria": "El enlace está visible y el 100% de los reclamos del mes se respondió dentro del plazo.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-p6-l4",
+       "title": "Datos de clientes",
+       "objective": "Usar los datos de WhatsApp y de los DMs sin infringir el Código de Consumo ni la Ley 29733.",
+       "procedure": [
+        "Envía promociones por WhatsApp, SMS o correo solo a quien dio su consentimiento previo, informado, expreso e inequívoco (artículo 58 del Código de Protección y Defensa del Consumidor, y Ley 29733 con su nuevo reglamento vigente desde el 31 de marzo de 2025).",
+        "Pide el consentimiento en el primer contacto. Ejemplo para ATC: ¿Desea recibir nuestras promociones por WhatsApp? Responda SÍ.",
+        "Registra quién aceptó y cuándo.",
+        "Permite darse de baja fácilmente (por ejemplo, respondiendo BAJA) y respétalo el mismo día.",
+        "Guarda los datos con acceso limitado; no compartas las listas ni las cargues en la IA.",
+        "Publica una política de privacidad visible en la web o en la bio."
+       ],
+       "commonMistakes": [
+        "Enviar difusiones masivas a toda la agenda.",
+        "Usar casillas de aceptación ya marcadas.",
+        "Comprar bases de datos.",
+        "Compartir el Excel de clientes por WhatsApp."
+       ],
+       "checklist": [
+        "Guion de consentimiento en ATC.",
+        "Registro de quién aceptó.",
+        "Opción de baja.",
+        "Acceso restringido a los datos.",
+        "Política de privacidad visible."
+       ],
+       "practice": "Depura la lista de difusión de Con Amor y deja solo a los contactos que dieron su consentimiento.",
+       "passCriteria": "La lista de difusión contiene solo contactos con consentimiento registrado y no hay envíos a quienes no aceptaron.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "level": "INTERMEDIO",
+   "goal": "Decidir con números: costos y márgenes, atribución de ventas por chat, reparto entre orgánico y pagado, ofertas y estrategia mensual, lectura de métricas, contratación e inducción, y control de calidad sin revisar todo personalmente.",
+   "modules": [
+    {
+     "id": "dueno-i1",
+     "slug": "dueno-i1",
+     "title": "Números del contenido",
+     "summary": "Costo por video, margen por producto, ROAS de equilibrio, atribución de ventas por chat y reparto entre orgánico y pagado.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=U2P-b98ZMiA",
+       "title": "¿Qué es el MARGEN de CONTRIBUCIÓN? Todo lo que necesitas saber",
+       "channel": "Contador Productivo",
+       "language": "es",
+       "why": "Explica el margen de contribución con ejemplos. Es la base para saber cuánto deja cada polera o taza antes de pagar pauta."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=cUKG2Iykzuc",
+       "title": "Break even ROAS - Cuánto tienes que facturar por cada € invertido para salir ganando | KPIs Economía",
+       "channel": "CrackPPC - Performance Marketing para eCommerce",
+       "language": "es",
+       "why": "Cómo calcular el ROAS de equilibrio a partir del margen. Los ejemplos usan euros, pero la fórmula es la misma en soles."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=g0DxVUwwCzE",
+       "title": "✅¿CUÁNTO COBRAR por un VÍDEO? Trabajo de FILMAKER 🎬",
+       "channel": "MARCO ALBANNY - ALBANNY STUDIO ACADEMY",
+       "language": "es",
+       "why": "Desglosa qué compone el precio de un video (tiempo, equipo, edición). Sirve para estimar el costo real por video del equipo."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-i1-l1",
+       "title": "Costo por video",
+       "objective": "Saber cuánto cuesta producir cada video para decidir cuántos hacer y cuánto cobrar.",
+       "procedure": [
+        "Por etapa, multiplica horas por tarifa: guion (incluidas la IA y la revisión), producción, grabación (filmmaker y talento), edición, diseño, publicación y análisis.",
+        "Suma los insumos (producto para grabar, props, transporte, música, pagos a terceros) y las herramientas prorrateadas (IA y software).",
+        "Ejemplo ilustrativo de Con Amor: guion S/ 25 + grabación S/ 110 + edición S/ 60 + publicación S/ 10 + insumos S/ 15 = S/ 220 por video.",
+        "Si grabas por lotes (5 videos en una jornada), reparte el costo de grabación entre ellos.",
+        "Compara el costo de cada video con las ventas que se le atribuyen."
+       ],
+       "commonMistakes": [
+        "No contar el tiempo del propio dueño.",
+        "Olvidar las regrabaciones y las rondas de corrección.",
+        "No aprovechar la grabación por lotes.",
+        "Cobrar a los clientes por debajo del costo."
+       ],
+       "checklist": [
+        "Horas reales por etapa.",
+        "Insumos y herramientas incluidos.",
+        "Costo promedio por formato.",
+        "Comparación con las ventas atribuidas."
+       ],
+       "practice": "Calcula el costo de 5 videos del mes pasado y el promedio por formato.",
+       "passCriteria": "Tiene el costo por video de cada formato calculado con horas reales y toma una decisión a partir de él (por ejemplo, grabar los Vlogs por lotes).",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-i1-l2",
+       "title": "Margen por producto",
+       "objective": "Calcular el margen de contribución de cada producto para saber cuánto se puede invertir en venderlo.",
+       "procedure": [
+        "Toma el precio de venta neto: si tu empresa está afecta a IGV, precio ÷ 1.18; si estás en el Nuevo RUS, el precio completo.",
+        "Resta los costos variables: insumo (polera afranelada o taza), estampado o sublimado, empaque, comisión de pasarela o POS, envío que asumes y merma.",
+        "Margen de contribución = precio neto − costos variables. Margen % = margen ÷ precio neto.",
+        "Ejemplo ilustrativo con precios netos: una polera de S/ 69 con S/ 34.50 de costos variables tiene un margen de 50%; una taza de S/ 35 con S/ 14 de costos variables, uno de 60%.",
+        "En el restaurante suma el costo de la receta, el empaque y la comisión de la app de delivery.",
+        "Usa el margen para decidir qué productos empujar en los videos y cuánto bonus cabe en una oferta."
+       ],
+       "commonMistakes": [
+        "Mirar solo el costo del insumo.",
+        "Calcular con el precio que incluye IGV.",
+        "Olvidar la comisión de delivery en el restaurante.",
+        "Ignorar el costo del envío gratis.",
+        "Confundir el margen de contribución con la ganancia final."
+       ],
+       "checklist": [
+        "Precio neto usado.",
+        "Todos los costos variables incluidos.",
+        "Margen en S/ y en %.",
+        "Ranking de productos por margen."
+       ],
+       "practice": "Calcula el margen de 5 productos de Con Amor y de 3 platos del restaurante.",
+       "passCriteria": "Tiene una tabla con el margen en S/ y en % y un ranking de qué productos empujar.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-i1-l3",
+       "title": "ROAS de equilibrio",
+       "objective": "Conocer el retorno mínimo que debe dar la pauta para no perder dinero.",
+       "procedure": [
+        "ROAS de equilibrio = 1 ÷ margen %. Con un margen de 50% (la polera) es 2.0; con uno de 60% (la taza) es 1.67.",
+        "Meta operativa: entre 1.3 y 1.5 veces el equilibrio para cubrir los gastos fijos. Para la polera, un ROAS de 2.6 a 3.0.",
+        "El costo por pedido máximo es igual al margen de contribución del ticket promedio. En la polera, S/ 34.50.",
+        "Si vendes por WhatsApp, calcula el ROAS con las ventas netas que ATC cerró a partir del anuncio, no con las conversaciones.",
+        "Revisa estos números cada semana con coordinación."
+       ],
+       "commonMistakes": [
+        "Celebrar un ROAS de 2 en un producto con 40% de margen, que en realidad pierde dinero.",
+        "Calcular con ingresos brutos que incluyen IGV.",
+        "Contar las conversaciones como ventas."
+       ],
+       "checklist": [
+        "ROAS de equilibrio por producto.",
+        "Meta operativa definida.",
+        "Costo por pedido máximo.",
+        "Ventas reales cruzadas con ATC."
+       ],
+       "practice": "Con los datos de una campaña de Día de la Madre, calcula el ROAS real y decide si seguir, ajustar o pausar.",
+       "passCriteria": "Justifica la decisión comparando el ROAS real con el ROAS de equilibrio y el costo por pedido real con el máximo.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-i1-l5",
+       "title": "Ventas por chat",
+       "objective": "Atribuir a cada video las ventas que llegan por DM y WhatsApp.",
+       "procedure": [
+        "ATC pregunta en cada chat por qué video encontró la marca, o se usa un código por video (por ejemplo, AMOR-TAZA12).",
+        "ATC anota en una planilla: fecha, canal, video o código, producto, monto en S/, estado (cerrada o perdida) y motivo si se perdió.",
+        "ATC y el analista usan el mismo código o título del video que figura en Intia.",
+        "En los anuncios a WhatsApp, toma las conversaciones iniciadas de Ads Manager y crúzalas con los cierres.",
+        "Cada semana, el analista carga en Métricas los leads, pedidos e ingresos de cada video.",
+        "Calcula la tasa de cierre: pedidos ÷ conversaciones."
+       ],
+       "commonMistakes": [
+        "Contar las conversaciones como ventas.",
+        "Que ATC no pregunte el origen.",
+        "Registrar solo las ventas cerradas y no las perdidas.",
+        "Usar nombres distintos del video en la planilla y en Intia."
+       ],
+       "checklist": [
+        "Pregunta o código de origen en cada chat.",
+        "Planilla con ventas cerradas y perdidas.",
+        "Mismo código que en Intia.",
+        "Carga semanal en Métricas.",
+        "Tasa de cierre calculada."
+       ],
+       "practice": "Registra una semana completa de ventas con su origen.",
+       "passCriteria": "Al menos el 80% de las ventas de la semana tiene su origen identificado.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-i1-l4",
+       "title": "Orgánico vs pagado",
+       "objective": "Repartir el presupuesto entre producir contenido orgánico y pautar lo que ya funcionó.",
+       "procedure": [
+        "El contenido orgánico es el laboratorio: publica formatos variados y mide.",
+        "La pauta es el altavoz: pauta solo los videos con buenas señales orgánicas (retención, compartidos y conversaciones).",
+        "Separa dos presupuestos: producción (costo por video × cantidad) y pauta (prueba más escala).",
+        "Empieza impulsando los mejores videos orgánicos de la semana con poco presupuesto y mide el costo por conversación y por pedido.",
+        "Mide el orgánico con alcance, interacción y leads; mide la pauta con costo por resultado y ROAS.",
+        "Revisa el reparto cada mes según los resultados."
+       ],
+       "commonMistakes": [
+        "Pautar videos que no funcionaron en orgánico para salvarlos.",
+        "No reservar presupuesto para pautar a los ganadores.",
+        "Medir el orgánico con ROAS."
+       ],
+       "checklist": [
+        "Criterio de entrada a pauta escrito.",
+        "Dos presupuestos separados.",
+        "Métricas distintas para cada canal.",
+        "Revisión mensual."
+       ],
+       "practice": "Propón el reparto del mes para Con Amor, una clínica y un restaurante.",
+       "passCriteria": "El reparto está justificado y tiene un criterio escrito para que un video pase a pauta.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "dueno-i2",
+     "slug": "dueno-i2",
+     "title": "Estrategia mensual",
+     "summary": "Evaluar el plan que propone coordinación, equilibrar los formatos, diseñar ofertas cumplibles, alternar contenido de valor con ofertas y planificar las fechas comerciales.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=4WvgfAt2-wI",
+       "title": "Cómo crear un CALENDARIO DE CONTENIDO efectivo para redes sociales (+ PLANTILLA GRATUITA)",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Cómo armar un calendario de contenido mensual. Sirve para evaluar el plan que propone coordinación y ubicar las fechas comerciales."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=eDaUxUiPWIY",
+       "title": "Dejá de forzar tu contenido: así funcionan los embudos en redes sociales",
+       "channel": "Mica Alejandro",
+       "language": "es",
+       "why": "Explica el embudo en redes (atraer, nutrir, convertir). Sirve para equilibrar formatos y alternar contenido de valor con ofertas."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=WsG7ZkFCeP4",
+       "title": "Cómo crear una OFERTA IRRESISTIBLE y VENDER CUALQUIER COSA | Resumen 100 Million Offers Alex Hormozi",
+       "channel": "Domina Las Ventas",
+       "language": "es",
+       "why": "Resume en español la oferta de Hormozi: valor, bonus, garantía, escasez y urgencia. Son los mismos elementos de los cierres de venta de los guiones."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-i2-l1",
+       "title": "Revisar la propuesta",
+       "objective": "Evaluar el plan mensual de coordinación y aprobarlo o devolverlo con cambios concretos.",
+       "procedure": [
+        "Exige que el plan traiga: objetivo y KPIs, resultados del mes pasado, mix de formatos, cantidad de videos por marca y plataforma, fechas comerciales, ofertas, presupuesto (producción y pauta), capacidad del equipo e hipótesis a probar.",
+        "Verifica que el plan responda al objetivo: si el objetivo son pedidos, ¿tiene suficientes cierres de venta?",
+        "Verifica que sea realizable con la capacidad del equipo (videos por editor por semana).",
+        "Verifica que las ofertas se puedan cumplir con el stock y la capacidad del taller.",
+        "Verifica que tenga al menos una prueba nueva y que repita a los ganadores.",
+        "Decide: GO, GO con cambios o devolverlo con un máximo de 3 cambios."
+       ],
+       "commonMistakes": [
+        "Aprobar sin mirar la capacidad del equipo.",
+        "Pedir más videos sin sumar gente.",
+        "Cambiar el plan a mitad de mes por impulso.",
+        "No pedir hipótesis."
+       ],
+       "checklist": [
+        "El plan trae los 9 elementos.",
+        "Responde al objetivo.",
+        "Cabe en la capacidad del equipo.",
+        "Las ofertas se pueden cumplir.",
+        "Tiene una prueba nueva.",
+        "Decisión escrita."
+       ],
+       "practice": "Evalúa con esta lista el plan del próximo mes de Con Amor.",
+       "passCriteria": "Deja la decisión escrita en 30 minutos o menos, con un máximo de 3 cambios concretos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-i2-l2",
+       "title": "Mix de formatos",
+       "objective": "Repartir los videos del mes entre formatos según el objetivo.",
+       "procedure": [
+        "Clasifica los formatos por función. Alcance: Camaleón, Sketch, Cámara Escondida y Vlog. Confianza: Testimonio, UGC, Antes y Después y Cómo se usa. Venta: PAS y cierres con escasez, urgencia, bonus o garantía.",
+        "En Estructuras, cada formato ya está marcado como Vende o Entretiene: úsalo como punto de partida.",
+        "Punto de partida (ajústalo con tus datos): en un mes de alcance, 50% alcance, 30% confianza y 20% venta; en un mes de campaña como Día de la Madre, 30%, 30% y 40%.",
+        "Asigna primero los formatos que ganaron el mes pasado.",
+        "Ejemplos. Con Amor: Antes y Después (polera blanca a polera personalizada), Cámara Escondida (regalo sorpresa a mamá), Cómo se usa (taza mágica). Servicio: Testimonio y PAS. Restaurante: Vlog de cocina y UGC de comensales.",
+        "Refleja el mix en el Calendario."
+       ],
+       "commonMistakes": [
+        "Hacer 100% de videos de venta, que agotan a la audiencia.",
+        "Hacer 100% de entretenimiento, que no vende.",
+        "Ignorar los datos del mes pasado."
+       ],
+       "checklist": [
+        "Formatos clasificados por función.",
+        "Porcentajes definidos según el objetivo.",
+        "Ganadores priorizados.",
+        "Mix reflejado en el calendario."
+       ],
+       "practice": "Planifica 20 videos de Con Amor para el próximo mes.",
+       "passCriteria": "El mix está justificado con los datos del mes anterior.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-i2-l3",
+       "title": "Valor antes que oferta",
+       "objective": "Equilibrar los videos que dan valor con los que piden la venta.",
+       "procedure": [
+        "Aplica el principio de dar, dar, dar y luego pedir.",
+        "En el calendario, marca cada video como Da o Pide.",
+        "Los videos Pide llevan una oferta completa (se diseña en la lección siguiente): qué es, precio, bonus, garantía y una urgencia real.",
+        "Los videos Da terminan con un CTA de comunidad (seguir, guardar o comentar).",
+        "Observa si al aumentar los Pide baja el alcance o suben los pedidos, y ajusta la proporción."
+       ],
+       "commonMistakes": [
+        "Ofertas sin garantía ni fecha.",
+        "Urgencia falsa.",
+        "Videos Da que no tienen relación con el producto."
+       ],
+       "checklist": [
+        "Cada video marcado como Da o Pide.",
+        "Las ofertas están completas.",
+        "La urgencia es real.",
+        "Los Da tienen CTA de comunidad."
+       ],
+       "practice": "Marca un mes completo de Con Amor y mide los resultados.",
+       "passCriteria": "Define la proporción y, al cierre del mes, mide su efecto en pedidos y alcance.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-i2-l5",
+       "title": "Diseñar la oferta",
+       "objective": "Armar ofertas que valgan más de lo que cuestan al cliente y que el negocio pueda cumplir con margen.",
+       "procedure": [
+        "Parte del deseo de la Persona (por ejemplo, que su mamá en Huancayo se emocione al recibir el regalo).",
+        "Sube el valor percibido con la ecuación de Hormozi: más resultado soñado y más certeza de lograrlo, con menos tiempo de espera y menos esfuerzo para el cliente.",
+        "Arma la oferta: producto núcleo + bonus de bajo costo y alto valor (tarjeta escrita a mano, empaque de regalo) + garantía cumplible (reimpresión gratis si el nombre llega mal escrito) + escasez y urgencia reales (50 unidades, pedidos a provincia hasta una fecha).",
+        "Ponle un nombre fácil de recordar (por ejemplo, Pack Mamá Rosa).",
+        "Calcula el margen después del bonus y la garantía: debe seguir por encima del costo por pedido esperado.",
+        "Ejemplos. Servicio: evaluación gratis + garantía de atención puntual. Restaurante: combo familiar con bebida incluida de martes a jueves.",
+        "Registra la oferta con fechas y stock y entrégala a ATC y al guionista antes de producir los videos Pide."
+       ],
+       "commonMistakes": [
+        "Descontar en lugar de agregar valor.",
+        "Garantías que el taller no puede cumplir.",
+        "Bonus que cuestan más de lo que aportan.",
+        "Urgencia falsa que se repite cada semana."
+       ],
+       "checklist": [
+        "Deseo del cliente definido.",
+        "Bonus de bajo costo y alto valor.",
+        "Garantía cumplible.",
+        "Escasez y urgencia reales.",
+        "Margen calculado después del bonus.",
+        "ATC y guionista informados."
+       ],
+       "practice": "Diseña la oferta de Día de la Madre de Con Amor y una oferta para el restaurante cliente.",
+       "passCriteria": "Cada oferta tiene margen positivo después del bonus y la garantía, y ATC la explica sin errores en un chat de prueba.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-i2-l4",
+       "title": "Fechas comerciales",
+       "objective": "Planificar las campañas con el tiempo suficiente para producir y entregar.",
+       "procedure": [
+        "Calendario de Perú: San Valentín (14 de febrero), Día de la Mujer (8 de marzo), Día del Niño Peruano (segundo domingo de abril), Día de la Madre (segundo domingo de mayo), Día del Padre (tercer domingo de junio), Día del Maestro (6 de julio), Fiestas Patrias (28 y 29 de julio), Día de la Canción Criolla (31 de octubre), Black Friday, Cyber Wow y Navidad.",
+        "Sierra y restaurantes: Carnavales (febrero), Inti Raymi en Cusco (24 de junio) y las fiestas patronales de cada ciudad; Día del Pisco Sour (primer sábado de febrero), Día del Ceviche (28 de junio) y Día del Pollo a la Brasa (tercer domingo de julio).",
+        "Cuenta hacia atrás desde la fecha de entrega: días de envío a provincia según tu courier, días de producción personalizada y días de campaña.",
+        "Para Con Amor: teasers 4 semanas antes, oferta 3 semanas antes y una fecha límite de pedidos visible para provincias.",
+        "Reserva la grabación por lotes 5 o 6 semanas antes.",
+        "Coordina el stock y los insumos con producción."
+       ],
+       "commonMistakes": [
+        "Empezar una semana antes.",
+        "No poner una fecha límite de pedidos.",
+        "Prometer entregas que no llegan a tiempo a la sierra."
+       ],
+       "checklist": [
+        "Fechas del año marcadas.",
+        "Cronograma hacia atrás.",
+        "Fecha límite de pedidos por zona.",
+        "Grabación reservada.",
+        "Stock confirmado."
+       ],
+       "practice": "Arma el plan de Día de la Madre para Con Amor.",
+       "passCriteria": "Tiene un cronograma con fechas contadas hacia atrás y una fecha límite de pedidos por zona.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "dueno-i3",
+     "slug": "dueno-i3",
+     "title": "Leer métricas",
+     "summary": "Leer el panel de Métricas en 15 minutos, entender la retención y convertir los datos en decisiones con responsable.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=jmWaW1nQ5Xs",
+       "title": "Cómo entender las estadísticas de INSTAGRAM - (Tutorial 2026) ✅",
+       "channel": "Alex Arano",
+       "language": "es",
+       "why": "Recorrido actualizado (2026) por las estadísticas de Instagram, incluida la de Reels. Sirve para leer el panel de Métricas en 15 minutos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=yF4M4ITrlY8",
+       "title": "TikTok Insights: Aprende a analizar tus métricas de TikTok como un PRO",
+       "channel": "Metricool en español",
+       "language": "es",
+       "why": "Cómo leer las métricas de TikTok, con retención y tiempo de visualización. Complementa la lectura de Instagram."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=VxBrRu-gOVQ",
+       "title": "Crea Videos adictivos de 100k vistas con esta Fórmula de Ganchos Virales",
+       "channel": "Andrea Estratega l Marketing de Contenidos",
+       "language": "es",
+       "why": "Fórmulas de ganchos para videos cortos. Ayuda a entender por qué la retención cae en los primeros segundos y qué pedir al guion."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-i3-l1",
+       "title": "Lectura semanal",
+       "objective": "Leer la pantalla Métricas en 15 minutos y sacar 3 conclusiones.",
+       "procedure": [
+        "Entra a Métricas y elige la semana (de lunes a domingo) y la marca.",
+        "Mira primero los pedidos y los ingresos, después las conversaciones (leads) y al final las vistas y el alcance.",
+        "Revisa los compartidos y guardados (las señales más fuertes) y la retención a 3 segundos.",
+        "Compara con la semana anterior y con el objetivo.",
+        "Separa por plataforma (Instagram, TikTok y YouTube). No sumes vistas de plataformas distintas sin criterio.",
+        "Escribe 3 conclusiones y 1 pregunta para el ritual."
+       ],
+       "commonMistakes": [
+        "Mirar solo las vistas.",
+        "Comparar plataformas entre sí.",
+        "Sacar conclusiones con un solo video.",
+        "Olvidar la inversión en pauta."
+       ],
+       "checklist": [
+        "Leo el embudo de abajo hacia arriba.",
+        "Comparo con la semana anterior y con la meta.",
+        "Separo por plataforma.",
+        "Escribo 3 conclusiones y 1 pregunta."
+       ],
+       "practice": "Lee la última semana de Con Amor y lleva tus conclusiones al ritual.",
+       "passCriteria": "Las 3 conclusiones tienen un número cada una y generan una decisión.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-i3-l2",
+       "title": "Retención 3 segundos",
+       "objective": "Entender por qué el gancho define el alcance y pedir correcciones concretas.",
+       "procedure": [
+        "Mira los videos de referencia sobre ganchos.",
+        "TikTok recomienda presentar la propuesta en los primeros 3 segundos y priorizar el gancho en los primeros 6.",
+        "Revisa la curva de retención: una caída fuerte en el segundo 1 o 2 indica un gancho débil.",
+        "Para los videos con buena oferta y mala retención, pide 3 ganchos alternativos y una reedición de la apertura.",
+        "Compara la retención antes y después del cambio."
+       ],
+       "commonMistakes": [
+        "Empezar el video con un saludo o con el logo.",
+        "Culpar al algoritmo.",
+        "Rehacer todo el video cuando solo falla el gancho."
+       ],
+       "checklist": [
+        "Revisé la curva de retención.",
+        "Identifiqué los videos con caída temprana.",
+        "Pedí ganchos alternativos.",
+        "Comparé el antes y el después."
+       ],
+       "practice": "Elige un video de Con Amor con buena oferta y mala retención y pide que reediten la apertura.",
+       "passCriteria": "El video reeditado mejora su retención a 3 segundos frente a la versión original.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "dueno-i3-l3",
+       "title": "Ganadores y perdedores",
+       "objective": "Decidir cada semana qué se replica, qué se pauta y qué se deja de hacer.",
+       "procedure": [
+        "Ordena los videos de la semana por pedidos, después por conversaciones y después por compartidos.",
+        "En el top 3, busca qué tienen en común: formato, gancho, talento, producto o CTA.",
+        "Decide si replicarlos (3 variaciones), pautarlos o ambas cosas.",
+        "En los 3 últimos, identifica si falló el gancho, la oferta o el producto.",
+        "Decide si corregir el gancho, cambiar la oferta o abandonar el formato.",
+        "Registra cada decisión como tarea."
+       ],
+       "commonMistakes": [
+        "Juzgar un formato con un solo video.",
+        "No documentar por qué ganó un video.",
+        "Descartar un formato por sus vistas aunque genere pedidos."
+       ],
+       "checklist": [
+        "Ranking por pedidos.",
+        "Patrones del top 3.",
+        "Diagnóstico de los últimos 3.",
+        "Decisiones convertidas en tareas."
+       ],
+       "practice": "Aplica este análisis durante 4 semanas en Con Amor.",
+       "passCriteria": "4 semanas con decisiones registradas y al menos una variación de un ganador ya producida.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-i3-l4",
+       "title": "Del dato a la decisión",
+       "objective": "Diagnosticar en qué parte del embudo se rompe la venta y a quién le toca corregirla.",
+       "procedure": [
+        "Pocas vistas y baja retención a 3 s: falla el gancho (guionista y editor).",
+        "Buena retención pero pocos compartidos o guardados: falta valor o emoción (guionista).",
+        "Buenas vistas pero pocas conversaciones: fallan el CTA o la oferta (guionista y coordinación).",
+        "Muchas conversaciones pero pocas ventas: revisar ATC, precio, tiempos de entrega o stock (ATC y dueño).",
+        "Buenas ventas pero margen bajo: revisar precio, costos o pauta (dueño).",
+        "Lleva el diagnóstico al ritual como un problema con responsable."
+       ],
+       "commonMistakes": [
+        "Culpar de todo al editor.",
+        "Subir la pauta cuando el problema es ATC.",
+        "Bajar el precio sin leer los chats."
+       ],
+       "checklist": [
+        "Ubiqué la etapa del embudo que falla.",
+        "Asigné un responsable.",
+        "Definí una acción correctiva.",
+        "Medí el resultado a la semana."
+       ],
+       "practice": "Diagnostica 3 casos reales: uno de Con Amor, uno de un servicio y uno de un restaurante.",
+       "passCriteria": "Diagnostica bien los 3 casos y cada responsable aplica la corrección en una semana.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "dueno-i4",
+     "slug": "dueno-i4",
+     "title": "Contratar y evaluar",
+     "summary": "Perfiles de puesto por resultados, pruebas pagadas, casting de talento, inducción de la primera semana y evaluación mensual con números.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=JYgBZuORJRo",
+       "title": "How To Create Job Scorecards For Your Employees (Better Than A Job Description!)",
+       "channel": "Chandler Bolt",
+       "language": "en",
+       "why": "Método del scorecard de puesto: definir el puesto por resultados medibles y no por tareas. Es justo lo que pide el módulo."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=EnOhr6-WHDI",
+       "title": "Qué es y cómo hacer un Perfil de Puesto?",
+       "channel": "APRENDAMOS PSICOLOGIA",
+       "language": "es",
+       "why": "Base en español para redactar un perfil de puesto. Complementa el scorecard de resultados."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=U4q-ajUkEe8",
+       "title": "Cómo Subcontratar a un EDITOR de Vídeo y NO MORIR en el Intento",
+       "channel": "No Solo Filmmaking",
+       "language": "es",
+       "why": "Consejos para contratar y trabajar con un editor externo: pruebas, expectativas y feedback. Aplica a contratar editores con prueba pagada."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-i4-l1",
+       "title": "Perfil del puesto",
+       "objective": "Describir el puesto por resultados antes de buscar a alguien.",
+       "procedure": [
+        "Escribe la misión del puesto en una frase.",
+        "Define los entregables y su estándar (por ejemplo, un editor entrega 10 videos por semana listos para la Revisión final en 48 h o menos).",
+        "Define los KPIs del rol.",
+        "Separa las habilidades imprescindibles de las deseables.",
+        "Define la modalidad (locación de servicios por video o por mes, o planilla) y el rango de pago en S/.",
+        "Describe la prueba que hará el candidato."
+       ],
+       "commonMistakes": [
+        "Pedir a alguien que sepa de todo.",
+        "No definir el volumen de trabajo.",
+        "No indicar la modalidad de contratación."
+       ],
+       "checklist": [
+        "Misión en una frase.",
+        "Entregables con estándar.",
+        "KPIs del rol.",
+        "Habilidades imprescindibles.",
+        "Modalidad y rango de pago.",
+        "Prueba definida."
+       ],
+       "practice": "Escribe el perfil de un editor para Con Amor.",
+       "passCriteria": "El perfil cabe en 1 página y lo aprueban coordinación y el jefe de editores.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-i4-l2",
+       "title": "Prueba pagada",
+       "objective": "Elegir editores y filmmakers por una prueba real y pagada, no por su portafolio.",
+       "procedure": [
+        "Editor: entrégale de 1 a 3 minutos de material crudo real de Con Amor, un brief escrito y una referencia. Pide un corte de 30 a 60 segundos en 48 a 72 horas.",
+        "Filmmaker: pídele grabar un guion corto con el producto y evalúa la luz, el encuadre 9:16, el foco en el producto y el audio.",
+        "Paga la prueba.",
+        "Envía una ronda de comentarios y evalúa cómo corrige.",
+        "Puntúa del 1 al 5: plazo de entrega, preguntas que hizo, ritmo, audio, subtítulos, creatividad, manejo de correcciones y comunicación.",
+        "Contrata al de mejor puntaje con un mes de prueba."
+       ],
+       "commonMistakes": [
+        "Pedir pruebas gratis, que atraen a peores candidatos.",
+        "Dar un material distinto a cada candidato.",
+        "Decidir por simpatía.",
+        "No probar cómo corrige."
+       ],
+       "checklist": [
+        "Mismo material para todos.",
+        "Brief escrito.",
+        "Prueba pagada.",
+        "Una ronda de correcciones.",
+        "Puntaje en 8 criterios."
+       ],
+       "practice": "Haz la prueba con 3 candidatos a editor.",
+       "passCriteria": "Evalúa a 3 candidatos con la misma prueba y el elegido obtiene 32/40 o más.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-i4-l3",
+       "title": "Casting de talento",
+       "objective": "Elegir actores y talentos que conecten con el público y sean confiables.",
+       "procedure": [
+        "Pide un video selfie de 30 segundos leyendo un gancho de Con Amor y otro improvisando.",
+        "En el casting presencial evalúa la lectura de un guion corto, la naturalidad al hablar a cámara y el manejo del producto.",
+        "Puntúa naturalidad, dicción, energía, conexión con el público (sierra y Lima), puntualidad y disponibilidad.",
+        "Revisa las redes del talento para descartar conductas que puedan dañar la marca y confirma si tiene exclusividad con otra marca de tu rubro.",
+        "Haz firmar la autorización o cesión de imagen, con uso en pauta si corresponde, antes de la primera grabación."
+       ],
+       "commonMistakes": [
+        "Elegir solo por la cantidad de seguidores.",
+        "No probar al talento con el producto.",
+        "No revisar si tiene exclusividad con otras marcas.",
+        "Depender de un solo talento para todas las piezas."
+       ],
+       "checklist": [
+        "Video selfie recibido.",
+        "Prueba con el producto.",
+        "Puntaje por criterios.",
+        "Redes y exclusividad revisadas.",
+        "Autorización firmada."
+       ],
+       "practice": "Haz un casting de 3 talentos para una Cámara Escondida de Con Amor.",
+       "passCriteria": "El talento elegido tiene puntaje escrito y la autorización firmada.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-i4-l5",
+       "title": "Inducción de 7 días",
+       "objective": "Que una persona nueva entregue trabajo con estándar en su primera semana sin depender del dueño.",
+       "procedure": [
+        "Antes del día 1: contrato firmado con confidencialidad y cesión de derechos, perfil y marcas mínimos en Equipo y 2FA activo.",
+        "Día 1: lee el manual de su puesto, la RACI, los acuerdos de comunicación y la ficha de la marca.",
+        "Día 2: acompaña a un compañero del mismo rol o a su líder en un video real.",
+        "Días 3 a 5: entrega sus primeros trabajos; el líder del área (jefe de editores o coordinación) los revisa con la lista de control.",
+        "Día 7: reunión de 20 minutos sobre qué entendió, dónde se trabó y qué se corrige en el manual.",
+        "Registra la inducción en Tareas con fecha de cierre."
+       ],
+       "commonMistakes": [
+        "Dar acceso antes de firmar el contrato.",
+        "Dar todas las marcas desde el primer día.",
+        "Que el dueño haga cada inducción en persona.",
+        "No corregir el manual con lo que la persona no entendió."
+       ],
+       "checklist": [
+        "Contrato firmado antes del acceso.",
+        "Perfil y marcas mínimos.",
+        "Manual leído.",
+        "Primeras entregas revisadas.",
+        "Reunión del día 7."
+       ],
+       "practice": "Aplica la inducción al próximo editor o community que se incorpore a Con Amor.",
+       "passCriteria": "La persona entrega su primer trabajo con estándar antes del día 7 y hace 3 consultas o menos al dueño.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-i4-l4",
+       "title": "Evaluación mensual",
+       "objective": "Evaluar a cada integrante con los números de su rol y una conversación corta.",
+       "procedure": [
+        "Arma una tarjeta por rol con 3 a 5 KPIs. Editor: videos entregados, % aprobados sin segunda corrección y tiempo promedio. ATC: tasa de cierre, tiempo de respuesta y reclamos.",
+        "Toma los datos de Intia (Tareas, Videos, Métricas y Actividad) y de los reportes.",
+        "Reunión de 20 minutos: qué salió bien, qué mejorar y un compromiso.",
+        "Registra la evaluación y compárala mes a mes.",
+        "Si alguien está 2 meses seguidos bajo el estándar, acuerden un plan de mejora con fecha. Si no mejora, se cambia a la persona."
+       ],
+       "commonMistakes": [
+        "Evaluar por sensaciones.",
+        "Hablar solo cuando algo sale mal.",
+        "No documentar las evaluaciones."
+       ],
+       "checklist": [
+        "Tarjeta por rol.",
+        "Datos de Intia.",
+        "Conversación de 20 minutos.",
+        "Compromiso registrado."
+       ],
+       "practice": "Evalúa este mes a todo el equipo de Con Amor.",
+       "passCriteria": "Todas las tarjetas del mes están llenas y todas las conversaciones se hicieron.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "dueno-i5",
+     "slug": "dueno-i5",
+     "title": "Calidad y marca",
+     "summary": "Qué exigir en pantalla y en el mensaje, y cómo controlar la calidad por muestreo sin revisarlo todo.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=RXiMG4GJw1Y",
+       "title": "Cómo grabar un VIDEO de PRODUCTO con tu CELULAR (fácil y PRO)",
+       "channel": "Jockvisual",
+       "language": "es",
+       "why": "Cómo grabar producto con celular: luz, encuadre y movimientos. Sirve para saber qué exigir en pantalla al mostrar poleras, tazas y casacas."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=AmfG6BW0Nds",
+       "title": "📱ZONAS de seguridad para que tus INSTAGRAM REELS se vean correctamente | TUTORIAL | Plantilla GRATIS",
+       "channel": "Ligia Alvear",
+       "language": "es",
+       "why": "Explica las zonas seguras de Reels, con plantilla. Es un check rápido de calidad al revisar por muestreo."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=EK0dOt9Q0a0",
+       "title": "El rol del Indecopi  frente a la publicidad engañosa y abusiva",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Video oficial y corto sobre veracidad y publicidad engañosa. Sirve para controlar que el mensaje del video no prometa lo que el producto no cumple."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-i5-l1",
+       "title": "Producto bien mostrado",
+       "objective": "Saber qué exigir cuando el producto aparece en cámara para que se entienda, se vea real y dé ganas de comprarlo.",
+       "procedure": [
+        "El producto aparece en los primeros 2 segundos, en la zona central del cuadro.",
+        "Se muestra de frente, a la altura del pecho, con el estampado o la personalización legible.",
+        "Un giro de 45° muestra la textura (el afranelado) y el volumen.",
+        "Un plano cercano muestra el detalle: el nombre estampado, la costura o el asa de la taza.",
+        "Se ve un uso real: alguien se pone la polera, toma de la taza o abre el regalo.",
+        "Cierre: producto, precio en S/ y CTA dentro de la zona segura.",
+        "Aprueba solo si están los 6 momentos y el color es fiel al real, o si hay una razón creativa para omitir alguno."
+       ],
+       "commonMistakes": [
+        "Producto lejos de cámara o fuera de foco.",
+        "Reflejos de luz sobre el logo de la taza.",
+        "Estampado ilegible por el movimiento.",
+        "Una mano que tapa el logo.",
+        "Color distinto al real por un mal balance de blancos.",
+        "Cara deformada por grabar muy cerca con el lente 1x."
+       ],
+       "checklist": [
+        "El producto aparece en 2 s o menos.",
+        "La personalización se lee.",
+        "La textura se ve.",
+        "Hay un plano cercano del detalle.",
+        "Se ve un uso real.",
+        "Precio y CTA en zona segura.",
+        "El color es fiel al real."
+       ],
+       "practice": "Graba con el filmmaker la secuencia con una polera y una taza y compárala momento por momento con la escena 3D.",
+       "passCriteria": "5 personas del equipo ven el video una vez sin sonido y describen correctamente el producto, la personalización y el precio.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Rincón de grabación de Con Amor: mesa de madera clara con 3 tazas blancas sublimadas y 2 poleras afraneladas dobladas; estante con casacas colgadas a 1,5 m detrás del talento para separar figura y fondo; pared lisa color crema. Sobre la escena se superpone un marco vertical 9:16 con la franja superior (14%) y la inferior (20%, que se amplía a 35% al activar el modo Anuncio) sombreadas en rojo como zonas no seguras, márgenes laterales de 6% y la columna de botones a la derecha. En una esquina, un panel de checklist con 6 casillas que se marcan en cada momento.",
+        "subjects": "Talento (mujer de unos 28 años, ropa lisa de color neutro, sin estampados que compitan) de pie a 1,3 m de la cámara. Paso 1: entra al cuadro con la polera extendida a la altura del pecho, con el estampado (nombre 'Mamá Rosa') de frente. Paso 2: gira la polera 45° a su izquierda y pasa la mano por la tela para mostrar el afranelado. Paso 3 (inserto grabado aparte): solo las manos sostienen el estampado a 25-30 cm de la lente, sin dedos encima de las letras. Paso 4: deja la polera y toma una taza por la base, con el asa hacia la cámara y el logo al frente. Paso 5: simula tomar un sorbo y sonríe mirando la taza. Paso 6: mira a la cámara y señala con la mano libre la zona media del cuadro, donde aparecerá el precio.",
+        "camera": "Orientación vertical 9:16, 1080×1920 a 30 fps (o 25 fps, pero el mismo en todo el video). Celular en trípode a la altura del pecho del talento (≈1,3 m) y a 1,3 m de distancia, con el lente 2x (≈48-52 mm equivalente) para un plano medio sin deformar la cara; con el 1x (≈24-26 mm) a esa distancia saldría casi de cuerpo entero, y acercarse para cerrar el plano deformaría el rostro. Inserto de detalle con el lente 1x a 25-30 cm (o modo macro); no usar 3x o 5x para el detalle porque no enfocan tan cerca. Cámara fija, sin paneos: se mueve el producto. Enfoque y exposición bloqueados en el producto (mantener presionado en la pantalla hasta ver el bloqueo AE/AF) para que no parpadee al moverlo.",
+        "lighting": "Esquema de 3 puntos suave. Luz principal: softbox o ventana difusa a 45° a la izquierda del talento, un poco por encima de los ojos, luz día de 5600 K. Relleno: rebotador blanco a la derecha para bajar sombras. Contraluz tenue detrás, a la derecha, para separar la polera del fondo. Para la taza, la luz principal se abre a 60-90° y se sube, y se gira la taza hasta que el brillo quede fuera del logo. Balance de blancos fijo en 5600 K y todas las luces a la misma temperatura para que el color de la polera sea el real.",
+        "beats": [
+         "0-2 s · GANCHO: la polera entra al cuadro de frente, en la zona central, con el nombre legible. Se marca la casilla 1: ¿se entiende qué es en 2 s?",
+         "2-5 s · TEXTURA: giro de 45° y mano sobre la tela. Casilla 2: ¿se nota que es afranelado y no una tela delgada?",
+         "5-8 s · DETALLE (inserto con lente 1x a 25-30 cm): el estampado sin dedos encima. Casilla 3: ¿el nombre está nítido y sin reflejos?",
+         "8-11 s · SEGUNDO PRODUCTO: la taza con el asa hacia la cámara y el logo al frente; el brillo de la luz queda a un costado. Casilla 4: ¿el logo se lee?",
+         "11-13 s · USO REAL: el talento toma un sorbo y sonríe. Casilla 5: ¿se siente real y no forzado?",
+         "13-15 s · CIERRE: el talento señala la zona media, donde aparece el texto con el precio en S/ y el CTA a WhatsApp. Se activa el modo Anuncio y la franja inferior crece a 35%. Casilla 6: ¿nada queda tapado por las franjas rojas en ninguno de los dos modos?"
+        ]
+       }
+      },
+      {
+       "id": "dueno-i5-l2",
+       "title": "Zonas seguras 9:16",
+       "objective": "Comprobar que el texto, el rostro, el producto y el precio no queden tapados por la interfaz de la app.",
+       "procedure": [
+        "El formato es vertical 9:16, idealmente 1080×1920; TikTok pide al menos 720p.",
+        "Referencia de Meta para Reels: deja libre el 14% superior, entre el 20% y el 35% inferior (35% en anuncios, por el botón y el texto) y un 6% a cada lado; a la derecha van los botones.",
+        "En TikTok usa la plantilla de zona segura del Administrador de anuncios o del Creative Center: la franja inferior (descripción) y la columna derecha (botones) quedan tapadas.",
+        "El precio, el logo y los subtítulos van en la zona central.",
+        "Los subtítulos se leen sin sonido. TikTok cita de 5 a 10 palabras por segundo como referencia; si al leerlos en voz alta no alcanzas, van demasiado rápido.",
+        "Revisa siempre en el celular, dentro de la app o con la plantilla encima, antes de aprobar."
+       ],
+       "commonMistakes": [
+        "Poner el precio en la parte inferior, donde lo tapa el texto de la publicación.",
+        "Poner el texto en la parte superior, donde aparece el nombre de la cuenta.",
+        "Revisar con la zona segura orgánica un video que irá a pauta.",
+        "Aprobar viendo el video en la computadora.",
+        "Usar subtítulos pequeños o que pasan demasiado rápido."
+       ],
+       "checklist": [
+        "Formato 9:16 en 1080×1920 (mínimo 720p).",
+        "14% superior libre.",
+        "20% inferior libre (35% si va a pauta).",
+        "Márgenes laterales y columna derecha libres.",
+        "Precio y logo en la zona central.",
+        "Subtítulos legibles.",
+        "Revisado en el celular."
+       ],
+       "practice": "Revisa en el celular 5 videos listos para publicar de Con Amor, 2 de ellos con la plantilla de anuncios.",
+       "passCriteria": "Ninguno de los 5 videos tiene elementos clave tapados, tampoco con la plantilla de anuncios.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-i5-l3",
+       "title": "Revisión de claims",
+       "objective": "Verificar, video por video, que cada promesa sea verdadera, se pueda probar y se pueda cumplir.",
+       "procedure": [
+        "Subraya en el guion o en el video cada afirmación: material, precio, tiempo de entrega, garantía, resultados y cantidad de clientes.",
+        "Pide la prueba de cada una: ficha técnica del proveedor, precio vigente o registro de entregas.",
+        "Revisa que la oferta tenga vigencia, stock y condiciones visibles.",
+        "Revisa que ATC pueda cumplir lo prometido (tiempos por zona).",
+        "Aprueba, corrige o elimina cada afirmación y deja la decisión como comentario en el video."
+       ],
+       "commonMistakes": [
+        "Aprobar un 100% algodón sin la ficha del proveedor.",
+        "Prometer entrega en 24 h a todo el Perú.",
+        "Poner una garantía que ATC no conoce.",
+        "Usar cifras infladas, como miles de clientes felices, sin datos."
+       ],
+       "checklist": [
+        "Afirmaciones subrayadas.",
+        "Cada una con su prueba.",
+        "Oferta con condiciones.",
+        "ATC alineado.",
+        "Decisión registrada en el video."
+       ],
+       "practice": "Revisa los 5 próximos videos con oferta de Con Amor y el de un cliente de servicios.",
+       "passCriteria": "Los videos se publican con el 100% de sus afirmaciones respaldadas y ninguna genera reclamos en el mes.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-i5-l4",
+       "title": "Revisión por muestreo",
+       "objective": "Controlar la calidad revisando una muestra en lugar de aprobar todos los videos.",
+       "procedure": [
+        "Revisa siempre el 100% de las piezas que van a pauta y de las que llevan oferta nueva.",
+        "Del resto, revisa 1 de cada 5 al azar después de publicado.",
+        "Puntúa del 1 al 5 el gancho, la marca (tono y no hacer), el producto bien mostrado, las zonas seguras y el CTA.",
+        "Si el promedio baja de 4, habla con el jefe de editores o con coordinación, no con cada editor.",
+        "Registra los puntajes cada mes para ver la tendencia."
+       ],
+       "commonMistakes": [
+        "Revisarlo todo y volverse el cuello de botella.",
+        "No revisar nada hasta que hay una crisis.",
+        "Corregir directamente al editor sin pasar por su jefe."
+       ],
+       "checklist": [
+        "100% de pautas y ofertas revisadas.",
+        "Muestreo de 1 de cada 5.",
+        "Puntaje en 5 criterios.",
+        "Comentarios a través del jefe de editores."
+       ],
+       "practice": "Aplica el muestreo durante un mes en Con Amor.",
+       "passCriteria": "El promedio de calidad es de 4 o más, con menos horas de revisión del dueño que el mes anterior.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "level": "AVANZADO",
+   "goal": "Escalar sin depender del dueño: contratos y derechos en orden con freelancers, creadores y clientes; marca protegida; pauta a escala rentable; manuales por puesto y dirección trimestral de varias marcas o clientes.",
+   "modules": [
+    {
+     "id": "dueno-a1",
+     "slug": "dueno-a1",
+     "title": "Contratos y derechos",
+     "summary": "Contratos de locación con cesión de derechos, riesgo laboral, licencias de contenido UGC, contratos con clientes de la agencia y control de vencimientos. Revisarlos con un abogado o contador la primera vez.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=fioLu9DLZ_c",
+       "title": "¿Cuáles son las diferencias entre el contrato de trabajo y locación de servicios?",
+       "channel": "LP - Pasión por el Derecho",
+       "language": "es",
+       "why": "Canal jurídico peruano reconocido. Explica cuándo una locación de servicios se vuelve relación laboral, que es el riesgo de desnaturalización."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=4zk0teihxvo",
+       "title": "Cómo emitir un recibo por honorario electrónico 2026 - SUNAT",
+       "channel": "TRIBUTA y CONSULTA",
+       "language": "es",
+       "why": "Tutorial vigente (2026) de emisión de recibos por honorarios en SUNAT. Sirve para exigir y controlar los comprobantes de los locadores."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=yXBdb7mCSrw",
+       "title": "UGC CONTRACT: 7 must-have terms by a lawyer // The LEGAL side of UGC",
+       "channel": "Alyssa | Biz & Creator Lawyer | Legal Doer APC",
+       "language": "en",
+       "why": "Una abogada repasa 7 cláusulas clave de un contrato UGC: licencia de uso, plazo, exclusividad y pauta. No encontré un equivalente de calidad en español."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-a1-l1",
+       "title": "Contrato de locación",
+       "objective": "Contratar a freelancers (editores, filmmakers, guionistas) con un contrato que deje los videos a nombre de la empresa.",
+       "procedure": [
+        "Partes: la empresa (comitente) y el locador, que debe tener RUC.",
+        "Objeto y entregables: por ejemplo, edición de 40 videos al mes con el estándar del manual y un plazo de 48 h por video.",
+        "Pago contra recibo por honorarios electrónico. Si el recibo supera S/ 1,500, la empresa retiene el 8% de renta de cuarta categoría, salvo que el locador presente su constancia de suspensión de retenciones.",
+        "Cesión de derechos patrimoniales de los videos y del material: el art. 16 del D. Leg. 822 presume la cesión al comitente solo en la medida de sus actividades habituales. Pacta por escrito una cesión amplia (todas las plataformas, pauta, reediciones, territorio y plazo) para evitar disputas.",
+        "Confidencialidad sobre guiones, clientes y datos, y reglas para usar el material en el portafolio del freelancer (solo después de publicado y con permiso del cliente).",
+        "Plazo, causales de término y entrega de archivos fuente y proyectos al terminar.",
+        "Revisa el modelo con un abogado la primera vez y reutilízalo después."
+       ],
+       "commonMistakes": [
+        "Trabajar sin contrato escrito.",
+        "Confiar en la presunción de la ley y no pactar la cesión de derechos.",
+        "No pedir los archivos fuente.",
+        "Permitir que el freelancer publique contenido de clientes sin autorización."
+       ],
+       "checklist": [
+        "Locador con RUC.",
+        "Entregables y estándar definidos.",
+        "Pago contra recibo por honorarios y retención revisada.",
+        "Cesión amplia de derechos patrimoniales.",
+        "Confidencialidad.",
+        "Entrega de archivos fuente."
+       ],
+       "practice": "Adapta el modelo al editor freelance de Con Amor.",
+       "passCriteria": "Todos los freelancers activos tienen contrato firmado con cesión de derechos.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-a1-l2",
+       "title": "Riesgo laboral",
+       "objective": "Evitar que un contrato de locación se considere una relación laboral encubierta.",
+       "procedure": [
+        "Por el principio de primacía de la realidad, vale lo que pasa en los hechos, no el nombre del contrato.",
+        "Revisa las señales de subordinación: horario fijo, registro de asistencia, órdenes directas permanentes, uso de uniforme o de un correo corporativo como trabajador.",
+        "Si la persona trabaja con horario, en tu local y bajo tus órdenes todos los días, evalúa ponerla en planilla.",
+        "En la locación, controla entregables y plazos, no horarios.",
+        "Documenta que el locador organiza su propio trabajo.",
+        "Revísalo con un contador o abogado laboral cuando el equipo crezca."
+       ],
+       "commonMistakes": [
+        "Exigir horario de oficina a un locador.",
+        "Pagar siempre el mismo monto por meses sin entregables definidos.",
+        "Ignorar el riesgo hasta que llega una inspección de SUNAFIL."
+       ],
+       "checklist": [
+        "Cada locador sin horario fijo.",
+        "Pago por entregables.",
+        "Roles permanentes con horario evaluados para planilla.",
+        "Revisión anual con un especialista."
+       ],
+       "practice": "Clasifica a cada integrante del equipo según las señales de subordinación.",
+       "passCriteria": "Ningún locador tiene 3 o más señales de subordinación sin que exista un plan de formalización.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-a1-l3",
+       "title": "Licencia de contenido UGC",
+       "objective": "Contratar creadores UGC y testimonios con derechos claros para usarlos en orgánico y en pauta.",
+       "procedure": [
+        "Define el alcance: número de videos, formatos, revisiones incluidas y fecha de entrega.",
+        "Define los derechos de uso: orgánico, pauta o ambos; plataformas; territorio; plazo (por ejemplo, 6 o 12 meses).",
+        "Si vas a pautar desde la cuenta del creador (anuncios de colaboración en Meta o Spark Ads en TikTok, cuyo código de autorización vence), pacta ese acceso por separado, con plazo y un pago adicional.",
+        "Exclusividad por categoría, si aplica (por ejemplo, que no promocione otra marca de regalos personalizados durante 3 meses).",
+        "Cumplimiento: seguir las guías de la marca y usar #Publicidad cuando el creador publique en su propia cuenta.",
+        "Pagos, entrega de archivos fuente y término del contrato."
+       ],
+       "commonMistakes": [
+        "Pautar un video UGC que solo tenía licencia orgánica.",
+        "Pedir el acceso a la cuenta del creador sin contrato.",
+        "No definir el plazo de la licencia."
+       ],
+       "checklist": [
+        "Alcance y revisiones.",
+        "Uso, plataformas y plazo.",
+        "Pauta desde la cuenta del creador pactada aparte.",
+        "Exclusividad, si aplica.",
+        "Identificación de la publicidad."
+       ],
+       "practice": "Redacta la licencia de 3 videos UGC para la campaña de Día del Padre de Con Amor.",
+       "passCriteria": "El contrato permite pautar durante 6 meses sin dudas y el creador lo firma.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-a1-l5",
+       "title": "Contrato con clientes",
+       "objective": "Firmar con cada cliente de la agencia un contrato que defina alcance, aprobaciones, pauta y derechos, para no hacer trabajo sin pago.",
+       "procedure": [
+        "Alcance: número de videos al mes, formatos, plataformas y qué no incluye (fotos, pauta, atención de chats).",
+        "Rondas de corrección incluidas (por ejemplo, 2 por video) y costo de las adicionales.",
+        "Plazos de aprobación del cliente (por ejemplo, 48 h para guiones y ediciones). Si no responde a tiempo, la fecha de publicación se mueve sin que la agencia pierda el cupo pagado.",
+        "Lo que aporta el cliente: producto para grabar, acceso al local, autorizaciones de imagen de su personal y pruebas de lo que afirma.",
+        "Pauta: quién la paga y quién la administra. La cuenta publicitaria es del cliente y la agencia entra con acceso de socio.",
+        "Derechos: los videos finales pasan al cliente tras el pago; crudos y proyectos, según lo pactado; uso en el portafolio de la agencia con permiso.",
+        "Fee, forma de pago (adelanto a inicio de mes), plazo mínimo y término con aviso de 30 días."
+       ],
+       "commonMistakes": [
+        "Trabajar con un acuerdo por WhatsApp.",
+        "Aceptar rondas de corrección ilimitadas.",
+        "Pautar con la tarjeta de la agencia sin respaldo.",
+        "No definir qué pasa si el cliente no aprueba a tiempo."
+       ],
+       "checklist": [
+        "Alcance y exclusiones.",
+        "Rondas y costo adicional.",
+        "Plazos de aprobación.",
+        "Aportes del cliente.",
+        "Pauta y cuentas.",
+        "Derechos y portafolio.",
+        "Fee, pago y término."
+       ],
+       "practice": "Redacta el contrato del restaurante cliente y el del estudio contable.",
+       "passCriteria": "Todos los clientes activos tienen contrato firmado y todo pedido fuera del alcance se cotiza aparte.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-a1-l4",
+       "title": "Vencimientos de derechos",
+       "objective": "Llevar el control de las autorizaciones y licencias para no usar contenido con derechos vencidos.",
+       "procedure": [
+        "Crea un registro con: video, persona o creador, tipo de uso, plataformas, fecha de inicio y fecha de vencimiento.",
+        "Crea en Tareas un recordatorio 30 días antes de cada vencimiento.",
+        "Al vencer, decide si renovar (con pago) o retirar el video de la pauta.",
+        "Revisa el registro cada trimestre junto con la auditoría."
+       ],
+       "commonMistakes": [
+        "Tener anuncios activos con licencias vencidas.",
+        "No tener registro y depender de la memoria.",
+        "Olvidar la autorización de un talento que ya dejó de trabajar con la marca."
+       ],
+       "checklist": [
+        "Registro completo.",
+        "Recordatorio 30 días antes.",
+        "Decisión documentada al vencer.",
+        "Revisión trimestral."
+       ],
+       "practice": "Arma el registro de todos los videos pautados en los últimos 6 meses.",
+       "passCriteria": "No hay ningún video pautado con derechos vencidos.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "dueno-a2",
+     "slug": "dueno-a2",
+     "title": "Protección de marca",
+     "summary": "Registro en Indecopi, plan de crisis, cuentas falsas y auditoría trimestral de accesos.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=3QGOrWdMPZY",
+       "title": "Cómo registrar tu marca en el Indecopi: Paso a paso",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Guía oficial de Indecopi para registrar una marca en Perú, paso a paso."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=_WmhqbIXWv4",
+       "title": "🚀 Activar Autenticación Verificación En Dos Pasos Meta Facebook Ads 👌",
+       "channel": "Damian Te Ayuda",
+       "language": "es",
+       "why": "Cómo activar la verificación en dos pasos en Meta para proteger las cuentas de la marca y la publicidad."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=_qV0MEiX0ks",
+       "title": "CRISIS ONLINE: 10 pasos para gestionarla con éxito",
+       "channel": "Aula CM - Conunicación y Marketing Digital",
+       "language": "es",
+       "why": "Diez pasos para gestionar una crisis en redes. Es la base del plan de crisis de la marca."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-a2-l1",
+       "title": "Registro en Indecopi",
+       "objective": "Registrar la marca para que nadie más pueda usarla en tu rubro.",
+       "procedure": [
+        "Busca antecedentes en Indecopi para comprobar que no existan marcas iguales o parecidas en tu rubro.",
+        "Define las clases de Niza (13.ª edición, vigente desde 2026). Con Amor: poleras y casacas en la clase 25 y tazas en la clase 21; evalúa la 35 (venta en línea) y la 40 (estampado por encargo). Restaurante: clase 43. Clínica dental: clase 44.",
+        "Presenta la solicitud y paga la tasa: S/ 534.90 por la primera clase, o S/ 401.20 si eres MYPE inscrita en el REMYPE.",
+        "Da seguimiento: sin oposición, el trámite toma aproximadamente de 4 a 6 meses.",
+        "El registro dura 10 años y es renovable. Agenda la renovación.",
+        "Registra también el logo si lo usas en productos."
+       ],
+       "commonMistakes": [
+        "Invertir en contenido con una marca sin registrar.",
+        "Registrar en la clase equivocada.",
+        "No buscar antecedentes antes de presentar la solicitud.",
+        "Olvidar la renovación."
+       ],
+       "checklist": [
+        "Búsqueda de antecedentes hecha.",
+        "Clases definidas.",
+        "Solicitud presentada.",
+        "Seguimiento agendado.",
+        "Renovación en el calendario."
+       ],
+       "practice": "Haz la búsqueda de antecedentes de Con Amor y define sus clases.",
+       "passCriteria": "Solicitud presentada, o marca ya registrada, en las clases correctas.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-a2-l3",
+       "title": "Plan de crisis",
+       "objective": "Responder rápido y bien cuando un video, un comentario o un reclamo se vuelve viral en contra.",
+       "procedure": [
+        "Define 3 niveles. Nivel 1: una queja aislada, que responde el community o ATC. Nivel 2: una queja repetida o de alguien influyente, que decide coordinación. Nivel 3: viral o con riesgo legal, que decide el dueño.",
+        "Define los tiempos: nivel 1 en el día, nivel 2 en 4 h y nivel 3 en 1 h (con una respuesta inicial).",
+        "Prepara plantillas de respuesta con el tono de la marca: reconocer, disculparse si corresponde, llevar el caso a un canal privado y dar una solución.",
+        "Lo que se prohíbe: borrar críticas legítimas, discutir en público y culpar al cliente.",
+        "Avisa a ATC y pausa la pauta del video afectado mientras dure la crisis.",
+        "Documenta cada crisis: causa, acción y aprendizaje. Si aplica, agrega la regla a la lista de no hacer."
+       ],
+       "commonMistakes": [
+        "Responder en caliente.",
+        "Borrar comentarios y provocar un efecto rebote.",
+        "No avisar a ATC, que sigue vendiendo como si nada.",
+        "Dejar la pauta activa sobre el video en crisis.",
+        "No aprender de la crisis."
+       ],
+       "checklist": [
+        "3 niveles definidos.",
+        "Tiempos de respuesta.",
+        "Plantillas listas.",
+        "Prohibiciones claras.",
+        "ATC avisado y pauta revisada.",
+        "Registro de crisis."
+       ],
+       "practice": "Simulacro: una clienta de Cusco publica que su polera personalizada llegó con el nombre mal escrito y el video se vuelve viral.",
+       "passCriteria": "En el simulacro, el equipo responde en menos de 1 h con la plantilla correcta y define la solución.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-a2-l5",
+       "title": "Cuentas falsas",
+       "objective": "Detectar y bajar las cuentas que suplantan a la marca para estafar a los clientes.",
+       "procedure": [
+        "Cada mes busca en Instagram, TikTok, Facebook y la Biblioteca de anuncios de Meta el nombre de la marca y sus variantes (con puntos, guiones o la palabra oficial).",
+        "Publica en la bio y en una historia destacada los únicos números de WhatsApp y las cuentas de pago oficiales.",
+        "ATC usa un mensaje fijo: solo vendemos por este número y solo cobramos a nombre de la empresa.",
+        "Denuncia cada cuenta falsa con la opción de suplantación de identidad de la red y pide a clientes y seguidores que también la reporten.",
+        "Si hay víctimas, publica un aviso en historias y registra el caso (fecha, cuenta, captura y acción).",
+        "Tener la marca registrada en Indecopi fortalece los reclamos por uso indebido."
+       ],
+       "commonMistakes": [
+        "Ignorar las cuentas falsas porque no son de la marca.",
+        "No tener los números oficiales visibles.",
+        "Pelear con la cuenta falsa en los comentarios."
+       ],
+       "checklist": [
+        "Búsqueda mensual hecha.",
+        "Números oficiales visibles.",
+        "Mensaje fijo de ATC.",
+        "Denuncias presentadas.",
+        "Registro de casos."
+       ],
+       "practice": "Haz la búsqueda de cuentas falsas de Con Amor y prepara la historia destacada con los canales oficiales.",
+       "passCriteria": "La búsqueda queda registrada y cada cuenta falsa encontrada tiene denuncia y aviso publicado.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-a2-l4",
+       "title": "Auditoría trimestral",
+       "objective": "Cerrar los accesos sobrantes y detectar riesgos cada trimestre.",
+       "procedure": [
+        "En Intia, Equipo: revisa que cada persona tenga los perfiles y las marcas correctos y desactiva a quienes ya no trabajan contigo.",
+        "En Intia, Actividad: revisa los cambios inusuales (borrados o cambios de estado masivos).",
+        "En Meta y TikTok: revisa usuarios, socios, administradores (mínimo 2) y métodos de pago.",
+        "Revisa quién tiene acceso a las carpetas de contratos y datos de clientes.",
+        "Cambia las contraseñas compartidas que existan, aunque no debería haberlas.",
+        "Registra la auditoría con fecha y hallazgos."
+       ],
+       "commonMistakes": [
+        "Que un excolaborador siga con acceso durante meses.",
+        "Tener tarjetas de crédito de terceros en las cuentas de anuncios.",
+        "No mirar nunca la Actividad."
+       ],
+       "checklist": [
+        "Equipo revisado.",
+        "Actividad revisada.",
+        "Meta y TikTok revisados.",
+        "Carpetas revisadas.",
+        "Registro de la auditoría."
+       ],
+       "practice": "Haz la auditoría de este trimestre.",
+       "passCriteria": "Ninguna persona externa tiene acceso activo sin necesitarlo y la auditoría queda registrada.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "dueno-a3",
+     "slug": "dueno-a3",
+     "title": "Escalar con pauta",
+     "summary": "Pasar a pauta los ganadores orgánicos de forma rentable, con variedad creativa, control de la fatiga y anuncios a WhatsApp medidos hasta la venta.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=Z1tn5rkE2Mg",
+       "title": "🔥 TRUCO para ESCALAR en Meta Ads SIN PERDER DINERO (Simulador de ROAS y CPA)",
+       "channel": "Felipe Vergara",
+       "language": "es",
+       "why": "Video reciente de un referente latino en Meta Ads. Enseña a escalar presupuesto cuidando ROAS y CPA."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=QoGFOGEqijw",
+       "title": "Copy This Meta Ads Strategy (Creative Diversity Post Andromeda)",
+       "channel": "Fraser Cottrell",
+       "language": "en",
+       "why": "Estrategia actual de variedad creativa en Meta (tras Andromeda) y cómo evita la fatiga. Es el enfoque más claro que encontré sobre el tema."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=3F6pkZqeago",
+       "title": "🚨 Los ANUNCIOS a WHATSAPP cambiaron para SIEMPRE ► Compras en WhatsApp con Meta Ads",
+       "channel": "Felipe Vergara",
+       "language": "es",
+       "why": "Anuncios a WhatsApp con compras medidas en Meta Ads. Sirve para atribuir hasta la venta lo que cierra ATC por chat."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-a3-l1",
+       "title": "Escalar ganadores",
+       "objective": "Aumentar la inversión en los videos que ya son rentables sin perder el control del costo por pedido.",
+       "procedure": [
+        "Criterio de entrada: un video con buenas señales orgánicas y un costo por pedido de prueba por debajo del máximo (el margen de contribución).",
+        "Sube el presupuesto de forma gradual (práctica común: alrededor de 20% cada 2 o 3 días) y revisa el costo por pedido después de cada aumento; en Meta, un cambio grande de presupuesto reinicia la fase de aprendizaje.",
+        "En paralelo, produce de 3 a 5 variaciones del ganador (nuevo gancho, otro talento, otro producto).",
+        "Si el ROAS cae por debajo de la meta operativa durante varios días, baja el presupuesto o cambia el creativo.",
+        "Registra cada cambio y su resultado en la tarea de la campaña."
+       ],
+       "commonMistakes": [
+        "Multiplicar el presupuesto de golpe.",
+        "Escalar un video sin tener variaciones listas.",
+        "Mirar solo el costo por conversación y no el costo por venta."
+       ],
+       "checklist": [
+        "Criterio de entrada cumplido.",
+        "Aumentos graduales.",
+        "Variaciones en producción.",
+        "Regla de corte definida.",
+        "Cambios registrados."
+       ],
+       "practice": "Escala el mejor video de tazas de Con Amor durante 2 semanas.",
+       "passCriteria": "Las ventas crecen con un ROAS igual o mayor que la meta operativa durante las 2 semanas.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-a3-l2",
+       "title": "Variedad creativa",
+       "objective": "Dar al algoritmo creativos distintos de verdad para encontrar más compradores.",
+       "procedure": [
+        "TikTok recomienda de 3 a 5 creativos por grupo de anuncios, con diferencias significativas entre ellos.",
+        "Varía una sola cosa grande por creativo: formato (Testimonio o Cámara Escondida), gancho, talento, ángulo (regalo para mamá o regalo para la pareja) u oferta.",
+        "Usa personas reales y un estilo nativo y poco pulido.",
+        "Pide al jefe de editores una matriz de variaciones por cada ganador.",
+        "Mide qué ángulo trae pedidos más baratos."
+       ],
+       "commonMistakes": [
+        "Usar 5 versiones del mismo video con distinto color de texto.",
+        "Usar un solo talento para todo.",
+        "Crear anuncios con apariencia de comercial de TV."
+       ],
+       "checklist": [
+        "De 3 a 5 creativos por grupo.",
+        "Diferencias grandes entre ellos.",
+        "Personas reales y estilo nativo.",
+        "Matriz de variaciones."
+       ],
+       "practice": "Diseña la matriz de 5 variaciones para la polera personalizada.",
+       "passCriteria": "Cada uno de los 5 creativos cambia una variable grande y se identifica el ángulo ganador.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-a3-l3",
+       "title": "Fatiga creativa",
+       "objective": "Detectar a tiempo cuándo un anuncio se desgastó y renovarlo.",
+       "procedure": [
+        "Señales de fatiga: la entrega cae de forma sostenida, sube el costo por resultado y aparecen pocos usuarios nuevos.",
+        "Revisa estas señales cada semana en la reunión con coordinación.",
+        "En TikTok, agrega los creativos nuevos al grupo de anuncios que ya funciona en lugar de crear uno nuevo (recomendación de TikTok). En Meta, agregar un anuncio reinicia brevemente el aprendizaje: agrégalos en bloque y no uno por día.",
+        "Ten siempre variaciones listas del ganador (de la lección anterior).",
+        "Archiva los creativos agotados con una nota de cuánto duraron."
+       ],
+       "commonMistakes": [
+        "Esperar a que el anuncio muera por completo.",
+        "Crear campañas nuevas cada vez.",
+        "No tener creativos de reemplazo listos."
+       ],
+       "checklist": [
+        "Señales revisadas cada semana.",
+        "Creativos nuevos agregados según la plataforma.",
+        "Reserva de variaciones.",
+        "Registro de la duración de cada creativo."
+       ],
+       "practice": "Revisa los anuncios activos de Con Amor e identifica cuáles muestran fatiga.",
+       "passCriteria": "Los anuncios fatigados se reemplazan antes de que el costo por pedido supere el máximo.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "dueno-a3-l4",
+       "title": "Anuncios a WhatsApp",
+       "objective": "Usar anuncios que abren un chat de WhatsApp y medirlos hasta la venta.",
+       "procedure": [
+        "Crea anuncios de clic a WhatsApp con el video ganador y un mensaje de bienvenida que pregunte por el producto de interés.",
+        "En Ads Manager la métrica es Conversaciones iniciadas; no son ventas.",
+        "ATC marca cada chat que viene del anuncio y registra si se cerró y por cuánto en S/.",
+        "Costo por venta = inversión ÷ ventas cerradas. Compáralo con el margen de contribución.",
+        "Si usan la API de WhatsApp Business con un proveedor, pueden enviar las compras a Meta (API de conversiones para mensajes) para que el anuncio optimice por ventas y no solo por conversaciones.",
+        "Si el costo por conversación es bueno pero la tasa de cierre es baja, el problema está en ATC o en la oferta, no en el anuncio.",
+        "Para enviar promociones después se necesita consentimiento (Código de Consumo y Ley 29733)."
+       ],
+       "commonMistakes": [
+        "Celebrar un costo por conversación bajo sin mirar las ventas.",
+        "Que ATC no responda rápido y se enfríen los chats.",
+        "Enviar difusiones a quien no dio consentimiento."
+       ],
+       "checklist": [
+        "Mensaje de bienvenida configurado.",
+        "Chats de anuncio marcados por ATC.",
+        "Costo por venta calculado.",
+        "Comparación con el margen.",
+        "Consentimiento solicitado."
+       ],
+       "practice": "Lanza una prueba de anuncio a WhatsApp para la taza mágica durante 1 semana.",
+       "passCriteria": "Tiene el costo por venta real calculado y una decisión de seguir, ajustar o pausar.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "dueno-a4",
+     "slug": "dueno-a4",
+     "title": "Procesos y manuales",
+     "summary": "Decidir qué delegar según lo que vale la hora del dueño y pasar lo que sabe a manuales por puesto que cualquier persona pueda seguir.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=cfsH5rjcaW8",
+       "title": "How To Create a Business Playbook™: How To Make SOPs",
+       "channel": "Dan Martell",
+       "language": "en",
+       "why": "Dan Martell explica cómo armar el playbook y los SOP grabando lo que haces (método camcorder). Es exactamente el tema del módulo."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=0n77p5b-Wu4",
+       "title": "How To Buy Back Your Time & Increase Profit",
+       "channel": "Dan Martell",
+       "language": "en",
+       "why": "Explica el valor de la hora del dueño (buyback rate) y qué delegar primero según ese valor."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=SW8u2cRvqTY",
+       "title": "Cómo hacer un manual de procesos",
+       "channel": "Procem Consultores",
+       "language": "es",
+       "why": "Guía en español para escribir un manual de procesos por puesto que cualquier persona pueda seguir."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-a4-l3",
+       "title": "Tu tarifa por hora",
+       "objective": "Decidir qué tareas delegar según lo que vale la hora del dueño.",
+       "procedure": [
+        "Calcula tu tarifa por hora: ingreso anual objetivo ÷ 2,000 horas. Ejemplo: S/ 120,000 ÷ 2,000 = S/ 60 por hora.",
+        "Calcula tu tarifa de recompra (Dan Martell): tarifa por hora ÷ 4. En el ejemplo, S/ 15 por hora.",
+        "Durante una semana, anota todo lo que haces en bloques de 30 minutos.",
+        "Marca las tareas que alguien podría hacer por menos de tu tarifa de recompra y las que te drenan energía.",
+        "Delega primero las que consumen más horas y cuestan poco, usando el método cámara (lección siguiente).",
+        "Usa las horas liberadas en estrategia, ofertas, alianzas y ventas grandes."
+       ],
+       "commonMistakes": [
+        "Seguir editando o publicando porque lo haces más rápido.",
+        "Delegar sin documentar.",
+        "Llenar las horas liberadas con más trabajo operativo."
+       ],
+       "checklist": [
+        "Tarifa por hora calculada.",
+        "Tarifa de recompra calculada.",
+        "Registro de una semana.",
+        "Tareas marcadas.",
+        "Plan de delegación."
+       ],
+       "practice": "Haz tu registro de una semana y elige 3 tareas para delegar este mes.",
+       "passCriteria": "El dueño libera al menos 5 horas por semana en 30 días, sin que caigan los KPIs.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-a4-l1",
+       "title": "Método cámara",
+       "objective": "Documentar una tarea grabándose mientras se hace, para delegarla sin perder calidad.",
+       "procedure": [
+        "Elige una tarea que hoy haces tú (por ejemplo, revisar las métricas semanales o aprobar una oferta).",
+        "Grábate haciéndola 3 veces (pantalla y voz), explicando cada decisión en voz alta.",
+        "Convierte las grabaciones en pasos cortos: el mini curso.",
+        "Define la frecuencia: cada cuánto se hace.",
+        "Escribe un checklist con lo que no se negocia.",
+        "Entrégalo a la persona que la asumirá y revisa sus 3 primeras entregas."
+       ],
+       "commonMistakes": [
+        "Grabar una sola vez y omitir casos especiales.",
+        "Entregar el video sin checklist.",
+        "No revisar las primeras entregas."
+       ],
+       "checklist": [
+        "3 grabaciones.",
+        "Pasos escritos.",
+        "Frecuencia definida.",
+        "Checklist.",
+        "Primeras 3 entregas revisadas."
+       ],
+       "practice": "Documenta con este método la lectura semanal de Métricas y delégala al analista.",
+       "passCriteria": "El analista hace la tarea 3 semanas seguidas con el mismo resultado que el dueño.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-a4-l2",
+       "title": "Manual por puesto",
+       "objective": "Tener un manual para cada puesto con propósito, pasos y estándares.",
+       "procedure": [
+        "Trata cada puesto como si fuera a replicarse en otra sede: sin depender del talento individual.",
+        "Estructura del manual: propósito del puesto, entradas (qué recibe y de quién), pasos por etapa del video, estándar de calidad, KPIs, herramientas y errores comunes.",
+        "Usa esta misma sección de manuales de Intia (Cómo se usa) como base para cada rol.",
+        "Agrega los checklists de cada etapa, los mismos pasos de la lista de control que ya existen en Intia.",
+        "Pide a una persona nueva que siga el manual y anota dónde se traba."
+       ],
+       "commonMistakes": [
+        "Manuales largos que nadie lee.",
+        "Manuales que dependen de una persona para entenderse.",
+        "No incluir el estándar de calidad."
+       ],
+       "checklist": [
+        "Propósito del puesto.",
+        "Entradas y salidas.",
+        "Pasos por etapa.",
+        "Estándar y KPIs.",
+        "Probado con una persona nueva."
+       ],
+       "practice": "Completa el manual del community manager y pruébalo con alguien nuevo.",
+       "passCriteria": "Una persona nueva completa su primera semana siguiendo solo el manual, con 3 consultas o menos.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-a4-l4",
+       "title": "Mantener manuales",
+       "objective": "Mantener los manuales vivos y actualizados.",
+       "procedure": [
+        "Asigna un responsable a cada manual: normalmente el líder del área (el jefe de editores para edición, coordinación para guion).",
+        "Pon versión y fecha en cada manual.",
+        "Cada vez que un problema del ritual se resuelve de raíz, actualiza el manual correspondiente.",
+        "Revisión trimestral: elimina lo que ya no aplica.",
+        "Avisa los cambios en el ritual semanal."
+       ],
+       "commonMistakes": [
+        "Hacer los manuales una vez y olvidarlos.",
+        "Cambiar el proceso sin actualizar el manual.",
+        "Que haya varias versiones distintas circulando."
+       ],
+       "checklist": [
+        "Responsable por manual.",
+        "Versión y fecha.",
+        "Actualización después de cada solución del ritual.",
+        "Revisión trimestral."
+       ],
+       "practice": "Revisa todos los manuales al cierre del trimestre.",
+       "passCriteria": "El 100% de los manuales tiene fecha del trimestre en curso y responsable asignado.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "dueno-a5",
+     "slug": "dueno-a5",
+     "title": "Dirección y portafolio",
+     "summary": "Prioridades trimestrales, rentabilidad y precio por marca o cliente, informes a clientes y control de la IA en Intia.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=T6hfGzCIS7c",
+       "title": "Quarterly Rocks: The Fix When Everything Feels Urgent",
+       "channel": "EOS Worldwide",
+       "language": "en",
+       "why": "Canal oficial de EOS explicando las Rocks, las prioridades trimestrales, en menos de 2 minutos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=3jLt2bR0mPU",
+       "title": "Digital Agency Profit Margin Guide: What Your Agency Profit Margin be (and how to get there)",
+       "channel": "Jason Swenk",
+       "language": "en",
+       "why": "Referente en gestión de agencias. Explica qué margen debe tener una agencia y cómo llegar a él, útil para ver la rentabilidad por cliente o por marca."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=uyN0lR1NGCk",
+       "title": "¿Cómo crear un informe de redes sociales? Todo lo que necesitas saber 😊",
+       "channel": "Marketeros Agencia | Marketing Digital 360º",
+       "language": "es",
+       "why": "Estructura de un informe de redes sociales para clientes. Sirve de modelo para los reportes mensuales por marca."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "dueno-a5-l1",
+       "title": "Prioridades trimestrales",
+       "objective": "Definir de 3 a 5 prioridades del trimestre con responsable y hacerles seguimiento semanal.",
+       "procedure": [
+        "Al inicio del trimestre, reúne a los líderes y lista todo lo que se quiere lograr.",
+        "Elige de 3 a 5 prioridades para la empresa (por ejemplo: registrar la marca, contratar un segundo editor, lanzar la línea de casacas).",
+        "Cada prioridad tiene un solo responsable y una definición de terminado.",
+        "Revísalas cada lunes en el ritual: en camino o fuera de camino.",
+        "Al cierre del trimestre, cumplir cerca del 80% se considera un buen resultado. Lo que no se cumplió se analiza en el ritual y se decide si pasa al trimestre siguiente."
+       ],
+       "commonMistakes": [
+        "Tener 12 prioridades.",
+        "Prioridades sin definición de terminado.",
+        "No revisarlas cada semana."
+       ],
+       "checklist": [
+        "De 3 a 5 prioridades.",
+        "Un responsable por prioridad.",
+        "Definición de terminado.",
+        "Revisión semanal.",
+        "Cierre trimestral."
+       ],
+       "practice": "Define las prioridades del próximo trimestre para la empresa y para Con Amor.",
+       "passCriteria": "Al cierre del trimestre se cumplió al menos el 80% de las prioridades.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-a5-l2",
+       "title": "Rentabilidad por marca",
+       "objective": "Saber qué marcas o clientes dejan dinero y cuáles consumen al equipo, y cobrar lo correcto.",
+       "procedure": [
+        "Para cada marca o cliente, anota los ingresos del mes: el fee del cliente o, en Con Amor, el margen de las ventas atribuidas.",
+        "Resta el costo del equipo asignado: videos producidos × costo por video, más horas de coordinación y ATC.",
+        "Resta la pauta si la paga la agencia.",
+        "Calcula el margen por marca o cliente.",
+        "Para cotizar: fee mínimo = costo mensual del equipo asignado ÷ (1 − margen objetivo). Ejemplo: S/ 3,000 de costo con 40% de margen objetivo = S/ 5,000.",
+        "Decide: subir el precio, reducir el alcance, mejorar la eficiencia o dejar al cliente, y ajusta en Equipo las marcas asignadas según la capacidad."
+       ],
+       "commonMistakes": [
+        "Aceptar clientes que pagan menos de lo que cuesta atenderlos.",
+        "No contar las horas de reuniones y cambios.",
+        "Subsidiar a un cliente con el margen de Con Amor sin saberlo."
+       ],
+       "checklist": [
+        "Ingresos por marca.",
+        "Costos del equipo.",
+        "Pauta.",
+        "Margen calculado.",
+        "Fee mínimo calculado.",
+        "Decisión por marca."
+       ],
+       "practice": "Calcula la rentabilidad del último mes de Con Amor, del cliente de servicios y del restaurante.",
+       "passCriteria": "Hay una decisión documentada para cada marca con margen bajo y cada cliente paga al menos su fee mínimo o tiene un plan de ajuste.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "dueno-a5-l3",
+       "title": "Informe a clientes",
+       "objective": "Entregar a cada cliente un informe mensual que muestre resultados de negocio y el plan siguiente.",
+       "procedure": [
+        "Estructura de 1 página: objetivo del mes y avance, videos publicados, top 3 videos y por qué funcionaron, conversaciones y ventas o reservas, inversión y costo por resultado, aprendizajes y plan del mes siguiente.",
+        "Toma los datos de Métricas y de Objetivos en Intia.",
+        "Explica con lenguaje de negocio, no de redes.",
+        "Envíalo en los 5 primeros días hábiles del mes.",
+        "Agenda 20 minutos para comentarlo con el cliente."
+       ],
+       "commonMistakes": [
+        "Informes de 30 páginas con capturas.",
+        "Hablar solo de likes.",
+        "No proponer el plan siguiente."
+       ],
+       "checklist": [
+        "1 página.",
+        "Datos de negocio.",
+        "Top 3 con aprendizaje.",
+        "Plan del mes siguiente.",
+        "Enviado a tiempo."
+       ],
+       "practice": "Prepara el informe del mes del restaurante cliente.",
+       "passCriteria": "El cliente entiende el informe sin explicaciones adicionales y aprueba el plan siguiente.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "dueno-a5-l4",
+       "title": "IA bajo control",
+       "objective": "Controlar quién usa la IA de Intia, cuánto cuesta y con qué calidad.",
+       "procedure": [
+        "En Ajustes (solo el dueño) revisa las claves de IA compartidas por la organización. Solo el perfil Guionista y el dueño pueden usar el Generador IA.",
+        "Revisa en Generaciones el historial: cantidad, fallos y reintentos.",
+        "Regla: todo guion de IA pasa por 'Guion aprobado por la marca' (coordinación o el cliente) antes de GRABACIÓN.",
+        "No cargues en la IA datos personales de clientes ni información confidencial de otros clientes.",
+        "Revisa cada mes el costo de la IA frente al número de guiones aprobados.",
+        "Si la calidad baja, mejora primero la ficha de la marca (tono, no hacer, Personas y Estructuras) antes de culpar a la IA."
+       ],
+       "commonMistakes": [
+        "Compartir las claves de IA fuera de la app.",
+        "Grabar guiones de IA sin aprobación.",
+        "Cargar chats de clientes con nombres y teléfonos."
+       ],
+       "checklist": [
+        "Claves revisadas en Ajustes.",
+        "Historial de Generaciones revisado.",
+        "Aprobación humana obligatoria.",
+        "Sin datos personales.",
+        "Costo contra guiones aprobados."
+       ],
+       "practice": "Revisa el último mes de Generaciones y calcula el costo por guion aprobado.",
+       "passCriteria": "Conoce el costo por guion aprobado y el % de fallos, y todos los guiones grabados tuvieron aprobación humana.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

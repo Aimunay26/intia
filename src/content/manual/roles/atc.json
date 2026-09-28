@@ -1,0 +1,2958 @@
+{
+ "id": "ATC",
+ "slug": "atc",
+ "name": "ATC",
+ "fullName": "ATC: Atención al Cliente y Ventas por Chat",
+ "mission": "Convertir cada mensaje que generan los videos en una venta bien hecha. El ATC responde en minutos, asesora con honestidad, toma pedidos sin errores, cobra de forma segura y acompaña al cliente hasta la entrega. Cuida que el chat diga lo mismo que el video y devuelve al equipo (guionistas, community, coordinación) lo que los clientes preguntan y objetan, para que el próximo video venda más. Todo dentro de la ley peruana: Código del Consumidor, Libro de Reclamaciones, comprobantes de SUNAT y protección de datos personales.",
+ "responsibilities": [
+  "Responder todos los DM de Instagram, Facebook y TikTok y los chats de WhatsApp Business en horario, con primera respuesta humana en 5 minutos o menos (mediana).",
+  "Calificar cada lead (para quién, ocasión, fecha, ciudad, presupuesto) y recomendar 1 o 2 opciones concretas.",
+  "Dar precios totales correctos en soles (producto, personalización y envío) y aplicar exactamente la oferta del video (bonus, garantía, escasez, fecha de corte) según la ficha de oferta de coordinación.",
+  "Verificar antes de la «Revisión final aprobada» de cada video que el precio, la oferta y la palabra clave en pantalla coincidan con la ficha de oferta.",
+  "Responder objeciones con método (escuchar, reconocer, explorar, responder) y pruebas reales, sin urgencias falsas ni presión.",
+  "Tomar pedidos completos: ficha de datos con CONFIRMO, personalización con mockup APROBADO, modalidad de envío a Lima o provincia y comprobante (boleta o factura).",
+  "Cobrar solo por los medios oficiales (Yape, Plin, transferencia o link de pago de la marca) y verificar cada pago en la app propia antes de producir o despachar.",
+  "Derivar al taller órdenes que se puedan producir sin hacer preguntas y mantener las etiquetas del embudo al día.",
+  "Hacer seguimiento (máximo 3 toques) a cotizados y chats en visto, respetando las ventanas de mensajería de Meta y el consentimiento del cliente.",
+  "Hacer la postventa: aviso de despacho con guía, confirmación de entrega y encuesta de satisfacción de 1 a 5.",
+  "Gestionar quejas y reclamos: ofrecer sin condiciones el Libro de Reclamaciones virtual y asegurar la respuesta formal dentro de 15 días hábiles.",
+  "Escalar a coordinación lo que no puede decidir: descuentos fuera de la ficha, reembolsos, pedidos corporativos, amenazas legales, prensa, influencers y crisis.",
+  "Registrar a diario los leads y ventas por canal y por video de origen, y entregar un reporte semanal ATC.",
+  "Entregar cada semana a guionistas y community las preguntas y objeciones textuales más frecuentes, registrar ideas como síntoma en Intia y avisar el mismo día de cualquier crisis.",
+  "Proteger los datos personales de los clientes (Ley 29733 y su reglamento, DS 016-2024-JUS), la cuenta de ventas (verificación en dos pasos) y prevenir fraudes (yapeos falsos, robo de cuenta, suplantación de la marca)."
+ ],
+ "sop": [
+  "IDEA (continuo): cuando una pregunta u objeción se repite en los chats, registrarla en Intia como IDEA escrita como síntoma (qué duele y dónde se nota), con su frecuencia y un ejemplo textual sin datos personales.",
+  "GUION → APROBADO: leer en Intia el guion aprobado y su CTA. Recibir de coordinación la ficha de oferta del video (precio total, bonus, garantía, escasez real con duración y stock mínimo, fecha de corte, palabra clave). Si algo no se puede cumplir (stock, capacidad del taller, plazos a provincia), avisarlo a coordinación antes de grabar.",
+  "GRABACION (cuando falte material): pedir al filmmaker, vía coordinación, 2 o 3 tomas verticales del producto real para el kit de confianza del chat.",
+  "EDICION (antes de la «Revisión final aprobada»): revisar en la vista previa que el precio, el bonus, la fecha de corte y la palabra clave que aparecen en pantalla coincidan con la ficha de oferta. Enviar OK o correcciones a coordinación y al jefe de editores en 2 horas como máximo.",
+  "PROGRAMADO (día previo a publicar): crear o actualizar las respuestas rápidas del video, acordar con el community la palabra clave y la automatización de comentario a DM, y agendar la guardia de respuesta para la hora de publicación.",
+  "PUBLICADO (primeras 0 a 48 horas del video): guardia de respuesta en 5 minutos o menos. Identificar y anotar el video de origen de cada lead. Si el volumen se triplica, activar el protocolo de video viral y avisar a coordinación.",
+  "APERTURA DEL TURNO (primeros 30 minutos): revisar la ficha de oferta vigente y los videos programados para hoy, confirmar que el mensaje de ausencia se desactivó, responder lo que llegó fuera de horario en este orden: pagos con captura, reclamos, nuevos leads y seguimientos. Verificar en la app de Yape, Plin o el banco los pagos de la noche y leer la nota de relevo.",
+  "DURANTE EL DÍA, POR CADA LEAD: saludo de una línea con pregunta, calificación, recomendación, precio total, manejo de objeciones y pedido de la venta. Luego ficha de pedido y CONFIRMO, personalización y mockup APROBADO, cobro, verificación del pago en la app propia, confirmación con número de pedido, boleta o factura, orden al taller y etiqueta En producción. Lo que no puede decidir, lo escala con hora comprometida al cliente.",
+  "SEGUIMIENTOS: a los cotizados que no pagaron, un toque a la hora, otro a las 24 horas y otro a las 48 a 72 horas (este último solo con bonus o fecha de corte reales; en Instagram y Facebook, enviado a mano desde la bandeja). La secuencia se detiene al comprar. Después del tercer toque se etiqueta Frío.",
+  "POSTVENTA: el día del despacho, enviar la guía y las instrucciones de recojo. Un día después de la fecha estimada, confirmar la entrega y pedir la calificación de 1 a 5. Etiqueta Entregado. Puntajes de 1 a 3 se atienden el mismo día.",
+  "RECLAMOS (el mismo día que ingresan): clasificar si es queja, reclamo o consulta, etiquetar Reclamo, ofrecer el Libro de Reclamaciones virtual sin condiciones si el cliente lo pide, enviar acuse con la fecha límite y coordinar la respuesta formal dentro de 15 días hábiles.",
+  "CIERRE DEL TURNO: dejar todos los pedidos pagados en el taller, completar el registro diario (leads, ventas, S/, video de origen), cero mensajes no leídos en WhatsApp, Meta y TikTok, todos los chats etiquetados y una nota de relevo. Enviar al grupo interno las preguntas nuevas del día, sin datos personales.",
+  "PAUSADO o CANCELADO: si un video se pausa o cancela, desactivar ese mismo día sus respuestas rápidas y automatizaciones y avisar a los leads con cotización vigente.",
+  "SEMANAL (lunes, antes de la reunión de métricas): entregar el reporte semanal ATC (embudo, ventas por video, tiempo de respuesta, CSAT, reclamos abiertos), las 5 preguntas y 3 objeciones más frecuentes al guionista y los testimonios con permiso al community. Actualizar las respuestas rápidas con la nueva ficha de oferta.",
+  "MENSUAL: auditar 10 chats por ATC con la rúbrica, actualizar el playbook de ventas, depurar la base de contactos (consentimientos y bajas), revisar la seguridad de las cuentas (dispositivos vinculados) y revisar las fechas de clientes para recompra y la lista VIP.",
+  "FECHAS CLAVE (Día de la Madre, San Valentín, Día del Padre, Navidad): 4 semanas antes, definir con el taller la capacidad y las fechas de corte por ciudad, preparar la colección del catálogo y las respuestas rápidas, y reforzar turnos."
+ ],
+ "receivesFrom": [
+  "STRATEGY (coordinación): guion aprobado, CTA y ficha de oferta por video (precio total, bonus, garantía, escasez real con duración y stock mínimo, fecha de corte, palabra clave) y decisiones sobre casos escalados.",
+  "WRITER (guionista): promesas y CTA exactos de cada guion, para que el chat diga lo mismo que el video.",
+  "JEFE DE EDITORES / EDITOR: vista previa del corte final o de los textos en pantalla antes de la «Revisión final aprobada», para verificar precio, oferta y palabra clave.",
+  "CAMERA (filmmaker): tomas verticales del producto real para el kit de confianza, cuando se piden vía coordinación.",
+  "PUBLISHER (community manager): calendario de publicaciones, comentarios y DM derivados, palabra clave del CTA y alertas de comentarios.",
+  "PRODUCTION / taller: stock por talla y color, capacidad diaria, tiempos de producción, fechas de despacho y recibido de cada orden.",
+  "DESIGNER: mockups de personalización para que el cliente los apruebe.",
+  "ANALYST: vistas y métricas por video en Intia, para cruzarlas con las ventas del chat.",
+  "OWNER (dueño): precios, precios por volumen, política de cambios y devoluciones, garantías autorizadas, lista de diseños no permitidos, régimen tributario (boleta o factura) y aprobación de respuestas a reclamos.",
+  "Clientes: leads por DM de Instagram, TikTok y Facebook y por WhatsApp Business, que llegan desde los videos."
+ ],
+ "deliversTo": [
+  "PRODUCTION / taller: órdenes de pedido completas (número, producto, talla, color, texto exacto, mockup APROBADO, fecha de despacho), sin datos personales innecesarios.",
+  "DESIGNER: datos de personalización verificados (texto letra por letra, foto original enviada como documento).",
+  "Logística / courier: datos de envío (nombre y DNI de quien recoge, ciudad, agencia o dirección con referencia).",
+  "JEFE DE EDITORES y STRATEGY: OK o correcciones de precio, oferta o palabra clave en pantalla antes de la «Revisión final aprobada».",
+  "CAMERA (vía coordinación): pedido de tomas del producto real para el kit de confianza.",
+  "WRITER (guionista): las 5 preguntas y 3 objeciones más frecuentes de la semana, en palabras del cliente, e ideas registradas como síntoma en Intia.",
+  "PUBLISHER (community manager): testimonios y fotos de clientes con permiso, alertas de crisis y respuestas unificadas.",
+  "ANALYST: registro diario de leads y ventas por canal y por video de origen.",
+  "STRATEGY (coordinación) y OWNER: reporte semanal ATC, casos escalados con propuesta, estado de reclamos con fechas límite y propuestas de mejora de ofertas.",
+  "Clientes: confirmación de pedido con número, comprobante electrónico, guía de envío y respuesta formal a reclamos."
+ ],
+ "kpis": [
+  "Tiempo de primera respuesta humana en horario: mediana de 5 minutos o menos; percentil 90 de 15 minutos o menos.",
+  "Chats sin responder al cierre del turno (WhatsApp, Meta y TikTok): 0.",
+  "Conversión total del chat (pedidos pagados / leads nuevos) por semana, por canal y por video. Meta a definir con la línea base de las primeras 4 semanas.",
+  "Cotizados recuperados por la secuencia de seguimiento: 15 % o más (meta inicial, ajustar con la línea base).",
+  "Ticket promedio en S/ y porcentaje de pedidos con venta cruzada.",
+  "Pagos verificados en la app propia antes de producir o despachar: 100 %.",
+  "Pedidos con error de personalización o datos atribuible a ATC: menos de 1 %.",
+  "Videos con ficha de oferta, respuestas rápidas y chequeo de precio en pantalla listos antes de publicar: 100 %.",
+  "Quejas y reclamos con respuesta formal dentro de 15 días hábiles: 100 %.",
+  "Satisfacción postventa (CSAT de 1 a 5): 4,5 o más de promedio.",
+  "Leads con video de origen identificado: 80 % o más.",
+  "Tasa de recompra a 90 días y ventas por referidos.",
+  "Preguntas y objeciones entregadas a guionistas cada semana: 5 preguntas y 3 objeciones como mínimo."
+ ],
+ "tools": [
+  "WhatsApp Business app: perfil de empresa, catálogo y colecciones, etiquetas, respuestas rápidas con atajo «/», mensajes de bienvenida y de ausencia, listas de difusión y verificación en dos pasos.",
+  "Meta Business Suite: bandeja unificada de Instagram y Facebook (y WhatsApp si está conectado), respuestas guardadas, preguntas frecuentes de Instagram, automatizaciones y notas de contacto.",
+  "Cuenta de empresa de TikTok: bandeja de mensajes directos y mensajes automáticos si están disponibles.",
+  "Herramienta de comentario a DM por palabra clave (automatizaciones nativas de Meta o terceros autorizados como ManyChat).",
+  "Yape y Plin empresa, app del banco y, si la marca lo usa, link de pago con tarjeta (Izipay, Niubiz, Mercado Pago u otro).",
+  "Hoja de pedidos y CRM simple (Google Sheets o similar) con etiquetas iguales a las del chat, video de origen y consentimiento.",
+  "Sistema de facturación electrónica (SUNAT o proveedor) y Consulta RUC de SUNAT.",
+  "Portales de courier: Olva Courier y Shalom, para guías y seguimiento.",
+  "Libro de Reclamaciones virtual (por ejemplo «Tu Libro de Reclamaciones» de Indecopi) y un control de reclamos con calculadora de días hábiles y feriados.",
+  "Intia: guiones aprobados, CTA, videos programados y publicados, métricas semanales y registro de ideas.",
+  "Kit de confianza en el celular: videos reales del producto, testimonios con permiso, capturas de envíos sin datos personales.",
+  "Asistente de IA solo para borradores de texto, sin datos personales y con revisión humana."
+ ],
+ "levels": [
+  {
+   "level": "PRINCIPIANTE",
+   "goal": "En 2 semanas, atender cualquier chat entrante con primera respuesta en 5 minutos o menos, con el tono de la marca y datos correctos de catálogo, precio total y envío, y tomar pedidos de principio a fin (pago verificado, comprobante y orden al taller) sin errores de personalización ni de pago.",
+   "modules": [
+    {
+     "id": "atc-p-m1",
+     "slug": "atc-p-m1",
+     "title": "Tu puesto de ATC",
+     "summary": "Configurar y proteger las herramientas de chat para que ningún cliente se pierda y cualquier compañero entienda en qué estado está cada conversación.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=5b08RIvwV2M",
+       "title": "WhatsApp Business para PRINCIPIANTES: guía FÁCIL y PRÁCTICA",
+       "channel": "ChicaGeek",
+       "language": "es",
+       "why": "Guía reciente para configurar desde cero el perfil de empresa y las herramientas básicas de WhatsApp Business."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=6iA6KTm8hAg",
+       "title": "Cómo Usar Etiquetas de WhatsApp Business y Respuestas Rápidas [TUTORIAL]",
+       "channel": "Aprendamos Marketing",
+       "language": "es",
+       "why": "Muestra cómo crear etiquetas para marcar el estado de cada conversación y respuestas rápidas para contestar sin redactar de nuevo."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=FJkWjuTSsY0",
+       "title": "WHATSAPP EN LA BANDEJA DE ENTRADA DE BUSINESS SUITE 2025",
+       "channel": "Geno Bernal",
+       "language": "es",
+       "why": "Explica cómo juntar WhatsApp con los mensajes de Instagram y Facebook en la bandeja de Meta Business Suite para que ningún chat se pierda."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-p-m1-l1",
+       "title": "Perfil de WhatsApp Business",
+       "objective": "Dejar completo el perfil de empresa para que el cliente confíe y encuentre horario, zona de envío, catálogo, medios de pago y Libro de Reclamaciones sin tener que preguntar.",
+       "procedure": [
+        "Abre WhatsApp Business > Herramientas para la empresa > Perfil de empresa.",
+        "Pon el nombre de la marca igual que en Instagram y TikTok (ej. «Con Amor»). Si el nombre es distinto, el cliente cree que es otra cuenta o una estafa.",
+        "Escribe una descripción de 1 o 2 líneas que diga qué vendes y a dónde envías. Ej.: «Poleras afraneladas, tazas y casacas personalizadas. Envíos a Lima y todo el Perú».",
+        "Registra el horario de atención real, el correo y la dirección (si hay tienda o taller con atención al público).",
+        "Usa los 2 enlaces de sitio web del perfil: el catálogo o la web, y el Libro de Reclamaciones virtual de la marca.",
+        "Usa el logo en alta como foto de perfil y revisa que se lea en el círculo pequeño.",
+        "Pide a un compañero que te escriba desde otro número y te diga qué ve.",
+        "Restaurante: agrega la zona de reparto y el horario de cocina. Servicio: agrega la dirección del local y los días de atención."
+       ],
+       "commonMistakes": [
+        "Poner un horario que no se cumple.",
+        "Usar un nombre distinto al de las redes sociales.",
+        "Vender desde un WhatsApp personal en vez de la cuenta de empresa.",
+        "Escribir una descripción larga y corporativa que nadie lee."
+       ],
+       "checklist": [
+        "Nombre igual al de las redes",
+        "Descripción de 2 líneas o menos que menciona los envíos",
+        "Horario real",
+        "Foto de perfil legible",
+        "Enlace de catálogo o web",
+        "Enlace del Libro de Reclamaciones",
+        "Prueba hecha desde otro número"
+       ],
+       "practice": "Configura el perfil de Con Amor y el de una cevichería ficticia (delivery de 11:00 a 16:00, zona de reparto en 5 distritos).",
+       "passCriteria": "Un compañero, sin preguntarte nada, encuentra el horario, la zona de envío, el catálogo y el Libro de Reclamaciones en menos de 30 segundos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m1-l2",
+       "title": "Bandeja unificada Meta",
+       "objective": "Atender Instagram y Facebook desde una sola bandeja (Meta Business Suite) sin dejar mensajes ni comentarios de compra sin respuesta.",
+       "procedure": [
+        "Entra a Meta Business Suite (web o app) > Bandeja de entrada y confirma que estén conectadas la página de Facebook y la cuenta de Instagram de la marca. Si la marca conectó también WhatsApp, verás esos chats en la misma bandeja.",
+        "Entra siempre con tu propio usuario, asignado por el dueño. Nunca uses la contraseña de otra persona.",
+        "En la app móvil, activa las notificaciones solo para mensajes y comentarios, no para likes.",
+        "Trabaja con filtros: primero «No leídos», luego «Seguimiento».",
+        "Mueve un chat a «Listo» solo cuando el cliente compró, desistió o fue derivado. Leerlo no basta.",
+        "En la pestaña de comentarios, a los que preguntan precio o cómo comprar respóndeles breve en público («¡Te escribimos por DM! 💌») y atiéndelos en privado. Acuerda con el community quién responde qué.",
+        "Deja una nota interna en el contacto con el producto de interés, la ciudad y el video de origen."
+       ],
+       "commonMistakes": [
+        "Abrir el mensaje, dejarlo en leído y olvidarlo.",
+        "Discutir precios en comentarios públicos.",
+        "Entrar con la cuenta de otra persona.",
+        "Archivar chats que tienen un pedido pendiente."
+       ],
+       "checklist": [
+        "Facebook e Instagram conectados",
+        "Acceso con usuario propio",
+        "Notificaciones de mensajes activas",
+        "0 no leídos al cierre",
+        "Comentarios de compra derivados al DM",
+        "Notas en los contactos"
+       ],
+       "practice": "Simula con un compañero 6 mensajes (3 de Instagram y 3 de Facebook) y 2 comentarios de «¿precio?». Atiéndelos todos en 15 minutos y deja notas.",
+       "passCriteria": "Al cierre del turno de prueba hay 0 mensajes no leídos y cada contacto tiene nota con producto, ciudad y video de origen.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "atc-p-m1-l6",
+       "title": "Bandeja de TikTok",
+       "objective": "Atender los mensajes y comentarios de compra de TikTok, que no entran en la bandeja de Meta, sin perder el video de origen.",
+       "procedure": [
+        "Trabaja solo desde la cuenta de empresa de la marca, con acceso propio. Nunca desde una cuenta personal.",
+        "Revisa en Privacidad > Mensajes directos que cualquier persona pueda escribir a la cuenta.",
+        "Activa las notificaciones de mensajes y revisa la bandeja cada 15 a 30 minutos en horario.",
+        "Si la cuenta de empresa tiene mensajes automáticos (bienvenida o respuestas por palabra clave), úsalos solo para saludar y pedir producto, ciudad y fecha. La venta la sigue una persona.",
+        "A los comentarios de «¿precio?» o «¿cómo compro?», responde breve en público e invita al DM o al WhatsApp del perfil. Acuerda con el community quién responde.",
+        "Si el cliente prefiere seguir por WhatsApp, envíale el enlace directo de la marca (wa.me) y anota en la ficha el canal TikTok y el video de origen."
+       ],
+       "commonMistakes": [
+        "Olvidar TikTok porque no aparece en la bandeja de Meta.",
+        "Responder desde una cuenta personal.",
+        "Perder el origen del lead al pasarlo a WhatsApp.",
+        "Dejar que el mensaje automático «venda» solo."
+       ],
+       "checklist": [
+        "Cuenta de empresa",
+        "Mensajes abiertos a todos",
+        "Revisión cada 15 a 30 minutos",
+        "Comentarios de compra derivados",
+        "Canal y video anotados al pasar a WhatsApp"
+       ],
+       "practice": "Simula 5 DM de TikTok y 3 comentarios de «¿precio?» de 2 videos distintos, y pasa 2 de esos clientes a WhatsApp.",
+       "passCriteria": "0 mensajes de TikTok sin responder al cierre, y los 2 clientes pasados a WhatsApp con canal y video de origen anotados.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m1-l3",
+       "title": "Respuestas rápidas",
+       "objective": "Crear respuestas rápidas con atajo «/» para contestar en segundos las preguntas que se repiten, sin sonar a robot.",
+       "procedure": [
+        "Lista las preguntas que más llegan: precio, tallas, envío a Lima, envío a provincia, tiempo de producción, medios de pago, cómo personalizar, cuidado de lavado, horario y reclamos.",
+        "En WhatsApp Business ve a Herramientas para la empresa > Respuestas rápidas > «+» y crea atajos cortos: /precios, /tallas, /lima, /provincia, /tiempos, /pago, /foto, /lavado, /horario y /libro (enlace del Libro de Reclamaciones).",
+        "Escribe cada una con esta estructura: saludo corto, respuesta clara y siguiente paso. Ej. /provincia: «Enviamos a todo el Perú 🚚 Por Shalom (recoges en agencia) llega en 3 a 7 días hábiles aprox. ¿A qué ciudad sería?».",
+        "Copia las mismas respuestas como «respuestas guardadas» en Meta Business Suite para Instagram y Facebook.",
+        "Antes de enviar, personaliza con el nombre del cliente y el producto que mencionó.",
+        "Cada lunes compara precios y plazos con la ficha de oferta vigente y anota la fecha de revisión."
+       ],
+       "commonMistakes": [
+        "Dejar precios desactualizados después de una promo.",
+        "Escribir textos de más de 5 líneas.",
+        "Pegar la respuesta sin el nombre del cliente.",
+        "No terminar con una pregunta y dejar el chat muerto."
+       ],
+       "checklist": [
+        "10 atajos o más creados",
+        "Cada uno termina en pregunta",
+        "5 líneas o menos",
+        "Copiados en Meta Business Suite",
+        "Fecha de última revisión anotada"
+       ],
+       "practice": "Escribe los 10 atajos de Con Amor y 5 para una cevichería (carta, delivery, horario, reservas, pago).",
+       "passCriteria": "Otro ATC responde 10 preguntas simuladas usando solo tus atajos y personalización, en menos de 8 minutos y sin datos incorrectos.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m1-l4",
+       "title": "Etiquetas del embudo",
+       "objective": "Etiquetar cada chat según su etapa para saber de un vistazo a quién cobrar, a quién hacer seguimiento y qué pedido está en producción.",
+       "procedure": [
+        "Crea estas etiquetas de etapa en WhatsApp Business: 1-Nuevo lead, 2-Cotizado, 3-Esperando pago, 4-Pagado, 5-En producción, 6-Enviado, 7-Entregado y Frío (cotizados que no respondieron a 3 seguimientos).",
+        "Crea además 3 etiquetas de tipo: Reclamo, Mayorista y VIP.",
+        "Cada chat lleva UNA sola etiqueta de etapa. Quita la anterior cuando avanza. Las de tipo se agregan además de la etapa.",
+        "Usa los mismos nombres en la hoja de pedidos, para que el chat y la hoja siempre cuadren.",
+        "En Meta Business Suite usa etiquetas equivalentes en cada contacto.",
+        "Pon 4-Pagado solo después de ver el dinero en tu propia app.",
+        "Al abrir el turno filtra por 3-Esperando pago y Reclamo. Al cerrar, verifica que no quede ningún chat sin etiqueta."
+       ],
+       "commonMistakes": [
+        "Poner 3 etiquetas de etapa en el mismo chat.",
+        "Crear una etiqueta nueva para cada cosa hasta que se vuelve un caos.",
+        "No mover a Pagado, y el taller no se entera.",
+        "Etiquetar Pagado sin haber verificado el pago."
+       ],
+       "checklist": [
+        "8 etiquetas de etapa y 3 de tipo",
+        "1 etapa por chat",
+        "Mismos nombres que la hoja de pedidos",
+        "Pagado solo con pago verificado",
+        "0 chats sin etiqueta al cierre"
+       ],
+       "practice": "Etiqueta 15 chats de ejemplo y luego explica a un compañero, en 3 minutos, en qué estado está cada uno.",
+       "passCriteria": "15 de 15 chats con la etapa correcta y coincidencia total con la hoja de pedidos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m1-l7",
+       "title": "Seguridad de la cuenta",
+       "objective": "Evitar que roben o bloqueen la cuenta de ventas, que es la caja de la marca.",
+       "procedure": [
+        "En WhatsApp Business ve a Ajustes > Cuenta > Verificación en dos pasos y crea un PIN de 6 dígitos con un correo de la empresa. El PIN lo guarda el dueño.",
+        "Nunca compartas el código de 6 dígitos que llega por SMS o llamada, aunque te lo pida «un cliente», «un compañero» o «soporte de WhatsApp». Es la forma más común de robar cuentas.",
+        "Cada semana revisa Dispositivos vinculados y cierra los que no reconozcas.",
+        "Activa la autenticación en dos pasos en Instagram, Facebook y TikTok, y entra siempre con tu propio usuario.",
+        "El celular de ventas tiene bloqueo de pantalla, solo apps de la tienda oficial y no se presta.",
+        "No abras enlaces que piden «verificar la cuenta» o «actualizar datos». Meta y WhatsApp no piden claves por chat.",
+        "Si pierdes el celular o sospechas un robo de cuenta, avisa al dueño en ese momento para recuperar la cuenta y avisar a los clientes."
+       ],
+       "commonMistakes": [
+        "Dar el código de verificación a alguien que dice haberlo enviado por error.",
+        "Compartir la contraseña de Instagram por WhatsApp.",
+        "No revisar los dispositivos vinculados.",
+        "Callar la pérdida del celular por miedo."
+       ],
+       "checklist": [
+        "Verificación en dos pasos en WhatsApp",
+        "Autenticación en dos pasos en Instagram, Facebook y TikTok",
+        "Dispositivos vinculados revisados",
+        "Celular con bloqueo",
+        "Protocolo de pérdida conocido"
+       ],
+       "practice": "Revisa con el dueño la seguridad de las 4 cuentas y responde 3 mensajes trampa simulados: código «enviado por error», enlace de «verificación» y «soporte» que pide tu PIN.",
+       "passCriteria": "Las 4 cuentas con verificación en dos pasos, 0 dispositivos desconocidos y los 3 mensajes trampa detectados.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "atc-p-m2",
+     "slug": "atc-p-m2",
+     "title": "Primer contacto",
+     "summary": "Cómo contestar el primer mensaje rápido y con el tono de la marca, identificando de qué video llegó el cliente.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=mLEU4Xingus",
+       "title": "Vende mucho más sólo con una mayor velocidad de respuesta.",
+       "channel": "Allen Hernández",
+       "language": "es",
+       "why": "Video corto que explica por qué contestar rápido el primer mensaje sube las ventas (la idea de la regla de los 5 minutos)."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=TcMMOx9_3JE",
+       "title": "Diez claves de atención al cliente a través de WhatsApp Business | Esther Checa",
+       "channel": "Vodafone Empresas",
+       "language": "es",
+       "why": "Da buenas prácticas de tono, cortesía y orden para atender por WhatsApp Business."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=XI_6Yb6RE6E",
+       "title": "Cómo crear el mensaje de bienvenida perfecto en WhatsApp: 10 ejemplos listos para usar | GUÍA 2026",
+       "channel": "Leadsales - CRM para WhatsApp",
+       "language": "es",
+       "why": "Trae 10 ejemplos de bienvenida para adaptar al tono de la marca y preguntar de qué video llegó el cliente."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-p-m2-l1",
+       "title": "Responder en 5 minutos",
+       "objective": "Dar la primera respuesta humana en 5 minutos o menos dentro del horario, porque el interés del cliente cae muy rápido.",
+       "procedure": [
+        "Meta del equipo: primera respuesta humana en 5 minutos o menos en horario, y nunca más de 15 minutos.",
+        "Mantén activas las notificaciones de WhatsApp Business, Meta Business Suite y TikTok. El celular de ventas no se usa para otra cosa.",
+        "Si no puedes resolver en el momento (por ejemplo, porque debes consultar stock al taller), envía un acuse personalizado: «¡Hola, Carla! 👋 Reviso si tenemos la M en guinda y te confirmo en 10 min».",
+        "Cumple el tiempo que prometiste.",
+        "Si llegan varios chats a la vez, atiende en este orden: pagos, preguntas de compra con fecha, consultas generales.",
+        "Anota la hora de llegada y la de respuesta de 10 chats al día. Al final de la semana ordénalos de menor a mayor y toma el del medio: esa es tu mediana."
+       ],
+       "commonMistakes": [
+        "Creer que el mensaje automático de bienvenida cuenta como respuesta.",
+        "Responder rápido pero con un «¿?» o un «info?».",
+        "Prometer 10 minutos y volver a las 2 horas.",
+        "Atender por orden de llegada sin mirar la urgencia."
+       ],
+       "checklist": [
+        "Notificaciones activas en los 3 canales",
+        "Acuse personalizado si vas a demorar",
+        "Tiempo prometido cumplido",
+        "Muestra de 10 tiempos al día anotada",
+        "Mediana semanal calculada"
+       ],
+       "practice": "Durante una semana, registra 10 tiempos de respuesta al día y calcula tu mediana.",
+       "passCriteria": "Mediana semanal de 5 minutos o menos y ningún chat en horario que pase de 15 minutos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m2-l2",
+       "title": "Saludo que vende",
+       "objective": "Abrir la conversación con un saludo de una línea que diga quién eres y haga una pregunta que avance la venta.",
+       "procedure": [
+        "Usa el nombre del cliente si aparece en el perfil.",
+        "Preséntate con tu nombre y el de la marca.",
+        "Haz UNA sola pregunta útil: para quién es o para cuándo.",
+        "Con Amor: «¡Hola, [nombre]! 👋 Soy Ana de Con Amor 💝 ¿El regalo es para alguien especial? Cuéntame para quién y para qué fecha y te paso opciones con precio».",
+        "Servicio (centro estético): «¡Hola, [nombre]! Soy Luis de Piel Sana ✨ ¿Buscas limpieza facial o tratamiento de manchas? Te cuento precios y horarios libres».",
+        "Restaurante: «¡Hola! Bienvenido a La Cevichería de Pepe 🐟 ¿Es para delivery o para reservar mesa?».",
+        "Si el cliente respondió a un video o historia, menciónalo: «¡Vi que te gustó la taza del video! 😍»."
+       ],
+       "commonMistakes": [
+        "Mandar un párrafo corporativo largo.",
+        "Escribir «Buenas, ¿en qué le puedo ayudar?» sin dar dirección.",
+        "Mandar el precio y el catálogo completo sin preguntar nada.",
+        "Hacer varias preguntas juntas."
+       ],
+       "checklist": [
+        "1 o 2 líneas",
+        "Nombre del cliente",
+        "Tu nombre y la marca",
+        "Una sola pregunta",
+        "Referencia al video si aplica"
+       ],
+       "practice": "Escribe 3 saludos (Con Amor, servicio, restaurante) y pruébalos en role-play con 3 compañeros.",
+       "passCriteria": "En los 3 role-plays, el «cliente» responde tu pregunta en su primer mensaje.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m2-l3",
+       "title": "Tono de marca",
+       "objective": "Escribir como habla la marca (cálida, clara y respetuosa) y adaptarte al cliente de Lima o de la sierra.",
+       "procedure": [
+        "Usa el mismo trato que el cliente: si te dice «usted», responde de usted; si tutea, tutea. Con personas mayores o de provincia, empieza de usted.",
+        "Escribe frases cortas, máximo 3 o 4 líneas por mensaje. Si hace falta, divide en dos mensajes.",
+        "Usa como máximo 1 o 2 emojis por mensaje, de la paleta de la marca (💝😊🙌📦).",
+        "No uses MAYÚSCULAS, abreviaturas («xq», «q») ni jerga que el cliente no usó.",
+        "Si el cliente manda audio, escúchalo completo (o usa la transcripción de WhatsApp si está disponible). Responde con audio solo si él lo prefiere, de 30 segundos como máximo, y luego confirma por escrito montos, fechas y datos.",
+        "Firma con tu nombre los mensajes importantes (confirmación de pedido, reclamo).",
+        "Frases prohibidas: «no se puede», «es política de la empresa», «ya le dije». En su lugar, di lo que SÍ se puede hacer."
+       ],
+       "commonMistakes": [
+        "Tutear a una señora que escribe muy formal.",
+        "Mandar audios largos con precios que después nadie encuentra.",
+        "Usar demasiados emojis.",
+        "Usar el tono de TikTok para responder un reclamo."
+       ],
+       "checklist": [
+        "Mismo trato que el cliente",
+        "4 líneas o menos",
+        "2 emojis o menos",
+        "Sin abreviaturas",
+        "Datos confirmados por escrito",
+        "Sin frases prohibidas"
+       ],
+       "practice": "Reescribe en el tono de la marca 5 respuestas mal escritas, reales o simuladas.",
+       "passCriteria": "Coordinación aprueba las 5 reescrituras sin cambios de fondo.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m2-l4",
+       "title": "¿De qué video vienes?",
+       "objective": "Registrar en cada lead el canal y el video que lo trajo, para saber qué contenido vende de verdad.",
+       "procedure": [
+        "Si el mensaje responde a un Reel o historia, o trae la palabra clave del CTA (ej. «TAZA»), el origen está claro: anótalo.",
+        "Si no está claro, pregunta de forma natural después de ayudar: «Por cierto, ¿en qué video nos viste? Así te paso la misma promo 😉».",
+        "Anota en la ficha el canal (IG, TikTok, FB o WA), el video (título o código del contenido en Intia) y la fecha.",
+        "Si el cliente no recuerda, pídele que describa el video («el de la cámara escondida con la mamá») y búscalo en la lista de publicados de Intia.",
+        "Si no hay forma de saberlo, anota «Sin identificar». Nunca lo inventes."
+       ],
+       "commonMistakes": [
+        "No preguntar nunca.",
+        "Anotar «Instagram» sin decir qué video.",
+        "Preguntar el origen antes de ayudar, que suena a encuesta.",
+        "Inventar el origen para llenar el campo."
+       ],
+       "checklist": [
+        "Canal anotado",
+        "Video o código anotado",
+        "Pregunta hecha después de ayudar",
+        "«Sin identificar» cuando corresponde"
+       ],
+       "practice": "Registra durante 3 días el origen de todos tus leads.",
+       "passCriteria": "80 % o más de los leads del día con su video de origen identificado.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m2-l5",
+       "title": "Mensaje de ausencia",
+       "objective": "Que quien escribe fuera de horario sepa cuándo le responderán y deje los datos necesarios para avanzar.",
+       "procedure": [
+        "Ve a WhatsApp Business > Herramientas para la empresa > Mensaje de ausencia > «Fuera del horario comercial».",
+        "Con Amor: «¡Hola! 🌙 Ahora estamos fuera de horario (lun-sáb 9:00-19:00). Déjanos 1) qué producto te interesa, 2) tu ciudad y 3) para qué fecha lo necesitas, y a primera hora te respondemos con precio 💝».",
+        "Restaurante: «Cocina cerrada por hoy 🐟 Mañana abrimos a las 11:00. Si quieres reservar, déjanos fecha, hora y número de personas».",
+        "Configura un mensaje de ausencia equivalente para Instagram y Facebook en Meta Business Suite.",
+        "En la apertura del turno, confirma que ya no esté activo y responde primero estos chats usando la información que dejaron."
+       ],
+       "commonMistakes": [
+        "Poner un horario que no coincide con el real.",
+        "Dejar el mensaje de ausencia activo en horario de trabajo.",
+        "No pedir datos y tener que empezar de cero al día siguiente.",
+        "Prometer «te respondemos en minutos» a la medianoche."
+       ],
+       "checklist": [
+        "Horario correcto",
+        "Pide producto, ciudad y fecha",
+        "Igual en WhatsApp, Instagram y Facebook",
+        "Se desactiva en horario"
+       ],
+       "practice": "Configura el mensaje y pruébalo escribiendo desde otro número fuera de horario.",
+       "passCriteria": "El mensaje llega solo fuera de horario, y con los datos que pide se puede cotizar sin volver a preguntar.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "atc-p-m3",
+     "slug": "atc-p-m3",
+     "title": "Catálogo y precios",
+     "summary": "Dominar los productos, los precios totales, las tallas y el material visual para responder con seguridad y generar confianza.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=FHtXFIvW0Zw",
+       "title": "Cómo Crear un Catálogo de Productos en WhatsApp Business",
+       "channel": "Cyberclick • Marketing Digital",
+       "language": "es",
+       "why": "Tutorial para armar el catálogo con fotos, precios y descripciones y así compartir los productos en el chat."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=taOo68zaK9c",
+       "title": "Características / Ventajas / Beneficios I Técnicas de Venta",
+       "channel": "García-Lomas & Allen-Perkins",
+       "language": "es",
+       "why": "Enseña a pasar de las características (algodón afranelado, estampado) a los beneficios que compra el cliente."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=bAymnVdfn_8",
+       "title": "¿Qué HACER? Cuando los CLIENTES Preguntan ¿CUAL ES EL PRECIO? | ¿Que respondes? | Patricio Armas",
+       "channel": "Patricio Armas",
+       "language": "es",
+       "why": "Explica cómo responder al '¿cuánto cuesta?' dando valor y contexto para no perder la venta."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-p-m3-l1",
+       "title": "Ficha de producto",
+       "objective": "Conocer al detalle los productos estrella para responder sin consultar a nadie y sin prometer de más.",
+       "procedure": [
+        "Pide a coordinación o producción la ficha de cada producto: material, tallas, colores, técnica de personalización, tiempo de producción, cuidados y precio vigente.",
+        "Toca y usa el producto. La polera de algodón afranelado es gruesa y abriga, que es el argumento clave para la sierra. Mira cómo queda el estampado después de lavarla.",
+        "Confirma la composición en la etiqueta: di solo lo que la etiqueta dice (no «100 % algodón» si no lo dice).",
+        "Resume cada producto en 3 beneficios con palabras del cliente: «abriga en Huancayo», «el nombre no se borra al lavar», «llega en caja de regalo».",
+        "Memoriza los 5 productos más vendidos con su precio y tiempo de producción.",
+        "Anota lo que el producto NO hace (ej. una taza con detalle metálico no va al microondas), para no prometer de más.",
+        "Servicio: duración, qué incluye y contraindicaciones. Restaurante: platos con alérgenos y tiempos de cocina."
+       ],
+       "commonMistakes": [
+        "Decir «es 100 % algodón» sin haberlo confirmado.",
+        "Prometer tiempos del taller sin preguntar.",
+        "Describir con palabras técnicas que el cliente no entiende.",
+        "No saber qué no hace el producto."
+       ],
+       "checklist": [
+        "Fichas de todos los productos activos",
+        "Composición confirmada",
+        "3 beneficios por producto",
+        "Top 5 memorizado",
+        "Limitaciones anotadas"
+       ],
+       "practice": "Examen oral: coordinación te hace 15 preguntas rápidas sobre los productos.",
+       "passCriteria": "14 de 15 respuestas correctas sin consultar.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m3-l2",
+       "title": "Dar el precio bien",
+       "objective": "Dar el precio total sin rodeos, con lo que incluye y una pregunta que avance la venta.",
+       "procedure": [
+        "Da el precio en el primer mensaje en que lo piden. Nunca respondas «precio por interno» a quien ya te escribe por interno.",
+        "El precio se da en soles, con impuestos incluidos y sin letras pequeñas: lo que dices es lo que se cobra.",
+        "Estructura: precio, qué incluye y pregunta. Ej. (precio de ejemplo): «La polera afranelada personalizada con nombre o foto está S/ 59 e incluye empaque de regalo 🎁 ¿Para qué fecha la necesitas?».",
+        "Di el costo de envío o su rango desde el inicio: «+ S/ 12 de envío en Lima» o «a provincia por Shalom desde S/ 15 aprox., según la ciudad».",
+        "Si el cliente llegó por un video con promo, usa exactamente lo que dice la ficha de oferta: precio, bonus y vigencia.",
+        "Servicio: precio por sesión y por paquete. Restaurante: precio del plato y costo del delivery según la zona.",
+        "Si preguntan por mayor, pide la cantidad antes de dar precio (ver la lección de pedidos corporativos)."
+       ],
+       "commonMistakes": [
+        "Dar el precio sin el envío y sorprender al final.",
+        "Mandar solo «S/ 59» sin nada más.",
+        "Inventar descuentos.",
+        "Dar un precio distinto al del video."
+       ],
+       "checklist": [
+        "Precio total en soles",
+        "Qué incluye",
+        "Envío informado",
+        "Pregunta al final",
+        "Coincide con la ficha de oferta"
+       ],
+       "practice": "Responde 10 consultas de precio: 5 de Con Amor, 3 de un servicio y 2 de un restaurante.",
+       "passCriteria": "10 de 10 con el precio total correcto y una pregunta para avanzar.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m3-l3",
+       "title": "Guía de tallas",
+       "objective": "Evitar cambios por talla ayudando al cliente a elegir bien, sobre todo cuando es un regalo.",
+       "procedure": [
+        "Ten la tabla de medidas real de cada modelo en una imagen lista para enviar: ancho de axila a axila y largo, en cm.",
+        "Pide al cliente que mida una polera que le quede bien, extendida sobre la cama: de axila a axila y el largo desde el hombro.",
+        "Si es un regalo sorpresa, pregunta la talla habitual, la estatura y la contextura. Si hay duda, sugiere la talla mayor (confírmalo con producción).",
+        "Confirma por escrito: «Entonces talla L, color guinda ✅».",
+        "Anota la talla en la ficha de pedido y repítela en el resumen final."
+       ],
+       "commonMistakes": [
+        "Decir «es talla estándar».",
+        "Confiar en la talla que el cliente «cree» que usa.",
+        "No preguntar a producción si la prenda encoge con secadora.",
+        "Olvidar confirmar el color."
+       ],
+       "checklist": [
+        "Tabla en imagen",
+        "Medida del cliente pedida",
+        "Talla y color confirmados por escrito",
+        "Anotado en la ficha"
+       ],
+       "practice": "Atiende 3 casos: un cliente que compra para sí, un regalo para la mamá y un regalo sorpresa para el enamorado.",
+       "passCriteria": "Los 3 casos cierran con una talla sustentada en una medida o en un criterio documentado.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m3-l4",
+       "title": "Catálogo y fotos",
+       "objective": "Enviar el material visual justo para que el cliente elija sin saturarlo.",
+       "procedure": [
+        "Mantén actualizado el catálogo de WhatsApp Business: cada producto con título único, al menos una foto, precio y una descripción corta.",
+        "Agrupa los productos en colecciones (Día de la Madre, Parejas, Tazas).",
+        "Envía el enlace de la colección que corresponde, no el catálogo completo.",
+        "Manda como máximo 3 o 4 imágenes por mensaje: primero fotos reales, después el mockup del diseño.",
+        "Acompaña cada envío con una pregunta: «¿Cuál te gustó más, la 1 o la 2?».",
+        "Si un producto se agota, ocúltalo del catálogo ese mismo día."
+       ],
+       "commonMistakes": [
+        "Mandar 20 fotos seguidas.",
+        "Usar fotos de internet o de otra marca.",
+        "Tener el catálogo con precios viejos.",
+        "Enviar fotos sin ninguna pregunta."
+       ],
+       "checklist": [
+        "Catálogo actualizado",
+        "Colecciones creadas",
+        "4 fotos o menos por envío",
+        "Fotos reales",
+        "Pregunta al final",
+        "Agotados ocultos"
+       ],
+       "practice": "Arma 3 colecciones del catálogo de Con Amor y envía una a un compañero con la pregunta de elección.",
+       "passCriteria": "Catálogo revisado sin errores de precio y con colecciones que se pueden enviar por enlace.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m3-l5",
+       "title": "Video real del producto",
+       "objective": "Grabar con el celular un video vertical de 15 a 20 segundos del producto real, para dar confianza y mostrar la textura y la personalización.",
+       "procedure": [
+        "Ponte junto a una ventana con luz indirecta (sin sol directo) que llegue de costado, y apaga la luz amarilla del techo para no mezclar colores.",
+        "Despeja el fondo: una mesa o tela clara, sin objetos ni pedidos de otros clientes.",
+        "Pon una cartulina blanca al lado opuesto de la ventana para rellenar las sombras.",
+        "Graba en vertical con la cámara principal (1x), en 1080p a 30 fps, sin zoom digital.",
+        "Mantén presionado el dedo sobre el producto en la pantalla para fijar el enfoque y la exposición.",
+        "Sigue 5 momentos: polera desplegada, detalle del interior afranelado, estampado estirado, taza girando con el nombre y etiqueta de talla.",
+        "Envíalo en calidad HD con un texto: «Así es la polera real 👇 ¿Te separo la M en guinda?»."
+       ],
+       "commonMistakes": [
+        "Grabar en horizontal.",
+        "Ponerse de espaldas a la ventana (contraluz).",
+        "Mezclar luz de ventana con el foco amarillo del techo.",
+        "Moverse rápido y desenfocar.",
+        "Mostrar el pedido de otro cliente con su nombre o foto a la vista.",
+        "Hacer un video de más de 20 segundos."
+       ],
+       "checklist": [
+        "Vertical",
+        "Luz lateral de ventana, techo apagado",
+        "Enfoque y exposición fijos",
+        "20 segundos o menos",
+        "Sin datos de otros clientes",
+        "Enviado en HD con pregunta"
+       ],
+       "practice": "Graba el video de la polera y de la taza y compártelo con coordinación.",
+       "passCriteria": "Coordinación aprueba el video como enviable (nítido, bien iluminado, colores reales, 20 segundos o menos) al primer o segundo intento.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Mesa de trabajo junto a una ventana en el local o taller de Con Amor. Fondo de tela o pared clara y lisa. Sobre la mesa: una polera de algodón afranelado guinda con foto personalizada, doblada; una taza blanca con el nombre «Mamá Rosa»; una caja de regalo abierta. A la derecha del producto, una cartulina blanca parada que hace de rebotador. No hay pedidos de otros clientes a la vista.",
+        "subjects": "Del ATC se ven solo las manos y los antebrazos, sin rostro. La mano derecha sostiene el celular en vertical y la izquierda manipula el producto, en este orden: 1) toma la polera por los hombros y la despliega frente a cámara con el brazo estirado para que se vea completa; 2) voltea el borde inferior para mostrar el interior afranelado y lo frota con el pulgar; 3) estira unos 5 cm la zona del estampado y la suelta para mostrar que no se cuartea; 4) deja la polera, toma la taza por el asa y la gira lentamente 180° mostrando el nombre y el diseño; 5) señala con el índice la etiqueta de talla del cuello.",
+        "camera": "Vertical 9:16 con la cámara principal del celular (1x, unos 24-26 mm equivalentes), 1080p a 30 fps, sin zoom digital. Plano general a la altura del pecho, a unos 50-60 cm del producto, con un ángulo ligeramente picado (15-20°). Para los detalles, el celular se acerca físicamente a unos 20 cm (primer plano de la textura); si desenfoca, se aleja un poco en vez de usar zoom. Movimiento lento y continuo, con enfoque y exposición bloqueados (mantener presionado sobre el producto). Duración total de 15 a 18 segundos.",
+        "lighting": "Luz natural de ventana indirecta (sin sol directo), lateral a unos 45° del producto, de temperatura aproximada 5 500-6 500 K. Luz del techo apagada (la bombilla cálida, de unos 2 700-3 000 K, teñiría de amarillo la polera). Cartulina blanca al lado opuesto, a 30-50 cm, que rellena las sombras. Sin flash y sin contraluz: la ventana nunca queda detrás del producto.",
+        "beats": [
+         "0-2 s: polera desplegada completa frente a cámara. Texto que acompaña: «Así es tu polera real 👇».",
+         "2-6 s: acercamiento a unos 20 cm del interior afranelado, con el pulgar frotando la tela para mostrar que es gruesa y suave (argumento: abriga en la sierra).",
+         "6-9 s: se estira el estampado y se suelta; se ve que no se cuartea.",
+         "9-14 s: la taza gira 180° con el nombre visible. Se inclina un poco para que el reflejo de la ventana no queme el diseño.",
+         "14-17 s: el índice señala la etiqueta de talla. Corte.",
+         "Envío: el video va en calidad HD con la pregunta de cierre «¿Te separo la L en guinda?»."
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "id": "atc-p-m4",
+     "slug": "atc-p-m4",
+     "title": "Toma de pedido",
+     "summary": "Del «lo quiero» al pedido pagado, con comprobante y derivado al taller sin errores: datos, personalización, envío, cobro y verificación.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=E55xXZtcxWA",
+       "title": "Gestión de Pedidos en WhatsApp: Todo lo que debes saber [Tutorial 2026] 🏆",
+       "channel": "Leadsales - CRM para WhatsApp",
+       "language": "es",
+       "why": "Muestra cómo tomar y ordenar pedidos por WhatsApp para que ninguno se pierda antes de pasarlo al taller."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=A6tGijcGuU8",
+       "title": "Recomendaciones para realizar tus envíos",
+       "channel": "Shalom Envíos",
+       "language": "es",
+       "why": "Canal oficial de Shalom con los datos y cuidados que se necesitan para enviar a provincia sin errores."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=d3PXFBzpoUA",
+       "title": "¡Tenga cuidado! Usan Yape y Plin 'fake' para estafar a comerciantes",
+       "channel": "ATV Noticias",
+       "language": "es",
+       "why": "Reportaje sobre capturas falsas de Yape y Plin. Refuerza la regla de confirmar el pago en la app antes de derivar el pedido."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-p-m4-l1",
+       "title": "Ficha de pedido",
+       "objective": "Recoger en un solo paso todos los datos del pedido y obtener la confirmación escrita del cliente antes de cobrar.",
+       "procedure": [
+        "Envía la ficha en un solo mensaje: «Para separar tu pedido necesito: 1) Nombre y apellido, 2) DNI, 3) Celular, 4) Producto, talla y color, 5) Personalización (nombre, foto o frase), 6) Fecha en que lo necesitas, 7) Distrito o ciudad, con dirección o agencia, 8) ¿Boleta o factura (RUC)?».",
+        "Si otra persona va a recibir o recoger el regalo, pide también su nombre, DNI y celular, y si va con tarjeta o dedicatoria.",
+        "Pasa lo recibido a la hoja de pedidos y agrega el canal y el video de origen.",
+        "Arma un resumen con el precio total: producto, personalización y envío.",
+        "Pide confirmación explícita: «¿Todo correcto? Respóndeme CONFIRMO ✅».",
+        "Pasa al cobro solo cuando tengas el CONFIRMO.",
+        "Servicio: nombre, servicio, fecha, hora y adelanto. Restaurante: pedido, dirección con referencia, hora y forma de pago."
+       ],
+       "commonMistakes": [
+        "Pedir los datos en 8 mensajes separados.",
+        "No pedir el DNI de quien recoge, y luego el courier no entrega.",
+        "No sumar el envío al total.",
+        "Avanzar sin confirmación escrita."
+       ],
+       "checklist": [
+        "8 datos completos",
+        "Datos de quien recibe si es otra persona",
+        "Hoja de pedidos llenada",
+        "Resumen con total",
+        "CONFIRMO recibido",
+        "Origen anotado"
+       ],
+       "practice": "Toma 5 pedidos simulados de clientes que mandan datos incompletos o desordenados.",
+       "passCriteria": "5 de 5 fichas completas y resúmenes sin errores de monto.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m4-l2",
+       "title": "Datos de personalización",
+       "objective": "Recibir correctos los textos y las imágenes de personalización, y conseguir la aprobación escrita antes de producir para evitar reclamos.",
+       "procedure": [
+        "Pide el texto por escrito, no por audio, y repítelo letra por letra: «Rosa María ✅, con tilde en María».",
+        "Revisa ñ, tildes, mayúsculas y fechas.",
+        "Pide la foto original enviada «como documento», para que no pierda calidad. Si está pixelada, avisa y pide otra.",
+        "Envía el mockup que hizo el equipo de diseño y pide aprobación: «¿Apruebas el diseño tal cual? Responde APROBADO».",
+        "Guarda la captura de la aprobación en la carpeta del pedido.",
+        "Sin APROBADO no se produce. Si el cliente pide cambios, se hace un mockup nuevo."
+       ],
+       "commonMistakes": [
+        "Copiar el nombre desde un audio.",
+        "Aceptar capturas de pantalla pixeladas.",
+        "Mandar a producir sin aprobación.",
+        "Cambiar algo «para mejorar» sin avisar al cliente."
+       ],
+       "checklist": [
+        "Texto escrito y repetido",
+        "Tildes y ñ revisadas",
+        "Foto en calidad original",
+        "Mockup enviado",
+        "APROBADO guardado"
+       ],
+       "practice": "Procesa 5 personalizaciones con errores puestos a propósito (foto borrosa, nombre ambiguo, fecha mal escrita).",
+       "passCriteria": "Detectas los 5 errores antes de pedir el mockup.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m4-l8",
+       "title": "Diseños no permitidos",
+       "objective": "Reconocer los pedidos de personalización que la marca no acepta y ofrecer una alternativa antes de cobrar.",
+       "procedure": [
+        "Pide al dueño la lista escrita de lo que la marca no personaliza. Suele incluir logos de marcas o clubes, personajes de películas o dibujos animados, fotos de artistas y contenido ofensivo, sexual o discriminatorio.",
+        "Recuerda por qué: estampar marcas o personajes sin licencia expone a la marca a denuncias por propiedad intelectual ante Indecopi y a que bajen sus publicaciones.",
+        "Revisa cada pedido contra esa lista antes de pedir el mockup.",
+        "Si el pedido no se puede, dilo sin juzgar y con alternativa: «Ese personaje tiene derechos de autor y no podemos estamparlo 🙏 ¿Te hago un diseño con su nombre y sus colores favoritos?».",
+        "Si la foto es de una persona ajena a la familia del cliente, confirma que el regalo es para esa persona.",
+        "Si hay duda, escala a coordinación antes de cobrar y anota en la ficha la alternativa aceptada."
+       ],
+       "commonMistakes": [
+        "Cobrar y después avisar que no se puede.",
+        "Decir que no sin ofrecer alternativa.",
+        "Aceptar «porque otras tiendas sí lo hacen».",
+        "Decidir un caso dudoso sin escalar."
+       ],
+       "checklist": [
+        "Lista del dueño a mano",
+        "Pedido revisado antes del mockup",
+        "Alternativa ofrecida",
+        "Dudas escaladas",
+        "Alternativa anotada en la ficha"
+       ],
+       "practice": "Revisa 8 pedidos simulados: 3 con personajes o logos, 1 con contenido ofensivo y 4 válidos.",
+       "passCriteria": "8 de 8 bien clasificados y una alternativa aceptable para cada rechazo.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m4-l3",
+       "title": "Envíos Lima y provincia",
+       "objective": "Ofrecer la modalidad de envío correcta y dar una fecha estimada realista para Lima y para la sierra.",
+       "procedure": [
+        "Pregunta primero la ciudad y el distrito.",
+        "Lima: courier o motorizado a domicilio. Informa el costo y el día aproximado de entrega.",
+        "Provincia o sierra: ofrece envío a agencia (ej. Shalom, fuerte en la sierra: se recoge en agencia, unos 3-7 días hábiles) o a domicilio en ciudades grandes (ej. Olva, unos 2-5 días hábiles). Las tarifas y plazos son referenciales: confirma siempre los vigentes.",
+        "Pide el nombre completo y el DNI de quien va a recoger, y la agencia exacta de destino.",
+        "Suma el tiempo de producción y el de envío en días hábiles, cuenta los feriados y compara con la fecha que necesita el cliente.",
+        "Plantilla: «Para Huancayo lo enviamos por Shalom 📦 Producción 2 días + envío 3-5 días hábiles aprox. Recoges en la agencia con tu DNI. ¿A nombre de quién lo mandamos?»."
+       ],
+       "commonMistakes": [
+        "Prometer «llega mañana» a provincia.",
+        "No pedir el DNI de quien recoge.",
+        "Olvidar los feriados.",
+        "No sumar el tiempo de producción."
+       ],
+       "checklist": [
+        "Ciudad y distrito",
+        "Modalidad elegida",
+        "Costo informado",
+        "Nombre y DNI de quien recoge",
+        "Agencia exacta",
+        "Fecha estimada = producción + envío"
+       ],
+       "practice": "Cotiza envíos a Lima (SJL), Huancayo, Cusco, Ayacucho y Arequipa.",
+       "passCriteria": "5 de 5 con modalidad, costo y fecha estimada coherentes.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m4-l4",
+       "title": "Cobrar el pedido",
+       "objective": "Cobrar de forma clara y segura, solo por los medios oficiales de la marca.",
+       "procedure": [
+        "Usa la respuesta rápida /pago con el número o QR de Yape y Plin de la empresa, el nombre del titular tal como aparece en la app y la cuenta bancaria con CCI para transferencias.",
+        "Si la marca usa link de pago con tarjeta (Izipay, Niubiz, Mercado Pago u otro), envía solo el link generado desde la cuenta oficial. El cliente pone su tarjeta en esa página, nunca en el chat.",
+        "Indica el monto total exacto y el concepto: «S/ 71 (polera S/ 59 + envío en Lima S/ 12)».",
+        "Pide la constancia y el nombre de quien paga, que puede ser otra persona.",
+        "Si la política es cobrar un adelanto (ej. 50 % en personalizados), dilo antes y anota el saldo y cuándo se paga.",
+        "Si el cliente no puede yapear todo por el límite diario de su app, ofrece transferencia o dividir el pago, y anota ambos abonos.",
+        "Nunca pidas ni recibas por chat números de tarjeta, claves o códigos de verificación del cliente."
+       ],
+       "commonMistakes": [
+        "Pasar el Yape personal de un trabajador.",
+        "Mandar un link de pago de una cuenta personal.",
+        "Dar un monto «aproximado».",
+        "No aclarar si es adelanto o pago total.",
+        "Aceptar un «te yapeo mañana» y mandar a producir."
+       ],
+       "checklist": [
+        "Datos de pago oficiales",
+        "Monto exacto y concepto",
+        "Adelanto o saldo claro",
+        "Constancia y nombre del pagador pedidos",
+        "Sin datos de tarjeta en el chat"
+       ],
+       "practice": "Simula 4 cobros: pago total por Yape, adelanto por transferencia, pago hecho por un tercero y pago con link.",
+       "passCriteria": "Los 4 con monto, concepto y registro correctos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m4-l5",
+       "title": "Verificar el pago",
+       "objective": "Confirmar que el dinero llegó de verdad antes de producir o despachar, y confirmar el pedido al cliente con número.",
+       "procedure": [
+        "Abre TU app de Yape, Plin o el banco (no la captura del cliente) y busca el movimiento.",
+        "Compara el monto, el nombre del pagador y la hora con la constancia que te enviaron.",
+        "En Yape, compara el código de seguridad de 3 dígitos de la constancia del cliente con el que ves en el detalle del movimiento en tu app. Si no coincide o no aparece, no hay pago.",
+        "Solo si aparece en tus movimientos, etiqueta 4-Pagado y confirma con número de pedido: «¡Pago recibido, Rocío! ✅ Tu pedido #123 está confirmado: polera afranelada L guinda con «Rosa María». Entrega estimada: jueves 12 en Shalom Huancayo. Te aviso cuando salga 📦».",
+        "Si no aparece: «Aún no me figura el pago, ¿me confirmas desde qué número o a nombre de quién se hizo?». Nunca acuses.",
+        "Las transferencias interbancarias diferidas pueden demorar hasta el siguiente día hábil: espera el abono antes de producir. Los yapeos no se revierten, así que tampoco devuelvas «excesos» que no ves en tu app."
+       ],
+       "commonMistakes": [
+        "Aceptar una captura como prueba.",
+        "Producir porque el cliente «se veía confiable».",
+        "Revisar solo el monto y no el nombre.",
+        "Reclamar con tono de acusación.",
+        "Confirmar el pedido sin número ni fecha estimada."
+       ],
+       "checklist": [
+        "Movimiento visto en la app propia",
+        "Monto, nombre y hora coinciden",
+        "Código de seguridad comparado (Yape)",
+        "Pagado solo después de verificar",
+        "Confirmación con número de pedido y fecha estimada"
+       ],
+       "practice": "Coordinación te da 6 capturas (2 falsas, 1 de otro monto y 3 reales) junto con tus movimientos. Clasifícalas y escribe la confirmación de las reales.",
+       "passCriteria": "6 de 6 bien clasificadas y 3 confirmaciones con número de pedido y fecha.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m4-l7",
+       "title": "Boleta o factura",
+       "objective": "Emitir el comprobante correcto de cada venta pagada, con los datos que exige SUNAT.",
+       "procedure": [
+        "Revisa en la ficha si el cliente pidió boleta o factura.",
+        "Boleta: se emite en toda venta de más de S/ 5. Si el total pasa de S/ 700, consigna el nombre y el DNI del cliente.",
+        "Factura: solo si el cliente la pide con RUC y razón social, y si la empresa puede emitirla (en el Nuevo RUS solo se emiten boletas: confírmalo con el dueño). Verifica en la Consulta RUC de SUNAT que el RUC esté activo y habido.",
+        "Emítela en el sistema de facturación por el mismo total que cobraste.",
+        "Envía el PDF al cliente por chat o correo y anota el número del comprobante en la hoja.",
+        "Si te equivocas, no la borres ni emitas otra encima: avisa a quien lleva la contabilidad para que emita la nota de crédito."
+       ],
+       "commonMistakes": [
+        "No emitir el comprobante.",
+        "Emitir una factura sin validar el RUC.",
+        "Poner un monto distinto al cobrado.",
+        "Corregir un error emitiendo otro comprobante sin nota de crédito."
+       ],
+       "checklist": [
+        "Tipo de comprobante confirmado",
+        "DNI si el total pasa de S/ 700",
+        "RUC validado en SUNAT (factura)",
+        "Monto igual al cobrado",
+        "PDF enviado",
+        "Número anotado en la hoja"
+       ],
+       "practice": "Emite 5 comprobantes simulados: 3 boletas (una de más de S/ 700), 1 factura y 1 corrección de error.",
+       "passCriteria": "5 de 5 sin errores de datos ni de monto, y la corrección hecha con el procedimiento de nota de crédito.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m4-l6",
+       "title": "Orden al taller",
+       "objective": "Pasar al taller una orden que se pueda producir sin hacer ninguna pregunta.",
+       "procedure": [
+        "Arma la orden con: número de pedido, producto, talla, color, texto exacto copiado del chat (no lo vuelvas a escribir), mockup APROBADO adjunto, fecha de despacho y modalidad de envío.",
+        "Agrega las notas especiales: tarjeta con dedicatoria, empaque de regalo, pedido sorpresa.",
+        "Envíala por el canal acordado con el taller (hoja o grupo de producción). No pongas DNI ni teléfono del cliente: el taller no los necesita.",
+        "Pide al taller un «recibido» y confirma la fecha de despacho.",
+        "Cambia la etiqueta a 5-En producción y anota la fecha de despacho en tu hoja para el seguimiento.",
+        "Si el taller detecta un problema (sin stock, foto que no sirve), avisa al cliente ese mismo día con una alternativa."
+       ],
+       "commonMistakes": [
+        "Mandar solo «una polera L con nombre», sin mockup.",
+        "Reescribir el texto y meter un error.",
+        "Pasar datos personales al grupo del taller.",
+        "No anotar la fecha de despacho."
+       ],
+       "checklist": [
+        "Orden completa con mockup",
+        "Texto copiado, no reescrito",
+        "Sin datos personales",
+        "Recibido del taller",
+        "Etiqueta En producción",
+        "Fecha de despacho anotada"
+       ],
+       "practice": "Pasa 3 órdenes simuladas al taller.",
+       "passCriteria": "3 de 3 órdenes que el taller puede producir sin hacer ninguna pregunta.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "atc-p-m5",
+     "slug": "atc-p-m5",
+     "title": "Postventa básica",
+     "summary": "Acompañar al cliente hasta que tiene el producto en la mano, medir su satisfacción y dejar registrada la venta.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=fypXuup_BUc",
+       "title": "Como RASTREAR un ENVIO de SHALOM / Empresa de envíos sobres, encomiendas, paquetería y carga",
+       "channel": "5000 Programas",
+       "language": "es",
+       "why": "Paso a paso para rastrear un envío de Shalom e informar al cliente hasta que recibe el producto."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=VFTYzIC3h7w",
+       "title": "Qué es la ENCUESTA DE SATISFACCIÓN AL CLIENTE [y cómo hacerla]",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Explica cómo armar una encuesta corta de satisfacción para enviar después de la entrega."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=zMtAeMihKHA",
+       "title": "Crea tu Registro de Ventas y Reportes Automáticos en Excel desde CERO (Paso a Paso)",
+       "channel": "Sergio Bazo | Herramientas Digitales",
+       "language": "es",
+       "why": "Enseña a llevar un registro de ventas ordenado, con reportes, para dejar cada venta anotada."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-p-m5-l1",
+       "title": "Aviso de despacho",
+       "objective": "Informar al cliente que su pedido salió, con la guía y las instrucciones de recojo, antes de que él pregunte.",
+       "procedure": [
+        "El día que sale el pedido, envía el número de guía u orden y el nombre de la empresa de envío.",
+        "Explica cómo recoger: agencia, DNI y horario.",
+        "Plantilla: «¡Tu pedido salió hoy! 📦 Shalom, orden N° ____. Llega a la agencia de Huancayo aprox. el jueves. Recoges con tu DNI. Te aviso si hay alguna novedad».",
+        "Cambia la etiqueta a 6-Enviado.",
+        "Si el courier se retrasa, avisa tú antes de que el cliente pregunte.",
+        "Restaurante: «Tu pedido ya salió 🛵, llega en unos 25 min»."
+       ],
+       "commonMistakes": [
+        "No enviar la guía.",
+        "Que el cliente se entere del retraso por su cuenta.",
+        "Mandar una foto de la guía donde se ven datos de otros clientes."
+       ],
+       "checklist": [
+        "Guía enviada",
+        "Instrucciones de recojo",
+        "Etiqueta Enviado",
+        "Retrasos avisados antes de que pregunten"
+       ],
+       "practice": "Envía 3 avisos: Lima a domicilio, Shalom a agencia y un delivery de restaurante.",
+       "passCriteria": "Los 3 avisos son claros y no muestran datos de terceros.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m5-l2",
+       "title": "Confirmar la entrega",
+       "objective": "Confirmar que el producto llegó bien y medir la satisfacción del cliente del 1 al 5.",
+       "procedure": [
+        "Un día después de la fecha estimada, escribe: «¿Ya tienes tu polera? 😊».",
+        "Si no llegó, revisa la guía en el portal del courier y dale al cliente una fecha nueva.",
+        "Si llegó, pregunta la satisfacción: «Del 1 al 5, ¿qué tan feliz quedaste con tu pedido?».",
+        "Si responde 4 o 5, agradece y marca en la hoja «Candidato a testimonio». El permiso se pide con la lección Testimonios con permiso.",
+        "Si responde de 1 a 3, pregunta qué pasó y sigue el procedimiento de reclamos o escala a coordinación el mismo día.",
+        "Cambia la etiqueta a 7-Entregado y anota el puntaje."
+       ],
+       "commonMistakes": [
+        "Pedir la reseña antes de que llegue el producto.",
+        "Publicar la foto del cliente sin permiso.",
+        "Ignorar los puntajes bajos."
+       ],
+       "checklist": [
+        "Mensaje postentrega enviado",
+        "Puntaje de 1 a 5 anotado",
+        "Candidatos a testimonio marcados",
+        "Puntaje bajo atendido o escalado el mismo día",
+        "Etiqueta Entregado"
+       ],
+       "practice": "Haz la postventa a 10 clientes, reales o simulados.",
+       "passCriteria": "10 de 10 con el puntaje registrado y todos los puntajes de 1 a 3 atendidos el mismo día.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-p-m5-l3",
+       "title": "Registro diario",
+       "objective": "Dejar registradas las ventas del día para que el dueño y el analista vean resultados reales por video.",
+       "procedure": [
+        "Registra cada lead nuevo en la hoja apenas lo atiendes (una fila por lead): fecha, canal y video de origen. No los cuentes al final por etiqueta, porque la etiqueta cambia durante el día.",
+        "Cuando alguien paga, completa en su fila producto, monto, ciudad, estado y número de comprobante.",
+        "Al final del día calcula la conversión: pedidos pagados del día entre leads nuevos del día.",
+        "Cuadra el total de ventas con los movimientos de Yape, Plin y el banco.",
+        "Comparte un resumen de 3 líneas en el grupo interno. Ej.: «Hoy: 42 leads, 6 ventas, S/ 480. Top video: Cámara escondida mamá»."
+       ],
+       "commonMistakes": [
+        "Llenar la hoja una vez por semana, de memoria.",
+        "Contar los leads por etiqueta al final del día.",
+        "No separar las ventas por video.",
+        "Contar como venta un pedido sin pago verificado."
+       ],
+       "checklist": [
+        "Una fila por lead",
+        "Pagos completados con comprobante",
+        "Conversión calculada",
+        "Ventas cuadradas con los movimientos",
+        "Resumen enviado"
+       ],
+       "practice": "Registra 5 días seguidos.",
+       "passCriteria": "Hoja de 5 días sin vacíos y cuadrada con los movimientos de Yape, Plin y el banco.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "atc-p-m6",
+     "slug": "atc-p-m6",
+     "title": "Rutina del turno",
+     "summary": "La rutina fija para abrir y cerrar cada turno y la regla de qué se escala, para que nada quede colgado entre días ni entre compañeros.",
+     "videos": [],
+     "lessons": [
+      {
+       "id": "atc-p-m6-l1",
+       "title": "Apertura de turno",
+       "objective": "Empezar cada turno con la misma rutina, atendiendo primero lo urgente y con la oferta del día clara.",
+       "procedure": [
+        "Lee la ficha de oferta vigente y revisa en Intia qué videos están PROGRAMADOS para hoy y a qué hora (CTA, precio, palabra clave).",
+        "Confirma que el mensaje de ausencia se desactivó y que las respuestas rápidas están al día.",
+        "Lee la nota de relevo del turno anterior.",
+        "Responde los mensajes que llegaron fuera de horario en este orden: pagos con captura, reclamos, nuevos leads y seguimientos.",
+        "Verifica en la app de Yape, Plin o el banco los pagos de la noche y etiqueta Pagado solo los que aparecen.",
+        "Revisa en el control de reclamos los que vencen en los próximos 3 días hábiles."
+       ],
+       "commonMistakes": [
+        "Empezar por el último mensaje y no por el más urgente.",
+        "No leer la oferta del día y dar un precio viejo.",
+        "Olvidar la nota de relevo.",
+        "Dejar activo el mensaje de ausencia."
+       ],
+       "checklist": [
+        "Oferta y videos del día revisados",
+        "Ausencia desactivada",
+        "Nota de relevo leída",
+        "Pendientes de la noche respondidos en orden",
+        "Pagos verificados",
+        "Reclamos por vencer revisados"
+       ],
+       "practice": "Haz 3 aperturas seguidas con la checklist impresa y márcala punto por punto.",
+       "passCriteria": "3 aperturas completas en 30 minutos o menos cada una, sin pagos de la noche sin verificar.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m6-l2",
+       "title": "Cierre de turno",
+       "objective": "Cerrar cada turno sin pedidos colgados y con un relevo que el siguiente turno entienda sin preguntar.",
+       "procedure": [
+        "Pasa al taller los pedidos pagados del día con su orden completa.",
+        "Completa el registro diario (leads, ventas, S/, video de origen).",
+        "Deja 0 no leídos en WhatsApp, Meta y TikTok, y todos los chats con etiqueta de etapa.",
+        "Escribe la nota de relevo: pagos por confirmar, clientes esperando mockup, promesas con hora para mañana, reclamos abiertos y seguimientos del día siguiente.",
+        "Envía al grupo interno las preguntas nuevas del día, sin datos personales."
+       ],
+       "commonMistakes": [
+        "Irse con pagos sin verificar o con pedidos pagados sin pasar al taller.",
+        "Hacer el relevo de palabra, sin notas.",
+        "Olvidar TikTok al contar los no leídos.",
+        "Mandar capturas con datos de clientes al grupo."
+       ],
+       "checklist": [
+        "Pedidos pagados en el taller",
+        "Registro diario completo",
+        "0 no leídos en los 3 canales",
+        "Chats etiquetados",
+        "Nota de relevo",
+        "Preguntas nuevas enviadas"
+       ],
+       "practice": "Haz 3 cierres seguidos con la checklist y pide a quien abre al día siguiente que califique tu nota de relevo.",
+       "passCriteria": "3 cierres con 0 pedidos pagados sin pasar al taller y una nota de relevo que el siguiente turno entiende sin preguntarte.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-p-m6-l3",
+       "title": "Cuándo escalar",
+       "objective": "Saber qué no decides tú y cómo pedir una decisión rápida sin dejar al cliente esperando.",
+       "procedure": [
+        "Escala siempre a coordinación (y ella al dueño): descuentos o bonus fuera de la ficha, reembolsos, pedidos corporativos, fechas que el taller no confirma, diseños dudosos, sospecha de fraude, amenazas de denuncia o menciones a Indecopi, prensa, influencers y propuestas de colaboración.",
+        "Escala como alerta, el mismo día, cuando 3 o más clientes reportan el mismo problema.",
+        "Escribe al grupo interno con esta plantilla: canal, qué pide el cliente, qué propones y hasta qué hora necesitas la respuesta. Sin DNI ni teléfonos.",
+        "Dale al cliente una hora concreta: «Lo consulto con mi coordinadora y te respondo hoy antes de las 5 pm 🙌».",
+        "Si 30 minutos antes de esa hora no tienes respuesta, llama a coordinación.",
+        "Cumple la hora prometida, aunque sea para decir que sigues esperando, y anota la decisión final para el playbook."
+       ],
+       "commonMistakes": [
+        "Dar un descuento «para no perder la venta» sin permiso.",
+        "Responder por tu cuenta a un periodista o a un influencer.",
+        "Escalar sin propuesta.",
+        "Dejar al cliente sin hora de respuesta."
+       ],
+       "checklist": [
+        "Caso de la lista de escalamiento",
+        "Plantilla completa",
+        "Hora comprometida al cliente",
+        "Llamada si no hay respuesta",
+        "Decisión anotada"
+       ],
+       "practice": "Resuelve 6 casos simulados y decide cuáles escalas y cuáles resuelves tú.",
+       "passCriteria": "6 de 6 decisiones correctas y mensajes de escalamiento completos.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "level": "INTERMEDIO",
+   "goal": "Subir la conversión del chat: calificar en pocas preguntas, responder objeciones con método, cerrar con la oferta del video de forma honesta y legal, recuperar a quien dejó de responder sin incumplir las reglas de Meta ni el consentimiento, resolver reclamos dentro de la ley peruana y atender también servicios y restaurantes.",
+   "modules": [
+    {
+     "id": "atc-i-m1",
+     "slug": "atc-i-m1",
+     "title": "Calificar al lead",
+     "summary": "Hacer las preguntas correctas para recomendar lo adecuado y priorizar a quien está listo para comprar.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=DtqBMH-aCWw",
+       "title": "Metodología BANT: Qué es y cómo aplicarla en reuniones de venta",
+       "channel": "Activa Ventas",
+       "language": "es",
+       "why": "Explica en español el método BANT (presupuesto, autoridad, necesidad y tiempo) para saber qué tan listo está un lead."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=YUlju8AO7ik",
+       "title": "Preguntas poderosas en atención al cliente | Ventas | César Piqueras",
+       "channel": "César Piqueras",
+       "language": "es",
+       "why": "Muestra qué preguntas hacer en atención al cliente para entender la necesidad y recomendar el producto correcto."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=aE_pOaQxNMc",
+       "title": "Cómo Hacer una Cotización Profesional (Paso a paso)",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Paso a paso de una cotización clara, útil para pedidos por mayor o corporativos."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-i-m1-l1",
+       "title": "Preguntas que califican",
+       "objective": "Descubrir en 3 preguntas como máximo para quién es, para cuándo y cuánto quiere invertir el cliente (adaptación del método BANT al chat).",
+       "procedure": [
+        "Necesidad: «¿Para quién es y por qué ocasión?».",
+        "Tiempo: «¿Para qué fecha lo necesitas y a qué ciudad?».",
+        "Presupuesto o cantidad: «¿Tienes un presupuesto en mente o buscas algo completo, tipo combo?».",
+        "Decisor (solo en corporativos o regalos grupales): «¿Lo decides tú o lo consultas con alguien?».",
+        "Haz una pregunta por mensaje y reacciona a cada respuesta antes de la siguiente: «¡Qué lindo, para tu mamá! 💝».",
+        "Servicio: motivo, fecha deseada y si ya hizo el tratamiento antes. Restaurante: delivery o mesa, número de personas y hora."
+       ],
+       "commonMistakes": [
+        "Hacer un interrogatorio de 5 preguntas en un solo mensaje.",
+        "Preguntar el presupuesto de forma brusca («¿cuánto tienes?»).",
+        "No preguntar la fecha y enterarse cuando ya no llega."
+       ],
+       "checklist": [
+        "Ocasión",
+        "Fecha y ciudad",
+        "Presupuesto o cantidad",
+        "Decisor si aplica",
+        "Una pregunta por mensaje",
+        "Reacción empática"
+       ],
+       "practice": "Role-play con 5 leads de perfiles distintos.",
+       "passCriteria": "En los 5 obtienes ocasión, fecha y presupuesto en 4 mensajes tuyos o menos.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m1-l2",
+       "title": "Lead caliente o frío",
+       "objective": "Priorizar a quien está listo para pagar sin descuidar a los demás.",
+       "procedure": [
+        "Caliente: pregunta por el pago, el envío, la talla o una fecha concreta, o manda la foto para personalizar. Atención inmediata y cierre.",
+        "Tibio: pregunta el precio y las opciones, sin fecha. Calificar y recomendar.",
+        "Frío: escribe «info», manda un emoji o no responde a tu pregunta. Una pregunta fácil y seguimiento.",
+        "Marca en la ficha C, T o F.",
+        "En los picos de mensajes, atiende primero a los calientes y luego a los tibios."
+       ],
+       "commonMistakes": [
+        "Tratar a todos igual en un pico.",
+        "Descartar al que escribe «info», que a veces sí compra.",
+        "Presionar a un lead frío como si fuera caliente."
+       ],
+       "checklist": [
+        "Señales revisadas",
+        "C, T o F marcado",
+        "Orden de atención según temperatura"
+       ],
+       "practice": "Clasifica 20 primeros mensajes, reales o simulados.",
+       "passCriteria": "Coincides con la clasificación de coordinación en 18 de 20 o más.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-i-m1-l3",
+       "title": "Recomendar, no listar",
+       "objective": "Con los datos de la calificación, recomendar 1 o 2 opciones concretas en lugar de mandar todo el catálogo.",
+       "procedure": [
+        "Resume lo que te dijo el cliente: «Entonces es para tu mamá en Huancayo, su cumple es el 20 y quieres algo que la abrigue».",
+        "Recomienda una opción principal y una alternativa, más barata o más completa.",
+        "Justifica con un beneficio ligado a lo que dijo: «La polera afranelada abriga en el frío de Huancayo y le pones su foto con tus hermanos».",
+        "Cierra con una pregunta suave: «¿Te gusta más con foto o con frase?».",
+        "CASO Con Amor (precios de ejemplo): Rocío, 28 años, vive en Lima; su mamá está en Huancayo; el cumple es en 8 días; presupuesto de S/ 80. Recomendación: polera afranelada con foto a S/ 59 + envío Shalom de unos S/ 15 = S/ 74. Alternativa: combo polera + taza a S/ 79 + envío, si puede subir un poco."
+       ],
+       "commonMistakes": [
+        "Mandar 15 opciones.",
+        "Recomendar lo más caro sin relación con lo que dijo el cliente.",
+        "No repetir su necesidad, lo que da la impresión de que no escuchaste."
+       ],
+       "checklist": [
+        "Resumen de la necesidad",
+        "1 opción principal y 1 alternativa",
+        "Beneficio ligado a lo que dijo",
+        "Precio total dentro del presupuesto",
+        "Pregunta de elección"
+       ],
+       "practice": "Resuelve 3 casos: Con Amor (mamá en la sierra), centro estético (novia antes de su boda) y cevichería (almuerzo de oficina para 12 personas).",
+       "passCriteria": "Coordinación valida que las 3 recomendaciones encajan con el presupuesto y la fecha.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "atc-i-m1-l4",
+       "title": "Pedidos corporativos",
+       "objective": "Atender pedidos por volumen (empresas, promociones de colegio, eventos) sin regalar el precio ni perder al cliente.",
+       "procedure": [
+        "Detecta la señal: «para mi equipo», «para la promo», más de 10 unidades.",
+        "Pregunta la cantidad, el producto, el logo o diseño, la fecha de entrega, la ciudad y si requiere factura (RUC y razón social). Verifica el RUC en la Consulta RUC de SUNAT.",
+        "No des el precio unitario de menudeo. Di: «Por volumen tenemos precio especial, te preparo la cotización hoy antes de las 6 pm».",
+        "Pasa los datos al dueño o a coordinación para el precio por volumen y la capacidad del taller. Si el logo es de la propia empresa cliente, pide que confirme por escrito que puede usarlo.",
+        "Confirma con el dueño si la empresa puede emitir factura (en el Nuevo RUS solo se emiten boletas) y aclara en la cotización si los precios incluyen IGV.",
+        "Envía la cotización por escrito: detalle, precio unitario y total, adelanto, tiempo de producción y validez (ej. 7 días).",
+        "Etiqueta Mayorista y haz seguimiento a las 48 horas."
+       ],
+       "commonMistakes": [
+        "Cotizar sin validar la capacidad del taller.",
+        "Olvidar la factura o prometerla sin saber si se puede emitir.",
+        "No aclarar si el precio incluye IGV.",
+        "Aceptar una fecha imposible.",
+        "Dejar la cotización sin seguimiento."
+       ],
+       "checklist": [
+        "Datos completos",
+        "RUC validado",
+        "Validación del dueño y del taller",
+        "IGV aclarado",
+        "Cotización escrita con validez",
+        "Etiqueta Mayorista",
+        "Seguimiento agendado"
+       ],
+       "practice": "Cotiza 40 poleras para la promoción de un colegio en Cusco y 25 tazas para una empresa en Lima con factura.",
+       "passCriteria": "El dueño aprueba ambas cotizaciones sin correcciones de fondo.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "atc-i-m2",
+     "slug": "atc-i-m2",
+     "title": "Manejo de objeciones",
+     "summary": "Responder dudas y frenos con un método (escuchar, reconocer, explorar, responder) y con pruebas reales.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=zy8iXDtPtnE",
+       "title": "Manual para el manejo de objeciones en ventas 2025",
+       "channel": "Emprendedor Eficaz",
+       "language": "es",
+       "why": "Método completo para escuchar, entender y responder objeciones sin discutir con el cliente."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Q5mYrXWA_w4",
+       "title": "Cómo rebatir objeciones en ventas [ ES MUY CARO ] - MANEJO DE OBJECIONES",
+       "channel": "Academia ETT",
+       "language": "es",
+       "why": "Se enfoca en la objeción más común ('está caro') con respuestas basadas en el valor."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=heUlB0qr96s",
+       "title": "Manejo de Objeciones en Ventas: Que hacer cuando el cliente dice \"lo voy a pensar\"",
+       "channel": "EMPRESARIOS DE ALTO RENDIMIENTO TRAINNING",
+       "language": "es",
+       "why": "Enseña a descubrir la duda real que hay detrás de 'lo voy a pensar'."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-i-m2-l1",
+       "title": "Método LAER por chat",
+       "objective": "Aplicar Escuchar, Reconocer, Explorar y Responder (LAER) a cualquier objeción que llegue por chat.",
+       "procedure": [
+        "Escuchar: lee completo el mensaje y los anteriores. No respondas a la primera palabra.",
+        "Reconocer: valida sin darle la razón y sin discutir: «Entiendo, es importante que el regalo llegue bien».",
+        "Explorar: pregunta para encontrar la duda real: «¿Te preocupa más el precio o que llegue a tiempo?».",
+        "Responder: contesta la duda real con un dato o una prueba y vuelve a proponer el siguiente paso.",
+        "Plantilla: «Te entiendo, [reconocer]. ¿Me cuentas si es por [A] o por [B]? … [respuesta con prueba]. ¿Te lo separo?»."
+       ],
+       "commonMistakes": [
+        "Discutir («no es caro»).",
+        "Responder con un párrafo a la defensiva.",
+        "Saltarse el paso de Explorar.",
+        "No volver a pedir la venta."
+       ],
+       "checklist": [
+        "Leí todo",
+        "Reconocí la duda",
+        "Pregunté la causa",
+        "Respondí con prueba",
+        "Propuse el siguiente paso"
+       ],
+       "practice": "Responde 10 objeciones del banco de objeciones usando LAER.",
+       "passCriteria": "Coordinación confirma que 8 de 10 respuestas muestran los 4 pasos.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "atc-i-m2-l2",
+       "title": "Objeción: está caro",
+       "objective": "Responder a la objeción de precio sin bajar el precio de inmediato.",
+       "procedure": [
+        "Reconoce: «Te entiendo, quieres que valga la pena».",
+        "Explora: «¿Lo comparas con otra tienda o se pasa de tu presupuesto?».",
+        "Si compara: da una diferencia concreta (afranelado grueso frente a algodón delgado, personalización y empaque incluidos, garantía de rehacer si el error es nuestro).",
+        "Si es por presupuesto: ofrece una opción menor (taza personalizada a S/ 29, precio de ejemplo) o un adelanto ahora y el saldo antes del despacho, si la política lo permite.",
+        "Usa solo el bonus o precio especial que esté en la ficha de oferta vigente.",
+        "Vuelve a proponer: «¿Te separo la taza o prefieres la polera con adelanto?».",
+        "Servicio: limpieza facial de S/ 120 «cara». Explica qué incluye y ofrece el paquete de 3 sesiones o la sesión básica. Restaurante: «el delivery está caro». Ofrece el recojo en el local o el monto mínimo para delivery gratis, si existe."
+       ],
+       "commonMistakes": [
+        "Bajar el precio al toque, lo que enseña al cliente a regatear.",
+        "Hablar mal de la competencia.",
+        "Inventar descuentos.",
+        "No ofrecer ninguna alternativa."
+       ],
+       "checklist": [
+        "Reconocí",
+        "Exploré la causa",
+        "Di una diferencia concreta o una alternativa",
+        "Solo ofertas autorizadas",
+        "Volví a pedir la venta"
+       ],
+       "practice": "3 role-plays de «está caro»: Con Amor, un servicio y un restaurante.",
+       "passCriteria": "En 2 de 3 el «cliente» acepta una opción sin descuentos no autorizados.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "atc-i-m2-l3",
+       "title": "Objeción: confianza",
+       "objective": "Demostrar que la tienda es real y cumple, sobre todo al cliente de provincia que tiene que pagar por adelantado.",
+       "procedure": [
+        "Reconoce: «Es normal que quieras estar seguro antes de yapear 🙌».",
+        "Envía pruebas en este orden: el video real del producto, 2 o 3 testimonios con foto de clientes de su región (con permiso) y una captura de un envío reciente a su ciudad, sin datos personales.",
+        "Muestra formalidad: el RUC (el cliente puede verificarlo en la Consulta RUC de SUNAT), que se emite boleta y el enlace del Libro de Reclamaciones virtual.",
+        "Explica el proceso: número de pedido y aviso de despacho con guía.",
+        "Si la política lo permite, ofrece un adelanto parcial.",
+        "Cierra: «¿Te separo la tuya con el adelanto?»."
+       ],
+       "commonMistakes": [
+        "Ofenderse («no somos estafadores»).",
+        "Mandar testimonios donde se ven datos de otros clientes.",
+        "Prometer opciones que no existen, como el pago contra entrega si no se hace."
+       ],
+       "checklist": [
+        "Reconocí",
+        "Video real enviado",
+        "Testimonios de su región con permiso",
+        "RUC, boleta y Libro de Reclamaciones",
+        "Proceso claro",
+        "Pedí la venta"
+       ],
+       "practice": "Arma tu «kit de confianza» en una carpeta del celular: video, 5 testimonios y capturas de envíos.",
+       "passCriteria": "Coordinación aprueba el kit y lo usas en 3 chats.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "atc-i-m2-l4",
+       "title": "Objeción: lo voy a pensar",
+       "objective": "Descubrir la objeción oculta detrás de «lo voy a pensar» y dejar un siguiente paso con fecha.",
+       "procedure": [
+        "Reconoce sin presionar: «¡Claro! Es un regalo importante».",
+        "Explora con opciones: «Para ayudarte a decidir, ¿es por el diseño, el precio o la fecha de entrega?».",
+        "Responde la causa real.",
+        "Si sigue indeciso, deja un paso concreto: «Te separo el diseño hasta mañana a las 12, sin compromiso, ¿te parece?».",
+        "Anota el seguimiento en la hoja con la etiqueta 2-Cotizado."
+       ],
+       "commonMistakes": [
+        "Responder «ok, avísame» y perder al cliente.",
+        "Presionar con una urgencia falsa.",
+        "Mandar 5 mensajes seguidos."
+       ],
+       "checklist": [
+        "Reconocí",
+        "Pregunté la causa con opciones",
+        "Respondí",
+        "Siguiente paso con hora",
+        "Seguimiento agendado"
+       ],
+       "practice": "5 role-plays con causas ocultas distintas.",
+       "passCriteria": "En 4 de 5 identificas la causa real y dejas un paso agendado.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "atc-i-m2-l5",
+       "title": "Objeción: fecha de entrega",
+       "objective": "Responder con honestidad si el pedido llega a tiempo y ofrecer alternativas reales.",
+       "procedure": [
+        "Calcula: días de producción + días hábiles de envío + feriados.",
+        "Si llega, da la fecha con margen: «llega entre el martes y el jueves».",
+        "Si está justo, ofrece alternativas: un producto con personalización más simple, envío express en Lima o una tarjeta digital de «tu regalo está en camino» para el día.",
+        "Si no llega, dilo claro y ofrece otra ocasión o el mismo producto avisando la fecha real.",
+        "Anota la fecha prometida en la ficha y avisa cualquier cambio."
+       ],
+       "commonMistakes": [
+        "Decir «sí llega» para cerrar la venta y luego recibir un reclamo.",
+        "Olvidar el tiempo de producción.",
+        "Ignorar los feriados."
+       ],
+       "checklist": [
+        "Cálculo de producción + envío",
+        "Fecha con margen",
+        "Alternativa si está justo",
+        "Honestidad si no llega",
+        "Fecha anotada en la ficha"
+       ],
+       "practice": "Resuelve 5 casos con distintas fechas límite a Lima y a la sierra.",
+       "passCriteria": "5 de 5 fechas calculadas correctamente.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "atc-i-m3",
+     "slug": "atc-i-m3",
+     "title": "Cierre por chat",
+     "summary": "Pedir la venta con claridad y usar la oferta del video (bonus, garantía, escasez) de forma honesta y legal.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=zwftNashIVM",
+       "title": "Cierra tus VENTAS en WHATSAPP 💚 | Estrategia completa para Cerrar clientes con WhatsApp 🔥",
+       "channel": "Aprendamos Marketing",
+       "language": "es",
+       "why": "Estrategia práctica para pedir la venta con claridad dentro del chat de WhatsApp."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=R2ygfqPrXzY",
+       "title": "Practica el cierre DOBLE ALTERNATIVA - Alex Dey",
+       "channel": "Alex Dey Oficial",
+       "language": "es",
+       "why": "Explica y practica el cierre de doble alternativa (¿talla M o L?, ¿Yape o transferencia?)."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=WsG7ZkFCeP4",
+       "title": "Cómo crear una OFERTA IRRESISTIBLE y VENDER CUALQUIER COSA | Resumen 100 Million Offers Alex Hormozi",
+       "channel": "Domina Las Ventas",
+       "language": "es",
+       "why": "Resumen en español de la oferta de Hormozi (bonus, garantía, escasez y urgencia) que usan los cierres de los videos."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-i-m3-l1",
+       "title": "Pedir la venta",
+       "objective": "Pasar de la conversación al pago con una pregunta directa y los datos de pago en el mismo mensaje.",
+       "procedure": [
+        "Detecta la señal de compra: el cliente eligió diseño o talla, o preguntó cómo pagar.",
+        "Cierre de alternativa: «¿Lo pagas con Yape o por transferencia?» o «¿Lo enviamos a Shalom de Huancayo centro o de El Tambo?».",
+        "Cierre directo: «Te lo separo ahora: son S/ 74 en total. Aquí los datos 👇 [/pago]».",
+        "Si todavía no tienes los datos, envía la ficha de pedido.",
+        "Después de pedir la venta, no agregues más texto: espera la respuesta."
+       ],
+       "commonMistakes": [
+        "Seguir explicando cuando el cliente ya quiere comprar.",
+        "Decir «avísame cuando quieras».",
+        "Mandar los datos de pago horas después, en otro mensaje."
+       ],
+       "checklist": [
+        "Señal detectada",
+        "Pregunta de cierre",
+        "Monto total",
+        "Datos de pago incluidos",
+        "No hablar de más"
+       ],
+       "practice": "Revisa 10 chats que no terminaron en venta y marca dónde hubo una señal de compra que no se aprovechó.",
+       "passCriteria": "Identificas 7 o más momentos de cierre perdidos y reescribes la pregunta de cierre en cada uno.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m3-l2",
+       "title": "Urgencia honesta",
+       "objective": "Usar la escasez y la urgencia solo cuando son reales, para cerrar sin engañar y sin exponer a la marca a reclamos ni sanciones.",
+       "procedure": [
+        "Usa solo lo que está en la ficha de oferta: fecha de corte, cupos del taller, stock real y vigencia de la promo.",
+        "Toda promoción debe decir hasta cuándo dura y, si hay unidades limitadas, cuántas hay como mínimo (Código del Consumidor, art. 14). Si el video dijo «solo 50 poleras», la ficha debe tener ese número y la fecha.",
+        "Frases válidas: «Para que llegue a provincia antes del Día de la Madre, el último día para pedir es el miércoles 6» o «Quedan 8 poleras guinda en talla M».",
+        "Si la oferta vence, vence: no la extiendas «solo para ti» a escondidas.",
+        "Nunca presiones con mensajes repetidos ni con miedo.",
+        "El Código prohíbe los métodos comerciales agresivos o engañosos (art. 58). Si se usan, el cliente puede pedir la devolución de lo pagado (derecho de restitución, art. 59)."
+       ],
+       "commonMistakes": [
+        "Decir «¡últimas unidades!» todos los días.",
+        "Inventar que la promo acaba hoy.",
+        "Anunciar unidades limitadas sin decir cuántas ni hasta cuándo.",
+        "Presionar 5 veces seguidas."
+       ],
+       "checklist": [
+        "Dato de escasez o urgencia tomado de la ficha",
+        "Duración y stock mínimo informados",
+        "Fecha concreta",
+        "Sin presión repetida",
+        "La oferta que vence, vence"
+       ],
+       "practice": "Reescribe 5 mensajes de urgencia falsa en su versión honesta.",
+       "passCriteria": "Coordinación aprueba los 5 como verificables y con duración y stock cuando corresponde.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-i-m3-l3",
+       "title": "Oferta con bonus y garantía",
+       "objective": "Presentar por chat la misma oferta que prometió el video (estilo Hormozi): resultado, bonus, garantía y límite real.",
+       "procedure": [
+        "Lee en Intia el CTA del guion aprobado y la ficha de oferta del video.",
+        "Estructura: resultado para el cliente + qué recibe + bonus + garantía + límite real + pregunta de cierre.",
+        "Con Amor (ejemplo): «Tu mamá recibe su polera afranelada con la foto de ustedes 💝 y, si pides hasta el viernes, la taza con su nombre de regalo. Si el nombre llega mal escrito por un error nuestro, lo rehacemos gratis. ¿Te la separo?».",
+        "Toda garantía que ofreces por chat obliga a la marca: ofrece solo la que está en la ficha y con las mismas palabras que el video.",
+        "Servicio: primera sesión con evaluación gratis y garantía de reprogramación. Restaurante: combo familiar con chicha gratis hoy hasta las 3 pm.",
+        "Si el cliente llegó por un video con CTA de comunidad (sin oferta), no inventes un descuento: ofrece la tarifa normal."
+       ],
+       "commonMistakes": [
+        "Ofrecer un bonus distinto al del video.",
+        "Dar garantías que el taller no puede cumplir.",
+        "Ofrecer una promo ya vencida."
+       ],
+       "checklist": [
+        "CTA del video leído",
+        "Estructura completa",
+        "Garantía de la ficha, con las mismas palabras",
+        "Límite real",
+        "Pregunta de cierre"
+       ],
+       "practice": "Escribe la oferta por chat de 3 videos distintos: Cámara Escondida, Tutorial y Testimonio.",
+       "passCriteria": "Las 3 coinciden al 100 % con la ficha de oferta y el CTA del guion.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m3-l4",
+       "title": "Venta cruzada",
+       "objective": "Subir el ticket con una sola sugerencia relevante después de que el cliente ya decidió.",
+       "procedure": [
+        "Espera a que el cliente decida la compra principal (por ejemplo, ya eligió la polera).",
+        "Ofrece UN complemento lógico: una taza a juego, una tarjeta con dedicatoria o la polera para la pareja.",
+        "Si hay combo, muestra el ahorro: «Con la taza a juego, el combo queda en S/ 79 en vez de S/ 88» (precios de ejemplo).",
+        "Si dice que no, acéptalo con una línea y cierra el pedido.",
+        "Restaurante: bebida o postre. Servicio: un producto para el cuidado en casa."
+       ],
+       "commonMistakes": [
+        "Ofrecer el complemento antes de que el cliente decida, lo que lo confunde.",
+        "Ofrecer 3 cosas a la vez.",
+        "Insistir después del «no»."
+       ],
+       "checklist": [
+        "Después de la decisión",
+        "Un solo complemento",
+        "Ahorro claro",
+        "Acepto el no"
+       ],
+       "practice": "Aplica la venta cruzada en 10 pedidos.",
+       "passCriteria": "3 o más de 10 aceptan el complemento sin que se pierda ninguna venta principal.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m3-l5",
+       "title": "Reforzar la compra",
+       "objective": "Hacer que el cliente se sienta seguro justo después de pagar, para evitar arrepentimientos y cancelaciones.",
+       "procedure": [
+        "Apenas confirmes el pago: agradece, felicita la decisión y explica qué pasa ahora.",
+        "Plantilla: «¡Gracias, Rocío! 💝 Tu mamá se va a emocionar con esa foto. Hoy entra a diseño y mañana te envío el mockup para que lo apruebes».",
+        "Cumple el siguiente paso en el plazo que prometiste.",
+        "Recuerda el número de pedido y a quién escribir si tiene dudas."
+       ],
+       "commonMistakes": [
+        "Quedarse en silencio después del pago.",
+        "Responder solo «ok».",
+        "Prometer el mockup para mañana y mandarlo en 3 días."
+       ],
+       "checklist": [
+        "Agradecimiento",
+        "Refuerzo emocional",
+        "Próximo paso con fecha",
+        "Número de pedido"
+       ],
+       "practice": "Escribe 3 mensajes de refuerzo: producto, servicio y restaurante.",
+       "passCriteria": "Los 3 mensajes aprobados y usados en los siguientes 10 pagos.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "atc-i-m4",
+     "slug": "atc-i-m4",
+     "title": "Seguimiento y recuperación",
+     "summary": "Recuperar a quien dejó de responder, dentro de las reglas de Meta, con consentimiento y sin hostigar.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=GPXbnw-7lwA",
+       "title": "Cómo hacer seguimiento por WhatsApp y DM´s que funcione - #VilmaNúñez",
+       "channel": "Vilma OS",
+       "language": "es",
+       "why": "Vilma Núñez explica cómo hacer seguimiento por WhatsApp y DM que aporte valor sin hostigar."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=AkIQaNVjtoA",
+       "title": "Cómo funciona la ventana de 24 horas en WhatsApp API [2026]",
+       "channel": "Leadsales - CRM para WhatsApp",
+       "language": "es",
+       "why": "Explica la regla de Meta de la ventana de 24 horas y qué se puede enviar después de que se cierra."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=fx36DeFEhKs",
+       "title": "💚 Cómo HACER una Lista de DIFUSIÓN en WHATSAPP Business y Enviar un MENSAJE MASIVO a Muchas Personas",
+       "channel": "Emmanuel - Chatbot Profesional",
+       "language": "es",
+       "why": "Tutorial de listas de difusión para reactivar a clientes que ya dieron su consentimiento (solo les llega a quienes guardaron el número)."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-i-m4-l1",
+       "title": "Ventanas de mensajes",
+       "objective": "Conocer hasta cuándo y cómo se le puede escribir a un cliente en cada canal, para no perder la conversación ni incumplir las políticas ni la ley.",
+       "procedure": [
+        "Instagram y Facebook: durante 24 horas desde el último mensaje del cliente puedes responder libremente, a mano o con automatizaciones.",
+        "Entre las 24 horas y los 7 días, solo puede responder una persona, a mano, desde la bandeja de Meta. Nada automático ni masivo.",
+        "Pasados 7 días sin mensaje del cliente, ya no puedes escribirle por Instagram o Facebook hasta que él vuelva a escribir.",
+        "WhatsApp Business app: no hay ventana técnica, pero los mensajes no pedidos generan bloqueos y reportes que pueden limitar la cuenta.",
+        "WhatsApp con API (si la marca usa una plataforma o CRM): ventana de servicio de 24 horas desde el último mensaje del cliente. Fuera de ella solo se envían plantillas aprobadas por Meta, que tienen costo.",
+        "Ley peruana: responder y hacer seguimiento a quien te pidió una cotización es parte de su consulta. Enviar promociones a quien no dio su consentimiento previo y expreso es un método comercial agresivo (Código del Consumidor, art. 58).",
+        "Regla del equipo: el primer seguimiento siempre dentro de las 24 horas."
+       ],
+       "commonMistakes": [
+        "Dejar el primer seguimiento en Instagram para el tercer día.",
+        "Mandar promociones automáticas a quien escribió hace una semana.",
+        "Enviar mensajes masivos por WhatsApp a personas que no dieron su consentimiento."
+       ],
+       "checklist": [
+        "Canal identificado",
+        "Seguimiento dentro de 24 horas",
+        "De 24 horas a 7 días, solo mensajes humanos y relevantes",
+        "Sin mensajes masivos no consentidos"
+       ],
+       "practice": "Revisa 10 chats en etapa 2-Cotizado y marca en qué ventana está cada uno y qué acción está permitida.",
+       "passCriteria": "10 de 10 clasificados correctamente, con la acción permitida para cada uno.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-i-m4-l2",
+       "title": "Secuencia 1h-24h-72h",
+       "objective": "Hacer como máximo 3 seguimientos a quien cotizó y no pagó, cada uno con un propósito distinto.",
+       "procedure": [
+        "A la hora (recordatorio, sin descuento): foto del producto, precio y pregunta. «Rocío, te dejo la polera con la foto que elegiste 😍 ¿Te la separo en L?».",
+        "A las 24 horas (resolver dudas): prueba social u objeción típica. «Una clienta de Huancayo nos mandó esta foto ayer 🥹 ¿Te quedó alguna duda del envío?».",
+        "A las 48-72 horas (último aviso): solo si hay un bonus o una fecha de corte reales en la ficha. «Hoy es el último día para que llegue a tiempo para el 20. ¿La confirmamos?».",
+        "En Instagram y Facebook, los toques que caen después de 24 horas se envían a mano desde la bandeja de Meta (hasta 7 días), nunca con automatizaciones.",
+        "Si el cliente responde o compra, detén la secuencia.",
+        "Si no responde al tercer mensaje, etiqueta Frío y no insistas más en esa campaña.",
+        "Guarda los 3 mensajes como respuestas rápidas por producto."
+       ],
+       "commonMistakes": [
+        "Dar descuento en el primer seguimiento, lo que enseña al cliente a esperar.",
+        "Mandar más de 3 mensajes.",
+        "Mandar mensajes genéricos, sin foto ni nombre.",
+        "Seguir escribiendo a quien ya compró."
+       ],
+       "checklist": [
+        "3 toques como máximo",
+        "Foto y nombre",
+        "Bonus o fecha de corte solo en el tercero, y solo si existen",
+        "Toques después de 24 h a mano en Meta",
+        "Parar cuando compra",
+        "Etiqueta final"
+       ],
+       "practice": "Aplica la secuencia a 15 cotizados durante una semana.",
+       "passCriteria": "Registras los resultados de los 15 y al menos 15 % de los cotizados compra gracias al seguimiento (meta inicial).",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m4-l3",
+       "title": "Recuperar el visto",
+       "objective": "Reabrir las conversaciones en las que el cliente dejó en visto, con un mensaje fácil de responder.",
+       "procedure": [
+        "Espera al menos unas horas. Nunca mandes «???».",
+        "Envía un mensaje de sí o no: «¿Sigues buscando el regalo para tu mamá? Responde 1 si sí y 2 si ya no 🙂».",
+        "Aporta algo de valor: foto de un pedido parecido recién despachado o un dato útil, como la fecha de corte.",
+        "Termina con una salida amable: «Te dejo el chat abierto, cuando quieras aquí estamos 💝».",
+        "Respeta el «ya no»: agradece y etiqueta."
+       ],
+       "commonMistakes": [
+        "Reclamar («te escribí y no respondes»).",
+        "Mandar audios.",
+        "Copiar el mismo mensaje a todos."
+       ],
+       "checklist": [
+        "Sin reproches",
+        "Pregunta de sí o no",
+        "Aporte de valor",
+        "Cierre amable",
+        "Respeto al no"
+       ],
+       "practice": "Reactiva 10 chats que quedaron en visto.",
+       "passCriteria": "Responden 3 o más de los 10.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m4-l4",
+       "title": "Reactivar clientes",
+       "objective": "Volver a venderles a clientes antiguos en fechas especiales, solo con su consentimiento (Ley 29733 y Código del Consumidor).",
+       "procedure": [
+        "Escribe solo a los clientes que aceptaron recibir novedades. Pídelo en la postventa, en un mensaje aparte: «¿Te aviso de promos por fechas especiales? Responde SÍ o NO».",
+        "Si dice NO, no vuelvas a pedírselo en otra campaña.",
+        "Registra en la hoja el consentimiento (sí o no), la fecha y la captura.",
+        "Usa listas de difusión (hasta 256 contactos por lista; solo les llega a quienes guardaron tu número) y separa por segmentos: compraron para la mamá, parejas, corporativo.",
+        "Personaliza el mensaje por segmento, con el producto nuevo y la fecha de corte, y termina con la salida: «Si no quieres más avisos, responde BAJA».",
+        "Si alguien pide no recibir más mensajes, sácalo de la lista ese mismo día.",
+        "Recuerda: enviar promociones a quien no dio su consentimiento previo y expreso es un método comercial agresivo (Código del Consumidor, art. 58) y va contra la Ley 29733."
+       ],
+       "commonMistakes": [
+        "Cargar todos los números a un envío masivo.",
+        "Volver a pedir permiso a quien ya dijo que no.",
+        "Escribir a quien tiene un reclamo sin cerrar.",
+        "No dar la opción de dejar de recibir mensajes."
+       ],
+       "checklist": [
+        "Consentimiento registrado con fecha",
+        "Segmento definido",
+        "Mensaje personalizado",
+        "Fecha de corte",
+        "Opción BAJA",
+        "Baja inmediata a quien la pide"
+       ],
+       "practice": "Arma la campaña de reactivación para el Día del Padre con 3 segmentos.",
+       "passCriteria": "Todos los contactos de la campaña tienen consentimiento registrado y los mensajes por segmento están aprobados.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "atc-i-m5",
+     "slug": "atc-i-m5",
+     "title": "Reclamos y ley peruana",
+     "summary": "Atender quejas y reclamos como manda Indecopi: Libro de Reclamaciones virtual, respuesta en 15 días hábiles, cambios y devoluciones según el Código del Consumidor.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=_jMRQx8wYXE",
+       "title": "📕 Libro de Reclamaciones 2025: ¿Para qué sirve y qué debes saber? ⚠️ | Términos y conclusiones 🎧🎙️",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Fuente oficial de Indecopi, actualizada a 2025, sobre el Libro de Reclamaciones, quejas, reclamos y plazos de respuesta."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=UmUPFMjUhUk",
+       "title": "¿Tienes un negocio? 👉 Así se implementa el Libro de Reclamaciones | Guía completa",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Guía oficial de Indecopi con las obligaciones del negocio al implementar el Libro de Reclamaciones."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=nYEU-ZyfNPg",
+       "title": "Cómo manejar clientes difíciles / Jorge Martínez Felicidad",
+       "channel": "Jorge Martínez Felicidad",
+       "language": "es",
+       "why": "Da técnicas para bajar la tensión con un cliente molesto antes de resolver su reclamo."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-i-m5-l1",
+       "title": "Queja o reclamo",
+       "objective": "Distinguir queja, reclamo y consulta para darle a cada uno el trámite correcto.",
+       "procedure": [
+        "Reclamo: disconformidad con el producto o servicio. Ej.: llegó roto, el nombre salió mal escrito, la talla no es la que se pidió.",
+        "Queja: malestar con la atención, no con el producto. Ej.: demora en responder o trato descortés.",
+        "Consulta o insatisfacción simple: se resuelve en el chat. Ej.: «¿cómo lavo la polera?».",
+        "Toda queja o reclamo que el cliente quiera formalizar va al Libro de Reclamaciones. Nunca se lo niegues ni lo condiciones. Ambos se responden en 15 días hábiles.",
+        "Etiqueta Reclamo y avisa a coordinación el mismo día."
+       ],
+       "commonMistakes": [
+        "Tratar un reclamo como consulta y olvidarlo.",
+        "Decir «no tenemos libro».",
+        "Discutir con el cliente si lo suyo es queja o reclamo."
+       ],
+       "checklist": [
+        "Tipo identificado",
+        "Etiqueta Reclamo",
+        "Coordinación avisada",
+        "Libro ofrecido si el cliente lo pide"
+       ],
+       "practice": "Clasifica 12 mensajes: 4 quejas, 4 reclamos y 4 consultas.",
+       "passCriteria": "12 de 12 correctos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-i-m5-l2",
+       "title": "Cliente molesto",
+       "objective": "Calmar y resolver por chat, en pocos mensajes, a un cliente molesto, con una solución concreta.",
+       "procedure": [
+        "Responde rápido: enojo más espera es igual a crisis. Si la queja está en un comentario público, responde breve y lleva la conversación al DM.",
+        "Agradece y valida sin culpar: «Gracias por avisarnos, Rocío. Entiendo tu molestia, era un regalo importante».",
+        "Pide evidencia concreta: fotos del producto y del empaque.",
+        "Propón una solución con fecha (rehacer y reenviar, cambio o devolución), según el caso y la política. Si no está en la política, escala antes de prometer.",
+        "Confírmala por escrito, cúmplela y avisa cada avance.",
+        "Cierra preguntando si quedó conforme y registra la causa: taller, courier o ATC.",
+        "Casos: taza que llegó rota a Cusco → reposición sin costo con envío prioritario. Nombre mal escrito por error del cliente → muéstrale con amabilidad su aprobación del mockup y ofrece rehacerlo con el descuento autorizado. Pedido de restaurante que llegó frío 50 minutos tarde → disculpa y reposición o crédito autorizado."
+       ],
+       "commonMistakes": [
+        "Responder a la defensiva o con ironía.",
+        "Decirle «cálmese».",
+        "Culpar al courier o al taller delante del cliente.",
+        "Prometer una solución sin validarla."
+       ],
+       "checklist": [
+        "Respuesta rápida",
+        "Validación",
+        "Evidencia pedida",
+        "Solución con fecha",
+        "Cumplimiento",
+        "Causa registrada"
+       ],
+       "practice": "Role-play de los 3 casos con un compañero que hace de cliente muy molesto.",
+       "passCriteria": "En los 3 casos el «cliente» acepta una solución concreta en 6 mensajes tuyos o menos.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "atc-i-m5-l3",
+       "title": "Libro de Reclamaciones",
+       "objective": "Tener el Libro de Reclamaciones virtual y ofrecerlo correctamente cuando el cliente lo pide.",
+       "procedure": [
+        "La marca debe tener un Libro de Reclamaciones virtual accesible, porque vende por internet. Puede usarse la herramienta gratuita de Indecopi «Tu Libro de Reclamaciones». Confirma el enlace con coordinación.",
+        "Pon el enlace a la vista: perfil de WhatsApp Business, link en bio y web.",
+        "Si la marca tiene un local con atención (taller, tienda o restaurante), ahí también debe estar el libro, con su aviso visible.",
+        "Si el cliente lo pide, envía el enlace en ese momento y sin condiciones.",
+        "Verifica que el cliente reciba copia de su hoja: el libro virtual debe permitir imprimirla o enviarla a su correo.",
+        "Registra la hoja en el control de reclamos (número, fecha, tipo y fecha límite) y guarda las hojas y respuestas al menos 2 años."
+       ],
+       "commonMistakes": [
+        "Decir que «por WhatsApp no aplica».",
+        "Pedir que primero converse «para evitar el libro».",
+        "No guardar las hojas."
+       ],
+       "checklist": [
+        "Enlace vigente",
+        "Visible en los perfiles",
+        "Libro en el local si hay atención presencial",
+        "Enviado cuando se pide",
+        "Copia al cliente",
+        "Registro en el control"
+       ],
+       "practice": "Entra al perfil de la marca como si fueras cliente, busca el enlace del libro y pruébalo.",
+       "passCriteria": "El enlace funciona y la hoja de prueba llega con copia al correo.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-i-m5-l4",
+       "title": "Respuesta en 15 días hábiles",
+       "objective": "Responder formalmente cada queja o reclamo dentro del plazo de 15 días hábiles, que no se puede prorrogar.",
+       "procedure": [
+        "Día 1: envía al cliente un acuse con el número de reclamo y la fecha límite.",
+        "Cuenta solo días hábiles (sin sábados, domingos ni feriados) y anota la fecha límite en el control.",
+        "Días 2 a 8: reúne la evidencia (chat, mockup aprobado, guía de envío, fotos).",
+        "Redacta la respuesta con número de reclamo, fecha, hechos, solución, plazo de cumplimiento y firma de la empresa con RUC.",
+        "Coordinación o el dueño la revisan antes del envío.",
+        "Envíala por el medio que el cliente registró en la hoja (normalmente el correo), no solo por WhatsApp, y guarda la constancia de envío."
+       ],
+       "commonMistakes": [
+        "Contar días calendario en vez de hábiles.",
+        "Responder solo por WhatsApp.",
+        "Responder sin el número de reclamo.",
+        "Dejarlo para el día 15."
+       ],
+       "checklist": [
+        "Acuse el día 1",
+        "Fecha límite calculada",
+        "Evidencia reunida",
+        "Respuesta con todos los datos",
+        "Revisada por coordinación o el dueño",
+        "Enviada por el medio registrado",
+        "Constancia archivada"
+       ],
+       "practice": "Redacta la respuesta al reclamo «la polera llegó con el nombre mal escrito», con evidencia simulada.",
+       "passCriteria": "El dueño aprueba la respuesta completa y en la simulación sale en 10 días hábiles o menos.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m5-l5",
+       "title": "Cambios y devoluciones",
+       "objective": "Aplicar la política de cambios de la marca y los derechos del consumidor sin improvisar.",
+       "procedure": [
+        "Antes de cobrar, informa la política: los productos personalizados no se cambian por gusto; si llegan con defecto o distintos a lo aprobado, se rehacen, se cambian o se devuelve el dinero.",
+        "Ante un reclamo, revisa si el pedido coincide con el mockup APROBADO y la talla confirmada.",
+        "Si la falla es nuestra o del courier: reposición o devolución, a elección del cliente y sin costo para él (garantía de idoneidad).",
+        "Si el error es del cliente (una talla que él eligió o un texto que él aprobó): explícalo con amabilidad y ofrece la alternativa autorizada (ej. rehacerlo con descuento).",
+        "Productos SIN personalizar (ej. casaca lisa): aplica la política escrita del dueño. Si el cliente invoca un «derecho de arrepentimiento» o de devolución por compra a distancia, escala a coordinación.",
+        "Si en la venta hubo presión o información engañosa, el cliente puede exigir la restitución de lo pagado. Por eso la urgencia siempre tiene que ser real.",
+        "Deja todo por escrito y registra el caso.",
+        "Casos: estampado que se despega a la semana → reposición. Talla equivocada en una prenda sin personalizar → cambio según la política. Reacción después de una limpieza facial → derivar a especialista y reembolso según la evaluación."
+       ],
+       "commonMistakes": [
+        "Decir «no hay devoluciones» frente a un producto defectuoso.",
+        "No informar la política antes del pago.",
+        "Decidir reembolsos sin coordinación.",
+        "Negar por tu cuenta un pedido de devolución de un producto sin personalizar."
+       ],
+       "checklist": [
+        "Política informada antes del pago",
+        "Comparación con lo aprobado",
+        "Solución según quién es responsable",
+        "Casos no personalizados escalados",
+        "Coordinación informada",
+        "Todo por escrito"
+       ],
+       "practice": "Resuelve 4 casos usando la política escrita de la marca.",
+       "passCriteria": "4 de 4 decisiones correctas según la política y el Código.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "atc-i-m6",
+     "slug": "atc-i-m6",
+     "title": "Servicios y restaurantes",
+     "summary": "Adaptar el proceso de chat a marcas de servicios (citas y cotizaciones) y a restaurantes (delivery y reservas).",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=I5ii9Mut2o4",
+       "title": "Gestiona los PEDIDOS A DOMICILIO en tu RESTAURANTE",
+       "channel": "TALENT | HOSTELERÍA",
+       "language": "es",
+       "why": "Explica cómo organizar los pedidos de delivery de un restaurante, desde que se toman hasta que se entregan."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=LrSDaKbpLB0",
+       "title": "Consejos para enviar recordatorios de citas por WhatsApp de forma eficiente 🖥️ | 2026",
+       "channel": "Leadsales - CRM para WhatsApp",
+       "language": "es",
+       "why": "Consejos para confirmar citas y enviar recordatorios por WhatsApp para que menos clientes falten, útil en marcas de servicios."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=AchxUwcDgpQ",
+       "title": "Cómo enviar propuestas y cotizaciones por WhatsApp",
+       "channel": "Mixtools",
+       "language": "es",
+       "why": "Muestra cómo enviar cotizaciones y propuestas de servicio claras dentro de WhatsApp."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-i-m6-l1",
+       "title": "Chat de restaurante",
+       "objective": "Tomar pedidos de delivery y reservas por chat sin errores de dirección, de tiempos ni de platos.",
+       "procedure": [
+        "Pregunta la modalidad: ¿delivery, recojo o mesa?",
+        "Delivery: confirma que la dirección esté dentro de la zona de reparto. Envía la carta (catálogo o PDF) y toma el pedido plato por plato.",
+        "Pregunta por alergias o indicaciones («sin ají»), la dirección con referencia y ubicación GPS, la forma de pago, si necesita vuelto y si quiere boleta o factura.",
+        "Repite el pedido completo con el total y un tiempo realista: «2 ceviches clásicos + 1 chicharrón: S/ 96 + S/ 6 de delivery. Llega en 40-50 min».",
+        "Pasa la comanda a cocina y avisa al cliente cuando salga el motorizado.",
+        "Reserva: pide fecha, hora, número de personas, nombre, celular y ocasión. Confírmala y manda un recordatorio el mismo día."
+       ],
+       "commonMistakes": [
+        "No pedir la referencia de la dirección.",
+        "Aceptar un delivery fuera de zona.",
+        "Dar un tiempo irreal en hora punta.",
+        "No repetir el pedido.",
+        "Olvidar las alergias."
+       ],
+       "checklist": [
+        "Modalidad",
+        "Dirección dentro de zona",
+        "Pedido repetido",
+        "Alergias",
+        "Ubicación",
+        "Pago, vuelto y comprobante",
+        "Tiempo realista",
+        "Comanda enviada",
+        "Recordatorio de la reserva"
+       ],
+       "practice": "Toma 5 pedidos y 3 reservas simuladas en hora punta.",
+       "passCriteria": "8 de 8 sin errores de plato, dirección ni monto.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m6-l2",
+       "title": "Agendar un servicio",
+       "objective": "Convertir las consultas de un servicio (ej. centro estético) en citas confirmadas a las que el cliente sí asiste.",
+       "procedure": [
+        "Califica: qué busca, si es su primera vez y la fecha deseada.",
+        "Ofrece 2 horarios concretos: «¿Te acomoda el jueves a las 4 pm o el sábado a las 10 am?».",
+        "Pide los datos y, si la política lo exige, un adelanto para separar.",
+        "Envía la confirmación con la dirección, las indicaciones previas y la política de reprogramación.",
+        "Manda un recordatorio 24 horas antes y otro 2 horas antes, con la pregunta «¿Confirmas?».",
+        "Si cancela, reprograma en el mismo chat."
+       ],
+       "commonMistakes": [
+        "Preguntar «¿qué día puedes?», que deja la conversación demasiado abierta.",
+        "No pedir confirmación.",
+        "No mandar recordatorios, lo que genera inasistencias."
+       ],
+       "checklist": [
+        "Calificación",
+        "2 horarios ofrecidos",
+        "Datos y adelanto",
+        "Confirmación con indicaciones",
+        "Recordatorios a las 24 y 2 horas"
+       ],
+       "practice": "Agenda 5 citas simuladas.",
+       "passCriteria": "5 de 5 con confirmación y recordatorios programados.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-i-m6-l3",
+       "title": "Cotizar por chat",
+       "objective": "Cotizar servicios de precio variable (catering, eventos, paquetes) de forma rápida y clara, y hacer seguimiento.",
+       "procedure": [
+        "Pregunta solo lo mínimo para cotizar: alcance, cantidad, fecha y lugar.",
+        "Si el precio varía, da un rango en ese momento: «Entre S/ 350 y S/ 500 según el tamaño; te confirmo el monto exacto hoy».",
+        "Envía la cotización por escrito: detalle, precio con impuestos, qué incluye, qué no incluye, adelanto y validez.",
+        "Pregunta: «¿Te la explico en una llamada de 5 minutos o tienes alguna duda?».",
+        "Haz seguimiento a las 24 y a las 72 horas."
+       ],
+       "commonMistakes": [
+        "Pedir 10 datos antes de dar un número.",
+        "Mandar una cotización sin validez.",
+        "No hacer seguimiento."
+       ],
+       "checklist": [
+        "Datos mínimos",
+        "Rango inmediato",
+        "Cotización escrita",
+        "Validez",
+        "Seguimiento"
+       ],
+       "practice": "Cotiza un catering para 30 personas y un servicio de estética para 5 novias.",
+       "passCriteria": "Ambas cotizaciones completas en menos de 2 horas desde la consulta.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "level": "AVANZADO",
+   "goal": "Gestionar el chat como un canal de ventas medible: reportar la conversión por video, alimentar a guionistas y community con preguntas reales, preparar picos de campaña, automatizar sin perder el trato humano ni incumplir políticas, asegurar la calidad y la protección de datos, formar a nuevos ATC y generar recompra.",
+   "modules": [
+    {
+     "id": "atc-a-m1",
+     "slug": "atc-a-m1",
+     "title": "Métricas del chat",
+     "summary": "Medir el chat como un embudo y reportar las ventas por video para que el equipo produzca más de lo que vende.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=YMlly0Yk6-k",
+       "title": "📈 ¿Cómo medir la calidad de la atención al cliente?",
+       "channel": "Manel Valcarce",
+       "language": "es",
+       "why": "Repasa los indicadores de atención (tiempos de respuesta, satisfacción, resolución) para medir el chat."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=d4m_0zEX1rI",
+       "title": "Cómo calcular tus ventas usando la Tasa de Conversión",
+       "channel": "Azucena Ferreira",
+       "language": "es",
+       "why": "Enseña a calcular la tasa de conversión para leer el chat como un embudo (conversaciones, cotizaciones, ventas)."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=pqorDYtJmxc",
+       "title": "Cómo Hacer un DASHBOARD INFORME DE VENTAS en Excel -Indicadores de Ventas- Cuadro de Mando de VENTAS",
+       "channel": "Luis Torres Accounting",
+       "language": "es",
+       "why": "Construye un informe de ventas con indicadores, base para el reporte semanal de ventas por video."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-a-m1-l1",
+       "title": "Tiempo de respuesta real",
+       "objective": "Medir y mejorar el tiempo de primera respuesta del equipo con datos, no con sensaciones.",
+       "procedure": [
+        "Define la métrica: minutos entre el primer mensaje del cliente y la primera respuesta humana, solo en horario.",
+        "Toma una muestra de 20 chats al día al azar, o usa el reporte de la herramienta si lo tiene.",
+        "Calcula la mediana y el percentil 90 (el tiempo dentro del cual se responde el 90 % de los chats).",
+        "Separa por franja horaria y por canal. Así aparecen los huecos: la hora del almuerzo o la publicación de un video.",
+        "Ajusta los turnos a las franjas críticas."
+       ],
+       "commonMistakes": [
+        "Contar la respuesta automática.",
+        "Usar un promedio que esconde chats de 3 horas.",
+        "Medir solo en días tranquilos."
+       ],
+       "checklist": [
+        "Definición escrita",
+        "Muestra diaria",
+        "Mediana y percentil 90",
+        "Por franja y canal",
+        "Acción sobre los turnos"
+       ],
+       "practice": "Mide una semana completa y propón un ajuste de turno.",
+       "passCriteria": "Reporte con mediana, percentil 90 y una acción. Tras el ajuste, el percentil 90 queda en 15 minutos o menos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-a-m1-l2",
+       "title": "Embudo de conversión",
+       "objective": "Calcular las tasas del embudo de chat para saber en qué etapa se pierde la venta.",
+       "procedure": [
+        "Cuenta por semana: leads (chats nuevos), calificados, cotizados y pagados.",
+        "Calcula las tasas: calificados/leads, cotizados/calificados, pagados/cotizados y pagados/leads (conversión total).",
+        "Calcula el ticket promedio: ventas en S/ entre pedidos pagados.",
+        "Compara con la semana anterior y marca la etapa que más cae.",
+        "Ejemplo: 300 leads → 180 calificados → 90 cotizados → 27 pagados = 9 % de conversión. Si cae pagados/cotizados, revisa el cierre y el seguimiento."
+       ],
+       "commonMistakes": [
+        "Mezclar chats de reclamos con leads de venta.",
+        "No separar los pedidos mayoristas.",
+        "Comparar semanas con campañas distintas sin anotarlo."
+       ],
+       "checklist": [
+        "4 conteos",
+        "4 tasas",
+        "Ticket promedio",
+        "Comparación semanal",
+        "Etapa crítica identificada"
+       ],
+       "practice": "Calcula el embudo de las últimas 4 semanas.",
+       "passCriteria": "Embudo correcto y una hipótesis de mejora para la etapa crítica.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-a-m1-l3",
+       "title": "Ventas por video",
+       "objective": "Atribuir los leads y las ventas a cada video para que el equipo produzca más de lo que vende.",
+       "procedure": [
+        "Parte del registro diario, con el campo de video de origen.",
+        "Suma por video: leads, ventas, monto y conversión.",
+        "Cruza esos datos con las vistas de cada video que el analista tiene en Intia.",
+        "Calcula las ventas por cada 1 000 vistas.",
+        "CASO (cifras de ejemplo): un video de Cámara Escondida trajo 120 DM y 9 ventas (7,5 %); un Tutorial «Cómo se usa» trajo 40 DM y 8 ventas (20 %). Lectura: el primero genera alcance y curiosidad; el segundo trae compradores listos.",
+        "Lleva una conclusión y un pedido concreto a la reunión semanal."
+       ],
+       "commonMistakes": [
+        "Sacar conclusiones con 1 sola venta.",
+        "Confundir el video más visto con el que más vende.",
+        "No anotar que hubo promos distintas."
+       ],
+       "checklist": [
+        "Datos por video",
+        "Conversión",
+        "Cruce con las vistas",
+        "Ventas por 1 000 vistas",
+        "Conclusión y pedido para el equipo"
+       ],
+       "practice": "Analiza los 5 últimos videos publicados.",
+       "passCriteria": "Tabla entregada al analista y coordinación acepta una de tus recomendaciones.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "atc-a-m1-l4",
+       "title": "Reporte semanal ATC",
+       "objective": "Entregar cada lunes un reporte de una página que el dueño y el equipo puedan leer en 2 minutos.",
+       "procedure": [
+        "Bloque 1, números: leads, ventas, S/, conversión, ticket promedio, tiempo de respuesta y CSAT.",
+        "Bloque 2: los 3 videos que más vendieron y el que trajo más leads sin vender.",
+        "Bloque 3: las 5 preguntas y 3 objeciones más frecuentes, con las palabras exactas del cliente.",
+        "Bloque 4: quejas y reclamos abiertos y cerrados, con los días hábiles que quedan para cada uno.",
+        "Bloque 5: un problema y una propuesta.",
+        "Envíalo antes de la reunión semanal de métricas."
+       ],
+       "commonMistakes": [
+        "Hacer un reporte de 5 páginas.",
+        "Poner solo números sin interpretarlos.",
+        "Olvidar los reclamos que están por vencer."
+       ],
+       "checklist": [
+        "5 bloques",
+        "1 página",
+        "Palabras exactas del cliente",
+        "Reclamos con fecha",
+        "Entregado a tiempo"
+       ],
+       "practice": "Arma el reporte de la semana pasada.",
+       "passCriteria": "Entregado a tiempo 4 semanas seguidas y usado en la reunión.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "atc-a-m2",
+     "slug": "atc-a-m2",
+     "title": "Feedback al contenido",
+     "summary": "Convertir la voz del cliente en el chat en insumos para guiones, testimonios y alertas del equipo de contenido.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=N7hf-gGe2TU",
+       "title": "Cómo VENDER MÁS usando las OBJECIONES de tus CLIENTES",
+       "channel": "Alvaro Luque",
+       "language": "es",
+       "why": "Muestra cómo convertir las objeciones que se repiten en el chat en contenido e ideas de guion que venden."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Y4OObDk6bWc",
+       "title": "They Ask, You Answer by Marcus Sheridan | Book Summary",
+       "channel": "Matt Woods",
+       "language": "en",
+       "why": "Resumen en inglés de 'They Ask, You Answer': responder en contenido las preguntas reales de los clientes. No se encontró una versión en español de igual calidad."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=_yDGjeCs-RM",
+       "title": "Cómo pedir TESTIMONIOS paso a paso 🗣+GUÍA GRATIS 🎁 (Incluye 5 preguntas poderosas) 📥",
+       "channel": "Marcela Keogan - Google Ads + IA",
+       "language": "es",
+       "why": "Paso a paso para pedir testimonios a clientes felices, que después sirven para videos de Testimonio y UGC."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-a-m2-l1",
+       "title": "Top preguntas a guionistas",
+       "objective": "Convertir las preguntas reales de los chats en insumos para los guiones.",
+       "procedure": [
+        "Durante la semana, copia las preguntas tal cual las escriben los clientes en una lista, sin datos personales.",
+        "Agrúpalas en las 5 categorías que más investiga un comprador: precio y costos, problemas y miedos, comparaciones, reseñas y pruebas, y «lo mejor para…».",
+        "Ordénalas por frecuencia.",
+        "Entrega al guionista las 5 más frecuentes, con la frase exacta y cuántas veces se repitió.",
+        "Ejemplo: «¿El nombre no se borra al lavar?» (23 veces) → idea de video Antes y Después con 20 lavadas."
+       ],
+       "commonMistakes": [
+        "Parafrasear y perder la voz del cliente.",
+        "Incluir datos personales.",
+        "Mandar 50 preguntas sin orden."
+       ],
+       "checklist": [
+        "Preguntas textuales",
+        "Sin datos personales",
+        "5 categorías",
+        "Ordenadas por frecuencia",
+        "Entregadas al guionista"
+       ],
+       "practice": "Arma la lista de preguntas de 2 semanas.",
+       "passCriteria": "El guionista lleva al menos 1 pregunta al backlog como idea.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-a-m2-l2",
+       "title": "Objeción convertida en video",
+       "objective": "Transformar la objeción más frecuente en una IDEA para el flujo de Intia, escrita como síntoma.",
+       "procedure": [
+        "Toma la objeción más repetida de la semana (ej. «no confío en pagar por adelantado desde Puno»).",
+        "Escríbela como síntoma, diciendo qué duele y dónde se nota: «30 % de los leads de provincia no pagan después de recibir los datos de pago».",
+        "Sugiere un formato: Testimonio de una clienta de Puno, UGC recibiendo el paquete o Cómo se usa (tutorial de recojo en agencia).",
+        "Registra la IDEA en Intia para que la evalúe coordinación.",
+        "Cuando el video se publique, mide si la objeción baja en los chats."
+       ],
+       "commonMistakes": [
+        "Mandar la solución al guionista como una orden.",
+        "No medir después de publicar.",
+        "Proponer ideas sin datos."
+       ],
+       "checklist": [
+        "Objeción con su frecuencia",
+        "Escrita como síntoma",
+        "Formato sugerido",
+        "IDEA registrada",
+        "Medición posterior"
+       ],
+       "practice": "Registra 2 ideas en un mes.",
+       "passCriteria": "Al menos 1 idea llega a GUION y tiene medición antes y después en los chats.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "atc-a-m2-l3",
+       "title": "Testimonios con permiso",
+       "objective": "Reunir testimonios y fotos de clientes con permiso, para UGC y prueba social.",
+       "procedure": [
+        "Parte de los clientes marcados «Candidato a testimonio» (puntaje 4 o 5) y pídeles una foto o un video corto.",
+        "Pide permiso explícito: «¿Nos autorizas a publicar tu foto y tu comentario en nuestras redes? Puedes decir que no 🙂».",
+        "Guarda la captura del permiso con la fecha.",
+        "Si aparece un menor de 14 años, el permiso lo da su padre, madre o tutor.",
+        "Antes de compartir, oculta teléfonos, apellidos y direcciones.",
+        "Entrega el material al community en la carpeta de testimonios, etiquetado por producto y ciudad."
+       ],
+       "commonMistakes": [
+        "Publicar capturas de chat con el número visible.",
+        "Usar fotos de menores sin permiso de su padre, madre o tutor.",
+        "No guardar el permiso."
+       ],
+       "checklist": [
+        "Permiso explícito guardado",
+        "Permiso de padres si hay menores",
+        "Datos ocultos",
+        "Carpeta etiquetada",
+        "Entregado al community"
+       ],
+       "practice": "Consigue 5 testimonios con permiso en 2 semanas.",
+       "passCriteria": "5 testimonios que se pueden usar, todos con su permiso archivado.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-a-m2-l4",
+       "title": "Alertas al community",
+       "objective": "Avisar el mismo día al community y a coordinación cuando los chats muestran un problema que afecta a muchos clientes.",
+       "procedure": [
+        "Lanza la alerta si: 3 o más clientes reportan lo mismo en un día, un video publicó un precio o dato equivocado, hay un retraso masivo del courier o aparece una cuenta falsa que suplanta a la marca.",
+        "El mensaje de alerta dice qué pasa, cuántos casos hay, desde cuándo y un ejemplo sin datos personales.",
+        "Acuerda con el equipo una respuesta única para chats y comentarios. Si es un precio equivocado en un video, el dueño decide si se respeta o se corrige; mientras tanto, usa la respuesta de espera acordada.",
+        "Guárdala como respuesta rápida temporal.",
+        "Cuando se resuelva, cierra la alerta, borra la respuesta temporal y registra la causa para evitar que se repita (por ejemplo, reforzar el chequeo de precio en EDICION)."
+       ],
+       "commonMistakes": [
+        "Que cada ATC responda algo distinto.",
+        "Esperar al reporte semanal.",
+        "Alarmar al equipo sin datos.",
+        "Confirmar o negar un precio equivocado antes de que decida el dueño."
+       ],
+       "checklist": [
+        "Umbral cumplido",
+        "Mensaje con datos",
+        "Respuesta única",
+        "Respuesta rápida temporal",
+        "Alerta cerrada con causa registrada"
+       ],
+       "practice": "Simula una alerta por un error de precio en un Reel.",
+       "passCriteria": "En la simulación, la respuesta única queda acordada en menos de 1 hora.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "atc-a-m3",
+     "slug": "atc-a-m3",
+     "title": "Picos de campaña",
+     "summary": "Preparar y operar el chat en fechas clave y cuando un video se vuelve viral, sin vender más de lo que el taller puede producir.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=fV157UtBPPg",
+       "title": "Como planear temporadas altas y los mejores meses en ventas🎄💀🎃",
+       "channel": "Emprende Conectadas",
+       "language": "es",
+       "why": "Ayuda a planificar con anticipación las temporadas altas (Día de la Madre, Navidad) para emprendimientos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=HUDuy9p8nKE",
+       "title": "Vende más esta Navidad: Checklist para preparar tu tienda online",
+       "channel": "Tiendanube",
+       "language": "es",
+       "why": "Checklist para preparar la tienda y la atención antes de un pico de campaña, con fechas de corte y stock."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=iBs5gI1POpo",
+       "title": "5 Customer Service Tips for Better Holiday Experiences",
+       "channel": "Shep Hyken: Customer Service & CX Expert",
+       "language": "en",
+       "why": "Experto reconocido en experiencia del cliente con consejos (en inglés) para mantener la calidad de la atención cuando sube el volumen de mensajes."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-a-m3-l1",
+       "title": "Preparar fecha clave",
+       "objective": "Preparar el chat para las fechas de alta demanda: Día de la Madre (segundo domingo de mayo), San Valentín (14 de febrero), Día del Padre (tercer domingo de junio) y Navidad.",
+       "procedure": [
+        "4 semanas antes: define con coordinación y el taller la capacidad diaria, el stock por color y talla y las fechas de corte por ciudad.",
+        "3 semanas antes: crea las respuestas rápidas nuevas (promo con duración y stock, fechas de corte, tiempos) y la colección de la fecha en el catálogo.",
+        "2 semanas antes: refuerza los turnos en los días de publicación de videos y entrena al personal de apoyo.",
+        "1 semana antes: avisa a los clientes que dieron su consentimiento y prepara la hoja de pedidos para el volumen.",
+        "Durante la campaña: reporta cada día la capacidad usada frente a la disponible."
+       ],
+       "commonMistakes": [
+        "Vender más de lo que el taller produce.",
+        "Usar la misma fecha de corte para Lima y la sierra.",
+        "Atender con el mismo número de ATC que un día normal."
+       ],
+       "checklist": [
+        "Capacidad definida",
+        "Fechas de corte por ciudad",
+        "Respuestas rápidas nuevas",
+        "Colección creada",
+        "Turnos reforzados",
+        "Control diario de capacidad"
+       ],
+       "practice": "Arma el plan del Día de la Madre.",
+       "passCriteria": "El dueño aprueba el plan con la capacidad y las fechas de corte.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-a-m3-l2",
+       "title": "Fecha de corte",
+       "objective": "Comunicar las fechas de corte por ciudad para que nadie compre algo que no llegará a tiempo.",
+       "procedure": [
+        "Arma una tabla por zona (Lima a domicilio, provincia de la costa, sierra en agencia) con el último día para pedir y pagar.",
+        "Mensaje antes del corte: «Para que llegue a Huancayo antes del domingo 10, el último día para pedir y pagar es el martes 5 📅».",
+        "Mensaje después del corte: ofrece una alternativa (entrega posterior con tarjeta digital, recojo en Lima u otro producto sin personalizar).",
+        "Con el community, fija la tabla en las historias destacadas y guárdala como respuesta rápida."
+       ],
+       "commonMistakes": [
+        "Poner una sola fecha para todo el país.",
+        "Aceptar pagos después del corte sin avisar.",
+        "No tener alternativa."
+       ],
+       "checklist": [
+        "Tabla por zona",
+        "Mensaje antes del corte",
+        "Mensaje después del corte con alternativa",
+        "Tabla publicada"
+       ],
+       "practice": "Arma la tabla de Navidad.",
+       "passCriteria": "El taller y el courier validan la tabla.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-a-m3-l3",
+       "title": "Triage en alto volumen",
+       "objective": "Atender cientos de chats en un pico sin perder ventas ni pagos.",
+       "procedure": [
+        "Sigue un orden fijo: 1) pagos por verificar, 2) reclamos, 3) calientes, 4) tibios, 5) fríos.",
+        "Primer barrido: a todos los chats nuevos, un acuse con respuesta rápida personalizada en menos de 5 minutos.",
+        "Dividan roles: un ATC cierra y cobra, otro responde las preguntas generales.",
+        "Activa la bienvenida con preguntas frecuentes para descargar las consultas simples.",
+        "Cada hora, cuenta los no leídos y revisa que los pedidos pagados hayan pasado al taller."
+       ],
+       "commonMistakes": [
+        "Responder por orden de llegada.",
+        "Dejar pagos sin verificar por atender a los nuevos.",
+        "Copiar y pegar sin el nombre del cliente."
+       ],
+       "checklist": [
+        "Orden de prioridad",
+        "Acuse en menos de 5 minutos",
+        "Roles divididos",
+        "Preguntas frecuentes activas",
+        "Control cada hora"
+       ],
+       "practice": "Simulacro de 50 chats en 1 hora con 2 ATC.",
+       "passCriteria": "0 pagos sin verificar y 90 % o más de acuses en menos de 5 minutos.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-a-m3-l4",
+       "title": "Video viral en vivo",
+       "objective": "Reaccionar cuando un video explota y llegan más leads de los que se pueden atender.",
+       "procedure": [
+        "Detecta la señal: más de 3 veces el volumen normal en la primera hora después de publicar.",
+        "Avisa a coordinación y al dueño y decidan: ¿hay stock y capacidad? ¿Se pausa la promo o se abre una lista de espera?",
+        "Ajusta el mensaje de bienvenida con la respuesta a la pregunta más repetida sobre el video.",
+        "Suma apoyo temporal con el guion de ventas y las respuestas rápidas.",
+        "Si se agota, abre una lista de espera con fecha real. Nunca vendas sin capacidad.",
+        "CASO (cifras de ejemplo): un Sketch de Con Amor trae 400 DM en 6 horas y el taller produce 60 poleras al día. Se venden 60 por día con fechas de entrega escalonadas y el resto va a la lista de espera."
+       ],
+       "commonMistakes": [
+        "Vender sin capacidad y luego incumplir.",
+        "Ignorar los comentarios.",
+        "Que cada persona improvise."
+       ],
+       "checklist": [
+        "Pico detectado",
+        "Decisión de capacidad",
+        "Bienvenida ajustada",
+        "Apoyo sumado",
+        "Lista de espera con fecha real"
+       ],
+       "practice": "Diseña el plan de reacción para un video que trae 10 veces más leads de lo normal.",
+       "passCriteria": "Plan aprobado, con umbrales y roles.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "atc-a-m4",
+     "slug": "atc-a-m4",
+     "title": "Automatización con criterio",
+     "summary": "Usar bienvenida automática, comentario a DM e IA para ganar velocidad sin perder el trato humano ni incumplir políticas.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=2ALQLtgNEz8",
+       "title": "Automatiza RESPUESTAS en Meta e Instagram GRATIS (Sin apps extra)",
+       "channel": "Aprendamos Marketing",
+       "language": "es",
+       "why": "Configura bienvenida, preguntas frecuentes y respuestas automáticas con las herramientas nativas de Meta."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=SayuoT4tYps",
+       "title": "Cómo automatizar mensajes directos de Instagram en los comentarios con MANYCHAT",
+       "channel": "Flor Abiuso - SEO para IA - Growth Marketing",
+       "language": "es",
+       "why": "Tutorial de ManyChat para enviar un DM automático cuando alguien comenta una palabra clave en un video."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=sopa2zG3k7o",
+       "title": "Cómo la IA Está Transformando la Atención al Cliente",
+       "channel": "Cyberclick • Marketing Digital",
+       "language": "es",
+       "why": "Explica con criterio qué conviene dejar a la IA y cuándo debe atender una persona."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-a-m4-l1",
+       "title": "Bienvenida y FAQ automáticas",
+       "objective": "Automatizar las respuestas simples sin perder el trato humano.",
+       "procedure": [
+        "Instagram (Meta Business Suite > Bandeja de entrada > Automatizaciones): configura hasta 4 preguntas frecuentes (precio, envíos, tiempos, cómo pedir).",
+        "WhatsApp Business: mensaje de bienvenida de una línea con una pregunta. Se envía cuando alguien escribe por primera vez o después de 14 días sin conversación.",
+        "Cada respuesta automática termina invitando a hablar con una persona.",
+        "Aclara que el mensaje es automático: «Te respondo automáticamente mientras una asesora te atiende».",
+        "Cada mes revisa qué preguntas llegan más y actualiza. Si cambia la ficha de oferta, actualiza el mismo día."
+       ],
+       "commonMistakes": [
+        "Un bot que responde con precios viejos.",
+        "Una bienvenida larga.",
+        "Un bot que se hace pasar por persona."
+       ],
+       "checklist": [
+        "4 preguntas frecuentes o menos, vigentes",
+        "Bienvenida de 1 línea",
+        "Salida a una persona",
+        "Aviso de mensaje automático",
+        "Revisión mensual"
+       ],
+       "practice": "Configura las preguntas frecuentes de Con Amor y del restaurante.",
+       "passCriteria": "Probando desde otra cuenta, las 4 respuestas son correctas y ofrecen atención humana.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-a-m4-l2",
+       "title": "Comentario a DM",
+       "objective": "Convertir los comentarios con la palabra clave del video en conversaciones privadas atendidas por una persona.",
+       "procedure": [
+        "Acuerda con el guionista y el community la palabra clave del CTA (ej. «comenta TAZA») cuando el video está en GUION, no después de publicar.",
+        "Configura la automatización que responde el comentario y envía un DM: herramientas nativas de Meta o de terceros autorizados, como ManyChat.",
+        "Instagram solo permite UNA respuesta privada por comentario y dentro de los 7 días del comentario. La ventana de 24 horas se abre recién cuando el cliente responde ese DM.",
+        "Por eso el DM automático da un dato y termina en una pregunta fácil («¿Para quién sería? 💝»), y avisa que una persona continúa.",
+        "El ATC toma la conversación apenas el cliente responde, dentro de esas 24 horas.",
+        "Mide el recorrido: comentarios con palabra clave → DM respondidos → ventas."
+       ],
+       "commonMistakes": [
+        "Usar una palabra clave distinta a la del video.",
+        "Un DM automático sin pregunta, que nunca abre la conversación.",
+        "Un DM automático que intenta vender todo sin una persona.",
+        "Dejar esos DM sin atender."
+       ],
+       "checklist": [
+        "Palabra clave acordada en GUION",
+        "Automatización probada",
+        "DM con pregunta",
+        "Una persona toma el chat en menos de 24 horas",
+        "Medición"
+       ],
+       "practice": "Configura y prueba el flujo para el próximo video con CTA.",
+       "passCriteria": "Flujo probado con 3 comentarios de prueba y leads registrados con su video.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-a-m4-l3",
+       "title": "Cuándo pasar a humano",
+       "objective": "Definir cuándo una respuesta automática o un bot debe dejar la conversación a una persona.",
+       "procedure": [
+        "Escribe las reglas. Pasa a una persona si hay: 1) un reclamo o enojo, 2) una personalización (fotos, textos), 3) un pedido corporativo, 4) un cliente que repite la misma pregunta 2 veces, 5) un cliente que pide hablar con alguien, 6) un pago o un problema con el pago.",
+        "Configura esas reglas en las herramientas.",
+        "El ATC atiende cada traspaso en menos de 5 minutos.",
+        "Revisa cada semana los traspasos y ajusta las reglas."
+       ],
+       "commonMistakes": [
+        "Un bot que responde un reclamo con el catálogo.",
+        "Menús que dan vueltas sin salida.",
+        "Traspasos que nadie atiende."
+       ],
+       "checklist": [
+        "6 reglas escritas",
+        "Reglas configuradas",
+        "Traspaso atendido en menos de 5 minutos",
+        "Revisión semanal"
+       ],
+       "practice": "Revisa 20 conversaciones automáticas y marca dónde debió entrar una persona.",
+       "passCriteria": "Reglas ajustadas y ningún reclamo atendido solo por el bot en el mes.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-a-m4-l4",
+       "title": "IA para borradores",
+       "objective": "Usar asistentes de IA para redactar más rápido sin arriesgar datos personales ni hacer promesas falsas.",
+       "procedure": [
+        "Úsala para: reescribir en el tono de la marca, resumir un chat largo, preparar respuestas rápidas nuevas y hacer el borrador de la respuesta formal a un reclamo (que después se revisa).",
+        "No le pegues DNI, teléfonos, direcciones, capturas de chat ni capturas de pago de clientes.",
+        "Verifica cada dato (precio, stock, plazos, políticas) contra la ficha de oferta.",
+        "Nunca envíes un texto de IA sin leerlo y adaptarlo.",
+        "Guarda en el playbook las instrucciones que funcionan."
+       ],
+       "commonMistakes": [
+        "Enviar un plazo o una garantía que la IA inventó.",
+        "Pegar datos personales o capturas de chat.",
+        "Enviar un texto con tono robótico sin revisarlo."
+       ],
+       "checklist": [
+        "Uso permitido",
+        "Sin datos personales",
+        "Datos verificados",
+        "Revisado antes de enviar",
+        "Instrucciones guardadas"
+       ],
+       "practice": "Reescribe con IA 10 respuestas rápidas y valídalas.",
+       "passCriteria": "10 de 10 sin datos inventados y con el tono aprobado.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "atc-a-m5",
+     "slug": "atc-a-m5",
+     "title": "Calidad y equipo",
+     "summary": "Asegurar la calidad con auditorías, un playbook vivo, la formación de nuevos ATC, la protección de datos y la prevención de fraude.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=I83Rqtfebds",
+       "title": "5 CONSEJOS DE MONITOREO DE CALIDAD - ¿QUÉ BUSCAR EN LA LLAMADA Y CHATS?",
+       "channel": "CYF Español",
+       "language": "es",
+       "why": "Explica qué revisar al auditar chats de atención, base para armar la rúbrica de calidad del ATC."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=gd-z5nIGdnM",
+       "title": "¿Qué es un Playbook de ventas y cómo armar el de tu empresa?",
+       "channel": "Fideliza | Ecosistemas Digitales de Ventas",
+       "language": "es",
+       "why": "Explica cómo armar un playbook de ventas que sirva como manual vivo y para formar a los ATC nuevos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=TyZvGiBYE74",
+       "title": "TODO SOBRE LA LEY DE PROTECCIÓN DE DATOS EN EL PERÚ",
+       "channel": "Tecnología & Negocios",
+       "language": "es",
+       "why": "Explica la Ley 29733 de protección de datos personales en Perú, aplicada a cómo el negocio maneja los datos de sus clientes."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-a-m5-l1",
+       "title": "Auditoría de chats",
+       "objective": "Evaluar la calidad de los chats con una rúbrica objetiva para mejorar cada semana.",
+       "procedure": [
+        "Elige al azar 10 chats por ATC, con y sin venta.",
+        "Aplica una rúbrica de 10 puntos, uno por criterio: respuesta en 5 minutos o menos, saludo con pregunta, calificación (ocasión, fecha, presupuesto), recomendación de 1 o 2 opciones, precio total, objeción con LAER, pedido de la venta, ficha completa, pago verificado, etiqueta y registro correctos.",
+        "Saca la nota de cada chat y el promedio por ATC.",
+        "Devuelve el feedback: una fortaleza y una cosa a mejorar, con un ejemplo.",
+        "Repite la auditoría en 2 semanas y compara."
+       ],
+       "commonMistakes": [
+        "Auditar solo chats con venta.",
+        "Dar un feedback general («mejora»).",
+        "No volver a medir."
+       ],
+       "checklist": [
+        "10 chats al azar",
+        "Rúbrica aplicada",
+        "Promedio",
+        "Feedback concreto",
+        "Siguiente auditoría agendada"
+       ],
+       "practice": "Audita 10 chats tuyos.",
+       "passCriteria": "Promedio de 8/10 o más en dos auditorías seguidas.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-a-m5-l2",
+       "title": "Playbook de ventas vivo",
+       "objective": "Mantener un solo documento con los mejores guiones de chat, actualizado cada mes.",
+       "procedure": [
+        "Estructura: saludo, calificación, recomendaciones por ocasión, precios, objeciones (con la respuesta que funcionó), cierre, seguimiento, reclamos, escalamiento y políticas.",
+        "Cada mes, agrega los 3 mejores chats (anonimizados) y quita lo que no funcionó.",
+        "Anota la versión y la fecha.",
+        "Mantenlo igual que las respuestas rápidas.",
+        "Compártelo con los guionistas para que el CTA del video y el chat digan lo mismo."
+       ],
+       "commonMistakes": [
+        "Un documento que nadie abre.",
+        "Una versión distinta para cada ATC.",
+        "No quitar lo que quedó viejo."
+       ],
+       "checklist": [
+        "Estructura completa",
+        "Ejemplos reales anonimizados",
+        "Versión y fecha",
+        "Igual que las respuestas rápidas",
+        "Compartido con guionistas"
+       ],
+       "practice": "Arma la versión 1 del playbook.",
+       "passCriteria": "El dueño la aprueba y se usa para entrenar a un nuevo ATC.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-a-m5-l3",
+       "title": "Entrenar a nuevo ATC",
+       "objective": "Lograr que un ATC nuevo atienda solo en 2 semanas y con la misma calidad.",
+       "procedure": [
+        "Días 1 y 2: lee el playbook, las fichas de producto y las políticas, activa la seguridad de sus accesos y observa chats en vivo.",
+        "Días 3 a 5: role-play diario con el banco de objeciones y respuestas supervisadas (tú apruebas antes de que envíe).",
+        "Semana 2: atiende solo leads tibios y fríos, y tú revisas 10 de sus chats al día.",
+        "Certificación: aprueba los criterios del nivel Principiante (examen de producto, fichas de pedido, verificación de pagos, comprobantes).",
+        "A los 30 días, primera auditoría."
+       ],
+       "commonMistakes": [
+        "Estrenar al nuevo en un pico de mensajes.",
+        "No darle acceso propio a las herramientas y a las fichas.",
+        "Entrenarlo solo de palabra."
+       ],
+       "checklist": [
+        "Plan de 10 días",
+        "Accesos propios con seguridad",
+        "Role-plays",
+        "Supervisión",
+        "Certificación",
+        "Auditoría a los 30 días"
+       ],
+       "practice": "Entrena a un ATC nuevo o a un apoyo de campaña.",
+       "passCriteria": "El nuevo saca 8/10 o más en su primera auditoría.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-a-m5-l4",
+       "title": "Datos personales seguros",
+       "objective": "Tratar los datos de los clientes cumpliendo la Ley 29733 de Protección de Datos Personales y su reglamento (DS 016-2024-JUS, vigente desde marzo de 2025).",
+       "procedure": [
+        "Pide solo los datos necesarios para el pedido: nombre, DNI (para el envío y la boleta), celular y dirección.",
+        "Explica para qué se usan y pide aparte, en el primer contacto de postventa, el consentimiento para promociones. Si lo niega, no se vuelve a pedir.",
+        "Guarda la hoja de pedidos con acceso restringido. Nada de DNI en grupos de WhatsApp ni en el grupo del taller.",
+        "Las fotos que el cliente manda para personalizar (a veces de menores) se usan solo para su pedido y se borran al terminarlo, según la política del dueño.",
+        "Si un cliente pide que borres sus datos o no quiere más mensajes, atiéndelo y regístralo.",
+        "Si se pierde el celular de ventas o se filtra la hoja, avisa al dueño en ese momento: el reglamento exige notificar a la Autoridad dentro de las 48 horas.",
+        "No pases la base a celulares personales ni la compartas con terceros. Coordina con el dueño la inscripción del banco de datos."
+       ],
+       "commonMistakes": [
+        "Mandar al grupo del taller capturas con el DNI.",
+        "Enviar mensajes masivos a quien no aceptó.",
+        "Guardar para siempre fotos de clientes y de sus hijos.",
+        "Callar una pérdida de datos."
+       ],
+       "checklist": [
+        "Datos mínimos",
+        "Finalidad explicada",
+        "Consentimiento de marketing por separado",
+        "Acceso restringido",
+        "Fotos de personalización borradas al cerrar",
+        "Pedidos de baja atendidos",
+        "Protocolo de 48 horas conocido"
+       ],
+       "practice": "Revisa la hoja de pedidos, el grupo del taller y la galería del celular de ventas, y elimina los datos innecesarios.",
+       "passCriteria": "Auditoría sin datos personales expuestos en grupos, carpetas abiertas ni galerías.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "atc-a-m5-l5",
+       "title": "Prevención de fraude",
+       "objective": "Reconocer y frenar los fraudes más comunes en las ventas por chat en Perú.",
+       "procedure": [
+        "Yapeo falso: verifica siempre en tu app y compara el código de seguridad. La captura no es prueba.",
+        "«Te yapeé de más, devuélveme la diferencia»: revisa tus movimientos. Si no hay abono, no devuelvas nada. Los yapeos no se revierten.",
+        "Cuentas falsas que suplantan a la marca: avisa al community para que las reporte y recuerda a los clientes cuál es el único número oficial.",
+        "Robo de cuenta: nadie del equipo comparte el código de verificación de WhatsApp (ver Seguridad de la cuenta).",
+        "Enlaces sospechosos que piden «actualizar datos»: no los abras.",
+        "Pedidos contra entrega a direcciones falsas (si se ofrece esa modalidad): confirma con una llamada o cobra el envío por adelantado.",
+        "Anota cada intento en el control de fraude.",
+        "CASO: a las 11 pm, un «cliente» manda una captura de S/ 150 por 2 poleras y pide despacho urgente. El pago no aparece en los movimientos, así que no se despacha."
+       ],
+       "commonMistakes": [
+        "Despachar por presión.",
+        "Devolver un supuesto «exceso» sin verificar.",
+        "Ignorar las cuentas falsas."
+       ],
+       "checklist": [
+        "Pago verificado en la app",
+        "Nada se devuelve sin abono",
+        "Cuentas falsas reportadas",
+        "Códigos de verificación nunca compartidos",
+        "Enlaces sospechosos sin abrir",
+        "Intentos registrados"
+       ],
+       "practice": "Resuelve 5 casos de posible fraude.",
+       "passCriteria": "Resuelves los 5 sin pérdida de dinero ni de producto.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "atc-a-m6",
+     "slug": "atc-a-m6",
+     "title": "Recompra y fidelización",
+     "summary": "Convertir cada venta de ocasión en la siguiente venta: calendario del cliente, referidos y clientes VIP.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=Obeigy3j80E",
+       "title": "Cómo Fidelizar Clientes? (Programas y Ejemplos Reales)",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Programas de fidelización con ejemplos reales para lograr que el cliente vuelva a comprar."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=6kRBDhr8MDE",
+       "title": "3 Estrategias Para Pedir Y Conseguir Referidos Sin Incomodar (¡La Segunda No Te La Esperas!)",
+       "channel": "Sandler Dan Macias",
+       "language": "es",
+       "why": "Enseña a pedir referidos sin incomodar a clientes satisfechos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=L4bEwdYVU20",
+       "title": "3 Estrategias para Fidelizar tus Mejores Clientes",
+       "channel": "Emprendedor Eficaz",
+       "language": "es",
+       "why": "Estrategias para dar trato VIP a los mejores clientes y mantenerlos comprando."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "atc-a-m6-l1",
+       "title": "Calendario del cliente",
+       "objective": "Convertir cada venta de ocasión en la venta del año siguiente.",
+       "procedure": [
+        "En la postventa, pregunta con permiso: «¿Te aviso el próximo año antes del cumple de tu mamá? 🎂».",
+        "Registra la fecha de la ocasión, para quién era, el producto comprado y el consentimiento.",
+        "Entre 10 y 15 días antes (para que llegue también a provincia), envía un mensaje personalizado: «Rocío, se viene el cumple de tu mamá el 20 💝 El año pasado le encantó la polera. ¿Le hacemos la taza a juego?».",
+        "Mide cuántas recompras vienen por este canal."
+       ],
+       "commonMistakes": [
+        "Escribir sin permiso.",
+        "Mandar un mensaje genérico.",
+        "Avisar tan tarde que ya no llega a provincia."
+       ],
+       "checklist": [
+        "Permiso",
+        "Fecha registrada",
+        "Aviso 10 a 15 días antes",
+        "Mensaje personalizado",
+        "Medición"
+       ],
+       "practice": "Registra las fechas de 20 clientes.",
+       "passCriteria": "20 fechas o más con consentimiento y el primer recordatorio programado.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-a-m6-l2",
+       "title": "Programa de referidos",
+       "objective": "Lograr que los clientes felices traigan clientes nuevos, con un beneficio simple y medible.",
+       "procedure": [
+        "Define con el dueño el beneficio para quien refiere y para el referido (ej. empaque premium gratis o S/ 5 de descuento, como ejemplo) y agrégalo a la ficha de oferta.",
+        "Asigna un código simple, como «ROCIO5».",
+        "Ofrécelo solo a clientes que dieron un puntaje de 4 o 5.",
+        "Registra cada código usado.",
+        "Entrega el beneficio a quien refirió cuando el referido pague."
+       ],
+       "commonMistakes": [
+        "Un beneficio que nadie entiende.",
+        "No registrar los códigos.",
+        "Prometer el beneficio y no darlo."
+       ],
+       "checklist": [
+        "Beneficio aprobado y en la ficha",
+        "Código asignado",
+        "Solo a clientes satisfechos",
+        "Registro",
+        "Beneficio entregado"
+       ],
+       "practice": "Lanza el programa con 10 clientes.",
+       "passCriteria": "2 o más ventas referidas en el mes, registradas.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "atc-a-m6-l3",
+       "title": "Clientes VIP",
+       "objective": "Identificar y cuidar a los clientes que más compran.",
+       "procedure": [
+        "Define quién es VIP: 3 o más compras, o S/ 300 o más en el año (criterio de ejemplo), o pedidos corporativos recurrentes.",
+        "Pon la etiqueta VIP en WhatsApp y en la hoja.",
+        "Beneficios: acceso anticipado a colecciones, prioridad en fechas pico y trato por su nombre.",
+        "Envía un agradecimiento personal una vez al año.",
+        "Revisa la lista cada trimestre."
+       ],
+       "commonMistakes": [
+        "Tratar al VIP como a un cliente nuevo y volver a preguntarle todo.",
+        "Dar beneficios que cuestan más de lo que el cliente deja.",
+        "No actualizar la lista."
+       ],
+       "checklist": [
+        "Criterio definido",
+        "Etiqueta VIP",
+        "Beneficios",
+        "Agradecimiento anual",
+        "Revisión trimestral"
+       ],
+       "practice": "Identifica a los VIP del último año.",
+       "passCriteria": "Lista VIP creada y una acción aplicada.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

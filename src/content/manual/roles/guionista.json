@@ -1,0 +1,3012 @@
+{
+ "id": "GUIONISTA",
+ "slug": "guionista",
+ "name": "Guionista",
+ "fullName": "Guionista / Creativo (WRITER)",
+ "mission": "Convertir los objetivos de venta y de comunidad de cada marca en guiones verticales cortos (Reels, TikTok, Shorts) que detienen el scroll en los primeros 3 segundos, se graban y editan sin reescrituras y generan conversaciones y pedidos por DM/WhatsApp. Cada guion usa datos reales del producto, promete solo lo que el negocio puede cumplir y respeta la normativa peruana de publicidad y consumo.",
+ "responsibilities": [
+  "Investigar producto, audiencia y objeciones reales con lo que aportan el dueño, ATC, community y el analista. Mantener al día las fichas de producto, el avatar y el glosario del cliente por marca y región.",
+  "Proponer y priorizar ideas en el tablero (etapa IDEA) según los objetivos del mes, los pilares, el nivel de conciencia del público y el calendario estacional peruano.",
+  "Escribir guiones con el Generador IA de Intia (marca, producto, contexto, actor, idea, estructura, ángulo, variante, cierre, duración), auditarlos y llevarlos de GUION a APROBADO con coordinación.",
+  "Escribir el gancho A y al menos un gancho B por cada guion de venta, y dejar registrados el ángulo, el formato y la hipótesis.",
+  "Escribir para lo que se ve y lo que se oye: acciones filmables, planos sugeridos con su propósito, emoción por escena, utilería, locación, texto en pantalla dentro de las zonas seguras y audio con licencia de uso comercial.",
+  "Entregar briefs al filmmaker y a producción, al talento, al jefe de editores y al editor, al community manager y a ATC para que todos ejecuten y vendan lo mismo que promete el guion.",
+  "Garantizar veracidad y legalidad: afirmaciones con prueba, promociones con vigencia y stock, divulgación de publicidad, autorizaciones de imagen y voz, datos personales protegidos, políticas de anuncios de cada plataforma y reglas de los rubros regulados (alcohol, alimentos, sorteos).",
+  "Leer métricas (retención 3 s, hold, guardados, compartidos, leads, pedidos) y hacer un post-mortem semanal para iterar ganchos, formatos y ofertas.",
+  "Mantener el banco de ganchos ganadores y perdedores, las fichas de producto, la lista de frases prohibidas de la IA y el manual de voz de cada marca."
+ ],
+ "sop": [
+  "LUNES 9:00 · Lectura de datos: revisar en Intia las métricas semanales de los videos PUBLICADOS (vistas, retención 3 s, guardados, compartidos, clics, leads, pedidos, ingresos). Recibir de ATC el top 5 de preguntas y objeciones de DM/WhatsApp, y de community los comentarios destacados, los pedidos de «parte 2» y los audios en tendencia que sí están disponibles para cuentas de empresa.",
+  "LUNES · Sesión de ideas (45 min) con coordinación: ganadores y perdedores, fechas del calendario estacional de las próximas 4 semanas, matriz ángulo × gancho × formato, priorización por impacto y facilidad de producción, y carga de las IDEAS en el tablero con avatar, objetivo (venta o comunidad), formato, nivel de conciencia y responsable.",
+  "IDEA → GUION: por cada idea asignada, validar con el dueño o coordinación los datos de la ficha (precio final en S/, tallas, tiempos de entrega por zona, stock, vigencia de la oferta) y completar el Generador IA: video al que se unirá, marca, producto, «Qué debe saber la IA sobre el producto», quién actúa frente a cámara, idea en 3 frases, estructura, ángulo, variante, objetivo del cierre, gatillo de venta o cierre de comunidad y duración objetivo (20-45 s para venta; 30-60 s por defecto; hasta 90 s para vlog o storytime).",
+  "Autorrevisión antes de enviar (15 min): cabecera coherente (título, avatar, enfoque, gancho, CTA), tiempos continuos, acciones filmables, planos posibles con el equipo real, lectura del diálogo en voz alta con cronómetro, búsqueda de datos inventados, revisión legal (afirmaciones, promociones, divulgación, rubro regulado), audio con licencia y redacción del gancho B.",
+  "GUION → APROBADO: pasar la tarjeta a GUION con una nota que incluya objetivo, avatar, por qué este gancho, gancho B, hipótesis, destino (orgánico o pauta) y riesgos (locación, permisos, talento, stock). Responder cada observación de coordinación en menos de 24 h. Meta: IDEA → APROBADO en 48 h o menos.",
+  "APROBADO: enviar los briefs. Al filmmaker y a producción: planos con propósito, tomas imprescindibles marcadas con ★, b-roll, locación, horario de luz y utilería consolidada. Al talento, 24 h antes: personaje, curva emocional, líneas literales (gancho y CTA), vestuario y un video de referencia del tono. Dejar listos los formatos de autorización de imagen y voz.",
+  "APROBADO → GRABACION (24 h antes): lectura de mesa de 10 min con el talento, en persona o por llamada, con cronómetro. Reescribir las líneas en las que se traba y actualizar los tiempos del guion.",
+  "GRABACION: estar disponible (en set o por chat) para ajustar líneas que no funcionan, confirmar que se grabaron el gancho A, el gancho B, el detalle del producto, la prueba y el CTA, recoger las autorizaciones firmadas y anotar los imprevistos reales que sirvan para vlogs.",
+  "EDICION: entregar al jefe de editores el brief de montaje (gancho del segundo 0, textos en pantalla exactos y revisados, ritmo, audio, referencias, duración máxima y CTA). Revisar el primer corte contra el guion y enviar las notas en una sola ronda, antes de la «Revisión final aprobada», sin reeditar el trabajo del editor.",
+  "PROGRAMADO: entregar al community manager el caption, la pregunta para fijar, la divulgación «Publicidad» o la etiqueta de contenido de marca si aplica, el horario sugerido y la fecha de vencimiento de la oferta. Entregar a ATC la ficha de la oferta: precio, vigencia, stock, bonus, garantía, palabra clave del CTA y respuestas a 3 objeciones previstas.",
+  "PUBLICADO + 48 h: revisar la retención 3 s («Visto vs. deslizado» en Shorts, tasa de omisión en Reels si la cuenta ya la muestra, curva de retención en TikTok) y los comentarios, y pedir a ATC el conteo de chats con la palabra clave. Si la oferta vence, coordinar con community la actualización o el archivo del video. A los 7 días, registrar los resultados en el banco de ganchos.",
+  "VIERNES · Post-mortem: top 3 y bottom 3 de la semana, con una hipótesis y una decisión por video (repetir, iterar o descartar). Actualizar fichas, glosario, frases prohibidas y banco de ganchos, compartir el resumen con coordinación, el jefe de editores y ATC, y adelantar los guiones de campañas estacionales con 3-4 semanas de anticipación."
+ ],
+ "receivesFrom": [
+  "Coordinación / Estrategia (STRATEGY): objetivos del mes, calendario, pilares, prioridades, aprobación u observaciones de los guiones",
+  "Dueño de negocio (OWNER): datos reales de producto, precios finales, stock, capacidad de producción, fechas de corte, ofertas, bonus y garantías que puede cumplir",
+  "ATC (atención al cliente por DM/WhatsApp): top de preguntas, objeciones, motivos de no compra, historias reales de clientes (con permiso) y conteo de chats por palabra clave",
+  "Community manager (PUBLISHER): comentarios destacados, pedidos de «parte 2», tendencias y audios disponibles para la cuenta de la marca",
+  "Analista (ANALYST): métricas semanales por video, formato, red y marca (retención 3 s, hold, guardados, compartidos, leads, pedidos)",
+  "Filmmaker (CAMERA) y Producción (PRODUCTION): restricciones de equipo, locación, horario, permisos y presupuesto",
+  "Talento / Actor (TALENT): retroalimentación sobre la naturalidad del diálogo en la lectura de mesa",
+  "Jefe de editores: notas de calidad de montaje, tomas faltantes recurrentes y confirmación de la «Revisión final aprobada»",
+  "Editor (EDITOR): dudas sobre textos, ritmo y material detectadas durante el montaje"
+ ],
+ "deliversTo": [
+  "Coordinación (STRATEGY): guion en GUION con nota de objetivo, avatar, gancho A/B, hipótesis, destino (orgánico o pauta) y riesgos, para su aprobación",
+  "Filmmaker (CAMERA) y Producción (PRODUCTION): desglose con planos sugeridos y su propósito, tomas imprescindibles, b-roll, locación, horario y utilería consolidada",
+  "Talento / Actor (TALENT): brief de personaje, curva emocional, líneas literales, vestuario y referencia de tono 24 h antes, lectura de mesa y formato de autorización de imagen y voz",
+  "Jefe de editores y Editor (EDITOR): brief de montaje con gancho, textos en pantalla exactos, ritmo, audio, referencias, duración y CTA, más las notas del primer corte en una sola ronda",
+  "Diseñador (DESIGNER): textos de portada y en pantalla revisados ortográficamente y pensados para las zonas seguras",
+  "Community manager (PUBLISHER): caption, pregunta para fijar, divulgación de publicidad si aplica, horario sugerido y fecha de vencimiento de la oferta",
+  "ATC: ficha de la oferta del video (precio, vigencia, stock, bonus, garantía, palabra clave y respuestas a objeciones)",
+  "Analista (ANALYST): hipótesis y variante de cada guion para leer los resultados, y el banco de ganchos actualizado"
+ ],
+ "kpis": [
+  "Aprobación a la primera: 70 % o más de los guiones pasan de GUION a APROBADO sin reescritura mayor",
+  "Tiempo de ciclo IDEA → APROBADO: 48 h o menos",
+  "Retención 3 s igual o mayor a la mediana propia de la cuenta, por formato y red (últimos 30 días), en al menos el 60 % de los videos",
+  "Hold rate (reproducciones de 15 s o ThruPlays ÷ reproducciones de 3 s) creciente mes a mes, por formato",
+  "Guardados + compartidos por cada 1.000 vistas, por formato y ángulo",
+  "Leads por cada 1.000 vistas y tasa lead → pedido en guiones de venta, atribuidos por palabra clave",
+  "Al menos 2 variantes de gancho por guion de venta",
+  "Líneas reescritas en el set: 2 o menos por video",
+  "Cero observaciones legales o de plataforma: afirmaciones sin prueba, promociones sin vigencia o stock, falta de divulgación o de autorización, anuncios rechazados por política o audio silenciado por derechos",
+  "Cero reclamos en ATC por diferencias entre lo que prometió el video y la oferta real"
+ ],
+ "tools": [
+  "Intia: Generador IA de guiones (video, marca, producto, contexto, quién actúa, idea, estructura, ángulo, variante, cierre de venta o de comunidad, duración, proveedor y modelo, historial y «Ver reintento»)",
+  "Intia: Estructuras (PAS, Antes y Después, Tutorial, UGC, Testimonio, Sketch, Cámara Escondida, Camaleón, Vlog, POV, etc.) y los 12 Ángulos creativos",
+  "Intia: tablero de contenido (IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO) y métricas semanales por video",
+  "Plantilla de guion a dos columnas (VIDEO | AUDIO), plantilla 9:16 con zonas seguras y cronómetro para la lectura en voz alta",
+  "TikTok Creative Center (Top Ads, tendencias) y Biblioteca de anuncios de Meta, para investigar referencias",
+  "YouTube Studio (Shorts: «Visto vs. deslizado», curva de retención), Instagram Insights (reels de prueba, tasa de omisión si está disponible) y TikTok Studio (curva de retención)",
+  "Bibliotecas de audio con licencia comercial: Biblioteca de Música Comercial de TikTok, Meta Sound Collection y Biblioteca de audio de YouTube",
+  "WhatsApp Business: etiquetas y palabras clave coordinadas con ATC",
+  "Hoja o base del banco de ganchos (gancho, tipo, ángulo, formato, red, retención 3 s, hold, leads, resultado)",
+  "Formato de autorización de uso de imagen y voz, y permiso para usar capturas de clientes",
+  "Marco legal de consulta: Guía de Publicidad para Influencers (Indecopi, 2024), Código de Protección y Defensa del Consumidor (Ley 29571), Ley de Represión de la Competencia Desleal (D. Leg. 1044), Código Civil art. 15, Ley de Protección de Datos Personales (Ley 29733), Ley 28681 (bebidas alcohólicas) y Ley 30021 (alimentación saludable)"
+ ],
+ "levels": [
+  {
+   "level": "PRINCIPIANTE",
+   "goal": "En 4-6 semanas, escribir guiones de 20-45 s que coordinación aprueba a la primera: una sola idea, gancho en los primeros 3 s, escenas filmables, texto y sonido bien planteados y un solo CTA. Usar bien el Generador IA de Intia y cumplir desde el primer guion las reglas básicas de publicidad y promociones del Perú.",
+   "modules": [
+    {
+     "id": "GUI-P1",
+     "slug": "gui-p1",
+     "title": "Anatomía del guion corto",
+     "summary": "Qué es un guion vertical, sus tres partes, cómo reducirlo a una idea, cómo medir su duración y cómo escribirlo a dos columnas.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=xcxhPCxgP_U",
+       "title": "Cómo ser un Maestro del Guion (Sin experiencia)",
+       "channel": "Andrea Estratega l Marketing de Contenidos",
+       "language": "es",
+       "why": "Explica desde cero cómo se arma un guion de video corto (gancho, desarrollo, cierre) para redes; base ideal para la anatomía del guion vertical."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=R0SYgrojo3c",
+       "title": "Cómo hacer 7 guiones virales en menos de 30 min CON UNA ESTRUCTURA copia y pega",
+       "channel": "Andrea Estratega l Marketing de Contenidos",
+       "language": "es",
+       "why": "Muestra una estructura repetible para escribir varios guiones cortos rápido: sirve para practicar reducir cada video a una idea y a tres partes."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=AK0lgU5N09g",
+       "title": "Video ensayo 4. El guion a dos columnas V 2023",
+       "channel": "FRANCISCO UTRAY (UC3M)",
+       "language": "es",
+       "why": "Clase breve universitaria (UC3M) que explica el formato a dos columnas audio/video, el mismo que usa el guion de Intia."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-P1-01",
+       "title": "Gancho, cuerpo y cierre",
+       "objective": "Reconocer y escribir las tres partes obligatorias de todo guion corto de la agencia: gancho (0-3 s), desarrollo que cumple la promesa y cierre con una sola acción.",
+       "procedure": [
+        "Escribe la promesa del video en una línea: «Después de verlo, el espectador sabrá o sentirá ___».",
+        "Gancho (0-3 s): describe a la vez qué se VE y qué se ESCUCHA. Debe anunciar la promesa sin saludo ni logo.",
+        "Desarrollo: lista de 2 a 4 beats que cumplen la promesa, cada uno con una acción visible (ej.: se estampa el nombre en la polera, se voltea para mostrar el afranelado por dentro).",
+        "Cierre: una sola acción (comentar, guardar o escribir al WhatsApp) y el motivo para hacerla ahora.",
+        "Quita todo beat que se pueda eliminar sin que se pierda nada."
+       ],
+       "commonMistakes": [
+        "Empezar con «Hola, bienvenidos» o con el logo animado",
+        "Un gancho que promete algo que el video no entrega",
+        "Dos o tres CTA al final («sígueme, comenta y compra»)"
+       ],
+       "checklist": [
+        "Promesa escrita en una línea",
+        "Gancho visual y verbal en 0-3 s",
+        "Cada beat tiene una acción visible",
+        "Un solo CTA",
+        "Sin saludo ni logo al inicio"
+       ],
+       "practice": "Toma un Reel ya publicado de Con Amor, divídelo en gancho, desarrollo y cierre, y marca los segundos. Luego escribe uno nuevo de 30 s sobre la taza personalizada con nombre.",
+       "passCriteria": "Coordinación identifica sin ayuda la promesa, el gancho y el único CTA. El gancho no tiene saludo ni logo y el desarrollo cumple lo que promete.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-P1-02",
+       "title": "Una idea por video",
+       "objective": "Reducir cada guion a un solo mensaje central que se entienda en una frase y guardar el resto como ideas nuevas.",
+       "procedure": [
+        "Anota todo lo que quisieras decir del producto (lluvia libre).",
+        "Marca con estrella lo que más le importa al cliente según ATC y los comentarios.",
+        "Elige UNA idea. El resto va como tarjetas IDEA separadas en el tablero.",
+        "Redacta la frase de prueba: «Este video es sobre ___ para ___».",
+        "Si la frase necesita «y», hay dos ideas: divídela en dos guiones."
+       ],
+       "commonMistakes": [
+        "Meter precio, material, tallas, envíos y promoción en 30 s",
+        "Confundir más información con más valor",
+        "Borrar las ideas descartadas en vez de guardarlas"
+       ],
+       "checklist": [
+        "Frase de prueba sin «y»",
+        "Ideas sobrantes cargadas como IDEA",
+        "El CTA se relaciona con la idea elegida"
+       ],
+       "practice": "Con la polera de algodón afranelado de Con Amor, genera 8 ideas sueltas (abriga en las noches de la sierra, nombre personalizado, regalo de aniversario, cuidado al lavar, envío a provincia…) y conviértelas en 8 tarjetas IDEA.",
+       "passCriteria": "Entrega 8 IDEAS independientes, cada una con su frase de prueba sin «y».",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-P1-03",
+       "title": "Duración y palabras",
+       "objective": "Calcular la duración real del guion antes de grabar para que no sobre ni falte texto.",
+       "procedure": [
+        "Cuenta solo las palabras habladas, sin acotaciones.",
+        "Aplica la regla base de unas 2,5 palabras por segundo (≈150 por minuto) en español conversacional: 20 s ≈ 50 palabras, 30 s ≈ 75 y 45 s ≈ 110.",
+        "Lee en voz alta con cronómetro al ritmo del talento: hay talentos que llegan a 3 palabras por segundo y otros que se quedan en 2. Anota el ritmo de cada uno.",
+        "Suma los segundos de acciones sin diálogo (reacciones, planos detalle, silencios).",
+        "Ajusta la «Duración objetivo» del generador y los segundos de inicio y fin de cada escena."
+       ],
+       "commonMistakes": [
+        "150 palabras para un video de 30 s: el actor termina hablando atropellado",
+        "Olvidar que las reacciones y los silencios también ocupan tiempo",
+        "Confiar solo en la duración que estima la IA"
+       ],
+       "checklist": [
+        "Palabras contadas",
+        "Lectura cronometrada hecha",
+        "Diferencia con la duración objetivo de 10 % o menos",
+        "Segundos sin diálogo sumados",
+        "Ritmo del talento anotado"
+       ],
+       "practice": "Cronometra tres guiones ya grabados, calcula su ritmo real en palabras por segundo y ajusta tu regla personal por talento.",
+       "passCriteria": "En tres guiones propios, la duración grabada difiere 10 % o menos de la estimada.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-P1-04",
+       "title": "Formato de dos columnas",
+       "objective": "Escribir guiones en formato AV (lo que se ve | lo que se escucha) para que producción, talento y edición lean lo mismo.",
+       "procedure": [
+        "Divide el guion en filas, una por beat, cada una con su tiempo (ej.: 00-03 s).",
+        "Columna VIDEO: plano sugerido, acción física, texto en pantalla y utilería.",
+        "Columna AUDIO: diálogo palabra por palabra, voz en off (V.O.), música y efectos (SFX).",
+        "Si el beat cambia de plano, abre una fila nueva.",
+        "Comprueba que coincida con los campos de escena de Intia: beat, plano, acción, diálogo, sonido y texto en pantalla."
+       ],
+       "commonMistakes": [
+        "Poner indicaciones de actuación dentro del diálogo",
+        "Texto en pantalla que repite todo el diálogo",
+        "Filas sin tiempo"
+       ],
+       "checklist": [
+        "Cada fila con tiempo",
+        "Video y audio alineados",
+        "Texto en pantalla de 7 palabras o menos",
+        "Diálogo listo para leer, sin acotaciones"
+       ],
+       "practice": "Pasa a dos columnas un guion de restaurante: «Así sale tu 1/4 de pollo a la brasa en 60 segundos».",
+       "passCriteria": "El filmmaker y el editor leen el guion y dicen qué plano va en cada segundo sin preguntar.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "GUI-P2",
+     "slug": "gui-p2",
+     "title": "Producto y audiencia",
+     "summary": "Investigar antes de escribir: ficha de producto, avatar en una frase, objeciones reales de ATC y palabras del cliente.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=d19DWhixFWU",
+       "title": "Cómo hacer tu PERFIL DE CLIENTE ideal (ejemplos)",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Guía con ejemplos para definir al cliente ideal; base para escribir el avatar en una frase antes de cada guion."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=yiW0X4L3F30",
+       "title": "Diferencias entre VENTAJAS y BENEFICIOS + ejemplos",
+       "channel": "Rosa Morel · Brand Storytelling",
+       "language": "es",
+       "why": "Aclara la diferencia entre características/ventajas y beneficios con ejemplos: clave para armar la ficha de producto (p. ej. polera afranelada → abriga en la sierra)."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=sgY9jcid7Fo",
+       "title": "How to Find Voice of Customer Data Fast: The Super Speedy VOC Formula - Copyhackers",
+       "channel": "Joanna Wiebe",
+       "language": "en",
+       "why": "Referente del copywriting explicando cómo extraer las palabras reales del cliente (reseñas, chats); aplica directo a usar las objeciones y frases que recoge ATC."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-P2-01",
+       "title": "Ficha de producto",
+       "objective": "Armar la ficha que alimenta cada guion: característica → beneficio → prueba filmable → objeción que resuelve.",
+       "procedure": [
+        "Pide datos reales al dueño o a coordinación: precio final en S/, tallas, tiempos de entrega por zona, stock y costo de envío, con fecha de validez.",
+        "Lista 5 características (ej.: algodón afranelado, nombre personalizado, empaque de regalo).",
+        "Traduce cada una a un beneficio que se siente: «abriga en las noches de Huancayo sin picar».",
+        "Añade una prueba grabable por beneficio: plano detalle del interior afranelado, prenda lavada que mantiene el estampado.",
+        "Pega la ficha en el campo «Qué debe saber la IA sobre el producto»."
+       ],
+       "commonMistakes": [
+        "Inventar precios o tiempos de entrega",
+        "Beneficios genéricos («alta calidad», «el mejor»)",
+        "Beneficios sin una prueba visual"
+       ],
+       "checklist": [
+        "Datos validados por el dueño con fecha",
+        "5 pares característica → beneficio",
+        "Una prueba filmable por beneficio",
+        "Objeción principal anotada"
+       ],
+       "practice": "Arma 3 fichas: taza personalizada de Con Amor, plan contable mensual para emprendedores (declaraciones ante SUNAT) y un combo de cevichería.",
+       "passCriteria": "Las 3 fichas no tienen datos inventados y el filmmaker puede grabar la prueba de cada beneficio.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-P2-02",
+       "title": "Avatar en una frase",
+       "objective": "Definir en una sola frase concreta a quién le habla cada video (campo «avatar» del guion).",
+       "procedure": [
+        "Parte de datos reales: quién compra (ATC), quién comenta (community) y desde dónde (Lima o sierra).",
+        "Usa la fórmula: «[Persona] que [situación] y quiere [deseo], pero [freno]».",
+        "Ejemplo Con Amor: «Chica de 20-30 años en Huancayo que quiere sorprender a su enamorado en el aniversario, pero no sabe qué regalo original dar».",
+        "Verifica que el gancho use su palabra, su lugar o su momento.",
+        "Un avatar por guion: otro avatar es otro guion."
+       ],
+       "commonMistakes": [
+        "«Hombres y mujeres de 18 a 65»",
+        "Avatar inventado sin preguntar a ATC",
+        "El mismo gancho para Lima y para la sierra aunque el dolor sea distinto (frío o moda)"
+       ],
+       "checklist": [
+        "Frase con persona, situación, deseo y freno",
+        "Basada en al menos un dato real",
+        "Gancho coherente con el avatar"
+       ],
+       "practice": "Escribe 3 avatares para la taza personalizada (Día de la Madre, oficina, pareja) y un gancho distinto para cada uno.",
+       "passCriteria": "Coordinación adivina el avatar leyendo solo el gancho.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-P2-03",
+       "title": "Objeciones desde ATC",
+       "objective": "Convertir las dudas reales de DM/WhatsApp en ideas y líneas de guion que las respondan antes de que el cliente pregunte.",
+       "procedure": [
+        "Cada lunes, pide a ATC el top 5 de preguntas y motivos de no compra de la semana.",
+        "Clasifícalas por tipo: precio, confianza, tiempo de entrega, talla o calidad, forma de pago.",
+        "Define para cada una la prueba visual que la desarma (ej.: «¿se despinta?» → lavado frente a cámara).",
+        "Crea una IDEA por objeción.",
+        "Usa la objeción tal cual la dice el cliente como gancho: «¿Y si no le queda la talla?»."
+       ],
+       "commonMistakes": [
+        "Responder objeciones con adjetivos en vez de pruebas",
+        "Ignorar objeciones que se repiten",
+        "No volver a preguntar a ATC si esas dudas bajaron"
+       ],
+       "checklist": [
+        "Top 5 de ATC recibido",
+        "Cada objeción tiene su prueba visual",
+        "IDEA creada por objeción",
+        "Revisión con ATC a las 2 semanas"
+       ],
+       "practice": "Con 5 objeciones (reales o de ejemplo: «¿llega a Cusco?», «¿cuánto demora?», «¿el nombre se borra?», «¿aceptan Yape?», «¿y si no le gusta?») escribe 5 ganchos y 5 pruebas.",
+       "passCriteria": "Entrega 5 ganchos que usan las palabras del cliente y 5 pruebas filmables.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-P2-04",
+       "title": "Palabras del cliente",
+       "objective": "Escribir con el vocabulario real de la audiencia, sacado de comentarios, DMs y reseñas.",
+       "procedure": [
+        "Copia 30 comentarios o DMs reales, sin nombres, números ni fotos: son datos personales (Ley 29733).",
+        "Subraya las frases que se repiten («para mi viejita», «hace un frío terrible», «mi flaco»).",
+        "Arma un glosario por marca y por región (Lima y sierra).",
+        "Reemplaza las palabras de marketing de tu guion por las del cliente.",
+        "Confirma con el talento que él lo diría así."
+       ],
+       "commonMistakes": [
+        "Copiar datos personales de clientes al documento",
+        "Usar jerga limeña para público de la sierra sin verificar",
+        "Sonar a catálogo («producto premium de alta calidad»)"
+       ],
+       "checklist": [
+        "30 frases reales sin datos personales",
+        "Glosario por región",
+        "Al menos 2 expresiones reales en cada guion"
+       ],
+       "practice": "Glosario de 20 expresiones para Con Amor (Lima y sierra) y 10 para la cevichería.",
+       "passCriteria": "El talento lee el guion reescrito sin cambiar ninguna palabra.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "GUI-P3",
+     "slug": "gui-p3",
+     "title": "Ganchos básicos",
+     "summary": "Los primeros 3 segundos: las capas del gancho, los ganchos de dolor, de resultado y visual, y los errores que hacen deslizar.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=VxBrRu-gOVQ",
+       "title": "Crea Videos adictivos de 100k vistas con esta Fórmula de Ganchos Virales",
+       "channel": "Andrea Estratega l Marketing de Contenidos",
+       "language": "es",
+       "why": "Fórmula de ganchos para los primeros segundos con capas (verbal, visual, texto) y ejemplos de reels."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=fCmFlTMs2N0",
+       "title": "30 ganchos visuales que te darán 1 millón de vistas (con ejemplos)",
+       "channel": "Andrea Estratega l Marketing de Contenidos",
+       "language": "es",
+       "why": "Catálogo de ganchos visuales con ejemplos; complementa el gancho de dolor y de resultado con lo que se ve en pantalla."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=gj74t85cx9s",
+       "title": "Cómo Empezar un Video para que NADIE se Vaya (20 Hooks)",
+       "channel": "converzzo",
+       "language": "es",
+       "why": "20 tipos de inicio de video explicados y errores que hacen deslizar; reciente y muy práctico para principiantes."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-P3-01",
+       "title": "Qué hace un gancho",
+       "objective": "Entender que el gancho combina lo que se ve, lo que se oye y lo que se lee en los primeros 1 a 3 segundos, y que las cuatro capas apuntan a una sola promesa.",
+       "procedure": [
+        "Capa visual: qué pasa en cuadro en el segundo 0.",
+        "Capa verbal: la primera frase, de 12 palabras o menos.",
+        "Texto en pantalla: 7 palabras o menos, que refuerzan sin repetir.",
+        "Sonido: efecto, silencio, textura ASMR o audio en tendencia disponible para la cuenta.",
+        "Verifica que las cuatro capas apunten a la misma promesa."
+       ],
+       "commonMistakes": [
+        "Gancho solo hablado sobre una imagen quieta",
+        "Texto en pantalla que tapa la cara",
+        "Frases genéricas como «¿Sabías que…?»"
+       ],
+       "checklist": [
+        "4 capas definidas",
+        "Una sola promesa",
+        "Primera frase de 12 palabras o menos",
+        "Texto en pantalla de 7 palabras o menos"
+       ],
+       "practice": "Analiza 10 Reels o TikToks de tu rubro y anota sus 4 capas y su promesa en una tabla.",
+       "passCriteria": "Tabla de 10 videos con las 4 capas identificadas y la promesa de cada uno.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "GUI-P3-02",
+       "title": "Gancho de dolor",
+       "objective": "Abrir el video llamando al avatar por un problema real que el producto sí resuelve.",
+       "procedure": [
+        "Toma el dolor u objeción de la ficha o del reporte de ATC.",
+        "Aplica una fórmula: «Si [situación], [consecuencia]» o «Deja de [error]».",
+        "Ejemplo: «Si tu enamorado ya tiene todo, no le regales otra colonia».",
+        "Imagen: la persona viviendo el dolor (buscando regalo con cara de apuro).",
+        "Muestra la solución antes del segundo 5."
+       ],
+       "commonMistakes": [
+        "Dolor exagerado o humillante",
+        "Un dolor que el producto no resuelve",
+        "Tardar más de 5 s en mostrar la solución"
+       ],
+       "checklist": [
+        "Dolor real (de ATC o de comentarios)",
+        "Consecuencia concreta",
+        "Solución visible antes del segundo 5"
+       ],
+       "practice": "Escribe 5 ganchos de dolor: Con Amor (frío en la sierra, regalo repetido), estudio contable (multa por declarar fuera de plazo) y restaurante (almuerzo que llega frío a la oficina).",
+       "passCriteria": "Coordinación aprueba 5 ganchos de 12 palabras o menos.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-P3-03",
+       "title": "Resultado primero",
+       "objective": "Abrir mostrando el resultado final y luego contar cómo se llegó a él.",
+       "procedure": [
+        "Identifica el momento más satisfactorio: la reacción al abrir el regalo, el plato servido, el cliente sin multas.",
+        "Ponlo entre los segundos 0 y 2, en plano cerrado.",
+        "Frase puente: «Así lo hicimos en 24 horas» o «Mira cómo se prepara» (solo con tiempos reales).",
+        "Desarrollo en orden cronológico.",
+        "Vuelve al resultado en el cierre para crear un bucle."
+       ],
+       "commonMistakes": [
+        "Resultado seguido de un desarrollo lento y sin tensión",
+        "Resultado en plano abierto que no se ve en el celular",
+        "Tiempos inventados en la frase puente"
+       ],
+       "checklist": [
+        "Resultado en los segundos 0-2 y en plano cerrado",
+        "Frase puente real",
+        "Bucle al final"
+       ],
+       "practice": "Guion de 30 s «Del pedido al regalo» con la polera personalizada, que empieza por la reacción de quien la recibe.",
+       "passCriteria": "El gancho se entiende sin sonido, solo con imagen y texto.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "GUI-P3-04",
+       "title": "Gancho visual",
+       "objective": "Diseñar un inicio que detenga el scroll por la imagen, incluso sin sonido.",
+       "procedure": [
+        "Elige un recurso: movimiento inesperado, objeto usado de forma rara, acercamiento brusco, pantalla dividida antes/después o un sonido ASMR.",
+        "Descríbelo como acción concreta en la columna VIDEO.",
+        "Indica el plano sugerido (detalle o primer plano).",
+        "Confirma con el filmmaker que se puede grabar con el equipo disponible.",
+        "Añade un texto en pantalla que dé contexto."
+       ],
+       "commonMistakes": [
+        "Escribir «algo llamativo» sin describir qué",
+        "Efectos que el editor tiene que inventar",
+        "Gancho visual sin relación con el producto"
+       ],
+       "checklist": [
+        "Acción visual descrita en una línea",
+        "Plano sugerido",
+        "Grabable con el equipo",
+        "Conectado con el producto"
+       ],
+       "practice": "Escribe 5 ganchos visuales: polera que se voltea y muestra el afranelado, nombre que aparece en la taza al servir el café (solo si ese modelo está en catálogo), limón exprimido en cámara lenta sobre el ceviche.",
+       "passCriteria": "El filmmaker confirma que los 5 se pueden grabar y el editor que no requieren efectos fuera de su alcance.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "GUI-P3-05",
+       "title": "Errores de arranque",
+       "objective": "Detectar y eliminar lo que hace deslizar en el primer segundo.",
+       "procedure": [
+        "Lee solo el primer segundo de tu guion.",
+        "Tacha saludos, presentaciones, logo y frases como «en este video te voy a…».",
+        "Comprueba que la promesa del gancho se cumpla. Si no, es clickbait y castiga la retención.",
+        "Verifica que el texto del gancho quede dentro de la zona segura (ver «Texto en pantalla»).",
+        "Relee como si fueras el avatar: ¿te quedarías?"
+       ],
+       "commonMistakes": [
+        "«Hola chicos, ¿cómo están?»",
+        "Logo animado de 2 s al inicio",
+        "Promesa exagerada que el video no cumple"
+       ],
+       "checklist": [
+        "Sin saludo",
+        "Sin logo al inicio",
+        "Promesa cumplida",
+        "Texto del gancho en zona segura"
+       ],
+       "practice": "Corrige el arranque de 5 guiones antiguos.",
+       "passCriteria": "5 arranques corregidos, cada uno resuelto en 3 s o menos.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "GUI-P4",
+     "slug": "gui-p4",
+     "title": "Escribir para lo visual",
+     "summary": "Escribir lo que se puede grabar y oír: acciones, planos sugeridos con propósito, emoción por escena, utilería y locación, texto en pantalla en zona segura y sonido con licencia.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=JskjxgSFlH4",
+       "title": "El SHOW DON'T TELL de una vez por todas | Consejos de escritura | Javier Miró",
+       "channel": "Javier Miró",
+       "language": "es",
+       "why": "Explica con ejemplos cómo mostrar en lugar de contar: base para escribir acciones grabables en vez de explicaciones."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=CmPg9POBvV0",
+       "title": "CINEMATOGRAFÍA - Lenguaje Audiovisual (I): escalas de plano, ángulos, movimientos...",
+       "channel": "Officium",
+       "language": "es",
+       "why": "Repaso claro de escalas de plano, ángulos y movimientos para que el guionista sugiera planos con propósito al filmmaker."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=fd9EcHwSaQA",
+       "title": "Como hacer un DESGLOSE DE GUION - como escribir hojas de desglose, y realizar el marcaje de guion",
+       "channel": "OriginalScript",
+       "language": "es",
+       "why": "Enseña a desglosar un guion en utilería, locación y personajes: lo que el guion de Intia debe dejar listo para filmmaker y talento."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-P4-01",
+       "title": "Acción, no adjetivos",
+       "objective": "Describir cada escena como una acción física que se puede grabar, no como una intención.",
+       "procedure": [
+        "Detecta los adjetivos abstractos («se ve feliz», «ambiente cálido»).",
+        "Tradúcelos a acción: «abre la caja, se tapa la boca y abraza la polera».",
+        "Deja una acción principal por escena.",
+        "Indica quién hace qué y con qué objeto.",
+        "Pregúntate si el actor sabe qué hacer con las manos."
+       ],
+       "commonMistakes": [
+        "«Escena emotiva» sin acción",
+        "Acciones imposibles en el tiempo asignado",
+        "Describir pensamientos que la cámara no puede ver"
+       ],
+       "checklist": [
+        "Cada escena con un verbo físico",
+        "Sujeto y objeto claros",
+        "Tiempo realista"
+       ],
+       "practice": "Reescribe 6 escenas abstractas de ejemplo como acciones.",
+       "passCriteria": "El actor y el filmmaker ejecutan las escenas sin pedir aclaraciones.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-P4-02",
+       "title": "Planos sugeridos básicos",
+       "objective": "Usar el vocabulario de planos para sugerir, no imponer, cómo se ve cada beat. El campo «plano» lleva el tipo de plano y su propósito; la ejecución la decide el filmmaker.",
+       "procedure": [
+        "Plano general: ubicar dónde estamos.",
+        "Plano medio: diálogo y gesto.",
+        "Primer plano: emoción y reacción.",
+        "Plano detalle: producto, textura, nombre personalizado.",
+        "Cenital: preparación, empaque o plato.",
+        "Escribe el plano con su porqué («primer plano para ver la reacción») y sin lentes ni equipos que no existan: el filmmaker decide cómo lograrlo."
+       ],
+       "commonMistakes": [
+        "Pedir dron o grúa que no existen",
+        "Todo el video en plano medio",
+        "Plano sin propósito"
+       ],
+       "checklist": [
+        "Cada escena con plano y propósito",
+        "Al menos un plano detalle del producto",
+        "Reacción en primer plano"
+       ],
+       "practice": "Asigna planos a un guion de 6 escenas de la taza personalizada.",
+       "passCriteria": "El filmmaker acepta el 80 % o más de los planos sugeridos sin cambios de fondo.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Taller de Con Amor: mesa de madera con una taza blanca personalizada con un nombre, una polera afranelada doblada y una caja de regalo. Ventana lateral con luz de día y un estante de productos al fondo.",
+        "subjects": "Una actriz (figura 3D femenina de 1,60 m) de pie detrás de la mesa. Pose 1: sostiene la taza a la altura del pecho y mira a cámara. Pose 2: gira la taza para mostrar el nombre. Pose 3: acerca la taza a su rostro y sonríe. Pose 4: solo sus manos guardan la taza en la caja.",
+        "camera": "Vertical 9:16 en todas las posiciones, con valores de un celular. Secuencia de 5 posiciones etiquetadas: (1) Plano general: lente principal (≈24-26 mm eq.), a 1,40 m de altura y 2,5-3 m de distancia, fija. (2) Plano medio: lente principal a 1,2 m, o 2x (≈48-52 mm eq.) a 2 m, a la altura del pecho. (3) Primer plano: 2x a la altura de los ojos, a 0,8-1 m. (4) Plano detalle: 2x a 35-45 cm, o modo macro, sobre el nombre de la taza. (5) Cenital: lente principal, 70-90 cm sobre la mesa mirando hacia abajo. Transición animada entre posiciones; en cada una aparece la etiqueta con el nombre del plano y su propósito.",
+        "lighting": "Luz principal suave de ventana a 45° por la izquierda (≈5600 K), rebotador blanco de relleno a la derecha y contraluz tenue cálido (≈3200 K) detrás de la actriz para separarla del fondo.",
+        "beats": [
+         "0-3 s · Plano general. Etiqueta «Dónde estamos». Qué escribir: «PG del taller, ella sostiene la taza».",
+         "3-6 s · Plano medio. Etiqueta «Diálogo y gesto». Qué escribir: «PM, dice la línea mirando a cámara».",
+         "6-9 s · Primer plano. Etiqueta «Emoción». Qué escribir: «PP, sonríe al ver el nombre».",
+         "9-12 s · Plano detalle. Etiqueta «Producto y prueba». Qué escribir: «PD del nombre impreso mientras gira la taza».",
+         "12-15 s · Cenital. Etiqueta «Proceso o empaque». Qué escribir: «Cenital, manos guardan la taza en la caja».",
+         "Error mostrado: primer plano hecho con el gran angular pegado a la cara (a 30 cm); la nariz y la frente se deforman. Por eso el primer plano se sugiere con 2x y más distancia.",
+         "Cierre: las 5 miniaturas lado a lado con la regla «plano + propósito»."
+        ]
+       }
+      },
+      {
+       "id": "GUI-P4-03",
+       "title": "Emoción por escena",
+       "objective": "Definir la emoción de cada escena y cómo se nota en pantalla.",
+       "procedure": [
+        "Dibuja la curva emocional: curiosidad o dolor → tensión → alivio o sorpresa → deseo.",
+        "Asigna una emoción por escena en el campo «emoción».",
+        "Tradúcela a una señal visible: mirada, pausa, respiración, gesto.",
+        "Sugiere una luz y un sonido que la refuercen (campos «iluminación» y «sonido»).",
+        "No cambies de emoción sin una causa en la historia."
+       ],
+       "commonMistakes": [
+        "«Feliz» en todas las escenas",
+        "Emoción sin señal física",
+        "Música que contradice la emoción"
+       ],
+       "checklist": [
+        "Curva emocional definida",
+        "Emoción y señal por escena",
+        "Luz y sonido coherentes"
+       ],
+       "practice": "Curva emocional de un storytime de restaurante: «El día que casi cerramos».",
+       "passCriteria": "El talento ejecuta las emociones en el orden correcto durante la lectura de mesa.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-P4-04",
+       "title": "Utilería y locación",
+       "objective": "Dejar listo el desglose de todo lo que hay que conseguir para grabar.",
+       "procedure": [
+        "Lista por escena la utilería, el vestuario y la locación.",
+        "Consolida todo en la lista general sin duplicados (propsSummary).",
+        "Separa lo que ya existe de lo que hay que comprar o pedir.",
+        "Valida locaciones reales (taller, tienda, local del cliente, calle) y sus permisos.",
+        "Envía el desglose a producción cuando el guion pase a APROBADO."
+       ],
+       "commonMistakes": [
+        "Locaciones imposibles (una playa para grabar en Huancayo)",
+        "No especificar el producto exacto (color, talla, nombre personalizado)",
+        "Marcas de terceros visibles"
+       ],
+       "checklist": [
+        "Utilería por escena",
+        "Lista consolidada",
+        "Locación validada",
+        "Producto exacto especificado"
+       ],
+       "practice": "Desglose completo de un sketch en una cevichería con 3 personajes.",
+       "passCriteria": "Producción no descubre ningún faltante el día de grabación.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-P4-05",
+       "title": "Texto en pantalla",
+       "objective": "Escribir el texto en pantalla para quien ve sin sonido: corto, legible, sin errores y fuera de las zonas que tapa la interfaz.",
+       "procedure": [
+        "Define la función de cada texto: gancho (título del segundo 0), dato clave, número de paso o CTA.",
+        "Máximo 7 palabras por texto y una idea por pantalla. Regla de lectura: al menos 1 s por cada 3 palabras y nunca menos de 1,5 s en pantalla.",
+        "Escribe el texto literal en la columna VIDEO, con ortografía y tildes revisadas. Los subtítulos del diálogo los hace edición; no los copies como texto en pantalla.",
+        "Zonas seguras en 9:16 (1080 × 1920): deja libre la franja inferior (≈20-25 %, donde van el caption y los botones), el borde derecho (≈120-150 px, íconos de me gusta y compartir) y la franja superior (≈10 %). Ubica el texto en el tercio medio.",
+        "Si el texto repite el diálogo, recórtalo a la palabra clave."
+       ],
+       "commonMistakes": [
+        "Párrafos en pantalla",
+        "Texto tapado por el caption o por los botones",
+        "Errores de ortografía o sin tildes («Regalo perfecto para tu Mama»)",
+        "Texto que desaparece antes de poder leerse"
+       ],
+       "checklist": [
+        "Función definida",
+        "7 palabras o menos",
+        "Ortografía y tildes revisadas",
+        "Dentro de la zona segura",
+        "Tiempo de lectura suficiente"
+       ],
+       "practice": "Escribe los textos en pantalla de un guion de 30 s de la cevichería («Combo para 4 en 3 pasos») y colócalos sobre una plantilla 9:16 con las zonas seguras marcadas.",
+       "passCriteria": "El diseñador y el editor montan los textos sin moverlos ni corregirlos, y el video se entiende en silencio.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-P4-06",
+       "title": "Sonido y música",
+       "objective": "Definir en el guion el sonido de cada escena (voz, efectos, ambiente y música) sabiendo qué audio puede usar legalmente una cuenta de empresa.",
+       "procedure": [
+        "Completa el campo «sonido» de cada escena: diálogo o voz en off, efecto (SFX), ambiente y música.",
+        "Usa el sonido como parte de la historia: el golpe de la plancha de estampado, el hervor del caldo, el crujido del papel de regalo.",
+        "Cuentas de empresa: en TikTok, solo la Biblioteca de Música Comercial; en Instagram y Facebook, la música habilitada para la cuenta o Meta Sound Collection; en YouTube, la Biblioteca de audio. Las canciones comerciales en tendencia pueden estar bloqueadas o silenciarse.",
+        "En los videos que irán a pauta, solo audio con licencia comercial.",
+        "Si la idea depende de un audio en tendencia, confirma con community que está disponible para la cuenta de la marca antes de enviar a aprobación y escribe una alternativa."
+       ],
+       "commonMistakes": [
+        "Guion que depende de una canción comercial que la marca no puede usar",
+        "Música a todo volumen sobre el diálogo",
+        "No indicar ningún sonido: el editor tiene que adivinar",
+        "Usar el audio original de otro creador sin permiso"
+       ],
+       "checklist": [
+        "Sonido por escena",
+        "Al menos un sonido de producto o proceso",
+        "Audio con licencia para cuenta de empresa",
+        "Alternativa si el audio en tendencia no está disponible"
+       ],
+       "practice": "Para el tutorial «Cómo pedir tu polera en 3 pasos», define el sonido de cada escena y elige 2 pistas de la biblioteca comercial que encajen.",
+       "passCriteria": "Community confirma que el audio está disponible para la cuenta y el editor no tiene que cambiar la idea sonora.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "GUI-P5",
+     "slug": "gui-p5",
+     "title": "Generador IA de Intia",
+     "summary": "Cómo llenar el pedido, darle buen contexto a la IA, elegir estructura y variante, auditar lo que devuelve y enviarlo a aprobación.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=p2PqfRte46k",
+       "title": "La Fórmula del Prompt Perfecto para ChatGPT (Guía Definitiva)",
+       "channel": "Cyberclick • Marketing Digital",
+       "language": "es",
+       "why": "Estructura de un buen prompt (rol, contexto, tarea, formato); aplica a cómo llenar el pedido y dar contexto al Generador IA."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=AJaKAJilf7Q",
+       "title": "¿Qué es ALUCINACIÓN DE IA?",
+       "channel": "Computer Hoy",
+       "language": "es",
+       "why": "Explica por qué la IA inventa datos; sustenta el paso de auditar precios, stock y promesas antes de enviar a aprobación."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=JBOpQsxdDbI",
+       "title": "Estudié +50 formatos de video, te reveló los 5 MÁS VIRALES",
+       "channel": "Andrea Estratega l Marketing de Contenidos",
+       "language": "es",
+       "why": "Panorama de formatos de video corto para elegir estructura y variante con criterio dentro del generador."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-P5-01",
+       "title": "Llenar el pedido",
+       "objective": "Completar el formulario del Generador IA con información suficiente y real.",
+       "procedure": [
+        "«Video al que se unirá»: elige la tarjeta en IDEA o GUION que aún no tiene guion (o genera un guion independiente).",
+        "«Marca» y «Producto o servicio del video» exactos. Cambiar de marca desvincula el video.",
+        "«Idea o historia principal» en 3 frases: qué pasa, qué sensación buscas y qué debe quedar claro.",
+        "«Quién actúa frente a cámara»: una persona del equipo, o sin asignar para que la IA proponga perfiles por escena.",
+        "«Duración objetivo (segundos)»: el campo acepta de 10 a 300 s. Usa 20-45 s para venta directa, 30-60 s como rango general y más solo para vlog o storytime.",
+        "Revisa el resumen del pedido antes de generar."
+       ],
+       "commonMistakes": [
+        "Idea de 5 palabras («video de polera bonito»)",
+        "Marca equivocada",
+        "120 s de duración para un video de venta directa"
+       ],
+       "checklist": [
+        "Video vinculado",
+        "Marca correcta",
+        "Idea en 3 frases",
+        "Actor definido o sin asignar a propósito",
+        "Duración coherente con el formato"
+       ],
+       "practice": "Llena el pedido para «polera afranelada para el frío de Cusco» y compara el resultado con el de un pedido pobre.",
+       "passCriteria": "El guion generado no necesita reescribir ni el gancho ni el desarrollo.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-P5-02",
+       "title": "Contexto del producto",
+       "objective": "Escribir el campo «Qué debe saber la IA sobre el producto» de forma que la IA no invente datos.",
+       "procedure": [
+        "Pega la ficha de producto: características, beneficios, precio real, tiempos, zonas y objeciones.",
+        "Ordénala con etiquetas cortas: PRODUCTO / PARA QUIÉN / PRUEBAS / NO DECIR.",
+        "En NO DECIR anota lo prohibido (ej.: «no prometer entrega en 24 h a provincia», «no decir 100 % algodón si no lo es»).",
+        "Incluye la oferta solo si está confirmada, con vigencia y stock.",
+        "Actualiza la ficha cada vez que cambie el precio o la oferta."
+       ],
+       "commonMistakes": [
+        "Dejar el campo vacío: la IA rellena con datos inventados",
+        "Pegar textos largos sin orden",
+        "Incluir promociones vencidas"
+       ],
+       "checklist": [
+        "4 etiquetas completas",
+        "Precio y oferta con fecha de validez",
+        "Lista NO DECIR"
+       ],
+       "practice": "Contexto para el servicio contable: qué incluye el plan mensual, para quién (emprendedores en RUS, RER o MYPE Tributario) y qué no incluye.",
+       "passCriteria": "Tres guiones generados sin ningún dato que contradiga la ficha.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-P5-03",
+       "title": "Estructura y variante",
+       "objective": "Elegir la estructura adecuada al objetivo y usar la variante para dar un giro concreto, con el ángulo que indique coordinación.",
+       "procedure": [
+        "Define el objetivo: vender, educar, entretener o hacer comunidad.",
+        "Elige la estructura en Estructuras. Regla base: venta directa → PAS, Antes y Después, Tutorial o Testimonio; alcance y comunidad → Sketch, Cámara Escondida, Camaleón, Vlog o POV.",
+        "En el paso de ángulo, usa el que indique coordinación o el «Ángulo estándar». Los 12 ángulos creativos se trabajan en el nivel Intermedio.",
+        "Escribe en «Variante o nota adicional» un solo giro concreto: «que ocurra de noche en un paradero», «el conflicto es al pagar».",
+        "Si dudas entre dos estructuras, genera ambas y compáralas con coordinación."
+       ],
+       "commonMistakes": [
+        "Sketch para una oferta directa con escasez",
+        "Variante vaga («más creativo», «que sea viral»)",
+        "Variante con tres cambios a la vez"
+       ],
+       "checklist": [
+        "Objetivo escrito",
+        "Estructura coherente con el objetivo",
+        "Ángulo indicado por coordinación o estándar",
+        "Variante concreta y única"
+       ],
+       "practice": "Para la taza personalizada, genera 2 guiones con estructuras distintas (Tutorial y Sketch) y explica cuál usarías para vender y cuál para crecer.",
+       "passCriteria": "Justificas cada elección en una línea y coordinación está de acuerdo.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-P5-04",
+       "title": "Revisar lo generado",
+       "objective": "Auditar el guion generado antes de pasarlo a GUION para aprobación.",
+       "procedure": [
+        "Lee la cabecera (título, avatar, enfoque, gancho y CTA) y compárala con tu pedido.",
+        "Revisa escena por escena: tiempos continuos, diálogo fácil de leer, acción filmable y plano posible.",
+        "Busca datos inventados: precios, porcentajes, premios, testimonios.",
+        "Lee el diálogo en voz alta y cambia las palabras que el talento no diría.",
+        "Revisión legal: divulgación si corresponde, promociones con vigencia y stock, afirmaciones con prueba.",
+        "Corrige a mano, o regenera con una variante precisa."
+       ],
+       "commonMistakes": [
+        "Enviar el guion sin leerlo",
+        "Aceptar cifras que nadie validó",
+        "Regenerar diez veces en vez de corregir dos líneas"
+       ],
+       "checklist": [
+        "Cabecera coherente",
+        "Tiempos continuos",
+        "Sin datos inventados",
+        "Diálogo leído en voz alta",
+        "Revisión legal hecha"
+       ],
+       "practice": "Revisa 3 guiones generados y marca con colores: dato inventado, línea antinatural, acción que no se puede grabar.",
+       "passCriteria": "Coordinación aprueba a la primera al menos 2 de los 3.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-P5-05",
+       "title": "Enviar a aprobación",
+       "objective": "Mover el guion por el flujo de la app con todo lo que coordinación necesita para aprobarlo rápido.",
+       "procedure": [
+        "Vincula el guion a su video y pasa la tarjeta a GUION.",
+        "Deja una nota con el objetivo, el avatar, por qué este gancho, el gancho B y el destino (orgánico o pauta).",
+        "Menciona riesgos: locación, permisos, talento, stock.",
+        "Atiende las observaciones en menos de 24 h y responde cada una.",
+        "Cuando pase a APROBADO, envía los briefs a producción, talento y edición."
+       ],
+       "commonMistakes": [
+        "Guion suelto, sin video vinculado",
+        "Nota vacía",
+        "Corregir sin responder las observaciones"
+       ],
+       "checklist": [
+        "Video vinculado",
+        "Nota con objetivo, avatar, gancho B y destino",
+        "Riesgos declarados",
+        "Observaciones respondidas"
+       ],
+       "practice": "Sube 2 guiones con la nota completa.",
+       "passCriteria": "Tus próximos 5 guiones pasan de IDEA a APROBADO en 48 h o menos.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "GUI-P6",
+     "slug": "gui-p6",
+     "title": "Cierre y reglas básicas",
+     "summary": "Elegir entre cierre de venta y de comunidad, pedir una sola acción y cumplir desde el inicio las reglas de promociones, divulgación y veracidad del Perú.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=EL90EkdKV7o",
+       "title": "CTAs en Redes Sociales: 5 Ejemplos de Call to Actions para tus Posts ✏️",
+       "channel": "Metricool en español",
+       "language": "es",
+       "why": "Ejemplos de llamados a la acción para redes y cómo pedir una sola acción clara (comentar, escribir al DM, guardar)."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Ij42JgsT0ZY",
+       "title": "Guía de Publicidad para influencers",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Video oficial de Indecopi sobre la guía de publicidad para influencers: cómo identificar contenido publicitario en redes en Perú."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=EK0dOt9Q0a0",
+       "title": "El rol del Indecopi  frente a la publicidad engañosa y abusiva",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Resumen oficial de qué se considera publicidad engañosa en Perú; regla básica para promociones, stock y vigencia."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-P6-01",
+       "title": "Venta o comunidad",
+       "objective": "Elegir el tipo de cierre según el objetivo del video.",
+       "procedure": [
+        "Objetivo de alcance o comunidad: cierre de comunidad del catálogo de Intia (Seguir · Parte 2, Guardar, Mándaselo, Etiquetar, Pregunta, Encuesta, Próximo tema, Tu duda en video, Muéstranos, Notificaciones, Hasta el final o Sin pedido), sin precios ni enlaces.",
+        "Objetivo de venta: gatillo de venta (Escasez, Urgencia, Motivo / Razón, Incentivo / Regalo, Impacto Visual o Directo).",
+        "Marca el objetivo del cierre en el generador.",
+        "Haz que el motivo del cierre salga del contenido del video.",
+        "Respeta la proporción de venta y comunidad que define coordinación en el calendario."
+       ],
+       "commonMistakes": [
+        "Precio en un video de entretenimiento",
+        "Cierre de comunidad en una campaña de oferta",
+        "CTA que no tiene nada que ver con el contenido"
+       ],
+       "checklist": [
+        "Objetivo marcado",
+        "Tipo de cierre coherente",
+        "Motivo salido del contenido"
+       ],
+       "practice": "Decide venta o comunidad para 4 videos de la semana y escribe cada cierre.",
+       "passCriteria": "Coordinación valida los 4 sin cambiar el tipo de cierre.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-P6-02",
+       "title": "Una sola acción",
+       "objective": "Redactar CTA concretos: una acción, un lugar y un motivo.",
+       "procedure": [
+        "Fórmula: [acción] + [dónde] + [por qué ahora].",
+        "Venta: «Escríbenos POLERA al WhatsApp y te mandamos el catálogo con tallas».",
+        "Comunidad: «Mándaselo a quien siempre dice que no sabe qué regalar».",
+        "Acuerda la palabra clave con ATC para que la reconozca y etiquete el chat.",
+        "Pon el CTA en audio y en texto en pantalla a la vez."
+       ],
+       "commonMistakes": [
+        "«Síguenos, comenta, comparte y compra»",
+        "CTA solo hablado",
+        "Palabra clave que ATC no conoce"
+       ],
+       "checklist": [
+        "Una sola acción",
+        "Lugar claro",
+        "Motivo",
+        "Palabra clave avisada a ATC",
+        "CTA en texto y en audio"
+       ],
+       "practice": "Escribe 10 CTA (5 de venta y 5 de comunidad) para Con Amor y la cevichería.",
+       "passCriteria": "ATC confirma que puede rastrear cada CTA de venta por su palabra clave.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-P6-03",
+       "title": "Promociones legales",
+       "objective": "Escribir ofertas que cumplan el Código de Protección y Defensa del Consumidor (Ley 29571).",
+       "procedure": [
+        "En cada anuncio de la promoción (video, caption y portada que la mencionen) indica la duración (desde y hasta) y el número mínimo de unidades disponibles (art. 14).",
+        "Nunca omitas el stock mínimo: si no se indica, el negocio puede quedar obligado a atender en esas condiciones a todos los que lo pidan.",
+        "Condiciones y restricciones claras y visibles (zonas de envío, tallas, medios de pago), en texto en pantalla y en el caption.",
+        "El precio anunciado es el precio final en soles que se cobra, con impuestos incluidos. Si el envío se cobra aparte, dilo.",
+        "Usa escasez y urgencia solo si son reales y guarda en la nota del guion la confirmación escrita del dueño."
+       ],
+       "commonMistakes": [
+        "«Últimas unidades» sin stock definido",
+        "«Solo hoy» que se repite todos los días",
+        "Letra chica ilegible",
+        "Precio sin el costo de envío cuando se cobra aparte"
+       ],
+       "checklist": [
+        "Vigencia (desde y hasta)",
+        "Stock mínimo",
+        "Condiciones visibles",
+        "Precio final en S/",
+        "Confirmación del dueño"
+       ],
+       "practice": "Convierte 3 ofertas mal planteadas en ofertas legales. Ej.: «¡Quedan pocas!» → «Promo del 1 al 14 de febrero o hasta agotar 50 poleras».",
+       "passCriteria": "Las 3 ofertas incluyen vigencia, stock mínimo, condiciones y precio final.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-P6-04",
+       "title": "Marcar la publicidad",
+       "objective": "Identificar como publicidad todo video en que un creador, actor o cliente habla de la marca a cambio de pago, producto, canje u otro beneficio.",
+       "procedure": [
+        "Pregunta: ¿se publica en una cuenta que no es de la marca (actor, creador, cliente o colaboración) y hay conexión material (pago, producto gratis, canje, descuento, viaje)? Si es así, se divulga.",
+        "Usa etiquetas claras, como las que recomienda la Guía de Publicidad para Influencers de Indecopi (2024): «Publicidad», «#Publicidad» o «#AnuncioContratado», al inicio del caption y, en el video, en texto o dicho al comienzo.",
+        "Evita etiquetas ambiguas: #Ad, #Publi, #Embajador o «gracias a…».",
+        "Activa además la herramienta de cada red: contenido de marca en TikTok y la etiqueta de colaboración pagada en Instagram.",
+        "Los canjes, unboxings y sorteos con producto de la marca también cuentan como publicidad.",
+        "En la cuenta propia de la marca el carácter publicitario es evidente, pero un UGC o testimonio no puede presentarse como opinión espontánea si hubo beneficio."
+       ],
+       "commonMistakes": [
+        "Ocultar que el actor recibió el producto",
+        "Poner #Publicidad al final de 30 hashtags",
+        "Pensar que un canje no es pago"
+       ],
+       "checklist": [
+        "Conexión material evaluada",
+        "Etiqueta clara al inicio",
+        "Herramienta de contenido de marca activada",
+        "Sin etiquetas ambiguas"
+       ],
+       "practice": "Clasifica 6 casos (actriz que publica en su cuenta tras recibir una casaca, reel en la cuenta de Con Amor, clienta que etiqueta a la marca sin recibir nada, sorteo, colaboración con un creador de Arequipa, canje con una cevichería) y define la divulgación de cada uno.",
+       "passCriteria": "Los 6 casos quedan bien clasificados y con la etiqueta correcta, y coordinación lo valida.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-P6-05",
+       "title": "Nada sin prueba",
+       "objective": "Aplicar desde el primer guion la regla de veracidad: toda afirmación objetiva necesita prueba y todo testimonio debe ser real.",
+       "procedure": [
+        "Subraya en tu guion las afirmaciones objetivas: cifras, «el mejor», «el más barato», «no se despinta», «100 % algodón», «llega en 24 h».",
+        "Pide la prueba antes de enviar: ficha del proveedor, prueba de lavado grabada, registro de entregas.",
+        "Sin prueba, reformula como experiencia verificable («la lavamos 20 veces y así quedó», solo si se hizo) o elimina la frase.",
+        "Testimonios solo de clientes reales, recientes y con autorización. Nunca un actor que dice ser cliente.",
+        "Ante la duda, consulta a coordinación antes de grabar."
+       ],
+       "commonMistakes": [
+        "«La mejor pollería de Lima» sin respaldo",
+        "Testimonio actuado presentado como real",
+        "Copiar cifras que propuso la IA"
+       ],
+       "checklist": [
+        "Afirmaciones subrayadas",
+        "Prueba archivada por cada una",
+        "Testimonios reales y autorizados"
+       ],
+       "practice": "Marca todas las afirmaciones de 5 guiones y clasifícalas en: probada, reformular o eliminar.",
+       "passCriteria": "Ninguna afirmación sin prueba en tus guiones del mes.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "level": "INTERMEDIO",
+   "goal": "Dominar los formatos ganadores de la agencia (PAS, Antes y Después, Tutorial, Testimonio, UGC, Sketch, Cámara Escondida, Camaleón, Vlog, Storytime y POV), sostener la retención después del gancho, trabajar con los 12 ángulos de Intia, escribir diálogos naturales y entregar paquetes completos (guion + gancho B + briefs) que se graban sin reescrituras, con criterio ético, legal y de políticas de plataforma.",
+   "modules": [
+    {
+     "id": "GUI-I1",
+     "slug": "gui-i1",
+     "title": "Formatos que venden",
+     "summary": "PAS, Antes y Después, Tutorial, Testimonio y UGC: beats, tiempos y ejemplos con Con Amor, un servicio y un restaurante.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=t4qSyxpLk94",
+       "title": "How to Use the PAS Formula - Copyhackers",
+       "channel": "Joanna Wiebe",
+       "language": "en",
+       "why": "Explicación de referencia de la fórmula Problema-Agitación-Solución, con ejemplos aplicables a los beats de un video PAS."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=yArSqBZ7P54",
+       "title": "6+ Formatos de VIDEOS UGC que toda marca necesita | Contenido Generado por Usuarios",
+       "channel": "Laura Gomez - Español",
+       "language": "es",
+       "why": "Repasa formatos UGC (unboxing, tutorial, testimonio, antes y después) con su estructura; cubre varios formatos del módulo."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=bAy4Mn0ZuM4",
+       "title": "Video Testimonial: ¿Cómo realizarlo y estructurarlo para las redes sociales?",
+       "channel": "Emprendedor Eficaz",
+       "language": "es",
+       "why": "Estructura y preguntas para grabar un testimonio de cliente para redes, aplicable a Con Amor, servicios o restaurantes."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-I1-01",
+       "title": "PAS paso a paso",
+       "objective": "Escribir un guion Problema-Agitación-Solución de 30 a 45 s.",
+       "procedure": [
+        "Problema (0-3 s): nombra el dolor con las palabras del cliente.",
+        "Agitación (3-15 s): una o dos consecuencias concretas (tiempo, dinero, vergüenza) con una imagen específica.",
+        "Solución (15-35 s): el producto como salida, con prueba visual.",
+        "CTA en los últimos 5 a 8 s.",
+        "Tono empático, no alarmista: agita sin asustar."
+       ],
+       "commonMistakes": [
+        "Agitación exagerada o que da miedo",
+        "Saltarse la agitación: se siente como venta directa",
+        "Solución sin prueba"
+       ],
+       "checklist": [
+        "Dolor con palabras del cliente",
+        "1-2 consecuencias concretas",
+        "Prueba de la solución",
+        "Un solo CTA",
+        "Solución antes del segundo 20"
+       ],
+       "practice": "PAS para el estudio contable: declarar fuera de plazo → multa y estrés → plan mensual con recordatorios y declaración a tiempo.",
+       "passCriteria": "El guion dura entre 30 y 45 s, la solución aparece antes del segundo 20 y no hay afirmaciones sin prueba.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I1-02",
+       "title": "Antes y Después",
+       "objective": "Escribir una transformación grabada con el mismo encuadre para que el cambio sea evidente.",
+       "procedure": [
+        "Define qué cambia: espacio, persona, prenda o plato.",
+        "«Antes», 2 a 4 s, con el dolor visible.",
+        "Transición motivada y escrita en el guion: chasquido, tapar la cámara, giro.",
+        "«Después» con el MISMO encuadre, la misma posición de cámara y la misma luz; indica «trípode, grabar ambas tomas seguidas».",
+        "Remate: reacción o detalle del producto, y CTA."
+       ],
+       "commonMistakes": [
+        "Cambiar el ángulo entre el antes y el después: el cambio no se nota",
+        "Un «antes» exagerado o falso",
+        "Una transformación que el producto no logra de verdad"
+       ],
+       "checklist": [
+        "Indicación de mismo encuadre y trípode",
+        "Transición escrita",
+        "Cambio real y verificable",
+        "Plano detalle del producto"
+       ],
+       "practice": "Con Amor: pareja con poleras comunes → poleras personalizadas con sus nombres para la foto del aniversario. Restaurante: mesa vacía → mesa servida con el combo.",
+       "passCriteria": "El filmmaker lo graba con trípode sin mover la cámara y el cambio se entiende sin audio.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Sala pequeña con sofá y pared lisa, iluminada por una ventana. En el piso, cruces de cinta marcan la posición de los actores y del trípode.",
+        "subjects": "Pareja (dos figuras 3D). ANTES: de pie sobre las marcas, con poleras comunes, postura encorvada, miran el celular. TRANSICIÓN: ella chasquea los dedos hacia la cámara. DESPUÉS: exactamente en la misma posición, con poleras afraneladas con sus nombres; se abrazan y miran a cámara.",
+        "camera": "Vertical 9:16. Trípode fijo a 1,40-1,50 m de altura, lente principal del celular (≈24-26 mm eq.), a 2,5-3 m de la pareja, plano americano (de las rodillas hacia arriba). Exposición, enfoque y balance de blancos bloqueados. La cámara NO se mueve entre tomas: la posición del trípode se resalta en rojo y un recuadro fantasma muestra que el encuadre es idéntico. Única excepción: el plano detalle final, marcado en amarillo.",
+        "lighting": "Luz de ventana lateral constante (≈5600 K) con relleno blanco. Aviso visual: si la luz cambia entre tomas (nube, hora), el corte se nota. Ambas tomas se graban seguidas.",
+        "beats": [
+         "0-3 s · ANTES: encuadre fijo, pareja con poleras comunes. Texto: «Nuestra foto de aniversario…».",
+         "3 s · TRANSICIÓN: chasquido en el mismo punto del cuadro. Se marca dónde queda la mano para el corte.",
+         "3-7 s · DESPUÉS: mismo encuadre, poleras con nombres. Superposición semitransparente del «antes» para comparar.",
+         "7-10 s · DETALLE: corte a plano detalle del nombre personalizado (toma marcada en amarillo).",
+         "Error mostrado: el «después» grabado desde otro ángulo (encuadre en rojo) y cómo se pierde el efecto."
+        ]
+       }
+      },
+      {
+       "id": "GUI-I1-03",
+       "title": "Cómo se usa",
+       "objective": "Escribir un tutorial con el resultado primero y pasos numerados.",
+       "procedure": [
+        "Muestra el resultado final en los segundos 0-2.",
+        "Promete el número real de pasos: «3 pasos para…».",
+        "Un paso por escena, con plano detalle de las manos y el número del paso en pantalla.",
+        "Incluye un truco o error común solo si el taller o el cliente lo confirma.",
+        "Cierre: guardar (comunidad) o pedir (venta)."
+       ],
+       "commonMistakes": [
+        "Más de 5 pasos",
+        "Pasos sin plano detalle",
+        "Consejos sin verificar con el taller"
+       ],
+       "checklist": [
+        "Resultado primero",
+        "Pasos numerados en pantalla",
+        "Un plano de manos por paso",
+        "Consejos verificados"
+       ],
+       "practice": "«Cómo pedir tu polera personalizada en 3 pasos por WhatsApp» y «Cómo armar el pedido para 4 en la cevichería».",
+       "passCriteria": "Una persona externa sigue el tutorial sin hacer preguntas.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I1-04",
+       "title": "Testimonio real",
+       "objective": "Guiar un testimonio auténtico y reciente, nunca inventado, con el arco situación → duda → transformación.",
+       "procedure": [
+        "Elige con ATC a clientes reales satisfechos de compras recientes y pide su autorización escrita de imagen y voz.",
+        "Prepara preguntas abiertas y no le des líneas: ¿qué buscabas?, ¿qué te hacía dudar?, ¿qué pasó cuando lo recibiste?",
+        "Estructura: situación → duda → momento clave → resultado → recomendación.",
+        "En el guion van las preguntas y los beats, no un diálogo textual.",
+        "En edición se usan sus palabras literales, sin añadir resultados que no dijo. Si recibió algo a cambio, se divulga."
+       ],
+       "commonMistakes": [
+        "Un actor recitando un testimonio escrito como si fuera cliente",
+        "Preguntas que inducen la respuesta",
+        "Exagerar los resultados"
+       ],
+       "checklist": [
+        "Cliente real y reciente",
+        "Autorización firmada",
+        "Preguntas abiertas",
+        "Arco de 5 beats",
+        "Sin frases añadidas"
+       ],
+       "practice": "Guía de entrevista para una clienta de Cusco que regaló una casaca personalizada a su papá.",
+       "passCriteria": "Guía con 6 o más preguntas abiertas y sus beats. Coordinación valida que no induce respuestas.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I1-05",
+       "title": "UGC por puntos",
+       "objective": "Escribir guiones UGC en viñetas que el creador dice con sus propias palabras.",
+       "procedure": [
+        "Largo: 15 a 30 s (unas 40 a 75 palabras).",
+        "Estructura: gancho → problema → producto → prueba → CTA.",
+        "Escribe viñetas con la idea. Solo el gancho y el CTA van literales.",
+        "Lista lo innegociable (nombre del producto, precio, afirmaciones permitidas) y lo que queda libre.",
+        "Pide 3 versiones del gancho en la misma grabación.",
+        "Si publica en su cuenta y hay conexión material, pide la divulgación «Publicidad». Si la marca lo pautará desde la cuenta del creador (Spark Ads o anuncio de socio), pide su autorización escrita con plazo de uso."
+       ],
+       "commonMistakes": [
+        "Guion palabra por palabra que suena leído",
+        "No fijar el gancho y el CTA",
+        "Dejar que el creador diga afirmaciones no aprobadas"
+       ],
+       "checklist": [
+        "Viñetas",
+        "Gancho y CTA literales",
+        "Innegociables listados",
+        "3 ganchos pedidos",
+        "Divulgación y autorización de pauta si aplican"
+       ],
+       "practice": "UGC de 20 s: una creadora de Arequipa desempaca la taza personalizada que regalará a su mamá.",
+       "passCriteria": "El video grabado suena espontáneo y cumple todos los innegociables.",
+       "mediaType": "VIDEO_REFERENCIA"
+      }
+     ]
+    },
+    {
+     "id": "GUI-I2",
+     "slug": "gui-i2",
+     "title": "Formatos que entretienen",
+     "summary": "Sketch, Cámara Escondida, Camaleón, Vlog, Storytime y POV: entretener primero y poner la marca en el lugar justo.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=OakIlbzep2w",
+       "title": "229. Los 9 pasos para escribir un sketch de comedia",
+       "channel": "David Esteban Cubero",
+       "language": "es",
+       "why": "Método paso a paso para escribir un sketch (premisa, juego, escalada, remate); base del formato Sketch."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=abTVF__AIX4",
+       "title": "TUTORIAL - CÓMO GRABAR VIDEOS DE BROMA CON CÁMARA OCULTA Y EXPERIMENTOS SOCIALES",
+       "channel": "Jhonny Tavares",
+       "language": "es",
+       "why": "Tutorial práctico de cómo planificar y grabar una cámara oculta; útil para escribir el formato Cámara Escondida pensando en la logística."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=pyXQulxsL-4",
+       "title": "13 Ejemplos de Anuncios Creativos en TikTok para Empresas",
+       "channel": "Cyberclick • Marketing Digital",
+       "language": "es",
+       "why": "Ejemplos de marcas que hacen contenido nativo en TikTok (entretener primero, marca integrada); referencia para el formato Camaleón."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-I2-01",
+       "title": "Sketch en 3 escalones",
+       "objective": "Escribir un sketch cómico con premisa, juego central y escalada.",
+       "procedure": [
+        "Premisa: una situación cotidiana que el avatar reconoce (pedir descuento, regalar lo mismo cada año).",
+        "Juego: la conducta inusual que se repite (el cliente que pide rebaja pero llega en camioneta del año).",
+        "Escala el juego 3 veces, cada vez más absurdo, sin perder la lógica.",
+        "Remate y corte inmediato.",
+        "Marca: solo si encaja en el remate. Si no, sin mención comercial."
+       ],
+       "commonMistakes": [
+        "Chistes sueltos sin un juego central",
+        "Escalada que no crece",
+        "Explicar el chiste al final",
+        "Meter la venta a la fuerza"
+       ],
+       "checklist": [
+        "Premisa en una línea",
+        "Juego definido",
+        "3 escalones crecientes",
+        "Remate",
+        "Corte inmediato"
+       ],
+       "practice": "Sketch «El que siempre regala medias» para Con Amor y sketch «El mozo que adivina el pedido» para la cevichería.",
+       "passCriteria": "En la lectura de mesa el equipo se ríe al menos en el segundo y el tercer escalón.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "GUI-I2-02",
+       "title": "Cámara escondida",
+       "objective": "Diseñar una broma sana con sorpresa que se pueda grabar y publicar con autorización.",
+       "procedure": [
+        "Premisa amable: nunca humilla, asusta ni pone a nadie en riesgo.",
+        "Gancho: el cómplice susurra el plan a cámara.",
+        "Diseña la situación y prevé 2 o 3 reacciones posibles (plan A y plan B).",
+        "Revelación, más regalo o sorpresa.",
+        "Antes de publicar, autorización firmada de imagen y voz. Sin firma no se usa, o se desenfoca. Nada de menores sin permiso de sus padres.",
+        "Si se graba en plaza o calle, consulta con producción si la municipalidad pide permiso de filmación."
+       ],
+       "commonMistakes": [
+        "Una broma que avergüenza",
+        "Publicar sin autorización",
+        "Guionar la reacción del transeúnte: debe ser real"
+       ],
+       "checklist": [
+        "Premisa amable",
+        "Plan B",
+        "Posiciones de cámara acordadas con el filmmaker",
+        "Revelación y regalo",
+        "Formato de autorización listo",
+        "Permiso de locación revisado"
+       ],
+       "practice": "«Caja misteriosa en la banca: Ábreme si necesitas amor», con una taza de regalo, en un parque de Huancayo.",
+       "passCriteria": "El guion incluye plan B, revelación y protocolo de autorización, y coordinación lo aprueba sin observaciones éticas.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Plaza de una ciudad andina (tipo Huancayo) con bancas, un poste y un quiosco. Sobre una banca, una caja de regalo roja con el cartel «Ábreme si necesitas amor». Tarde nublada.",
+        "subjects": "Cómplice (figura 3D) agachado junto al quiosco que susurra a cámara. Transeúnte (figura neutra) que camina, ve la caja, duda, la abre, saca una taza con un mensaje y sonríe. El cómplice se acerca, revela la broma, le entrega la taza y le pide firmar la autorización en una tablet.",
+        "camera": "Vertical 9:16. Cámara A: oculta tras el quiosco, lente principal o 2x (≈26-50 mm eq.), a 1,20 m de altura y 5-6 m de la banca, plano medio-general de la banca para captar la reacción completa. Cámara B: celular del cómplice en mano, lente principal (≈24-26 mm eq.), primer plano para el susurro y la revelación. Cámara C opcional: plano detalle fijo de la caja desde debajo de la banca. Se dibujan los conos de visión de cada cámara.",
+        "lighting": "Luz natural nublada y difusa (≈6500 K). Nota: evitar el contraluz del cielo en la cámara A. El cómplice, de cara a la luz durante el susurro.",
+        "beats": [
+         "0-3 s · Gancho: cámara B, el cómplice susurra «Dejamos esta caja… veamos quién la abre».",
+         "3-10 s · Preparación: la cámara A muestra la banca. Un primer transeúnte pasa de largo (material de apoyo).",
+         "10-20 s · Reacción: el transeúnte duda, abre la caja y lee la taza. La cámara A capta la reacción completa sin cortes.",
+         "20-25 s · Revelación: el cómplice entra a cuadro, explica la broma y entrega la taza de regalo.",
+         "25-28 s · Autorización: firma en la tablet. Aviso en pantalla: sin firma no se publica.",
+         "Error mostrado: la cámara A queda tapada por el poste y la reacción se pierde."
+        ]
+       }
+      },
+      {
+       "id": "GUI-I2-03",
+       "title": "Camaleón 90/10",
+       "objective": "Escribir contenido nativo que entretiene o enseña y deja la marca solo al final, de forma lógica.",
+       "procedure": [
+        "Parte de un formato nativo de la plataforma: tendencia, POV, storytime, receta.",
+        "El 90 % del video es valor, sin mencionar la marca.",
+        "La marca entra en el remate como parte lógica de la historia (el regalo, el lugar, la solución).",
+        "CTA suave, de preferencia de comunidad.",
+        "Prueba: si tapas la marca, el video debe seguir funcionando."
+       ],
+       "commonMistakes": [
+        "Marca en los primeros beats: se siente anuncio",
+        "Integración forzada",
+        "Una tendencia que no encaja con la marca"
+       ],
+       "checklist": [
+        "Formato nativo",
+        "Marca solo en el remate",
+        "Integración justificada",
+        "Prueba de «tapar la marca» superada"
+       ],
+       "practice": "Camaleón «POV: tienes 20 soles y mañana es el cumpleaños de tu mamá», que termina en la taza personalizada.",
+       "passCriteria": "3 personas externas dicen que «no parece anuncio» y recuerdan la marca.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "GUI-I2-04",
+       "title": "Vlog con imprevisto",
+       "objective": "Estructurar un vlog de marca, sin depender de la improvisación pura, que muestre el detrás de cámaras con un conflicto real.",
+       "procedure": [
+        "Define el día o proceso: un pedido urgente del Día de la Madre.",
+        "Gancho: el reto del día.",
+        "Lista de 3 a 5 momentos clave que el filmmaker debe captar.",
+        "Registra en el set el imprevisto real (se acabó el hilo, llovió en la entrega) y cómo se resolvió.",
+        "Escribe la voz en off después de ver el material. Cierre con el resultado y un CTA."
+       ],
+       "commonMistakes": [
+        "Vlog sin conflicto: aburre",
+        "Inventar imprevistos falsos",
+        "Pedir «graba todo» sin lista de momentos"
+       ],
+       "checklist": [
+        "Reto del día",
+        "Lista de momentos",
+        "Imprevisto real anotado",
+        "Voz en off ajustada al material"
+       ],
+       "practice": "Vlog «Un día en el taller de Con Amor en San Valentín» y vlog «Abrimos la cevichería a las 6 a. m.».",
+       "passCriteria": "Entregas la lista de momentos antes de grabar y la voz en off coincide con el material real.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-I2-05",
+       "title": "Storytime en tensión",
+       "objective": "Contar una historia real en primera persona que engancha desde el momento de mayor tensión.",
+       "procedure": [
+        "Elige una historia real del negocio, con permiso de quien la vivió.",
+        "Empieza en el momento de mayor tensión: «La clienta llegó llorando a las 7 p. m.».",
+        "Contexto mínimo, en 1 o 2 frases.",
+        "Giro o decisión.",
+        "Resolución, aprendizaje y un CTA coherente (de comunidad o de venta suave)."
+       ],
+       "commonMistakes": [
+        "Empezar por el contexto («Todo empezó en 2019…»)",
+        "Historia sin giro",
+        "Inventar o exagerar la historia"
+       ],
+       "checklist": [
+        "Historia real y autorizada",
+        "Arranque en tensión",
+        "Contexto de 2 frases o menos",
+        "Giro",
+        "Aprendizaje"
+       ],
+       "practice": "Storytime real contado por ATC (con permiso): el pedido que casi no llega a tiempo a Puno.",
+       "passCriteria": "La retención de 3 s del video publicado es igual o mayor a la mediana de la cuenta.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I2-06",
+       "title": "POV bien escrito",
+       "objective": "Escribir un POV en el que la cámara son los ojos del espectador y todo se le dice o se le hace «a él».",
+       "procedure": [
+        "Define quién es «tú» en una línea: «POV: eres el papá que recibe la caja».",
+        "Texto en pantalla que abre con «POV:» y la situación en 7 palabras o menos.",
+        "Los personajes miran y hablan al lente, como si el espectador estuviera ahí.",
+        "Si aparecen manos, son las «tuyas»: entran desde el borde inferior del cuadro, como las verías tú.",
+        "La cámara se mueve como una cabeza: a la altura de los ojos y sin movimientos imposibles para una persona.",
+        "Remate: la reacción que te dan a ti o la decisión que tomas, y el CTA."
+       ],
+       "commonMistakes": [
+        "Personajes que miran a un lado: se vuelve tercera persona",
+        "Cámara a la altura de la cintura",
+        "Manos que entran desde el costado como si fueran de otro"
+       ],
+       "checklist": [
+        "«Tú» definido",
+        "Miradas al lente",
+        "Altura de ojos",
+        "Manos desde abajo",
+        "Remate y CTA"
+       ],
+       "practice": "POV de 20 s «Eres el papá que recibe su casaca personalizada» y POV «Eres el cliente que llega a la cevichería a las 12:59».",
+       "passCriteria": "El filmmaker lo graba sin preguntar dónde va la cámara y 3 espectadores de prueba entienden que ellos son el personaje.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Sala de una casa en Lima con una mesa baja, un sofá y una ventana lateral. Sobre la mesa, una caja de regalo de Con Amor. Tarde, luz de ventana.",
+        "subjects": "Hija (figura 3D femenina) de pie frente a la cámara. Manos del «espectador» (dos manos 3D, sin cuerpo visible) que entran desde el borde inferior del cuadro. Pose 1: la hija mira al lente y extiende la caja. Pose 2: las manos suben desde abajo y la reciben. Pose 3: las manos abren la tapa; dentro, una casaca con el nombre «Papá Lucho». Pose 4: la hija se tapa la boca emocionada y mira al lente.",
+        "camera": "Vertical 9:16. Una sola cámara POV en la cabeza de un maniquí 3D sentado en el sofá: altura de ojos de una persona sentada (≈1,15 m), lente principal del celular (≈24-26 mm eq.), hija a 1-1,2 m. Movimiento: leve inclinación hacia abajo para mirar la caja (como bajar la cabeza) y regreso a la cara de la hija. Comparación final en pantalla dividida: a la izquierda el POV correcto; a la derecha una cámara lateral en tercera persona con la etiqueta «Esto NO es POV».",
+        "lighting": "Luz de ventana lateral suave (≈5600 K) sobre el rostro de la hija; relleno con la pared clara. Sin contraluz fuerte detrás de ella para no oscurecer su cara.",
+        "beats": [
+         "0-2 s · Texto «POV: tu hija te sorprende». La hija mira al lente y extiende la caja. Etiqueta: «Los personajes hablan al lente».",
+         "2-5 s · Las manos entran desde abajo y toman la caja. Etiqueta: «Tus manos entran desde abajo».",
+         "5-9 s · La cámara baja la mirada como una cabeza: caja abierta y nombre personalizado. Etiqueta: «La cámara se mueve como tu cabeza».",
+         "9-12 s · Vuelve a la hija, que se emociona. Etiqueta: «La reacción te la dan a ti».",
+         "Error mostrado: la misma escena desde una cámara lateral; la hija mira fuera de cuadro y se pierde el efecto POV."
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "id": "GUI-I7",
+     "slug": "gui-i7",
+     "title": "Ritmo y retención",
+     "summary": "Sostener la atención después del gancho: bucles abiertos, re-ganchos a mitad del video y finales que invitan a volver a verlo.",
+     "videos": [],
+     "lessons": [
+      {
+       "id": "GUI-I7-01",
+       "title": "Bucle abierto",
+       "objective": "Plantear al inicio una pregunta o promesa que solo se resuelve al final, para que el espectador se quede.",
+       "procedure": [
+        "Escribe la pregunta que el espectador se hará después del gancho: «¿cuál es el tercero?», «¿le gustó o no?».",
+        "Anúnciala en los primeros 5 s sin resolverla: «El tercero es el que más nos piden».",
+        "Ordena los beats para que la respuesta llegue en el último tercio del video.",
+        "Resuelve de verdad: si el bucle no se cierra, el público se siente engañado.",
+        "Un bucle principal por video y, como máximo, uno secundario."
+       ],
+       "commonMistakes": [
+        "Prometer algo y no resolverlo",
+        "Resolver el bucle en el segundo 8 de un video de 40",
+        "Abrir tres bucles a la vez"
+       ],
+       "checklist": [
+        "Pregunta del espectador escrita",
+        "Bucle abierto antes del segundo 5",
+        "Respuesta en el último tercio",
+        "Bucle cerrado"
+       ],
+       "practice": "Guion de 35 s «3 regalos para el que ya tiene todo (el tercero es el que más piden)» con la taza, la polera y la casaca de Con Amor.",
+       "passCriteria": "En la lectura de mesa 3 personas dicen que se quedarían hasta el final y, ya publicado, la curva no cae de golpe antes de la respuesta.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I7-02",
+       "title": "Re-ganchos intermedios",
+       "objective": "Poner un estímulo nuevo cada 5-8 s para que el espectador no se vaya a mitad del video.",
+       "procedure": [
+        "Divide el guion en bloques de 5 a 8 s y revisa qué cambia en cada uno.",
+        "Añade un re-gancho por bloque: un giro («pero entonces…»), un dato nuevo, un cambio de lugar o de plano, o una prueba visible.",
+        "Anota cada re-gancho en la columna VIDEO o AUDIO con su segundo exacto.",
+        "Pon el re-gancho más fuerte justo antes del segundo en que suelen caer los videos de la cuenta (según su curva de retención).",
+        "Quita todo bloque que no aporte nada nuevo."
+       ],
+       "commonMistakes": [
+        "Bloques de 15 s con la misma imagen y la misma idea",
+        "Re-ganchos que no tienen que ver con la historia",
+        "Confiar en que la edición le dará ritmo a un guion plano"
+       ],
+       "checklist": [
+        "Bloques de 5-8 s",
+        "Un re-gancho por bloque",
+        "Segundo exacto anotado",
+        "Re-gancho fuerte antes de la caída habitual"
+       ],
+       "practice": "Toma un guion de 45 s que tuvo una caída a mitad y reescríbelo con un re-gancho por bloque.",
+       "passCriteria": "El editor confirma que cada bloque tiene algo nuevo que mostrar y el hold de la nueva versión supera al de la anterior.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "GUI-I7-03",
+       "title": "Final en bucle",
+       "objective": "Escribir cierres que invitan a volver a ver en los videos de comunidad, sin sacrificar el CTA en los de venta.",
+       "procedure": [
+        "Videos de comunidad: haz que la última frase conecte con la primera para que la repetición parezca continua.",
+        "No cierres con despedidas ni pantallas negras: corta en la acción.",
+        "Videos de venta: el CTA va completo; solo el último segundo puede volver a la imagen del gancho.",
+        "Indica el corte exacto al editor en el brief («cortar en el abrazo, sin fundido»).",
+        "Lee las métricas: si el tiempo promedio de visualización supera la duración del video, hubo repeticiones."
+       ],
+       "commonMistakes": [
+        "«Chau, nos vemos» al final",
+        "Fundido a negro que rompe el bucle",
+        "Forzar el bucle y perder el CTA de venta"
+       ],
+       "checklist": [
+        "Última frase conecta con la primera",
+        "Corte en la acción",
+        "CTA intacto en videos de venta",
+        "Indicación de corte en el brief"
+       ],
+       "practice": "Reescribe el final de 3 guiones de comunidad para que hagan bucle.",
+       "passCriteria": "Coordinación valida los 3 finales y en al menos uno de los videos publicados el tiempo promedio de visualización supera su duración.",
+       "mediaType": "VIDEO_REFERENCIA"
+      }
+     ]
+    },
+    {
+     "id": "GUI-I3",
+     "slug": "gui-i3",
+     "title": "Ángulos creativos",
+     "summary": "Separar ángulo, gancho y formato, dominar los 12 ángulos de Intia, construir matrices de conceptos y usar ángulos de contraste y de contradicción sin engañar.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=Lri2-Nnpw5Q",
+       "title": "💎 Cómo FACTURAR MÁS con un producto usando diferentes ÁNGULOS DE VENTA (PLANTILLA GRATIS)",
+       "channel": "Mapi Molina",
+       "language": "es",
+       "why": "Cómo sacar varios ángulos de venta de un mismo producto con plantilla; base para la matriz de conceptos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=fvO-wSLXck4",
+       "title": "Ad Hooks vs Angles (why it matters for Meta's Andromeda update in 2026)",
+       "channel": "Tiana Asperjan",
+       "language": "en",
+       "why": "Separa con claridad gancho y ángulo, justo la distinción ángulo/gancho/formato que pide el módulo; vigente (2026)."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=59I305cbE3Y",
+       "title": "🔥 TRUCO para tener ANUNCIOS GANADORES en Meta Ads en 2026 (Diversificación Creativa)",
+       "channel": "Felipe Vergara",
+       "language": "es",
+       "why": "Explica la diversificación creativa (variar ángulos, formatos y mensajes), útil para construir matrices de conceptos."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-I3-01",
+       "title": "Ángulo, gancho, formato",
+       "objective": "Distinguir el ángulo (por qué le importa al espectador), el gancho (cómo abre) y el formato (cómo se cuenta), y conocer los 12 ángulos de Intia.",
+       "procedure": [
+        "Ángulo: el argumento de fondo. En Intia hay 12: Camaleón, Ellos vs Nosotros, Impacto Visual, POV Real, Anti-Consejo, Experimento, Storytime, Parodia / Humor, Frente al Hater, Hack Oculto, ASMR / Unboxing y Detrás de Cámaras.",
+        "Gancho: los primeros 3 s, que expresan ese ángulo.",
+        "Formato: la estructura (PAS, sketch, tutorial…).",
+        "Escribe primero el ángulo, luego 3 ganchos y al final elige el formato.",
+        "Registra los tres en la nota del guion."
+       ],
+       "commonMistakes": [
+        "Llamar «ángulo nuevo» a un gancho nuevo",
+        "Cambiar los tres a la vez y no saber qué funcionó"
+       ],
+       "checklist": [
+        "Ángulo en una frase",
+        "3 ganchos para ese ángulo",
+        "Formato elegido",
+        "Los tres registrados en la nota"
+       ],
+       "practice": "Taza personalizada: 3 ángulos × 2 ganchos = 6 aperturas.",
+       "passCriteria": "Coordinación clasifica correctamente cada elemento de tu matriz.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I3-02",
+       "title": "Matriz de ángulos",
+       "objective": "Generar en una hora 10 o más conceptos combinando ángulos, ganchos y formatos.",
+       "procedure": [
+        "Filas: 5 ángulos.",
+        "Columnas: 2 o 3 formatos de la agencia.",
+        "En cada celda, un gancho de 12 palabras o menos.",
+        "Prioriza las 3 celdas más fuertes con coordinación.",
+        "Llévalas al tablero como IDEA y al generador (ángulo + variante)."
+       ],
+       "commonMistakes": [
+        "Celdas casi iguales",
+        "Saltarse la priorización",
+        "No cruzar con el objetivo del mes"
+       ],
+       "checklist": [
+        "Matriz de al menos 5 × 2",
+        "Ganchos de 12 palabras o menos",
+        "3 celdas priorizadas",
+        "Convertidas en IDEA"
+       ],
+       "practice": "Matriz para el menú del día de la cevichería: identidad («oficinista que almuerza en 30 min»), ellos vs nosotros (recalentado vs preparado al momento), detrás de cámaras, etc.",
+       "passCriteria": "10 celdas, 3 priorizadas y cargadas en el tablero.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I3-03",
+       "title": "Ellos vs Nosotros",
+       "objective": "Contrastar enfoques sin denigrar ni comparar de forma engañosa.",
+       "procedure": [
+        "Define «ellos» como una práctica genérica (el regalo de último minuto, el menú recalentado), no como una marca.",
+        "Muestra el contraste en pantalla dividida o en secuencia.",
+        "Cada diferencia con una prueba visible.",
+        "Tono de humor o de empatía, nunca de burla.",
+        "Si comparas con una marca concreta, la comparación debe ser objetiva, verificable y actual (Ley de Represión de la Competencia Desleal, D. Leg. 1044) y pasa por coordinación."
+       ],
+       "commonMistakes": [
+        "Burlarse de un competidor",
+        "Comparar precios sin actualizarlos",
+        "Decir «los otros usan material malo» sin pruebas"
+       ],
+       "checklist": [
+        "«Ellos» genérico",
+        "Pruebas visibles",
+        "Tono respetuoso",
+        "Validación si se nombra una marca"
+       ],
+       "practice": "«Polera estampada común vs polera afranelada con nombre», en 20 s.",
+       "passCriteria": "Ninguna afirmación sin prueba, y coordinación lo aprueba sin observación legal.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-I3-04",
+       "title": "Anti-consejo y mito",
+       "objective": "Usar la contradicción («no hagas X») para enganchar sin mentir.",
+       "procedure": [
+        "Encuentra una creencia común del avatar: «regalar ropa es aburrido».",
+        "Contradícela con una razón real.",
+        "Demuéstralo o muestra una prueba.",
+        "Reencuadra en positivo con el producto.",
+        "No contradigas algo cierto solo para generar polémica."
+       ],
+       "commonMistakes": [
+        "Polémica falsa",
+        "Mitos de salud o de finanzas sin fuente",
+        "Tono soberbio"
+       ],
+       "checklist": [
+        "Creencia real del avatar",
+        "Razón verificable",
+        "Demostración",
+        "Reencuadre"
+       ],
+       "practice": "Anti-consejo para el estudio contable («No declares solo si…»), con un fundamento real validado por el contador del cliente.",
+       "passCriteria": "El contraargumento se sostiene con una fuente o prueba y el cliente lo valida por escrito.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "GUI-I4",
+     "slug": "gui-i4",
+     "title": "Diálogo natural",
+     "summary": "Que el talento suene a persona real: frases cortas, subtexto, lectura en voz alta y guiones para quienes no son actores.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=K2WFT_nRyKc",
+       "title": "7.9 DIÁLOGOS. Naturalidad [Curso de guion | Cine | Series | Dany Campos]",
+       "channel": "CONSULTORÍA DE GUION",
+       "language": "es",
+       "why": "Lección de curso de guion específica sobre la naturalidad en los diálogos: frases cortas, subtexto, cómo habla la gente real."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Hw3MSphFBhM",
+       "title": "10 consejos para hablar a cámara con naturalidad",
+       "channel": "YOS Contenidos",
+       "language": "es",
+       "why": "Muy visto; ayuda a escribir textos que el talento pueda decir natural a cámara y a probarlos en voz alta."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=ElKNl4d5ckE",
+       "title": "Como dirigir a \"No actores\": 5 consejos importantes",
+       "channel": "Video Rebeldes",
+       "language": "es",
+       "why": "Consejos para trabajar con personas que no son actores (clientes, dueños, empleados); guía cómo escribirles guiones sencillos."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-I4-01",
+       "title": "Hablar como la gente",
+       "objective": "Escribir líneas que suenen dichas, no leídas.",
+       "procedure": [
+        "Frases cortas (15 palabras o menos), una idea por frase.",
+        "Muletillas y giros propios de la región, con moderación.",
+        "Entra tarde a la conversación y sal temprano.",
+        "Evita la exposición forzada: «Como sabes, nuestra polera de algodón afranelado…».",
+        "Cada personaje quiere algo en la escena y tiene su propia voz."
+       ],
+       "commonMistakes": [
+        "Diálogo de catálogo",
+        "Personajes que dicen el nombre completo del producto",
+        "Todos los personajes hablan igual"
+       ],
+       "checklist": [
+        "Frases de 15 palabras o menos",
+        "Sin exposición forzada",
+        "Cada personaje con un objetivo",
+        "Una voz distinta por personaje"
+       ],
+       "practice": "Reescribe un diálogo «de comercial» entre madre e hija sobre la taza.",
+       "passCriteria": "Dos actores leen el diálogo sin trabarse y sin cambiar palabras.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I4-02",
+       "title": "Subtexto y reacción",
+       "objective": "Dejar que la emoción se vea en la reacción y no en la explicación.",
+       "procedure": [
+        "Busca las líneas que anuncian la emoción («¡Estoy tan emocionada!»).",
+        "Reemplázalas por una acción o un silencio: se queda callada, se tapa la cara.",
+        "Marca la pausa en el diálogo (…) y en «cómo se entrega».",
+        "Reserva tiempo para el primer plano de la reacción.",
+        "Comprueba que el espectador entiende la escena sin esa línea."
+       ],
+       "commonMistakes": [
+        "Sobreexplicar",
+        "Acotaciones de actuación dentro del diálogo",
+        "No dejar tiempo para la reacción"
+       ],
+       "checklist": [
+        "Emociones mostradas con acción",
+        "Pausas marcadas",
+        "Tiempo de reacción reservado"
+       ],
+       "practice": "Escena en la que la hija entrega una casaca personalizada a su papá sin que nadie diga «te quiero».",
+       "passCriteria": "Un espectador de prueba identifica la emoción aunque no se diga.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-I4-03",
+       "title": "Lectura en voz alta",
+       "objective": "Validar el diálogo con una lectura de mesa antes de enviarlo a grabación.",
+       "procedure": [
+        "Lee tú el guion en voz alta con cronómetro.",
+        "Pide al talento, o a un compañero, una lectura en frío (24 h antes de grabar, en persona o por llamada).",
+        "Marca dónde se traba, respira o cambia palabras.",
+        "Reescribe esas líneas con las palabras que usó.",
+        "Actualiza los tiempos de cada escena."
+       ],
+       "commonMistakes": [
+        "Validar leyendo solo en silencio",
+        "Ignorar los cambios espontáneos del talento",
+        "No actualizar los tiempos"
+       ],
+       "checklist": [
+        "Lectura cronometrada",
+        "Lectura en frío",
+        "Trabas corregidas",
+        "Tiempos actualizados"
+       ],
+       "practice": "Graba en audio la lectura de 2 guiones y compara la versión anterior con la corregida.",
+       "passCriteria": "En la grabación real no se reescribe ninguna línea en el set.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-I4-04",
+       "title": "Guion para no actores",
+       "objective": "Adaptar el guion cuando habla alguien que no es actor profesional: el dueño, un cocinero o un cliente.",
+       "procedure": [
+        "Pregúntale cómo lo explicaría con sus palabras y graba ese audio.",
+        "Transcríbelo y ordénalo como guion.",
+        "Deja literales solo el gancho y el CTA.",
+        "Divide el texto en frases cortas que se puedan grabar por separado.",
+        "Prepara preguntas de rescate por si se bloquea."
+       ],
+       "commonMistakes": [
+        "Darle un texto largo para memorizar",
+        "Corregir su forma de hablar",
+        "No tener preguntas de rescate"
+       ],
+       "checklist": [
+        "Audio original grabado",
+        "Frases cortas",
+        "Gancho y CTA literales",
+        "Preguntas de rescate"
+       ],
+       "practice": "Guion para que el chef de la cevichería explique su leche de tigre.",
+       "passCriteria": "La persona graba cada frase en 3 tomas o menos.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "GUI-I5",
+     "slug": "gui-i5",
+     "title": "Briefs al equipo",
+     "summary": "Del guion aprobado a los briefs que usan el filmmaker, el talento, el jefe de editores y el editor, el community manager y ATC.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=xUbs5PxuXbI",
+       "title": "Cómo crear un BRIEF CREATIVO excepcional [Ejemplos + plantilla gratuita]",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Estructura de un brief creativo con plantilla; modelo para pasar el guion aprobado a filmmaker, talento y editor."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=4oYvFcp7TOs",
+       "title": "How Shot Lists Can Improve Your Storytelling | Ep 1: What is a Shot List? #shotlist",
+       "channel": "StudioBinder",
+       "language": "en",
+       "why": "StudioBinder explica qué es una shot list y cómo se arma; referencia para el brief al filmmaker."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=eumlf3uvXrU",
+       "title": "Cómo Responder WhatsApp para Vender Más: Guión + Manejo de Objeciones",
+       "channel": "Aprendamos Marketing",
+       "language": "es",
+       "why": "Guion de respuestas de WhatsApp con manejo de objeciones; modelo para el brief que se entrega a ATC por cada video."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-I5-01",
+       "title": "Brief al filmmaker",
+       "objective": "Entregar al filmmaker el desglose de producción que necesita cuando el guion pasa a APROBADO.",
+       "procedure": [
+        "Lista de escenas con el plano sugerido y su propósito.",
+        "Locación, horario (luz natural) y permisos.",
+        "Utilería y vestuario consolidados.",
+        "Tomas imprescindibles marcadas con ★ (gancho A y B, detalle del producto, prueba y CTA).",
+        "Tomas de apoyo (b-roll) para edición."
+       ],
+       "commonMistakes": [
+        "Enviar solo el diálogo",
+        "No marcar las tomas imprescindibles",
+        "Olvidar el b-roll"
+       ],
+       "checklist": [
+        "Planos con propósito",
+        "Locación y horario",
+        "Utilería",
+        "Imprescindibles ★",
+        "B-roll"
+       ],
+       "practice": "Brief de grabación del Antes y Después de las poleras.",
+       "passCriteria": "El filmmaker graba sin llamarte para aclarar nada.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I5-02",
+       "title": "Brief al talento",
+       "objective": "Preparar al actor con su objetivo, su emoción y las líneas clave.",
+       "procedure": [
+        "Personaje en una línea: quién es y qué quiere.",
+        "Emoción por escena y curva completa.",
+        "Líneas literales (gancho y CTA) separadas de las líneas libres.",
+        "Vestuario y un video de referencia del tono buscado.",
+        "Envío 24 h antes, con el guion a dos columnas y la hora de la lectura de mesa."
+       ],
+       "commonMistakes": [
+        "Enviar el guion la misma mañana",
+        "No marcar lo literal",
+        "Pedir «que sea natural» sin referencia"
+       ],
+       "checklist": [
+        "Personaje",
+        "Curva emocional",
+        "Líneas literales marcadas",
+        "Vestuario",
+        "Enviado 24 h antes"
+       ],
+       "practice": "Brief para la actriz del sketch «El que siempre regala medias».",
+       "passCriteria": "El talento llega con el gancho memorizado y el vestuario correcto.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I5-03",
+       "title": "Brief al editor",
+       "objective": "Comunicar al jefe de editores y al editor la intención del montaje sin hacer su trabajo.",
+       "procedure": [
+        "Gancho: qué debe verse en el primer segundo y el texto exacto en pantalla.",
+        "Ritmo por bloque (rápido o pausado) y re-ganchos con su segundo.",
+        "Texto en pantalla literal por escena, revisado ortográficamente y pensado para la zona segura.",
+        "Audio elegido (con licencia) y enlaces de referencia.",
+        "CTA final, corte final y duración máxima.",
+        "Envíalo al jefe de editores, que lo asigna; tus notas del primer corte van en una sola ronda."
+       ],
+       "commonMistakes": [
+        "Pedir «que quede viral»",
+        "Textos con errores de ortografía",
+        "No indicar la duración máxima",
+        "Mandar notas sueltas en varias rondas"
+       ],
+       "checklist": [
+        "Gancho y texto exacto",
+        "Ritmo por bloque",
+        "Textos revisados",
+        "Audio y referencias",
+        "Duración máxima",
+        "Notas en una sola ronda"
+       ],
+       "practice": "Brief de edición del tutorial «Cómo pedir tu polera en 3 pasos».",
+       "passCriteria": "El primer corte respeta gancho, textos y duración, y solo requiere ajustes finos.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I5-04",
+       "title": "Brief al community",
+       "objective": "Entregar al community manager todo lo necesario para publicar el video tal como fue pensado.",
+       "procedure": [
+        "Caption: una primera línea que continúa el gancho (en Instagram se corta a unos 125 caracteres), luego contexto y el mismo CTA del video.",
+        "Pregunta para fijar en comentarios que invite a responder.",
+        "Divulgación «Publicidad» o etiqueta de contenido de marca si hay conexión material.",
+        "Horario sugerido según las métricas de la cuenta y audio usado.",
+        "Si hay oferta: fecha en que el video debe actualizarse o archivarse."
+       ],
+       "commonMistakes": [
+        "Caption que contradice el video",
+        "Caption que repite el guion palabra por palabra",
+        "Olvidar la fecha de vencimiento de la oferta"
+       ],
+       "checklist": [
+        "Caption con primera línea fuerte",
+        "Pregunta para fijar",
+        "Divulgación si aplica",
+        "Horario sugerido",
+        "Fecha de retiro si hay oferta"
+       ],
+       "practice": "Brief de community para un video con oferta de San Valentín de Con Amor.",
+       "passCriteria": "Community publica sin pedir datos adicionales.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-I5-05",
+       "title": "Brief a ATC",
+       "objective": "Preparar a ATC para vender exactamente lo que prometió el video.",
+       "procedure": [
+        "Ficha de oferta: producto, precio final en S/, vigencia, stock, bonus, garantía y zonas de envío.",
+        "Palabra clave única del CTA y la etiqueta que usará en WhatsApp Business.",
+        "Respuestas a 3 objeciones previstas, con las mismas palabras y pruebas del video.",
+        "Envía la ficha cuando el video pase a PROGRAMADO, no el día de la publicación.",
+        "A las 48 h, pide el conteo de chats con la palabra clave y las dudas nuevas."
+       ],
+       "commonMistakes": [
+        "ATC se entera de la promoción por el cliente",
+        "Palabra clave repetida de otro video",
+        "Respuestas que prometen más que el video"
+       ],
+       "checklist": [
+        "Ficha de oferta completa",
+        "Palabra clave y etiqueta",
+        "3 objeciones con respuesta",
+        "Enviada en PROGRAMADO",
+        "Seguimiento a las 48 h"
+       ],
+       "practice": "Ficha de oferta para ATC del combo familiar de la cevichería con la palabra clave «COMBO4».",
+       "passCriteria": "ATC responde el primer DM sin tener que preguntar qué se ofreció.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "GUI-I6",
+     "slug": "gui-i6",
+     "title": "Ética y permisos",
+     "summary": "Imagen y voz, auditoría de afirmaciones, bromas sensibles, políticas de anuncios, rubros regulados y datos de clientes: qué se puede escribir y qué no.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=BIcmSpajYfY",
+       "title": "LP | El derecho a la imagen | Marco Torres Maldonado",
+       "channel": "LP - Pasión por el Derecho",
+       "language": "es",
+       "why": "Explicación breve del derecho a la imagen desde el derecho peruano (LP); base para pedir autorización de imagen y voz."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=jmupQ5KKLlM",
+       "title": "PUCP - Al derecho y al revés: El derecho a la intimidad en un mundo interconectado",
+       "channel": "PUCP",
+       "language": "es",
+       "why": "La PUCP explica la intimidad en redes; útil para escenas con terceros, cámara escondida y datos personales."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=JONWqas8itc",
+       "title": "✨ Publicidad engañosa: ⚠️ no todo lo que brilla en internet es verdad 🚫",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Indecopi sobre publicidad engañosa en internet: por qué toda afirmación del guion necesita prueba (veracidad)."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-I6-01",
+       "title": "Imagen y voz",
+       "objective": "Asegurar la autorización de toda persona reconocible en el video.",
+       "procedure": [
+        "La imagen y la voz de una persona no se pueden aprovechar sin su autorización expresa (art. 15 del Código Civil).",
+        "Prepara el formato de autorización antes de grabar: actores, clientes, transeúntes.",
+        "Menores: autorización de padres o tutores. Mejor evitar exponerlos.",
+        "Sin firma, no se usa o se desenfoca.",
+        "Archiva las autorizaciones en la carpeta del video."
+       ],
+       "commonMistakes": [
+        "Grabar en la calle y publicar caras sin permiso",
+        "Autorización verbal sin registro",
+        "Niños en pantalla sin permiso de sus padres"
+       ],
+       "checklist": [
+        "Formato listo",
+        "Firmas archivadas",
+        "Menores con autorización",
+        "Plan para quien no firma"
+       ],
+       "practice": "Revisa 3 guiones y lista qué personas tendrían que firmar.",
+       "passCriteria": "El 100 % de las personas reconocibles tiene autorización archivada.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-I6-02",
+       "title": "Auditar afirmaciones",
+       "objective": "Auditar guiones propios y ajenos distinguiendo la exageración publicitaria aceptable, las afirmaciones que requieren prueba y las promesas de resultado.",
+       "procedure": [
+        "Clasifica cada afirmación: subjetiva evidente («el regalo más tierno», que nadie toma al pie de la letra), objetiva comprobable («no se despinta tras 20 lavados», «entrega en 48 h en Lima») o promesa de resultado («te ahorra S/ 500», «cero multas»).",
+        "Las subjetivas evidentes pasan; las objetivas necesitan prueba archivada antes de grabar; las promesas de resultado, solo con cálculo o con condiciones claras.",
+        "Comparaciones con otras marcas: objetivas, verificables y actuales (D. Leg. 1044).",
+        "En servicios, nunca garantices resultados que dependen de terceros (SUNAT, bancos).",
+        "Archiva las pruebas junto al guion con su fecha de vigencia."
+       ],
+       "commonMistakes": [
+        "«Garantizado» sin condiciones",
+        "«Te ahorra S/ 500» sin cálculo",
+        "Superlativos que suenan objetivos («el más barato de Huancayo»)"
+       ],
+       "checklist": [
+        "Afirmaciones clasificadas",
+        "Prueba por cada afirmación objetiva",
+        "Promesas con condiciones",
+        "Comparaciones verificadas",
+        "Pruebas archivadas con fecha"
+       ],
+       "practice": "Auditoría de afirmaciones en 5 guiones (Con Amor, estudio contable, cevichería).",
+       "passCriteria": "Ninguna afirmación sin sustento en los guiones aprobados del mes.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-I6-03",
+       "title": "Bromas y escenas sensibles",
+       "objective": "Poner límites éticos a sketches, cámaras escondidas y humor.",
+       "procedure": [
+        "No humillar, no asustar de forma peligrosa y no burlarse de rasgos físicos, origen, idioma o región.",
+        "Revisa estereotipos (serrano, provinciano, de género) y reemplázalos por humor de situación.",
+        "No simular emergencias ni delitos en la vía pública.",
+        "Si dudas, prueba el guion con 3 personas del público objetivo.",
+        "Coordinación tiene la última palabra."
+       ],
+       "commonMistakes": [
+        "Remate basado en un acento o en una región",
+        "Broma que genera pánico",
+        "Ridiculizar a clientes reales"
+       ],
+       "checklist": [
+        "Sin burla por rasgos u origen",
+        "Sin simulación de emergencias",
+        "Prueba con el público objetivo",
+        "Aprobado por coordinación"
+       ],
+       "practice": "Revisa un sketch y reemplaza 2 chistes de estereotipo por chistes de situación.",
+       "passCriteria": "El sketch sigue siendo gracioso sin estereotipos, validado por 3 personas.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-I6-04",
+       "title": "Políticas de anuncios",
+       "objective": "Escribir guiones que puedan pautarse sin que Meta o TikTok los rechacen.",
+       "procedure": [
+        "Si el video puede ir a pauta, márcalo en la nota del guion y revisa las normas publicitarias de la plataforma antes de aprobarlo.",
+        "Atributos personales (Meta): no afirmes ni insinúes rasgos del espectador como su situación financiera, su salud o su edad («¿Tienes deudas con SUNAT?»). Reformula en general: «Muchos emprendedores se atrasan con su declaración».",
+        "Antes y después: en rubros de salud, peso o cuerpo las plataformas lo restringen; en productos y locales, muestra solo cambios reales.",
+        "Nada de funciones falsas: botones de play, notificaciones o ventanas del sistema simuladas.",
+        "Contenido de creadores en pauta (Spark Ads en TikTok, anuncios de socio en Meta): requiere el permiso del creador en la plataforma y su autorización escrita con plazo.",
+        "Si un anuncio es rechazado, anota el motivo en el banco de ganchos para no repetirlo."
+       ],
+       "commonMistakes": [
+        "Gancho «¿Estás endeudado?» en pauta",
+        "Botón de play falso en la primera imagen",
+        "Pautar el video de un creador sin su autorización"
+       ],
+       "checklist": [
+        "Destino (orgánico o pauta) marcado",
+        "Sin atributos personales",
+        "Antes y después permitido",
+        "Sin funciones falsas",
+        "Autorización del creador si aplica"
+       ],
+       "practice": "Reescribe 5 ganchos de dolor del estudio contable para que cumplan la política de atributos personales sin perder fuerza.",
+       "passCriteria": "Los 5 ganchos pasan la revisión de coordinación y, si se pautan, no son rechazados.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-I6-05",
+       "title": "Rubros con reglas",
+       "objective": "Reconocer los rubros con reglas publicitarias propias antes de escribir para ellos.",
+       "procedure": [
+        "Bebidas alcohólicas (restaurantes que venden cerveza, pisco o chilcanos): la publicidad lleva la advertencia «TOMAR BEBIDAS ALCOHÓLICAS EN EXCESO ES DAÑINO» (Ley 28681), no muestra menores ni sugiere que beber da éxito o mejora el desempeño.",
+        "Alimentos y bebidas procesados con octógonos (gaseosas, snacks): respeta las advertencias y no dirijas la publicidad a menores de 16 años (Ley 30021).",
+        "Sorteos: bases publicadas (fechas, mecánica, premio y forma de entrega) y consulta a coordinación si requieren algún trámite. Las apuestas llevan advertencias obligatorias: no se escriben sin revisión legal.",
+        "Salud, suplementos y estética: no prometas curas ni resultados.",
+        "Servicios contables y financieros: no garantices resultados tributarios ni aprobación de créditos.",
+        "Si el cliente es de un rubro nuevo, pide revisión legal antes del primer guion."
+       ],
+       "commonMistakes": [
+        "Video de pisco sour sin la advertencia",
+        "Combo con gaseosa dirigido a escolares",
+        "«Con nosotros nunca te multa SUNAT»"
+       ],
+       "checklist": [
+        "Rubro identificado",
+        "Advertencias obligatorias incluidas y legibles",
+        "Público permitido",
+        "Revisión legal si es un rubro nuevo"
+       ],
+       "practice": "Guion de 20 s para el Día del Pisco Sour en la cevichería que cumpla las reglas de bebidas alcohólicas.",
+       "passCriteria": "Coordinación aprueba el guion sin observaciones legales y la advertencia es legible en pantalla.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-I6-06",
+       "title": "Capturas de clientes",
+       "objective": "Usar chats, reseñas y comentarios como prueba social sin exponer datos personales.",
+       "procedure": [
+        "Pide permiso al cliente antes de mostrar su chat, reseña o foto (Ley 29733, de Protección de Datos Personales).",
+        "Tapa nombre, número, foto de perfil y cualquier dato de dirección o de pago.",
+        "No edites ni «mejores» el texto del cliente: puedes recortar, no reescribir.",
+        "Guarda la captura original y el permiso en la carpeta del video.",
+        "Aunque el comentario sea público en la red de la marca, oculta el usuario salvo que haya permiso."
+       ],
+       "commonMistakes": [
+        "Mostrar el número de WhatsApp del cliente",
+        "Captura inventada o retocada",
+        "Usar la foto de perfil del cliente sin permiso"
+       ],
+       "checklist": [
+        "Permiso del cliente",
+        "Datos tapados",
+        "Texto sin alterar",
+        "Original archivado"
+       ],
+       "practice": "Guion de 15 s «Lo que nos escriben después de recibir su regalo» con 3 capturas preparadas correctamente.",
+       "passCriteria": "Ninguna captura permite identificar al cliente sin su permiso y coordinación lo aprueba.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "level": "AVANZADO",
+   "goal": "Liderar el sistema creativo con datos: diagnosticar con métricas qué reescribir, probar ganchos con método, construir cierres estilo Hormozi que cumplan la ley peruana, planificar por niveles de conciencia, temporadas y redes, sacar el máximo del Generador IA y formar a otros guionistas con una voz de marca documentada.",
+   "modules": [
+    {
+     "id": "GUI-A1",
+     "slug": "gui-a1",
+     "title": "Métricas para iterar",
+     "summary": "Leer retención 3 s, hold, guardados, compartidos, leads y pedidos para decidir qué parte del guion reescribir.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=QT4pCG8ppto",
+       "title": "Qué KPIs Analizar en Instagram l Métricas para Vender",
+       "channel": "Andrea Estratega l Marketing de Contenidos",
+       "language": "es",
+       "why": "Qué métricas mirar en Instagram (retención, guardados, compartidos, conversiones) para decidir qué reescribir."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=jmWaW1nQ5Xs",
+       "title": "Cómo entender las estadísticas de INSTAGRAM - (Tutorial 2026) ✅",
+       "channel": "Alex Arano",
+       "language": "es",
+       "why": "Tutorial reciente de dónde está cada estadística de reels y cómo leerla, incluida la retención."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=H7N1MBdx80A",
+       "title": "Hold Rate: The Most Important Metric You're NOT Using on Facebook Ads",
+       "channel": "Dara Denney",
+       "language": "en",
+       "why": "Referente de creativos de anuncios explicando hold rate y su relación con el hook rate; conecta métricas con partes del guion."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-A1-01",
+       "title": "Retención 3 segundos",
+       "objective": "Usar la retención de 3 s (hook rate) de cada red para juzgar el gancho.",
+       "procedure": [
+        "Pauta en Meta: hook rate = reproducciones de 3 s ÷ impresiones.",
+        "Orgánico: en YouTube Shorts, «Visto vs. deslizado»; en Instagram, la tasa de omisión de los Reels si la cuenta ya la muestra; en TikTok, el punto de la curva de retención en el segundo 3.",
+        "Registra la retención 3 s en la métrica semanal del video en Intia.",
+        "Compárala con la mediana propia de la cuenta por formato y por red (últimos 30 días), no con benchmarks genéricos ni entre redes distintas.",
+        "Si está por debajo, reescribe solo el gancho y anota su tipo en el banco de ganchos."
+       ],
+       "commonMistakes": [
+        "Juzgar el video solo por las vistas",
+        "Compararse con cuentas de otro rubro",
+        "Comparar la retención de TikTok con la de Shorts",
+        "Rehacer todo el video cuando solo falló el gancho"
+       ],
+       "checklist": [
+        "Dato registrado por red",
+        "Mediana propia calculada",
+        "Tipo de gancho anotado",
+        "Decisión escrita"
+       ],
+       "practice": "Calcula la mediana de retención 3 s por formato y por red de los últimos 20 videos.",
+       "passCriteria": "Tabla de medianas por formato y red, y 3 ganchos reescritos a partir de videos bajo la mediana.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-A1-02",
+       "title": "Hold y abandono",
+       "objective": "Encontrar en qué segundo se va la gente y qué beat lo provoca.",
+       "procedure": [
+        "Hold rate = reproducciones de 15 s (o ThruPlays) ÷ reproducciones de 3 s.",
+        "Abre la curva de retención de la plataforma y marca las caídas.",
+        "Cruza cada caída con la escena del guion según sus segundos.",
+        "Diagnóstico: gancho fuerte y hold débil, el desarrollo no cumple. Gancho débil y hold fuerte, rehacer la apertura. Ambos débiles, rehacer el concepto.",
+        "Escribe la hipótesis y la corrección (por ejemplo, un re-gancho antes de la caída)."
+       ],
+       "commonMistakes": [
+        "Mirar solo el tiempo promedio de visualización",
+        "No cruzar las caídas con los tiempos del guion",
+        "Culpar a la edición sin revisar el guion"
+       ],
+       "checklist": [
+        "Hold calculado",
+        "Caídas marcadas",
+        "Escena identificada",
+        "Diagnóstico",
+        "Hipótesis y corrección"
+       ],
+       "practice": "Diagnostica 3 videos: uno viral, uno promedio y uno bajo.",
+       "passCriteria": "Cada diagnóstico nombra la escena exacta y una corrección concreta.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-A1-03",
+       "title": "Guardados y compartidos",
+       "objective": "Leer las señales de valor y de identificación para decidir qué formatos repetir.",
+       "procedure": [
+        "Calcula guardados y compartidos por cada 1.000 vistas.",
+        "Muchos guardados indican valor útil (tutoriales, trucos). Muchos compartidos indican identificación («es literal mi mamá»).",
+        "Compara por formato y por ángulo.",
+        "Repite el ángulo ganador con otro gancho.",
+        "Usa CTA de «Guárdalo» o «Mándaselo» donde el público ya se comporta así."
+       ],
+       "commonMistakes": [
+        "Tomar los likes como éxito",
+        "No normalizar por vistas",
+        "Pedir «guárdalo» en un sketch"
+       ],
+       "checklist": [
+        "Tasas por 1.000 vistas",
+        "Lectura por formato",
+        "Decisión de repetición"
+       ],
+       "practice": "Ranking de los 10 videos con más compartidos por cada 1.000 vistas y qué tienen en común.",
+       "passCriteria": "Identificas 2 patrones repetibles y los conviertes en IDEAS.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-A1-04",
+       "title": "Del video al pedido",
+       "objective": "Conectar cada guion de venta con los leads y pedidos reales que atiende ATC.",
+       "procedure": [
+        "Cada CTA de venta usa una palabra clave única por video.",
+        "ATC etiqueta los chats con esa palabra.",
+        "Registra en las métricas semanales: clics, leads, pedidos e ingresos.",
+        "Calcula los leads por cada 1.000 vistas y la tasa de lead a pedido.",
+        "Si hay leads pero no pedidos, el problema está en la oferta o en la atención, no en el gancho."
+       ],
+       "commonMistakes": [
+        "Atribuir ventas «a ojo»",
+        "Repetir la misma palabra clave en varios videos",
+        "Culpar al guion por una falla de atención"
+       ],
+       "checklist": [
+        "Palabra clave única",
+        "Etiquetas en ATC",
+        "Métricas registradas",
+        "Tasas calculadas"
+       ],
+       "practice": "Reporte de 4 semanas de un producto de Con Amor con una palabra clave por video.",
+       "passCriteria": "Todos los videos de venta del mes tienen leads y pedidos atribuidos.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "GUI-A2",
+     "slug": "gui-a2",
+     "title": "Test A/B de ganchos",
+     "summary": "Probar variantes con método: una sola variable, umbral de decisión, matriz de ganchos, pruebas orgánicas y banco de resultados.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=ko9URz7HOMU",
+       "title": "🤯 Encontré una NUEVA FORMA de TESTEAR Meta Ads en 2026 ► Pruebas de Contenido",
+       "channel": "Felipe Vergara",
+       "language": "es",
+       "why": "Cómo usar las pruebas de contenido de Meta para comparar creativos con método; vigente (2026)."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=jGQKnScg84k",
+       "title": "Reels de Prueba de Instagram: Qué son y cómo incluirlos en tu estrategia de Instagram",
+       "channel": "Metricool en español",
+       "language": "es",
+       "why": "Explica los Reels de prueba para testear variantes de gancho de forma orgánica sin afectar la cuenta."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Hg9YEp4qicc",
+       "title": "¿Qué es un swipe file? [Diccionario del Copywriter]",
+       "channel": "Javi Pastor",
+       "language": "es",
+       "why": "Qué es un swipe file y cómo usarlo; base para el banco de ganchos y resultados del equipo."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-A2-01",
+       "title": "Una variable a la vez",
+       "objective": "Diseñar pruebas en las que solo cambia el gancho y decidir con un umbral fijado antes.",
+       "procedure": [
+        "Congela el cuerpo, el CTA, la música y la duración.",
+        "Cambia solo los primeros 3 s: verbal, visual o texto.",
+        "Publica o pauta en condiciones iguales: misma audiencia, presupuesto y franja horaria. Con pauta, usa la herramienta de prueba A/B de Meta o de TikTok con el mismo presupuesto por variante.",
+        "Fija el umbral antes de publicar. Regla interna de partida: al menos 1.000 reproducciones de 3 s por variante (o 7 días) y 20 % o más de diferencia relativa en retención 3 s; por debajo de eso, es empate.",
+        "Declara ganador por retención 3 s y hold, y confírmalo con leads si es un video de venta."
+       ],
+       "commonMistakes": [
+        "Cambiar el gancho y el CTA a la vez",
+        "Decidir con 200 vistas",
+        "Publicar las variantes con días de diferencia y sin control"
+       ],
+       "checklist": [
+        "Una sola variable",
+        "Condiciones iguales",
+        "Umbral de datos definido antes",
+        "Métrica de decisión"
+       ],
+       "practice": "Diseña la prueba de 3 ganchos para un video de la cevichería.",
+       "passCriteria": "Coordinación y el analista aprueban el plan con variable, métrica y umbral.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A2-02",
+       "title": "Matriz 5x2 de ganchos",
+       "objective": "Multiplicar un concepto ganador en 10 variantes grabables en una sola sesión.",
+       "procedure": [
+        "Toma el ángulo ganador.",
+        "Escribe 5 ganchos verbales: pregunta, dolor, resultado, mito y POV.",
+        "Combínalos con 2 ganchos visuales.",
+        "Planifica grabar los 10 arranques en la misma sesión. El cuerpo se graba una sola vez.",
+        "Entrega al jefe de editores la tabla con los nombres de archivo (G1V1, G1V2…)."
+       ],
+       "commonMistakes": [
+        "Variantes demasiado parecidas",
+        "Reescribir el cuerpo para cada gancho",
+        "No nombrar los archivos"
+       ],
+       "checklist": [
+        "5 ganchos verbales",
+        "2 ganchos visuales",
+        "Plan de rodaje",
+        "Nomenclatura de archivos"
+       ],
+       "practice": "Matriz 5x2 para la polera afranelada «para el frío».",
+       "passCriteria": "10 arranques grabados en una sesión y montados sobre un mismo cuerpo.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A2-03",
+       "title": "Pruebas orgánicas",
+       "objective": "Probar ganchos sin pauta, con las herramientas de cada red.",
+       "procedure": [
+        "Instagram: usa los reels de prueba (cuenta profesional), que se muestran primero a quienes no te siguen.",
+        "TikTok y Shorts: publica las variantes en días y horarios comparables, sin subir videos idénticos seguidos.",
+        "Registra los resultados en la tarjeta del video.",
+        "Pauta o reutiliza la variante ganadora.",
+        "Archivar las variantes perdedoras lo decide coordinación."
+       ],
+       "commonMistakes": [
+        "Publicar variantes idénticas seguidas: la red puede tratarlas como contenido repetido",
+        "No registrar qué variante era cuál"
+       ],
+       "checklist": [
+        "Herramienta elegida",
+        "Condiciones comparables",
+        "Resultados registrados",
+        "Decisión tomada"
+       ],
+       "practice": "Prueba de 2 ganchos con reels de prueba para una taza del Día del Padre.",
+       "passCriteria": "El resultado queda registrado y el ganador se reutiliza.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-A2-04",
+       "title": "Banco de ganchos",
+       "objective": "Mantener un repositorio de ganchos ganadores y perdedores con sus datos.",
+       "procedure": [
+        "Registra por gancho: texto, tipo, ángulo, formato, red, marca, retención 3 s, hold, resultado y, si fue pauta, si hubo rechazo y por qué.",
+        "Etiqueta por avatar y temporada.",
+        "Revisa cada mes los 10 mejores y los 10 peores.",
+        "Reutiliza estructuras, no textos literales.",
+        "Refresca cuando cae el rendimiento (fatiga creativa)."
+       ],
+       "commonMistakes": [
+        "Guardar solo los ganadores: no aprendes de lo que falló",
+        "No registrar el contexto",
+        "Repetir el mismo gancho hasta quemarlo"
+       ],
+       "checklist": [
+        "Campos completos",
+        "Etiquetas",
+        "Revisión mensual",
+        "Regla de refresco"
+       ],
+       "practice": "Carga 20 ganchos históricos con sus métricas.",
+       "passCriteria": "Banco con 20 o más registros y un informe de 3 patrones.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "GUI-A3",
+     "slug": "gui-a3",
+     "title": "Oferta y cierre Hormozi",
+     "summary": "Cierres de venta con ecuación de valor, escasez y urgencia reales, bonus, garantía y nombre, dentro de la ley peruana.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=WsG7ZkFCeP4",
+       "title": "Cómo crear una OFERTA IRRESISTIBLE y VENDER CUALQUIER COSA | Resumen 100 Million Offers Alex Hormozi",
+       "channel": "Domina Las Ventas",
+       "language": "es",
+       "why": "Resumen en español de $100M Offers: ecuación de valor, escasez, urgencia, bonus, garantía y nombre de la oferta."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=4GiY-X9IfDI",
+       "title": "Cómo vender más caro (fórmula de valor de Alex Hormozi)",
+       "channel": "Caro Dubi - Marketing de Resultados",
+       "language": "es",
+       "why": "Explicación corta y clara de la ecuación de valor de Hormozi aplicada a vender."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=9htyfIZ9iPk",
+       "title": "How To Craft A $100M Offer In 6 Minutes",
+       "channel": "My First Million",
+       "language": "en",
+       "why": "El propio Hormozi arma una oferta en 6 minutos; muestra en vivo cómo se construye el cierre (recordar ajustar escasez y garantía a la ley peruana)."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-A3-01",
+       "title": "Ecuación de valor",
+       "objective": "Escribir el desarrollo y el cierre aumentando el valor percibido.",
+       "procedure": [
+        "Resultado soñado: ¿qué siente quien recibe el regalo?",
+        "Probabilidad percibida: pruebas, testimonios reales, garantía.",
+        "Tiempo: «llega en X días», con un plazo real.",
+        "Esfuerzo: «tú solo nos mandas el nombre por WhatsApp».",
+        "Cada beat del guion trabaja uno de los cuatro componentes."
+       ],
+       "commonMistakes": [
+        "Hablar del producto y no del resultado",
+        "Prometer tiempos irreales",
+        "Olvidar reducir el esfuerzo"
+       ],
+       "checklist": [
+        "4 componentes cubiertos",
+        "Tiempos reales",
+        "Prueba de la probabilidad"
+       ],
+       "practice": "Reescribe un guion de venta de la casaca personalizada con los 4 componentes.",
+       "passCriteria": "Coordinación identifica los 4 componentes en el guion.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A3-02",
+       "title": "Escasez y urgencia reales",
+       "objective": "Usar escasez (cupos o stock) y urgencia (fecha) solo cuando son verdad y cumplen la ley.",
+       "procedure": [
+        "Pide al dueño el límite real: stock, cupos de producción por día, fecha de corte de pedidos (ej.: «pedidos para el Día de la Madre hasta el 5 de mayo»).",
+        "Escríbelo con número y fecha.",
+        "Da el motivo lógico: «el taller personaliza 40 poleras por día».",
+        "Muestra la vigencia y el stock mínimo en texto, en cada anuncio (art. 14 de la Ley 29571).",
+        "Programa con community retirar o actualizar el video cuando venza la oferta."
+       ],
+       "commonMistakes": [
+        "Escasez falsa",
+        "«Solo hoy» permanente",
+        "Dejar publicado un video con la oferta vencida"
+       ],
+       "checklist": [
+        "Límite real confirmado",
+        "Número y fecha",
+        "Motivo",
+        "Texto visible",
+        "Recordatorio de retiro"
+       ],
+       "practice": "3 cierres de escasez o urgencia de temporada: San Valentín, Día de la Madre y Navidad.",
+       "passCriteria": "Los 3 indican vigencia y stock y tienen un motivo real.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-A3-03",
+       "title": "Bonus y garantía",
+       "objective": "Mejorar la oferta sin bajar el precio, con bonus y una garantía clara que se pueda cumplir.",
+       "procedure": [
+        "En lugar de un descuento, añade un bonus útil: tarjeta dedicada escrita a mano, empaque de regalo, envío priorizado.",
+        "Muestra el bonus en pantalla.",
+        "Garantía específica y cumplible: «si el nombre sale mal, lo rehacemos gratis».",
+        "La garantía comercial se suma a la garantía legal: no puede recortar los derechos del consumidor ante un producto defectuoso.",
+        "Valida la garantía con el dueño y con ATC y dale un nombre memorable."
+       ],
+       "commonMistakes": [
+        "Un bonus que nadie valora",
+        "Una garantía que el negocio no puede cumplir",
+        "Condiciones ocultas o que recortan derechos legales"
+       ],
+       "checklist": [
+        "Bonus visible",
+        "Garantía específica",
+        "Compatible con la garantía legal",
+        "Validada por el dueño y ATC",
+        "Condiciones claras"
+       ],
+       "practice": "Oferta completa para el estudio contable: plan mensual + bonus (revisión inicial) + garantía.",
+       "passCriteria": "El dueño confirma por escrito que puede cumplir todo lo prometido.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-A3-04",
+       "title": "Nombrar la oferta",
+       "objective": "Dar a la oferta un nombre memorable con la fórmula MAGIC.",
+       "procedure": [
+        "M: razón magnética («Especial Aniversario»).",
+        "A: avatar («para parejas»).",
+        "G: meta («el regalo que no se olvida»).",
+        "I: intervalo («listo en 48 h», solo si es real).",
+        "C: contenedor («Pack», «Kit», «Combo»).",
+        "Combina 3 a 5 de estos elementos en 6 palabras o menos."
+       ],
+       "commonMistakes": [
+        "Nombres genéricos («Promo»)",
+        "Nombres tan largos que nadie los puede decir",
+        "Intervalos falsos"
+       ],
+       "checklist": [
+        "3 o más elementos MAGIC",
+        "6 palabras o menos",
+        "Todo es verdad"
+       ],
+       "practice": "Nombra 5 ofertas: pack parejas de Con Amor, combo familiar de la cevichería y plan contable para emprendedores.",
+       "passCriteria": "ATC y el dueño eligen al menos 2 nombres para usar.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "GUI-A4",
+     "slug": "gui-a4",
+     "title": "Estrategia de contenidos",
+     "summary": "Niveles de conciencia, pilares, series, calendario estacional peruano y adaptación por red para planificar guiones con intención.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=fNabSZj6ods",
+       "title": "Las 5 etapas de CONSCIENCIA con EJEMPLOS (Eugene Schwartz)",
+       "channel": "Javier Yranzo",
+       "language": "es",
+       "why": "Los 5 niveles de conciencia de Schwartz con ejemplos, para decidir qué guion escribir según la etapa del cliente."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=tP8rej15i80",
+       "title": "PILARES DE CONTENIDO para tu marca (Paso a paso)",
+       "channel": "Victoria Poggioli",
+       "language": "es",
+       "why": "Paso a paso para definir pilares de contenido de una marca; base para organizar series y guiones con intención."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=cfAOnS1-y4I",
+       "title": "📅 Crea un CALENDARIO de MARKETING y atrae clientes TODO el AÑO",
+       "channel": "Felipe Vergara",
+       "language": "es",
+       "why": "Cómo armar un calendario de marketing anual con fechas clave; se adapta al calendario estacional peruano (Día de la Madre, Fiestas Patrias, Navidad)."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-A4-01",
+       "title": "Niveles de conciencia",
+       "objective": "Ajustar gancho y mensaje según cuánto sabe el espectador del problema y del producto (Schwartz).",
+       "procedure": [
+        "No sabe que tiene el problema: historia o curiosidad (sketch, storytime, camaleón).",
+        "Conoce el problema: valida el dolor (PAS).",
+        "Conoce las soluciones: compara enfoques (ellos vs nosotros, tutorial).",
+        "Conoce el producto: pruebas (testimonio, antes y después).",
+        "Listo para comprar: oferta directa con escasez o urgencia reales.",
+        "Etiqueta cada guion con su nivel."
+       ],
+       "commonMistakes": [
+        "Oferta directa a gente que no conoce la marca",
+        "Educar a quien ya quiere comprar"
+       ],
+       "checklist": [
+        "Nivel definido",
+        "Gancho coherente con el nivel",
+        "Formato coherente",
+        "Guion etiquetado"
+       ],
+       "practice": "5 ganchos para la polera afranelada, uno por nivel.",
+       "passCriteria": "Coordinación asigna correctamente el nivel de cada gancho.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A4-02",
+       "title": "Pilares y mezcla",
+       "objective": "Repartir los guiones de la semana entre pilares y objetivos.",
+       "procedure": [
+        "Define 3 a 5 pilares por marca. Ej. Con Amor: regalos por ocasión, detrás del taller, humor de pareja, clientes reales, oferta.",
+        "Acuerda con coordinación la proporción de cada pilar.",
+        "Cruza pilar × nivel de conciencia × formato.",
+        "Arma el plan semanal de IDEAS.",
+        "Revisa la mezcla cada mes según las métricas."
+       ],
+       "commonMistakes": [
+        "Todo venta",
+        "Todo entretenimiento sin cierre",
+        "El mismo formato 5 veces seguidas"
+       ],
+       "checklist": [
+        "Pilares definidos",
+        "Proporción acordada",
+        "Cruce hecho",
+        "Plan semanal"
+       ],
+       "practice": "Plan de 2 semanas para la cevichería con 3 pilares.",
+       "passCriteria": "Plan aprobado y cargado como IDEAS en el tablero.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A4-03",
+       "title": "Series y parte 2",
+       "objective": "Escribir series que hacen volver al público y suman seguidores.",
+       "procedure": [
+        "Identifica un video con comentarios pidiendo «parte 2» o con muchos compartidos.",
+        "Define el formato fijo de la serie: mismo arranque y mismo personaje.",
+        "Escribe de una vez 3 a 5 episodios.",
+        "Cierre de comunidad: «Seguir · Parte 2».",
+        "Mide si cada episodio mantiene la retención."
+       ],
+       "commonMistakes": [
+        "Prometer una parte 2 y no publicarla",
+        "Episodios que no se entienden por sí solos"
+       ],
+       "checklist": [
+        "Formato fijo",
+        "3-5 episodios escritos",
+        "Cada episodio se entiende solo",
+        "Fechas de publicación"
+       ],
+       "practice": "Serie «Regalos para el que ya tiene todo», de 5 episodios.",
+       "passCriteria": "El episodio 2 tiene una retención de al menos el 80 % de la del episodio 1.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-A4-04",
+       "title": "Calendario estacional",
+       "objective": "Anticipar las fechas clave del Perú para escribir con tiempo.",
+       "procedure": [
+        "Lista las fechas: San Valentín (14 feb), Día del Pisco Sour (1.er sábado de feb), regreso a clases (mar), Día del Niño peruano (2.º domingo de abr), Día de la Madre (2.º domingo de may), Día del Padre (3.er domingo de jun), Día del Ceviche (28 jun), Día del Maestro (6 jul), Día del Pollo a la Brasa (3.er domingo de jul), Fiestas Patrias (28-29 jul), Día de la Canción Criolla (31 oct), CyberWow y Black Friday (fechas variables), Navidad y Año Nuevo, y la temporada de heladas en la sierra (aprox. de mayo a agosto) para prendas afraneladas.",
+        "Fija con el dueño la fecha de corte de pedidos de cada campaña.",
+        "Escribe los guiones 3 a 4 semanas antes.",
+        "Secuencia de campaña: expectativa → prueba → oferta → urgencia final.",
+        "Evalúa la campaña y guarda los aprendizajes para el año siguiente."
+       ],
+       "commonMistakes": [
+        "Escribir la misma semana de la fecha",
+        "Promociones sin fecha de corte",
+        "Olvidar la temporada de frío para las prendas afraneladas"
+       ],
+       "checklist": [
+        "Calendario anual por marca",
+        "Fechas de corte",
+        "Guiones 3-4 semanas antes",
+        "Secuencia de 4 fases"
+       ],
+       "practice": "Plan de campaña del Día de la Madre para Con Amor con 6 guiones y plan del Día del Ceviche para la cevichería con 3.",
+       "passCriteria": "Los guiones están en APROBADO 3 semanas antes de cada fecha.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A4-05",
+       "title": "Una idea, tres redes",
+       "objective": "Adaptar un mismo guion a TikTok, Reels y Shorts sin reescribirlo entero.",
+       "procedure": [
+        "Escribe la versión madre en 9:16 con el gancho y los textos dentro de la zona segura común a las tres redes.",
+        "Adapta el CTA a lo que cada red permite y a su camino de compra (DM, comentario con palabra clave, enlace del perfil) y confírmalo con community.",
+        "Marca en el guion qué bloque se puede quitar si una red rinde mejor con versiones más cortas.",
+        "Confirma que el audio está disponible en las tres redes; si no, indica la alternativa por red.",
+        "Pide versiones sin marcas de agua de otras apps (TikTok, CapCut): Instagram ha dicho que reduce su distribución.",
+        "Registra y compara las métricas de cada red por separado."
+       ],
+       "commonMistakes": [
+        "Subir a Reels el video con marca de agua de TikTok",
+        "El mismo CTA para las tres redes aunque el camino de compra cambia",
+        "Comparar la retención entre redes distintas"
+       ],
+       "checklist": [
+        "Versión madre en zona segura común",
+        "CTA por red",
+        "Bloque recortable marcado",
+        "Audio disponible en cada red",
+        "Sin marcas de agua"
+       ],
+       "practice": "Adapta el guion «Cómo pedir tu polera en 3 pasos» a las tres redes, con su CTA y su audio.",
+       "passCriteria": "Community publica las tres versiones sin volver a editar y las métricas se registran por red.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "GUI-A5",
+     "slug": "gui-a5",
+     "title": "IA avanzada",
+     "summary": "Sacar lo mejor del Generador de Intia: ejemplos ganadores, variantes controladas, control de calidad y qué hacer cuando la generación falla.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=5wQw3T9tb3c",
+       "title": "🎓CURSO PROMPT ENGINEERING  en Español - GRATIS - 🤖CLASE 06- ZERO SHOT, ONE-SHOT, FEW-SHOT PROMPTING",
+       "channel": "Joaquín Barberá - Inteligencia Artificial",
+       "language": "es",
+       "why": "Explica el few-shot prompting (dar ejemplos ganadores a la IA), técnica central para mejorar la salida del Generador."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=fZ7ZeH65PFA",
+       "title": "Por qué la IA te da RESPUESTAS MEDIOCRES (otros sacan ORO)",
+       "channel": "Gustavo Entrala",
+       "language": "es",
+       "why": "Muy visto; por qué salen respuestas genéricas y cómo iterar con contexto para obtener mejores resultados."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=8Wqgr7Ry3dk",
+       "title": "Curso gratis de prompt engineering (2026)",
+       "channel": "EDteam",
+       "language": "es",
+       "why": "Curso completo y vigente de prompt engineering para profundizar en variantes controladas y control de calidad."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-A5-01",
+       "title": "Ejemplos ganadores",
+       "objective": "Mejorar lo que devuelve la IA usando guiones ganadores como referencia.",
+       "procedure": [
+        "Elige 1 o 2 guiones del mismo formato con la mejor retención.",
+        "Adjúntalos como documento de referencia o pégalos en el contexto.",
+        "Indica qué imitar (ritmo, estructura del gancho) y qué no (el texto literal).",
+        "Genera una versión con ejemplo y otra sin ejemplo, y compáralas.",
+        "Documenta la diferencia."
+       ],
+       "commonMistakes": [
+        "Usar ejemplos malos o de otro formato",
+        "Pedir que copie el texto literal",
+        "Dar demasiados ejemplos que se contradicen"
+       ],
+       "checklist": [
+        "Ejemplo ganador con sus métricas",
+        "Instrucción de qué imitar",
+        "Comparación hecha"
+       ],
+       "practice": "Genera un PAS con y sin ejemplo ganador y compáralos.",
+       "passCriteria": "La versión con ejemplo necesita menos correcciones, y queda documentado.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "GUI-A5-02",
+       "title": "Variantes controladas",
+       "objective": "Usar el campo «Variante o nota adicional» para obtener versiones que cambian una sola cosa.",
+       "procedure": [
+        "Genera y guarda la versión base.",
+        "En «Variante o nota adicional», escribe un solo cambio concreto: «mismo guion, gancho de pregunta en vez de dolor».",
+        "Mantén igual la estructura, el ángulo y el cierre.",
+        "Compara las versiones lado a lado.",
+        "Guarda la mejor como gancho B en la nota del guion."
+       ],
+       "commonMistakes": [
+        "Una variante con 3 cambios",
+        "Regenerar sin guardar la base",
+        "Confundir una variante con una idea nueva"
+       ],
+       "checklist": [
+        "Base guardada",
+        "Un solo cambio",
+        "Comparación hecha",
+        "Gancho B registrado"
+       ],
+       "practice": "3 variantes de gancho para un combo de la cevichería.",
+       "passCriteria": "Las 3 variantes difieren solo en el gancho.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A5-03",
+       "title": "Control de calidad IA",
+       "objective": "Detectar y corregir los errores típicos de la IA antes de aprobar.",
+       "procedure": [
+        "Datos inventados: precios, porcentajes, premios, testimonios.",
+        "Frases genéricas de IA: «descubre la magia», «eleva tu estilo».",
+        "Tiempos imposibles: 6 acciones en 3 s.",
+        "Planos, locaciones o audios que no existen o no se pueden usar.",
+        "Tono fuera de la marca o de la región.",
+        "Registra el error frecuente en la lista NO DECIR o de frases prohibidas de la ficha."
+       ],
+       "commonMistakes": [
+        "Asumir que la IA ya revisó",
+        "Corregir sin actualizar la ficha",
+        "Aceptar un español de catálogo para público local"
+       ],
+       "checklist": [
+        "5 revisiones hechas",
+        "Errores registrados",
+        "Ficha actualizada"
+       ],
+       "practice": "Audita 5 guiones generados y arma tu lista de frases prohibidas.",
+       "passCriteria": "Lista de 15 o más frases prohibidas incorporada al contexto de la marca.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "GUI-A5-04",
+       "title": "Si la generación falla",
+       "objective": "Resolver una generación fallida o saturada sin duplicar pedidos ni perder el trabajo.",
+       "procedure": [
+        "Revisa el historial de generaciones del guion antes de volver a pedir.",
+        "Ante saturación, el generador reintenta solo con un modelo alternativo y esperas crecientes, hasta 3 intentos por guion. No lances otro pedido mientras tanto.",
+        "Si se agotan los intentos, reintenta desde el historial o desde «Ver reintento», con otro proveedor o modelo si hace falta.",
+        "Reduce la carga: menos documentos de referencia, contexto ordenado y la duración recomendada.",
+        "Si vuelve a fallar, avisa a coordinación con la hora y el mensaje de error."
+       ],
+       "commonMistakes": [
+        "Mandar el mismo pedido varias veces seguidas",
+        "Perder el contexto ya escrito",
+        "No reportar fallas repetidas"
+       ],
+       "checklist": [
+        "Historial revisado",
+        "Reintento desde el historial o «Ver reintento»",
+        "Proveedor o modelo alternativo",
+        "Carga reducida",
+        "Reporte a coordinación"
+       ],
+       "practice": "Simula con coordinación un fallo y ejecuta el protocolo.",
+       "passCriteria": "El guion se genera sin duplicados o la falla queda reportada con sus datos.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "GUI-A6",
+     "slug": "gui-a6",
+     "title": "Liderazgo creativo",
+     "summary": "Dirigir la sesión de ideas, dar retroalimentación objetiva a otros guionistas, cerrar la semana con un post-mortem y documentar la voz de cada marca.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=YPTYQ3yrpHw",
+       "title": "Técnicas de lluvia de ideas: Cómo innovar en grupo",
+       "channel": "Sprouts Español",
+       "language": "es",
+       "why": "Técnicas para dirigir una lluvia de ideas en grupo; base para la sesión de ideas semanal."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Y0x1Iu4mpxk",
+       "title": "Sé un buen líder dando feedback constructivo",
+       "channel": "Platzi",
+       "language": "es",
+       "why": "Cómo dar retroalimentación objetiva y constructiva; aplica a revisar guiones de otros guionistas."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=W6jZptSd3eM",
+       "title": "Paso a paso para una Retrospectiva - Para Scrum Masters",
+       "channel": "Ágil Es Por Cris Rúa",
+       "language": "es",
+       "why": "Paso a paso de una retrospectiva de equipo, adaptable al post-mortem semanal de contenidos."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "GUI-A6-01",
+       "title": "Sesión de ideas",
+       "objective": "Facilitar una sesión semanal de 45 min que termine en IDEAS priorizadas y asignadas.",
+       "procedure": [
+        "10 min: métricas de la semana, ganadores y perdedores.",
+        "10 min: insumos de ATC y community (objeciones, comentarios) y fechas del calendario de las próximas 4 semanas.",
+        "15 min: matriz de ángulos y ganchos.",
+        "10 min: priorización por impacto y facilidad de producción.",
+        "Carga las IDEAS con su responsable."
+       ],
+       "commonMistakes": [
+        "Reunión sin datos",
+        "Ideas sin responsable",
+        "Sesiones de más de 1 hora"
+       ],
+       "checklist": [
+        "Agenda enviada",
+        "Insumos recibidos",
+        "Matriz",
+        "Priorización",
+        "IDEAS cargadas"
+       ],
+       "practice": "Facilita una sesión real con el equipo.",
+       "passCriteria": "8 o más IDEAS priorizadas y asignadas en 45 min.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A6-02",
+       "title": "Feedback de guiones",
+       "objective": "Revisar guiones de otros con criterios objetivos.",
+       "procedure": [
+        "Usa la rúbrica: promesa, gancho, una sola idea, filmable, diálogo, CTA y legal (de 1 a 3 puntos cada uno).",
+        "Primero comenta lo que funciona. Luego, de 1 a 3 cambios prioritarios.",
+        "Cada comentario con su porqué y un ejemplo.",
+        "Deja que el autor reescriba.",
+        "Registra los errores que se repiten en el equipo para la formación."
+       ],
+       "commonMistakes": [
+        "Reescribir tú el guion",
+        "Comentarios de gusto («no me convence»)",
+        "20 observaciones de golpe"
+       ],
+       "checklist": [
+        "Rúbrica aplicada",
+        "1-3 cambios",
+        "Porqué y ejemplo en cada comentario",
+        "Patrón registrado"
+       ],
+       "practice": "Revisa con la rúbrica 3 guiones de un guionista principiante.",
+       "passCriteria": "El guionista sube su puntaje en la siguiente entrega.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A6-03",
+       "title": "Post-mortem semanal",
+       "objective": "Cerrar cada semana con aprendizajes escritos que cambien los próximos guiones.",
+       "procedure": [
+        "Top 3 y bottom 3 de la semana por retención 3 s, hold y leads.",
+        "Una hipótesis por video: gancho, desarrollo, oferta o publicación.",
+        "Una decisión por hipótesis: repetir, iterar o descartar.",
+        "Actualiza el banco de ganchos y las fichas.",
+        "Comparte el resumen con coordinación, el jefe de editores y ATC."
+       ],
+       "commonMistakes": [
+        "Solo celebrar a los ganadores",
+        "Hipótesis sin acción",
+        "No compartir el resumen con el equipo"
+       ],
+       "checklist": [
+        "Top y bottom",
+        "Hipótesis",
+        "Decisión",
+        "Banco actualizado",
+        "Resumen compartido"
+       ],
+       "practice": "Post-mortem de las últimas 2 semanas.",
+       "passCriteria": "3 decisiones ejecutadas en los guiones de la semana siguiente.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "GUI-A6-04",
+       "title": "Manual de voz de marca",
+       "objective": "Documentar en una página la voz de cada marca para que cualquier guionista, y la IA, escriba igual.",
+       "procedure": [
+        "Tono en 3 adjetivos, cada uno con su «pero no»: «cariñosa pero no cursi», «cercana pero no vulgar».",
+        "Palabras y frases que sí (glosario del cliente por región) y frases prohibidas (incluidas las de la IA).",
+        "Reglas de trato: tú o usted, jerga permitida, uso de emojis en el caption.",
+        "3 guiones ganadores como ejemplo y 1 perdedor con el porqué.",
+        "Pega el resumen en el contexto de la marca del generador y revísalo cada trimestre con las métricas."
+       ],
+       "commonMistakes": [
+        "Manual de 30 páginas que nadie lee",
+        "Adjetivos sin «pero no»",
+        "No actualizarlo con las métricas"
+       ],
+       "checklist": [
+        "Tono con 3 pares",
+        "Glosario sí y no",
+        "Reglas de trato",
+        "Ejemplos",
+        "Resumen cargado en el generador"
+       ],
+       "practice": "Manual de voz de una página para Con Amor y otro para la cevichería.",
+       "passCriteria": "Un guionista nuevo escribe un guion que coordinación aprueba sin notas de tono.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

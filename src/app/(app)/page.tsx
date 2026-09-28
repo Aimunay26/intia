@@ -25,6 +25,7 @@ import Link from "next/link";
 import { cache, Suspense } from "react";
 
 import { FunnelBars } from "@/components/charts";
+import { ManualCard } from "@/components/manual/manual-card";
 import {
 	Avatar,
 	AvatarStack,
@@ -156,6 +157,7 @@ export default async function PanelGeneral() {
           </>
         }
       />
+    <ManualCard user={user} variant="banner" className="mb-5" />
     {sections ? sections[0] : <Suspense key={scope + "stats"} fallback={<SectionLoading label="indicadores" />}><PanelStats /></Suspense>}
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0 space-y-5">{sections ? <>{sections[1]}{sections[2]}</> : <><Suspense key={scope + "pending"} fallback={<SectionLoading label="pendientes" />}><PanelPending /></Suspense><Suspense key={scope + "objectives"} fallback={<SectionLoading label="objetivos" />}><PanelObjectives /></Suspense></>}</div>

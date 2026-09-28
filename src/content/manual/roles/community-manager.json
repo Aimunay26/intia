@@ -1,0 +1,2493 @@
+{
+ "id": "COMMUNITY",
+ "slug": "community-manager",
+ "name": "Community manager",
+ "fullName": "Community Manager (perfil PUBLISHER)",
+ "mission": "Convertir cada video aprobado en alcance, comunidad y conversaciones de venta. Publica en el momento, formato y red correctos (TikTok, Instagram, Facebook y YouTube Shorts), cuida la conversación alrededor de la marca y pasa cada intención de compra a ATC en minutos y con contexto. Cada semana devuelve al equipo aprendizajes basados en datos que mejoran los próximos guiones, grabaciones y ediciones, sin incumplir las políticas de las plataformas ni la normativa peruana (Código de Protección y Defensa del Consumidor, Guía de Publicidad para Influencers de Indecopi, Ley 29733 y derecho a la imagen).",
+ "responsibilities": [
+  "Proponer con coordinación la parrilla semanal por marca y plataforma. En Intia solo ves los videos con “Revisión final aprobada”: en ellos confirmas la Fecha prevista, programas y mueves la ficha a PROGRAMADO.",
+  "Revisar el master antes de programar: 9:16, sin marcas de agua, textos fuera de la zona tapada, precios y datos vigentes, música con fuente registrada. No editas el contenido: los errores se comentan en la ficha y se avisan a coordinación.",
+  "Verificar antes de publicar que existan las autorizaciones de imagen de las personas reales (Cámara Escondida, clientes, UGC, menores) y aplicar la etiqueta de contenido con IA cuando corresponda.",
+  "Escribir el copy de cada red: palabra clave, CTA alineado con el cierre (Hormozi o comunidad), hashtags dentro de los límites (Instagram ≤5), portada y primer comentario fijado. Al terminar marca “Copy y hashtags escritos”.",
+  "Subir el video a cada plataforma con música de uso comercial y la divulgación correcta (“Tu marca” en TikTok; la etiqueta de colaboración pagada solo cuando publica o coescribe un creador pagado). Guarda el enlace público, marca los checks y pasa la ficha a PUBLICADO.",
+  "Responder comentarios y DMs con la voz de la marca y derivar a ATC toda intención de compra con una ficha de pase completa (en 15 minutos o menos, en horario laboral).",
+  "Moderar la comunidad: ocultar o reportar spam, estafas, suplantaciones y abuso, sin borrar críticas legítimas. Configura y revisa los filtros de palabras.",
+  "Responder las reseñas de Google y Facebook de restaurantes y servicios, sin pedir ni premiar reseñas.",
+  "Detectar crisis a tiempo, pausar en las plataformas lo programado y los anuncios, escalar a coordinación (que pasa las fichas a PAUSADO) y al dueño, y ejecutar el protocolo de respuesta.",
+  "Monitorear tendencias y audios en Perú, filtrarlos y proponerlos a coordinación con la plantilla de idea. Coordinación los registra como IDEA en Intia (el perfil PUBLISHER no crea videos).",
+  "Coordinar colaboraciones con creadores (publicaciones en colaboración, contenido de marca, permisos de UGC) cumpliendo la Guía de Publicidad para Influencers de Indecopi.",
+  "Medir cada video a las 24 horas y a los 7 días en la hoja de la marca (el analista carga los resultados en Intia) y dejar feedback accionable como comentario en la ficha.",
+  "Entregar el reporte semanal con recomendaciones y responsables a coordinación y al dueño.",
+  "Impulsar con pauta solo videos ganadores y solo con presupuesto aprobado por escrito por el dueño, midiendo el costo por conversación.",
+  "Proteger los datos personales de los clientes (Ley 29733) y los accesos de las cuentas de la marca (roles y verificación en dos pasos)."
+ ],
+ "sop": [
+  "POR VIDEO · IDEA: aporta tendencias, preguntas y objeciones reales de la comunidad. Envíalas a coordinación con la plantilla de idea (tendencia, formato, hook, producto, cierre, audio con licencia y fecha límite). Coordinación las registra como IDEA en Intia y las asigna al guionista.",
+  "POR VIDEO · GUION: tu perfil no abre Guiones. En la reunión de parrilla o por el canal de coordinación, valida la palabra clave del CTA, que la oferta, el stock y el plazo sean reales y que el audio previsto sea de uso comercial.",
+  "POR VIDEO · GRABACIÓN: pide a producción material de detrás de cámaras para historias y confirma que se firmen las autorizaciones de imagen de las personas reales (Cámara Escondida, clientes, menores con su padre, madre o tutor).",
+  "POR VIDEO · EDICIÓN: cuando la ficha aparece en tu lista ya tiene “Revisión final aprobada”. Lee el brief, el Hook, el CTA y las notas. Descarga el master desde los adjuntos (nunca de WhatsApp) y revísalo en la vista previa de cada app. Si hay un error de texto, precio, logo o zona tapada, comenta en la ficha y avisa a coordinación: solo coordinación reabre la aprobación.",
+  "POR VIDEO · PROGRAMADO: escribe el copy por red y marca “Copy y hashtags escritos”. Programa en Meta Business Suite, TikTok Studio y YouTube Studio en hora de Perú (UTC-5). Confirma la Fecha prevista en “Programación y enlace publicado”, anota la hora en un comentario y mueve la ficha a PROGRAMADO. Avisa a ATC la palabra clave y la oferta.",
+  "POR VIDEO · PUBLICADO: verifica en modo incógnito que el video salió y fija el primer comentario. Marca “Subido a la plataforma”, guarda el enlace público de la red principal (los demás van en un comentario), marca “Link guardado en la ficha” y mueve a PUBLICADO. Anota la hora real y cualquier incidencia.",
+  "POR VIDEO · MÉTRICAS: a las 24 h y a los 7 días registra los datos en la hoja de la marca (el analista los carga en Intia) y deja el feedback de retención como comentario en la ficha para el guionista, el editor y el filmmaker.",
+  "08:30-09:00 · APERTURA: revisa notificaciones y bandejas (Meta Business Suite, TikTok, YouTube Studio, reseñas de Google). Responde lo pendiente de la noche, deriva a ATC cada lead con su ficha de pase y etiqueta todas las conversaciones (Lead nuevo, Derivado a ATC, Reclamo, Colaboración, Spam).",
+  "09:00-11:00 · PREPARAR: filtra tu marca en Intia > Videos y trabaja los videos aprobados de la parrilla del día siguiendo los pasos de EDICIÓN y PROGRAMADO (revisión del master, permisos, copy, portada, primer comentario, música y divulgación).",
+  "HORA DE PUBLICACIÓN: ejecuta el paso PUBLICADO y comparte el video en historias.",
+  "PRIMERA HORA TRAS PUBLICAR: responde el 100% de los comentarios, lleva la intención de compra a DM y a ATC, y vigila patrones de queja (5 o más sobre el mismo tema en una hora = alerta a coordinación).",
+  "BLOQUES DE COMUNIDAD (13:00, 17:00, 21:00): atiende comentarios, DMs y reseñas, modera (ocultar o reportar spam, estafas y abuso; las críticas legítimas se responden), pasa leads a ATC en ≤15 min y deja cero conversaciones sin etiqueta.",
+  "20 MIN DIARIOS · TENDENCIAS: revisa TikTok Creative Center (región Perú) y los audios en tendencia de Reels, aplica el filtro de 5 preguntas y envía a coordinación las que pasan, con fecha límite.",
+  "CIERRE DEL DÍA: registra las métricas a 24 h del video de ayer en la hoja de la marca, deja el feedback en la ficha y anota los pendientes del siguiente turno.",
+  "VIERNES: arma con coordinación la parrilla de la semana siguiente (coordinación carga la Fecha prevista en las fichas en planificación), reporta huecos de material, revisa los comentarios ocultos por los filtros y registra las métricas a 7 días.",
+  "LUNES 12:00 · REPORTE SEMANAL: top 3 y bottom 3 con su porqué, KPIs contra la semana anterior, comunidad (tiempos, leads, reclamos, reseñas), tendencias, pauta y 3 recomendaciones con responsable. Se entrega a coordinación y al dueño.",
+  "MENSUAL: audita los perfiles (nombre con keyword, bio, destacadas, enlaces), actualiza con ATC las preguntas frecuentes y las respuestas guardadas, revisa accesos y roles, y actualiza el calendario de fechas comerciales peruanas.",
+  "ANTE UNA CRISIS (en cualquier momento): clasifica el nivel, pausa en las plataformas lo programado y los anuncios, pide a coordinación pasar esas fichas a PAUSADO, escala al dueño, publica el comunicado de espera preaprobado en ≤30 min, actualiza en los plazos prometidos y cierra con un post mortem escrito."
+ ],
+ "receivesFrom": [
+  "Coordinación (STRATEGY): prioridades, parrilla aprobada, Fecha prevista en las fichas, videos con “Revisión final aprobada”, decisiones sobre tendencias, reaperturas de aprobación y crisis.",
+  "Editor y Jefe de editores (EDITOR): master final 9:16 sin marcas de agua, fuente y licencia de la música, uso de IA declarado, subtítulos y versiones por plataforma.",
+  "Producción (PRODUCTION): autorizaciones de imagen firmadas y material de detrás de cámaras para historias.",
+  "Diseñador (DESIGNER): plantillas de portada y miniaturas, portadas de destacadas.",
+  "Guionista (WRITER), a través de coordinación y la ficha: hook, keyword hablada o en pantalla, tipo de cierre (Hormozi o comunidad) y CTA.",
+  "ATC: preguntas frecuentes, precios, plazos y stock vigentes, y el resultado de los leads derivados (ventas atribuidas).",
+  "Analista (ANALYST): tableros y promedios por marca y formato.",
+  "Dueño (OWNER): ofertas, garantías y bonus confirmados, fechas límite de pedidos, presupuesto de pauta, accesos por rol, límites de respuesta y aprobación en crisis.",
+  "Creadores y clientes: contenido colaborativo, UGC y permisos de uso."
+ ],
+ "deliversTo": [
+  "ATC: leads con ficha de pase (usuario, red, video de origen, producto, pregunta, palabra clave, fecha requerida), reclamos y reseñas negativas para su atención formal.",
+  "Coordinación: propuestas de idea con plantilla (coordinación las registra como IDEA), parrilla propuesta, errores detectados en masters aprobados, alertas de crisis y reporte semanal.",
+  "Guionista: hooks, preguntas y objeciones reales de la comunidad como insumo de guiones; feedback de retención.",
+  "Editor y Jefe de editores: segundo exacto de abandono, textos tapados por la interfaz y audios con reclamos.",
+  "Filmmaker y talento: qué formatos, planos y aperturas retienen más.",
+  "Analista: la hoja de métricas a 24 h y 7 días etiquetada por formato, hook, cierre, horario y pauta.",
+  "Dueño: resumen ejecutivo semanal, ventas atribuidas a contenido, propuestas de pauta con presupuesto e incidentes."
+ ],
+ "kpis": [
+  "Puntualidad: ≥95% de los videos publicados en la fecha y hora acordadas.",
+  "Trazabilidad: 100% de las fichas en PUBLICADO con enlace público, hora anotada y checks de Publicación marcados.",
+  "Tiempo de primera respuesta a DMs en horario laboral: ≤15 min. Comentarios: ≤2 h. 100% respondido en menos de 24 h.",
+  "Tasa de respuesta a comentarios relevantes y reseñas: ≥90%.",
+  "Leads derivados a ATC con ficha de pase completa: ≥95% (ATC no tiene que repreguntar).",
+  "Conversaciones de venta y pedidos atribuidos a contenido por semana (palabra clave o pregunta de ATC).",
+  "Retención: % visto completo o tiempo medio por video frente al promedio de la marca y el formato; visto vs. deslizado en Shorts.",
+  "Compartidos por alcance y guardados por alcance frente al promedio de la marca.",
+  "Crecimiento neto semanal de seguidores por red.",
+  "Cumplimiento: cero videos silenciados o eliminados por derechos, cero contenidos pagados sin etiqueta de publicidad y cero publicaciones con personas reales sin autorización archivada.",
+  "Crisis: reconocimiento público en ≤30 min desde la detección.",
+  "Pauta: costo por conversación dentro del límite acordado con el dueño.",
+  "Reporte semanal entregado el lunes antes de las 12:00 con al menos 3 recomendaciones accionables."
+ ],
+ "tools": [
+  "Intia: lista de videos aprobados, ficha (brief, Hook, CTA, notas, adjuntos, comentarios), sección “Programación y enlace publicado” y checks de Publicación (“Copy y hashtags escritos”, “Subido a la plataforma”, “Link guardado en la ficha”)",
+  "Meta Business Suite: planificador de Reels para Instagram y Facebook, bandeja unificada, respuestas guardadas, preguntas frecuentes, mensajes de ausencia y Colección de sonidos de Meta",
+  "TikTok Studio (web) y app de TikTok con cuenta de empresa",
+  "TikTok Creative Center: tendencias por región Perú y Biblioteca de Música Comercial",
+  "App de Instagram: Reels de prueba, publicaciones en colaboración, etiqueta de colaboración pagada y Palabras ocultas",
+  "YouTube Studio: subida y programación de Shorts, estadísticas, biblioteca de audio y declaración de contenido alterado o sintético",
+  "Perfil de Empresa de Google: reseñas de restaurantes y servicios",
+  "Botón Promocionar de Meta, TikTok Promote y Spark Ads (solo con presupuesto aprobado; el medio de pago lo configura el dueño)",
+  "Metricool u otro programador multirred aprobado (opcional)",
+  "Canva con las plantillas de portada de cada marca",
+  "Google Sheets: parrilla, hoja de métricas por marca y reporte semanal",
+  "WhatsApp Business del equipo ATC para pases y etiquetas",
+  "Google Drive: masters finales, autorizaciones de imagen y permisos de UGC",
+  "Gestor de contraseñas definido por el dueño y verificación en dos pasos en todas las cuentas"
+ ],
+ "levels": [
+  {
+   "level": "PRINCIPIANTE",
+   "goal": "Publicar un video aprobado en TikTok, Instagram, Facebook y YouTube Shorts sin errores (formato, copy, música, divulgación, permisos) y cerrar la ficha en Intia. Además, atender comentarios, DMs y reseñas con la voz de la marca y derivar cada intención de compra a ATC.",
+   "modules": [
+    {
+     "id": "COMMUNITY-P1",
+     "slug": "community-p1",
+     "title": "Tu rol en el flujo",
+     "summary": "Qué ves y qué puedes hacer en Intia con el perfil PUBLISHER, cuentas listas para publicar, voz de cada marca y formatos por plataforma antes de publicar nada.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=6c-id9slimM",
+       "title": "Cómo Ser COMMUNITY MANAGER | CURSO GRATIS #1",
+       "channel": "Mugu | Mentor en Marketing Digital",
+       "language": "es",
+       "why": "Clase 1 de un curso gratuito muy visto (650 mil vistas): explica qué hace un community manager, sus tareas y dónde encaja en el equipo. Sirve de base para 'Tu rol en el flujo'."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=orKs7Jbedwc",
+       "title": "Voz y Tono de Marca: Descubre Tu Brand Voice [12 EJEMPLOS]",
+       "channel": "Ivo Fiz Escuela de Copywriting y Contenidos",
+       "language": "es",
+       "why": "Diferencia voz y tono con 12 ejemplos de marcas reales. Ayuda a fijar la voz de cada marca (Con Amor, restaurantes, servicios) antes de publicar."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=AmfG6BW0Nds",
+       "title": "📱ZONAS de seguridad para que tus INSTAGRAM REELS se vean correctamente | TUTORIAL | Plantilla GRATIS",
+       "channel": "Ligia Alvear",
+       "language": "es",
+       "why": "Explica las zonas seguras del formato vertical e incluye una plantilla. Sirve para revisar que textos y CTA no queden tapados por la interfaz antes de publicar."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-P1-L1",
+       "title": "Flujo del video en Intia",
+       "objective": "Saber en qué estado recibes un video, qué ves en la ficha, qué checks te tocan y qué no puedes modificar.",
+       "procedure": [
+        "Abre Intia > Videos y filtra tu marca. Los estados son IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO, más PAUSADO y CANCELADO, que maneja coordinación.",
+        "Tu lista solo muestra videos con “Revisión final aprobada”: tu perfil no ve ideas, guiones ni videos en proceso. Si esperas un video que no aparece, pregunta a coordinación.",
+        "En la ficha lee el brief, el Hook, el CTA y las notas. Si no está claro el tipo de cierre (Hormozi o comunidad) o la palabra clave, pregúntalo en un comentario.",
+        "Descarga el master final desde los adjuntos de la ficha. Tras la aprobación final la ficha queda bloqueada para adjuntos: permisos y capturas van en Drive, con el enlace en un comentario.",
+        "Checks de Publicación: “Copy y hashtags escritos” y “Subido a la plataforma” son obligatorios (sin ellos la app no deja pasar a PUBLICADO). “Link guardado en la ficha” es opcional en la app, pero en este manual es obligatorio.",
+        "En “Programación y enlace publicado”: para pasar a PROGRAMADO debe existir la Fecha prevista (solo fecha; la hora va en un comentario). Para pasar a PUBLICADO debe estar guardado el enlace público.",
+        "Si ves un error (tilde, precio, logo, dato), no lo corrijas: comenta en la ficha y avisa a coordinación. Solo coordinación puede reabrir la aprobación final para que el editor corrija."
+       ],
+       "commonMistakes": [
+        "Publicar un video que te mandaron por WhatsApp y que no aparece en tu lista de Intia (no tiene aprobación final).",
+        "Descargar un borrador (sin subtítulos o con música temporal) en vez del master final adjunto.",
+        "Marcar los checks de Publicación antes de que el video esté realmente en línea.",
+        "Corregir por tu cuenta textos o precios del video."
+       ],
+       "checklist": [
+        "El video aparece en tu lista (tiene “Revisión final aprobada”)",
+        "Brief, Hook, CTA y notas leídos",
+        "Master descargado de los adjuntos",
+        "Fecha prevista cargada antes de PROGRAMADO",
+        "Hora anotada en un comentario",
+        "Enlace público guardado antes de PUBLICADO",
+        "Checks de Publicación marcados"
+       ],
+       "practice": "En la cuenta de práctica abre 3 videos aprobados de Con Amor. Para cada uno decide por escrito: “listo para programar” o “comentario a coordinación” (por ejemplo, precio distinto al vigente o CTA vacío). Luego lleva el que está listo hasta PUBLICADO.",
+       "passCriteria": "Decide bien 3 de 3 casos y recorre el flujo de uno hasta PUBLICADO sin mensajes de error de la app.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P1-L2",
+       "title": "Cuentas listas para publicar",
+       "objective": "Comprobar antes de tu primera publicación que cada marca tiene cuentas profesionales conectadas, accesos por rol y un perfil que vende.",
+       "procedure": [
+        "Instagram: confirma que sea cuenta profesional (empresa) y que esté vinculada a la página de Facebook en Meta Business Suite. Sin ese vínculo no hay programación ni bandeja unificada.",
+        "TikTok: confirma que sea cuenta de empresa. Así accedes a la Biblioteca de Música Comercial y a las estadísticas.",
+        "YouTube: confirma que tienes permiso de administrador o editor en el canal de la marca. Nunca publiques desde la cuenta personal del dueño.",
+        "Tu acceso llega por rol (portafolio de Meta, permisos del canal, TikTok), asignado por el dueño. Nunca pidas ni recibas contraseñas por chat.",
+        "Activa la verificación en dos pasos en tu usuario y confirma con el dueño que las cuentas de la marca también la tienen.",
+        "Revisa el perfil: nombre con palabra clave (ej. “Con Amor | Poleras y tazas personalizadas”), bio con propuesta, ciudades de envío y CTA, enlace a WhatsApp o catálogo y categoría correcta. Los cambios se proponen a coordinación; no cambies nombre ni bio por tu cuenta."
+       ],
+       "commonMistakes": [
+        "Manejar la marca desde una cuenta personal o de creador.",
+        "Compartir contraseñas por WhatsApp.",
+        "Tener Instagram sin vincular a Facebook (no se puede programar desde Meta Business Suite).",
+        "Cambiar el nombre o la bio sin aprobación.",
+        "Bio sin ciudad ni forma de comprar."
+       ],
+       "checklist": [
+        "IG profesional vinculado a la página de FB",
+        "TikTok en cuenta de empresa",
+        "YouTube con acceso por rol",
+        "Accesos por rol, sin contraseñas compartidas",
+        "Verificación en dos pasos en tu usuario y en las cuentas",
+        "Nombre con keyword, bio con ciudad y CTA",
+        "Enlace de contacto probado"
+       ],
+       "practice": "Audita las cuentas de una marca (Con Amor o un restaurante) y llena una tabla: red, tipo de cuenta, cómo accedes, verificación en dos pasos, nombre, bio y enlace probado. Envía los pendientes a coordinación.",
+       "passCriteria": "Tabla completa, con el enlace de contacto probado desde otro celular y cada pendiente reportado a coordinación.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P1-L3",
+       "title": "Voz de cada marca",
+       "objective": "Escribir y responder como la marca, no como tú, aplicando su guía de voz según el tipo de negocio.",
+       "procedure": [
+        "Lee la ficha de la marca en Intia > Marcas (público, promesa, productos, zonas de envío) y su guía de voz.",
+        "Ubica en la guía: 3 adjetivos, trato (tú o usted), emojis permitidos, palabras prohibidas y cómo se firma.",
+        "Ten a mano las 5 frases modelo de la marca: saludo, agradecimiento, respuesta a “¿precio?”, respuesta a una queja y despedida.",
+        "Adapta por tipo de negocio. Con Amor: cálida y familiar, español claro para la sierra y Lima, sin jergas de un solo lugar. Servicio (ej. estudio contable): confiable y sencillo, trato de usted, sin tecnicismos. Restaurante: apetitoso y rápido, con horario y distrito siempre a mano.",
+        "Si la marca no tiene guía de voz, pídela a coordinación antes de responder en su nombre (la guía se arma en el manual por marca)."
+       ],
+       "commonMistakes": [
+        "Mezclar tú y usted en la misma cuenta.",
+        "Copiar el tono de otra marca del equipo.",
+        "Hacer bromas al responder una queja.",
+        "Usar demasiados emojis en marcas de servicios."
+       ],
+       "checklist": [
+        "Ficha de marca leída",
+        "Trato (tú o usted) respetado",
+        "Emojis dentro de lo permitido",
+        "Sin palabras prohibidas",
+        "Frases modelo a mano"
+       ],
+       "practice": "Escribe la respuesta a “¿cuánto cuesta?” en el tono de Con Amor (polera con foto), de un estudio contable (declaración anual) y de una cevichería (ceviche para dos).",
+       "passCriteria": "Coordinación identifica a qué marca pertenece cada respuesta sin ver el nombre.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-P1-L4",
+       "title": "Formatos por plataforma",
+       "objective": "Conocer medidas, duraciones y zonas seguras para que ningún texto clave quede tapado y el video se clasifique bien.",
+       "procedure": [
+        "Exige un master vertical 9:16 de 1080×1920 en MP4 (H.264, audio AAC), con los fps en que se grabó (normalmente 30) y sin marcas de agua de TikTok o CapCut.",
+        "Duración: para alcance en TikTok y Reels funcionan bien 15-90 s (Reels acepta hasta 3 min). YouTube clasifica como Short un video vertical o cuadrado de hasta 3 min; un 16:9 horizontal no es Short.",
+        "Zonas tapadas: el 15-20% inferior (descripción y nombre) y la franja derecha (íconos). Precio, CTA y subtítulos deben ir fuera de esas zonas.",
+        "Previsualiza el video en cada app antes de publicar.",
+        "Si un texto clave queda bajo la interfaz, comenta en la ficha con una captura y avisa a coordinación: la ficha aprobada solo se corrige si coordinación la reabre."
+       ],
+       "commonMistakes": [
+        "Subir a Reels o Shorts el video descargado de TikTok con marca de agua: se trata como contenido no original y pierde alcance.",
+        "Precio o CTA tapado por la descripción.",
+        "Subir un 16:9 esperando que sea Short.",
+        "Pedir el cambio al editor por WhatsApp, saltándose la ficha."
+       ],
+       "checklist": [
+        "9:16, 1080×1920, MP4",
+        "Sin marcas de agua",
+        "Texto clave dentro de la zona segura",
+        "Duración adecuada a la red",
+        "Audio sin cortes ni picos"
+       ],
+       "practice": "Revisa 3 masters en la vista previa de TikTok, Instagram y YouTube y marca con captura qué elementos quedan tapados en cada red.",
+       "passCriteria": "Detecta todos los textos tapados en un video de prueba preparado por el jefe.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-P2",
+     "slug": "community-p2",
+     "title": "Copy que vende",
+     "summary": "Caption, palabras clave, hashtags y llamado a la acción escritos para cada red, conectados con el cierre del guion y con ofertas verdaderas.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=3QAhojLlvSg",
+       "title": "Cómo escribir en las redes sociales (clase de copywriting)",
+       "channel": "Romuald Fons",
+       "language": "es",
+       "why": "Clase corta de copywriting aplicada a redes: cómo escribir captions que se lean y lleven a actuar. Es la base de 'Copy que vende'."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=NdJW950Hig4",
+       "title": "Cómo Hacer SEO en TikTok Paso a Paso y Triplicar tu Alcance",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Canal de referencia. Enseña paso a paso a poner palabras clave en la descripción, el texto en pantalla y los hashtags para salir en el buscador de TikTok."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=EL90EkdKV7o",
+       "title": "CTAs en Redes Sociales: 5 Ejemplos de Call to Actions para tus Posts ✏️",
+       "channel": "Metricool en español",
+       "language": "es",
+       "why": "Cinco ejemplos concretos de llamados a la acción para el caption, que se pueden conectar con el cierre del guion (escribir por DM, comentar una palabra, guardar)."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-P2-L1",
+       "title": "Anatomía del caption",
+       "objective": "Escribir un caption que retiene, aparece en búsquedas y lleva a una sola acción.",
+       "procedure": [
+        "Línea 1: hook o beneficio con la palabra clave. Las primeras ~125 letras son las que se ven antes de “más” y pueden salir en Google.",
+        "Líneas 2-3: contexto (qué es, para quién, prueba o dato útil).",
+        "Línea 4: un solo CTA alineado con el CTA de la ficha.",
+        "Al final, los hashtags (Instagram máx. 5).",
+        "Si mencionas precio, que sea el total en soles (S/) con impuestos incluidos e igual al vigente que maneja ATC.",
+        "Escribe primero en tus notas o en la hoja de parrilla, revisa tildes y ortografía, y luego pega en cada red.",
+        "Ejemplo Con Amor: “Polera personalizada con tu foto para mamá 📸 / Algodón afranelado, abrigadora para el frío de la sierra. / Envíos a Huancayo, Cusco, Arequipa y Lima. / Escríbenos MAMÁ por DM y te mandamos modelos. / #polerapersonalizada #regaloparamama #huancayo”.",
+        "Ejemplo servicio: “¿SUNAT te mandó una multa? Qué hacer en 30 segundos / … / Agenda tu asesoría por DM”. Ejemplo restaurante: “Ceviche de [pescado del día] en [distrito], listo en 10 min / … / Pide por WhatsApp (link en perfil)”."
+       ],
+       "commonMistakes": [
+        "Empezar con el nombre de la marca o con “Nuevo video”.",
+        "Poner varios CTA a la vez (comenta, comparte, escribe, visita).",
+        "Repetir el texto del video sin aportar nada.",
+        "Precio sin impuestos o distinto al de ATC.",
+        "Publicar sin tildes o con errores de ortografía."
+       ],
+       "checklist": [
+        "Hook con keyword en la primera línea",
+        "Contexto breve",
+        "Un solo CTA coherente con la ficha",
+        "Precio total en S/ si se menciona",
+        "Hashtags al final y dentro del límite",
+        "Ortografía y tildes revisadas"
+       ],
+       "practice": "Escribe los captions de un mismo video de tazas personalizadas para TikTok, Instagram, Facebook y el título y la descripción del Short.",
+       "passCriteria": "Los 4 textos cumplen la plantilla y coordinación los aprueba sin cambios de fondo.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-P2-L2",
+       "title": "Palabras clave sociales",
+       "objective": "Que el video aparezca cuando alguien busca lo que la marca vende.",
+       "procedure": [
+        "Lista 10 búsquedas reales de clientes: “regalo para mamá”, “polera con foto”, “taza personalizada Huancayo”, “cevichería en Surquillo”, “contador para RUS”.",
+        "Valídalas escribiéndolas en la búsqueda de TikTok, Instagram y YouTube y anota las sugerencias de autocompletado.",
+        "Elige por video 1 keyword principal y 1-2 secundarias.",
+        "Colócala en la primera línea del caption y en el título del Short.",
+        "Para que también vaya en la voz y en el texto en pantalla, entrégala a coordinación en la parrilla, antes del guion: cuando el video llega aprobado ya no se cambia.",
+        "En Instagram usa ubicación y texto alternativo en las publicaciones, y propone a coordinación la keyword para el campo Nombre del perfil.",
+        "Entrega la lista a coordinación para la ficha de marca y actualízala cada mes."
+       ],
+       "commonMistakes": [
+        "Usar palabras que nadie busca (“experiencias memorables”).",
+        "Llenar el caption de keywords (se lee como spam).",
+        "Poner una keyword que no coincide con lo que muestra el video.",
+        "Pedir la keyword en pantalla cuando el video ya está aprobado."
+       ],
+       "checklist": [
+        "Lista de 10 búsquedas validada",
+        "Keyword principal por video",
+        "Keyword en el caption y en el título del Short",
+        "Keyword entregada a coordinación antes del guion",
+        "Ubicación y texto alternativo en IG"
+       ],
+       "practice": "Arma la lista de keywords de Con Amor para el Día de la Madre y la de una cevichería de Lima.",
+       "passCriteria": "Al menos 6 de 10 keywords aparecen como sugerencia de búsqueda en alguna de las plataformas.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-P2-L3",
+       "title": "Hashtags sin spam",
+       "objective": "Usar pocos hashtags precisos que describan el video y respeten los límites de cada red.",
+       "procedure": [
+        "Instagram: máximo 5 hashtags por publicación o reel (límite desde diciembre de 2025).",
+        "TikTok: 3-5 hashtags relevantes.",
+        "YouTube Shorts: 2-3 hashtags en el título o la descripción.",
+        "Fórmula: categoría (#regalospersonalizados) + ocasión o nicho (#regaloparamama) + ubicación (#huancayo) + marca (#conamorregalos).",
+        "Busca cada hashtag antes de usarlo para comprobar que no tenga doble sentido ni contenido inapropiado.",
+        "No uses #fyp o #viral como estrategia ni pegues el mismo bloque en todos los videos."
+       ],
+       "commonMistakes": [
+        "Pegar 20-30 hashtags de una lista genérica.",
+        "Usar hashtags que no tienen que ver con el video.",
+        "No revisar qué contenido aparece bajo el hashtag."
+       ],
+       "checklist": [
+        "Cantidad dentro del límite de la red",
+        "Todos relevantes al video",
+        "Ubicación incluida si la venta es local",
+        "Hashtag de marca",
+        "Revisados en el buscador"
+       ],
+       "practice": "Propón bloques de hashtags para Con Amor (poleras, tazas, casacas) y uno para un restaurante.",
+       "passCriteria": "Los 4 bloques cumplen los límites y el jefe no encuentra hashtags irrelevantes.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P2-L4",
+       "title": "CTA según el cierre",
+       "objective": "Alinear el llamado a la acción del copy con el cierre del guion (venta estilo Hormozi o comunidad) usando solo promesas verdaderas.",
+       "procedure": [
+        "Lee en la ficha el CTA y el tipo de cierre: Hormozi (escasez, urgencia, bonus, garantía) o comunidad. Si no está claro, pregunta a coordinación en un comentario.",
+        "Cierre Hormozi → CTA de conversación: “Escribe TAZA por DM” o “Pide por WhatsApp (link en perfil)”, con un plazo real (“pedidos para el Día de la Madre hasta el jueves”).",
+        "Cierre de comunidad → CTA de interacción: “¿A quién se la regalarías? Etiquétalo” o “Guárdalo para tu próximo regalo”.",
+        "Si hay promoción, el copy indica su vigencia y, si el stock es limitado, la cantidad mínima de unidades disponibles: el Código de Protección y Defensa del Consumidor lo exige y Indecopi sanciona la publicidad engañosa.",
+        "Confirma con el dueño por escrito que la escasez, el stock, el bonus y la garantía son reales.",
+        "Avisa a ATC la palabra clave y la oferta del video antes de publicar."
+       ],
+       "commonMistakes": [
+        "Urgencia falsa (“últimas unidades” todo el año).",
+        "Promoción sin fecha de vigencia.",
+        "CTA del copy distinto al del video.",
+        "Pedir tres acciones al mismo tiempo.",
+        "No avisar a ATC la palabra clave."
+       ],
+       "checklist": [
+        "El CTA coincide con el cierre del guion",
+        "Vigencia y stock indicados si hay promoción",
+        "Oferta confirmada por el dueño",
+        "Una sola acción",
+        "Palabra clave comunicada a ATC"
+       ],
+       "practice": "Convierte 2 cierres de guion en CTA de copy: uno Hormozi para casacas (con vigencia y stock) y uno de comunidad para un restaurante.",
+       "passCriteria": "Ambos CTA son coherentes con el guion y verificables (oferta, vigencia y stock reales).",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-P3",
+     "slug": "community-p3",
+     "title": "Publicar sin errores",
+     "summary": "Portada, programación y publicación en Meta, TikTok y YouTube con la divulgación correcta, cerrando la ficha en Intia con enlace, hora y checks.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=ACS59TptrN0",
+       "title": "COMO USAR META BUSINESS SUITE 2026 🚀 TUTORIAL",
+       "channel": "Susan Gorbina",
+       "language": "es",
+       "why": "Tutorial completo y actual de Meta Business Suite: planificador, programación de Reels en Facebook e Instagram y bandeja de entrada."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=ZCP_6m7A4qo",
+       "title": "Cómo programar vídeos en TikTok [desde PC y móvil]",
+       "channel": "Metricool en español",
+       "language": "es",
+       "why": "Muestra cómo programar videos en TikTok desde la computadora (TikTok Studio) y desde el móvil, justo el paso de programación de este módulo."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=vYTSq9Cm22k",
+       "title": "La forma CORRECTA de Subir Shorts en YouTube para Conseguir Más Visitas - Crece Rápido en 2026",
+       "channel": "Edu Serrano",
+       "language": "es",
+       "why": "Guía muy vista (más de 850 mil vistas) sobre cómo subir un YouTube Short bien: título, descripción, configuración y errores que restan alcance."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-P3-L1",
+       "title": "Portada que se entiende",
+       "objective": "Elegir o pedir una portada que diga de qué trata el video y se vea completa en el perfil.",
+       "procedure": [
+        "Elige un frame nítido con rostro o producto claro: la polera puesta, la taza con la foto, el plato humeante.",
+        "Texto de portada de 3-6 palabras con la keyword (“Polera con tu foto”, “Declara sin multas”).",
+        "Centra el texto y el sujeto: la cuadrícula del perfil de Instagram muestra un recorte vertical (aprox. 3:4) y TikTok y Shorts también recortan.",
+        "Usa la plantilla de portada del diseñador (tipografía y colores de la marca).",
+        "Súbela como portada en Instagram y TikTok. En YouTube Shorts la miniatura se elige como un fotograma del video desde la app; si tu cuenta no permite subir imagen, acuerda con el jefe de editores que cada master traiga un fotograma limpio apto para portada.",
+        "Revisa el perfil de cada red después de publicar."
+       ],
+       "commonMistakes": [
+        "Portada borrosa o con los ojos cerrados.",
+        "Texto pegado a los bordes que se corta en la cuadrícula.",
+        "Portada que promete algo que el video no muestra."
+       ],
+       "checklist": [
+        "Frame nítido",
+        "Texto de 3-6 palabras con keyword",
+        "Texto y sujeto centrados",
+        "Plantilla de la marca",
+        "Fotograma de portada elegido en Shorts",
+        "Revisada en la cuadrícula del perfil"
+       ],
+       "practice": "Crea en Canva portadas para 3 videos (Con Amor, servicio y restaurante) con la plantilla de cada marca.",
+       "passCriteria": "En la vista de cuadrícula se lee completo el texto de las 3 portadas.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-P3-L2",
+       "title": "Programar en Meta Suite",
+       "objective": "Programar Reels para Instagram y Facebook desde el planificador de Meta Business Suite sin errores de cuenta ni de hora.",
+       "procedure": [
+        "Entra a Meta Business Suite > Planificador (o Contenido) > Crear reel y verifica arriba que estás en la marca correcta.",
+        "Sube el master y pega el caption de Instagram. Si también sale en Facebook, adapta el texto: más conversacional, con una pregunta.",
+        "Elige portada y ubicación. Las publicaciones en colaboración con creadores se hacen desde la app de Instagram (lección de colaboraciones), no desde aquí.",
+        "Pulsa Programar, elige fecha y hora de Perú (UTC-5) y revisa la zona horaria configurada.",
+        "En Intia confirma la Fecha prevista en “Programación y enlace publicado”, anota la hora en un comentario y mueve la ficha a PROGRAMADO.",
+        "Al final del día revisa el planificador: nada duplicado ni en la cuenta equivocada."
+       ],
+       "commonMistakes": [
+        "Zona horaria mal configurada: se publica a las 3 a. m.",
+        "Programar en la página de otra marca.",
+        "Usar el mismo caption de Instagram en Facebook sin adaptarlo.",
+        "No mover la ficha a PROGRAMADO ni anotar la hora."
+       ],
+       "checklist": [
+        "Marca correcta",
+        "Caption por red",
+        "Portada elegida",
+        "Fecha y hora de Perú",
+        "Fecha prevista confirmada y hora anotada",
+        "Ficha en PROGRAMADO"
+       ],
+       "practice": "Programa 2 reels de prueba en la cuenta de práctica para mañana a distintas horas y comparte una captura del planificador.",
+       "passCriteria": "Ambos salen a la hora exacta, en la cuenta correcta y con la portada elegida.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "COMMUNITY-P3-L3",
+       "title": "Publicar en TikTok",
+       "objective": "Subir y programar en TikTok con licencia de música, divulgación y descripción correctas.",
+       "procedure": [
+        "Desde TikTok Studio (web) sube el master, o en la app usa + > Subir. Verifica que la cuenta activa sea la de la marca.",
+        "Pega la descripción con la keyword y 3-5 hashtags, y agrega ubicación si la venta es local.",
+        "Sonido: la cuenta de empresa solo debe usar la Biblioteca de Música Comercial. Si el master trae música del editor, confirma su fuente en la ficha.",
+        "Divulgación de contenido: en la cuenta de la marca activa “Tu marca” cuando el video promociona productos u ofertas. “Contenido de marca” lo activa un creador que publica en su propia cuenta a cambio de pago o canje. Actívalo antes de publicar; si se olvidó, edita la publicación y agrégalo de inmediato.",
+        "Elige la portada con texto y define los permisos (comentarios activados; dúos y stitch según la estrategia).",
+        "Programa o publica y luego guarda el enlace en la ficha de Intia."
+       ],
+       "commonMistakes": [
+        "Usar un audio en tendencia que no está en la biblioteca comercial: el video se silencia o se elimina.",
+        "Olvidar la divulgación en videos con oferta.",
+        "Activar “Contenido de marca” en la cuenta propia de la marca.",
+        "Descripción sin keyword.",
+        "Publicar desde el celular personal con otra cuenta activa."
+       ],
+       "checklist": [
+        "Cuenta de la marca activa",
+        "Descripción con keyword y 3-5 hashtags",
+        "Sonido con licencia comercial",
+        "Divulgación “Tu marca” si promociona",
+        "Portada con texto",
+        "Enlace guardado en la ficha"
+       ],
+       "practice": "Publica en la cuenta de práctica un video de tazas con todos los ajustes y comparte capturas de cada pantalla de configuración.",
+       "passCriteria": "Configuración completa sin observaciones del jefe.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "COMMUNITY-P3-L4",
+       "title": "Subir un Short",
+       "objective": "Publicar un YouTube Short que se clasifique como Short, se encuentre en búsquedas y no reciba reclamos de derechos.",
+       "procedure": [
+        "Sube desde YouTube Studio o la app. El video debe ser vertical o cuadrado y durar hasta 3 min.",
+        "Título con la keyword (máx. 100 caracteres), descripción breve con CTA y 2-3 hashtags.",
+        "Audiencia: declara si es o no contenido para niños (es obligatorio).",
+        "Música: usa solo la biblioteca de audio de YouTube o música con licencia. Desde el 24/09/2026 los Shorts nuevos de 1 a 3 min con reclamo de Content ID ya no se bloquean automáticamente, pero el reclamo sigue: el titular puede quedarse con los ingresos o restringir el video.",
+        "Opcional: vincula el Short a un video largo relacionado del canal.",
+        "Programa en Visibilidad > Programar y guarda el enlace en Intia."
+       ],
+       "commonMistakes": [
+        "Subir un video horizontal (se trata como video largo).",
+        "Títulos genéricos (“Short 23”).",
+        "Creer que la música comercial ya no es problema porque el Short no se bloquea.",
+        "No declarar la audiencia."
+       ],
+       "checklist": [
+        "Vertical o cuadrado y ≤3 min",
+        "Título con keyword",
+        "2-3 hashtags",
+        "Audiencia declarada",
+        "Música con licencia",
+        "Enlace guardado"
+       ],
+       "practice": "Sube un Short de prueba con título optimizado para “polera personalizada con foto”.",
+       "passCriteria": "El Short aparece en la pestaña Shorts del canal sin avisos de derechos después de 24 h.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "COMMUNITY-P3-L5",
+       "title": "Cerrar la ficha",
+       "objective": "Dejar trazabilidad total: cada video publicado con enlace, hora real y checks en Intia.",
+       "procedure": [
+        "Minutos después de publicar, abre el video en modo incógnito o desde otra cuenta para confirmar que es público.",
+        "Copia el enlace público de la red principal en “Enlace de publicación” (sección “Programación y enlace publicado”) y pulsa Guardar publicación. Los enlaces de las otras redes van en un comentario.",
+        "Marca “Copy y hashtags escritos”, “Subido a la plataforma” y “Link guardado en la ficha”.",
+        "Mueve la ficha a PUBLICADO. La app exige los dos checks obligatorios y el enlace, y registra la fecha de publicación.",
+        "Comenta la hora real y cualquier incidencia (audio cambiado, portada, reclamo)."
+       ],
+       "commonMistakes": [
+        "Pegar el enlace de edición o de borrador en vez del público.",
+        "Marcar checks antes de publicar.",
+        "Olvidar los enlaces de las otras redes."
+       ],
+       "checklist": [
+        "Enlace probado en incógnito",
+        "Enlace guardado en la ficha",
+        "Checks de Publicación marcados",
+        "Ficha en PUBLICADO",
+        "Enlaces de todas las redes en un comentario",
+        "Comentario con hora e incidencias"
+       ],
+       "practice": "Cierra la ficha de un video publicado en 3 redes.",
+       "passCriteria": "Otro miembro del equipo abre todos los enlaces desde la ficha y funcionan.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-P4",
+     "slug": "community-p4",
+     "title": "Comunidad día a día",
+     "summary": "Responder comentarios, mensajes y reseñas con la voz de la marca, fijar el primer comentario, moderar con criterio y derivar cada intención de compra a ATC.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=tamRaFcRp-o",
+       "title": "Comentarios Negativos en Redes Sociales: 5 estrategias para gestionarlos",
+       "channel": "Emprendedor Eficaz",
+       "language": "es",
+       "why": "Cinco estrategias breves para responder comentarios negativos sin empeorar la situación. Sirve para moderar con criterio día a día."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=WwxrHNIbLLQ",
+       "title": "Dispara tus ventas por DM en Instagram - Vilma Núñez",
+       "channel": "Vilma OS",
+       "language": "es",
+       "why": "Vilma Núñez, referente en marketing en español, explica cómo convertir los mensajes directos en ventas. Se alinea con detectar la intención de compra y derivarla a ATC."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Bebe3TMyUew",
+       "title": "CÓMO FIJAR COMENTARIOS EN TIK TOK-ANCLAR COMENTARIOS EN TIK TOK",
+       "channel": "Quedense Ahi",
+       "language": "es",
+       "why": "Tutorial práctico para fijar un comentario en TikTok, el paso de 'fijar el primer comentario' con el CTA o la información de compra."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-P4-L1",
+       "title": "Responder comentarios",
+       "objective": "Responder rápido y con criterio según el tipo de comentario.",
+       "procedure": [
+        "Clasifica cada comentario: elogio, pregunta, intención de compra, queja, troll u ofensa, spam.",
+        "Elogio → agradece de forma personalizada, citando lo que dijo (“¡Qué bonito que la polera llegó a tiempo para el cumple de tu mamá!”).",
+        "Pregunta frecuente → respuesta pública corta (ayuda a otros lectores) e invitación al DM si necesita datos.",
+        "Intención de compra (“precio”, “cómo pido”, “¿envían a Juliaca?”) → respuesta pública breve (“¡Sí enviamos a Juliaca! Te escribimos por DM 🚚”), abre el DM y deriva a ATC.",
+        "Queja → reconoce en público con empatía (“Lamentamos lo ocurrido, [nombre]. Te escribimos por interno para solucionarlo hoy”) y lleva la conversación a privado. Nunca discutas.",
+        "Primera hora tras publicar: responde todo. Luego trabaja en bloques (13:00, 17:00, 21:00)."
+       ],
+       "commonMistakes": [
+        "Dar precios en público cuando varían por talla o diseño.",
+        "Pegar la misma respuesta a todos.",
+        "Borrar quejas legítimas.",
+        "Tardar más de 24 h (el 73% de los usuarios espera respuesta en menos de 24 h)."
+       ],
+       "checklist": [
+        "Comentario clasificado",
+        "Respuesta personalizada",
+        "Leads derivados a DM y ATC",
+        "Quejas llevadas a privado",
+        "Primera hora cubierta"
+       ],
+       "practice": "Responde 20 comentarios de un banco de práctica que mezcla tipos, para Con Amor y para un restaurante.",
+       "passCriteria": "18 de 20 bien clasificados y respondidos según la plantilla.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-P4-L2",
+       "title": "DMs y pase a ATC",
+       "objective": "Detectar la intención de compra y entregar el cliente a ATC con contexto, sin perderlo.",
+       "procedure": [
+        "Revisa la bandeja unificada de Meta Business Suite y los mensajes de TikTok al inicio de cada bloque.",
+        "Señales de compra: precio, stock, talla, envío, medios de pago (Yape, Plin, transferencia), “quiero”, “cómo pido”, reservas, citas.",
+        "Responde en ≤15 min en horario laboral: saludo + confirmación + pase (“¡Hola, [nombre]! Te paso con nuestro equipo de ventas para ayudarte con tu pedido 😊”).",
+        "Envía a ATC la ficha de pase: usuario, red, enlace del video de origen, producto, pregunta exacta, palabra clave usada y fecha en que lo necesita.",
+        "Etiqueta la conversación como “Derivado a ATC” y confirma que ATC respondió.",
+        "No cotices ni cierres ventas (salvo autorización del dueño) y nunca pidas datos personales por comentarios."
+       ],
+       "commonMistakes": [
+        "Dejar leads en visto.",
+        "Derivar sin contexto: ATC vuelve a preguntar todo y el cliente se enfría.",
+        "Pedir DNI o dirección en comentarios.",
+        "Prometer fechas de entrega sin confirmar."
+       ],
+       "checklist": [
+        "Respuesta en ≤15 min",
+        "Ficha de pase completa",
+        "Conversación etiquetada",
+        "ATC confirmó la atención",
+        "Ningún dato personal en público"
+       ],
+       "practice": "Simula 5 DMs (polera con foto, casaca, reserva en restaurante, cita con un estudio contable, reclamo de envío) y llena la ficha de pase de cada uno.",
+       "passCriteria": "ATC puede atender los 5 sin repreguntar datos.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-P4-L3",
+       "title": "Primer comentario fijado",
+       "objective": "Usar el comentario fijado para guiar la conversación y la venta desde el primer minuto.",
+       "procedure": [
+        "Prepara el comentario al escribir el copy: dato extra, pregunta o CTA (“📦 Envíos a todo el Perú. Escríbenos POLERA por DM”).",
+        "Publícalo desde la cuenta de la marca en los primeros 5 minutos.",
+        "Fíjalo (mantén presionado > Fijar) en TikTok e Instagram. En YouTube, menú del comentario > Fijar.",
+        "Alternativa: cuando aparezca, fija el mejor comentario de un cliente (prueba social).",
+        "Revisa que no queden fijados comentarios con ofertas vencidas."
+       ],
+       "commonMistakes": [
+        "Poner los hashtags en el primer comentario en vez del caption (pierden valor para la búsqueda).",
+        "Olvidar fijarlo.",
+        "Dejar fijadas ofertas vencidas."
+       ],
+       "checklist": [
+        "Texto preparado",
+        "Publicado en ≤5 min",
+        "Fijado",
+        "Oferta vigente"
+       ],
+       "practice": "Escribe y fija primeros comentarios para 3 videos en la cuenta de práctica.",
+       "passCriteria": "Los 3 están fijados y alineados con el CTA del video.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P4-L4",
+       "title": "Ocultar, borrar o bloquear",
+       "objective": "Moderar sin censurar críticas legítimas y sin dejar pasar abuso ni estafas.",
+       "procedure": [
+        "Crítica legítima (producto, demora, atención) → no se borra: se responde y se lleva a privado.",
+        "Spam y estafas (“gana dinero”, perfiles que suplantan a la marca pidiendo pagos) → ocultar o eliminar, reportar y bloquear la cuenta falsa. Avisa a la comunidad si la suplantación se repite.",
+        "Insultos, discriminación o datos personales expuestos → ocultar, reportar y bloquear si reincide.",
+        "Bromas o menciones de la competencia → ignora, salvo que coordinación apruebe responder con humor.",
+        "Antes de ocultar o borrar algo delicado, toma captura y guárdala en la carpeta de Drive de la marca (con enlace en un comentario de la ficha si es de un video).",
+        "Si ves 5 o más quejas del mismo tema en una hora, avisa a coordinación (posible crisis)."
+       ],
+       "commonMistakes": [
+        "Borrar quejas: agranda el problema.",
+        "Discutir con trolls.",
+        "No reportar perfiles que suplantan a la marca y estafan a clientes."
+       ],
+       "checklist": [
+        "Comentario clasificado",
+        "Captura guardada en Drive",
+        "Acción correcta (responder, ocultar, reportar, bloquear)",
+        "Suplantadores reportados",
+        "Alerta si hay patrón de quejas"
+       ],
+       "practice": "Decide la acción para 15 comentarios de un banco de casos (Con Amor, servicio, restaurante).",
+       "passCriteria": "14 de 15 decisiones correctas.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P4-L5",
+       "title": "Responder reseñas",
+       "objective": "Cuidar la reputación en Google Maps y Facebook respondiendo cada reseña con la voz de la marca, sin incentivar ni discutir.",
+       "procedure": [
+        "Pide al dueño acceso por rol al Perfil de Empresa de Google y a la página de Facebook (sin contraseñas). Para responder en Google, el perfil debe estar verificado.",
+        "Revisa las reseñas nuevas en cada bloque de comunidad: son clave en restaurantes y servicios.",
+        "Positiva: agradece con un detalle concreto (“¡Gracias, Ana! Nos alegra que el ceviche mixto te haya encantado”) e invita a volver.",
+        "Negativa: disculpa breve, sin excusas ni datos personales, y canal privado (“Lamentamos la demora, Luis. Escríbenos al [WhatsApp] para solucionarlo”). Deriva el caso a ATC con la ficha de pase.",
+        "Nunca ofrezcas descuentos o regalos a cambio de reseñas, ni pidas reseñas solo a clientes contentos, ni publiques reseñas falsas: va contra las políticas de Google y es publicidad engañosa.",
+        "Si una reseña es falsa, ofensiva o de la competencia, denúnciala desde el perfil y avisa a coordinación. Si alguien pide dinero para retirar una reseña negativa, repórtalo como extorsión."
+       ],
+       "commonMistakes": [
+        "Responder solo las reseñas buenas.",
+        "Discutir en público con el cliente.",
+        "Ofrecer un descuento a cambio de cambiar la reseña.",
+        "Copiar la misma respuesta en todas."
+       ],
+       "checklist": [
+        "Acceso por rol al perfil",
+        "Reseñas revisadas en cada bloque",
+        "Respuesta personalizada",
+        "Negativas llevadas a privado y a ATC",
+        "Sin incentivos por reseñas",
+        "Falsas denunciadas"
+       ],
+       "practice": "Responde 10 reseñas de práctica de una cevichería y de un estudio contable: 5 positivas, 4 negativas y 1 falsa.",
+       "passCriteria": "Coordinación aprueba 9 de 10 respuestas sin cambios de fondo, y la reseña falsa se denuncia en vez de discutirse.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-P5",
+     "slug": "community-p5",
+     "title": "Reglas y derechos",
+     "summary": "Lo mínimo legal y de plataformas para no perder alcance ni videos y no recibir multas: música, originalidad, publicidad, datos personales, derecho a la imagen y contenido con IA.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=x3l03ig-AGw",
+       "title": "Influencers y creadores de contenido en el Perú: Guía completa para una publicidad responsable 🚀",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Video oficial de Indecopi sobre su Guía de Publicidad para Influencers: cómo identificar la publicidad (#publicidad, colaboración pagada) para evitar multas en Perú."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=LV4aW7V1mHQ",
+       "title": "Bibliotecas de música OFICIALES de Youtube, Facebook y TikTok y sus licencias | Música GRATIS",
+       "channel": "Alerta Creadores",
+       "language": "es",
+       "why": "Explica las bibliotecas de música oficiales de YouTube, Meta y TikTok y qué licencia tiene cada una, para no perder videos ni alcance por derechos de autor."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=TyZvGiBYE74",
+       "title": "TODO SOBRE LA LEY DE PROTECCIÓN DE DATOS EN EL PERÚ",
+       "channel": "Tecnología & Negocios",
+       "language": "es",
+       "why": "Resumen de la Ley 29733 de protección de datos personales en Perú, aplicado a negocios: qué datos de clientes (DM, WhatsApp) se pueden pedir y guardar."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-P5-L1",
+       "title": "Música con licencia",
+       "objective": "Publicar solo con audios que la marca puede usar comercialmente.",
+       "procedure": [
+        "TikTok con cuenta de empresa: solo sonidos de la Biblioteca de Música Comercial (Creative Center > Commercial Music Library, o + > Sonidos comerciales en la app).",
+        "Instagram y Facebook: las cuentas de empresa tienen un catálogo limitado. Usa lo que aparece en la app o la Colección de sonidos de Meta; si un audio no aparece, no lo fuerces con una versión descargada.",
+        "YouTube Shorts: usa la biblioteca de audio de YouTube o música con licencia. La música externa puede recibir reclamos de Content ID.",
+        "Verifica que la fuente de la música esté anotada en la ficha; si falta, pídela al editor en un comentario.",
+        "Si un video es silenciado o recibe un reclamo, no lo vuelvas a subir igual: avisa a coordinación para reemplazar el audio."
+       ],
+       "commonMistakes": [
+        "Usar una canción porque “todos la usan”: la marca no tiene licencia.",
+        "Volver a subir el mismo video silenciado.",
+        "Música de fondo en el master sin fuente conocida."
+       ],
+       "checklist": [
+        "Fuente del audio registrada",
+        "Audio de biblioteca comercial o con licencia",
+        "Sin reclamos a las 24 h"
+       ],
+       "practice": "Busca 5 audios en tendencia en Perú y verifica cuáles están disponibles para una cuenta de empresa.",
+       "passCriteria": "Clasifica bien los 5.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P5-L2",
+       "title": "Contenido original",
+       "objective": "Evitar que las plataformas bajen el alcance por contenido no original o fuera de sus normas.",
+       "procedure": [
+        "Publica siempre el master limpio. Nunca descargues de TikTok para subir a Reels o Shorts.",
+        "No subas clips de terceros solo con reacción, texto o bordes encima: Facebook los desprioriza y TikTok los deja fuera de Para Ti.",
+        "Revisa las normas: nada de retos peligrosos, desnudez, afirmaciones falsas o engañosas, ni “like por like” o interacción falsa.",
+        "Si reutilizas UGC de clientes, hazlo con permiso y aportando algo (contexto o respuesta).",
+        "Si recibes una advertencia o restricción, captura el motivo y avisa a coordinación antes de apelar."
+       ],
+       "commonMistakes": [
+        "Reciclar videos de otras cuentas.",
+        "Marcas de agua de TikTok o CapCut.",
+        "Pedir “like si…” como táctica de alcance."
+       ],
+       "checklist": [
+        "Master limpio",
+        "Contenido propio o transformado",
+        "Sin afirmaciones falsas",
+        "Normas de la comunidad revisadas"
+       ],
+       "practice": "Revisa 5 videos proporcionados por el jefe y marca cuáles serían considerados no originales o no recomendables, con el motivo.",
+       "passCriteria": "5 de 5 correctos con justificación.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P5-L3",
+       "title": "Publicidad bien etiquetada",
+       "objective": "Cumplir la Guía de Publicidad para Influencers de Indecopi (2.ª ed., 2024) y usar la divulgación correcta de cada plataforma.",
+       "procedure": [
+        "En la cuenta de la marca, el contenido propio ya es publicidad evidente: no lleva etiqueta de colaboración pagada, pero precios, ofertas y resultados deben ser reales.",
+        "Cuando un creador o talento externo publica en su cuenta, o en coautoría con la marca, y recibió pago, producto, descuento o canje, hay conexión material: el contenido es publicidad y debe identificarse.",
+        "Identificación clara al inicio del caption o en pantalla: “Publicidad” o “Anuncio contratado” (#Publicidad / #AnuncioContratado), no escondida entre hashtags.",
+        "Instagram y Facebook: el creador activa la etiqueta de “Colaboración pagada” con la marca antes de publicar y la marca la aprueba. TikTok: el creador activa Divulgación de contenido > Contenido de marca.",
+        "Testimonios: solo reales y actuales. Si el video es actuado por talento (Testimonio, UGC o Cámara Escondida con actores), no lo presentes como “cliente real”.",
+        "Ante la duda, consulta con coordinación antes de publicar (las multas de Indecopi pueden llegar a 700 UIT)."
+       ],
+       "commonMistakes": [
+        "Etiqueta escondida al final entre hashtags.",
+        "Creer que un canje de poleras no es publicidad.",
+        "Presentar un testimonio actuado como experiencia real.",
+        "Activar “colaboración pagada” en los reels propios de la marca."
+       ],
+       "checklist": [
+        "¿Quién publica: la marca o un creador?",
+        "¿Hay conexión material?",
+        "Etiqueta clara y visible",
+        "Herramienta de la plataforma activada por el creador",
+        "Testimonio verificable"
+       ],
+       "practice": "Decide qué etiqueta lleva cada caso: canje de poleras con una influencer de Huancayo, foodie pagado en un restaurante, sketch con talento contratado publicado en la cuenta de Con Amor y testimonio espontáneo de un cliente.",
+       "passCriteria": "4 de 4 correctos con justificación.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P5-L4",
+       "title": "Datos del cliente seguros",
+       "objective": "Tratar los datos de los clientes según la Ley 29733 y su reglamento vigente desde marzo de 2025.",
+       "procedure": [
+        "Nunca pidas ni publiques DNI, dirección, teléfono ni comprobantes en comentarios: lleva la conversación a DM o a WhatsApp con ATC.",
+        "No agregues clientes a listas de difusión ni les envíes promociones por WhatsApp sin su consentimiento expreso.",
+        "Si un cliente publica sus datos en un comentario, ocúltalo y avísale por privado.",
+        "Antes de usar capturas de chats como prueba social, pide permiso y tapa nombre, número y foto.",
+        "Si alguien pide borrar sus datos, deriva la solicitud a ATC o al dueño."
+       ],
+       "commonMistakes": [
+        "Publicar capturas de WhatsApp con el número visible.",
+        "Pedir el número en comentarios.",
+        "Enviar promociones masivas a quien solo preguntó una vez."
+       ],
+       "checklist": [
+        "Datos solo por privado",
+        "Consentimiento antes de promociones",
+        "Capturas anonimizadas y con permiso",
+        "Solicitudes de datos derivadas"
+       ],
+       "practice": "Anonimiza 3 capturas de chats de clientes felices para usarlas en historias y registra el permiso de cada uno.",
+       "passCriteria": "No queda ningún dato identificable y el permiso está archivado.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P5-L5",
+       "title": "Permisos de imagen",
+       "objective": "Publicar solo videos en los que cada persona reconocible autorizó el uso de su imagen y su voz.",
+       "procedure": [
+        "Regla: en el Perú la imagen y la voz de una persona no se pueden aprovechar sin su autorización expresa (Código Civil, art. 15). Aplica a talentos, clientes, transeúntes y trabajadores.",
+        "Antes de programar, confirma en la ficha (comentario de producción o enlace a Drive) que existe la autorización firmada de cada persona reconocible.",
+        "Cámara Escondida: las personas reales grabadas sin saberlo firman después de la toma. Si alguien no firma, su rostro se difumina o la toma se descarta: comenta en la ficha y avisa a coordinación.",
+        "Menores de edad: autorización firmada del padre, la madre o el tutor, y nada que los ubique (uniforme o nombre del colegio, dirección).",
+        "Testimonios y UGC de clientes: permiso escrito con alcance (redes, anuncios y plazo), como en la lección de permisos de UGC.",
+        "Si falta una autorización, no publiques hasta que coordinación la resuelva."
+       ],
+       "commonMistakes": [
+        "Publicar una Cámara Escondida con transeúntes sin firma.",
+        "Creer que un “sí” verbal basta.",
+        "Mostrar a un niño con el uniforme de su colegio.",
+        "Usar en anuncios un permiso que era solo para redes orgánicas."
+       ],
+       "checklist": [
+        "Personas reconocibles identificadas",
+        "Autorización firmada de cada una",
+        "Menores con firma del padre, la madre o el tutor",
+        "Alcance del permiso claro",
+        "Enlace a la autorización en la ficha"
+       ],
+       "practice": "Revisa 4 videos de práctica (Cámara Escondida en un mercado de Huancayo, testimonio de una clienta, sketch con talento del equipo y video del Día del Niño) y decide cuáles pueden publicarse y qué falta en cada uno.",
+       "passCriteria": "4 de 4 decisiones correctas, con la autorización existente o el faltante identificado.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-P5-L6",
+       "title": "Contenido hecho con IA",
+       "objective": "Etiquetar bien los videos con partes realistas creadas o alteradas con IA, sin etiquetar de más.",
+       "procedure": [
+        "Pregunta al editor en la ficha si el video usa IA realista: voz clonada de otra persona, persona que no existe, escenario o hecho real alterado.",
+        "No requiere etiqueta: guion escrito con IA (como los del generador de Intia), subtítulos, filtros de color o belleza, limpieza de ruido o mejora de imagen. YouTube tampoco la pide si alguien clona su propia voz para su locución.",
+        "Sí requiere etiqueta si parece real. YouTube Studio: “Contenido alterado o sintético” = Sí. TikTok: activa la etiqueta de contenido generado por IA al publicar. Instagram y Facebook: usa la opción de etiqueta de IA al publicar (Meta muestra “Información de IA”).",
+        "Nunca uses IA para fabricar testimonios, clientes o resultados del producto: es publicidad engañosa aunque lleve la etiqueta.",
+        "Anota en un comentario de la ficha qué etiqueta aplicaste en cada red."
+       ],
+       "commonMistakes": [
+        "Etiquetar como IA un video grabado solo porque el guion salió del generador.",
+        "Publicar una voz de famoso imitada con IA.",
+        "Mostrar un “antes y después” generado con IA como si fuera real."
+       ],
+       "checklist": [
+        "Uso de IA consultado al editor",
+        "Etiqueta activada si es realista",
+        "Sin testimonios ni resultados fabricados",
+        "Etiqueta anotada en la ficha"
+       ],
+       "practice": "Decide qué hacer en 5 casos: guion hecho con el generador de Intia, subtítulos automáticos, fondo realista de Machu Picchu generado con IA, voz de un famoso imitada con IA y un “cliente” creado con IA.",
+       "passCriteria": "5 de 5 correctos; la voz del famoso y el cliente creado con IA se rechazan en vez de etiquetarse.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "level": "INTERMEDIO",
+   "goal": "Planificar la semana en varias redes con coordinación, leer las métricas de cada video para mejorar hooks y cierres, convertir tendencias en propuestas de idea y organizar la comunidad (bandeja, filtros, palabras clave, videos de respuesta, vivos e historias) para que genere conversaciones de venta medibles.",
+   "modules": [
+    {
+     "id": "COMMUNITY-I1",
+     "slug": "community-i1",
+     "title": "Calendario editorial",
+     "summary": "Planifica con coordinación la semana por marca y plataforma, con horarios propios, fechas comerciales peruanas, mezcla de formatos y adaptación a cada red.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=4WvgfAt2-wI",
+       "title": "Cómo crear un CALENDARIO DE CONTENIDO efectivo para redes sociales (+ PLANTILLA GRATUITA)",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Paso a paso reciente para armar un calendario de contenido por plataforma, con plantilla gratuita. Es la base del calendario editorial semanal por marca."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=tP8rej15i80",
+       "title": "PILARES DE CONTENIDO para tu marca (Paso a paso)",
+       "channel": "Victoria Poggioli",
+       "language": "es",
+       "why": "Enseña a definir pilares de contenido y equilibrar la mezcla de formatos (venta, valor, comunidad) dentro de la semana."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=cfAOnS1-y4I",
+       "title": "📅 Crea un CALENDARIO de MARKETING y atrae clientes TODO el AÑO",
+       "channel": "Felipe Vergara",
+       "language": "es",
+       "why": "Cómo planificar campañas alrededor de fechas comerciales a lo largo del año. Se adapta a las fechas peruanas (Día de la Madre, Fiestas Patrias, Navidad)."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-I1-L1",
+       "title": "Parrilla semanal",
+       "objective": "Tener lista cada viernes, junto con coordinación, la parrilla de la semana siguiente.",
+       "procedure": [
+        "Viernes, en la reunión con coordinación: revisa los videos aprobados que ya ves en Intia y pide a coordinación el estado de los que vienen en camino (tu perfil no ve ideas ni videos en proceso).",
+        "Llena la plantilla en la hoja: día | marca | ficha del video | formato | redes | hora | keyword | CTA y tipo de cierre | objetivo (alcance, confianza, venta).",
+        "Frecuencia base sugerida: 3-5 videos por semana y marca en TikTok y Reels, reutilizando el mismo master en Shorts y Facebook Reels.",
+        "Deja 1 espacio flexible por semana para una tendencia.",
+        "Si falta material, avísalo el viernes, no el día de publicar.",
+        "Coordinación carga la Fecha prevista en las fichas en planificación; tú la confirmas o ajustas cuando el video llega aprobado."
+       ],
+       "commonMistakes": [
+        "Planificar el mismo día.",
+        "Tres videos de venta seguidos.",
+        "No dejar espacio para tendencias.",
+        "Armar la parrilla sin preguntar por los videos que aún no ves."
+       ],
+       "checklist": [
+        "Parrilla completa",
+        "Fechas previstas cargadas por coordinación",
+        "Huecos reportados el viernes",
+        "Espacio flexible para tendencia",
+        "Aprobada por coordinación"
+       ],
+       "practice": "Arma con coordinación la parrilla de una semana para Con Amor y un restaurante.",
+       "passCriteria": "Parrilla sin choques, con fechas previstas cargadas y aprobada al primer intento.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-I1-L2",
+       "title": "Horarios que funcionan",
+       "objective": "Encontrar los horarios de tu propia audiencia en lugar de copiar estudios globales.",
+       "procedure": [
+        "Punto de partida (hora de Perú): TikTok 18:00-21:00, Instagram 19:00-21:00, Facebook 12:00-14:00. En un restaurante, publica antes de las comidas (≈11:00 y ≈17:30).",
+        "Revisa cuándo están activos tus seguidores: Instagram > Estadísticas > Seguidores; TikTok Studio > Estadísticas > Seguidores.",
+        "Prueba 2 franjas durante 2 semanas con formatos similares, cambiando solo la hora.",
+        "Compara las vistas a 24 h y la retención, no solo los likes.",
+        "Fija la franja ganadora de cada marca y revísala cada mes.",
+        "Caso Con Amor: público de sierra que mira de noche después del trabajo. En la semana del Día de la Madre refuerza domingo y lunes por la noche."
+       ],
+       "commonMistakes": [
+        "Copiar el “mejor horario” de un blog.",
+        "Cambiar hora y formato a la vez.",
+        "Medir a las 2 horas."
+       ],
+       "checklist": [
+        "Actividad de seguidores revisada",
+        "2 franjas en prueba",
+        "Resultados a 24 h",
+        "Franja ganadora fijada por marca"
+       ],
+       "practice": "Diseña y ejecuta una prueba de horarios de 2 semanas para una marca.",
+       "passCriteria": "Entrega una tabla con resultados y una recomendación argumentada con datos.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-I1-L3",
+       "title": "Mezcla de formatos",
+       "objective": "Balancear entretenimiento, valor y venta para crecer sin cansar a la audiencia.",
+       "procedure": [
+        "Regla base 80/20: ≈80% entretener, enseñar o crear comunidad; ≈20% venta directa.",
+        "Asigna los formatos ganadores según su objetivo. Alcance: Sketch, Cámara Escondida, Camaleón. Confianza: Cómo se usa, Antes y Después. Prueba social: Testimonio, UGC. Venta: PAS con cierre Hormozi. Comunidad: Vlog y detrás de cámaras.",
+        "No publiques dos cierres de venta seguidos en la misma cuenta.",
+        "Anota el objetivo de cada video en la parrilla.",
+        "Ejemplos. Con Amor: lunes Sketch (“cuando le regalas a tu suegra…”), miércoles Antes y Después de la taza, viernes PAS con cierre Hormozi. Restaurante: Cámara Escondida probando el plato. Servicio: Cómo se usa (“cómo sacar tu RUC”).",
+        "Cada mes, revisa qué mezcla trajo más conversaciones de venta."
+       ],
+       "commonMistakes": [
+        "Publicar solo ofertas.",
+        "Humor sin conexión con el producto.",
+        "No anotar el objetivo de cada video."
+       ],
+       "checklist": [
+        "Objetivo por video",
+        "Proporción 80/20",
+        "Sin ventas seguidas",
+        "Revisión mensual con datos"
+       ],
+       "practice": "Clasifica los 12 videos del último mes por objetivo y propone la mezcla del mes siguiente.",
+       "passCriteria": "La mezcla propuesta es coherente y está justificada con los datos del mes.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-I1-L4",
+       "title": "Fechas comerciales Perú",
+       "objective": "Anticipar las campañas del año con 3-4 semanas de margen.",
+       "procedure": [
+        "Carga en el calendario: Carnavales y Virgen de la Candelaria (febrero, fuertes en la sierra y en Puno), San Valentín (14 feb), regreso a clases (marzo), Día del Niño peruano (2.º domingo de abril), Día de la Madre (2.º domingo de mayo), Día del Padre (3.er domingo de junio), Inti Raymi (24 jun, clave en Cusco y la sierra), Día del Maestro (6 jul), Fiestas Patrias (28-29 jul), Santa Rosa de Lima (30 ago), Día de la Canción Criolla y Halloween (31 oct), Navidad y fin de año, y las fechas Cyber Wow que anuncia IAB Perú.",
+        "Para cada fecha define con el dueño: producto (poleras familiares, tazas para papá, casacas de promoción), fecha límite de pedidos según la logística a provincias y cantidad de videos.",
+        "Cronograma hacia atrás: ideas a coordinación 4 semanas antes, grabación 3 semanas antes, publicación desde 2-3 semanas antes.",
+        "Coordina con ATC la palabra clave y las respuestas de la campaña.",
+        "Después de la fecha, registra los resultados en el reporte."
+       ],
+       "commonMistakes": [
+        "Empezar la semana previa.",
+        "No publicar la fecha límite de pedidos (luego llegan reclamos por entregas tardías).",
+        "Usar solo fechas limeñas y olvidar las de la sierra."
+       ],
+       "checklist": [
+        "Fechas cargadas",
+        "Producto y límite de pedidos confirmados",
+        "Ideas enviadas a coordinación a tiempo",
+        "ATC informado",
+        "Resultados registrados"
+       ],
+       "practice": "Arma el plan del Día de la Madre para Con Amor y el de Fiestas Patrias para un restaurante.",
+       "passCriteria": "Planes con cronograma hacia atrás aprobados por el dueño.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-I1-L5",
+       "title": "Adaptar por red",
+       "objective": "Publicar el mismo video en 4 redes sin perder alcance ni originalidad.",
+       "procedure": [
+        "Usa siempre el master limpio en cada red, nunca la descarga de otra app.",
+        "Adapta el copy. TikTok: keyword + texto corto. Instagram: hook + contexto + ≤5 hashtags. Facebook: conversacional con pregunta. YouTube: título con keyword.",
+        "Escalona: primero la red principal de la marca y las demás en las siguientes 2-24 h, según tus horarios ganadores, para poder atender los comentarios.",
+        "Si una red necesita otro audio, pide a coordinación una versión específica del editor sin cambiar el contenido.",
+        "Registra en la ficha el orden de publicación y los enlaces."
+       ],
+       "commonMistakes": [
+        "Mismo caption en todas las redes.",
+        "Marcas de agua.",
+        "Publicar en las 4 al mismo minuto sin poder atender los comentarios."
+       ],
+       "checklist": [
+        "Master limpio",
+        "Copy por red",
+        "Publicación escalonada",
+        "Enlaces de las 4 redes en la ficha"
+       ],
+       "practice": "Adapta un video de casacas a las 4 plataformas.",
+       "passCriteria": "4 publicaciones sin marca de agua, con copy distinto y enlaces guardados.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-I2",
+     "slug": "community-i2",
+     "title": "Métricas por video",
+     "summary": "Lee cada video a las 24 horas y a los 7 días (gancho, retención, compartidos, guardados y fuentes de tráfico) y devuelve aprendizajes al equipo.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=yF4M4ITrlY8",
+       "title": "TikTok Insights: Aprende a analizar tus métricas de TikTok como un PRO",
+       "channel": "Metricool en español",
+       "language": "es",
+       "why": "Recorre las estadísticas de TikTok por video: retención, tiempo medio de visualización, compartidos, guardados y fuentes de tráfico (Para ti, búsqueda, perfil)."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=p42EnwWNntg",
+       "title": "Cómo entender las estadísticas de INSTAGRAM (Tutorial 2026)",
+       "channel": "Victoria Poggioli",
+       "language": "es",
+       "why": "Tutorial de 2026 sobre las estadísticas actuales de Instagram: alcance de seguidores y no seguidores, envíos y retención de Reels."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=dtUcJnpskPU",
+       "title": "Las Métricas MÁS IMPORTANTES de tus Shorts en YouTube 📈 Unonet 🎯 Tips",
+       "channel": "Unonet",
+       "language": "es",
+       "why": "Video corto en español sobre las métricas clave de YouTube Shorts (visto frente a deslizado, retención). Completa la lectura a las 24 horas y a los 7 días en las tres plataformas."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-I2-L1",
+       "title": "Leer la retención",
+       "objective": "Encontrar el segundo exacto en que se va la gente y darle feedback accionable al guionista y al editor.",
+       "procedure": [
+        "Abre las estadísticas del video. TikTok Studio > Estadísticas > video. Instagram > Ver estadísticas del reel (gráfico de retención y, si tu cuenta ya la muestra, la tasa de omisión de los primeros segundos). YouTube Studio > Contenido > Short > Retención de la audiencia.",
+        "Anota el tiempo medio de reproducción, el % que lo vio completo y la forma de la curva.",
+        "Interpreta las caídas. En 0-3 s: falla el hook. A la mitad: hay relleno. Antes del CTA: el cierre es largo.",
+        "Compara con el promedio de la marca (últimos 10 videos del mismo formato).",
+        "Deja un comentario en la ficha: “Caída en el s 4 al mostrar el logo. Sugerencia: abrir con el producto en plano detalle”.",
+        "Caso: taza mágica que abría con el logo, con fuga fuerte en el s 2. La versión 2 abre con la foto apareciendo al servir el café caliente y la retención sube."
+       ],
+       "commonMistakes": [
+        "Mirar solo las vistas.",
+        "Comparar un sketch con un tutorial.",
+        "Culpar al algoritmo sin mirar la curva."
+       ],
+       "checklist": [
+        "Tiempo medio",
+        "% visto completo",
+        "Punto de caída identificado",
+        "Comparación con el promedio del formato",
+        "Feedback en la ficha"
+       ],
+       "practice": "Analiza 3 videos de la semana y escribe 1 feedback accionable por video.",
+       "passCriteria": "El guionista o el editor aplican al menos 1 feedback en el siguiente video.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-I2-L2",
+       "title": "Vistos vs. deslizados",
+       "objective": "Diagnosticar en YouTube Shorts si el problema está en el inicio o en el cuerpo del video.",
+       "procedure": [
+        "YouTube Studio > Estadísticas > Contenido > Shorts: busca la métrica “Visto vs. deslizado”.",
+        "Un % bajo de vistos significa que falla el primer frame o la primera frase. Revisa la claridad del tema, el texto inicial y el contraste.",
+        "Muchos vistos con una caída temprana de retención: el hook prometió algo que el cuerpo no cumple. Adelanta la prueba o reescribe la premisa.",
+        "Compara solo con tus Shorts del mismo formato y duración (YouTube no publica un benchmark universal).",
+        "Lleva la lección a TikTok y Reels mirando la retención a los 2-3 s."
+       ],
+       "commonMistakes": [
+        "Compararte con Shorts de otros nichos.",
+        "Cambiar el cuerpo del video cuando el problema era el primer frame."
+       ],
+       "checklist": [
+        "Métrica revisada",
+        "Diagnóstico: inicio o cuerpo",
+        "Comparación con tus propios Shorts",
+        "Recomendación escrita en la ficha"
+       ],
+       "practice": "Diagnostica 5 Shorts del canal y clasifícalos según dónde está el problema.",
+       "passCriteria": "Diagnóstico coherente, validado por el analista o el jefe.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-I2-L3",
+       "title": "Compartidos y guardados",
+       "objective": "Medir si el video genera recomendación (compartidos) y utilidad (guardados), no solo likes.",
+       "procedure": [
+        "Calcula por video: compartidos ÷ alcance, guardados ÷ alcance y likes ÷ alcance. Según Instagram, las señales principales son el tiempo de visualización, los likes por alcance y los envíos por alcance (los envíos pesan más para llegar a no seguidores).",
+        "En TikTok, el tiempo de visualización, la finalización, las repeticiones y los compartidos pesan más que los likes.",
+        "Identifica qué formatos disparan compartidos (Sketch, Cámara Escondida) y cuáles guardados (Cómo se usa, listas de regalos).",
+        "Regístralo en la hoja de 7 días.",
+        "Recomienda al guionista más de lo que se comparte cuando el objetivo es alcance, y más de lo que se guarda cuando el objetivo es confianza.",
+        "Caso: el Sketch “mamá abre la polera con la foto familiar” recibe muchos envíos por DM (hermanos que se etiquetan). El tutorial “cómo lavar tu polera afranelada” recibe guardados."
+       ],
+       "commonMistakes": [
+        "Celebrar muchos likes con cero compartidos.",
+        "No dividir por el alcance.",
+        "Comparar cuentas de tamaños muy distintos."
+       ],
+       "checklist": [
+        "Ratios calculados",
+        "Formato identificado",
+        "Registro a 7 días",
+        "Recomendación al guionista"
+       ],
+       "practice": "Calcula los ratios de 10 videos y arma un ranking.",
+       "passCriteria": "Ranking correcto y 2 conclusiones accionables.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-I2-L4",
+       "title": "Fuentes de tráfico",
+       "objective": "Saber de dónde vienen las vistas para decidir qué optimizar.",
+       "procedure": [
+        "Revisa las fuentes. TikTok: Para Ti, perfil, seguidores, búsqueda, sonido. Instagram: seguidores vs. no seguidores. YouTube: feed de Shorts, búsqueda, canal.",
+        "Mucho “Para Ti” o no seguidores: buen alcance. Optimiza el CTA y el perfil para convertir a esos visitantes.",
+        "Mucha búsqueda: la keyword funciona. Replícala en los próximos videos.",
+        "Casi todo de seguidores: el video no sale a públicos nuevos. Revisa el hook y la originalidad.",
+        "Anota el dato en la hoja de 7 días y en un comentario de la ficha."
+       ],
+       "commonMistakes": [
+        "Ignorar el tráfico de búsqueda.",
+        "Confundir el alcance de seguidores con viralidad."
+       ],
+       "checklist": [
+        "Fuentes revisadas",
+        "Diagnóstico escrito",
+        "Acción definida"
+       ],
+       "practice": "Compara las fuentes de tráfico de un video de venta y uno de entretenimiento de la misma marca.",
+       "passCriteria": "Explica las diferencias y propone 1 acción por video.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-I2-L5",
+       "title": "Ficha 24 h y 7 días",
+       "objective": "Registrar los datos siempre igual para poder comparar videos, formatos y marcas.",
+       "procedure": [
+        "A las 24 h: vistas, % visto completo o tiempo medio, visto vs. deslizado (Shorts), comentarios, compartidos, guardados y DMs recibidos.",
+        "A los 7 días: lo mismo, más seguidores ganados y conversaciones de venta atribuidas (dato de ATC).",
+        "Registra todo en la hoja de métricas de la marca con el título de la ficha de Intia. El analista la usa para cargar los resultados en Intia (tu perfil no tiene la sección Métricas).",
+        "Etiqueta cada video: formato, tipo de hook, cierre (Hormozi o comunidad), horario, red y si tuvo pauta.",
+        "Marca con color si quedó arriba o abajo del promedio de la marca."
+       ],
+       "commonMistakes": [
+        "Medir a distintas horas.",
+        "No etiquetar el formato.",
+        "Olvidar los datos de ATC.",
+        "Mezclar resultados con y sin pauta."
+       ],
+       "checklist": [
+        "Registro a 24 h",
+        "Registro a 7 días",
+        "Etiquetas completas",
+        "Datos de ATC",
+        "Color frente al promedio"
+       ],
+       "practice": "Completa la hoja de 5 videos publicados.",
+       "passCriteria": "5 filas sin celdas vacías y con las etiquetas correctas, validadas por el analista.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-I3",
+     "slug": "community-i3",
+     "title": "Tendencias y audios",
+     "summary": "Detecta tendencias en Perú a tiempo, filtra las que encajan con la marca, conviértelas en propuestas de idea para coordinación y crea audios propios.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=hVWWbeE_ESg",
+       "title": "TikTok Creative Center - La Herramienta de TikTok que Cambiará tu Estrategia de Contenido",
+       "channel": "Ligia Alvear",
+       "language": "es",
+       "why": "Tutorial de TikTok Creative Center para detectar hashtags, canciones y creadores en tendencia filtrando por país (Perú) y por industria."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=I_5nVsdert8",
+       "title": "Cómo subirte a una tendencia (sin parecer oportunista) 🫣 |#ConvierteMás",
+       "channel": "Convierte Más | La Casa del Marketing en Español",
+       "language": "es",
+       "why": "Criterios para decidir si una tendencia encaja con la marca y cómo adaptarla sin parecer oportunista. Es el filtro antes de convertirla en idea en Intia."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=r64u8nwGhyA",
+       "title": "🎵🎶 Cómo utilizar el SONIDO ORIGINAL EN REELS de Instagram",
+       "channel": "Comunicazen",
+       "language": "es",
+       "why": "Explica cómo usar y aprovechar el audio original en Reels, clave para crear audios propios de la marca que otros puedan reutilizar."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-I3-L1",
+       "title": "Detectar tendencias",
+       "objective": "Encontrar tendencias que están subiendo (no las que ya pasaron) en Perú.",
+       "procedure": [
+        "TikTok Creative Center > Tendencias: filtra la región Perú y los últimos 7 días, y revisa hashtags, canciones, creadores y videos.",
+        "Prioriza lo que entra por primera vez al top o tiene una curva muy empinada: crece rápido, pero la ventana es corta.",
+        "Instagram: en Reels, busca los audios marcados como tendencia y guárdalos en una carpeta “Tendencias”.",
+        "Dedica 15-20 min diarios a revisar el feed con la cuenta de la marca y guarda 3 referencias.",
+        "Anota cada una: tendencia, enlace, por qué funciona y ventana estimada."
+       ],
+       "commonMistakes": [
+        "Llegar tarde, con la tendencia ya bajando.",
+        "Tomar tendencias de otro país sin adaptarlas.",
+        "Revisar el feed sin registrar nada."
+       ],
+       "checklist": [
+        "Filtro Perú aplicado",
+        "Curva en subida",
+        "3 referencias guardadas",
+        "Registro completo"
+       ],
+       "practice": "Presenta 5 tendencias en subida el lunes a coordinación.",
+       "passCriteria": "Al menos 3 siguen vigentes el día en que se publican.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "COMMUNITY-I3-L2",
+       "title": "Filtro de tendencia",
+       "objective": "Decidir en 5 minutos si una tendencia sirve a la marca.",
+       "procedure": [
+        "Pregunta 1: ¿encaja con la marca y su público (sierra, Lima, tipo de cliente)?",
+        "Pregunta 2: ¿se puede grabar y publicar en 48 h o menos?",
+        "Pregunta 3: ¿el audio está disponible para una cuenta de empresa?",
+        "Pregunta 4: ¿está libre de riesgo (burla a grupos, tragedias, política, temas sensibles)?",
+        "Pregunta 5: ¿se conecta con un producto o un formato ganador?",
+        "5 sí: propuesta urgente. 3-4 sí: evaluar con coordinación. Menos de 3: descartar."
+       ],
+       "commonMistakes": [
+        "Subirse a memes sobre tragedias.",
+        "Forzar el producto donde no encaja.",
+        "Usar un audio sin licencia comercial."
+       ],
+       "checklist": [
+        "Encaje con la marca",
+        "Tiempo de producción",
+        "Licencia del audio",
+        "Riesgo evaluado",
+        "Conexión con producto o formato"
+       ],
+       "practice": "Evalúa 10 tendencias con el filtro.",
+       "passCriteria": "Coordinación coincide contigo en al menos 8 de 10 decisiones.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-I3-L3",
+       "title": "De tendencia a idea",
+       "objective": "Convertir una tendencia aprobada en una propuesta que coordinación registre como IDEA y el guionista pueda trabajar de inmediato.",
+       "procedure": [
+        "Llena la plantilla de idea: tendencia (enlace) | marca | formato (Sketch, Camaleón, etc.) | hook adaptado | producto | cierre (Hormozi o comunidad) | audio y licencia | fecha límite de publicación | prioridad.",
+        "Adjunta 1-2 referencias.",
+        "Envíala a coordinación por el canal acordado (tarea de tendencias o mensaje). Tu perfil no crea videos en Intia: coordinación la registra como IDEA y la asigna al guionista.",
+        "Si es urgente (ventana de 48 h), avisa además por mensaje directo a coordinación.",
+        "Ejemplo: tendencia “POV” → Con Amor: “POV: tu mamá ve la taza con la foto de su perrito”. Restaurante: “POV: pediste ceviche para uno y llegó para tres”.",
+        "El viernes revisa qué propuestas pasaron a IDEA y por qué se descartaron las otras."
+       ],
+       "commonMistakes": [
+        "Mandar solo el enlace, sin plantilla.",
+        "Propuesta sin fecha límite.",
+        "Propuesta sin producto."
+       ],
+       "checklist": [
+        "Plantilla completa",
+        "Fecha límite",
+        "Referencias adjuntas",
+        "Enviada a coordinación",
+        "Resultado revisado el viernes"
+       ],
+       "practice": "Propón 3 ideas a partir de las tendencias de la semana.",
+       "passCriteria": "Al menos 1 llega a guion aprobado.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-I3-L4",
+       "title": "Audio propio de marca",
+       "objective": "Crear y reutilizar audios originales que identifiquen a la marca y puedan volverse tendencia.",
+       "procedure": [
+        "Identifica frases o jingles que se repiten en videos exitosos (ej. “¡Con Amor se nota!”).",
+        "Pide a coordinación una versión limpia del audio hecha por el editor, sin música con derechos debajo.",
+        "Publícala como sonido original con un nombre claro, si la plataforma lo permite.",
+        "Reutilízala en series e invita a clientes y creadores a usarla (UGC).",
+        "Mide cuántos videos usan el audio y cuáles rinden mejor."
+       ],
+       "commonMistakes": [
+        "Audio original con música comercial de fondo.",
+        "Audio con ruido o volumen bajo.",
+        "Cambiar la frase cada semana."
+       ],
+       "checklist": [
+        "Frase o jingle definido",
+        "Audio limpio",
+        "Nombre claro",
+        "Usado en una serie",
+        "Uso medido"
+       ],
+       "practice": "Propón y publica un audio de marca para una serie de 3 videos.",
+       "passCriteria": "El audio se usa en 3 videos con registro de uso y resultados.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-I4",
+     "slug": "community-i4",
+     "title": "Comunidad que convierte",
+     "summary": "Ordena la bandeja, automatiza lo repetitivo, filtra el abuso y usa palabras clave, videos de respuesta y vivos para llevar conversaciones a ATC.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=2ALQLtgNEz8",
+       "title": "Automatiza RESPUESTAS en Meta e Instagram GRATIS (Sin apps extra)",
+       "channel": "Aprendamos Marketing",
+       "language": "es",
+       "why": "Configura respuestas automáticas, preguntas frecuentes y respuestas por palabra clave con las herramientas nativas de Meta, sin apps pagas. Automatiza lo repetitivo antes de pasar la conversación a ATC."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=ryRSyQcf_T4",
+       "title": "🤫❌ Cómo OCULTAR PALABRAS, FRASES o COMENTARIOS OFENSIVOS en INSTAGRAM FÁCIL y RÁPIDO",
+       "channel": "El Poder del AnDrOiDe VeRdE",
+       "language": "es",
+       "why": "Paso a paso de 'Palabras ocultas' en Instagram para filtrar automáticamente insultos, spam y abuso en comentarios y mensajes."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=2ezlPUxP8dA",
+       "title": "Cómo Responder a Un Comentario de TikTok con Video 📹",
+       "channel": "Respondia",
+       "language": "es",
+       "why": "Tutorial muy visto (160 mil vistas) para responder comentarios con un video en TikTok, formato que convierte preguntas frecuentes en contenido y lleva a DM."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-I4-L1",
+       "title": "Respuestas guardadas",
+       "objective": "Responder rápido las preguntas frecuentes sin sonar a robot.",
+       "procedure": [
+        "Con ATC, lista las 10 preguntas más repetidas: precio, envío a provincias, tiempos, pagos con Yape o Plin, tallas, horarios, delivery, reservas, citas.",
+        "Redacta respuestas base con espacios para personalizar ([nombre], [producto], [ciudad]).",
+        "Cárgalas en Meta Business Suite > Bandeja > Respuestas guardadas y Preguntas frecuentes. Configura mensajes de bienvenida y de ausencia con horarios reales.",
+        "En TikTok, usa los mensajes automáticos o las respuestas rápidas si tu cuenta de empresa los tiene.",
+        "Revisa precios, plazos y stock con ATC cada mes."
+       ],
+       "commonMistakes": [
+        "Respuestas con precios desactualizados.",
+        "Mensaje de ausencia que promete “respondemos en 5 minutos” a las 11 p. m.",
+        "Enviar la plantilla sin personalizar."
+       ],
+       "checklist": [
+        "10 preguntas frecuentes definidas",
+        "Respuestas cargadas",
+        "Mensajes de bienvenida y ausencia",
+        "Revisión mensual con ATC"
+       ],
+       "practice": "Configura el set de respuestas de una marca en la cuenta de práctica.",
+       "passCriteria": "ATC valida el set y no hay datos desactualizados.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-I4-L2",
+       "title": "Filtros de comentarios",
+       "objective": "Bloquear spam y abuso automáticamente sin ocultar a los compradores.",
+       "procedure": [
+        "Instagram: Configuración > Cómo pueden interactuar contigo > Palabras ocultas. Activa ocultar comentarios ofensivos y agrega una lista personalizada.",
+        "Lista base: insultos comunes, palabras de estafa (“gana dinero”, “inversión”, “premio, escribe a…”) y nombres de cuentas que suplantan a la marca.",
+        "Incluye variantes (sin tildes, con números, con espacios): el filtro solo detecta coincidencias exactas.",
+        "TikTok: Configuración y privacidad > Comentarios > filtrar spam y palabras clave.",
+        "Facebook: moderación de la página (bloqueo de palabras) desde Meta Business Suite.",
+        "Cada viernes revisa los comentarios ocultos y restaura las preguntas reales."
+       ],
+       "commonMistakes": [
+        "Filtrar “precio” o “WhatsApp” y ocultar a los compradores.",
+        "No revisar nunca los ocultos.",
+        "Lista sin variantes."
+       ],
+       "checklist": [
+        "Filtros activos en las 3 redes",
+        "Lista con variantes",
+        "Revisión semanal de ocultos"
+       ],
+       "practice": "Arma la lista de una marca y pruébala con 10 comentarios de prueba.",
+       "passCriteria": "9 de 10 comentarios se comportan como se esperaba.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-I4-L3",
+       "title": "Palabra clave al DM",
+       "objective": "Convertir comentarios en conversaciones privadas medibles y atribuibles a cada video.",
+       "procedure": [
+        "Define una palabra por campaña o video: “MAMÁ”, “TAZA”, “RESERVA”, “RUC”, y entrégala a coordinación antes del guion para que vaya en el video.",
+        "Úsala en el CTA del copy: “Comenta TAZA y te mandamos modelos y precios por DM”.",
+        "Responde cada comentario con esa palabra y envía el DM con la información y el pase a ATC, de forma manual o con una automatización oficial de Meta o de un proveedor aprobado por coordinación.",
+        "Mide el embudo: comentarios con palabra → DMs enviados → conversaciones con ATC → pedidos (dato de ATC).",
+        "Cambia la palabra en cada campaña para poder atribuir resultados.",
+        "Ejemplo ilustrativo del Día de la Madre en Con Amor: 120 “MAMÁ” → 95 DMs → 40 conversaciones con ATC → 18 pedidos."
+       ],
+       "commonMistakes": [
+        "No responder a todos: se pierde la confianza.",
+        "Automatizaciones no oficiales que mandan mensajes repetidos, como spam.",
+        "Usar siempre la misma palabra, lo que impide atribuir."
+       ],
+       "checklist": [
+        "Palabra definida y entregada a coordinación",
+        "ATC informado",
+        "100% de comentarios respondidos",
+        "Embudo medido"
+       ],
+       "practice": "Diseña la mecánica para un restaurante con la palabra “RESERVA” y ejecútala en un video.",
+       "passCriteria": "Embudo medido de punta a punta con datos de ATC.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-I4-L4",
+       "title": "Video de respuesta",
+       "objective": "Responder un comentario frecuente con un video corto que genera contenido nuevo y confianza.",
+       "procedure": [
+        "Elige un comentario con una pregunta útil y repetida (“¿Hacen envíos a Cusco?”, “¿La polera se despinta al lavar?”).",
+        "En TikTok usa “Responder con video” (el comentario aparece como sticker). En Instagram, responde el comentario con un reel.",
+        "Guion de 15-25 s: lee la pregunta, responde en una frase, muestra la prueba (paquete, textura, lavado) y cierra con CTA. Confirma plazos y datos con ATC.",
+        "Graba en vertical con el celular a la altura de los ojos, zoom 2x a 1,1-1,2 m (plano medio), luz de ventana frontal-lateral y fondo ordenado del taller o local.",
+        "Pide aprobación a coordinación antes de publicar. Si la marca exige subtítulos, coordinación lo pasa al editor.",
+        "Pide a coordinación registrar la pieza en Intia para mantener la trazabilidad (tu perfil no crea fichas)."
+       ],
+       "commonMistakes": [
+        "Grabar con la ventana detrás (contraluz).",
+        "Celular por debajo del mentón (picado poco favorecedor).",
+        "Usar el gran angular 0,5x, que deforma el rostro.",
+        "Responder sin mostrar la prueba.",
+        "Publicar sin aprobación."
+       ],
+       "checklist": [
+        "Comentario útil elegido",
+        "Sticker del comentario visible",
+        "Prueba visual",
+        "Luz frontal-lateral y celular a la altura de los ojos",
+        "Exposición y enfoque bloqueados",
+        "Aprobado por coordinación"
+       ],
+       "practice": "Graba un video de respuesta a “¿Hacen envíos a Cusco?” para Con Amor, con plazos confirmados por ATC.",
+       "passCriteria": "Video aprobado por coordinación y publicado con el sticker del comentario.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Taller de Con Amor: mesa de trabajo de madera con poleras dobladas, tazas y un paquete listo para envío. Ventana grande a la izquierda del sujeto y pared clara de fondo a 1,5 m, con el logo pequeño y desenfocado. Nada de desorden detrás de la cabeza.",
+        "subjects": "Una persona de la marca (community o talento) de pie, a 1,1-1,2 m de la cámara, con un paquete de envío y una polera en las manos. Paso 1: mira a cámara y señala hacia arriba, donde aparecerá el sticker del comentario. Paso 2: responde con una frase corta y asiente. Paso 3: acerca el paquete a cámara y muestra la etiqueta con destino “Cusco” (dato ficticio). Paso 4: despliega la polera frente al pecho. Paso 5: sonríe y señala hacia abajo, a la zona del caption, al decir el CTA.",
+        "camera": "Orientación 9:16, 1080×1920 a 30 fps. Celular en trípode con la cámara trasera principal a la altura de los ojos (≈1,55-1,65 m), frontal al sujeto. Zoom 2x (~48-52 mm equivalente) a 1,1-1,2 m: plano medio de la cintura hacia arriba (≈0,85 m de alto), que deja ver las manos con el paquete y la polera. No usar 0,5x (≈13 mm), que deforma; con 1x (~26 mm) a esa distancia el plano se abre hasta las rodillas. Bloquear exposición y enfoque manteniendo el dedo sobre el rostro. Si se graba solo, cámara frontal a la misma altura y distancia. Cámara fija; en el paso 3, corte a plano detalle del paquete (segunda toma con 1x a 30-40 cm).",
+        "lighting": "Luz principal: ventana grande frontal-lateral a 45° a la izquierda del sujeto, luz suave de día (≈5500-6500 K). Relleno a la derecha con pared blanca o reflector plegable a 1 m. Nunca con la ventana detrás. De noche: panel LED con difusor a 45° y a la altura de la cabeza, en 5600 K, o aro de luz centrado detrás del celular; apagar los focos cálidos del techo para no mezclar temperaturas.",
+        "beats": [
+         "0-2 s: sticker con la pregunta en la parte superior del cuadro; el sujeto la lee en voz alta mirando a cámara y señala el sticker.",
+         "2-6 s: respuesta directa en una frase (“¡Sí! Enviamos a Cusco en [plazo confirmado por ATC]”), asintiendo.",
+         "6-15 s: prueba visual: corte a plano detalle del paquete con la etiqueta de destino y vuelta al plano medio con la polera desplegada frente al pecho.",
+         "15-22 s: CTA: “Escríbenos CUSCO por DM y te pasamos modelos”, señalando hacia abajo, a la zona del caption.",
+         "Publicación: se sube como respuesta al comentario original, que también se responde por texto y se fija si genera más preguntas."
+        ]
+       }
+      },
+      {
+       "id": "COMMUNITY-I4-L5",
+       "title": "Etiquetas de bandeja",
+       "objective": "Que ningún mensaje se pierda y que la carga de trabajo se pueda medir.",
+       "procedure": [
+        "Crea las mismas etiquetas en Meta Business Suite y en el WhatsApp Business de ATC: Lead nuevo, Derivado a ATC, Reclamo, Colaboración, Proveedor, Spam.",
+        "Etiqueta cada conversación en cada bloque de revisión.",
+        "Usa “Seguimiento” para lo pendiente y “Listo” solo para lo resuelto.",
+        "Al final del día: cero conversaciones sin etiqueta y pendientes anotados para el siguiente turno.",
+        "Los viernes cuenta las conversaciones por etiqueta para el reporte."
+       ],
+       "commonMistakes": [
+        "Marcar como leído sin responder.",
+        "Etiquetas distintas entre community y ATC."
+       ],
+       "checklist": [
+        "Etiquetas creadas e iguales con ATC",
+        "Todas las conversaciones etiquetadas",
+        "Pendientes anotados",
+        "Conteo semanal"
+       ],
+       "practice": "Ordena una bandeja de práctica de 30 mensajes.",
+       "passCriteria": "30 de 30 mensajes etiquetados correctamente.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-I4-L6",
+       "title": "Transmisión en vivo",
+       "objective": "Planificar y moderar una transmisión en vivo de venta sin perder comentarios ni leads.",
+       "procedure": [
+        "Acuerda con coordinación y el dueño el objetivo, la oferta vigente (con fecha y stock reales), el conductor (talento) y la duración (30-60 min).",
+        "Revisa los requisitos vigentes de cada red antes de anunciarlo: TikTok LIVE exige ser mayor de edad y un mínimo de seguidores, e Instagram también pide un mínimo a las cuentas públicas. Si la cuenta no cumple, usa Facebook Live u otra red.",
+        "Anúncialo 24-48 h antes en historias y en un comentario fijado de un video reciente, con fecha y hora de Perú.",
+        "Durante el vivo el community no conduce: modera. Fija el comentario con la palabra clave y el WhatsApp, responde preguntas por escrito, oculta spam y pasa cada intención de compra a ATC con ficha de pase.",
+        "Lee los comentarios en un segundo celular y avisa al conductor las preguntas repetidas para que las responda en voz.",
+        "Al terminar, guarda la repetición si la red lo permite, cuenta con ATC los leads y pedidos atribuidos y regístralo en el reporte."
+       ],
+       "commonMistakes": [
+        "Anunciar el vivo sin revisar si la cuenta cumple los requisitos.",
+        "Que la misma persona conduzca y modere.",
+        "Dar precios distintos a los de ATC.",
+        "No medir leads al final."
+       ],
+       "checklist": [
+        "Objetivo y oferta aprobados",
+        "Requisitos de la red revisados",
+        "Anuncio 24-48 h antes",
+        "Comentario fijado con palabra clave",
+        "Moderador distinto al conductor",
+        "Leads pasados a ATC",
+        "Resultados registrados"
+       ],
+       "practice": "Planifica y modera un vivo de 30 min de Con Amor para el Día de la Madre (en la cuenta de práctica, o en la real con aprobación del dueño).",
+       "passCriteria": "Cero comentarios de compra sin responder y leads registrados con ATC al cierre.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-I5",
+     "slug": "community-i5",
+     "title": "Historias y perfil",
+     "summary": "Historias diarias, stickers de interacción y destacadas que convierten el perfil en una vitrina de venta.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=xybw1haqSj4",
+       "title": "¿Cómo VENDER con las Historias de INSTAGRAM? 3 pasos",
+       "channel": "Steph Comonfort - Marketing y Marca Personal",
+       "language": "es",
+       "why": "Estructura en 3 pasos para que las historias diarias vendan: conectar, mostrar el producto y pedir la acción."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=EYWnV9R7N9k",
+       "title": "Nuevo Sticker De Enlace En Instagram - Cómo Aprovecharlo Más",
+       "channel": "Laura Figueroa Marketing",
+       "language": "es",
+       "why": "Cómo usar el sticker de enlace en historias (por ejemplo hacia WhatsApp o el catálogo) y sacarle más clics."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=bzu4w0rdKgA",
+       "title": "COMO CREAR LAS HISTORIAS DESTACADAS EN INSTAGRAM 🚀",
+       "channel": "Susan Gorbina",
+       "language": "es",
+       "why": "Tutorial completo para crear y organizar historias destacadas (precios, testimonios, cómo comprar) y convertir el perfil en vitrina de venta."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-I5-L1",
+       "title": "Historias diarias",
+       "objective": "Mantener la marca presente cada día con 3-5 historias que apoyen el video y la venta.",
+       "procedure": [
+        "Estructura diaria: 1) detrás de cámaras (estampando una polera, preparando el plato, atendiendo a un cliente); 2) compartir el video del día; 3) prueba social (cliente feliz, con permiso y datos tapados); 4) CTA con sticker de enlace a WhatsApp o “Escríbenos”.",
+        "Graba en vertical, con luz frontal y texto grande dentro de la zona segura.",
+        "En campañas, agrega una cuenta regresiva a la fecha límite de pedidos.",
+        "Revisa las respuestas y deriva los leads a ATC."
+       ],
+       "commonMistakes": [
+        "Historias solo con ofertas.",
+        "Texto pequeño o tapado por la interfaz.",
+        "Capturas de clientes sin permiso."
+       ],
+       "checklist": [
+        "3-5 historias",
+        "Una de prueba social con permiso",
+        "CTA con enlace",
+        "Respuestas atendidas"
+       ],
+       "practice": "Publica una semana de historias para Con Amor siguiendo la estructura.",
+       "passCriteria": "7 días cumplidos y al menos 1 lead derivado desde historias.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-I5-L2",
+       "title": "Stickers que conversan",
+       "objective": "Usar encuestas, preguntas y cuestionarios para conocer a la audiencia y conseguir ideas.",
+       "procedure": [
+        "Encuesta: “¿Taza o polera para papá?” sirve para decidir el producto de la campaña.",
+        "Caja de preguntas: “¿Qué quieres saber de nuestras casacas?”. Las respuestas se vuelven guiones.",
+        "Cuestionario: “¿Qué tela abriga más?”, que educa sobre el algodón afranelado.",
+        "Envía las respuestas útiles a coordinación con la plantilla de idea para que las registre como IDEA.",
+        "Responde algunas preguntas en público (con permiso) para generar confianza."
+       ],
+       "commonMistakes": [
+        "Preguntar cosas que no se usan después.",
+        "Ignorar las respuestas recibidas."
+       ],
+       "checklist": [
+        "Sticker con objetivo",
+        "Respuestas registradas",
+        "Propuestas de idea enviadas a coordinación"
+       ],
+       "practice": "Lanza 3 stickers en una semana y convierte las respuestas en 2 propuestas de idea.",
+       "passCriteria": "Coordinación registra como IDEA en Intia al menos 2 propuestas basadas en respuestas reales.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-I5-L3",
+       "title": "Destacadas que venden",
+       "objective": "Que un visitante nuevo entienda en 10 segundos qué vendes, cuánto cuesta y cómo comprar.",
+       "procedure": [
+        "Crea 5 destacadas: Catálogo, Cómo pedir, Envíos (provincias y Lima), Clientes felices, Preguntas frecuentes. En un restaurante: Carta, Delivery, Reservas, Ubicación. En un servicio: Servicios, Casos, Cómo agendar.",
+        "Portadas con la plantilla del diseñador.",
+        "Actualízalas cuando cambien precios, plazos o productos.",
+        "Revisa que la bio y el enlace lleven a WhatsApp o al catálogo vigente."
+       ],
+       "commonMistakes": [
+        "Destacadas con precios viejos.",
+        "Nombres confusos.",
+        "Enlace roto en la bio."
+       ],
+       "checklist": [
+        "5 destacadas",
+        "Portadas uniformes",
+        "Información vigente",
+        "Enlace funcionando"
+       ],
+       "practice": "Audita y rehace las destacadas de una marca.",
+       "passCriteria": "Una persona externa encuentra en menos de 10 s cómo pedir y a qué ciudades envían.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "level": "AVANZADO",
+   "goal": "Dirigir la distribución y la comunidad de varias marcas con experimentos, pauta medida, gestión de crisis, colaboraciones con creadores y reportes que se convierten en decisiones del equipo y en ventas atribuibles.",
+   "modules": [
+    {
+     "id": "COMMUNITY-A1",
+     "slug": "community-a1",
+     "title": "Experimentos de crecimiento",
+     "summary": "Prueba hipótesis con una sola variable, usa los Reels de prueba, recicla ganadores, construye series e impulsa con pauta solo lo que ya funcionó.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=1nvMOhNtJX8",
+       "title": "Qué es el A/B Testing (con 3 EJEMPLOS reales sorprendentes)",
+       "channel": "Cyberclick • Marketing Digital",
+       "language": "es",
+       "why": "Explica la lógica del test A/B con ejemplos reales: una sola variable, una hipótesis y una métrica. Es la base para diseñar experimentos de contenido."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=ZtjiAlkPqPI",
+       "title": "¿Merecen la pena los Reels de prueba en Instagram? Probamos más de 50 para descubrirlo",
+       "channel": "Metricool en español",
+       "language": "es",
+       "why": "Experimento reciente con más de 50 Reels de prueba: cómo funcionan, qué resultados dieron y cómo usarlos para probar ganchos sin afectar a los seguidores."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=G5Uo6CaJ-_c",
+       "title": "Series de Contenido: La estrategia que te falta para crecer en 2026",
+       "channel": "agusbirch-mkt",
+       "language": "es",
+       "why": "Cómo convertir un contenido ganador en una serie recurrente que fideliza. Es el paso de 'reciclar ganadores y construir series'."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-A1-L1",
+       "title": "Hipótesis y prueba A/B",
+       "objective": "Mejorar resultados con experimentos controlados, no con intuición.",
+       "procedure": [
+        "Redacta la hipótesis: “Si cambiamos [variable] de [A] a [B] en videos de [formato], entonces [métrica] sube de [x] a [y], porque [razón]”.",
+        "Cambia una sola variable a la vez: hook, portada, primera línea del caption, hora o CTA.",
+        "Mínimo 3 videos por variante, mismo formato y red.",
+        "Mide a 24 h y 7 días con la hoja estándar.",
+        "Decide: adoptar, descartar o repetir. Documenta el resultado en el reporte.",
+        "Ejemplo: en las tazas, abrir con “la foto aparece con el café caliente” frente a “el precio primero”, midiendo la retención a 3 s."
+       ],
+       "commonMistakes": [
+        "Cambiar varias cosas a la vez.",
+        "Decidir con un solo video.",
+        "No documentar lo aprendido."
+       ],
+       "checklist": [
+        "Hipótesis escrita",
+        "Una sola variable",
+        "≥3 videos por variante",
+        "Decisión documentada"
+       ],
+       "practice": "Ejecuta un experimento de hook durante 2 semanas en una marca.",
+       "passCriteria": "Informe con datos, decisión tomada y aplicada en la parrilla.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-A1-L2",
+       "title": "Reels de prueba",
+       "objective": "Probar contenido con no seguidores antes de mostrarlo a la comunidad, usando los Reels de prueba de Instagram.",
+       "procedure": [
+        "Con una cuenta profesional, crea el reel como siempre y, antes de compartir, activa “Prueba”.",
+        "El reel se muestra primero a no seguidores. No aparece en la cuadrícula ni a los seguidores, salvo que decidas compartirlo.",
+        "Revisa las estadísticas a las ~24 h (reproducciones, me gusta, comentarios, compartidos) y compáralas con pruebas anteriores.",
+        "Decide si lo compartes con todos o activa la opción para que Instagram lo comparta automáticamente si rinde bien en las primeras 72 h.",
+        "Úsalos para probar 2 hooks del mismo video o formatos arriesgados (humor nuevo, Camaleón). Las versiones las pide coordinación al editor."
+       ],
+       "commonMistakes": [
+        "Usar pruebas para ofertas con fecha límite.",
+        "No comparar con el historial de pruebas.",
+        "Olvidar compartir el ganador."
+       ],
+       "checklist": [
+        "Opción Prueba activada",
+        "Estadísticas revisadas a 24 h",
+        "Decisión tomada",
+        "Aprendizaje registrado"
+       ],
+       "practice": "Lanza 2 versiones de hook de un mismo video como Reels de prueba y decide cuál se comparte.",
+       "passCriteria": "Decisión basada en datos y el ganador supera el promedio de la marca.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-A1-L3",
+       "title": "Reciclar ganadores",
+       "objective": "Sacar más valor de los videos que ya funcionaron sin publicar duplicados.",
+       "procedure": [
+        "Cada mes, identifica el top 10% de videos de los últimos 60-90 días.",
+        "Propón a coordinación nuevas versiones: otro hook, otra portada, otro cierre o un talento distinto, con el mismo concepto.",
+        "Llévalos a redes donde no se publicaron o donde rindieron menos.",
+        "No vuelvas a subir el archivo idéntico en la misma cuenta. Cambia algo significativo.",
+        "Coordinación registra cada versión como nueva ficha en Intia, con referencia a la original en las notas."
+       ],
+       "commonMistakes": [
+        "Subir el mismo archivo varias veces.",
+        "Reciclar videos con ofertas vencidas.",
+        "No medir la versión nueva."
+       ],
+       "checklist": [
+        "Top 10% identificado",
+        "Versión con cambios significativos",
+        "Nueva ficha creada por coordinación",
+        "Oferta vigente"
+       ],
+       "practice": "Recicla 2 ganadores de Con Amor con hooks nuevos.",
+       "passCriteria": "Al menos 1 versión nueva supera el promedio de la marca.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-A1-L4",
+       "title": "Series de contenido",
+       "objective": "Crear formatos recurrentes que la audiencia espere y que el equipo produzca en lote.",
+       "procedure": [
+        "Define la serie: nombre, formato, día fijo y estructura (ej. “Regalo del lunes”, “¿Qué pidió el cliente?”, “Menú en 15 segundos”, “SUNAT en 30 segundos”).",
+        "Numera los episodios en pantalla y en el caption.",
+        "Agrúpalos en listas de reproducción de TikTok y YouTube, y en la sección fija del perfil si está disponible.",
+        "Pide a coordinación producción por lotes de 4-6 episodios con el guionista y el filmmaker.",
+        "Evalúa la serie cada 4 episodios con retención y seguidores ganados."
+       ],
+       "commonMistakes": [
+        "Series sin día fijo.",
+        "Estructura que cambia en cada episodio.",
+        "Mantener series que no rinden."
+       ],
+       "checklist": [
+        "Nombre y estructura",
+        "Día fijo",
+        "Numeración",
+        "Lista de reproducción",
+        "Evaluación cada 4 episodios"
+       ],
+       "practice": "Diseña una serie para un restaurante y otra para Con Amor.",
+       "passCriteria": "Serie aprobada por coordinación, con 4 episodios planificados en Intia por coordinación.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-A1-L5",
+       "title": "Impulsar un ganador",
+       "objective": "Poner pauta solo en videos ya probados, con presupuesto aprobado, y medir el costo por conversación de venta.",
+       "procedure": [
+        "Elige candidatos del top de las últimas 4 semanas por retención, compartidos y conversaciones con ATC, no solo por vistas. La oferta del video debe seguir vigente.",
+        "Propón al dueño por escrito: video, objetivo (mensajes a WhatsApp o a Instagram Direct), ciudades, edades, días y presupuesto en S/. Sin aprobación no se activa nada. El medio de pago lo configura el dueño; tú nunca manejas tarjetas.",
+        "Meta: desde Instagram o Meta Business Suite usa “Promocionar” en el reel con objetivo de mensajes y público por ubicación (ciudades de envío o radio alrededor del restaurante).",
+        "TikTok: usa Promocionar desde la cuenta de empresa si está disponible. Para contenido de un creador, pide su código de autorización de Spark Ads. En Meta, el contenido de un creador solo se promociona si él dio permiso en la colaboración pagada.",
+        "Avisa a ATC fechas, oferta y palabra clave antes de activar.",
+        "Revisa a las 48-72 h el costo por conversación (S/) y los pedidos atribuidos por ATC. Si supera el límite acordado con el dueño, pausa y reporta."
+       ],
+       "commonMistakes": [
+        "Pautar un video solo porque tuvo muchas vistas.",
+        "Activar pauta sin aprobación escrita del dueño.",
+        "Segmentar a todo el Perú cuando solo se entrega en Lima.",
+        "Medir solo alcance y no conversaciones."
+       ],
+       "checklist": [
+        "Video con datos de 4 semanas",
+        "Oferta vigente",
+        "Presupuesto aprobado por escrito",
+        "Público por zona de entrega",
+        "ATC avisado",
+        "Costo por conversación medido"
+       ],
+       "practice": "Propón al dueño la pauta de un ganador de Con Amor (objetivo, ciudades, presupuesto y límite de costo por conversación) y, si la aprueba, mide 7 días.",
+       "passCriteria": "Propuesta aprobada y reporte con costo por conversación y pedidos atribuidos.",
+       "mediaType": "CASO_PRACTICO"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-A2",
+     "slug": "community-a2",
+     "title": "Crisis y reputación",
+     "summary": "Distingue un problema de una crisis, activa el protocolo con tiempos realistas, redacta el comunicado de espera, gestiona reclamos formales y cierra con aprendizaje.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=_qV0MEiX0ks",
+       "title": "CRISIS ONLINE: 10 pasos para gestionarla con éxito",
+       "channel": "Aula CM - Conunicación y Marketing Digital",
+       "language": "es",
+       "why": "Clásico de Aula CM (60 mil vistas) con 10 pasos para gestionar una crisis online, desde detectarla hasta el cierre y el aprendizaje."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=BqPHmWEOC3c",
+       "title": "Guía para crear un Protocolo de Crisis En redes sociales 2024 ¿Cómo solucionar una crisis en redes?",
+       "channel": "Marketing de Ciencia",
+       "language": "es",
+       "why": "Guía breve para escribir el protocolo de crisis: niveles, responsables, tiempos de respuesta y comunicado de espera."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=UmUPFMjUhUk",
+       "title": "¿Tienes un negocio? 👉 Así se implementa el Libro de Reclamaciones | Guía completa",
+       "channel": "Instituto Nacional de Defensa de la Competencia y de la Protección de la Propiedad Intelectual",
+       "language": "es",
+       "why": "Video oficial de Indecopi sobre cómo implementar y atender el Libro de Reclamaciones, obligatorio en Perú para gestionar reclamos formales."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-A2-L1",
+       "title": "¿Problema o crisis?",
+       "objective": "Clasificar en minutos el nivel del incidente para responder en proporción.",
+       "procedure": [
+        "Nivel 1, incidente: queja aislada y alcance mínimo. Se atiende con el flujo normal y se deriva a ATC.",
+        "Nivel 2, alerta: 5 o más quejas del mismo tema en una hora, un creador con alcance se queja o un comentario negativo crece rápido. Avisa a coordinación y prepara la respuesta.",
+        "Nivel 3, crisis: cambio negativo repentino que pone en riesgo la confianza (video viral en contra, llamado a boicot, riesgo de salud o legal, como una intoxicación en un restaurante o una estafa con el nombre de la marca). Se activa el protocolo.",
+        "Registra hora, enlaces y capturas desde el primer minuto.",
+        "Ante la duda entre dos niveles, trátalo como el más alto."
+       ],
+       "commonMistakes": [
+        "Tratar una crisis como una queja más.",
+        "Sobrerreaccionar ante un troll aislado.",
+        "No guardar evidencia."
+       ],
+       "checklist": [
+        "Nivel asignado",
+        "Evidencia guardada",
+        "Escalamiento correcto"
+       ],
+       "practice": "Clasifica 8 escenarios (entrega tardía en el Día de la Madre, polera despintada viral, cuenta falsa cobrando, reseña de un foodie, etc.).",
+       "passCriteria": "7 de 8 clasificados correctamente.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-A2-L2",
+       "title": "Protocolo de crisis",
+       "objective": "Ejecutar una respuesta coordinada, rápida y aprobada.",
+       "procedure": [
+        "Roles: líder de comunicación (coordinación), aprobador (dueño), soporte de hechos (ATC, producción o logística) y asesoría legal si aplica.",
+        "Pausa de inmediato en Meta Business Suite, TikTok Studio y YouTube Studio los videos programados y los anuncios. Pide a coordinación pasar esas fichas a PAUSADO en Intia (tu perfil no puede).",
+        "Tiempos objetivo: reconocimiento público con el comunicado de espera preaprobado en ≤30 min desde la detección; actualización con hechos confirmados dentro del plazo que prometiste; seguimiento al menos diario hasta cerrar.",
+        "Publica en el canal donde nació la crisis y fija la respuesta. Lleva los casos individuales a privado.",
+        "Monitorea menciones y comentarios. Actualiza al equipo cada hora mientras dure el nivel 3.",
+        "No borres comentarios críticos, no discutas y no publiques nada que no haya aprobado el dueño."
+       ],
+       "commonMistakes": [
+        "Seguir publicando contenido promocional en plena crisis.",
+        "Olvidar pausar un video programado en otra red.",
+        "Responder a la defensiva.",
+        "Hablar antes de confirmar los hechos."
+       ],
+       "checklist": [
+        "Roles asignados",
+        "Programados y anuncios pausados en las 4 redes",
+        "Fichas en PAUSADO por coordinación",
+        "Reconocimiento en ≤30 min",
+        "Actualizaciones en el plazo prometido",
+        "Todo aprobado por el dueño"
+       ],
+       "practice": "Simulacro: una polera se despinta en el primer lavado y el video de la clienta se vuelve viral. Ejecuta el protocolo con el equipo.",
+       "passCriteria": "Tiempos cumplidos en el simulacro y mensajes aprobados sin contradicciones.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-A2-L3",
+       "title": "Comunicado de espera",
+       "objective": "Tener lista y preaprobada una plantilla de primer mensaje que reconozca el problema sin especular.",
+       "procedure": [
+        "Plantilla: “Nos enteramos hoy de [situación]. Sabemos lo importante que es para ustedes y ya estamos revisando cada caso. Si te afectó, escríbenos por DM o al [WhatsApp] para atenderte personalmente. Compartiremos nuestras acciones en las próximas [24] horas.”",
+        "Deja la plantilla aprobada por el dueño antes de cualquier crisis, para solo completar los corchetes.",
+        "Ajusta el tono de la marca: empático, sin tecnicismos y sin culpar al cliente.",
+        "No admitas causas no confirmadas ni prometas compensaciones que el dueño no aprobó.",
+        "Publícalo en el canal afectado, fíjalo y respóndelo con enlace en los comentarios clave.",
+        "Cumple el plazo de actualización prometido."
+       ],
+       "commonMistakes": [
+        "Comunicado genérico que no nombra el problema.",
+        "Culpar al cliente o al courier en público.",
+        "Prometer y no volver a actualizar."
+       ],
+       "checklist": [
+        "Plantilla preaprobada",
+        "Nombra el problema",
+        "Canal privado ofrecido",
+        "Plazo de actualización",
+        "Versión final aprobada por el dueño"
+       ],
+       "practice": "Redacta comunicados de espera para 3 casos: Con Amor (retraso masivo de envíos), restaurante (queja de salubridad) y servicio (error en un trámite).",
+       "passCriteria": "Los 3 aprobados por el dueño con cambios menores.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-A2-L4",
+       "title": "Reclamos e Indecopi",
+       "objective": "Canalizar los reclamos formales sin exponer a la marca y respetando los plazos legales.",
+       "procedure": [
+        "Si un cliente menciona Indecopi o pide el Libro de Reclamaciones, no discutas en público: responde con empatía y ofrece el canal privado.",
+        "Deriva de inmediato a ATC o al dueño con el enlace y las capturas.",
+        "Comparte el enlace del Libro de Reclamaciones virtual de la marca.",
+        "Recuerda al responsable el plazo: el proveedor debe responder en máximo 15 días hábiles.",
+        "Registra el caso en la bitácora de reclamos y haz seguimiento hasta el cierre."
+       ],
+       "commonMistakes": [
+        "Negar o discutir en público.",
+        "Ignorar la mención de Indecopi.",
+        "No tener visible el enlace del libro virtual."
+       ],
+       "checklist": [
+        "Respuesta pública empática",
+        "Derivado a ATC o al dueño",
+        "Enlace del Libro de Reclamaciones compartido",
+        "Plazo de 15 días hábiles controlado"
+       ],
+       "practice": "Resuelve un caso simulado de un cliente que comenta “los voy a denunciar a Indecopi” bajo un reel.",
+       "passCriteria": "Respuesta aprobada, derivación completa y seguimiento registrado.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-A2-L5",
+       "title": "Post mortem",
+       "objective": "Convertir cada crisis en aprendizaje documentado para que no se repita.",
+       "procedure": [
+        "Dentro de los 7 días siguientes, reúne a coordinación, ATC y el dueño.",
+        "Plantilla: qué pasó (línea de tiempo), causa raíz en una frase, qué funcionó, qué falló, impacto (comentarios, ventas, seguidores) y acciones con responsable y fecha.",
+        "Actualiza el protocolo, el comunicado de espera, las respuestas guardadas y los filtros según lo aprendido.",
+        "Reanuda los programados y anuncios solo con aprobación (coordinación saca las fichas de PAUSADO).",
+        "Guarda el documento en Drive y pide a coordinación enlazarlo en la ficha de marca."
+       ],
+       "commonMistakes": [
+        "Buscar culpables en lugar de causas.",
+        "No actualizar el protocolo.",
+        "Reanudar las ventas demasiado pronto."
+       ],
+       "checklist": [
+        "Línea de tiempo",
+        "Causa raíz",
+        "Acciones con responsable",
+        "Protocolo actualizado"
+       ],
+       "practice": "Haz el post mortem del simulacro de la lección de protocolo.",
+       "passCriteria": "Documento completo con al menos 3 acciones implementadas.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-A3",
+     "slug": "community-a3",
+     "title": "Creadores y colaboraciones",
+     "summary": "Elige creadores, escribe briefs, publica en colaboración con la divulgación correcta y asegura los permisos de uso del UGC.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=H_qE2oVgUkM",
+       "title": "5 tips rápidos para identificar INFLUENCERS CON SEGUIDORES FALSOS",
+       "channel": "Soy Laura Alcaide - Marketing de Influencers",
+       "language": "es",
+       "why": "Especialista en marketing de influencers. Da cinco señales para descartar creadores con seguidores falsos antes de elegirlos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=xUbs5PxuXbI",
+       "title": "Cómo crear un BRIEF CREATIVO excepcional [Ejemplos + plantilla gratuita]",
+       "channel": "HubSpot Español",
+       "language": "es",
+       "why": "Estructura de brief con ejemplos y plantilla. Se adapta al brief para creadores y UGC: objetivo, mensaje, entregables, plazos y derechos de uso."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=CireQXKv8Ig",
+       "title": "Cómo añadir colaboración en Instagram post después de publicar",
+       "channel": "Soluciones Rápidas",
+       "language": "es",
+       "why": "Tutorial práctico y muy visto para publicar en colaboración (Collab) en Instagram con el creador, incluso después de haber publicado."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-A3-L1",
+       "title": "Elegir creadores",
+       "objective": "Seleccionar creadores con audiencia real y afinidad con la marca.",
+       "procedure": [
+        "Define el objetivo: alcance, prueba social o contenido para anuncios.",
+        "Busca creadores de la ciudad o región objetivo (Huancayo, Cusco, Arequipa, Lima) y del nicho (mamás, universitarios, foodies, emprendedores).",
+        "Revisa la audiencia real (comentarios auténticos frente a genéricos), la regularidad y la calidad de sus videos.",
+        "Revisa su historial: polémicas y si etiqueta correctamente la publicidad.",
+        "Prioriza microcreadores con buena conversación antes que cuentas grandes con poca interacción.",
+        "Registra a los candidatos en una tabla con datos, tarifa o canje y decisión."
+       ],
+       "commonMistakes": [
+        "Elegir solo por número de seguidores.",
+        "No revisar polémicas previas.",
+        "Creadores cuya audiencia está fuera del Perú."
+       ],
+       "checklist": [
+        "Objetivo definido",
+        "Audiencia en la zona",
+        "Comentarios auténticos",
+        "Sin polémicas graves",
+        "Etiqueta la publicidad correctamente"
+       ],
+       "practice": "Propón 5 creadores para una campaña de Con Amor en la sierra y 3 foodies para un restaurante.",
+       "passCriteria": "Coordinación aprueba al menos 5 de 8 con justificación.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-A3-L2",
+       "title": "Brief para creador",
+       "objective": "Darle al creador la información clara para que haga contenido nativo y alineado con la marca.",
+       "procedure": [
+        "Plantilla: marca y producto, objetivo, mensaje clave (uno), qué mostrar (uso real, textura, empaque), formato sugerido (Camaleón, UGC, Testimonio), CTA y palabra clave, fechas, entregables (video, historias, derechos de uso) y lo que no se puede decir.",
+        "Incluye la obligación de identificar la publicidad: “Publicidad” visible y la herramienta de colaboración pagada o contenido de marca.",
+        "Deja libertad de estilo: el creador conoce a su audiencia.",
+        "Pide un borrador para revisión antes de publicar.",
+        "Acuerda el pago o canje, los plazos y el alcance de uso por escrito."
+       ],
+       "commonMistakes": [
+        "Guion rígido que suena a anuncio.",
+        "Olvidar la etiqueta de publicidad.",
+        "Sin revisión previa."
+       ],
+       "checklist": [
+        "Mensaje clave único",
+        "Entregables y fechas",
+        "Etiquetado obligatorio",
+        "Revisión previa",
+        "Acuerdo escrito"
+       ],
+       "practice": "Escribe el brief para una creadora que recibirá un canje de poleras personalizadas.",
+       "passCriteria": "Brief aprobado por coordinación y entendido por la creadora sin preguntas de fondo.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-A3-L3",
+       "title": "Colaboración y etiqueta",
+       "objective": "Publicar en coautoría y con la divulgación correcta en cada plataforma.",
+       "procedure": [
+        "Instagram: Etiquetar personas > Invitar colaborador. El colaborador acepta desde su bandeja y el contenido aparece en ambos perfiles.",
+        "Si hay pago o canje, el creador activa la etiqueta de “Colaboración pagada” con la marca antes de publicar y la marca la aprueba en su configuración de contenido de marca. Si luego se hará pauta, el creador debe dar permiso a la marca para promocionarlo.",
+        "TikTok: el creador activa Divulgación de contenido > Contenido de marca antes de publicar; si lo olvidó, debe agregarlo editando la publicación de inmediato.",
+        "Añade la mención clara de “Publicidad” según Indecopi.",
+        "Registra en la ficha de Intia (comentario) el enlace de ambas cuentas y el acuerdo."
+       ],
+       "commonMistakes": [
+        "El colaborador no aceptó la invitación y el post quedó solo en una cuenta.",
+        "Etiqueta pagada sin permiso para pauta cuando se planea promocionar.",
+        "Olvidar la divulgación en TikTok."
+       ],
+       "checklist": [
+        "Invitación aceptada",
+        "Etiqueta pagada aprobada o divulgación activada",
+        "Permiso para pauta si aplica",
+        "Mención “Publicidad”",
+        "Enlaces registrados"
+       ],
+       "practice": "Publica una colaboración de prueba con otra cuenta del equipo.",
+       "passCriteria": "El contenido aparece en ambos perfiles con la configuración correcta.",
+       "mediaType": "VIDEO_REFERENCIA"
+      },
+      {
+       "id": "COMMUNITY-A3-L4",
+       "title": "Permisos de UGC",
+       "objective": "Usar el contenido de clientes y creadores con permiso escrito y dentro de su alcance.",
+       "procedure": [
+        "Antes de volver a publicar, pide permiso por escrito (DM o correo): “¿Nos autorizas a compartir tu video en nuestras redes [y en anuncios] durante [plazo], dándote crédito?”",
+        "Especifica el alcance: orgánico o anuncios, plazo, redes y crédito.",
+        "Guarda la captura del permiso en Drive y enlázala en un comentario de la ficha de Intia.",
+        "Da crédito con la mención del autor.",
+        "Si el cliente retira el permiso, retira el contenido."
+       ],
+       "commonMistakes": [
+        "Tomar videos de clientes sin preguntar.",
+        "Usar en anuncios un permiso que era solo orgánico.",
+        "No guardar la evidencia."
+       ],
+       "checklist": [
+        "Permiso escrito",
+        "Alcance y plazo definidos",
+        "Evidencia archivada y enlazada",
+        "Crédito al autor"
+       ],
+       "practice": "Consigue permiso de 3 clientes reales para usar su contenido.",
+       "passCriteria": "3 permisos archivados con alcance claro.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-A4",
+     "slug": "community-a4",
+     "title": "Reporte y decisiones",
+     "summary": "Arma el reporte semanal, convierte los datos en decisiones, atribuye ventas al contenido y presenta resultados al dueño.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=NrnR43iT9dw",
+       "title": "Cómo Hacer INFORMES de REDES SOCIALES en Minutos ⏱️ [+PLANTILLA]",
+       "channel": "Metricool en español",
+       "language": "es",
+       "why": "Cómo armar un reporte de redes con plantilla. Es la base del reporte semanal que se presenta al dueño."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=u_BmGi4RxRQ",
+       "title": "Qué KPIs Analizar en Redes Sociales l Métricas Clave",
+       "channel": "Cyberclick • Marketing Digital",
+       "language": "es",
+       "why": "Distingue métricas de vanidad de los KPIs que sirven para decidir, para convertir los datos en decisiones y no solo en números."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=EXrSKFB5FQg",
+       "title": "¿QUÉ SON Y PARA QUE SIRVEN LOS PARÁMETROS UTM?",
+       "channel": "Javier Yranzo",
+       "language": "es",
+       "why": "Explicación corta de los parámetros UTM para etiquetar los enlaces de la bio y de las historias, y así atribuir clics y ventas a cada contenido."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-A4-L1",
+       "title": "Reporte semanal",
+       "objective": "Entregar cada lunes un reporte que se lea en 5 minutos y termine en acciones.",
+       "procedure": [
+        "Resumen ejecutivo: 3 líneas con lo más importante.",
+        "KPIs por marca y red frente a la semana anterior: alcance, vistas, retención media, compartidos y guardados por alcance, seguidores netos.",
+        "Top 3 y bottom 3 videos, con el porqué (hook, formato, horario).",
+        "Comunidad: tiempo de respuesta, leads derivados a ATC, ventas atribuidas, reclamos y reseñas.",
+        "Tendencias detectadas, experimentos en curso y pauta (gasto y costo por conversación).",
+        "3 recomendaciones con responsable (guionista, editor, filmmaker, coordinación) y fecha. Se entrega el lunes a las 12:00."
+       ],
+       "commonMistakes": [
+        "Solo números sin interpretación.",
+        "No comparar con la semana anterior.",
+        "Recomendaciones sin responsable."
+       ],
+       "checklist": [
+        "Resumen de 3 líneas",
+        "KPIs comparados",
+        "Top y bottom con porqué",
+        "Datos de comunidad y ATC",
+        "3 recomendaciones con responsable"
+       ],
+       "practice": "Arma el reporte de la última semana de 2 marcas.",
+       "passCriteria": "Coordinación ejecuta al menos 2 de las 3 recomendaciones.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-A4-L2",
+       "title": "Del dato a la decisión",
+       "objective": "Traducir patrones de métricas en cambios concretos de guion, grabación, edición y distribución.",
+       "procedure": [
+        "Busca patrones en 4 semanas, no en un solo video.",
+        "Relaciona cada patrón con su responsable. Retención a 3 s baja: guionista y editor (hook). Visto vs. deslizado bajo: primer frame (filmmaker y editor). Pocos compartidos: formato o premisa. Muchas vistas y pocos leads: CTA, perfil o palabra clave (community y ATC).",
+        "Propón un cambio por responsable, a través de coordinación, y mide en las 2 semanas siguientes.",
+        "Caso: el restaurante tiene muchas vistas y pocas reservas. Cambia a CTA “Comenta RESERVA” con el horario en pantalla y las reservas suben.",
+        "Caso servicio: tutoriales con muchos guardados pero sin citas. Agrega un cierre con una oferta de diagnóstico gratuito."
+       ],
+       "commonMistakes": [
+        "Decidir con un solo video.",
+        "Pedir cambios a todos al mismo tiempo.",
+        "No medir el efecto del cambio."
+       ],
+       "checklist": [
+        "Patrón de 4 semanas",
+        "Responsable identificado",
+        "Un cambio por responsable",
+        "Medición posterior"
+       ],
+       "practice": "Analiza un mes de una marca y propón 3 decisiones.",
+       "passCriteria": "Al menos 1 decisión mejora su métrica objetivo en 2 semanas.",
+       "mediaType": "CASO_PRACTICO"
+      },
+      {
+       "id": "COMMUNITY-A4-L3",
+       "title": "Atribuir ventas",
+       "objective": "Saber qué videos generan conversaciones y pedidos reales.",
+       "procedure": [
+        "Usa una palabra clave distinta por video o campaña.",
+        "Acuerda con ATC que pregunte “¿En qué video nos viste?” y lo registre en cada pedido.",
+        "Usa enlaces con parámetros UTM en la bio o en el catálogo cuando haya web.",
+        "Cruza cada semana: palabra clave o video → conversaciones → pedidos → monto (S/).",
+        "Incluye en el reporte el ranking de videos por pedidos, no solo por vistas."
+       ],
+       "commonMistakes": [
+        "Atribuir por intuición.",
+        "Palabras clave repetidas.",
+        "ATC sin registro de origen."
+       ],
+       "checklist": [
+        "Palabra clave única",
+        "Registro de origen en ATC",
+        "UTM si hay web",
+        "Cruce semanal",
+        "Ranking por pedidos"
+       ],
+       "practice": "Implementa la atribución durante una campaña de Con Amor.",
+       "passCriteria": "Más del 70% de los pedidos de la campaña tienen su origen identificado.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-A4-L4",
+       "title": "Presentar al dueño",
+       "objective": "Comunicar en 10 minutos resultados, riesgos y pedidos concretos al dueño del negocio.",
+       "procedure": [
+        "Una página: resultado principal (pedidos o conversaciones atribuidas), 3 aprendizajes, 1 riesgo y 1 pedido de decisión.",
+        "Empieza por el impacto en ventas, no por los likes.",
+        "Usa gráficos simples: tendencia de 4 semanas y top de videos.",
+        "Trae opciones con costo y beneficio (ej. “pauta de S/ 300 en el mejor video del mes, con límite de costo por conversación”).",
+        "Deja registradas las decisiones y los responsables."
+       ],
+       "commonMistakes": [
+        "Presentación larga llena de jerga.",
+        "Solo buenas noticias.",
+        "Salir sin decisiones."
+       ],
+       "checklist": [
+        "Una página",
+        "Impacto en ventas primero",
+        "Un riesgo",
+        "Un pedido de decisión",
+        "Decisiones registradas"
+       ],
+       "practice": "Presenta el mes de una marca al dueño en 10 minutos.",
+       "passCriteria": "El dueño toma al menos 1 decisión en la reunión.",
+       "mediaType": "PLANTILLA"
+      }
+     ]
+    },
+    {
+     "id": "COMMUNITY-A5",
+     "slug": "community-a5",
+     "title": "Operación multimarca",
+     "summary": "Opera varias marcas sin errores, documenta el manual de cada una, protege accesos y entrena a nuevos community managers.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=bHClLpjU35k",
+       "title": "Cómo Dar Acceso en Meta Business Suite 2026 | Permisos, Cuenta Publicitaria y Portafolio",
+       "channel": "Sharon Sin Caos",
+       "language": "es",
+       "why": "Tutorial actual de roles y permisos en el portafolio comercial de Meta. Sirve para dar acceso por marca sin compartir contraseñas."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=eKuxSbH0PKw",
+       "title": "Cómo Proteger tu Cuenta de Instagram en 2025 (guía definitiva)",
+       "channel": "María Aperador | Criminología y Ciberseguridad",
+       "language": "es",
+       "why": "Especialista en ciberseguridad. Guía para blindar cuentas de negocio (verificación en dos pasos, correos de phishing, accesos) y evitar hackeos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=yrf44jZuAEQ",
+       "title": "Community manager: cómo trabajar con un cliente nuevo",
+       "channel": "Diana Fernandez - Community Manager y Mentora",
+       "language": "es",
+       "why": "Proceso para incorporar una marca o cliente nuevo: recopilar accesos, manual de marca y acuerdos. Sirve como guía para documentar cada marca y capacitar a nuevos community managers."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "COMMUNITY-A5-L1",
+       "title": "Varias marcas sin errores",
+       "objective": "Evitar publicar o responder en la cuenta equivocada al manejar varias marcas.",
+       "procedure": [
+        "Separa por marca: perfiles de navegador, carpetas de masters y filtros en Intia y en Meta Business Suite.",
+        "Antes de publicar o responder, confirma en voz alta la marca activa (foto y nombre de la cuenta).",
+        "Usa colores o prefijos por marca en la parrilla y en las etiquetas.",
+        "Evita alternar cuentas personales y de marca en el mismo teléfono al responder.",
+        "Revisión cruzada: otra persona revisa lo programado de la semana."
+       ],
+       "commonMistakes": [
+        "Publicar el video del restaurante en la cuenta de Con Amor.",
+        "Responder con la cuenta personal.",
+        "Mezclar masters entre marcas."
+       ],
+       "checklist": [
+        "Perfiles separados",
+        "Verificación de cuenta activa",
+        "Colores por marca",
+        "Revisión cruzada semanal"
+       ],
+       "practice": "Opera 2 marcas durante una semana con el sistema de separación.",
+       "passCriteria": "Cero publicaciones o respuestas en la cuenta equivocada.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-A5-L2",
+       "title": "Manual por marca",
+       "objective": "Documentar todo lo necesario para que cualquier community opere la marca desde el primer día.",
+       "procedure": [
+        "Secciones: público y ciudades, voz y tono (3 adjetivos, trato, emojis, palabras prohibidas, 5 frases modelo), productos y precios vigentes (enlace a la fuente de ATC), keywords y hashtags, horarios ganadores, formatos que funcionan, palabras clave de campañas, lista de palabras ocultas, comunicado de espera preaprobado, protocolo de crisis y contactos.",
+        "Guárdalo en Drive y pide a coordinación enlazarlo en la ficha de marca de Intia (tu perfil no edita marcas).",
+        "Actualízalo cada mes y después de cada campaña o crisis.",
+        "Valídalo con coordinación y con el dueño."
+       ],
+       "commonMistakes": [
+        "Manual desactualizado.",
+        "Información solo en la cabeza del community.",
+        "Precios copiados en lugar de enlazados."
+       ],
+       "checklist": [
+        "Todas las secciones completas",
+        "Enlazado en la ficha de marca",
+        "Fecha de última actualización",
+        "Validado por coordinación y el dueño"
+       ],
+       "practice": "Escribe el manual de una marca de servicio.",
+       "passCriteria": "Un community nuevo opera la marca un día sin hacer preguntas de fondo.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "COMMUNITY-A5-L3",
+       "title": "Accesos y seguridad",
+       "objective": "Proteger las cuentas de las marcas frente a hackeos, suplantación y salida de personal.",
+       "procedure": [
+        "Todos acceden por roles (portafolio de Meta, TikTok Business Center si aplica, permisos de YouTube, Perfil de Empresa de Google), nunca con contraseñas compartidas.",
+        "Verificación en dos pasos en todas las cuentas y correos de recuperación de la empresa, no personales.",
+        "Inventario de accesos: quién tiene qué rol y desde cuándo. Revisión mensual con el dueño.",
+        "Cuando alguien sale del equipo, el dueño retira sus accesos el mismo día.",
+        "Desconfía de mensajes que dicen “tu cuenta será desactivada, entra aquí”: suelen ser phishing. Verifica en la configuración oficial y reporta."
+       ],
+       "commonMistakes": [
+        "Contraseña compartida en un grupo de WhatsApp.",
+        "Correo de recuperación personal de alguien que ya no está.",
+        "Hacer clic en falsos avisos de infracción."
+       ],
+       "checklist": [
+        "Acceso por roles",
+        "Verificación en dos pasos",
+        "Inventario de accesos",
+        "Retiro de accesos al salir",
+        "Protocolo antiphishing"
+       ],
+       "practice": "Haz con el dueño el inventario de accesos de todas las marcas y corrige los riesgos.",
+       "passCriteria": "Inventario sin accesos huérfanos y con verificación en dos pasos al 100%.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "COMMUNITY-A5-L4",
+       "title": "Entrenar a un junior",
+       "objective": "Formar a un nuevo community usando este manual, con evaluación por niveles.",
+       "procedure": [
+        "Semana 1: módulos de Principiante con práctica en la cuenta de prueba.",
+        "Semana 2: publica con supervisión (tú revisas antes de programar).",
+        "Semanas 3-4: módulos de Intermedio, con respuesta de comunidad supervisada.",
+        "Evalúa con los criterios de aprobación de cada lección y registra el avance.",
+        "Da feedback semanal con ejemplos reales."
+       ],
+       "commonMistakes": [
+        "Pedir al dueño accesos completos para el junior el primer día.",
+        "Entrenar sin práctica.",
+        "No evaluar con criterios."
+       ],
+       "checklist": [
+        "Plan de 4 semanas",
+        "Cuenta de práctica",
+        "Supervisión antes de publicar",
+        "Evaluaciones registradas"
+       ],
+       "practice": "Entrena a un nuevo integrante durante 2 semanas.",
+       "passCriteria": "El junior aprueba todos los módulos de Principiante y publica sin errores durante una semana.",
+       "mediaType": "CHECKLIST"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

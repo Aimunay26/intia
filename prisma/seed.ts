@@ -12,6 +12,7 @@
 import "../scripts/local-database-only.mjs";
 import { prisma as rootPrisma } from "../src/lib/prisma";
 import { lockDemoTables, recordDemoSeed } from "../src/lib/demo-provenance";
+import { slugify } from "../src/lib/utils";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "node:crypto";
 
@@ -372,6 +373,73 @@ const OBJECTIVES = [
     sortOrder: 4,
   },
 ];
+
+/* ============================================================ CATÁLOGO === */
+
+/** Productos de la marca de ejemplo: los que aparecen como tarjetas en el paso 2 del generador. */
+const PRODUCTS = [
+  {
+    key: "polera",
+    kind: "PRODUCTO",
+    name: "Polera personalizada de algodón afranelado",
+    priceLabel: "S/ 89",
+    aiNotes:
+      "Polera de algodón afranelado: suave por dentro y abrigadora sin ser gruesa. Se personaliza con la fecha, las iniciales y una frase corta que elige el cliente; el diseño se aprueba por WhatsApp antes de producirla. Tallas S a XL, en corte unisex y de mujer. Se vende sola o en par a juego para parejas y llega en la caja premium, lista para regalar. En el video siempre se ven los detalles personalizados. No prometer plazos de entrega: se acuerdan por WhatsApp.",
+    features: [
+      "Algodón afranelado, suave por dentro",
+      "Fecha, iniciales y frase personalizadas",
+      "Tallas S a XL, corte unisex y de mujer",
+      "Más de 100 diseños exclusivos",
+      "Llega en caja premium",
+    ],
+    benefits: [
+      "Un regalo que nadie más tiene igual",
+      "Listo para entregar, sin envolver nada",
+      "Se puede usar a juego con la pareja",
+    ],
+    objections: [
+      "¿Y si no le queda? La talla se confirma por WhatsApp antes de producir",
+      "¿Llega a tiempo? El plazo se acuerda por WhatsApp según la fecha del regalo",
+      "¿Por qué cuesta más que una polera normal? Es personalizada y llega en caja premium",
+    ],
+  },
+  {
+    key: "taza",
+    kind: "PRODUCTO",
+    name: "Taza personalizada",
+    priceLabel: "S/ 39",
+    aiNotes:
+      "Taza de cerámica blanca con foto, nombres o una frase de la pareja. El diseño se aprueba por WhatsApp antes de imprimir. Llega en la caja premium. También es uno de los regalos extra cuando se pide con anticipación.",
+    features: ["Cerámica blanca", "Foto, nombres o frase a elección", "Llega en caja premium"],
+    benefits: ["Detalle que se usa todos los días", "Complementa cualquier regalo de pareja"],
+    objections: ["¿Se ve bien la foto? Se aprueba la prueba del diseño por WhatsApp antes de imprimir"],
+  },
+  {
+    key: "casaca",
+    kind: "PRODUCTO",
+    name: "Casaca personalizada",
+    priceLabel: "S/ 149",
+    aiNotes:
+      "Casaca personalizada con las iniciales y la fecha de la pareja. Pensada para el frío y para regalos de aniversario. Se aprueba el diseño por WhatsApp y llega en la caja premium. No prometer plazos de entrega en el video.",
+    features: ["Iniciales y fecha personalizadas", "Tallas S a XL", "Llega en caja premium"],
+    benefits: ["Regalo que se usa todo el invierno", "Se puede pedir a juego para los dos"],
+    objections: ["¿Es muy cara? Es una prenda personalizada que dura años, no un detalle de un día"],
+  },
+] as const;
+
+const COMBOS = [
+  {
+    kind: "PRODUCTO",
+    name: "Pack pareja: 2 poleras + taza",
+    priceLabel: "S/ 199",
+    aiNotes:
+      "Dos poleras a juego personalizadas con la misma fecha y frase, más una taza con la foto de la pareja. Todo llega en una sola caja premium. Pensado para aniversarios y San Valentín.",
+    items: [
+      { product: "polera", quantity: 2 },
+      { product: "taza", quantity: 1 },
+    ],
+  },
+] as const;
 
 /* ============================================================= GUIONES === */
 
@@ -965,6 +1033,53 @@ async function main() {
       });
     }
     console.log(`  ${OBJECTIVES.length} objetivos`);
+  }
+
+  /* --- Catálogo de productos --- */
+  // Upsert por (marca, slug): repetir el seed no duplica ni pisa lo que el equipo editó.
+  // Una instalación sembrada antes del catálogo no los recibe: cambiarían la huella de la
+  // marca de ejemplo y la limpieza de datos de ejemplo la trataría como trabajo propio.
+  const catalogoYaRegistrado = !pristine && (await prisma.demoSeedRecord.count({ where: { entityType: "Brand", entityId: brand.id } })) > 0;
+  if (!catalogoYaRegistrado) {
+    const productIds = new Map<string, string>();
+    for (const [index, p] of PRODUCTS.entries()) {
+      const slug = slugify(p.name);
+      const row = await prisma.brandProduct.upsert({
+        where: { brandId_slug: { brandId: brand.id, slug } },
+        create: {
+          brandId: brand.id,
+          slug,
+          kind: p.kind,
+          name: p.name,
+          aiNotes: p.aiNotes,
+          features: J(p.features),
+          benefits: J(p.benefits),
+          objections: J(p.objections),
+          priceLabel: p.priceLabel,
+          sortOrder: index,
+        },
+        update: {},
+      });
+      productIds.set(p.key, row.id);
+    }
+    for (const [index, c] of COMBOS.entries()) {
+      const slug = slugify(c.name);
+      const combo = await prisma.brandCombo.upsert({
+        where: { brandId_slug: { brandId: brand.id, slug } },
+        create: { brandId: brand.id, slug, kind: c.kind, name: c.name, aiNotes: c.aiNotes, priceLabel: c.priceLabel, sortOrder: index },
+        update: {},
+      });
+      // Los productos del combo solo se ponen al crearlo: si el equipo los cambió, se respetan.
+      if ((await prisma.brandComboItem.count({ where: { comboId: combo.id } })) === 0) {
+        await prisma.brandComboItem.createMany({
+          data: c.items.flatMap((item, order) => {
+            const productId = productIds.get(item.product);
+            return productId ? [{ comboId: combo.id, productId, brandId: brand.id, quantity: item.quantity, sortOrder: order }] : [];
+          }),
+        });
+      }
+    }
+    console.log(`  ${PRODUCTS.length} productos y ${COMBOS.length} ${COMBOS.length === 1 ? "combo" : "combos"}`);
   }
 
   /* --- Equipo --- */

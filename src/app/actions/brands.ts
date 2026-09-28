@@ -19,6 +19,7 @@ import { OBJECTIVE_PERIODS, OBJECTIVE_STATUS_MAP } from "@/lib/constants";
 import { lockRevision, withMutation } from "@/lib/mutations";
 import { MAX_UPLOAD_BYTES } from "@/lib/pdf";
 import { type AppTransaction } from "@/lib/prisma";
+import { productCatalogEnabled } from "@/lib/product-catalog";
 import {
 	boolField,
 	dateField,
@@ -260,7 +261,8 @@ export async function crearMarca(formData: FormData) {
       revalidateBrand(brand.id);
       revalidatePath("/actividad");
     });
-    afterCommit(() => redirect(`/marcas/${brand.id}`));
+    // Con el catálogo activo, el alta sigue en Productos: lo que la IA debe saber se carga al registrar la marca.
+    afterCommit(() => redirect(productCatalogEnabled() ? `/marcas/${brand.id}?vista=productos` : `/marcas/${brand.id}`));
   });
 }
 
@@ -358,6 +360,13 @@ export async function eliminarMarca(formData: FormData) {
       where: { id },
       select: { id: true, name: true, _count: { select: { content: true, objectives: true } } },
     });
+    // Solo con el catálogo activo se cuentan sus filas: apagado, las tablas nuevas no se consultan.
+    const catalogo = productCatalogEnabled()
+      ? {
+          products: await tx.brandProduct.count({ where: { brandId: id } }),
+          combos: await tx.brandCombo.count({ where: { brandId: id } }),
+        }
+      : null;
 
     await borrarAssetsDe("brand", id, tx);
     await tx.brand.delete({ where: { id } });
@@ -368,7 +377,9 @@ export async function eliminarMarca(formData: FormData) {
       entity: "Brand",
       entityId: id,
       brandId: id,
-      summary: `Eliminó la marca "${before.name}" con sus ${before._count.content} videos y ${before._count.objectives} objetivos`,
+      summary: catalogo
+        ? `Eliminó la marca "${before.name}" con sus ${before._count.content} videos, ${before._count.objectives} objetivos, ${catalogo.products} productos y ${catalogo.combos} combos`
+        : `Eliminó la marca "${before.name}" con sus ${before._count.content} videos y ${before._count.objectives} objetivos`,
     });
 
     afterCommit(() => revalidatePath("/marcas"));

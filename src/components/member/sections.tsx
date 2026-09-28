@@ -1,5 +1,6 @@
 import { optionalDateRange } from "@/lib/query-params";
 import { BrandObjectives } from "@/components/brand-objectives";
+import { BrandProducts } from "@/components/brand-products";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Prisma } from "@prisma/client";
@@ -78,7 +79,7 @@ export async function MemberCatalog({ user, id, query = {}, section }: MemberPag
   if (section === "brands") {
     const brand = await prisma.brand.findFirst({ where: { AND: [{ id }, brandScope(user)] } });
     if (!brand) notFound();
-    return <div className="space-y-4"><Link href={meta.href}>← {meta.label}</Link><PageHeader title={brand.name} subtitle="Identidad y referencias de marca" /><Card className="p-4"><BrandForm action={actualizarMarca} mode="editar" canEdit={editable} canImport={false} brand={{ id, updatedAt: brand.updatedAt.toISOString(), name: brand.name, tagline: brand.tagline ?? "", description: brand.description ?? "", identity: brand.identity ?? "", brief: brand.brief ?? "", toneOfVoice: brand.toneOfVoice ?? "", audience: brand.audience ?? "", valueProps: parseList(brand.valueProps).join("\n"), doNots: parseList(brand.doNots).join("\n"), keywords: parseList(brand.keywords).join("\n"), colorPrimary: brand.colorPrimary, colorSecondary: brand.colorSecondary, colorAccent: brand.colorAccent, website: brand.website ?? "", instagram: brand.instagram ?? "", tiktok: brand.tiktok ?? "", whatsapp: brand.whatsapp ?? "" }} /></Card><BrandObjectives user={user} brandId={id} /><MemberAssets type="brand" id={id} canEdit={editable} query={query} /></div>;
+    return <div className="space-y-4"><Link href={meta.href}>← {meta.label}</Link><PageHeader title={brand.name} subtitle="Identidad y referencias de marca" /><Card className="p-4"><BrandForm action={actualizarMarca} mode="editar" canEdit={editable} canImport={false} brand={{ id, updatedAt: brand.updatedAt.toISOString(), name: brand.name, tagline: brand.tagline ?? "", description: brand.description ?? "", identity: brand.identity ?? "", brief: brand.brief ?? "", toneOfVoice: brand.toneOfVoice ?? "", audience: brand.audience ?? "", valueProps: parseList(brand.valueProps).join("\n"), doNots: parseList(brand.doNots).join("\n"), keywords: parseList(brand.keywords).join("\n"), colorPrimary: brand.colorPrimary, colorSecondary: brand.colorSecondary, colorAccent: brand.colorAccent, website: brand.website ?? "", instagram: brand.instagram ?? "", tiktok: brand.tiktok ?? "", whatsapp: brand.whatsapp ?? "" }} /></Card><BrandProducts user={user} brandId={id} /><BrandObjectives user={user} brandId={id} /><MemberAssets type="brand" id={id} canEdit={editable} query={query} /></div>;
   }
   if (section === "structures") {
     const s = await prisma.structure.findUnique({ where: { id } });

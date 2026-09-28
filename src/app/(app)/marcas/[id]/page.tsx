@@ -12,6 +12,7 @@ import {
 	Globe,
 	Instagram,
 	Music2,
+	Package,
 	Palette,
 	Target,
 	Trash2,
@@ -48,13 +49,17 @@ import {
 } from "@/lib/constants";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { prisma } from "@/lib/prisma";
+import { brandDominantKind, productCatalogEnabled, readBrandCatalog } from "@/lib/product-catalog";
 import { formatDate, formatNumber, fromDateKey, jsonToLines, objectiveProgress, parseList } from "@/lib/utils";
 import { BrandForm, type DocumentosMarca } from "../brand-form";
 import { ObjectivesPanel, type ObjectiveRow } from "./objectives";
+import { ProductsPanel } from "./products";
 
-type Vista = "identidad" | "objetivos" | "contenido" | "documentos";
+type Vista = "identidad" | "productos" | "objetivos" | "contenido" | "documentos";
 
 const VISTAS: Vista[] = ["identidad", "objetivos", "contenido", "documentos"];
+/** "productos" solo existe con PRODUCT_CATALOG_ENABLED: apagado, la pestaña no se ve y el catálogo no se consulta. */
+const VISTAS_CON_CATALOGO: Vista[] = ["identidad", "productos", "objetivos", "contenido", "documentos"];
 
 /** Convierte un usuario o una URL suelta en un enlace usable. */
 function enlace(valor: string, base: string): string {
@@ -76,7 +81,9 @@ export default async function MarcaPage({
   const { id } = await params;
   const sp = singleQueryValues(await searchParams);
 
-  const vista: Vista = VISTAS.includes(sp.vista as Vista)
+  const catalogoActivo = productCatalogEnabled();
+  const vistas = catalogoActivo ? VISTAS_CON_CATALOGO : VISTAS;
+  const vista: Vista = vistas.includes(sp.vista as Vista)
     ? (sp.vista as Vista)
     : "identidad";
 
@@ -123,6 +130,8 @@ export default async function MarcaPage({
     );
     return (fin - Date.now()) / total < 0.3 && avance < 60;
   }).length;
+
+  const catalogo = catalogoActivo && vista === "productos" ? await readBrandCatalog(user, brand.id) : null;
 
   const videos =
     vista === "contenido"
@@ -247,7 +256,7 @@ export default async function MarcaPage({
                 icon={<Trash2 size={13} />}
                 className="btn btn-danger btn-sm"
                 title={`¿Eliminar "${brand.name}"?`}
-                description={`Se borrará la marca con sus ${brand._count.content} videos, sus objetivos y sus guiones asociados. Si solo quieres sacarla de la vista, archívala.`}
+                description={`Se borrará la marca con sus ${brand._count.content} videos, sus objetivos${catalogoActivo ? ", sus productos y combos" : ""} y sus guiones asociados. Si solo quieres sacarla de la vista, archívala.`}
               />
             ) : null}
           </>
@@ -291,7 +300,8 @@ export default async function MarcaPage({
         />
       </div>
 
-      <div className="mb-4">
+      {/* Con la pestaña Productos son cinco: en móvil se desplazan en vez de desbordar la página. */}
+      <div className={catalogoActivo ? "no-scrollbar mb-4 overflow-x-auto" : "mb-4"}>
         <SegmentedControl
           param="vista"
           defaultValue="identidad"
@@ -302,6 +312,7 @@ export default async function MarcaPage({
               icon: <Palette size={13} />,
               guia: GUIA_TARGETS.MARCA_TAB_IDENTIDAD,
             },
+            ...(catalogoActivo ? [{ value: "productos", label: "Productos", icon: <Package size={13} /> }] : []),
             { value: "objetivos", label: "Objetivos", icon: <Target size={13} /> },
             { value: "contenido", label: "Contenido", icon: <Film size={13} /> },
             { value: "documentos", label: "Documentos", icon: <FileText size={13} /> },
@@ -413,6 +424,16 @@ export default async function MarcaPage({
             </Card>
           </div>
         </div>
+      ) : null}
+
+      {catalogo ? (
+        <ProductsPanel
+          brandId={brand.id}
+          catalog={catalogo}
+          canEdit={puedeGestionar}
+          canDelete={puedeEliminar}
+          defaultKind={brandDominantKind(catalogo.products) ?? "PRODUCTO"}
+        />
       ) : null}
 
       {vista === "objetivos" ? (

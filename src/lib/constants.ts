@@ -523,6 +523,40 @@ export const OBJECTIVE_PERIODS: Option[] = [
   { value: "ANUAL", label: "Anual", chip: "", hex: "#64748b" },
 ];
 
+/* ---------------------------------------------------------- PRODUCTOS -- */
+
+/** Qué vende la marca con cada ficha del catálogo. Decide qué cierres y ángulos encajan. */
+export type ProductKind = "PRODUCTO" | "SERVICIO" | "RESTAURANTE";
+
+export const PRODUCT_KINDS: Option[] = [
+  {
+    value: "PRODUCTO",
+    label: "Producto",
+    chip: "bg-sky-500/12 text-sky-600 dark:text-sky-300 ring-sky-500/25",
+    hex: "#0ea5e9",
+    description: "Algo físico que se envía o entrega.",
+  },
+  {
+    value: "SERVICIO",
+    label: "Servicio",
+    chip: "bg-violet-500/12 text-violet-600 dark:text-violet-300 ring-violet-500/25",
+    hex: "#8b5cf6",
+    description: "Se vende tiempo, atención o un resultado.",
+  },
+  {
+    value: "RESTAURANTE",
+    label: "Restaurante",
+    chip: "bg-orange-500/12 text-orange-600 dark:text-orange-300 ring-orange-500/25",
+    hex: "#f97316",
+    description: "Platos, menú o experiencia en local o delivery.",
+  },
+];
+export const PRODUCT_KIND_MAP = byValue(PRODUCT_KINDS);
+
+export function isProductKind(v: unknown): v is ProductKind {
+  return v === "PRODUCTO" || v === "SERVICIO" || v === "RESTAURANTE";
+}
+
 /* ------------------------------------------------------------------- IA -- */
 
 export const AI_PROVIDERS: Option[] = [
@@ -643,6 +677,8 @@ export const AUDIT_ENTITIES = [
   "TaskColumn",
   "Brand",
   "BrandObjective",
+  "BrandProduct",
+  "BrandCombo",
   "CalendarEvent",
   "ContentItem",
   "ChecklistItem",
@@ -664,6 +700,8 @@ export const ENTITY_LABELS: Record<string, string> = {
   TaskColumn: "Columna de tareas",
   Brand: "Marca",
   BrandObjective: "Objetivo",
+  BrandProduct: "Producto",
+  BrandCombo: "Combo",
   CalendarEvent: "Agenda",
   ContentItem: "Video",
   ChecklistItem: "Check",

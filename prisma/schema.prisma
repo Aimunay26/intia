@@ -177,6 +177,8 @@ model Brand {
   updatedAt DateTime @updatedAt
 
   objectives BrandObjective[]
+  products   BrandProduct[]
+  combos     BrandCombo[]
   content    ContentItem[]
   scripts    Script[]
   events     CalendarEvent[]
@@ -214,6 +216,73 @@ model BrandObjective {
   updatedAt DateTime @updatedAt
 
   @@index([brandId])
+}
+
+/// Producto, servicio o plato que vende una marca. Alimenta el selector del generador.
+/// El tipo decide qué cierres y ángulos encajan (una polera no tiene "cupos de atención").
+model BrandProduct {
+  id      String @id @default(cuid())
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  kind       String  @default("PRODUCTO") // PRODUCTO | SERVICIO | RESTAURANTE
+  name       String
+  slug       String // único por marca: guardado idempotente
+  aiNotes    String? // Qué debe saber la IA
+  features   String  @default("[]") // JSON: string[]
+  benefits   String  @default("[]") // JSON: string[]
+  objections String  @default("[]") // JSON: string[]
+  priceLabel String? // "S/ 89", "desde S/ 120", "Menú S/ 25"
+  active     Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comboItems BrandComboItem[]
+
+  @@unique([brandId, slug])
+  @@unique([id, brandId])
+  @@index([brandId, active])
+}
+
+/// Varios productos de la misma marca que se venden juntos.
+model BrandCombo {
+  id      String @id @default(cuid())
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  kind       String  @default("PRODUCTO") // PRODUCTO | SERVICIO | RESTAURANTE (el más frecuente de sus productos)
+  name       String
+  slug       String // único por marca: guardado idempotente
+  aiNotes    String? // Qué debe saber la IA
+  priceLabel String?
+  active     Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items BrandComboItem[]
+
+  @@unique([brandId, slug])
+  @@unique([id, brandId])
+  @@index([brandId, active])
+}
+
+/// Producto dentro de un combo. Las FK compuestas impiden mezclar marcas.
+model BrandComboItem {
+  comboId   String
+  productId String
+  brandId   String
+  quantity  Int    @default(1)
+  sortOrder Int    @default(0)
+
+  combo   BrandCombo   @relation(fields: [comboId, brandId], references: [id, brandId], onDelete: Cascade)
+  product BrandProduct @relation(fields: [productId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  @@id([comboId, productId])
+  @@index([productId])
 }
 
 // ------------------------------------------------------------ ESTRUCTURAS --

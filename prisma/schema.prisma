@@ -55,6 +55,9 @@ model User {
   sessions       AuthSession[]
   workProfiles   UserWorkProfile[]
   brandAccess    UserBrandAccess[]
+  brandTeamRoles BrandTeamMember[]
+  productionSteps ProductionStep[] @relation("ProductionStepAssignee")
+  requestedProductionSteps ProductionStep[] @relation("ProductionStepRequester")
 
   @@index([role])
   @@index([archetypeId])
@@ -185,8 +188,37 @@ model Brand {
   tasks      Task[]
   taskColumns TaskColumn[]
   userAccess UserBrandAccess[]
+  teamMembers BrandTeamMember[]
+  productionSettings BrandProductionSettings?
 
   @@index([active])
+}
+
+/// Persona por defecto de cada función en la marca (una por función).
+/// El flujo automático de producción (PRODUCTION_FLOW_ENABLED) asigna desde aquí.
+model BrandTeamMember {
+  id      String @id @default(cuid())
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  role    String // ENCARGADO | GUIONISTA | FILMMAKER | EDITOR | COMMUNITY | DISENADOR
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([brandId, role])
+  @@index([userId])
+}
+
+/// Días de grabación y asignación automática de la marca.
+model BrandProductionSettings {
+  brandId String @id
+  brand   Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  /// JSON: number[] con días de la semana 1 (lunes) a 6 (sábado). Domingo no se trabaja.
+  recordingWeekdays String  @default("[]")
+  autoAssign        Boolean @default(true)
+  updatedAt         DateTime @updatedAt
 }
 
 /// Objetivo medible de una marca: numero actual vs numero meta.
@@ -609,6 +641,7 @@ model ContentItem {
   plannedStructures ContentPlannedStructure[]
   comments    Comment[]
   events      CalendarEvent[]
+  productionSteps ProductionStep[]
 
   @@index([brandId, scheduledDate])
   @@index([status])
@@ -1011,6 +1044,8 @@ model Task {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  productionStep ProductionStep?
+
   @@index([columnId])
   @@index([assigneeId])
   @@index([brandId])
@@ -1018,6 +1053,39 @@ model Task {
   @@index([order])
   @@index([columnId, order, id])
   @@index([columnId, brandId, order, id])
+}
+
+/// Paso operativo de un video: grabación, edición, publicación o diseño, con responsable y plazo.
+/// automationKey hace idempotente la automatización (`<video>:EDICION`; diseño: `<video>:DISENO:<uuid>`).
+model ProductionStep {
+  id            String  @id @default(cuid())
+  contentItemId String
+  brandId       String
+  /// FK compuesta: el paso siempre pertenece a la marca de su video.
+  contentItem   ContentItem @relation(fields: [contentItemId, brandId], references: [id, brandId], onDelete: Cascade)
+
+  step        String    // GRABACION | EDICION | PUBLICACION | DISENO
+  assigneeId  String?
+  assignee    User?     @relation("ProductionStepAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  dueAt       DateTime
+  status      String    @default("PENDIENTE") // PENDIENTE | HECHO | CANCELADO
+  source      String    @default("AUTO") // AUTO | MANUAL
+  taskId      String?   @unique
+  task        Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  /// Enlace a la nube: material grabado o entrega del diseño (http/https).
+  materialUrl String?
+  requestedById String?
+  requestedBy   User?   @relation("ProductionStepRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+  notes       String?
+  doneAt      DateTime?
+  automationKey String  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contentItemId])
+  @@index([brandId, dueAt])
+  @@index([assigneeId, status])
 }
 
 model AppSecret {

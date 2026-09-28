@@ -1,6 +1,7 @@
 import { optionalDateRange } from "@/lib/query-params";
 import { BrandObjectives } from "@/components/brand-objectives";
 import { BrandProducts } from "@/components/brand-products";
+import { BrandTeam } from "@/components/brand-team";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Prisma } from "@prisma/client";
@@ -26,6 +27,8 @@ import { StructureForm } from "@/app/(app)/estructuras/structure-form";
 import { BrandingLectura, BrandingForm } from "@/app/(app)/arquetipos/[id]/branding";
 import { ArchetypeCreateButton } from "@/app/(app)/arquetipos/archetype-form";
 import { NuevoEventoBoton, EditarEventoBoton } from "@/app/(app)/calendario/event-form";
+import { MemberCalendarMensual } from "@/app/(app)/calendario/member-calendar";
+import { calendarioMensualActivo } from "@/lib/calendar-view";
 import type { MemberPageProps } from "@/components/member-workspace";
 import { Details, Input, TextArea, HiddenId, Search, Paged, MemberAssets } from "./shared";
 
@@ -49,6 +52,8 @@ export async function MemberTasks({ user, query = {} }: MemberPageProps) {
 }
 
 export async function MemberCalendar({ user, query = {} }: MemberPageProps) {
+  // Vista mensual por defecto; CALENDARIO_MENSUAL=false vuelve a esta lista de 31 días.
+  if (calendarioMensualActivo()) return <MemberCalendarMensual user={user} query={query} />;
   const ctx = await getPageBrandContext();
   const from = optionalDateRange(query.desde, undefined).desde ?? dateKey(new Date());
   const start = new Date(`${from}T00:00:00-05:00`);
@@ -79,7 +84,7 @@ export async function MemberCatalog({ user, id, query = {}, section }: MemberPag
   if (section === "brands") {
     const brand = await prisma.brand.findFirst({ where: { AND: [{ id }, brandScope(user)] } });
     if (!brand) notFound();
-    return <div className="space-y-4"><Link href={meta.href}>← {meta.label}</Link><PageHeader title={brand.name} subtitle="Identidad y referencias de marca" /><Card className="p-4"><BrandForm action={actualizarMarca} mode="editar" canEdit={editable} canImport={false} brand={{ id, updatedAt: brand.updatedAt.toISOString(), name: brand.name, tagline: brand.tagline ?? "", description: brand.description ?? "", identity: brand.identity ?? "", brief: brand.brief ?? "", toneOfVoice: brand.toneOfVoice ?? "", audience: brand.audience ?? "", valueProps: parseList(brand.valueProps).join("\n"), doNots: parseList(brand.doNots).join("\n"), keywords: parseList(brand.keywords).join("\n"), colorPrimary: brand.colorPrimary, colorSecondary: brand.colorSecondary, colorAccent: brand.colorAccent, website: brand.website ?? "", instagram: brand.instagram ?? "", tiktok: brand.tiktok ?? "", whatsapp: brand.whatsapp ?? "" }} /></Card><BrandProducts user={user} brandId={id} /><BrandObjectives user={user} brandId={id} /><MemberAssets type="brand" id={id} canEdit={editable} query={query} /></div>;
+    return <div className="space-y-4"><Link href={meta.href}>← {meta.label}</Link><PageHeader title={brand.name} subtitle="Identidad y referencias de marca" /><Card className="p-4"><BrandForm action={actualizarMarca} mode="editar" canEdit={editable} canImport={false} brand={{ id, updatedAt: brand.updatedAt.toISOString(), name: brand.name, tagline: brand.tagline ?? "", description: brand.description ?? "", identity: brand.identity ?? "", brief: brand.brief ?? "", toneOfVoice: brand.toneOfVoice ?? "", audience: brand.audience ?? "", valueProps: parseList(brand.valueProps).join("\n"), doNots: parseList(brand.doNots).join("\n"), keywords: parseList(brand.keywords).join("\n"), colorPrimary: brand.colorPrimary, colorSecondary: brand.colorSecondary, colorAccent: brand.colorAccent, website: brand.website ?? "", instagram: brand.instagram ?? "", tiktok: brand.tiktok ?? "", whatsapp: brand.whatsapp ?? "" }} /></Card><BrandProducts user={user} brandId={id} /><BrandTeam user={user} brandId={id} /><BrandObjectives user={user} brandId={id} /><MemberAssets type="brand" id={id} canEdit={editable} query={query} /></div>;
   }
   if (section === "structures") {
     const s = await prisma.structure.findUnique({ where: { id } });

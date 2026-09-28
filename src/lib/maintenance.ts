@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { dispatchGeneration } from "@/lib/generation-dispatch";
 import { cleanupPrivateFiles } from "@/lib/private-storage";
 import { runRetention } from "@/lib/retention";
+import { runProductionSweep } from "@/lib/production-sweep";
 
 /** An expired wait does not claim that a remote side effect was cancelled. Durable dispatch claims allow reconciliation. */
 export async function boundedStep<T>(work: () => Promise<T>, milliseconds: number): Promise<{ value?: T; error?: "failed" | "uncertain" }> {
@@ -26,7 +27,10 @@ export async function runMaintenance() {
   const cleanupDeadline = Math.min(deadline-8000,Date.now()+20000);
   const cleanup = await boundedStep(() => cleanupPrivateFiles(3,cleanupDeadline),Math.max(1,cleanupDeadline-Date.now()));
   const retention = await boundedStep(() => runRetention(100),Math.max(1,Math.min(6000,deadline-Date.now())));
-  const report = { recovery, cleanup, retention, durationMs: Date.now()-started };
+  // Flujo de producción: edición de los días de grabación ya pasados. Apagado (PRODUCTION_FLOW_ENABLED), no consulta nada.
+  const productionBudget = Math.max(1,Math.min(8000,deadline-Date.now()-2000));
+  const production = await boundedStep(() => runProductionSweep(25,new Date(),Math.max(1,productionBudget-1500)),productionBudget);
+  const report = { recovery, cleanup, retention, production, durationMs: Date.now()-started };
   // Only counts/status; no prompts, file names, keys or provider error bodies.
   console.info(JSON.stringify({ event: "maintenance", ...report }));
   const saved = await boundedStep(() => prisma.appSetting.upsert({ where: { key: "ops.maintenance.last" }, create: { key: "ops.maintenance.last", value: JSON.stringify({ ...report, at: new Date().toISOString() }) }, update: { value: JSON.stringify({ ...report, at: new Date().toISOString() }) } }), Math.max(1,Math.min(1500,deadline-Date.now())));

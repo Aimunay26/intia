@@ -7,6 +7,7 @@ import { CONTENT_FLOW, SCRIPT_FLOW, transition, WorkflowError } from "@/lib/work
 import { CONTENT_STATUS_MAP, SCRIPT_STATUS_MAP } from "@/lib/constants";
 import { approveVersion, assertApprovedVersion, assertChecklistApproved, assertRequiredChecks, assertScriptApproved, reopenContentApprovals, reopeningReason, revokeVersion } from "@/lib/approvals";
 import { auditInTransaction, diffFields } from "@/lib/audit";
+import { onScriptApproved, onVideoStatusChanged } from "@/lib/domain/production-flow";
 export type TransitionInput = { id: string; status: string; expectedUpdatedAt: string; override: boolean; reason: string };
 
 /** Invariant owner for this transition; caller owns the transaction and post-commit effects. */
@@ -69,7 +70,9 @@ export async function transitionVideo(tx: AppTransaction, user: SessionUser, inp
       },
     });
 
-
+    // Flujo de producción (PRODUCTION_FLOW_ENABLED): grabación, edición o publicación con plazo.
+    // Apagado no consulta nada; un fallo de la automatización no revierte el cambio de estado.
+    await onVideoStatusChanged(tx, user, id, status);
 }
 
 /** Invariant owner for this transition; caller owns the transaction and post-commit effects. */
@@ -118,7 +121,8 @@ export async function transitionScript(tx: AppTransaction, user: SessionUser, in
       },
     });
 
-
+    // Guion aprobado: cada video que lo usa recibe su día de grabación (PRODUCTION_FLOW_ENABLED).
+    if (status === "APROBADO") await onScriptApproved(tx, user, id);
 }
 
 export async function recordPublication(tx: AppTransaction, user: SessionUser, input: { id: string; expectedUpdatedAt: string; publishedUrl: string | null; scheduledDate: Date | null }) {

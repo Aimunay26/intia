@@ -7,6 +7,7 @@ import { generationStage } from "@/lib/generation-trace";
 import { closedVideoWhere, contentScope } from "@/lib/access-scope";
 import type { Capability } from "@/lib/permissions";
 import { validateGeneratedScript } from "@/lib/ai/validate-script";
+import { onScriptLinked } from "@/lib/domain/production-flow";
 
 /**
  * Lo que el trabajo de generación guarda además de la entrada del modelo:
@@ -272,6 +273,10 @@ export async function vincularGuionAVideo(
         : {}),
     },
   });
+
+  // Con el guion unido, el video recibe su día de grabación y filmmaker (PRODUCTION_FLOW_ENABLED).
+  // Corre en esta misma transacción: vale para la ficha del guion y para el trabajo de generación.
+  await onScriptLinked(tx, user, contentItemId);
 
   return { linked: true };
 }

@@ -1,5 +1,6 @@
 "use server";
 import { transitionVideo } from "@/lib/domain/lifecycle";
+import { onChecklistCompleted, onShootDateChanged } from "@/lib/domain/production-flow";
 import { approveVersion, assertChecklistApproved, assertRequiredChecks, assertScriptApproved, reopenContentApprovals, reopeningReason, revokeVersion } from "@/lib/approvals";
 import { WorkflowError } from "@/lib/workflow-policy";
 import { requirePermission } from "@/lib/auth";
@@ -212,6 +213,8 @@ export async function actualizarVideo(formData: FormData) {
       summary: `Editó el video "${data.title}"`,
       changes: diffFields(before, data, FIELD_LABELS),
     });
+    // Nueva fecha de grabación: la grabación automática pendiente la sigue (PRODUCTION_FLOW_ENABLED).
+    if (dateKey(before.shootDate) !== dateKey(data.shootDate)) await onShootDateChanged(tx, user, id);
 
     afterCommit(() => revalidar(id));
   });
@@ -230,6 +233,7 @@ export async function actualizarGrabacion(formData: FormData) {
     await tx.contentItem.update({ where: { id }, data });
     await auditInTransaction(tx, { user, action: "EDITAR", entity: "ContentItem", entityId: id, brandId: before.brandId,
       summary: `Cambió la fecha de grabación de "${before.title}"`, changes: diffFields(before, data, FIELD_LABELS) });
+    if (dateKey(before.shootDate) !== dateKey(data.shootDate)) await onShootDateChanged(tx, user, id);
     afterCommit(() => revalidar(id));
   });
 }
@@ -392,6 +396,9 @@ export async function alternarCheck(formData: FormData) {
         check.contentItem.title
       }"${reopening ? `. Motivo: ${reason}` : ""}`,
     });
+
+    // Grabación terminada → edición; revisión final aprobada → publicación (PRODUCTION_FLOW_ENABLED).
+    if (done) await onChecklistCompleted(tx, user, { contentItemId: check.contentItemId, stage: current.stage, kind: current.kind });
 
     afterCommit(() => revalidar(check.contentItem.id));
   });

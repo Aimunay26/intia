@@ -33,7 +33,8 @@ export async function withMutation<T>(actor: SessionUser, owner: boolean,
 
 const TABLES = { Metric: '"Metric"', Brand: '"Brand"', BrandObjective: '"BrandObjective"', ContentItem: '"ContentItem"', Script: '"Script"',
   CalendarEvent: '"CalendarEvent"', Structure: '"Structure"', Archetype: '"Archetype"', Task: '"Task"', TaskColumn: '"TaskColumn"',
-  User: '"User"', Asset: '"Asset"', ArchetypeFit: '"ArchetypeFit"', BrandProduct: '"BrandProduct"', BrandCombo: '"BrandCombo"' } as const;
+  User: '"User"', Asset: '"Asset"', ArchetypeFit: '"ArchetypeFit"', BrandProduct: '"BrandProduct"', BrandCombo: '"BrandCombo"',
+  ProductionStep: '"ProductionStep"' } as const;
 
 /** Bloquea el registro y compara con la revisión que vio el editor, nunca con una leída al enviar. */
 export async function lockRevision(tx: AppTransaction, model: keyof typeof TABLES, id: string, expected: FormData | string) {

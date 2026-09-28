@@ -11,6 +11,7 @@ export const demoDigest = (value: unknown) => createHash("sha256").update(JSON.s
 
 const DEMO_TABLES = '"DemoSeedRecord", "Brand", "BrandObjective", "User", "AuthSession", "Archetype", "ArchetypeFit", "ContentItem", "Assignment", "ChecklistItem", "Metric", "Comment", "Script", "ScriptScene", "MatchRun", "MatchRow", "CalendarEvent", "TaskColumn", "Task", "Asset"';
 const CATALOG_TABLES = '"BrandProduct", "BrandCombo", "BrandComboItem"';
+const PRODUCTION_TABLES = '"BrandTeamMember", "BrandProductionSettings", "ProductionStep"';
 
 /** Una vez vistas, las tablas del catálogo no desaparecen: solo se cachea el sí. */
 let catalogoMigrado = false;
@@ -28,10 +29,26 @@ export async function catalogTablesExist(db: AppTransaction): Promise<boolean> {
   return catalogoMigrado;
 }
 
+/** Una vez vistas, las tablas del flujo de producción no desaparecen: solo se cachea el sí. */
+let produccionMigrada = false;
+
+/**
+ * Mismo criterio que el catálogo para la migración 20260928180000_production_flow: equipo,
+ * ajustes y pasos de producción entran en el bloqueo y en la huella solo si las tablas
+ * existen, sin mirar PRODUCTION_FLOW_ENABLED. Caen en cascada con la marca, el video o la
+ * cuenta de ejemplo; si alguien los cargó, protegen el lote como cualquier otra edición.
+ */
+export async function productionTablesExist(db: AppTransaction): Promise<boolean> {
+  if (produccionMigrada) return true;
+  const [row] = await db.$queryRaw<{ ok: boolean }[]>`SELECT (to_regclass('"BrandTeamMember"') IS NOT NULL AND to_regclass('"BrandProductionSettings"') IS NOT NULL AND to_regclass('"ProductionStep"') IS NOT NULL) AS ok`;
+  produccionMigrada = Boolean(row?.ok);
+  return produccionMigrada;
+}
+
 export async function lockDemoTables(db: AppTransaction) {
   // Solo durante seed/limpieza explícitos. Evita cambios entre comprobación y borrado,
   // incluso desde acciones antiguas que no conocen el manifiesto.
-  const tables = await catalogTablesExist(db) ? `${DEMO_TABLES}, ${CATALOG_TABLES}` : DEMO_TABLES;
+  const tables = [DEMO_TABLES, ...(await catalogTablesExist(db) ? [CATALOG_TABLES] : []), ...(await productionTablesExist(db) ? [PRODUCTION_TABLES] : [])].join(", ");
   await db.$executeRawUnsafe(`LOCK TABLE ${tables} IN SHARE ROW EXCLUSIVE MODE`);
 }
 
@@ -50,14 +67,24 @@ export async function demoSnapshot(db: AppTransaction, type: string, id: string)
     const catalogo = await catalogTablesExist(db);
     const products = catalogo ? await db.brandProduct.findMany({ where: { brandId: id } }) : [];
     const combos = catalogo ? await db.brandCombo.findMany({ where: { brandId: id }, include: { items: true } }) : [];
+    // Flujo de producción: igual que el catálogo, solo si la migración existe y hay filas.
+    const produccion = await productionTablesExist(db);
+    const team = produccion ? await db.brandTeamMember.findMany({ where: { brandId: id } }) : [];
+    const productionSettings = produccion ? await db.brandProductionSettings.findUnique({ where: { brandId: id } }) : null;
+    const productionSteps = produccion ? await db.productionStep.findMany({ where: { brandId: id } }) : [];
     return { brand, assets: [...await assets("brand", [id]), ...await assets("content", brand.content.map(c => c.id))],
       relatedEvents: await db.calendarEvent.findMany({ where: { contentItemId: { in: brand.content.map(c => c.id) } } }),
-      ...(products.length ? { products } : {}), ...(combos.length ? { combos } : {}) };
+      ...(products.length ? { products } : {}), ...(combos.length ? { combos } : {}),
+      ...(team.length ? { team } : {}), ...(productionSettings ? { productionSettings } : {}), ...(productionSteps.length ? { productionSteps } : {}) };
   }
   if (type === "User") {
     const user = await db.user.findUnique({ where: { id }, include: { assignments: true, scripts: true, checkedItems: true, createdContent: true, comments: true, events: true, tasks: true, sessions: true, auditLogs: { select: { id: true } } } });
     if (!user) return null;
-    return { user, assets: await assets("user", [id]), uploaded: await db.asset.findMany({ where: { uploadedById: id }, select: { id: true } }) };
+    const produccion = await productionTablesExist(db);
+    const teamRoles = produccion ? await db.brandTeamMember.findMany({ where: { userId: id } }) : [];
+    const productionSteps = produccion ? await db.productionStep.findMany({ where: { OR: [{ assigneeId: id }, { requestedById: id }] }, select: { id: true } }) : [];
+    return { user, assets: await assets("user", [id]), uploaded: await db.asset.findMany({ where: { uploadedById: id }, select: { id: true } }),
+      ...(teamRoles.length ? { teamRoles } : {}), ...(productionSteps.length ? { productionSteps } : {}) };
   }
   if (type === "Archetype") {
     const archetype = await db.archetype.findUnique({ where: { id }, include: { fits: true, users: true, matchRows: true } });

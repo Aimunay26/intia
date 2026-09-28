@@ -5,6 +5,7 @@ import { approvalToken } from "@/lib/approvals";
 import { WorkflowStatusFields } from "@/components/workflow-status-fields";
 import { requirePageSection } from "@/lib/render-context";
 import { MemberWorkspace } from "@/components/member-workspace";
+import { ProductionPanel } from "@/components/production-panel";
 import { EditForm, RevisionField } from "@/components/edit-form";
 import { getStructureChoices } from "@/lib/structure-choices";
 import {
@@ -347,6 +348,9 @@ export default async function VideoPage({ params, searchParams }: { params: Prom
             canEdit={canEdit}
             canManage={canManage}
           />
+
+          {/* Flujo de producción (PRODUCTION_FLOW_ENABLED): apagado no se muestra ni consulta nada. */}
+          <ProductionPanel user={user} videoId={item.id} />
 
           {item.script ? (
             <Card>

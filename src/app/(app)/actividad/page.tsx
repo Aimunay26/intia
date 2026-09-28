@@ -27,6 +27,7 @@ import {
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { productCatalogEnabled } from "@/lib/product-catalog";
+import { productionFlowEnabled } from "@/lib/production-flow-flag";
 import {
 	formatDate,
 	formatDateTime,
@@ -45,6 +46,8 @@ export const dynamic = "force-dynamic";
  * rotular los movimientos ya registrados.
  */
 const CATALOG_ENTITIES: string[] = ["BrandProduct", "BrandCombo"];
+/** Igual con el flujo de producción (PRODUCTION_FLOW_ENABLED). */
+const PRODUCTION_ENTITIES: string[] = ["BrandTeamMember", "ProductionStep"];
 
 const POR_PAGINA = 60;
 
@@ -265,7 +268,7 @@ export default async function ActividadPage({
         <FilterSelect
           param="entidad"
           allLabel="Todo tipo de cosa"
-          options={AUDIT_ENTITIES.filter((e) => productCatalogEnabled() || !CATALOG_ENTITIES.includes(e)).map((e) => ({
+          options={AUDIT_ENTITIES.filter((e) => (productCatalogEnabled() || !CATALOG_ENTITIES.includes(e)) && (productionFlowEnabled() || !PRODUCTION_ENTITIES.includes(e))).map((e) => ({
             value: e,
             label: ENTITY_LABELS[e] ?? e,
           }))}

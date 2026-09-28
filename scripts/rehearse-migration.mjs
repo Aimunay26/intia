@@ -168,6 +168,37 @@ try {
   assert.ok((await db.brandProduct.findUniqueOrThrow({where:{id:'upgrade-product'}})).updatedAt>productBefore.updatedAt,'El catálogo usa la revisión monótona');
   sql(source,`DELETE FROM "Brand" WHERE id='upgrade-other'`);
   assert.equal(await db.brandProduct.count({where:{brandId:'upgrade-other'}}),0);
+  // Flujo de producción: solo tablas nuevas; ninguna fila ni columna existente cambia.
+  const [flowBrandBefore]=await db.$queryRaw`SELECT * FROM "Brand" WHERE id='upgrade-brand'`;
+  const [flowVideoBefore]=await db.$queryRaw`SELECT * FROM "ContentItem" WHERE id='upgrade-video'`;
+  const [flowTaskColumns]=await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public' AND table_name IN ('ContentItem','Task','Assignment','Brand','User')`;
+  sql(source,fs.readFileSync('prisma/migrations/20260928180000_production_flow/migration.sql'));
+  await db.$disconnect();
+  assert.deepEqual((await db.$queryRaw`SELECT * FROM "Brand" WHERE id='upgrade-brand'`)[0],flowBrandBefore);
+  assert.deepEqual((await db.$queryRaw`SELECT * FROM "ContentItem" WHERE id='upgrade-video'`)[0],flowVideoBefore);
+  assert.deepEqual((await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public' AND table_name IN ('ContentItem','Task','Assignment','Brand','User')`)[0],flowTaskColumns,'Sin columnas nuevas en tablas existentes: el código previo sigue leyendo lo mismo');
+  assert.equal(await db.productionStep.count(),0,'El flujo nace vacío: no se infieren equipos ni pasos');
+  assert.equal(await db.brandTeamMember.count(),0);
+  sql(source,`INSERT INTO "Brand" (id,name,slug,"updatedAt") VALUES ('flow-other','Otra marca','flow-other',now());
+    INSERT INTO "BrandTeamMember" (id,"brandId",role,"userId","updatedAt") VALUES ('flow-team','upgrade-brand','FILMMAKER','upgrade-member',now());
+    INSERT INTO "BrandProductionSettings" ("brandId","recordingWeekdays","updatedAt") VALUES ('upgrade-brand','[2,4]',now());
+    INSERT INTO "ProductionStep" (id,"contentItemId","brandId",step,"assigneeId","dueAt","automationKey","updatedAt") VALUES ('flow-step','upgrade-video','upgrade-brand','GRABACION','upgrade-member',now(),'upgrade-video:GRABACION',now());`);
+  assert.throws(()=>sql(source,`INSERT INTO "BrandTeamMember" (id,"brandId",role,"userId","updatedAt") VALUES ('flow-dup','upgrade-brand','FILMMAKER','upgrade-owner',now())`),/BrandTeamMember_brandId_role_key/);
+  assert.throws(()=>sql(source,`INSERT INTO "BrandTeamMember" (id,"brandId",role,"userId","updatedAt") VALUES ('flow-role','upgrade-brand','CAMARA','upgrade-owner',now())`),/BrandTeamMember_role_check/);
+  assert.throws(()=>sql(source,`UPDATE "BrandProductionSettings" SET "recordingWeekdays"='[0,2]'`),/BrandProductionSettings_recordingWeekdays_check/);
+  assert.throws(()=>sql(source,`INSERT INTO "ProductionStep" (id,"contentItemId","brandId",step,"dueAt","automationKey","updatedAt") VALUES ('flow-cross','upgrade-video','flow-other','EDICION',now(),'upgrade-video:EDICION',now())`),/ProductionStep_contentItemId_brandId_fkey/);
+  assert.throws(()=>sql(source,`INSERT INTO "ProductionStep" (id,"contentItemId","brandId",step,"dueAt","automationKey","updatedAt") VALUES ('flow-key','upgrade-video','upgrade-brand','EDICION',now(),'otro-video:EDICION',now())`),/ProductionStep_automationKey_check/);
+  assert.throws(()=>sql(source,`INSERT INTO "ProductionStep" (id,"contentItemId","brandId",step,"dueAt","automationKey","updatedAt") VALUES ('flow-twice','upgrade-video','upgrade-brand','EDICION',now(),'upgrade-video:GRABACION',now())`),/ProductionStep_automationKey_key/);
+  assert.throws(()=>sql(source,`INSERT INTO "ProductionStep" (id,"contentItemId","brandId",step,"dueAt","automationKey","updatedAt") VALUES ('flow-step-kind','upgrade-video','upgrade-brand','MONTAJE',now(),'upgrade-video:MONTAJE',now())`),/ProductionStep_step_check/);
+  assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET status='HECHO' WHERE id='flow-step'`),/ProductionStep_done_check/);
+  assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET "materialUrl"='javascript:alert(1)' WHERE id='flow-step'`),/ProductionStep_materialUrl_check/);
+  const flowStepBefore=await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'}});
+  await db.productionStep.update({where:{id:'flow-step'},data:{status:'HECHO',doneAt:new Date(),materialUrl:'https://drive.example.test/material'}});
+  assert.ok((await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'}})).updatedAt>flowStepBefore.updatedAt,'Los pasos usan la revisión monótona');
+  sql(source,`DELETE FROM "User" WHERE id='upgrade-member'`);
+  assert.equal(await db.brandTeamMember.count(),0,'La función de la marca cae con la cuenta');
+  assert.equal((await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'}})).assigneeId,null,'El paso conserva su historial sin responsable');
+  sql(source,`DELETE FROM "Brand" WHERE id='flow-other'`);
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);
@@ -175,7 +206,7 @@ try {
   const schemaDiff=sourceDefinitions.flatMap(row=>{const other=targetDefinitions.find(item=>item.key===row.key);return other?.value===row.value?[]:[{key:row.key,source:row.value,restored:other?.value}];});
   fs.writeFileSync('.audit/migration-schema-diff.json',JSON.stringify(schemaDiff,null,2));
   assert.deepEqual(await snapshot(restored),original);assert.deepEqual(await restored.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8')),originalSchema);
-  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,workflowPreflightRolledBack:true,legacyApprovalsPreservedWithoutInventedVersion:true,completionManualObjectivesPreserved:true,completionLegacyMatchingPreservedReadOnly:true,completionDefaultsSafe:true,completionIndexDriftRolledBack:true,legacyGlobalCalendarRevoked:true,secretMigrationRollbackOnMissingKey:true,secretsMigratedEncrypted:true,masterKeyRotationVerified:true,catalogExistingRowsPreserved:true,catalogSameBrandEnforced:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
+  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,workflowPreflightRolledBack:true,legacyApprovalsPreservedWithoutInventedVersion:true,completionManualObjectivesPreserved:true,completionLegacyMatchingPreservedReadOnly:true,completionDefaultsSafe:true,completionIndexDriftRolledBack:true,legacyGlobalCalendarRevoked:true,secretMigrationRollbackOnMissingKey:true,secretsMigratedEncrypted:true,masterKeyRotationVerified:true,catalogExistingRowsPreserved:true,catalogSameBrandEnforced:true,productionFlowExistingRowsPreserved:true,productionFlowNoNewColumnsOnExistingTables:true,productionFlowSameBrandEnforced:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
   fs.writeFileSync('.audit/migration-rehearsal.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 } finally {
   for(const db of clients)await db.$disconnect();

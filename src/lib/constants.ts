@@ -339,8 +339,139 @@ export const ASSIGNMENT_ROLES: Option[] = [
     hex: "#6366f1",
     description: "Gráficos, miniatura, textos en pantalla",
   },
+  {
+    value: "COMMUNITY",
+    label: "Community / publicación",
+    chip: "bg-rose-500/12 text-rose-600 dark:text-rose-300 ring-rose-500/25",
+    hex: "#f43f5e",
+    description: "Sube el video a las redes",
+  },
 ];
 export const ASSIGNMENT_ROLE_MAP = byValue(ASSIGNMENT_ROLES);
+
+/* ------------------------------------------------- FLUJO DE PRODUCCIÓN -- */
+
+/**
+ * Funciones del equipo de una marca (BrandTeamMember.role): una persona por
+ * función. El flujo automático (PRODUCTION_FLOW_ENABLED) asigna desde aquí.
+ * `profile` es el perfil de trabajo que se sugiere primero al elegir persona.
+ */
+export const BRAND_TEAM_ROLES: (Option & { profile: string })[] = [
+  {
+    value: "ENCARGADO",
+    label: "Encargado de marca",
+    chip: "bg-violet-500/12 text-violet-600 dark:text-violet-300 ring-violet-500/25",
+    hex: "#8b5cf6",
+    description: "Coordina la marca y responde por el calendario.",
+    profile: "STRATEGY",
+  },
+  {
+    value: "GUIONISTA",
+    label: "Guionista",
+    chip: "bg-fuchsia-500/12 text-fuchsia-600 dark:text-fuchsia-300 ring-fuchsia-500/25",
+    hex: "#d946ef",
+    description: "Escribe los guiones y pide los diseños.",
+    profile: "WRITER",
+  },
+  {
+    value: "FILMMAKER",
+    label: "Filmmaker",
+    chip: "bg-sky-500/12 text-sky-600 dark:text-sky-300 ring-sky-500/25",
+    hex: "#0ea5e9",
+    description: "Graba el día de grabación y sube el material a la nube.",
+    profile: "CAMERA",
+  },
+  {
+    value: "EDITOR",
+    label: "Edición",
+    chip: "bg-orange-500/12 text-orange-600 dark:text-orange-300 ring-orange-500/25",
+    hex: "#f97316",
+    description: "Edita el material en el siguiente día hábil.",
+    profile: "EDITOR",
+  },
+  {
+    value: "COMMUNITY",
+    label: "Community",
+    chip: "bg-rose-500/12 text-rose-600 dark:text-rose-300 ring-rose-500/25",
+    hex: "#f43f5e",
+    description: "Sube el video aprobado a las redes al día siguiente.",
+    profile: "PUBLISHER",
+  },
+  {
+    value: "DISENADOR",
+    label: "Diseño",
+    chip: "bg-indigo-500/12 text-indigo-600 dark:text-indigo-300 ring-indigo-500/25",
+    hex: "#6366f1",
+    description: "Entrega los diseños pedidos en un máximo de 24 horas.",
+    profile: "DESIGNER",
+  },
+];
+export const BRAND_TEAM_ROLE_MAP = byValue(BRAND_TEAM_ROLES);
+
+/** Pasos de producción con plazo (ProductionStep.step). */
+export const PRODUCTION_STEPS: Option[] = [
+  {
+    value: "GRABACION",
+    label: "Grabación",
+    chip: "bg-sky-500/12 text-sky-600 dark:text-sky-300 ring-sky-500/25",
+    hex: "#0ea5e9",
+    description: "El día de grabación elegido para la marca.",
+  },
+  {
+    value: "EDICION",
+    label: "Edición",
+    chip: "bg-orange-500/12 text-orange-600 dark:text-orange-300 ring-orange-500/25",
+    hex: "#f97316",
+    description: "En las 24 horas hábiles siguientes a la grabación.",
+  },
+  {
+    value: "PUBLICACION",
+    label: "Publicación",
+    chip: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-300 ring-emerald-500/25",
+    hex: "#10b981",
+    description: "Al día hábil siguiente de la revisión final.",
+  },
+  {
+    value: "DISENO",
+    label: "Diseño",
+    chip: "bg-indigo-500/12 text-indigo-600 dark:text-indigo-300 ring-indigo-500/25",
+    hex: "#6366f1",
+    description: "Entrega en un máximo de 24 horas.",
+  },
+];
+export const PRODUCTION_STEP_MAP = byValue(PRODUCTION_STEPS);
+
+export const PRODUCTION_STEP_STATUSES: Option[] = [
+  {
+    value: "PENDIENTE",
+    label: "Pendiente",
+    chip: "bg-amber-500/12 text-amber-600 dark:text-amber-300 ring-amber-500/25",
+    hex: "#f59e0b",
+  },
+  {
+    value: "HECHO",
+    label: "Hecho",
+    chip: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-300 ring-emerald-500/25",
+    hex: "#10b981",
+  },
+  {
+    value: "CANCELADO",
+    label: "Cancelado",
+    chip: "bg-slate-500/12 text-slate-600 dark:text-slate-300 ring-slate-500/25",
+    hex: "#64748b",
+  },
+];
+export const PRODUCTION_STEP_STATUS_MAP = byValue(PRODUCTION_STEP_STATUSES);
+
+/** Días en que se puede grabar: lunes (1) a sábado (6). El domingo no se trabaja. */
+export const RECORDING_WEEKDAYS: { value: number; label: string; long: string }[] = [
+  { value: 1, label: "Lun", long: "lunes" },
+  { value: 2, label: "Mar", long: "martes" },
+  { value: 3, label: "Mié", long: "miércoles" },
+  { value: 4, label: "Jue", long: "jueves" },
+  { value: 5, label: "Vie", long: "viernes" },
+  { value: 6, label: "Sáb", long: "sábado" },
+];
 
 /* ------------------------------------------------------------ CHECKLIST -- */
 
@@ -694,6 +825,9 @@ export const AUDIT_ENTITIES = [
   "Comment",
   "AppSetting",
   "Auth",
+  "Task",
+  "BrandTeamMember",
+  "ProductionStep",
 ];
 
 export const ENTITY_LABELS: Record<string, string> = {
@@ -717,6 +851,9 @@ export const ENTITY_LABELS: Record<string, string> = {
   Comment: "Comentario",
   AppSetting: "Ajuste",
   Auth: "Sesión",
+  Task: "Tarea",
+  BrandTeamMember: "Equipo de marca",
+  ProductionStep: "Paso de producción",
 };
 
 /* ------------------------------------------------------------- PALETA -- */

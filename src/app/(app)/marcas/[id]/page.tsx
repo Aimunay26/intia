@@ -17,6 +17,7 @@ import {
 	Target,
 	Trash2,
 	TrendingUp,
+	Users,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -27,6 +28,7 @@ import {
 	eliminarMarca,
 } from "@/app/actions/brands";
 import { MemberAssets } from "@/components/member/shared";
+import { BrandTeam } from "@/components/brand-team";
 import { ETIQUETA_DOCUMENTO } from "@/lib/branding-parser";
 import { SegmentedControl } from "@/components/filters";
 import { DeleteButton, SubmitButton } from "@/components/forms";
@@ -50,16 +52,19 @@ import {
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { prisma } from "@/lib/prisma";
 import { brandDominantKind, productCatalogEnabled, readBrandCatalog } from "@/lib/product-catalog";
+import { productionFlowEnabled } from "@/lib/production-flow-flag";
 import { formatDate, formatNumber, fromDateKey, jsonToLines, objectiveProgress, parseList } from "@/lib/utils";
 import { BrandForm, type DocumentosMarca } from "../brand-form";
 import { ObjectivesPanel, type ObjectiveRow } from "./objectives";
 import { ProductsPanel } from "./products";
 
-type Vista = "identidad" | "productos" | "objetivos" | "contenido" | "documentos";
+type Vista = "identidad" | "productos" | "objetivos" | "contenido" | "documentos" | "equipo";
 
 const VISTAS: Vista[] = ["identidad", "objetivos", "contenido", "documentos"];
 /** "productos" solo existe con PRODUCT_CATALOG_ENABLED: apagado, la pestaña no se ve y el catálogo no se consulta. */
 const VISTAS_CON_CATALOGO: Vista[] = ["identidad", "productos", "objetivos", "contenido", "documentos"];
+/** "equipo" solo existe con PRODUCTION_FLOW_ENABLED: apagado, la pestaña no se ve y sus tablas no se consultan. */
+const VISTA_EQUIPO: Vista = "equipo";
 
 /** Convierte un usuario o una URL suelta en un enlace usable. */
 function enlace(valor: string, base: string): string {
@@ -82,7 +87,8 @@ export default async function MarcaPage({
   const sp = singleQueryValues(await searchParams);
 
   const catalogoActivo = productCatalogEnabled();
-  const vistas = catalogoActivo ? VISTAS_CON_CATALOGO : VISTAS;
+  const produccionActiva = productionFlowEnabled();
+  const vistas = [...(catalogoActivo ? VISTAS_CON_CATALOGO : VISTAS), ...(produccionActiva ? [VISTA_EQUIPO] : [])];
   const vista: Vista = vistas.includes(sp.vista as Vista)
     ? (sp.vista as Vista)
     : "identidad";
@@ -301,7 +307,7 @@ export default async function MarcaPage({
       </div>
 
       {/* Con la pestaña Productos son cinco: en móvil se desplazan en vez de desbordar la página. */}
-      <div className={catalogoActivo ? "no-scrollbar mb-4 overflow-x-auto" : "mb-4"}>
+      <div className={catalogoActivo || produccionActiva ? "no-scrollbar mb-4 overflow-x-auto" : "mb-4"}>
         <SegmentedControl
           param="vista"
           defaultValue="identidad"
@@ -316,6 +322,7 @@ export default async function MarcaPage({
             { value: "objetivos", label: "Objetivos", icon: <Target size={13} /> },
             { value: "contenido", label: "Contenido", icon: <Film size={13} /> },
             { value: "documentos", label: "Documentos", icon: <FileText size={13} /> },
+            ...(produccionActiva ? [{ value: "equipo", label: "Equipo", icon: <Users size={13} /> }] : []),
           ]}
         />
       </div>
@@ -528,6 +535,8 @@ export default async function MarcaPage({
           )}
         </Card>
       ) : null}
+
+      {vista === "equipo" ? <BrandTeam user={user} brandId={brand.id} /> : null}
 
       {vista === "documentos" ? (
         <MemberAssets type="brand" id={id} canEdit={puedeGestionar} canDelete={puedeEliminar} query={sp} />

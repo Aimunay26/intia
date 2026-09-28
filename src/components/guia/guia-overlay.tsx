@@ -167,6 +167,8 @@ export function GuiaOverlay() {
   const [cardSize, setCardSize] = useState<{ width: number; height: number }>({ width: 390, height: 280 });
   const [alertaRoja, setAlertaRoja] = useState<string | null>(null);
   const [accionRealizada, setAccionRealizada] = useState(false);
+  /** La pantalla muestra el catálogo de productos: los pasos con `conCatalogo` usan esos textos. */
+  const [conCatalogo, setConCatalogo] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -184,6 +186,9 @@ export function GuiaOverlay() {
   const vistoRef = useRef<string | null>(null);
   /** Id del paso desde el que ya se resincronizó: una sola vez por paso. */
   const saltoRef = useRef<string | null>(null);
+
+  // Textos del paso: los de la variante con catálogo de productos si la pantalla lo muestra.
+  const textos = conCatalogo && pasoActual.conCatalogo ? { ...pasoActual, ...pasoActual.conCatalogo } : pasoActual;
 
   // La intención vive en el catálogo; el prefijo «btn-» es solo el valor por defecto.
   const esPasoDeAccion = pasoActual.requiereAccion ?? pasoActual.target.startsWith("btn-");
@@ -303,6 +308,8 @@ export function GuiaOverlay() {
     setViewport((p) =>
       p.w === vp.w && p.h === vp.h && p.offX === vp.offX && p.offY === vp.offY ? p : vp
     );
+    const hayCatalogo = document.querySelector("[data-guia-catalogo]") !== null;
+    setConCatalogo((p) => (p === hayCatalogo ? p : hayCatalogo));
 
     const modal = modalAbierto();
     const mr = modal ? rectDe(modal.getBoundingClientRect()) : null;
@@ -760,10 +767,10 @@ export function GuiaOverlay() {
     const texto = {
       hecho: "Pulsa Siguiente para continuar.",
       menu: "Abre el menú para ver el enlace señalado.",
-      "otra-seccion": pasoActual.fallbackTexto,
+      "otra-seccion": textos.fallbackTexto,
       modal: "Termina lo que hay en la ventana abierta y ciérrala; seguimos aquí.",
-      ventana: pasoActual.fallbackTexto,
-      "no-disponible": pasoActual.fallbackTexto,
+      ventana: textos.fallbackTexto,
+      "no-disponible": textos.fallbackTexto,
     }[motivo];
 
     return (
@@ -936,14 +943,14 @@ export function GuiaOverlay() {
           <div className="flex-1 overflow-y-auto min-h-0 py-2.5 space-y-2 pr-1">
             <div>
               <div className="text-brand text-[12px] font-bold">{moduloActual.titulo}</div>
-              <h4 className="text-ink mt-0.5 text-[15px] font-bold leading-snug">{pasoActual.titulo}</h4>
+              <h4 className="text-ink mt-0.5 text-[15px] font-bold leading-snug">{textos.titulo}</h4>
             </div>
 
-            <p className="text-inksoft text-[13px] leading-relaxed">{pasoActual.instruccion}</p>
+            <p className="text-inksoft text-[13px] leading-relaxed">{textos.instruccion}</p>
 
-            {pasoActual.detalle && !colocacion.compacto && (
+            {textos.detalle && !colocacion.compacto && (
               <div className="bg-surface2 border-line text-inkmuted rounded-lg border p-2.5 text-[12px] leading-relaxed">
-                💡 {pasoActual.detalle}
+                💡 {textos.detalle}
               </div>
             )}
 

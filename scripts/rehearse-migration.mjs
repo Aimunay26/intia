@@ -150,6 +150,24 @@ try {
   process.env.APP_SECRETS_KEYS=JSON.stringify({second:JSON.parse(process.env.APP_SECRETS_KEYS).second});
   assert.equal(crypto.decryptSecret('ai.google.apiKey',await db.appSecret.findUniqueOrThrow({where:{key:'ai.google.apiKey'}})),'upgrade-key-fixture');
   assert.deepEqual(await db.$transaction(tx=>migrateSecretStore(tx,true)),{migrated:0,rotated:0,removedLegacyRows:0});
+  const [catalogBrandBefore]=await db.$queryRaw`SELECT * FROM "Brand" WHERE id='upgrade-brand'`;
+  sql(source,fs.readFileSync('prisma/migrations/20260928120000_brand_catalog/migration.sql'));
+  await db.$disconnect();
+  assert.deepEqual((await db.$queryRaw`SELECT * FROM "Brand" WHERE id='upgrade-brand'`)[0],catalogBrandBefore);
+  assert.equal(await db.brandProduct.count(),0,'El catálogo nace vacío: no se infieren productos del brief');
+  sql(source,`INSERT INTO "Brand" (id,name,slug,"updatedAt") VALUES ('upgrade-other','Otra marca','upgrade-other',now());
+    INSERT INTO "BrandProduct" (id,"brandId",name,slug,"updatedAt") VALUES ('upgrade-product','upgrade-brand','Polera','polera',now()),('other-product','upgrade-other','Taza','taza',now());
+    INSERT INTO "BrandCombo" (id,"brandId",name,slug,"updatedAt") VALUES ('upgrade-combo','upgrade-brand','Pack','pack',now());
+    INSERT INTO "BrandComboItem" ("comboId","productId","brandId",quantity) VALUES ('upgrade-combo','upgrade-product','upgrade-brand',2);`);
+  assert.throws(()=>sql(source,`INSERT INTO "BrandComboItem" ("comboId","productId","brandId") VALUES ('upgrade-combo','other-product','upgrade-brand')`),/BrandComboItem_productId_brandId_fkey/);
+  assert.throws(()=>sql(source,`INSERT INTO "BrandComboItem" ("comboId","productId","brandId") VALUES ('upgrade-combo','other-product','upgrade-other')`),/BrandComboItem_comboId_brandId_fkey/);
+  assert.throws(()=>sql(source,`UPDATE "BrandProduct" SET kind='OTRO' WHERE id='upgrade-product'`),/BrandProduct_kind_check/);
+  assert.throws(()=>sql(source,`UPDATE "BrandComboItem" SET quantity=0`),/BrandComboItem_quantity_check/);
+  const productBefore=await db.brandProduct.findUniqueOrThrow({where:{id:'upgrade-product'}});
+  await db.brandProduct.update({where:{id:'upgrade-product'},data:{aiNotes:'Algodón pima'}});
+  assert.ok((await db.brandProduct.findUniqueOrThrow({where:{id:'upgrade-product'}})).updatedAt>productBefore.updatedAt,'El catálogo usa la revisión monótona');
+  sql(source,`DELETE FROM "Brand" WHERE id='upgrade-other'`);
+  assert.equal(await db.brandProduct.count({where:{brandId:'upgrade-other'}}),0);
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);
@@ -157,7 +175,7 @@ try {
   const schemaDiff=sourceDefinitions.flatMap(row=>{const other=targetDefinitions.find(item=>item.key===row.key);return other?.value===row.value?[]:[{key:row.key,source:row.value,restored:other?.value}];});
   fs.writeFileSync('.audit/migration-schema-diff.json',JSON.stringify(schemaDiff,null,2));
   assert.deepEqual(await snapshot(restored),original);assert.deepEqual(await restored.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8')),originalSchema);
-  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,workflowPreflightRolledBack:true,legacyApprovalsPreservedWithoutInventedVersion:true,completionManualObjectivesPreserved:true,completionLegacyMatchingPreservedReadOnly:true,completionDefaultsSafe:true,completionIndexDriftRolledBack:true,legacyGlobalCalendarRevoked:true,secretMigrationRollbackOnMissingKey:true,secretsMigratedEncrypted:true,masterKeyRotationVerified:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
+  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,workflowPreflightRolledBack:true,legacyApprovalsPreservedWithoutInventedVersion:true,completionManualObjectivesPreserved:true,completionLegacyMatchingPreservedReadOnly:true,completionDefaultsSafe:true,completionIndexDriftRolledBack:true,legacyGlobalCalendarRevoked:true,secretMigrationRollbackOnMissingKey:true,secretsMigratedEncrypted:true,masterKeyRotationVerified:true,catalogExistingRowsPreserved:true,catalogSameBrandEnforced:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
   fs.writeFileSync('.audit/migration-rehearsal.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 } finally {
   for(const db of clients)await db.$disconnect();

@@ -26,6 +26,7 @@ import {
 	ENTITY_LABELS,
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { productCatalogEnabled } from "@/lib/product-catalog";
 import {
 	formatDate,
 	formatDateTime,
@@ -37,6 +38,13 @@ import {
 } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Con el catálogo apagado (PRODUCT_CATALOG_ENABLED) el filtro no ofrece sus entidades:
+ * queda como antes del catálogo. Siguen en AUDIT_ENTITIES para validar `?entidad=` y
+ * rotular los movimientos ya registrados.
+ */
+const CATALOG_ENTITIES: string[] = ["BrandProduct", "BrandCombo"];
 
 const POR_PAGINA = 60;
 
@@ -257,7 +265,7 @@ export default async function ActividadPage({
         <FilterSelect
           param="entidad"
           allLabel="Todo tipo de cosa"
-          options={AUDIT_ENTITIES.map((e) => ({
+          options={AUDIT_ENTITIES.filter((e) => productCatalogEnabled() || !CATALOG_ENTITIES.includes(e)).map((e) => ({
             value: e,
             label: ENTITY_LABELS[e] ?? e,
           }))}

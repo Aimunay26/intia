@@ -5,11 +5,13 @@ import type { AppTransaction } from "@/lib/prisma";
 import { requireLevel, LEVEL } from "@/lib/auth";
 import { auditInTransaction } from "@/lib/audit";
 import { assertActor, withAuthLock } from "@/lib/auth-transactions";
-import { eligibleDemoSeed, lockDemoTables } from "@/lib/demo-provenance";
+import { catalogTablesExist, eligibleDemoSeed, lockDemoTables } from "@/lib/demo-provenance";
 
 export type Recuento = {
   marca: string | null; objetivos: number; videos: number; guiones: number; escenas: number;
   metricas: number; eventos: number; cuentas: string[]; perfilesGenericos: number; archivos: number;
+  /** Catálogo de la marca de ejemplo: cae en cascada con ella. 0 si la migración del catálogo no está aplicada. */
+  productos: number; combos: number;
   reviewToken: string; protected: boolean;
   seConserva: { personas: number; estructuras: number; movimientos: number };
 };
@@ -25,6 +27,8 @@ async function preview(db: AppTransaction, actorId: string) {
     db.script.findMany({ where: { brandId: { in: brands } }, select: { id: true } }),
     db.user.findMany({ where: { id: { in: users } }, select: { name: true } }),
   ]);
+  // El catálogo se cuenta aunque PRODUCT_CATALOG_ENABLED esté apagado: se borra igual con la marca.
+  const catalogo = brands.length > 0 && await catalogTablesExist(db);
   const assets = { OR: [{ ownerType: "brand", ownerId: { in: brands } }, { ownerType: "content", ownerId: { in: content.map(c => c.id) } }, { ownerType: "user", ownerId: { in: users } }, { ownerType: "archetype", ownerId: { in: archetypes } }] };
   const recuento: Recuento = {
     marca: brandRows.map(b => b.name).join(", ") || null,
@@ -35,6 +39,8 @@ async function preview(db: AppTransaction, actorId: string) {
     eventos: await db.calendarEvent.count({ where: { brandId: { in: brands } } }),
     cuentas: accounts.map(a => a.name), perfilesGenericos: archetypes.length,
     archivos: await db.asset.count({ where: assets }),
+    productos: catalogo ? await db.brandProduct.count({ where: { brandId: { in: brands } } }) : 0,
+    combos: catalogo ? await db.brandCombo.count({ where: { brandId: { in: brands } } }) : 0,
     reviewToken: eligible.token, protected: eligible.protected,
     seConserva: { personas: await db.archetype.count({ where: { isPerson: true } }), estructuras: await db.structure.count(), movimientos: await db.auditLog.count() },
   };
@@ -62,7 +68,9 @@ export async function vaciarDatosDeEjemplo(_prev: VaciarState, form: FormData): 
     await tx.user.deleteMany({ where: { id: { in: batch.users }, role: "MEMBER" } });
     await tx.archetype.deleteMany({ where: { id: { in: batch.archetypes } } });
     await tx.demoSeedRecord.deleteMany({ where: { OR: batch.eligible.records.map(r => ({ entityType: r.entityType, entityId: r.entityId })) } });
-    await auditInTransaction(tx, { user, action: "ELIMINAR", entity: "AppSetting", summary: `Limpió un lote demo verificado: ${batch.recuento.videos} videos, ${batch.recuento.guiones} guiones, ${batch.users.length} cuentas y ${batch.archetypes.length} perfiles` });
+    const { productos, combos } = batch.recuento;
+    const catalogo = productos || combos ? `, ${productos} productos, ${combos} combos` : "";
+    await auditInTransaction(tx, { user, action: "ELIMINAR", entity: "AppSetting", summary: `Limpió un lote demo verificado: ${batch.recuento.videos} videos, ${batch.recuento.guiones} guiones${catalogo}, ${batch.users.length} cuentas y ${batch.archetypes.length} perfiles` });
     return { ok: "Se eliminó el lote demo verificado. Los datos sin marca de procedencia se conservaron." };
   });
   if (result.ok) for (const path of ["/", "/marcas", "/contenido", "/guiones", "/calendario", "/metricas", "/equipo", "/arquetipos", "/ajustes", "/actividad"]) revalidatePath(path);

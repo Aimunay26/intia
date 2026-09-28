@@ -35,6 +35,11 @@ export type GuiaPaso = {
   abreCon?: GuiaTargetKey;
   /** Paso que solo sirve para llegar a la ficha: si ya estamos en una ruta hija de `url`, se salta solo. */
   puente?: boolean;
+  /**
+   * Textos cuando la pantalla muestra el catálogo de productos (PRODUCT_CATALOG_ENABLED):
+   * la guía los usa si hay un elemento con `data-guia-catalogo`. Sin él, los de siempre.
+   */
+  conCatalogo?: Partial<Pick<GuiaPaso, "titulo" | "instruccion" | "detalle" | "fallbackTexto">>;
 };
 
 export type GuiaModulo = {
@@ -415,6 +420,11 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         url: "/generador",
         fallbackTexto: "Campo «Producto» de la etapa 2.",
         posicionPreferida: "bottom",
+        conCatalogo: {
+          titulo: "Elige el producto",
+          instruccion: "Elige el producto o combo de la marca, o pulsa «Cargar un nuevo producto».",
+          fallbackTexto: "Productos de la marca, en la etapa 2.",
+        },
       },
       {
         id: "m5-producto-desc",
@@ -425,6 +435,11 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         url: "/generador",
         fallbackTexto: "Campo de descripción del producto, etapa 2.",
         posicionPreferida: "top",
+        conCatalogo: {
+          titulo: "Revisa qué sabrá la IA",
+          instruccion: "«Qué debe saber la IA» llega cargado desde el producto. Ajústalo solo si este video necesita algo más.",
+          fallbackTexto: "Aparece al elegir un producto o al pulsar «Cargar un nuevo producto» en la etapa 2.",
+        },
       },
       {
         id: "m5-actor",

@@ -18,11 +18,15 @@ import { aiStatus, getSettings, SETTING_KEYS } from "@/lib/settings";
 import { resolveAiModel } from "@/lib/ai-models";
 import { resourceLimit } from "@/lib/resource-limits";
 import { formatDate, parseJson, parseList } from "@/lib/utils";
+import { allows } from "@/lib/permissions";
+import { brandDominantKind, productCatalogEnabled, readGeneratorCatalog, type ProductKind } from "@/lib/product-catalog";
+import { STRUCTURE_REFERENCES, getStructureReference } from "@/lib/structure-references";
 import {
 	GeneratorForm,
 	type GeneratorArchetype,
 	type GeneratorBeat,
 	type GeneratorBrand,
+	type GeneratorCatalog,
 	type GeneratorStructure,
 	type GeneratorVideo,
 } from "./generator-form";
@@ -68,8 +72,28 @@ export default async function GeneradorPage({
   // Solo las tarjetas a las que esta persona puede unir un guion (el mismo
   // alcance que exige asignarGuionAVideo): la cookie de marca no concede acceso.
   const alcanceVideos = contentScope(user, "scripts.write");
+  // Catálogo de productos (kill-switch): apagado, las tablas nuevas no se consultan.
+  const catalogoActivo = productCatalogEnabled();
+  // Las marcas se leen una vez: la lista del formulario y, con el catálogo
+  // encendido, sus productos salen de las mismas marcas autorizadas (brandScope).
+  const marcasAutorizadas = prisma.brand.findMany({
+    where: { active: true, archived: false, ...brandScope(user) },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      colorPrimary: true,
+      tagline: true,
+      audience: true,
+      toneOfVoice: true,
+      identity: true,
+      valueProps: true,
+      doNots: true,
+      keywords: true,
+    },
+  });
 
-  const [structures, brands, archetypes, fits, refRows, ai, modelSettings, candidatos, tarjetaPedida] = await Promise.all([
+  const [structures, brands, archetypes, fits, refRows, ai, modelSettings, candidatos, tarjetaPedida, catalogRows] = await Promise.all([
     prisma.structure.findMany({
       where: { active: true },
       orderBy: [{ category: "asc" }, { name: "asc" }],
@@ -85,22 +109,7 @@ export default async function GeneradorPage({
         defaultModel: true,
       },
     }),
-    prisma.brand.findMany({
-      where: { active: true, archived: false, ...brandScope(user) },
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        colorPrimary: true,
-        tagline: true,
-        audience: true,
-        toneOfVoice: true,
-        identity: true,
-        valueProps: true,
-        doNots: true,
-        keywords: true,
-      },
-    }),
+    marcasAutorizadas,
     prisma.archetype.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
@@ -150,6 +159,10 @@ export default async function GeneradorPage({
           where: { AND: [{ id: sp.video }, alcanceVideos] },
           select: { ...VIDEO_SELECT, scriptId: true },
         })
+      : Promise.resolve(null),
+    // Productos y combos activos de las marcas de la lista, solo con el flag.
+    catalogoActivo
+      ? marcasAutorizadas.then((rows) => readGeneratorCatalog(rows.map((b) => b.id)))
       : Promise.resolve(null),
   ]);
 
@@ -206,6 +219,9 @@ export default async function GeneradorPage({
     defaultProvider: s.defaultProvider,
     defaultModel: s.defaultModel,
     docs: docs.get(`structure:${s.id}`) ?? 0,
+    // Con el catálogo, los ángulos recomendados por la referencia del formato
+    // ordenan la lista del paso 3 (solo si la referencia existe de verdad).
+    ...(catalogoActivo ? { recommendedAngles: angulosRecomendados(s.name) } : {}),
   }));
 
   const brandOptions: GeneratorBrand[] = brands.map((b) => ({
@@ -276,6 +292,11 @@ export default async function GeneradorPage({
     ? (marcaPedida as string)
     : "";
 
+  // null con el flag apagado: el paso 2 queda idéntico al de siempre.
+  const catalog: GeneratorCatalog | null = catalogRows
+    ? { ...catalogRows, kindByBrand: tiposPorMarca(catalogRows.products) }
+    : null;
+
   return (
     <>
       <PageHeader
@@ -325,10 +346,34 @@ export default async function GeneradorPage({
           initialProduct={sp.producto}
           initialRequest={sp.peticion}
           initialAngle={sp.angulo}
+          catalog={catalog}
+          canSaveProducts={Boolean(catalog) && allows(user, "brands.edit")}
         /></>
       )}
     </>
   );
 
   });
+}
+
+/** Ángulos que la referencia del formato recomienda; nada si el formato no tiene referencia propia. */
+function angulosRecomendados(nombre: string): string[] {
+  const referencia = getStructureReference(nombre);
+  return Object.values(STRUCTURE_REFERENCES).includes(referencia) ? referencia.recommendedAngles : [];
+}
+
+/** Tipo por defecto de cada marca: el más frecuente entre sus productos activos. */
+function tiposPorMarca(products: { brandId: string; kind: string; active: boolean }[]): Record<string, ProductKind> {
+  const porMarca = new Map<string, { kind: string; active: boolean }[]>();
+  for (const product of products) {
+    const lista = porMarca.get(product.brandId) ?? [];
+    lista.push(product);
+    porMarca.set(product.brandId, lista);
+  }
+  const tipos: Record<string, ProductKind> = {};
+  for (const [brandId, lista] of porMarca) {
+    const kind = brandDominantKind(lista);
+    if (kind) tipos[brandId] = kind;
+  }
+  return tipos;
 }

@@ -2,7 +2,14 @@
  * Catálogo de Ángulos Creativos y Gatillos Psicológicos de CTA
  * Inspirado en fórmulas de retención vertical y la metodología de Alex Hormozi
  * ($100M Offers / $100M Leads: Escasez, Urgencia, Motivo "Fraternidad", Incentivo y Demostración Visual).
+ *
+ * Tipo de lo que se vende (PRODUCTO, SERVICIO, RESTAURANTE): ángulos, fórmulas
+ * y acciones pueden declarar `tipos`. Sin `tipos` sirven para todos. Con el
+ * tipo desconocido (null) todas las funciones "…Para" devuelven lo de siempre,
+ * sin filtrar ni agregar nada.
  */
+
+import type { ProductKind } from "@/lib/constants";
 
 export type CreativeAngle = {
   id: string;
@@ -13,6 +20,8 @@ export type CreativeAngle = {
   description: string;
   promptInstructions: string;
   hookExample: string;
+  /** Solo encaja con estos tipos de producto. Sin valor: con todos. */
+  tipos?: ProductKind[];
 };
 
 export const ANGULOS_CREATIVOS: CreativeAngle[] = [
@@ -173,6 +182,8 @@ export const ANGULOS_CREATIVOS: CreativeAngle[] = [
 - Diálogo pausado, íntimo y susurrado o en voz baja que no tape los sonidos reales del producto.
 - Enfatiza la emoción sensorial de abrir un paquete pensado para uno.`,
     hookExample: "(Sonido crujiente de cinta adhesiva y empaque en primerísimo plano) «Miren la sorpresa que preparamos para este pedido especial…»",
+    // Un servicio no tiene paquete que abrir; un plato para delivery sí.
+    tipos: ["PRODUCTO", "RESTAURANTE"],
   },
   {
     id: "detras_de_camaras",
@@ -193,6 +204,15 @@ export const ANGULOS_CREATIVOS: CreativeAngle[] = [
 
 /* --------------------------------------------------- GATILLOS DE CTA (HORMOZI) -- */
 
+export type CtaPreset = {
+  label: string;
+  accion: string;
+  detalle: string;
+  textoCompleto: string;
+  /** Solo encaja con estos tipos de producto. Sin valor: con todos. */
+  tipos?: ProductKind[];
+};
+
 export type CtaTrigger = {
   id: string;
   name: string;
@@ -204,12 +224,15 @@ export type CtaTrigger = {
   /** De dónde sale la idea: cita del libro (venta) o evidencia de plataforma (comunidad). */
   bookReference: string;
   defaultDetailPlaceholder: string;
-  presets: {
-    label: string;
-    accion: string;
-    detalle: string;
-    textoCompleto: string;
-  }[];
+  presets: CtaPreset[];
+  /**
+   * Fórmulas que solo aparecen cuando se conoce el tipo de producto: van
+   * después de `presets` en presetsPara(). Viven aparte para que `presets`
+   * (lo que se ve hoy con el tipo desconocido) no cambie.
+   */
+  presetsPorTipo?: CtaPreset[];
+  /** Ejemplo del campo de detalle según el tipo; si falta, defaultDetailPlaceholder. */
+  placeholderPorTipo?: Partial<Record<ProductKind, string>>;
   promptGuidance: string;
 };
 
@@ -258,20 +281,57 @@ export const CTA_TRIGGERS: CtaTrigger[] = [
         accion: "compra",
         detalle: "Solo puedo atender a 9 clientes y ya tengo 5, las plazas de atención se llenan",
         textoCompleto: "Si no me compras ahora solo puedo atender a 9 clientes y ya tengo 5 clientes, así que ya lo sabes: las plazas de atención se llenan y conmigo vas a conseguir los resultados que quieres.",
+        tipos: ["SERVICIO"],
       },
       {
         label: "Lote único no reimpreso",
         accion: "bio",
         detalle: "Solo fabricamos un lote único y nunca reimprimiremos este modelo",
         textoCompleto: "Solo imprimimos un lote de edición limitada y nunca reimprimiremos este diseño. Ve al enlace de mi perfil para asegurar el tuyo antes de que se agote para siempre.",
+        tipos: ["PRODUCTO"],
       },
       {
         label: "Horarios de agenda que se llenan",
         accion: "dm",
         detalle: "Solo abro 5 huecos de asesoría por semana",
         textoCompleto: "Solo puedo atender a 5 personas por semana para darles seguimiento personalizado. Escríbeme «CUPO» por DM si quieres que lo resolvamos pronto.",
+        tipos: ["SERVICIO"],
       },
     ],
+    presetsPorTipo: [
+      {
+        label: "Stock del lote o talla",
+        accion: "compra",
+        detalle: "Quedan 7 unidades de este diseño en talla M y no vamos a reponerlo",
+        textoCompleto: "De este diseño quedan solo 7 unidades en talla M y no lo vamos a reponer. Cuando se acaben, se acabó: pide el tuyo hoy antes de que otro se lleve tu talla.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "Producción semanal limitada",
+        accion: "dm",
+        detalle: "Esta semana solo alcanzamos a producir 20 pedidos personalizados y ya van 14",
+        textoCompleto: "Esta semana solo alcanzamos a producir 20 pedidos personalizados y ya van 14. Escríbeme «QUIERO» por DM y te separo uno de los 6 que quedan.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "Porciones limitadas hoy",
+        accion: "compra",
+        detalle: "Hoy solo preparamos 30 porciones de este plato y cuando se acaban no hay más",
+        textoCompleto: "Hoy solo preparamos 30 porciones de este plato y cuando se acaban, se acabó hasta la próxima semana. Haz tu pedido ahora o ven temprano antes de que vuele.",
+        tipos: ["RESTAURANTE"],
+      },
+      {
+        label: "Mesas contadas",
+        accion: "dm",
+        detalle: "Solo nos quedan 4 mesas para este sábado en la noche",
+        textoCompleto: "Para este sábado en la noche solo nos quedan 4 mesas. Escríbeme «MESA» por DM y te la separo antes de que se llenen.",
+        tipos: ["RESTAURANTE"],
+      },
+    ],
+    placeholderPorTipo: {
+      PRODUCTO: "Ej. Quedan 7 unidades en talla M y no vamos a reponer este diseño",
+      RESTAURANTE: "Ej. Hoy solo preparamos 30 porciones de este plato",
+    },
     promptGuidance: `CIERRE CON GATILLO DE ESCASEZ ÉTICA (Hormozi):
 - El guion debe terminar comunicando un límite real e inamovible de capacidad, plazas o inventario.
 - NO prometas stock infinito: haz sentir que la oportunidad es finita y que postergar la decisión significa quedarse fuera porque otros tomarán los cupos restantes.`,
@@ -307,6 +367,29 @@ export const CTA_TRIGGERS: CtaTrigger[] = [
         textoCompleto: "Este precio de lanzamiento solo está activo hasta mañana al mediodía. Haz clic en el enlace de la bio antes de que suba a su precio regular.",
       },
     ],
+    presetsPorTipo: [
+      {
+        label: "Antes del corte de envío",
+        accion: "compra",
+        detalle: "Si pides antes de las 3 de la tarde, sale hoy mismo y llega mañana",
+        textoCompleto: "Si haces tu pedido antes de las 3 de la tarde, sale hoy mismo y mañana lo tienes en tu puerta. Después de esa hora ya entra en el envío del lunes.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "Llega a tiempo para la fecha",
+        accion: "bio",
+        detalle: "Hoy es el último día para pedir y que llegue antes del Día de la Madre",
+        textoCompleto: "Hoy es el último día para pedirlo y que llegue antes del Día de la Madre. Entra al enlace de mi perfil ahora: desde mañana ya no te podemos garantizar la entrega.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "Solo hoy en carta",
+        accion: "compra",
+        detalle: "Este plato solo está en la carta hoy",
+        textoCompleto: "Este plato solo está en la carta hoy. Mañana ya no lo preparamos, así que pídelo por delivery o ven a probarlo antes de que cierre la cocina.",
+        tipos: ["RESTAURANTE"],
+      },
+    ],
     promptGuidance: `CIERRE CON GATILLO DE URGENCIA TEMPORAL (Hormozi):
 - El llamado a la acción debe poner el reloj a correr.
 - Enfatiza el plazo perentorio: una fecha, hora o evento inminente tras el cual la oferta o ventaja se pierde irrevocablemente.`,
@@ -334,12 +417,32 @@ export const CTA_TRIGGERS: CtaTrigger[] = [
         accion: "dm",
         detalle: "Porque acabamos de lanzar la versión 2.0 y quiero casos de éxito reales",
         textoCompleto: "Porque acabamos de abrir la nueva versión y buscamos a los primeros casos de éxito para acompañarlos paso a paso, mándame un DM con la palabra «LANZAMIENTO».",
+        // Acompañar casos de éxito paso a paso es un servicio, no una polera.
+        tipos: ["SERVICIO"],
       },
       {
         label: "Causa o convicción",
         accion: "seguir",
         detalle: "Porque nadie más en este mercado se atreve a decirte la verdad sin rodeos",
         textoCompleto: "Porque estás harto de perder el tiempo con métodos que no sirven y alguien tenía que decirte la verdad, sígueme para no perderte la parte dos mañana.",
+        // "Métodos que no sirven… la parte dos" es el discurso de un asesor, no de una polera.
+        tipos: ["SERVICIO"],
+      },
+    ],
+    presetsPorTipo: [
+      {
+        label: "Colección nueva",
+        accion: "comentar",
+        detalle: "Porque acaba de salir la colección nueva y quiero que la estrenen primero ustedes",
+        textoCompleto: "Porque acaba de salir la colección nueva y quiero que la estrenen primero ustedes, comenta «NUEVA» y te mando las fotos de todos los diseños antes que a nadie.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "Plato nuevo en la carta",
+        accion: "dm",
+        detalle: "Porque estrenamos plato esta semana y queremos que lo prueben primero ustedes",
+        textoCompleto: "Porque esta semana estrenamos plato y queremos que lo prueben primero ustedes, escríbeme «PRUEBO» por DM y te guardamos uno para este fin de semana.",
+        tipos: ["RESTAURANTE"],
       },
     ],
     promptGuidance: `CIERRE CON GATILLO DE MOTIVO / RAZÓN ("Fraternidad" - Hormozi):
@@ -363,20 +466,57 @@ export const CTA_TRIGGERS: CtaTrigger[] = [
         accion: "seguir",
         detalle: "Te regalo a los primeros 10 una guía de cómo hacer más dinero",
         textoCompleto: "Si me sigues ahora mismo, le voy a regalar a los primeros 10 una guía completa de cómo hacer más dinero paso a paso. Sígueme y déjame tu comentario.",
+        tipos: ["SERVICIO"],
       },
       {
         label: "Plantilla / Checklist por palabra clave",
         accion: "comentar",
         detalle: "La plantilla exacta de Notion que uso para gestionar todo el flujo",
         textoCompleto: "Comenta la palabra «PLANTILLA» aquí abajo y mi automatización te mandará el enlace directo a tu DM en menos de 30 segundos.",
+        tipos: ["SERVICIO"],
       },
       {
         label: "Auditoría o diagnóstico rápido",
         accion: "dm",
         detalle: "Una revisión personalizada de tus primeros 3 videos",
         textoCompleto: "Escríbeme por DM la palabra «REVISIÓN» y te devolveré una nota de voz con los 3 puntos exactos que debes corregir en tu cuenta esta semana.",
+        tipos: ["SERVICIO"],
       },
     ],
+    presetsPorTipo: [
+      {
+        label: "Empaque de regalo incluido",
+        accion: "compra",
+        detalle: "Empaque de regalo y tarjeta escrita a mano incluidos en los pedidos de esta semana",
+        textoCompleto: "Todos los pedidos de esta semana llevan empaque de regalo y tarjeta escrita a mano sin costo. Pide el tuyo y te llega listo para entregar.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "Regalo a los primeros 10",
+        accion: "comentar",
+        detalle: "Los primeros 10 pedidos se llevan un llavero con el mismo diseño",
+        textoCompleto: "Los primeros 10 que comenten «QUIERO» y hagan su pedido se llevan de regalo un llavero con el mismo diseño. Te escribo al DM para separarte el tuyo.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "Bebida de cortesía",
+        accion: "dm",
+        detalle: "La primera bebida de la mesa va por la casa si reservas mencionando este video",
+        textoCompleto: "Escríbeme «BEBIDA» por DM, haz tu reserva y la primera bebida de la mesa va por la casa.",
+        tipos: ["RESTAURANTE"],
+      },
+      {
+        label: "Postre por la palabra clave",
+        accion: "comentar",
+        detalle: "Un postre de regalo diciendo la palabra clave al pedir o en caja",
+        textoCompleto: "Comenta «POSTRE» y te paso la palabra clave: dila al hacer tu pedido o en caja y te llevas el postre de regalo.",
+        tipos: ["RESTAURANTE"],
+      },
+    ],
+    placeholderPorTipo: {
+      PRODUCTO: "Ej. Empaque de regalo y tarjeta escrita a mano incluidos esta semana",
+      RESTAURANTE: "Ej. La primera bebida de la mesa va por la casa",
+    },
     promptGuidance: `CIERRE CON GATILLO DE INCENTIVO / REGALO (Lead Magnet):
 - El guion debe prometer un intercambio de valor claro y sin fricción: acción del usuario -> recompensa inmediata (guía, plantilla, acceso, revisión).
 - La recompensa debe sonar altamente deseable, concreta y fácil de consumir.`,
@@ -398,20 +538,46 @@ export const CTA_TRIGGERS: CtaTrigger[] = [
         accion: "comentar",
         detalle: "Sosteniendo la tablet con la guía abierta en pantalla",
         textoCompleto: "Mira esto que tengo aquí en pantalla. Si quieres que te lo mande gratis, comenta la palabra «GUIA» y te lo entrego de inmediato.",
+        // Una guía en la tablet es un imán de prospectos de servicio.
+        tipos: ["SERVICIO"],
       },
       {
         label: "Resultado antes vs después tangible",
         accion: "bio",
         detalle: "Mostrando el contraste del producto terminado en cámara",
         textoCompleto: "Esto es lo que consigues cuando dejas de improvisar. Si quieres el mismo resultado, haz clic en el enlace de mi perfil y empecemos hoy.",
+        // "Dejar de improvisar… empecemos hoy" vende un acompañamiento: es de servicio.
+        tipos: ["SERVICIO"],
       },
       {
         label: "Empaque / Unboxing en el cierre",
         accion: "compra",
         detalle: "Cerrando la caja o mostrando el producto listo para envío",
         textoCompleto: "Así es como llega a tu puerta. Toca el botón aquí abajo antes de que se termine el lote de esta semana.",
+        // Un servicio no se envía en caja; un pedido de delivery sí.
+        tipos: ["PRODUCTO", "RESTAURANTE"],
       },
     ],
+    presetsPorTipo: [
+      {
+        label: "Puesto y en uso",
+        accion: "bio",
+        detalle: "Mostrando el producto puesto y en uso frente a cámara",
+        textoCompleto: "Así se ve puesto en la vida real, sin filtros. Si lo quieres igual, entra al enlace de mi perfil y elige el tuyo.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "El plato servido en cámara",
+        accion: "compra",
+        detalle: "Sirviendo el plato recién salido de la cocina en primer plano",
+        textoCompleto: "Así sale de la cocina, recién servido. Pídelo por delivery o ven hoy: así mismo llega a tu mesa.",
+        tipos: ["RESTAURANTE"],
+      },
+    ],
+    placeholderPorTipo: {
+      PRODUCTO: "Ej. Mostrando el producto puesto o el empaque listo para regalar",
+      RESTAURANTE: "Ej. Sirviendo el plato recién salido de la cocina en primer plano",
+    },
     promptGuidance: `CIERRE CON IMPACTO VISUAL EN EL CTA:
 - En la última escena, las indicaciones de 'shot', 'action', 'props' y 'onScreenText' DEBEN incluir la interacción visual con el objeto o resultado (mostrar la pantalla, sostener el documento, exhibir el empaque).
 - El texto del CTA debe sincronizarse con lo que el actor está mostrando en cámara.`,
@@ -445,6 +611,22 @@ export const CTA_TRIGGERS: CtaTrigger[] = [
         accion: "seguir",
         detalle: "Seguir la cuenta para no perderse la serie",
         textoCompleto: "Si te sirvió este consejo, dale a seguir para aprender más trucos como este todos los días.",
+      },
+    ],
+    presetsPorTipo: [
+      {
+        label: "Pídelo por DM",
+        accion: "dm",
+        detalle: "Escribir al DM con el modelo y la talla",
+        textoCompleto: "Escríbeme por DM el modelo y tu talla, y te confirmo el precio y el envío en el momento.",
+        tipos: ["PRODUCTO"],
+      },
+      {
+        label: "Delivery o reserva",
+        accion: "compra",
+        detalle: "Pedir por delivery o reservar mesa desde el enlace del perfil",
+        textoCompleto: "Pídelo por delivery o reserva tu mesa desde el enlace de mi perfil. Te esperamos hoy.",
+        tipos: ["RESTAURANTE"],
       },
     ],
     promptGuidance: `CIERRE DIRECTO Y CLARO:
@@ -937,6 +1119,11 @@ export type CtaActionType = {
   verbo: string;
   /** Sin modo sirve en ambos; "venta" o "comunidad" la limita a ese cierre. */
   modo?: CtaModo;
+  /**
+   * Cómo se nombra la acción cuando se conoce el tipo de producto. Solo lo
+   * leen etiquetaAccion() y verboAccion(); `label` y `verbo` no cambian.
+   */
+  porTipo?: Partial<Record<ProductKind, { label: string; verbo: string }>>;
 };
 
 export const CTA_ACTIONS: CtaActionType[] = [
@@ -946,7 +1133,18 @@ export const CTA_ACTIONS: CtaActionType[] = [
   { id: "seguir", label: "Seguir cuenta", icon: "👤", verbo: "Sígueme" },
   { id: "bio", label: "Enlace en Bio / Perfil", icon: "🔗", verbo: "Ve al enlace de mi perfil", modo: "venta" },
   { id: "dm", label: "Mensaje Directo (DM)", icon: "📩", verbo: "Escríbeme al DM", modo: "venta" },
-  { id: "compra", label: "Comprar / Reservar cupo", icon: "🛒", verbo: "Separa tu cupo", modo: "venta" },
+  {
+    id: "compra",
+    label: "Comprar / Reservar cupo",
+    icon: "🛒",
+    verbo: "Separa tu cupo",
+    modo: "venta",
+    porTipo: {
+      PRODUCTO: { label: "Comprar", verbo: "Pide el tuyo" },
+      SERVICIO: { label: "Reservar cupo", verbo: "Separa tu cupo" },
+      RESTAURANTE: { label: "Pedir / reservar", verbo: "Haz tu pedido o reserva" },
+    },
+  },
   { id: "guardar", label: "Guardar el video", icon: "🔖", verbo: "Guárdalo", modo: "comunidad" },
   { id: "compartir", label: "Enviárselo a alguien", icon: "📤", verbo: "Mándaselo", modo: "comunidad" },
   { id: "etiquetar", label: "Etiquetar con motivo", icon: "🏷️", verbo: "Etiqueta a", modo: "comunidad" },
@@ -1005,6 +1203,90 @@ export function coherenciaCta(
   return { gatillo, accion };
 }
 
+/* ------------------------------------------------------ SEGÚN EL TIPO -- */
+
+/** Si un ángulo o una fórmula encaja con el tipo. Sin `tipos`, o sin tipo conocido, encaja. */
+export function encajaConTipo(item: { tipos?: readonly ProductKind[] }, kind: ProductKind | null): boolean {
+  return !kind || !item.tipos || item.tipos.includes(kind);
+}
+
+function presetsDeGatillo(gatillo: CtaTrigger, kind: ProductKind | null): CtaPreset[] {
+  if (!kind) return gatillo.presets;
+  return [...gatillo.presets, ...(gatillo.presetsPorTipo ?? [])].filter((p) => encajaConTipo(p, kind));
+}
+
+/**
+ * Las fórmulas de un gatillo para ese tipo: las de siempre que encajan y, al
+ * final, las propias del tipo. Con el tipo desconocido devuelve `presets` tal
+ * cual (el mismo arreglo). Un gatillo que no existe devuelve [].
+ */
+export function presetsPara(gatilloId: string, kind: ProductKind | null): CtaPreset[] {
+  const gatillo = buscarGatillo(gatilloId);
+  return gatillo ? presetsDeGatillo(gatillo, kind) : [];
+}
+
+export type CierreInicial = { gatillo: string; accion: string; detalle: string; texto: string };
+
+function cierreDe(gatillo: CtaTrigger, preset: CtaPreset): CierreInicial {
+  return { gatillo: gatillo.id, accion: preset.accion, detalle: preset.detalle, texto: preset.textoCompleto };
+}
+
+/**
+ * El punto de partida de la etapa de cierre: el primer gatillo del modo que
+ * tenga una fórmula para ese tipo, con esa fórmula. Con el tipo desconocido es
+ * el primer gatillo con su primera fórmula, como siempre.
+ */
+export function cierreInicialPara(modo: CtaModo, kind: ProductKind | null): CierreInicial {
+  const catalogo = ctaCatalogo(modo);
+  if (kind) {
+    for (const gatillo of catalogo) {
+      const preset = presetsDeGatillo(gatillo, kind)[0];
+      if (preset) return cierreDe(gatillo, preset);
+    }
+  }
+  return cierreDe(catalogo[0], catalogo[0].presets[0]);
+}
+
+/**
+ * Los ángulos creativos que encajan con el tipo, con los recomendados por la
+ * estructura primero (en el orden recomendado) y el resto en el orden del
+ * catálogo. Con el tipo desconocido devuelve ANGULOS_CREATIVOS tal cual.
+ */
+export function angulosPara(kind: ProductKind | null, recommended: readonly string[] = []): CreativeAngle[] {
+  if (!kind) return ANGULOS_CREATIVOS;
+  const encajan = ANGULOS_CREATIVOS.filter((a) => encajaConTipo(a, kind));
+  const primeros: CreativeAngle[] = [];
+  for (const id of recommended) {
+    const angulo = encajan.find((a) => a.id === id);
+    if (angulo && !primeros.includes(angulo)) primeros.push(angulo);
+  }
+  return [...primeros, ...encajan.filter((a) => !primeros.includes(a))];
+}
+
+function accionPorTipo(accionId: string, kind: ProductKind | null) {
+  const accion = CTA_ACTIONS.find((a) => a.id === accionId);
+  return { accion, propia: kind ? accion?.porTipo?.[kind] : undefined };
+}
+
+/** Nombre visible de la acción para ese tipo. Con el tipo desconocido, `label` como siempre. */
+export function etiquetaAccion(accionId: string, kind: ProductKind | null): string {
+  const { accion, propia } = accionPorTipo(accionId, kind);
+  return propia?.label ?? accion?.label ?? accionId;
+}
+
+/** El verbo de la acción para ese tipo. Con el tipo desconocido, `verbo` como siempre. */
+export function verboAccion(accionId: string, kind: ProductKind | null): string {
+  const { accion, propia } = accionPorTipo(accionId, kind);
+  return propia?.verbo ?? accion?.verbo ?? "";
+}
+
+/** El ejemplo del campo de detalle para ese tipo. Con el tipo desconocido, el de siempre. */
+export function detallePlaceholderPara(gatilloId: string, kind: ProductKind | null): string {
+  const gatillo = buscarGatillo(gatilloId);
+  if (!gatillo) return "";
+  return (kind ? gatillo.placeholderPorTipo?.[kind] : undefined) ?? gatillo.defaultDetailPlaceholder;
+}
+
 /** Cierra la frase con punto si el usuario no puso ningún signo final. */
 function frase(texto: string): string {
   return /[.!?»…]$/.test(texto) ? texto : `${texto}.`;
@@ -1016,22 +1298,93 @@ function sinPreposicionA(texto: string): string {
 }
 
 /**
+ * Las frases de venta que cambian cuando se vende un producto físico o un
+ * plato: "unidades" o "porciones y mesas" en vez de "plazas" y "CUPO", y un
+ * regalo que se lleva con el pedido en vez de uno que se descarga. Devuelve
+ * null cuando la frase de siempre ya sirve (siempre para SERVICIO).
+ */
+function textoPorTipo(
+  category: CtaTrigger["category"],
+  accionId: string,
+  det: string,
+  kind: ProductKind
+): string | null {
+  if (kind === "SERVICIO") return null;
+  const plato = kind === "RESTAURANTE";
+
+  if (category === "escasez") {
+    switch (accionId) {
+      case "seguir":
+        return `Sígueme ahora mismo: ${det}. ¡No te quedes sin ${plato ? "probarlo" : "el tuyo"}!`;
+      case "comentar":
+        return `${det}. Comenta «QUIERO» aquí abajo antes de que se acaben las ${plato ? "porciones" : "unidades"}.`;
+      case "bio":
+        return plato
+          ? `${det}. Ve al enlace de mi perfil para pedir o reservar tu mesa antes de que se acaben las porciones.`
+          : `${det}. Ve al enlace de mi perfil para asegurar el tuyo antes de que se agoten las unidades.`;
+      case "dm":
+        return plato
+          ? `${det}. Mándame un mensaje directo con la palabra «MESA» y te separo tu porción o tu mesa.`
+          : `${det}. Mándame un mensaje directo con la palabra «QUIERO» y te separo una de las unidades que quedan.`;
+      default:
+        return plato
+          ? `Si no tomas acción ahora: ${det}. Las porciones y las mesas se acaban, así que haz tu pedido o tu reserva hoy mismo.`
+          : `Si no tomas acción ahora: ${det}. Las unidades se agotan, así que asegura la tuya hoy mismo.`;
+    }
+  }
+
+  if (category === "incentivo") {
+    const pedido = plato ? "tu pedido o tu reserva" : "tu pedido";
+    switch (accionId) {
+      case "seguir":
+        return `Si me sigues ahora: ${det}. ¡Sígueme y te cuento cómo ${plato ? "pedir o reservar" : "pedir el tuyo"}!`;
+      case "comentar":
+        return `Comenta «QUIERO» aquí abajo y te escribo al DM para que te lleves esto con ${pedido}: ${det}.`;
+      case "dm":
+        return `Mándame un DM con la palabra «REGALO» y te lo guardamos con ${pedido}: ${det}.`;
+      case "bio":
+        return `${plato ? "Pide o reserva" : "Pide"} desde el enlace de mi perfil y te llevas esto: ${det}.`;
+      default:
+        return null;
+    }
+  }
+
+  if (category === "directo") {
+    const verbo = verboAccion(accionId, kind);
+    const deSiempre = CTA_ACTIONS.find((a) => a.id === accionId)?.verbo;
+    return deSiempre && verbo !== deSiempre ? `${verbo} para más información: ${det}` : null;
+  }
+
+  return null;
+}
+
+/**
  * Función que ensambla inteligentemente un texto de CTA a partir del gatillo, la acción y el detalle.
  * Busca el gatillo en los dos catálogos; un cierre de comunidad nunca añade presión ni palabras de oferta.
+ * Con `kind` usa las fórmulas y el vocabulario de ese tipo; sin él (o con null) arma lo de siempre.
  */
 export function armarCtaTexto(
   gatilloId: string,
   accionId: string,
-  detalle?: string
+  detalle?: string,
+  kind?: ProductKind | null
 ): string {
   const det = (detalle ?? "").trim();
   const accion = CTA_ACTIONS.find((a) => a.id === accionId) ?? CTA_ACTIONS[0];
   const gatillo = buscarGatillo(gatilloId) ?? CTA_TRIGGERS[0];
 
   if (!det) {
+    if (kind) {
+      const delTipo = presetsDeGatillo(gatillo, kind);
+      const elegido = delTipo.find((p) => p.accion === accionId) ?? delTipo[0];
+      if (elegido) return elegido.textoCompleto;
+    }
     const preset = gatillo.presets.find((p) => p.accion === accionId) ?? gatillo.presets[0];
     return preset.textoCompleto;
   }
+
+  const propio = kind ? textoPorTipo(gatillo.category, accion.id, det, kind) : null;
+  if (propio !== null) return propio;
 
   switch (gatillo.category) {
     case "comunidad":

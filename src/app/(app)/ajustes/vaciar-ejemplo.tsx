@@ -47,7 +47,9 @@ function VaciarEjemploDetalle({ recuento, onReview }: { recuento: Recuento; onRe
     recuento.metricas +
     recuento.cuentas.length +
     recuento.perfilesGenericos +
-    recuento.eventos;
+    recuento.eventos +
+    recuento.productos +
+    recuento.combos;
 
   if (state?.ok) {
     return (
@@ -105,6 +107,15 @@ function VaciarEjemploDetalle({ recuento, onReview }: { recuento: Recuento; onRe
                 <li>
                   La marca <strong>{recuento.marca}</strong>
                   {recuento.objetivos ? ` y sus ${recuento.objetivos} objetivos` : ""}
+                </li>
+              ) : null}
+              {recuento.productos || recuento.combos ? (
+                <li>
+                  {[
+                    recuento.productos ? `${recuento.productos} ${recuento.productos === 1 ? "producto" : "productos"}` : "",
+                    recuento.combos ? `${recuento.combos} ${recuento.combos === 1 ? "combo" : "combos"}` : "",
+                  ].filter(Boolean).join(" y ")}{" "}
+                  del catálogo de la marca
                 </li>
               ) : null}
               {recuento.videos ? (

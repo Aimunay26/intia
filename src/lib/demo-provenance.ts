@@ -9,10 +9,30 @@ function stable(value: unknown): unknown {
 }
 export const demoDigest = (value: unknown) => createHash("sha256").update(JSON.stringify(stable(value))).digest("hex");
 
+const DEMO_TABLES = '"DemoSeedRecord", "Brand", "BrandObjective", "User", "AuthSession", "Archetype", "ArchetypeFit", "ContentItem", "Assignment", "ChecklistItem", "Metric", "Comment", "Script", "ScriptScene", "MatchRun", "MatchRow", "CalendarEvent", "TaskColumn", "Task", "Asset"';
+const CATALOG_TABLES = '"BrandProduct", "BrandCombo", "BrandComboItem"';
+
+/** Una vez vistas, las tablas del catálogo no desaparecen: solo se cachea el sí. */
+let catalogoMigrado = false;
+
+/**
+ * Las tablas del catálogo (migración 20260928120000_brand_catalog) pueden no existir si el código
+ * se desplegó antes de migrar. Se incluyen en el bloqueo y en la huella solo si existen, sin mirar
+ * PRODUCT_CATALOG_ENABLED: así "Revisar/Vaciar datos de ejemplo" funciona antes de la migración y,
+ * después, un catálogo cargado en la marca de ejemplo sigue protegiendo el lote con el flag apagado.
+ */
+export async function catalogTablesExist(db: AppTransaction): Promise<boolean> {
+  if (catalogoMigrado) return true;
+  const [row] = await db.$queryRaw<{ ok: boolean }[]>`SELECT (to_regclass('"BrandProduct"') IS NOT NULL AND to_regclass('"BrandCombo"') IS NOT NULL AND to_regclass('"BrandComboItem"') IS NOT NULL) AS ok`;
+  catalogoMigrado = Boolean(row?.ok);
+  return catalogoMigrado;
+}
+
 export async function lockDemoTables(db: AppTransaction) {
   // Solo durante seed/limpieza explícitos. Evita cambios entre comprobación y borrado,
   // incluso desde acciones antiguas que no conocen el manifiesto.
-  await db.$executeRawUnsafe('LOCK TABLE "DemoSeedRecord", "Brand", "BrandObjective", "User", "AuthSession", "Archetype", "ArchetypeFit", "ContentItem", "Assignment", "ChecklistItem", "Metric", "Comment", "Script", "ScriptScene", "MatchRun", "MatchRow", "CalendarEvent", "TaskColumn", "Task", "Asset" IN SHARE ROW EXCLUSIVE MODE');
+  const tables = await catalogTablesExist(db) ? `${DEMO_TABLES}, ${CATALOG_TABLES}` : DEMO_TABLES;
+  await db.$executeRawUnsafe(`LOCK TABLE ${tables} IN SHARE ROW EXCLUSIVE MODE`);
 }
 
 export async function demoSnapshot(db: AppTransaction, type: string, id: string) {
@@ -24,8 +44,15 @@ export async function demoSnapshot(db: AppTransaction, type: string, id: string)
       content: { include: { metrics: true, assignments: true, checklist: true, comments: true } },
     } });
     if (!brand) return null;
+    // Catálogo aparte y solo si tiene filas: las huellas registradas antes del catálogo siguen siendo válidas,
+    // y cualquier producto o combo cargado en la marca de ejemplo protege el lote completo.
+    // Sin la migración aplicada, no hay catálogo que leer (catalogTablesExist).
+    const catalogo = await catalogTablesExist(db);
+    const products = catalogo ? await db.brandProduct.findMany({ where: { brandId: id } }) : [];
+    const combos = catalogo ? await db.brandCombo.findMany({ where: { brandId: id }, include: { items: true } }) : [];
     return { brand, assets: [...await assets("brand", [id]), ...await assets("content", brand.content.map(c => c.id))],
-      relatedEvents: await db.calendarEvent.findMany({ where: { contentItemId: { in: brand.content.map(c => c.id) } } }) };
+      relatedEvents: await db.calendarEvent.findMany({ where: { contentItemId: { in: brand.content.map(c => c.id) } } }),
+      ...(products.length ? { products } : {}), ...(combos.length ? { combos } : {}) };
   }
   if (type === "User") {
     const user = await db.user.findUnique({ where: { id }, include: { assignments: true, scripts: true, checkedItems: true, createdContent: true, comments: true, events: true, tasks: true, sessions: true, auditLogs: { select: { id: true } } } });

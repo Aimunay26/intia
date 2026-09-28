@@ -8,21 +8,28 @@ import { ArrowLeft, Bot, Check, ChevronDown, Clock, FileText, Film, Layers, Load
 import { generarGuion, type GenerateState } from "@/app/actions/scripts";
 import {
   ANGULOS_CREATIVOS,
-  CTA_ACTIONS,
   CTA_MODOS,
+  angulosPara,
   armarCtaTexto,
   buscarGatillo,
+  cierreInicialPara,
   ctaAccionesDeModo,
   ctaCatalogo,
+  detallePlaceholderPara,
+  etiquetaAccion,
   modoDeGatillo,
+  presetsPara,
   type CtaModo,
 } from "@/lib/script-angles";
-import { AI_MODELS, AI_PROVIDERS, DEFAULT_MODEL, FIT_SCORES, STRUCTURE_CATEGORY_MAP } from "@/lib/constants";
+import { AI_MODELS, AI_PROVIDERS, DEFAULT_MODEL, FIT_SCORES, PRODUCT_KIND_MAP, STRUCTURE_CATEGORY_MAP, type ProductKind } from "@/lib/constants";
+import type { CatalogProduct, GeneratorCatalogRows } from "@/lib/product-catalog-types";
+import { avisoDeRecorte, focoDeProducto } from "@/lib/product-focus";
 import { resolveAiModel } from "@/lib/ai-models";
 import { cn, withAlpha } from "@/lib/utils";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { FormatStep } from "./format-step";
-import { Callout, Card, CardHeader } from "@/components/ui";
+import { ProductPicker, type CatalogChoice } from "./product-picker";
+import { Badge, Callout, Card, CardHeader } from "@/components/ui";
 import { StepCard, StepDetails, StepField, StepFooter } from "./step-ui";
 import stepStyles from "./step-ui.module.css";
 
@@ -46,6 +53,8 @@ export type GeneratorStructure = {
   defaultProvider: string;
   defaultModel: string;
   docs: number;
+  /** Ángulos que recomienda la referencia del formato (solo con el catálogo de productos encendido). */
+  recommendedAngles?: string[];
 };
 
 export type GeneratorBrand = {
@@ -93,6 +102,15 @@ export type GeneratorVideo = {
   structureIds: string[];
 };
 
+/**
+ * Productos y combos activos de las marcas de la lista (PRODUCT_CATALOG_ENABLED),
+ * con tope por marca: `truncatedBrandIds` son las marcas que tienen más.
+ */
+export type GeneratorCatalog = GeneratorCatalogRows & {
+  /** Tipo más frecuente entre los productos activos de cada marca: el que propone "Cargar un nuevo producto". */
+  kindByBrand: Record<string, ProductKind>;
+};
+
 /* ------------------------------------------------------------ AUXILIARES -- */
 
 /** La petición inicial que sale de la tarjeta: título, hook y descripción. */
@@ -108,16 +126,19 @@ function modoDeEstructura(s: GeneratorStructure | null): CtaModo {
   return s?.category === "ENTRETIENE" ? "comunidad" : "venta";
 }
 
-/** El primer gatillo del modo con su primera fórmula: el punto de partida de la etapa 4. */
-function cierreInicial(modo: CtaModo) {
-  const gatillo = ctaCatalogo(modo)[0];
-  const preset = gatillo.presets[0];
-  return {
-    gatillo: gatillo.id,
-    accion: preset.accion,
-    detalle: preset.detalle,
-    texto: preset.textoCompleto,
-  };
+/** La ficha de la marca con ese nombre (sin distinguir mayúsculas): `?producto=` la preselecciona. */
+function buscarEnCatalogo(catalog: GeneratorCatalog, brandId: string, nombre: string): CatalogChoice | null {
+  const clave = nombre.trim().toLowerCase();
+  if (!brandId || !clave) return null;
+  const product = catalog.products.find((p) => p.brandId === brandId && p.name.trim().toLowerCase() === clave);
+  if (product) return { type: "product", product };
+  const combo = catalog.combos.find((c) => c.brandId === brandId && c.name.trim().toLowerCase() === clave);
+  return combo ? { type: "combo", combo } : null;
+}
+
+/** Si la marca tiene fichas en el catálogo. Sin catálogo (flag apagado), nunca. */
+function marcaConCatalogo(products: readonly { brandId: string }[], combos: readonly { brandId: string }[], brandId: string): boolean {
+  return Boolean(brandId) && (products.some((p) => p.brandId === brandId) || combos.some((c) => c.brandId === brandId));
 }
 
 function etiquetaModo(modo: CtaModo): string {
@@ -188,6 +209,8 @@ export function GeneratorForm({
   initialAngle,
   maxBatch = 3,
   canManageAi = false,
+  catalog = null,
+  canSaveProducts = false,
 }: {
   structures: GeneratorStructure[];
   brands: GeneratorBrand[];
@@ -212,6 +235,13 @@ export function GeneratorForm({
   maxBatch?: number;
   /** Solo controla la ayuda visible; las acciones verifican permisos en el servidor. */
   canManageAi?: boolean;
+  /**
+   * Catálogo de productos de las marcas de la lista. null con PRODUCT_CATALOG_ENABLED
+   * apagado: el paso 2, los campos enviados y los cierres quedan como siempre.
+   */
+  catalog?: GeneratorCatalog | null;
+  /** Muestra "Guardar en el catálogo" (brands.edit); guardarProductoRapido lo vuelve a comprobar. */
+  canSaveProducts?: boolean;
 }) {
   const router = useRouter();
   const submission = useRef({ fingerprint: "", key: "" });
@@ -242,12 +272,35 @@ export function GeneratorForm({
   const [formatPage, setFormatPage] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState<string>("TODOS");
   const [searchStructure, setSearchStructure] = useState<string>("");
+  // Catálogo: `?producto=` preselecciona la ficha de la marca con ese nombre; si
+  // no hay ninguna, queda como texto libre. Sin catálogo todo esto es null.
+  const itemInicial = catalog && initialProduct ? buscarEnCatalogo(catalog, initialBrandId, initialProduct) : null;
+  const fichaInicial = itemInicial ? (itemInicial.type === "product" ? itemInicial.product : itemInicial.combo) : null;
+  // Con catálogo en la marca, el título del video no es un producto: se elige una ficha.
+  const tituloInicial =
+    videoInicial && !marcaConCatalogo(catalog?.products ?? [], catalog?.combos ?? [], initialBrandId)
+      ? videoInicial.title
+      : undefined;
   // Con un video elegido, el producto y la petición arrancan desde la tarjeta
   // si la URL no trae nada más concreto.
-  const [producto, setProducto] = useState<string>(
-    initialProduct || videoInicial?.title || ""
-  );
-  const [productoDetalle, setProductoDetalle] = useState<string>("");
+  const productoInicial = fichaInicial?.name ?? (initialProduct || tituloInicial || "");
+  const [producto, setProducto] = useState<string>(productoInicial);
+  // "Qué debe saber la IA": el de la ficha elegida (editable solo para este video) o el texto libre.
+  // Lo editado vale para esa ficha: elegir otra, soltarla o abrir el formulario nuevo lo reemplaza.
+  const [productoDetalle, setProductoDetalle] = useState<string>(fichaInicial?.aiNotes ?? "");
+  // Ficha elegida del catálogo (una de las dos) y su tipo, que decide cierres y ángulos.
+  const [productoId, setProductoId] = useState<string>(itemInicial?.type === "product" ? itemInicial.product.id : "");
+  const [comboId, setComboId] = useState<string>(itemInicial?.type === "combo" ? itemInicial.combo.id : "");
+  // Con catálogo y texto libre desde el inicio (`?producto=` sin ficha, o el título del video),
+  // el formulario nuevo arranca abierto y con el tipo que más usa la marca, como al pulsar el botón.
+  const nuevoAbiertoInicial = Boolean(catalog && !fichaInicial && productoInicial.trim());
+  const tipoInicial: ProductKind | null =
+    fichaInicial?.kind ?? (nuevoAbiertoInicial ? (catalog?.kindByBrand[initialBrandId] ?? null) : null);
+  const [productKind, setProductKind] = useState<ProductKind | null>(tipoInicial);
+  // "Cargar un nuevo producto" pulsado (o texto libre en curso): el formulario de texto libre queda a la vista.
+  const [nuevoAbierto, setNuevoAbierto] = useState(nuevoAbiertoInicial);
+  // Guardados desde aquí con guardarProductoRapido, hasta que la página traiga el catálogo nuevo.
+  const [productosGuardados, setProductosGuardados] = useState<CatalogProduct[]>([]);
   const [peticion, setPeticion] = useState<string>(
     initialRequest || (videoInicial ? peticionDeVideo(videoInicial) : "")
   );
@@ -285,7 +338,8 @@ export function GeneratorForm({
     structures[0] ??
     null;
   const modoInicial = modoDeEstructura(estructuraInicial);
-  const cierre0 = cierreInicial(modoInicial);
+  // Sin tipo (sin catálogo o sin ficha) es el primer gatillo con su primera fórmula, como siempre.
+  const cierre0 = cierreInicialPara(modoInicial, tipoInicial);
   const [ctaModo, setCtaModo] = useState<CtaModo>(modoInicial);
   const [modoElegidoAMano, setModoElegidoAMano] = useState(false);
   // El usuario ya trabajó el cierre (gatillo, acción, detalle o texto): tocar
@@ -297,13 +351,17 @@ export function GeneratorForm({
   const [cta, setCta] = useState(cierre0.texto);
   const [segundos, setSegundos] = useState(0);
 
-  /** Aplica un gatillo con su primera fórmula (o la que coincida con la acción actual). */
+  /**
+   * Aplica un gatillo con su primera fórmula (o la que coincida con la acción
+   * actual), entre las que encajan con el tipo del producto. Sin tipo son las de siempre.
+   */
   const aplicarGatillo = (gatilloId: string, preferirAccion?: string) => {
     const gat = buscarGatillo(gatilloId);
     if (!gat) return;
+    const formulas = presetsPara(gat.id, productKind);
     const preset =
-      (preferirAccion ? gat.presets.find((p) => p.accion === preferirAccion) : undefined) ??
-      gat.presets[0];
+      (preferirAccion ? formulas.find((p) => p.accion === preferirAccion) : undefined) ??
+      formulas[0];
     setCtaTrigger(gat.id);
     if (preset) {
       setCtaAction(preset.accion);
@@ -312,12 +370,31 @@ export function GeneratorForm({
     }
   };
 
-  /** Cambia de modo y deja el cierre coherente: el primer gatillo del catálogo nuevo. */
-  const aplicarModo = (modo: CtaModo, aMano: boolean) => {
+  /**
+   * Cambia de modo y deja el cierre coherente: el primer gatillo del catálogo
+   * nuevo con la primera fórmula que encaja con el tipo (`kind`, el actual si no se indica).
+   */
+  const aplicarModo = (modo: CtaModo, aMano: boolean, kind: ProductKind | null = productKind) => {
     if (aMano) setModoElegidoAMano(true);
     if (modo === ctaModo && modoDeGatillo(ctaTrigger) === modo) return;
     setCtaModo(modo);
-    const inicial = cierreInicial(modo);
+    const inicial = cierreInicialPara(modo, kind);
+    setCtaTrigger(inicial.gatillo);
+    setCtaAction(inicial.accion);
+    setCtaDetail(inicial.detalle);
+    setCta(inicial.texto);
+  };
+
+  /**
+   * El tipo del producto decide qué fórmulas de cierre encajan (una polera no
+   * habla de cupos de asesoría). Si el cierre no se tocó a mano, se rehace con la
+   * primera fórmula del modo actual que encaja con el tipo; el modo no cambia.
+   */
+  const cambiarTipo = (kind: ProductKind | null) => {
+    if (kind === productKind) return;
+    setProductKind(kind);
+    if (cierreEditadoAMano) return;
+    const inicial = cierreInicialPara(ctaModo, kind);
     setCtaTrigger(inicial.gatillo);
     setCtaAction(inicial.accion);
     setCtaDetail(inicial.detalle);
@@ -329,9 +406,9 @@ export function GeneratorForm({
    * o que el cierre ya esté redactado: aplicarModo reemplaza gatillo, acción,
    * detalle y texto, y ese trabajo no se pierde por marcar otro formato.
    */
-  const seguirModoDeEstructura = (s: GeneratorStructure | null) => {
+  const seguirModoDeEstructura = (s: GeneratorStructure | null, kind: ProductKind | null = productKind) => {
     if (modoElegidoAMano || cierreEditadoAMano || !s) return;
-    aplicarModo(modoDeEstructura(s), false);
+    aplicarModo(modoDeEstructura(s), false, kind);
   };
 
   const structure =
@@ -343,6 +420,106 @@ export function GeneratorForm({
   const archetype = archetypes.find((a) => a.id === archetypeId) ?? null;
   const video = videos.find((v) => v.id === videoId) ?? null;
 
+  // Catálogo (vacío sin flag): las fichas de la página más las guardadas desde aquí.
+  const productosCatalogo = useMemo(() => {
+    if (!catalog) return [];
+    const nuevos = productosGuardados.filter((p) => !catalog.products.some((c) => c.id === p.id));
+    return [...catalog.products, ...nuevos];
+  }, [catalog, productosGuardados]);
+  const combosCatalogo = catalog?.combos ?? [];
+  const productoElegido = productoId ? (productosCatalogo.find((p) => p.id === productoId) ?? null) : null;
+  const comboElegido = comboId ? (combosCatalogo.find((c) => c.id === comboId) ?? null) : null;
+  const fichaElegida = productoElegido ?? comboElegido;
+
+  /**
+   * Suelta la ficha elegida: el producto queda por elegir, "Qué debe saber la IA"
+   * se vacía (lo editado era de esa ficha) y el cierre vuelve al del tipo desconocido.
+   */
+  const soltarFicha = () => {
+    setProductoId("");
+    setComboId("");
+    setProducto("");
+    setProductoDetalle("");
+    cambiarTipo(null);
+  };
+
+  /** Elige una ficha (o la suelta si ya estaba elegida). "Qué debe saber la IA" llega de la ficha. */
+  const elegirDelCatalogo = (choice: CatalogChoice) => {
+    const ficha = choice.type === "product" ? choice.product : choice.combo;
+    if (fichaElegida?.id === ficha.id) {
+      soltarFicha();
+      return;
+    }
+    setNuevoAbierto(false);
+    setProductoId(choice.type === "product" ? ficha.id : "");
+    setComboId(choice.type === "combo" ? ficha.id : "");
+    setProducto(ficha.name);
+    // Siempre las notas de la ficha nueva: lo editado para otra ficha (o el texto libre) no se hereda.
+    setProductoDetalle(ficha.aiNotes);
+    cambiarTipo(ficha.kind);
+  };
+
+  /** "Cargar un nuevo producto": texto libre, con el tipo que más usa la marca. */
+  const abrirNuevo = () => {
+    const tipoDeMarca = catalog?.kindByBrand[brandId] ?? null;
+    if (fichaElegida) {
+      setProductoId("");
+      setComboId("");
+      setProducto("");
+      setProductoDetalle("");
+      cambiarTipo(tipoDeMarca);
+    } else if (!productKind) {
+      cambiarTipo(tipoDeMarca);
+    }
+    setNuevoAbierto(true);
+  };
+
+  /**
+   * El botón "Cargar un nuevo producto" es un interruptor: con el formulario
+   * abierto, la segunda pulsación lo cierra y descarta el texto libre (nombre,
+   * tipo y detalle), para que no se envíe nada que ya no se ve.
+   */
+  const alternarNuevo = () => {
+    if (fichaElegida || !nuevoAbierto) {
+      abrirNuevo();
+      return;
+    }
+    setNuevoAbierto(false);
+    setProducto("");
+    setProductoDetalle("");
+    cambiarTipo(null);
+  };
+
+  const restaurarNotas = () => {
+    if (!fichaElegida) return;
+    setProductoDetalle(fichaElegida.aiNotes);
+  };
+
+  /**
+   * Lo guardado en el catálogo desde el paso 2 queda elegido, como cualquier ficha.
+   * Si mientras tanto se cambió de marca, solo se suma a su catálogo y no se elige.
+   */
+  const guardadoEnCatalogo = (product: CatalogProduct) => {
+    setProductosGuardados((prev) => [...prev.filter((p) => p.id !== product.id), product]);
+    if (product.brandId !== brandId) return;
+    setNuevoAbierto(false);
+    setProductoId(product.id);
+    setComboId("");
+    setProducto(product.name);
+    // Lo escrito se conserva para este video; si no había nada, las notas de la ficha.
+    if (!productoDetalle.trim()) setProductoDetalle(product.aiNotes);
+    cambiarTipo(product.kind);
+  };
+
+  // Lo que no cabe de la ficha elegida en el texto para la IA se avisa (mismo cálculo que el servidor).
+  const avisoFicha = useMemo(() => {
+    if (productoElegido) return avisoDeRecorte(focoDeProducto({ type: "product", product: productoElegido }, productoDetalle).recortes);
+    if (comboElegido) {
+      return avisoDeRecorte(focoDeProducto({ type: "combo", combo: comboElegido, products: productosCatalogo }, productoDetalle).recortes);
+    }
+    return null;
+  }, [productoElegido, comboElegido, productosCatalogo, productoDetalle]);
+
   // Con marca elegida solo se ofrecen sus tarjetas (y la ya elegida, por si acaso).
   const videosVisibles = videos.filter(
     (v) => !brandId || v.brandId === brandId || v.id === videoId
@@ -351,13 +528,21 @@ export function GeneratorForm({
   /**
    * Elegir un video fija la marca, rellena producto y petición si estaban
    * vacíos y preselecciona el lote con sus formatos previstos que sigan activos.
+   * Con catálogo: una ficha de otra marca se suelta y, si la marca del video
+   * tiene fichas, su título no se copia como producto (se elige una ficha).
    */
   const elegirVideo = (id: string) => {
     setVideoId(id);
     const elegido = videos.find((v) => v.id === id);
     if (!elegido) return;
-    setBrandId(brands.some((b) => b.id === elegido.brandId) ? elegido.brandId : "");
-    if (!producto.trim()) setProducto(elegido.title);
+    const marca = brands.some((b) => b.id === elegido.brandId) ? elegido.brandId : "";
+    setBrandId(marca);
+    const soltada = Boolean(fichaElegida && fichaElegida.brandId !== marca);
+    if (soltada) soltarFicha();
+    const copiaTitulo = (soltada || !producto.trim()) && !marcaConCatalogo(productosCatalogo, combosCatalogo, marca);
+    if (copiaTitulo) setProducto(elegido.title);
+    // El texto libre que queda (el título copiado o lo ya escrito) mantiene el formulario a la vista.
+    if (catalog && (copiaTitulo || (!fichaElegida && (producto.trim() || productoDetalle.trim())))) setNuevoAbierto(true);
     if (!peticion.trim()) setPeticion(peticionDeVideo(elegido));
     const lote = elegido.structureIds
       .filter((sid) => structures.some((s) => s.id === sid))
@@ -369,15 +554,19 @@ export function GeneratorForm({
       if (primera) {
         setDuracion(String(primera.defaultDurationSec || 45));
         aplicarPreferenciasDeEstructura(primera);
-        seguirModoDeEstructura(primera);
+        // Si la ficha se soltó, el cierre del modo nuevo ya es el del tipo desconocido.
+        seguirModoDeEstructura(primera, soltada ? null : productKind);
       }
     }
   };
 
-  /** Cambiar de marca suelta el video si era de otra: el servidor exige que coincidan. */
+  /** Cambiar de marca suelta el video y la ficha del catálogo si eran de otra: el servidor exige que coincidan. */
   const elegirMarca = (id: string) => {
     setBrandId(id);
     if (video && id && video.brandId !== id) setVideoId("");
+    if (fichaElegida && fichaElegida.brandId !== id) soltarFicha();
+    // Texto libre escrito antes de elegir la marca: el formulario sigue abierto aunque la marca tenga fichas.
+    else if (catalog && !fichaElegida && (producto.trim() || productoDetalle.trim())) setNuevoAbierto(true);
   };
 
   const fitActual =
@@ -477,6 +666,12 @@ export function GeneratorForm({
   const accionesDelModo = ctaAccionesDeModo(ctaModo);
   const gatilloActual = buscarGatillo(ctaTrigger);
   const anguloActual = ANGULOS_CREATIVOS.find((angle) => angle.id === creativeAngle);
+  // Con tipo: los ángulos que encajan, primero los que recomienda el formato. Sin
+  // tipo, ANGULOS_CREATIVOS tal cual. El ángulo ya elegido nunca desaparece de la lista.
+  const angulosDelTipo = angulosPara(productKind, structure?.recommendedAngles ?? []);
+  const angulosVisibles =
+    anguloActual && !angulosDelTipo.includes(anguloActual) ? [...angulosDelTipo, anguloActual] : angulosDelTipo;
+  const formulasDelGatillo = presetsPara(ctaTrigger, productKind);
   const resumenCierre = `${etiquetaModo(ctaModo)} · ${gatilloActual?.shortLabel ?? "Sin gatillo"}`;
 
   // --- PASOS DEL ASISTENTE DE IDEACIÓN (GEMINI-STYLE) ---
@@ -535,7 +730,8 @@ export function GeneratorForm({
     },
   ];
 
-  const puedeAvanzarPaso2 = Boolean(producto.trim().length > 0);
+  // Una ficha del catálogo elegida, o un producto escrito.
+  const puedeAvanzarPaso2 = Boolean(fichaElegida || producto.trim().length > 0);
   const puedeAvanzarPaso3 = Boolean(peticion.trim().length >= 5);
 
 
@@ -585,6 +781,15 @@ export function GeneratorForm({
         <input type="hidden" name="arquetipo" value={archetypeId} />
         <input type="hidden" name="producto" value={producto} />
         <input type="hidden" name="productoDetalle" value={productoDetalle} />
+        {/* Catálogo: la ficha elegida, la revisión que se vio y el tipo. Sin catálogo no existen. */}
+        {catalog ? (
+          <>
+            <input type="hidden" name="productoId" value={productoElegido?.id ?? ""} />
+            <input type="hidden" name="comboId" value={comboElegido?.id ?? ""} />
+            <input type="hidden" name="productoRevision" value={fichaElegida?.updatedAt ?? ""} />
+            <input type="hidden" name="productoTipo" value={productKind ?? ""} />
+          </>
+        ) : null}
         <input type="hidden" name="anguloCreativo" value={creativeAngle} />
         <input type="hidden" name="peticion" value={peticion} />
         <input type="hidden" name="variante" value={variante} />
@@ -656,12 +861,40 @@ export function GeneratorForm({
                 </select>
               </StepField>
             </div>
-            <StepField id="generator-product" label="Producto o servicio del video" required>
-              <input id="generator-product" name="producto" className="input" value={producto} onChange={(e) => setProducto(e.target.value)} placeholder="Ej. Ramo de rosas con chocolates" data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO} />
-            </StepField>
-            <StepField id="generator-product-detail" label="Qué debe saber la IA sobre el producto" hint="Características, beneficios, precio y objeciones que resuelve. Usa datos reales.">
-              <textarea id="generator-product-detail" name="productoDetalle" rows={3} className="textarea" value={productoDetalle} onChange={(e) => setProductoDetalle(e.target.value)} placeholder="Describe qué ofrece, para quién sirve y qué lo hace diferente." data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO_DESC} />
-            </StepField>
+            {catalog ? (
+              <ProductPicker
+                brandId={brandId}
+                brandName={brand?.name ?? null}
+                products={productosCatalogo.filter((p) => p.brandId === brandId)}
+                combos={combosCatalogo.filter((c) => c.brandId === brandId)}
+                selectedProductId={productoElegido?.id ?? ""}
+                selectedComboId={comboElegido?.id ?? ""}
+                truncated={catalog.truncatedBrandIds.includes(brandId)}
+                formOpen={!fichaElegida && nuevoAbierto}
+                name={producto}
+                kind={productKind}
+                detail={productoDetalle}
+                catalogNotes={fichaElegida ? fichaElegida.aiNotes : null}
+                trimNotice={avisoFicha}
+                canSave={canSaveProducts}
+                onPick={elegirDelCatalogo}
+                onToggleForm={alternarNuevo}
+                onNameChange={setProducto}
+                onKindChange={cambiarTipo}
+                onDetailChange={setProductoDetalle}
+                onRestoreNotes={restaurarNotas}
+                onSaved={guardadoEnCatalogo}
+              />
+            ) : (
+              <>
+                <StepField id="generator-product" label="Producto o servicio del video" required>
+                  <input id="generator-product" name="producto" className="input" value={producto} onChange={(e) => setProducto(e.target.value)} placeholder="Ej. Ramo de rosas con chocolates" data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO} />
+                </StepField>
+                <StepField id="generator-product-detail" label="Qué debe saber la IA sobre el producto" hint="Características, beneficios, precio y objeciones que resuelve. Usa datos reales.">
+                  <textarea id="generator-product-detail" name="productoDetalle" rows={3} className="textarea" value={productoDetalle} onChange={(e) => setProductoDetalle(e.target.value)} placeholder="Describe qué ofrece, para quién sirve y qué lo hace diferente." data-guia={GUIA_TARGETS.INPUT_GENERADOR_PRODUCTO_DESC} />
+                </StepField>
+              </>
+            )}
             <StepField id="generator-actor" label="Quién actúa frente a cámara" hint="Puedes dejarlo sin asignar para que la IA proponga los perfiles de cada escena.">
               <select id="generator-actor" className="select" value={archetypeId} onChange={(e) => setArchetypeId(e.target.value)} data-guia={GUIA_TARGETS.SELECT_GENERADOR_ARQUETIPO}>
                 <option value="">Sin asignar</option>
@@ -692,7 +925,7 @@ export function GeneratorForm({
             <StepDetails title="Ayuda para describir el producto">
               <p className="text-inksoft text-sm leading-relaxed">Incluye características, beneficios, precio, para qué sirve y objeciones que resuelve. Aunque el producto solo aparezca al final, la IA necesita conocerlo para fundamentar el video con veracidad.</p>
             </StepDetails>
-            <StepFooter back="Volver a Formato" onBack={() => setCurrentStep(1)} next="Ángulo e idea" onNext={() => avanzarPaso(3)} disabled={!puedeAvanzarPaso2} reason="Escribe el producto o servicio para continuar." guide={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_2} />
+            <StepFooter back="Volver a Formato" onBack={() => setCurrentStep(1)} next="Ángulo e idea" onNext={() => avanzarPaso(3)} disabled={!puedeAvanzarPaso2} reason={catalog ? "Elige un producto o carga uno nuevo para continuar." : "Escribe el producto o servicio para continuar."} guide={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_2} />
           </StepCard>
         )}
 
@@ -705,7 +938,7 @@ export function GeneratorForm({
               <StepField id="generator-angle" label="Ángulo creativo" hint="Opcional. Elige el enfoque de esta versión del guion.">
                 <select id="generator-angle" className="select" value={creativeAngle} onChange={(e) => setCreativeAngle(e.target.value)}>
                   <option value="">Estándar · Sin forzar un ángulo</option>
-                  {ANGULOS_CREATIVOS.map((angle) => <option key={angle.id} value={angle.id}>{angle.icon} {angle.shortLabel}</option>)}
+                  {angulosVisibles.map((angle) => <option key={angle.id} value={angle.id}>{angle.icon} {angle.shortLabel}</option>)}
                 </select>
               </StepField>
               {anguloActual ? <div className="mt-3">
@@ -740,23 +973,23 @@ export function GeneratorForm({
                 </select>
               </StepField>
               <StepField id="generator-action" label="Acción que pides" hint={esComunidad ? "Una sola acción de comunidad, sin enlace comercial ni DM." : undefined}>
-                <select id="generator-action" className="select" value={ctaAction} onChange={(e) => { setCierreEditadoAMano(true); setCtaAction(e.target.value); setCta(armarCtaTexto(ctaTrigger, e.target.value, ctaDetail)); }}>
+                <select id="generator-action" className="select" value={ctaAction} onChange={(e) => { setCierreEditadoAMano(true); setCtaAction(e.target.value); setCta(armarCtaTexto(ctaTrigger, e.target.value, ctaDetail, productKind)); }}>
                   {!ctaAction ? <option value="">Sin pedido explícito</option> : null}
-                  {accionesDelModo.map((action) => <option key={action.id} value={action.id}>{action.icon} {action.label}</option>)}
+                  {accionesDelModo.map((action) => <option key={action.id} value={action.id}>{action.icon} {etiquetaAccion(action.id, productKind)}</option>)}
                 </select>
               </StepField>
             </div>
             {gatilloActual ? <StepField id="generator-cta-detail" label={esComunidad ? "Motivo, destinatario o pregunta" : "Incentivo, límite o detalle"} hint={esComunidad ? "El motivo debe salir del contenido, sin precios ni promociones." : "Personaliza la razón para actuar con datos concretos."}>
-              <input id="generator-cta-detail" className="input" value={ctaDetail} placeholder={gatilloActual.defaultDetailPlaceholder} onChange={(e) => { setCierreEditadoAMano(true); setCtaDetail(e.target.value); setCta(armarCtaTexto(ctaTrigger, ctaAction, e.target.value)); }} />
+              <input id="generator-cta-detail" className="input" value={ctaDetail} placeholder={detallePlaceholderPara(gatilloActual.id, productKind)} onChange={(e) => { setCierreEditadoAMano(true); setCtaDetail(e.target.value); setCta(armarCtaTexto(ctaTrigger, ctaAction, e.target.value, productKind)); }} />
             </StepField> : null}
             <StepField id="generator-cta" label="Texto final del cierre" hint={esComunidad ? "La IA recibe este cierre con la instrucción de no añadir precios, ofertas ni enlaces de venta." : "Puedes editar libremente lo que dirá la última escena."}>
               <textarea id="generator-cta" name="cta" className="textarea" rows={3} value={cta} onChange={(e) => { setCierreEditadoAMano(true); setCta(e.target.value); }} placeholder={esComunidad ? "Ej. Envíalo a quien siempre dice que no sabe qué regalar." : "Escribe el llamado a la acción."} />
-              <button type="button" className="text-brand mt-3 inline-flex items-center gap-2 py-1 text-xs font-semibold hover:underline" onClick={() => { setCierreEditadoAMano(true); setCta(armarCtaTexto(ctaTrigger, ctaAction, ctaDetail)); }}><RotateCcw size={13} aria-hidden="true" /> Re-ensamblar fórmula</button>
+              <button type="button" className="text-brand mt-3 inline-flex items-center gap-2 py-1 text-xs font-semibold hover:underline" onClick={() => { setCierreEditadoAMano(true); setCta(armarCtaTexto(ctaTrigger, ctaAction, ctaDetail, productKind)); }}><RotateCcw size={13} aria-hidden="true" /> Re-ensamblar fórmula</button>
             </StepField>
             {gatilloActual ? <StepDetails key={`${ctaModo}-${ctaTrigger}`} title={esComunidad ? "Explorar frases de ejemplo" : "Explorar fórmulas de venta"} summary={gatilloActual.shortLabel}>
               <span className="chip chip-brand">{gatilloActual.badge}</span><p className="text-inksoft text-sm leading-relaxed">{gatilloActual.explanation}</p>
               <div className="grid gap-3 sm:grid-cols-2">
-                {gatilloActual.presets.map((preset, index) => <button key={index} type="button" className={stepStyles.choice} aria-label={`Usar fórmula: ${preset.label}`} onClick={() => { setCierreEditadoAMano(true); setCtaAction(preset.accion); setCtaDetail(preset.detalle); setCta(preset.textoCompleto); }}>
+                {formulasDelGatillo.map((preset, index) => <button key={index} type="button" className={stepStyles.choice} aria-label={`Usar fórmula: ${preset.label}`} onClick={() => { setCierreEditadoAMano(true); setCtaAction(preset.accion); setCtaDetail(preset.detalle); setCta(preset.textoCompleto); }}>
                   <span className="text-brand text-sm font-semibold">{preset.label}</span><span className="text-inksoft mt-2 block text-sm leading-relaxed">{preset.textoCompleto}</span>
                 </button>)}
               </div>
@@ -1006,6 +1239,49 @@ export function GeneratorForm({
                     )}
                   </PanelRow>
 
+                  {catalog ? (
+                    <PanelRow icon={<Package size={13} />} label="Producto">
+                      {fichaElegida ? (
+                        <>
+                          <span className="text-ink font-semibold">{fichaElegida.name}</span>
+                          <Badge option={PRODUCT_KIND_MAP[fichaElegida.kind]} fallback={fichaElegida.kind} className="ml-1.5" />
+                          {fichaElegida.priceLabel ? (
+                            <span className="text-inkmuted"> · {fichaElegida.priceLabel}</span>
+                          ) : null}
+                          {productoElegido?.features.length ? (
+                            <span className="text-inkmuted block">{productoElegido.features.slice(0, 3).join(" · ")}</span>
+                          ) : null}
+                          {comboElegido?.items.length ? (
+                            <span className="text-inkmuted block">
+                              Incluye: {comboElegido.items.slice(0, 3).map((i) => `${i.quantity}× ${i.name}`).join(", ")}
+                              {comboElegido.items.length > 3 ? ", …" : ""}
+                            </span>
+                          ) : null}
+                          {productoDetalle.trim() ? (
+                            <span className="text-inkmuted block">Con lo que debe saber la IA.</span>
+                          ) : null}
+                        </>
+                      ) : producto.trim() ? (
+                        <>
+                          <span className="text-ink font-semibold">{producto}</span>
+                          {productKind ? (
+                            <Badge option={PRODUCT_KIND_MAP[productKind]} fallback={productKind} className="ml-1.5" />
+                          ) : null}
+                          <span className="text-inkmuted block">
+                            Texto libre para este video: la IA recibe{" "}
+                            {["el nombre", productKind ? "el tipo" : "", productoDetalle.trim() ? "lo que escribiste" : ""]
+                              .filter(Boolean)
+                              .join(", ")
+                              .replace(/, ([^,]*)$/, " y $1")}
+                            .
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-inkmuted">Sin producto: elígelo en la etapa 2.</span>
+                      )}
+                    </PanelRow>
+                  ) : null}
+
                   <PanelRow icon={<Sparkles size={13} />} label="Ángulo creativo (Versión)">
                     {creativeAngle ? (
                       (() => {
@@ -1037,7 +1313,7 @@ export function GeneratorForm({
                           </span>
                           {ctaAction ? (
                             <span className="chip chip-plain text-[10px]">
-                              {CTA_ACTIONS.find((a) => a.id === ctaAction)?.label ?? ctaAction}
+                              {etiquetaAccion(ctaAction, productKind)}
                             </span>
                           ) : null}
                         </div>

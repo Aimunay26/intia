@@ -130,8 +130,8 @@ test("contenido: índice, archivos por rol, módulos, lecciones y videos coincid
       }
     }
   }
-  assert.equal(slugs.size, 135);
-  assert.equal(lessonsTotal, 618);
+  assert.equal(slugs.size, 139);
+  assert.equal(lessonsTotal, 640);
   const loaded = await getManualRole("filmmaker");
   assert.equal(loaded?.id, "FILMMAKER");
   assert.equal(await getManualRole("__proto__"), null);
@@ -154,7 +154,10 @@ test("escena vacía o desconocida: valores prudentes", () => {
     assert.equal(scene.camera.angle, "ojos");
     assert.equal(scene.camera.focalMm, 26);
     assert.equal(scene.camera.move, "fija");
-    assert.deepEqual(scene.lights.map(light => light.role), ["key", "fill"]);
+    // Toda escena suma un contraluz de separación (se compara con «Sin luz trasera»).
+    assert.deepEqual(scene.lights.map(light => light.role), ["key", "fill", "back"]);
+    assert.equal(scene.preset, null);
+    assert.equal(scene.format, "vertical");
     assert.equal(scene.subjects.count, 1);
     assert.equal(scene.beats.length, 1);
     assert.ok(scene.duration > 0);
@@ -289,7 +292,7 @@ test("pasos que mueven la luz principal: ángulo y altura se arrastran al paso s
   assert.equal(beats[0].angle, "ojos");
 });
 
-test("las 98 escenas del currículo producen una configuración usable", () => {
+test("las 106 escenas del currículo producen una configuración usable", () => {
   let count = 0;
   const environments = new Set<string>();
   for (const role of roleFiles()) {
@@ -308,7 +311,7 @@ test("las 98 escenas del currículo producen una configuración usable", () => {
       }
     }
   }
-  assert.equal(count, 98);
+  assert.equal(count, 106);
   assert.ok(environments.size >= 4, [...environments].join(","));
 });
 

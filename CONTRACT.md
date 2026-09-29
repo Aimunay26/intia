@@ -49,6 +49,7 @@ Rutas de API (las únicas que existen, y cada una por un motivo):
 | `/api/auth/google` · `/api/auth/google/callback` | Google necesita redirigir a una URL |
 | `/api/calendario.ics` | Google Calendar la pide desde sus servidores, sin sesión |
 | `/api/assets/[id]` | Devuelve los bytes de un archivo |
+| `/api/modelos-3d/[archivo]` | Devuelve los bytes de los personajes 3D del manual solo con sesión (uso interno) |
 | `/api/logout` | Borra la cookie y redirige |
 | `/api/maintenance` | Mantenimiento diario autenticado con CRON_SECRET |
 | `/.well-known/workflow/v1/*` | Rutas generadas por Workflow SDK; no se editan manualmente |
@@ -686,6 +687,7 @@ interruptor: nunca `git revert` ni `DROP`.
 | `PRODUCT_CATALOG_ENABLED` | apagado | exactamente `"true"` lo enciende | Catálogo de productos por marca, selector del paso 2 y línea `Tipo:` | Migración `20260928120000_brand_catalog` |
 | `PRODUCTION_FLOW_ENABLED` | apagado | exactamente `"true"` lo enciende | Equipo por marca, pasos con plazo, panel «Producción» y barrido diario | Migración `20260928180000_production_flow` |
 | `MANUAL_PROCEDIMIENTOS_ENABLED` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Manual de procedimientos: menú, tarjetas y `/manual/*` | — |
+| `MANUAL_3D_PERSONAJES` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Personajes 3D (camarógrafo y dos actrices) en las escenas del manual; apagado, el visor usa los maniquíes y `/api/modelos-3d/*` responde 404 | Archivos en `src/content/modelos-3d/` |
 | `CALENDARIO_MENSUAL` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Vista mensual del calendario para Dueño y Equipo | — |
 | `GUIONES_AJUSTE_PANTALLA` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Modo ajuste del visor y de la biblioteca de guiones | — |
 | `GEMINI_ESQUEMA_SIMPLE` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Esquema de Gemini sin límites de tamaño/rango; apagado envía el anterior con límites. La validación local no cambia | — |
@@ -893,6 +895,34 @@ Interruptor `MANUAL_PROCEDIMIENTOS_ENABLED`: apagado, oculta el menú y las tarj
   configuración tipada por palabras clave, sin IA; lo que no reconoce cae en valores prudentes
   y los pasos en texto siempre acompañan a la escena. Con movimiento reducido no se reproduce
   sola.
+- **Personajes 3D** (interruptor `MANUAL_3D_PERSONAJES`): modelos con derechos de terceros
+  autorizados por el dueño solo para uso interno el 29/09/2026; antes de vender el sistema a
+  terceros deben reemplazarse por modelos con licencia; se sirven solo con sesión.
+  - Viven versionados en `src/content/modelos-3d/` (`manifest.json`, `camarografo.glb`,
+    `actriz-1.glb`, `actriz-2.glb`). **Nunca en `public/`**: todo lo que está ahí se sirve sin
+    sesión. `tests/modelos-3d.test.mjs` falla si aparece un modelo en `public/`.
+  - Solo los entrega `GET /api/modelos-3d/[archivo]`: sesión válida (`getSession`; sin ella,
+    401), lista cerrada `MODELOS_3D` de `src/lib/manual-3d.ts` comprobada antes de tocar el disco
+    (cualquier otro nombre, `../` o mayúsculas → 404), interruptor y manual encendidos (si no,
+    404). Cabeceras: `model/gltf-binary` o `application/json`, `Cache-Control: private,
+    max-age=604800, immutable`, `ETag` por hash del contenido (304 con `If-None-Match`),
+    `X-Content-Type-Options: nosniff` y `Content-Disposition: inline`. `next.config.ts` los
+    incluye en el paquete de la ruta con `outputFileTracingIncludes`.
+  - Caché del navegador: el visor pide manifiesto y GLB con `cache: "no-cache"` (revalida con el
+    `ETag`: 304 sin volver a bajar los bytes, y 401 si la sesión venció), así un manifiesto nuevo
+    nunca se mezcla con un GLB viejo tras un despliegue. `/api/logout` responde
+    `Clear-Site-Data: "cache"`: al salir, la copia privada de 7 días no queda disponible sin sesión
+    en un equipo compartido. El 401 se comprueba en una ventana privada o con `curl`, no en el
+    navegador donde ya se vieron las escenas.
+  - El servidor calcula `personajes3dEnabled()` en la página del módulo y lo baja por props
+    (`ModuleLessons` → `SceneViewer`, prop `personajes`). Desde el cliente, `manual-3d.ts` se
+    importa solo con `import type`.
+  - Asignación: quien graba = `camarografo`; sujeto principal = `actriz-1`; segunda persona
+    (podcast, pareja, dos personas) = `actriz-2`. Más de dos sujetos además de quien graba: los
+    extras siguen como maniquí.
+  - Los GLB usan `EXT_meshopt_compression`, `KHR_mesh_quantization` y `EXT_texture_webp`: el
+    cargador necesita `MeshoptDecoder`. Escala en metros, pies en y=0, miran hacia +Z y la pose de
+    reposo es la bind pose (A-pose). Las vistas previas de revisión no van al repositorio.
 - **Videos de YouTube:** fachada con miniatura. El `iframe` (`youtube-nocookie.com`) se crea al
   pulsar, así la página no pide nada a YouTube hasta entonces. Solo se aceptan IDs de YouTube
   válidos.

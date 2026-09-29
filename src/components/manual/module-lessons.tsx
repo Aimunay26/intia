@@ -102,8 +102,9 @@ export function LessonDetail({ lesson, compact = false }: { lesson: LessonView; 
 /**
  * Lecciones de un módulo: botones cortos con «!» para la ficha rápida.
  * Recibe solo los datos de este módulo; nunca el manual completo.
+ * `personajes`: lo calcula el servidor (MANUAL_3D_PERSONAJES) y solo se reenvía al visor 3D.
  */
-export function ModuleLessons({ lessons, initialLessonId }: { lessons: LessonView[]; initialLessonId?: string }) {
+export function ModuleLessons({ lessons, initialLessonId, personajes }: { lessons: LessonView[]; initialLessonId?: string; personajes: boolean }) {
   const [selectedId, setSelectedId] = useState(() => (lessons.some(l => l.id === initialLessonId) ? initialLessonId! : lessons[0]?.id));
   const [infoId, setInfoId] = useState<string | null>(null);
   const [show3d, setShow3d] = useState(false);
@@ -202,7 +203,7 @@ export function ModuleLessons({ lessons, initialLessonId }: { lessons: LessonVie
         {selected.scene3d ? (
           <div ref={sceneRef} tabIndex={-1} className="mb-5 scroll-mt-20 outline-none">
             {show3d ? (
-              <SceneViewer key={selected.id} scene={selected.scene3d} title={selected.title} />
+              <SceneViewer key={selected.id} scene={selected.scene3d} title={selected.title} personajes={personajes} />
             ) : (
               <div className="border-line bg-surface2 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center">
                 <span className="bg-brandsoft text-brand grid h-11 w-11 shrink-0 place-items-center rounded-xl"><Box size={20} /></span>

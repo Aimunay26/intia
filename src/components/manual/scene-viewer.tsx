@@ -9,12 +9,25 @@
  * Encima de la escena: formato vertical 9:16 (por defecto) u horizontal 16:9, y
  * «Compara con lo incorrecto»: cada error rearma la escena (luces, cuerpo o
  * encuadre) y se vuelve a la versión correcta con «Correcto». Cambiar de formato
- * o de error recrea el visor y conserva el tiempo, la reproducción y la vista.
+ * o de error rearma la escena sobre el mismo WebGLRenderer (texturas y shaders
+ * siguen en la GPU) y conserva el tiempo, la reproducción y la vista.
+ *
+ * Personajes 3D (`personajes`, lo decide el servidor con MANUAL_3D_PERSONAJES): con
+ * sesión se descargan de /api/modelos-3d los GLB del manifiesto (revalidando con el
+ * ETag) y reemplazan a los maniquíes sin reiniciar la animación ni la cámara
+ * (camarógrafo = quien graba, actriz 1 = sujeto, actriz 2 = segunda persona). Mientras
+ * cargan, o si fallan, se ven los maniquíes; un conmutador «Personajes / Maniquí» vuelve
+ * a los livianos (y tras un fallo, «Personajes» reintenta). Quien graba nunca aparece en
+ * la «Vista de cámara». La pose se resuelve sobre el esqueleto en
+ * src/lib/manual-characters.ts.
  */
-import { ChevronLeft, ChevronRight, CircleCheck, Pause, Play, RectangleHorizontal, RectangleVertical, RotateCcw, TriangleAlert } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleCheck, Pause, PersonStanding, Play, RectangleHorizontal, RectangleVertical, RotateCcw, TriangleAlert, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AmbientLight,
+  AnimationMixer,
+  type AnimationAction,
+  type AnimationClip,
   BoxGeometry,
   BufferAttribute,
   BufferGeometry,
@@ -32,13 +45,17 @@ import {
   Line,
   LineBasicMaterial,
   type Material,
+  Matrix4,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   Object3D,
   PerspectiveCamera,
   PlaneGeometry,
+  Quaternion,
   Scene,
+  type SkinnedMesh,
+  Sphere,
   SphereGeometry,
   SpotLight,
   TorusGeometry,
@@ -48,6 +65,39 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import type { ManualScene3d } from "@/lib/manual";
+import type { ModeloPersonaje, PersonajeId } from "@/lib/manual-3d";
+import {
+  HUESOS,
+  PRODUCT_HALF_WIDTH,
+  SEAT_TOP,
+  STRIDE,
+  WALK_CLIP_WEIGHT,
+  blendCharacterPose,
+  calibrateRig,
+  castCharacters,
+  castIds,
+  characterActionPose,
+  clipOverlay,
+  characterEyeHeight,
+  headLocals,
+  legsLive,
+  measureClipYaw,
+  measureWalkStride,
+  parseManifest,
+  productHold,
+  resolveBoneMap,
+  solveArmLive,
+  solvePose,
+  stepFeet,
+  travelInFrame,
+  type BoneMap,
+  type CharacterPose,
+  type ClipOverlay,
+  type Gait,
+  type PoseSolution,
+  type RigCalibration,
+  type Side,
+} from "@/lib/manual-characters";
 import {
   ANGLE_INTENT,
   ANGLE_LABELS,
@@ -84,6 +134,8 @@ import { cn } from "@/lib/utils";
 /* ------------------------------------------------------------ CONSTANTES -- */
 
 const HELPERS = 1; // capa de ayudas: se ven en la vista libre, nunca en la «Vista de cámara»
+/** Quien graba (maniquí F o camarógrafo): está detrás del celular, así que la «Vista de cámara» nunca lo dibuja. */
+const CREW_LAYER = 2;
 const CAMERA_COLOR = "#c2410c";
 const PATH_COLOR = "#f97316";
 const SUBJECT_PATH_COLOR = "#0f766e";
@@ -763,10 +815,467 @@ function setLine(line: Line, a: Vector3, b: Vector3) {
   attribute.needsUpdate = true;
 }
 
+/* ---------------------------------------------------------- PERSONAJES -- */
+
+/** Ruta autenticada de los modelos (viven fuera de /public y exigen sesión). */
+const MODELS_URL = "/api/modelos-3d";
+/**
+ * La ruta responde «private, max-age=604800, immutable» sobre URLs sin versión: pedidos así, el
+ * navegador no volvería a preguntar en 7 días y podría juntar un manifiesto viejo con un GLB nuevo
+ * (o seguir sirviendo los modelos sin sesión). Con «no-cache» revalida cada vez con el ETag: la ruta
+ * vuelve a exigir la sesión y, si nada cambió, responde 304 sin volver a bajar los bytes.
+ */
+const MODELS_FETCH: RequestInit = { credentials: "same-origin", cache: "no-cache" };
+
+/** Un GLB listo para clonar: la plantilla queda en reposo y nunca se agrega a una escena. */
+type LoadedCharacter = {
+  spec: ModeloPersonaje;
+  template: Object3D;
+  cal: RigCalibration;
+  clips: { idle: AnimationClip | null; walk: AnimationClip | null };
+  /** Metros por ciclo del clip de caminar tal como se mezcla (null: marcha procedural). */
+  stride: number | null;
+  /** Cuánto giran el torso los clips de reposo y de caminar (rad; + hacia su izquierda): se descuenta al orientarlo. */
+  idleYaw: number;
+  walkYaw: number;
+};
+export type CharacterSet = Partial<Record<PersonajeId, LoadedCharacter>>;
+
+/*
+ * Caché a nivel de módulo: una promesa por archivo, compartida entre lecciones y entre las veces que
+ * el visor se recrea (formato, errores). Si una descarga falla se olvida para poder reintentar.
+ */
+let cloneSkinned: ((source: Object3D) => Object3D) | null = null;
+let manifestPromise: Promise<ModeloPersonaje[]> | null = null;
+const characterPromises = new Map<PersonajeId, Promise<LoadedCharacter>>();
+const charactersReady = new Map<PersonajeId, LoadedCharacter>();
+/** La nota de «no se pudieron cargar» se muestra una sola vez por visita (salvo que la persona reintente). */
+let characterFailureShown = false;
+
+function loadManifest() {
+  if (!manifestPromise) {
+    const pending = fetch(`${MODELS_URL}/manifest.json`, MODELS_FETCH).then(async response => {
+      if (!response.ok) throw new Error(`manifiesto: HTTP ${response.status}`);
+      return parseManifest(await response.json()).personajes;
+    });
+    pending.catch(() => {
+      if (manifestPromise === pending) manifestPromise = null;
+    });
+    manifestPromise = pending;
+  }
+  return manifestPromise;
+}
+
+function loadCharacter(id: PersonajeId): Promise<LoadedCharacter> {
+  const ready = charactersReady.get(id);
+  if (ready) return Promise.resolve(ready);
+  let pending = characterPromises.get(id);
+  if (!pending) {
+    pending = (async () => {
+      // El cargador, el decodificador meshopt y SkeletonUtils van en su propio chunk: sin personajes no se descargan.
+      const [specs, { GLTFLoader }, { MeshoptDecoder }, skeleton] = await Promise.all([
+        loadManifest(),
+        import("three/examples/jsm/loaders/GLTFLoader.js"),
+        import("three/examples/jsm/libs/meshopt_decoder.module.js"),
+        import("three/examples/jsm/utils/SkeletonUtils.js"),
+      ]);
+      const spec = specs.find(item => item.id === id);
+      if (!spec) throw new Error(`el manifiesto no trae ${id}`);
+      const loader = new GLTFLoader();
+      loader.setMeshoptDecoder(MeshoptDecoder);
+      // fetch propio (no loader.load) para pedirlo con MODELS_FETCH; el GLB trae todo adentro.
+      const response = await fetch(`${MODELS_URL}/${spec.archivo}`, MODELS_FETCH);
+      if (!response.ok) throw new Error(`${spec.archivo}: HTTP ${response.status}`);
+      const gltf = await loader.parseAsync(await response.arrayBuffer(), "");
+      const template = gltf.scene;
+      const bones = resolveBoneMap(template, spec.huesos);
+      const cal = calibrateRig(template, spec, bones);
+      const named = (name?: string) => (name ? gltf.animations.find(clip => clip.name === name) ?? null : null);
+      const clips = { idle: named(spec.animaciones?.reposo), walk: named(spec.animaciones?.caminar) };
+      const stride = clips.walk ? measureWalkStride(template, bones, clips.walk, clips.idle, WALK_CLIP_WEIGHT) : null;
+      const idleYaw = clips.idle ? measureClipYaw(template, bones, clips.idle) : 0;
+      const walkYaw = clips.walk ? measureClipYaw(template, bones, clips.walk) : 0;
+      cloneSkinned = skeleton.clone;
+      const loaded: LoadedCharacter = { spec, template, cal, clips, stride, idleYaw, walkYaw };
+      charactersReady.set(id, loaded);
+      return loaded;
+    })();
+    const current = pending;
+    current.catch(() => {
+      if (characterPromises.get(id) === current) characterPromises.delete(id);
+      // Si un GLB no cuadra con el manifiesto (un despliegue cambió uno de los dos), el reintento pide los dos de nuevo.
+      manifestPromise = null;
+    });
+    characterPromises.set(id, current);
+  }
+  return pending;
+}
+
+function loadCharacters(ids: readonly PersonajeId[]): Promise<CharacterSet> {
+  return Promise.all(ids.map(loadCharacter)).then(list => Object.fromEntries(list.map(item => [item.spec.id, item])) as CharacterSet);
+}
+
+/** Lo que ya está en memoria (otra lección los cargó): se usa al montar, sin parpadeo de maniquíes. */
+function readyCharacters(ids: readonly PersonajeId[]): CharacterSet | null {
+  if (!ids.length || !ids.every(id => charactersReady.has(id))) return null;
+  return Object.fromEntries(ids.map(id => [id, charactersReady.get(id)!])) as CharacterSet;
+}
+
+/**
+ * Una instancia en escena: clon con esqueleto propio; geometría, materiales y texturas son los de la
+ * plantilla del caché. Así, con el mismo WebGLRenderer, recrear el visor (formato, errores) no vuelve
+ * a subir texturas ni a compilar shaders.
+ */
+type CharacterInstance = {
+  asset: LoadedCharacter;
+  root: Object3D;
+  bones: BoneMap;
+  /** Punto medio entre los ojos, colgado de la cabeza: lo que se encuadra en la línea superior. */
+  eyes: Object3D;
+  shadow: Mesh;
+  product: Group | null;
+  mixer: AnimationMixer | null;
+  idle: AnimationAction | null;
+  walk: AnimationAction | null;
+  /** Lo que se retoca encima del clip (piernas, brazos, cadera) vuelve a lo del clip antes de cada cuadro. */
+  overlay: ClipOverlay | null;
+};
+
+/** Giro del producto en las manos de la actriz: la taza, con el asa hacia la cámara (así no choca con la palma). */
+const HELD_YAW: Record<SceneConfig["props"]["product"], number> = { caja: 0, taza: -Math.PI / 2, prenda: 0, plato: 0, celular: 0 };
+
+function createCharacter(asset: LoadedCharacter, product: SceneConfig["props"]["product"] | null): CharacterInstance {
+  if (!cloneSkinned) throw new Error("SkeletonUtils no está cargado");
+  const root = cloneSkinned(asset.template);
+  root.updateMatrixWorld(true);
+  const rootInv = root.matrixWorld.clone().invert();
+  const height = asset.spec.altura;
+  const toMesh = new Matrix4();
+  root.traverse(object => {
+    const item = object as Mesh;
+    if (!item.isMesh) return;
+    item.userData.sharedAsset = true;
+    const skinned = object as SkinnedMesh;
+    if (skinned.isSkinnedMesh) {
+      // El volumen de reposo no cubre los brazos levantados ni la marcha: una esfera holgada (cintura,
+      // radio de casi toda la estatura) en el espacio de la malla. Con ella, la «Vista de cámara» no
+      // dibuja a quien queda fuera de cuadro (quien entrevista en el podcast).
+      toMesh.multiplyMatrices(rootInv, skinned.matrixWorld).invert();
+      const scale = Math.max(1e-6, new Matrix4().multiplyMatrices(rootInv, skinned.matrixWorld).getMaxScaleOnAxis());
+      skinned.boundingSphere = new Sphere(new Vector3(0, height * 0.5, 0).applyMatrix4(toMesh), (height * 0.9) / scale);
+    }
+  });
+  const bones = resolveBoneMap(root, asset.spec.huesos);
+  const eyes = new Object3D();
+  eyes.position.copy(asset.cal.eyeLocal);
+  bones.head.add(eyes);
+  const shadow = mesh(new CircleGeometry(0.3, 24), new MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.12, depthWrite: false }));
+  shadow.rotation.x = -Math.PI / 2;
+  let mixer: AnimationMixer | null = null;
+  let idle: AnimationAction | null = null;
+  let walk: AnimationAction | null = null;
+  if (asset.clips.idle) {
+    mixer = new AnimationMixer(root);
+    idle = mixer.clipAction(asset.clips.idle);
+    idle.play();
+    if (asset.clips.walk && asset.stride) {
+      walk = mixer.clipAction(asset.clips.walk);
+      walk.play();
+      walk.setEffectiveWeight(0);
+    }
+  }
+  let held: Group | null = null;
+  if (product) {
+    held = buildProduct(product);
+    held.visible = false;
+    held.rotation.y = HELD_YAW[product];
+    root.add(held);
+  }
+  return { asset, root, bones, eyes, shadow, product: held, mixer, idle, walk, overlay: mixer ? clipOverlay(bones) : null };
+}
+
+/** Quien graba va en su propia capa: la ve la vista libre, nunca la «Vista de cámara». */
+function onCrewLayer(...objects: Object3D[]) {
+  for (const object of objects) object.traverse(child => child.layers.set(CREW_LAYER));
+}
+
+/** Libera lo propio de la instancia (esqueletos, sombra, producto); lo compartido queda en el caché. */
+function disposeCharacter(character: CharacterInstance) {
+  character.root.removeFromParent();
+  character.shadow.removeFromParent();
+  if (character.mixer) {
+    character.mixer.stopAllAction();
+    character.mixer.uncacheRoot(character.root);
+  }
+  character.root.traverse(object => {
+    const skinned = object as SkinnedMesh;
+    if (skinned.isSkinnedMesh) skinned.skeleton.dispose();
+  });
+  character.shadow.geometry.dispose();
+  (character.shadow.material as Material).dispose();
+  character.product?.traverse(object => {
+    const item = object as Partial<Mesh>;
+    item.geometry?.dispose();
+    (item.material as Material | undefined)?.dispose();
+  });
+}
+
+/**
+ * Al cerrar el visor (se va el WebGLRenderer): suelta lo que ese renderer subió de las plantillas.
+ * Los datos quedan en memoria y el próximo visor los vuelve a subir; sin esto, los oyentes «dispose»
+ * que cada renderer deja en geometrías, materiales y texturas compartidos lo retendrían toda la visita.
+ */
+function releaseCharacterTemplates() {
+  for (const asset of charactersReady.values()) {
+    asset.template.traverse(object => {
+      const item = object as Mesh;
+      if (!item.isMesh) return;
+      item.geometry.dispose();
+      for (const material of Array.isArray(item.material) ? item.material : [item.material]) {
+        for (const value of Object.values(material)) if ((value as { isTexture?: boolean } | null)?.isTexture) (value as { dispose(): void }).dispose();
+        material.dispose();
+      }
+    });
+  }
+}
+
+function placeCharacter(character: CharacterInstance, x: number, z: number, yaw: number) {
+  character.root.position.set(x, 0, z);
+  character.root.rotation.y = yaw;
+  character.shadow.position.set(x, 0.003, z);
+  // Solo la raíz: los huesos se actualizan después de posarlos.
+  character.root.updateWorldMatrix(false, false);
+}
+
+function applySolution(character: CharacterInstance, solution: PoseSolution) {
+  for (const key of HUESOS) character.bones[key].quaternion.copy(solution.local[key]);
+  character.bones.pelvis.position.copy(solution.pelvisPosition);
+  character.root.updateMatrixWorld(true);
+}
+
+const wrapAngle = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));
+
+/** Cabeza del personaje hacia un punto del mundo (cuello 40 %, cabeza 60 %), como `aimHead` del maniquí. */
+function aimCharacterHead(character: CharacterInstance, pose: CharacterPose, look: number, point: Vector3 | null) {
+  let yaw = pose.headYaw;
+  let pitch = pose.headPitch;
+  if (point && look > 0) {
+    const origin = character.bones.head.getWorldPosition(new Vector3());
+    const bodyYaw = character.root.rotation.y + pose.torsoYaw + pose.pelvisYaw;
+    const flat = Math.hypot(point.x - origin.x, point.z - origin.z);
+    yaw = lerp(pose.headYaw, clamp(wrapAngle(Math.atan2(point.x - origin.x, point.z - origin.z) - bodyYaw), -1.2, 1.2), look);
+    pitch = lerp(pose.headPitch, clamp(-Math.atan2(point.y - origin.y, Math.max(0.1, flat)) - pose.lean, -0.6, 0.6), look);
+  }
+  const { neck, head } = headLocals(character.asset.cal, yaw, pitch, pose.headRoll);
+  character.bones.neck.quaternion.copy(neck);
+  character.bones.head.quaternion.copy(head);
+  character.bones.neck.updateMatrixWorld(true);
+}
+
+/**
+ * Actriz: pose procedural completa. `placement` es la base más el desplazamiento de la acción; el
+ * producto va entre las palmas (separadas según su ancho, `holdHalfWidth`) cuando la pose del
+ * maniquí lo muestra. No gira como en el maniquí: lo sostienen las dos manos.
+ */
+function poseActress(character: CharacterInstance, pose: CharacterPose, placement: { x: number; z: number; yaw: number }, product: number, seatTop: number, holdHalfWidth: number) {
+  placeCharacter(character, placement.x, placement.z, placement.yaw);
+  const solution = solvePose(character.asset.cal, pose, { seatTop, holdHalfWidth });
+  applySolution(character, solution);
+  if (character.product) {
+    const shown = product > 0.02;
+    character.product.visible = shown;
+    if (shown) {
+      character.product.position.copy(productHold(solution));
+      character.product.scale.setScalar(Math.max(0.001, product));
+    }
+  }
+}
+
+const LIVE = { rootInv: new Matrix4(), relative: new Matrix4(), parent: new Quaternion(), position: new Vector3(), scale: new Vector3() };
+
+/** Si el hombro llega cómodo a un punto (sin estirar del todo el brazo). Todo en el espacio del personaje. */
+function withinReach(character: CharacterInstance, side: Side, shoulder: Vector3, target: Vector3) {
+  const limb = character.asset.cal.arm[side];
+  return shoulder.distanceTo(target) <= (limb.upperLen + limb.lowerLen) * 0.97;
+}
+
+/**
+ * Brazo del camarógrafo hacia un punto (espacio del personaje) sobre lo que dejó el clip. Con
+ * `optional`, si no llega cómodo deja el brazo del clip (el celular en un trípode muy alto o muy bajo).
+ */
+function reachLive(character: CharacterInstance, side: Side, target: Vector3, pole: Vector3, optional: boolean) {
+  const upper = character.bones[side === "L" ? "upperArmL" : "upperArmR"];
+  const lower = character.bones[side === "L" ? "lowerArmL" : "lowerArmR"];
+  const parent = upper.parent;
+  if (!parent) return;
+  LIVE.rootInv.copy(character.root.matrixWorld).invert();
+  LIVE.relative.multiplyMatrices(LIVE.rootInv, parent.matrixWorld).decompose(LIVE.position, LIVE.parent, LIVE.scale);
+  const shoulder = upper.getWorldPosition(new Vector3()).applyMatrix4(LIVE.rootInv);
+  if (optional && !withinReach(character, side, shoulder, target)) return;
+  const solved = solveArmLive(character.asset.cal, side, LIVE.parent, shoulder, target, pole);
+  upper.quaternion.copy(solved.upper);
+  lower.quaternion.copy(solved.lower);
+  upper.updateMatrixWorld(true);
+}
+
+type CrewMotion = {
+  walking: boolean;
+  /** Metros recorridos por el camino del paso y velocidad (m/s). */
+  gait: Gait;
+  /** Hacia dónde va el recorrido en el mundo (unitaria y horizontal); null si no hay recorrido. */
+  heading: Vector3 | null;
+  time: number;
+  /** Codos pegados y rodillas flexionadas (fluido) o no (brusco / codos abiertos). */
+  tucked: boolean;
+  elbowsOut: boolean;
+  /** Muñecas en el mundo: el celular con las dos manos, o el celular y la luz. null = brazos del clip. */
+  hands: Partial<Record<Side, Vector3 | null>>;
+  /** En trípode sostener es opcional: si el celular queda lejos de las manos, brazos sueltos. */
+  optional: boolean;
+  /** Del lugar de quien graba hacia el celular (unitaria y horizontal). */
+  toward: Vector3;
+};
+
+/** Cadera más baja con las rodillas flexionadas (quieto / caminando), como el maniquí; subirla estira las piernas (error). */
+const CREW_KNEES = { still: 0.055, walking: 0.03, rigid: -0.03 } as const;
+/** Lo más que se acerca quien graba al celular para que le lleguen los brazos. */
+const CREW_MAX_STEP = 0.25;
+
+/**
+ * En mano, si el celular queda lejos de un hombro (a más del 97 % del largo del brazo), quien graba
+ * da un paso hacia él: lo justo para que los dos brazos lleguen, hasta `CREW_MAX_STEP`.
+ */
+function stepToward(character: CharacterInstance, motion: CrewMotion) {
+  let step = 0;
+  for (const side of ["L", "R"] as const) {
+    const target = motion.hands[side];
+    if (!target) continue;
+    const limb = character.asset.cal.arm[side];
+    const reach = (limb.upperLen + limb.lowerLen) * 0.97;
+    const shoulder = character.bones[side === "L" ? "upperArmL" : "upperArmR"].getWorldPosition(new Vector3());
+    const gap = target.clone().sub(shoulder);
+    // Menor s ≥ 0 con |gap − s·toward| ≤ reach; si ni así llega, lo más cerca posible.
+    const along = gap.dot(motion.toward);
+    const disc = along * along - gap.lengthSq() + reach * reach;
+    step = Math.max(step, disc >= 0 ? along - Math.sqrt(disc) : along);
+  }
+  step = clamp(step, 0, CREW_MAX_STEP);
+  if (step < 1e-3) return;
+  character.root.position.addScaledVector(motion.toward, step);
+  character.shadow.position.set(character.root.position.x, 0.003, character.root.position.z);
+  character.root.updateMatrixWorld(true);
+}
+
+/**
+ * Camarógrafo con clips: el torso de su «idle» gira unos 24° hacia su derecha (el de «walk», casi
+ * nada); la raíz descuenta ese giro, mezclado como se mezclan los clips, para que quede de frente
+ * al celular. Si el recorrido va hacia donde mira o hacia atrás (a menos de 45°), «idle» y «walk» se
+ * mezclan según la velocidad y la fase de «walk» sigue a los metros recorridos de frente (equivale
+ * a ajustar su timeScale, pero es determinista al saltar entre pasos); lo que quede de costado lo
+ * cubren pasos cortos. Si va de costado (cámara en mano que acompaña a quien cruza el cuadro), no se
+ * mezcla «walk»: da pasos cortos en la dirección del recorrido, sin patinar. Encima del clip: las
+ * piernas (rodillas flexionadas o rígidas) y los brazos, que sostienen el celular. Sin clips, marcha
+ * procedural.
+ */
+function poseCrew(character: CharacterInstance, placement: { x: number; z: number; yaw: number }, motion: CrewMotion) {
+  const { cal, idleYaw, walkYaw } = character.asset;
+  const { mixer, idle, walk } = character;
+  const moving = motion.walking && motion.heading !== null;
+  // Respecto de hacia dónde mira (el celular): ¿de frente/hacia atrás o de costado?
+  const facing = moving ? travelInFrame(motion.heading!, placement.yaw) : { frontal: 0, lateral: 0 };
+  const walkClip = Boolean(mixer && idle && walk) && Math.abs(facing.frontal) >= Math.SQRT1_2;
+  const walkWeight = walkClip ? WALK_CLIP_WEIGHT * smooth((motion.gait.speed * Math.abs(facing.frontal)) / 0.3) : 0;
+  const yaw = placement.yaw - (mixer && idle ? idleYaw * (1 - walkWeight) + walkYaw * walkWeight : 0);
+  placeCharacter(character, placement.x, placement.z, yaw);
+  const poleFor = (side: Side) => new Vector3(side === "L" ? 1 : -1, 0, 0).multiplyScalar(motion.elbowsOut ? 1 : 0.5).add(new Vector3(0, motion.elbowsOut ? -0.15 : -1, motion.elbowsOut ? -0.2 : -0.3));
+  const local = (side: Side) => {
+    const world = motion.hands[side];
+    return world ? character.root.worldToLocal(world.clone()) : null;
+  };
+  // El recorrido en el marco de la raíz (sus pies): +Z su frente, +X su izquierda.
+  const travel = moving ? travelInFrame(motion.heading!, yaw) : { frontal: 0, lateral: 0 };
+  const frontal: Gait = { distance: motion.gait.distance * travel.frontal, speed: motion.gait.speed * Math.abs(travel.frontal) };
+  if (mixer && idle) {
+    // Lo retocado en el cuadro anterior vuelve a lo del clip: el mezclador no reescribe lo que no cambió (pausa).
+    character.overlay?.restore();
+    idle.time = motion.time % Math.max(0.001, idle.getClip().duration);
+    idle.setEffectiveWeight(1 - walkWeight);
+    if (walk) {
+      walk.setEffectiveWeight(walkWeight);
+      const cycles = frontal.distance / (character.asset.stride ?? STRIDE);
+      walk.time = (cycles - Math.floor(cycles)) * walk.getClip().duration;
+    }
+    mixer.update(0);
+    character.overlay?.save();
+    character.root.updateMatrixWorld(true);
+    // Con el celular por encima de los hombros (picado en mano) nadie se agacha: sin flexión extra.
+    const shoulderY = character.root.position.y + cal.rest.upperArmL.pos.y;
+    const overhead = [motion.hands.L, motion.hands.R].some(point => point && point.y > shoulderY);
+    const drop = motion.tucked ? (overhead ? 0 : motion.walking ? CREW_KNEES.walking : CREW_KNEES.still) : motion.walking ? 0 : CREW_KNEES.rigid;
+    let feet: Record<Side, Vector3> | undefined;
+    if (moving && walkClip && Math.abs(travel.lateral) > 0.05) feet = stepFeet(motion.gait.distance * travel.lateral, motion.gait.speed * Math.abs(travel.lateral));
+    else if (moving && !walkClip) feet = stepFeet(motion.gait.distance, motion.gait.speed, { x: travel.lateral, z: travel.frontal });
+    if (drop !== 0 || feet) legsLive(character.root, character.bones, cal, { drop, feet });
+    if (!motion.optional) stepToward(character, motion);
+    for (const side of ["L", "R"] as const) {
+      const target = local(side);
+      if (target) reachLive(character, side, target, poleFor(side), motion.optional);
+    }
+    return;
+  }
+  const reach = { L: local("L"), R: local("R") };
+  for (const side of ["L", "R"] as const) {
+    const target = reach[side];
+    if (target && motion.optional && !withinReach(character, side, cal.rest[side === "L" ? "upperArmL" : "upperArmR"].pos, target)) reach[side] = null;
+  }
+  const pose = characterActionPose({
+    action: motion.walking ? "walk" : "idle",
+    p: 0,
+    time: motion.time,
+    seated: false,
+    body: { elbows: "pegados", feet: motion.tucked ? "adelantado" : "juntos" },
+    gait: motion.walking ? frontal : null,
+  });
+  applySolution(character, solvePose(cal, pose, { reach, reachPole: { L: reach.L ? poleFor("L") : undefined, R: reach.R ? poleFor("R") : undefined } }));
+}
+
+const BODY_OK: SceneBody = { elbows: "pegados", feet: "adelantado" };
+
+/** Base del lugar más el desplazamiento y el giro de la acción (lo mismo que hace `applyPose` con el maniquí). */
+function placementOf(base: { x: number; z: number; yaw: number }, pose: Pose) {
+  return { x: base.x + pose.x, z: base.z + pose.z, yaw: base.yaw + pose.yaw };
+}
+
 /* --------------------------------------------------------------- VISOR -- */
 
 type ViewerSnapshot = { time: number; playing: boolean; view: { position: [number, number, number]; target: [number, number, number] } };
-type ViewerApi = { play(): void; pause(): void; seek(index: number): void; restart(): void; view(name: ViewName): void; snapshot(): ViewerSnapshot; dispose(): void };
+type ViewerApi = {
+  play(): void; pause(): void; seek(index: number): void; restart(): void; view(name: ViewName): void; snapshot(): ViewerSnapshot;
+  /**
+   * Suelta el lienzo (animación, controles, observadores) y devuelve cómo liberar sus geometrías y
+   * materiales. El renderer es del componente y sigue vivo: se liberan después del primer cuadro del
+   * visor nuevo, así los shaders que comparten siguen compilados.
+   */
+  dispose(): () => void;
+  /** Cambia maniquíes por personajes (o al revés) en el lugar: no toca el tiempo, la reproducción ni la vista. */
+  setCharacters(set: CharacterSet | null): void;
+};
+
+/** Un solo WebGLRenderer por visor montado: se reutiliza al cambiar de formato o de error. null si no hay WebGL. */
+function createRenderer(): WebGLRenderer | null {
+  let renderer: WebGLRenderer;
+  try {
+    renderer = new WebGLRenderer({ antialias: true, powerPreference: "low-power" });
+  } catch {
+    return null;
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.domElement.style.width = "100%";
+  renderer.domElement.style.height = "100%";
+  renderer.domElement.style.display = "block";
+  renderer.domElement.style.touchAction = "none";
+  return renderer;
+}
 
 /** Recuadro de la «Vista de cámara» (píxeles, arriba a la derecha) según el formato. */
 function insetRect(width: number, height: number, format: FrameFormat) {
@@ -781,28 +1290,24 @@ function insetRect(width: number, height: number, format: FrameFormat) {
 }
 
 function createViewer(options: {
+  /** Renderer del componente: su lienzo ya está en `host` y conserva texturas y shaders entre recreaciones. */
+  renderer: WebGLRenderer;
   host: HTMLDivElement;
   inset: HTMLDivElement;
   progress: HTMLSpanElement;
   eyeMarker: HTMLSpanElement;
   config: SceneConfig;
   resume: ViewerSnapshot | null;
+  /** Personajes ya cargados (si no, maniquíes hasta que lleguen por `setCharacters`). */
+  characters: CharacterSet | null;
   onBeat: (index: number) => void;
   onPlaying: (playing: boolean) => void;
-}): ViewerApi | null {
-  const { host, inset, progress, eyeMarker, config, resume, onBeat, onPlaying } = options;
-  let renderer: WebGLRenderer;
-  try {
-    renderer = new WebGLRenderer({ antialias: true, powerPreference: "low-power" });
-  } catch {
-    return null;
-  }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-  renderer.domElement.style.width = "100%";
-  renderer.domElement.style.height = "100%";
-  renderer.domElement.style.display = "block";
-  renderer.domElement.style.touchAction = "none";
-  host.prepend(renderer.domElement);
+  /** Después del primer cuadro dibujado (el componente libera ahí lo del visor anterior). */
+  onFirstFrame: () => void;
+  /** No se pudo armar un personaje que el reparto pedía: la escena vuelve a los maniquíes. */
+  onCharactersError: (error: unknown) => void;
+}): ViewerApi {
+  const { renderer, host, inset, progress, eyeMarker, config, resume, onBeat, onPlaying } = options;
 
   const dark = document.documentElement.classList.contains("dark");
   const scene = new Scene();
@@ -840,9 +1345,20 @@ function createViewer(options: {
   const bases = [subjectBase(config), podcast ? { x: interviewer.x, z: interviewer.z, yaw: Math.atan2(-interviewer.x, -interviewer.z) } : { x: 0.78, z: -0.15, yaw: -0.45 }];
   for (const person of people) scene.add(person.root, person.shadow);
   people[0].root.visible = people[0].shadow.visible = !productOnly;
-  // Quien graba (maniquí F) aparece detrás del celular, con los brazos hacia él.
+  // Quien graba (maniquí F) aparece detrás del celular, con los brazos hacia él. Va en su capa: sus
+  // manos quedan junto al lente y la «Vista de cámara» no debe dibujarlas.
   const operator = config.subjects.operator ? buildMannequin(OPERATOR_COLOR, config.props.product) : null;
-  if (operator) scene.add(operator.root, operator.shadow);
+  if (operator) {
+    onCrewLayer(operator.root, operator.shadow);
+    scene.add(operator.root, operator.shadow);
+  }
+  // Personajes que reemplazan a los maniquíes (a lo sumo 3); la persona de la luz de mano sigue como maniquí.
+  const cast = castCharacters(config.subjects);
+  const actors: { subject: CharacterInstance | null; second: CharacterInstance | null; operator: CharacterInstance | null } = { subject: null, second: null, operator: null };
+  // Asiento: el sofá es más bajo que la silla, la banca y las sillas del podcast.
+  const seatTop = config.props.sofa && !podcast ? 0.42 : SEAT_TOP;
+  // Las palmas de la actriz se apoyan en las caras del producto de la escena.
+  const holdHalf = PRODUCT_HALF_WIDTH[config.props.product];
 
   // Luz de mano: una persona la sostiene a 45°, un poco por encima de los ojos.
   const hand = config.lights.find(light => light.source === "mano");
@@ -883,6 +1399,7 @@ function createViewer(options: {
 
   const viewCam = new PerspectiveCamera(45, 1, 0.05, 80);
   viewCam.layers.enable(HELPERS);
+  viewCam.layers.enable(CREW_LAYER);
   viewCam.position.set(...VIEWS["3/4"]);
   const controls = new OrbitControls(viewCam, renderer.domElement);
   controls.target.set(0, 1, 0.35);
@@ -908,11 +1425,17 @@ function createViewer(options: {
   let width = 1, height = 1;
   let time = resume ? clamp(resume.time, 0, config.duration) : 0;
   let last = 0, raf = 0;
-  let playing = false, visible = true, disposed = false, currentBeat = -1;
+  let playing = false, visible = true, disposed = false, currentBeat = -1, firstFrame = true;
   const tmp = new Vector3();
   const eyeWorld = new Vector3();
   const lookAt = new Vector3(...first.position);
-  const canonicalEyeY = eyeHeight(seated, body.feet);
+  // Altura de ojos y producto en mano del sujeto: los del maniquí o, con personajes, los del modelo real
+  // (manifest.ojos). Se recalculan al cambiar de figuras.
+  let canonicalEyeY = eyeHeight(seated, body.feet);
+  const MANNEQUIN_PRODUCT = new Vector3(0, MANNEQUIN.hips + MANNEQUIN.spine + 0.2, 0.36);
+  const productFocus = MANNEQUIN_PRODUCT.clone();
+  // Luz de mano pegada al lente: con camarógrafo, la sostiene con la otra mano sobre el celular.
+  const lensLight = hand && hand.side === 0 ? new Vector3(...first.position).add(new Vector3(0, 0.1, 0)) : null;
   // `settled`: el sujeto ya llegó a su marca (o la cámara lo acompaña); mientras camina hacia una cámara quieta, el marcador es neutro.
   const eyeScreen = { x: 0.5, y: EYE_LINE, shown: false, settled: true };
 
@@ -920,6 +1443,146 @@ function createViewer(options: {
     const beat = config.beats[index];
     return beat && !productOnly ? actionPose(beat.action, 1, 0, seated, enter, body).product > 0.5 : false;
   };
+
+  /* Personajes: lo que se ve es el personaje si está cargado; si no, el maniquí. */
+  const subjectHead = (): Object3D => (actors.subject ? actors.subject.bones.head : people[0].head);
+  const subjectEyes = (): Object3D => (actors.subject ? actors.subject.eyes : people[0].eyes);
+
+  /** Metros recorridos por el sujeto en el paso y su velocidad (m/s): la marcha los sigue para que los pies no patinen. */
+  function gaitFor(action: SubjectAction, p: number, duration: number, remap: (q: number) => number = q => q): Gait {
+    if (action !== "walk" && action !== "walkIn") return { distance: 0, speed: 0 };
+    const at = (q: number) => actionPose(action, remap(clamp(q, 0, 1)), 0, seated, enter, body);
+    const start = at(0);
+    const travelled = (q: number) => {
+      const here = at(q);
+      return Math.hypot(here.x - start.x, here.z - start.z);
+    };
+    const a = Math.max(0, p - 0.01);
+    const b = Math.min(1, p + 0.01);
+    return { distance: travelled(p), speed: Math.abs(travelled(b) - travelled(a)) / Math.max(1e-4, (b - a) * duration) };
+  }
+
+  const actressState = (item: SceneBeat, q: number, t: number) => ({ action: item.action, p: q, time: t, seated, body, gait: gaitFor(item.action, q, item.end - item.start) });
+
+  /**
+   * Camarógrafo detrás del celular. En mano o en seguimiento lo sostiene con las dos manos (o con una y
+   * la luz pegada al lente en la otra) y camina al ritmo del sujeto; en trípode lo toma si le queda a mano.
+   */
+  function poseCamarographer(character: CharacterInstance, beat: SceneBeat, p: number, t: number, placement: { x: number; z: number; yaw: number }, state: { tucked: boolean; walking: boolean; onTripod: boolean; toward: Vector3 }) {
+    const moving = tracks(beat) && (beat.action === "walk" || beat.action === "walkIn");
+    // La cámara lo arrastra: a tirones con el error de movimiento brusco.
+    const gait = moving ? gaitFor(beat.action, p, beat.end - beat.start, jerky ? q => followProgress(q, "brusco") : undefined) : { distance: 0, speed: 0 };
+    const from = actionPose(beat.action, 0, 0, seated, enter, body);
+    const to = actionPose(beat.action, 1, 0, seated, enter, body);
+    // Quien graba recorre el mismo camino que el sujeto. En su marco, poseCrew decide: si el sujeto viene
+    // hacia la cámara retrocede (el clip va al revés) y si cruza de costado da pasos laterales.
+    const heading = new Vector3(to.x - from.x, 0, to.z - from.z);
+    const right = new Vector3(1, 0, 0).applyQuaternion(shotCam.quaternion);
+    const up = new Vector3(0, 1, 0).applyQuaternion(shotCam.quaternion);
+    const behind = new Vector3(0, 0, 1).applyQuaternion(shotCam.quaternion);
+    // Muñecas un poco detrás y debajo de los bordes del celular (los dedos lo rodean). Su derecha es la derecha de la pantalla.
+    const grip = (offset: number) => shotCam.position.clone().addScaledVector(right, offset).addScaledVector(behind, 0.06).addScaledVector(up, -0.03);
+    const hands = lensLight
+      ? { L: lensLight.clone().addScaledVector(behind, 0.05).add(new Vector3(0, -0.05, 0)), R: grip(0) }
+      : { L: grip(-0.05), R: grip(0.05) };
+    poseCrew(character, placement, {
+      walking: state.walking,
+      gait,
+      heading: heading.lengthSq() > 1e-6 ? heading.normalize() : null,
+      time: t,
+      tucked: state.tucked,
+      elbowsOut: crewElbows,
+      hands,
+      optional: state.onTripod,
+      toward: state.toward,
+    });
+  }
+
+  type Cast = { subject: CharacterInstance | null; second: CharacterInstance | null; operator: CharacterInstance | null };
+  const castMembers = (list: Cast) => [list.subject, list.second, list.operator].filter((item): item is CharacterInstance => item !== null);
+  let castVersion = 0;
+
+  /**
+   * Arma las instancias que pide el reparto. Si una falla (un hueso que no está en el clon, un
+   * personaje que no llegó), libera las demás, lo registra y avisa: la escena sigue con maniquíes
+   * y el conmutador lo muestra.
+   */
+  function buildCast(set: CharacterSet): Cast | null {
+    const built: Cast = { subject: null, second: null, operator: null };
+    const wanted: [keyof Cast, PersonajeId | null, SceneConfig["props"]["product"] | null][] = [
+      ["subject", productOnly ? null : cast.subject, config.props.product],
+      ["second", people[1] ? cast.second : null, null],
+      ["operator", operator ? cast.operator : null, null],
+    ];
+    try {
+      for (const [role, id, product] of wanted) {
+        if (!id) continue;
+        const asset = set[id];
+        if (!asset) throw new Error(`el reparto cargado no trae ${id}`);
+        built[role] = createCharacter(asset, product);
+      }
+    } catch (error) {
+      console.warn("[personajes] no se pudo armar la escena con personajes; siguen los maniquíes.", error);
+      for (const character of castMembers(built)) disposeCharacter(character);
+      options.onCharactersError(error);
+      return null;
+    }
+    if (built.operator) onCrewLayer(built.operator.root, built.operator.shadow);
+    return built;
+  }
+
+  /** Pone en escena un reparto armado (null: los maniquíes) y reencuadra con los ojos reales. */
+  function install(next: Cast | null) {
+    for (const character of castMembers(actors)) disposeCharacter(character);
+    actors.subject = next?.subject ?? null;
+    actors.second = next?.second ?? null;
+    actors.operator = next?.operator ?? null;
+    for (const character of castMembers(actors)) scene.add(character.root, character.shadow);
+    people[0].root.visible = people[0].shadow.visible = !productOnly && !actors.subject;
+    if (people[1]) people[1].root.visible = people[1].shadow.visible = !actors.second;
+    if (operator) operator.root.visible = operator.shadow.visible = !actors.operator;
+    // Encuadre con los ojos reales del personaje (manifest.ojos) y el producto entre sus manos.
+    const subject = actors.subject;
+    if (subject) {
+      canonicalEyeY = characterEyeHeight(subject.asset.cal, seated, body.feet, seatTop);
+      const held = productHold(solvePose(subject.asset.cal, characterActionPose({ action: "showProduct", p: 1, time: 0, seated, body }), { seatTop, holdHalfWidth: holdHalf }));
+      const base = bases[0];
+      productFocus.copy(held.applyAxisAngle(new Vector3(0, 1, 0), base.yaw)).add(new Vector3(base.x, 0, base.z));
+    } else {
+      canonicalEyeY = eyeHeight(seated, body.feet);
+      productFocus.copy(MANNEQUIN_PRODUCT);
+    }
+    const beat = config.beats[currentBeat];
+    if (beat) rebuildPath(beat);
+    schedule();
+  }
+
+  /**
+   * Reemplaza maniquíes por personajes (o al revés) sin tocar el tiempo, la reproducción ni la vista.
+   * `precompile`: cuando llegan con la escena andando, sus shaders se compilan antes de mostrarlos
+   * (en paralelo si el navegador tiene KHR_parallel_shader_compile, sin trabar la animación);
+   * mientras tanto siguen los maniquíes. Al crear el visor con ellos ya cargados, van directo.
+   */
+  function setCharacters(set: CharacterSet | null, precompile: boolean) {
+    const version = ++castVersion;
+    const built = set ? buildCast(set) : null;
+    if (!built || !precompile) {
+      install(built);
+      return;
+    }
+    const holder = new Group();
+    for (const character of castMembers(built)) holder.add(character.root);
+    renderer
+      .compileAsync(holder, viewCam, scene)
+      .catch(error => console.warn("[personajes] no se pudieron precompilar los shaders; se compilan al dibujar.", error))
+      .then(() => {
+        if (disposed || version !== castVersion) {
+          for (const character of castMembers(built)) disposeCharacter(character);
+          return;
+        }
+        install(built);
+      });
+  }
 
   type Subject = { x: number; z: number; eyeY: number };
 
@@ -947,7 +1610,7 @@ function createViewer(options: {
     const target = new Vector3(...placement.target);
     // Detalle o cenital de producto: el foco va al producto, en mano o sobre la mesa.
     if (productOnly || beat.shot === "detalle" || (beat.angle === "cenital" && hasTable && !holdingAt(beat.index))) {
-      const focus = holdingAt(beat.index) ? new Vector3(0, MANNEQUIN.hips + MANNEQUIN.spine + 0.2, 0.36) : hasTable ? new Vector3(tablePos.x + 0.18, 0.84, tablePos.z) : null;
+      const focus = holdingAt(beat.index) ? productFocus.clone() : hasTable ? new Vector3(tablePos.x + 0.18, 0.84, tablePos.z) : null;
       if (focus) {
         const shift = position.clone().sub(target);
         target.copy(focus);
@@ -1048,15 +1711,33 @@ function createViewer(options: {
     const previous = index > 0 ? beats[index - 1] : null;
     const blend = previous && local < BLEND ? smooth(local / BLEND) : 1;
     if (previous && blend < 1) pose = blendPose(actionPose(previous.action, 1, t, seated, enter, body), pose, blend);
-    applyPose(people[0], pose, bases[0], t);
+    // Con personaje, el maniquí sigue mandando dónde está (x, z, giro), a dónde mira y si muestra el producto;
+    // el cuerpo lo pone la pose procedural del esqueleto, mezclada entre pasos igual que la del maniquí.
+    let actressPose: CharacterPose | null = null;
+    if (actors.subject) {
+      actressPose = characterActionPose(actressState(beat, p, t));
+      if (previous && blend < 1) actressPose = blendCharacterPose(characterActionPose(actressState(previous, 1, t)), actressPose, blend);
+      poseActress(actors.subject, actressPose, placementOf(bases[0], pose), pose.product, seatTop, holdHalf);
+    } else applyPose(people[0], pose, bases[0], t);
+    const aimSubject = (point: Vector3) => {
+      if (actors.subject && actressPose) aimCharacterHead(actors.subject, actressPose, pose.look, point);
+      else aimHead(people[0], pose, point);
+    };
 
     // Segunda persona. En el podcast es quien entrevista: el sujeto la mira a ella, no a la cámara.
     let lookPoint: Vector3 | null = null;
     if (people[1] && podcast) {
-      const listener = actionPose("idle", p, t + 0.7, true, enter, { elbows: "pegados", feet: "adelantado" });
-      applyPose(people[1], listener, bases[1], t);
-      aimHead(people[1], listener, people[0].head.getWorldPosition(tmp));
-      lookPoint = people[1].head.getWorldPosition(new Vector3());
+      const listener = actionPose("idle", p, t + 0.7, true, enter, BODY_OK);
+      if (actors.second) {
+        const listening = characterActionPose({ action: "idle", p, time: t + 0.7, seated: true, body: BODY_OK });
+        poseActress(actors.second, listening, placementOf(bases[1], listener), 0, seatTop, holdHalf);
+        aimCharacterHead(actors.second, listening, listener.look, subjectHead().getWorldPosition(tmp));
+        lookPoint = actors.second.bones.head.getWorldPosition(new Vector3());
+      } else {
+        applyPose(people[1], listener, bases[1], t);
+        aimHead(people[1], listener, subjectHead().getWorldPosition(tmp));
+        lookPoint = people[1].head.getWorldPosition(new Vector3());
+      }
     }
 
     // Cámara con la línea de ojos. Dos pasadas: la cabeza mira a la cámara y los ojos se mueven un poco.
@@ -1071,13 +1752,13 @@ function createViewer(options: {
     };
     let cam = camFor({ x: pose.x, z: pose.z, eyeY: canonicalEyeY });
     for (let pass = 0; pass < 2 && !productOnly; pass += 1) {
-      aimHead(people[0], pose, lookPoint ?? lookAt.copy(cam.position));
-      people[0].eyes.getWorldPosition(eyeWorld);
+      aimSubject(lookPoint ?? lookAt.copy(cam.position));
+      subjectEyes().getWorldPosition(eyeWorld);
       cam = camFor({ x: pose.x, z: pose.z, eyeY: eyeWorld.y });
     }
     if (!productOnly) {
-      aimHead(people[0], pose, lookPoint ?? lookAt.copy(cam.position));
-      people[0].eyes.getWorldPosition(eyeWorld);
+      aimSubject(lookPoint ?? lookAt.copy(cam.position));
+      subjectEyes().getWorldPosition(eyeWorld);
     }
 
     if (keyRig) {
@@ -1114,7 +1795,8 @@ function createViewer(options: {
       tripod.scale.set(1, Math.max(0.1, shotCam.position.y - 0.09), 1);
     }
     if (heightLine && heightRing) {
-      const subjectAt = new Vector3(people[0].root.position.x, shotCam.position.y, people[0].root.position.z);
+      const standing = actors.subject ? actors.subject.root : people[0].root;
+      const subjectAt = new Vector3(standing.position.x, shotCam.position.y, standing.position.z);
       setLine(heightLine, shotCam.position, subjectAt);
       heightRing.position.copy(subjectAt);
     }
@@ -1133,9 +1815,15 @@ function createViewer(options: {
       const secondAction: SubjectAction = beat.action === "react" ? "react" : beat.action === "talk" || beat.action === "lookLens" ? "lookAway" : beat.action === "sit" ? "sit" : "idle";
       const second = actionPose(secondAction, p, t + 0.7, seated, enter, body);
       second.look = 1;
-      applyPose(people[1], second, bases[1], t);
-      people[0].head.getWorldPosition(tmp);
-      aimHead(people[1], second, secondAction === "lookAway" ? tmp : shotCam.position);
+      const target = secondAction === "lookAway" ? subjectHead().getWorldPosition(tmp) : shotCam.position;
+      if (actors.second) {
+        const partner = characterActionPose({ action: secondAction, p, time: t + 0.7, seated, body });
+        poseActress(actors.second, partner, placementOf(bases[1], second), 0, seatTop, holdHalf);
+        aimCharacterHead(actors.second, partner, 1, target);
+      } else {
+        applyPose(people[1], second, bases[1], t);
+        aimHead(people[1], second, target);
+      }
     }
     if (operator) {
       const tucked = !jerky && !crewElbows;
@@ -1144,7 +1832,9 @@ function createViewer(options: {
       if (back.lengthSq() < 0.01) back.set(0, 0, 1);
       back.normalize().multiplyScalar(tucked ? 0.34 : 0.55);
       const x = shotCam.position.x + back.x, z = shotCam.position.z + back.z;
-      applyPose(operator, operatorPose(tucked, walking, t), { x, z, yaw: Math.atan2(cam.target.x - x, cam.target.z - z) }, t);
+      const yaw = Math.atan2(cam.target.x - x, cam.target.z - z);
+      if (actors.operator) poseCamarographer(actors.operator, beat, p, t, { x, z, yaw }, { tucked, walking, onTripod, toward: back.clone().normalize().negate() });
+      else applyPose(operator, operatorPose(tucked, walking, t), { x, z, yaw }, t);
     }
     progress.style.width = `${config.duration ? (t / config.duration) * 100 : 0}%`;
   }
@@ -1193,6 +1883,10 @@ function createViewer(options: {
     }
     applyTime(time);
     render();
+    if (firstFrame) {
+      firstFrame = false;
+      options.onFirstFrame();
+    }
     if (playing && visible && !raf) raf = requestAnimationFrame(tick);
   }
   const schedule = () => {
@@ -1269,6 +1963,9 @@ function createViewer(options: {
         view: { position: [viewCam.position.x, viewCam.position.y, viewCam.position.z], target: [controls.target.x, controls.target.y, controls.target.z] },
       };
     },
+    setCharacters(set) {
+      if (!disposed) setCharacters(set, true);
+    },
     dispose() {
       disposed = true;
       cancelAnimationFrame(raf);
@@ -1278,20 +1975,24 @@ function createViewer(options: {
       document.removeEventListener("visibilitychange", onVisibility);
       controls.removeEventListener("change", schedule);
       controls.dispose();
-      frustum.dispose();
-      scene.traverse(object => {
-        const item = object as Partial<Mesh>;
-        item.geometry?.dispose();
-        const material = item.material;
-        if (Array.isArray(material)) material.forEach(m => m.dispose());
-        else material?.dispose();
-      });
-      renderer.dispose();
-      renderer.forceContextLoss();
-      renderer.domElement.remove();
+      return () => {
+        frustum.dispose();
+        // Los personajes liberan lo suyo (esqueletos, mezclador, sombra); geometría, materiales y texturas son del caché.
+        for (const character of castMembers(actors)) disposeCharacter(character);
+        actors.subject = actors.second = actors.operator = null;
+        scene.traverse(object => {
+          const item = object as Partial<Mesh>;
+          if (item.userData?.sharedAsset) return;
+          item.geometry?.dispose();
+          const material = item.material;
+          if (Array.isArray(material)) material.forEach(m => m.dispose());
+          else material?.dispose();
+        });
+      };
     },
   };
 
+  if (options.characters) setCharacters(options.characters, false);
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   // Al cambiar de formato o de error se sigue donde estaba; la primera vez, solo sin movimiento reducido.
   if (resume ? resume.playing : !reduced) api.play();
@@ -1306,7 +2007,29 @@ const FORMATS: readonly { value: FrameFormat; short: string; Icon: typeof Rectan
   { value: "horizontal", short: "16:9 YouTube", Icon: RectangleHorizontal },
 ];
 
-export default function SceneViewer({ scene, title }: { scene: ManualScene3d; title: string }) {
+type Figures = "personajes" | "maniqui";
+
+const FIGURES: readonly { value: Figures; label: string; title: string; Icon: typeof UsersRound }[] = [
+  { value: "personajes", label: "Personajes", title: "Personajes 3D (solo para uso interno del equipo)", Icon: UsersRound },
+  { value: "maniqui", label: "Maniquí", title: "Maniquíes livianos, para equipos lentos", Icon: PersonStanding },
+];
+
+/**
+ * Con el ahorro de datos del navegador encendido, o en equipos con muy poca memoria (2 GB o menos),
+ * la escena empieza con los maniquíes livianos: los personajes bajan unos 5 MB y ocupan decenas de
+ * MB de memoria de video. «Personajes» sigue a un toque.
+ */
+function prefersLightFigures() {
+  if (typeof navigator === "undefined") return false;
+  const hints = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
+  return hints.connection?.saveData === true || (typeof hints.deviceMemory === "number" && hints.deviceMemory <= 2);
+}
+
+/**
+ * `personajes`: lo calcula el servidor (MANUAL_3D_PERSONAJES) y baja por ModuleLessons. Apagado, el
+ * visor usa solo maniquíes y no pide nada a /api/modelos-3d.
+ */
+export default function SceneViewer({ scene, title, personajes }: { scene: ManualScene3d; title: string; personajes: boolean }) {
   const base = useMemo(() => parseScene3d(scene, title), [scene, title]);
   const [format, setFormat] = useState<FrameFormat>("vertical");
   const [mistake, setMistake] = useState<SceneMistake | null>(null);
@@ -1334,21 +2057,124 @@ export default function SceneViewer({ scene, title }: { scene: ManualScene3d; ti
     [base],
   );
 
+  // Personajes: quién aparece no cambia con el formato ni con los errores, solo con la escena.
+  const castKey = useMemo(() => castIds(castCharacters(base.subjects)).join(","), [base]);
+  const ids = useMemo(() => (castKey ? (castKey.split(",") as PersonajeId[]) : []), [castKey]);
+  const [figures, setFigures] = useState<Figures>(() => (prefersLightFigures() ? "maniqui" : "personajes"));
+  const [characters, setCharacters] = useState<CharacterSet | null>(() => (personajes ? readyCharacters(ids) : null));
+  const [charactersFailed, setCharactersFailed] = useState(false);
+  const [failureNote, setFailureNote] = useState(false);
+  const wantsCharacters = personajes && ids.length > 0 && figures === "personajes" && !failed && !charactersFailed;
+  // Si no se pudieron cargar, el conmutador muestra lo que se ve: los maniquíes.
+  const shownFigures: Figures = charactersFailed ? "maniqui" : figures;
+  const loadingCharacters = wantsCharacters && !characters;
+  const charactersRef = useRef<CharacterSet | null>(null);
+  /** La persona pidió reintentar: si vuelve a fallar, la nota se muestra otra vez. */
+  const retryRef = useRef(false);
+
+  // Descarga o armado fallido: maniquíes y el conmutador en «Maniquí» (tocar «Personajes» reintenta).
+  const reportCharactersFailure = useCallback(() => {
+    setCharactersFailed(true);
+    if (!characterFailureShown || retryRef.current) {
+      characterFailureShown = true;
+      retryRef.current = false;
+      setFailureNote(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loadingCharacters) return;
+    let cancelled = false;
+    loadCharacters(ids).then(
+      set => {
+        if (!cancelled) setCharacters(set);
+      },
+      error => {
+        // 401 (sesión vencida), 404 (interruptor apagado), red, un GLB inválido o huesos que no cuadran:
+        // queda registrado y la escena sigue con los maniquíes.
+        console.warn("[personajes] no se pudieron cargar los modelos; siguen los maniquíes.", error);
+        if (!cancelled) reportCharactersFailure();
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [loadingCharacters, ids, reportCharactersFailure]);
+
+  useEffect(() => {
+    if (!failureNote) return;
+    const timer = window.setTimeout(() => setFailureNote(false), 7000);
+    return () => window.clearTimeout(timer);
+  }, [failureNote]);
+
+  // Va antes que el efecto que crea el visor: al montarlo (o recrearlo) ya sabe qué figuras usar.
+  useEffect(() => {
+    charactersRef.current = wantsCharacters ? characters : null;
+    apiRef.current?.setCharacters(charactersRef.current);
+  }, [wantsCharacters, characters]);
+
+  /*
+   * Un solo WebGLRenderer mientras el visor está montado. Cambiar de formato o de error (también los
+   * pasos «[ERROR]» durante la reproducción) rearma la escena, no el contexto: texturas y shaders de
+   * los personajes siguen en la GPU. Lo del visor anterior se libera después del primer cuadro del
+   * nuevo, así los shaders que comparten no se destruyen y se vuelven a compilar.
+   */
+  const gpuRef = useRef<{ renderer: WebGLRenderer | null; retired: (() => void)[] }>({ renderer: null, retired: [] });
+
   useEffect(() => {
     const host = hostRef.current, inset = insetRef.current, progress = progressRef.current, eyeMarker = eyeMarkerRef.current;
     if (!host || !inset || !progress || !eyeMarker) return;
-    const api = createViewer({ host, inset, progress, eyeMarker, config, resume: resumeRef.current, onBeat, onPlaying: setPlaying });
-    if (!api) {
-      setFailed(true);
-      return;
+    const gpu = gpuRef.current;
+    if (!gpu.renderer) {
+      gpu.renderer = createRenderer();
+      if (!gpu.renderer) {
+        setFailed(true);
+        return;
+      }
+      host.prepend(gpu.renderer.domElement);
     }
+    const flush = () => {
+      for (const release of gpu.retired.splice(0)) release();
+    };
+    const api = createViewer({
+      renderer: gpu.renderer,
+      host,
+      inset,
+      progress,
+      eyeMarker,
+      config,
+      resume: resumeRef.current,
+      characters: charactersRef.current,
+      onBeat,
+      onPlaying: setPlaying,
+      onFirstFrame: flush,
+      onCharactersError: reportCharactersFailure,
+    });
     apiRef.current = api;
     return () => {
       resumeRef.current = api.snapshot();
-      api.dispose();
+      const release = api.dispose();
+      // Si el renderer ya se cerró (desmontaje), se libera ahora.
+      if (gpu.renderer) gpu.retired.push(release);
+      else release();
       apiRef.current = null;
     };
-  }, [config, onBeat]);
+  }, [config, onBeat, reportCharactersFailure]);
+
+  // Va después del efecto del visor: al desmontar, primero se retira el último visor y luego se cierra el contexto.
+  useEffect(() => {
+    const gpu = gpuRef.current;
+    return () => {
+      for (const release of gpu.retired.splice(0)) release();
+      const renderer = gpu.renderer;
+      gpu.renderer = null;
+      if (!renderer) return;
+      releaseCharacterTemplates();
+      renderer.dispose();
+      renderer.forceContextLoss();
+      renderer.domElement.remove();
+    };
+  }, []);
 
   const beat = config.beats[beatIndex];
   const angle = beat ? beatAngle(config, beat) : null;
@@ -1423,7 +2249,15 @@ export default function SceneViewer({ scene, title }: { scene: ManualScene3d; ti
             </span>
           ))}
         </div>
+        {loadingCharacters || failureNote ? (
+          <span className="bg-surface/90 text-inkmuted pointer-events-none absolute right-2.5 bottom-2 max-w-[60%] rounded-md px-2 py-0.5 text-right text-[10.5px] font-semibold shadow-[var(--shadow-1)]" aria-hidden="true">
+            {loadingCharacters ? "Cargando personajes…" : "No se pudieron cargar los personajes: se muestran los maniquíes."}
+          </span>
+        ) : null}
       </div>
+      <p className="sr-only" aria-live="polite">
+        {loadingCharacters ? "Cargando personajes…" : failureNote ? "No se pudieron cargar los personajes: se muestran los maniquíes." : ""}
+      </p>
 
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="btn btn-sm btn-primary" onClick={() => (playing ? apiRef.current?.pause() : apiRef.current?.play())} disabled={failed}>
@@ -1459,6 +2293,34 @@ export default function SceneViewer({ scene, title }: { scene: ManualScene3d; ti
             </button>
           ))}
         </div>
+        {personajes && ids.length ? (
+          <div className="bg-surface3 inline-flex items-center gap-0.5 rounded-lg p-0.5" role="group" aria-label="Figuras de la escena">
+            {FIGURES.map(({ value, label, title: hint, Icon }) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={shownFigures === value}
+                title={value === "personajes" && charactersFailed ? "No se pudieron cargar los personajes: toca para reintentar" : hint}
+                onClick={() => {
+                  // Tras un fallo, «Personajes» reintenta (la caché ya olvidó las descargas fallidas).
+                  if (value === "personajes" && charactersFailed) {
+                    retryRef.current = true;
+                    setCharactersFailed(false);
+                  }
+                  setFigures(value);
+                }}
+                disabled={failed}
+                className={cn(
+                  "inline-flex min-h-[30px] items-center gap-1.5 rounded-md px-2.5 py-[5px] text-[12px] font-semibold",
+                  shownFigures === value ? "bg-surface text-ink shadow-[var(--shadow-1)]" : "text-inkmuted hover:text-ink",
+                )}
+              >
+                <Icon size={14} aria-hidden="true" />
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="bg-surface3 ml-auto inline-flex items-center gap-0.5 rounded-lg p-0.5" role="group" aria-label="Punto de vista">
           {(Object.keys(VIEWS) as ViewName[]).map(name => (
             <button key={name} type="button" className="text-inkmuted hover:text-ink min-h-[30px] rounded-md px-2.5 py-[5px] text-[12px] font-semibold" onClick={() => apiRef.current?.view(name)} disabled={failed}>

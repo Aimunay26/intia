@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
     },
   },
   serverExternalPackages: ["@prisma/client", "bcryptjs", "unpdf"],
+
+  // Los personajes 3D del manual se leen con fs desde src/content (no están en /public
+  // porque solo se sirven con sesión): el rastreo no los ve solo, así que se incluyen aquí.
+  outputFileTracingIncludes: {
+    "/api/modelos-3d/[archivo]": ["./src/content/modelos-3d/**"],
+  },
 };
 
 export default withWorkflow(nextConfig);

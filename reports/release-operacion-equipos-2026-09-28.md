@@ -53,6 +53,7 @@ Nota de foco: el dueño pidió todo en una sola entrega. Se cumple la regla de "
 | `PRODUCT_CATALOG_ENABLED` | apagado | `true` activa el catálogo (requiere migración) |
 | `PRODUCTION_FLOW_ENABLED` | apagado | `true` activa equipos por marca y automatización (requiere migración) |
 | `GEMINI_ESQUEMA_SIMPLE` | encendido | `false` vuelve a enviar a Gemini el esquema con límites (ver «Integrado desde otra sesión») |
+| `MANUAL_3D_PERSONAJES` | encendido | `false` vuelve a los maniquíes del visor y `/api/modelos-3d/*` responde 404 (ver «Personajes 3D del manual») |
 
 ### Criterio de HECHO
 - Un miembro ve inicio y ayuda distintos, con "Manual de procedimientos" primero; las escenas 3D cargan en filmmaker y actor.
@@ -141,6 +142,62 @@ filmmaker, sábado → lunes para la edición, publicación al día hábil sigui
 domingo, datos manuales que mandan, SAVEPOINT que no rompe la acción principal y flag apagado sin
 consultas.
 
+### Personajes 3D del manual (29/09/2026)
+
+**Decisión del dueño y riesgo aceptado.** El 29/09/2026 el dueño aceptó explícitamente usar en las
+escenas 3D modelos con derechos de autor de Marvel (Spider-Man como camarógrafo, Invisible Woman
+como actriz 1 y Magik como actriz 2) **solo para uso interno de su equipo**. El repositorio es
+privado. Riesgo aceptado: son obras de terceros sin licencia; no pueden publicarse, mostrarse
+fuera del equipo ni venderse con el sistema. **Antes de vender o ceder Intia a terceros hay que
+reemplazarlos por modelos con licencia** (o apagar `MANUAL_3D_PERSONAJES`). Para acotar la
+exposición se sirven solo con sesión y nunca desde `public/`.
+
+Mini-spec:
+
+- **Archivos:** `src/content/modelos-3d/` (`manifest.json`, `camarografo.glb` 1,42 MB,
+  `actriz-1.glb` 1,45 MB, `actriz-2.glb` 1,92 MB; versionados, fuera de `public/`),
+  `src/app/api/modelos-3d/[archivo]/route.ts`, `src/lib/manual-3d.ts`, `next.config.ts`
+  (`outputFileTracingIncludes`), la página del módulo del manual, `module-lessons.tsx` y el visor
+  (`scene-viewer.tsx`). Patrón seguido: autenticación de `/api/assets/[id]` e interruptor como
+  `MANUAL_PROCEDIMIENTOS_ENABLED`.
+- **Diseño:** la ruta exige sesión (401), compara el nombre con una lista cerrada antes de tocar el
+  disco (404) y responde con caché privada de 7 días, `ETag` por hash (304) y `nosniff`. El
+  estado en memoria es solo una caché por instancia de los bytes y su hash (los archivos no
+  cambian dentro de un despliegue; si la lectura falla se olvida y se reintenta, con 503 y log).
+  Sin base de datos. El servidor calcula el interruptor y lo baja por props hasta el visor.
+  Asignación: quien graba = camarógrafo; sujeto principal = actriz 1; segunda persona = actriz 2;
+  más sujetos siguen como maniquí.
+- **Reversa:** `MANUAL_3D_PERSONAJES="false"` en Vercel y redesplegar: el visor vuelve a los
+  maniquíes y la ruta responde 404. No hay migración ni datos que revertir.
+- **Criterio de HECHO:** con sesión, las escenas muestran los tres personajes y la segunda carga
+  sale de caché (304 o memoria del navegador); sin sesión, `/api/modelos-3d/actriz-1.glb`
+  responde 401 (comprobarlo en una ventana privada o con `curl`: el navegador donde ya se vieron
+  las escenas guarda una copia privada hasta cerrar sesión); ningún `.glb` bajo `public/`; con el
+  interruptor en `false`, maniquíes y 404.
+- **Pruebas:** `tests/modelos-3d.test.mjs` (en `npm run test:unidad`): 401 sin sesión, 200 con
+  tipo, caché y ETag, 304 con `If-None-Match`, 404 fuera de la lista (`../`, mayúsculas, otros
+  nombres) sin tocar el disco, 404 con el interruptor o el manual apagados, 503 y reintento si
+  falta el archivo, forma del manifiesto, ausencia de modelos en `public/`, `Clear-Site-Data` al
+  cerrar sesión y pedidos del visor con revalidación. `tests/manual-characters.test.mts`: poses,
+  IK, palmas en las caras del producto, rodillas de quien graba sobre el clip, pasos cortos sin
+  patinar y giro del «idle» medido en el GLB real.
+- Las vistas previas PNG de revisión no van al repositorio.
+- **Revisión (29/09/2026), corregido:**
+  - Caché: el visor revalida manifiesto y GLB con el `ETag` (`cache: "no-cache"`) y
+    `/api/logout` envía `Clear-Site-Data: "cache"`; la cabecera de la ruta no cambia.
+  - Quien graba va en una capa propia: la «Vista de cámara» nunca lo dibuja (sus dedos tapaban
+    entre el 75 % y el 98 % del cuadro).
+  - Un solo `WebGLRenderer` por visor montado: cambiar de formato o de error (y los pasos
+    «[ERROR]») rearma la escena sin crear otro contexto; los personajes usan los materiales de la
+    plantilla, así texturas y shaders siguen en la GPU; los shaders se precompilan al llegar los
+    personajes; esfera de recorte holgada en vez de dibujarlos siempre.
+  - Camarógrafo: descuenta el giro de 24° del torso del «idle» (y se acerca hasta 25 cm si en mano
+    no le llegan los brazos), flexiona las rodillas sobre el clip con codos pegados y las estira
+    con el error, y acompaña de costado con pasos cortos en vez de patinar.
+  - Actrices: con el producto, las palmas quedan en sus caras (antes, a 7 cm entre sí).
+  - Errores registrados con `console.warn('[personajes] …')`; tras un fallo, «Personajes» reintenta.
+  - Con ahorro de datos o 2 GB de memoria o menos, la escena empieza en «Maniquí».
+
 ### Criterio de HECHO
 
 | Criterio | Estado |
@@ -151,6 +208,7 @@ consultas.
 | Visor en 1920×1080 sin scroll de página; en 375 px el diálogo antes de los 400 px | Implementado (`c2a9853`). Volver a comprobar cuando termine el trabajo de celulares. |
 | Sin desborde horizontal en 360, 768 y 1440 px (`scripts/check-design-ui.mjs`) | Pendiente: trabajo de celulares en curso. |
 | Producción: despliegue Ready y sin errores nuevos en 24 h | Pendiente. |
+| Personajes 3D: con sesión se ven los tres personajes; sin sesión 401; nada en `public/`; interruptor apagado → maniquíes y 404 | Ruta, interruptor y pruebas listos (`tests/modelos-3d.test.mjs`). Falta la revisión visual del visor y comprobar el 401 en producción en una ventana privada o con `curl`. |
 
 ### Pendiente para el cierre (fase 7)
 

@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "personajes": [
+    {
+      "id": "camarografo",
+      "nombre": "Spider-Man",
+      "archivo": "camarografo.glb",
+      "altura": 1.78,
+      "rig": "BIPED",
+      "huesos": {
+        "pelvis": "Bip001_Pelvis",
+        "spine": "Bip001_Spine",
+        "chest": "Bip001_Spine1",
+        "neck": "Bip001_Neck",
+        "head": "Bip001_Head",
+        "upperArmL": "Bip001_L_UpperArm",
+        "lowerArmL": "Bip001_L_Forearm",
+        "handL": "Bip001_L_Hand",
+        "upperArmR": "Bip001_R_UpperArm",
+        "lowerArmR": "Bip001_R_Forearm",
+        "handR": "Bip001_R_Hand",
+        "thighL": "Bip001_L_Thigh",
+        "calfL": "Bip001_L_Calf",
+        "footL": "Bip001_L_Foot",
+        "thighR": "Bip001_R_Thigh",
+        "calfR": "Bip001_R_Calf",
+        "footR": "Bip001_R_Foot"
+      },
+      "ojos": {
+        "altura": 1.661,
+        "adelante": 0.109
+      },
+      "animaciones": {
+        "reposo": "idle",
+        "caminar": "walk",
+        "hablar": "dialog_speak"
+      },
+      "notas": "Pose de reposo = bind pose (A-pose); nodo raiz \"camarografo\" con escala uniforme 1.003796 (normaliza la altura), pies en y=0, mira a +Z, izquierda del personaje = +X. Unidades internas del esqueleto ~metros (sin la escala 100 del FBX); huesos sin escala local. Ojos: centro de los lentes blancos de la mascara (vertices del material spiderman_01 con texel claro, sobre el hueso head); altura en m desde el piso, adelante = z(ojos) - z(hueso head); separacion entre ojos 0.063 m. Rig 3ds Max Biped: nombres con espacios renombrados a \"_\" (asi los expone three.js GLTFLoader). Huesos auxiliares con peso re-emparentados para que sigan al hueso principal al posar: Bip001_LUpArmTwist2 -> L_UpperArm, Bip001_L_ForeTwist9 -> L_Forearm, Bip001_LThighTwist2 -> L_Thigh, Bip001_L_Clavicle2 -> L_Clavicle (igual en R); sus canales de animacion se re-expresaron (clips identicos al original, error < 1.5 mm). La pose de nodos del FBX original NO era la bind pose (Bip001 rotado ~55 grados); se reemplazo por la bind pose reconstruida de las inverseBindMatrices. Animaciones: idle, walk (ciclo de locomocion, parece trote), wait, dialog_idle, dialog_speak. \"wait\" es parcial (no anima Bip001_Pelvis, Bip001_Neck, dedos del pie ni pulgar izq.): reproducir encima de idle, no sola desde la bind pose. Mallas: cuerpo (spiderman_01 rojo + cabeza, spiderman_02 azul) + lineas de telarana en relieve (spiderman_03). Sin armas/efectos."
+    },
+    {
+      "id": "actriz-1",
+      "nombre": "Invisible Woman",
+      "archivo": "actriz-1.glb",
+      "altura": 1.7,
+      "rig": "UE",
+      "huesos": {
+        "pelvis": "pelvis",
+        "spine": "spine_03",
+        "chest": "spine_05",
+        "neck": "neck_01",
+        "head": "head",
+        "upperArmL": "upperarm_l",
+        "lowerArmL": "lowerarm_l",
+        "handL": "hand_l",
+        "upperArmR": "upperarm_r",
+        "lowerArmR": "lowerarm_r",
+        "handR": "hand_r",
+        "thighL": "thigh_l",
+        "calfL": "calf_l",
+        "footL": "foot_l",
+        "thighR": "thigh_r",
+        "calfR": "calf_r",
+        "footR": "foot_r"
+      },
+      "ojos": {
+        "altura": 1.569,
+        "adelante": 0.088
+      },
+      "notas": "Pose de reposo = bind pose (A-pose); nodo raiz \"actriz-1\" con escala uniforme 0.993523 (normaliza la altura), pies en y=0, mira a +Z, izquierda del personaje = +X. Unidades internas del esqueleto ~metros (sin la escala 100 del FBX); huesos sin escala local. Ojos: centro del bounding box de cada globo ocular (material \"eyes\"); altura en m desde el piso, adelante = z(ojos) - z(hueso head); separacion entre ojos 0.061 m. Rig estilo UE: cadena pelvis > spine_01..spine_05 > neck_01 > neck_02 > head; clavicle_l/r cuelgan de spine_05; hay huesos de giro (upperarm_twist_0N, lowerarm_twist_0N, thigh_twist_0N, calf_twist_0N) y de volumen (*_vol_*) que llevan peso: al posar procedimentalmente rotar los huesos principales (los twist/vol siguen como hijos). Huesos faciales: facial_master > jaw, l_eye_ball, r_eye_ball, etc. Sin animaciones. Huesos ik_* y *_end sin peso eliminados. Materiales por nombre MI_1050001_X -> T_1050001_X_D/_N. Ojo: Eyes_02 es el globo ocular (T_1050001_Eyes_02_D); Eyes_01 (cornea translucida) y Eyes_03 (sombra) eliminados. Pelo: T_1050001_Hair_D + alpha de Hair_M (MASK, doble cara); cejas y mechones de linea en material hair_lines (cutoff 0.2). Los mechones de linea negros/naranjas/rosas/verdes vienen asi en la textura."
+    },
+    {
+      "id": "actriz-2",
+      "nombre": "Magik",
+      "archivo": "actriz-2.glb",
+      "altura": 1.68,
+      "rig": "UE",
+      "huesos": {
+        "pelvis": "pelvis",
+        "spine": "spine_03",
+        "chest": "spine_05",
+        "neck": "neck_01",
+        "head": "head",
+        "upperArmL": "upperarm_l",
+        "lowerArmL": "lowerarm_l",
+        "handL": "hand_l",
+        "upperArmR": "upperarm_r",
+        "lowerArmR": "lowerarm_r",
+        "handR": "hand_r",
+        "thighL": "thigh_l",
+        "calfL": "calf_l",
+        "footL": "foot_l",
+        "thighR": "thigh_r",
+        "calfR": "calf_r",
+        "footR": "foot_r"
+      },
+      "ojos": {
+        "altura": 1.561,
+        "adelante": 0.07
+      },
+      "notas": "Pose de reposo = bind pose (A-pose); nodo raiz \"actriz-2\" con escala uniforme 0.945044 (normaliza la altura), pies en y=0, mira a +Z, izquierda del personaje = +X. Unidades internas del esqueleto ~metros (sin la escala 100 del FBX); huesos sin escala local. Ojos: centro del bounding box de cada globo ocular (material \"eyes\"); altura en m desde el piso, adelante = z(ojos) - z(hueso head); separacion entre ojos 0.060 m. Rig estilo UE: cadena pelvis > spine_01..spine_05 > neck_01 > neck_02 > head; clavicle_l/r cuelgan de spine_05; hay huesos de giro (upperarm_twist_0N, lowerarm_twist_0N, thigh_twist_0N, calf_twist_0N) y de volumen (*_vol_*) que llevan peso: al posar procedimentalmente rotar los huesos principales (los twist/vol siguen como hijos). Huesos faciales: facial_master > jaw, l_eye_ball, r_eye_ball, etc. Sin animaciones. Huesos ik_* y *_end sin peso eliminados. Mapeo material->textura reconstruido por analisis de UV (el FBX no trae nombres ni enlaces de texturas). Espada (Weapons_01 + huesos Sword_*) eliminada. Conserva cuernos y pinchos de la armadura: el bbox llega a ~1.81 m; la altura 1.68 m se mide a la parte alta de cabeza+pelo. Ojos con la textura de globo ocular del pack de Invisible Woman (Magik no incluye una). Las lineas de pelo usan Hair_Line_D_02."
+    }
+  ]
+}

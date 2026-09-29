@@ -185,6 +185,14 @@ procedimiento, a quién le recibe y a quién le entrega, y una formación de pri
 avanzado con lecciones cortas, videos de YouTube y escenas 3D. *Cómo se usa* enseña a usar
 Intia; el manual enseña a hacer el trabajo.
 
+En las escenas 3D, quien graba, el sujeto principal y la segunda persona (podcast, pareja) son
+personajes 3D en vez de maniquíes: un camarógrafo y dos actrices. Son modelos con derechos de
+terceros que el dueño autorizó el 29/09/2026 **solo para uso interno del equipo**: se descargan
+únicamente con la sesión iniciada (`/api/modelos-3d/…`, nunca desde `public/`) y antes de vender
+el sistema a terceros hay que reemplazarlos por modelos con licencia. Si algo falla,
+`MANUAL_3D_PERSONAJES="false"` vuelve a los maniquíes sin tocar código: se cambia la variable en
+Vercel y se redespliega.
+
 ### Prioridades
 
 Semáforo, para leerlo de un vistazo: **azul** es baja, **naranja** media, **roja** alta.
@@ -670,7 +678,7 @@ Dos cosas que conviene saber:
 | `npm run ver:prompt -- eru` | Imprime el prompt exacto que se le manda a la IA por esa persona |
 | `npm run test:motores` | Calibra el motor de match contra la matriz de compatibilidad |
 | `npm run test:humo` | 37 comprobaciones: permisos, calendario, datos y archivos |
-| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos, CTA de comunidad, catálogo de productos, producto en el generador, calendario mensual, flujo de producción, visor de guiones, cierres por tipo y Manual) |
+| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos, CTA de comunidad, catálogo de productos, producto en el generador, calendario mensual, flujo de producción, visor de guiones, personajes 3D del manual, cierres por tipo y Manual) |
 | `npm run test:cta` | Vigila que los CTA de comunidad no lleven presión ni oferta (`tsx --test`) |
 | `npm run test:presets` | Cierres, fórmulas y ángulos por tipo de producto: sin tipo, todo como antes; un producto o un restaurante nunca reciben cupos ni asesorías |
 | `npm run test:manual` | Manual de procedimientos: interruptor, orden por rol, contenido generado, enlaces de YouTube y traducción de las 98 escenas 3D |
@@ -697,6 +705,7 @@ src/
       auth/google/       Entrar con Gmail (OAuth 2.0)
       calendario.ics/    Feed que lee Google Calendar
       assets/[id]/       Descarga de los PDF de referencia
+      modelos-3d/[archivo]/  Personajes 3D del manual, solo con sesión
     login/               Entrada y alta del primer dueño
   components/
     brand-switcher.tsx   Selector de marca activa (barra lateral)
@@ -707,6 +716,7 @@ src/
     scripts/             Visor de guiones: cabecera, menú «Más» y escena en foco
   content/
     manual/              Manual de procedimientos, generado por scripts/manual-content.mjs
+    modelos-3d/          Personajes 3D del manual (uso interno; nunca en public/)
   lib/
     ai/                  Generador: contexto, esquema y proveedores
     auth.ts              Sesiones, contraseñas y permisos
@@ -719,6 +729,7 @@ src/
     product-catalog.ts   Catálogo de productos por marca
     product-focus.ts     Texto del producto que recibe la IA
     manual.ts            Acceso al contenido del manual
+    manual-3d.ts         Interruptor, lista de archivos y tipos de los personajes 3D
     google.ts            OAuth de Google
     ical.ts              Generación del archivo .ics
     constants.ts         Catálogos de estados, roles, redes y prioridades
@@ -795,6 +806,9 @@ Para que no haya sorpresas:
   definido no recibe asignaciones automáticas, aunque el video tenga personas asignadas.
 - **El manual no guarda tu avance** ni califica las prácticas. ATC y jefe de editores tienen
   manual, pero todavía no existen como perfiles de Intia.
+- **Los personajes 3D del manual no se pueden vender con el sistema.** Son modelos con derechos
+  de terceros, autorizados solo para uso interno; antes de ofrecer Intia a otra empresa hay que
+  reemplazarlos por modelos con licencia (o apagar `MANUAL_3D_PERSONAJES`).
 - **Las Personas todavía no se limitan por marca.** Un guionista o un estratega limitado a su
   marca ve todas las fichas de Personas. La decisión ya está tomada (personas vinculadas a una o
   varias marcas, o compartidas) y está pendiente de construir; ver la

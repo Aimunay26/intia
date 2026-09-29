@@ -6,6 +6,7 @@ import { ModuleLessons, type LessonView } from "@/components/manual/module-lesso
 import { ModuleVideos, type ModuleVideo } from "@/components/manual/module-videos";
 import { Breadcrumb, Card, CardHeader, PageHeader } from "@/components/ui";
 import { MANUAL_LEVELS, MEDIA_LABELS, getManualModule, youtubeEmbed, youtubeId, youtubeThumbnail } from "@/lib/manual";
+import { personajes3dEnabled } from "@/lib/manual-3d";
 import { measurePagePhase } from "@/lib/performance-page";
 import { singleQueryValues } from "@/lib/query-params";
 
@@ -38,6 +39,8 @@ export default async function ManualModulePage({
     });
     const scenes = lessons.filter(lesson => lesson.mediaType === "ESCENA_3D").length;
     const initialLessonId = typeof query.leccion === "string" ? query.leccion.slice(0, 80) : undefined;
+    // Interruptor MANUAL_3D_PERSONAJES: apagado, el visor usa los maniquíes y no pide modelos.
+    const personajes = personajes3dEnabled();
 
     return (
       <>
@@ -78,7 +81,7 @@ export default async function ManualModulePage({
 
           <section aria-labelledby="lecciones-titulo">
             <h2 id="lecciones-titulo" className="text-inkmuted mb-2.5 text-[11px] font-bold tracking-[0.09em] uppercase">Lecciones</h2>
-            <ModuleLessons lessons={lessons} initialLessonId={initialLessonId} />
+            <ModuleLessons lessons={lessons} initialLessonId={initialLessonId} personajes={personajes} />
           </section>
 
           <nav className="flex flex-wrap justify-between gap-2" aria-label="Módulos del nivel">

@@ -52,6 +52,7 @@ Nota de foco: el dueño pidió todo en una sola entrega. Se cumple la regla de "
 | `GUIONES_AJUSTE_PANTALLA` | encendido | `false` quita el modo "cabe en pantalla" del visor |
 | `PRODUCT_CATALOG_ENABLED` | apagado | `true` activa el catálogo (requiere migración) |
 | `PRODUCTION_FLOW_ENABLED` | apagado | `true` activa equipos por marca y automatización (requiere migración) |
+| `GEMINI_ESQUEMA_SIMPLE` | encendido | `false` vuelve a enviar a Gemini el esquema con límites (ver «Integrado desde otra sesión») |
 
 ### Criterio de HECHO
 - Un miembro ve inicio y ayuda distintos, con "Manual de procedimientos" primero; las escenas 3D cargan en filmmaker y actor.
@@ -112,6 +113,18 @@ explícito de una persona basta; el barrido diario sigue exigiendo el estado. Ad
 se vuelve a montar con la revisión nueva después de guardar el enlace del material, en vez de dar
 conflicto.
 
+### Integrado desde otra sesión (generador)
+
+Cambios que otra sesión dejó sin commitear en `main`, revisados e integrados sobre esta rama:
+
+| Parte | Commit | Interruptor |
+|---|---|---|
+| Equipo debe elegir una marca autorizada al generar: preselección con una sola marca, aviso sin marcas, mensaje propio en el servidor y traza `brand_access` sin datos personales | `354aa4e` | — (el servidor ya rechazaba a Equipo sin marca; cambian la interfaz, el mensaje y la traza) |
+| Gemini: esquema sin límites de tamaño/rango (Zod los sigue validando), HTTP 408/504 como timeout y diagnósticos de listas cerradas | `3e4c573` | `GEMINI_ESQUEMA_SIMPLE`, encendido |
+
+Informes: `reports/acceso-marca-generador-2026-09-28.md` y
+`reports/diagnostico-gemini-400-504-2026-09-25.md`.
+
 ### Pruebas
 
 | Prueba | Resultado |
@@ -120,6 +133,7 @@ conflicto.
 | `npm run test:cta` · `test:presets` · `test:manual` | 11/11 · 10/10 · 17/17 |
 | Pruebas nuevas | `catalogo-productos` (23), `generador-producto` (12), `calendario` (13), `production-flow` (26), `guiones-visor` (5), `presets-tipo` (10), `manual` (17) y ajustes en `permissions` |
 | PostgreSQL real | Suite `production-flow` (`tests/postgres-production-flow.test.mjs`, dentro de `npm run test:postgres`): equipo, grabación, edición, diseño, SAVEPOINT y barrido. Su ejecución no quedó registrada en esta sección: correrla antes del merge. |
+| Tras integrar la otra sesión (28/09) | `npm test`: 226 pruebas, 225 correctas (la misma `security-startup`); `test:cta` · `test:presets` · `test:manual`: 11/11 · 10/10 · 17/17. PostgreSQL local (`node scripts/test-postgres.mjs`): `priorities` 37/37, `workflow` 13/13, `organization-ai` 9/9, `production-flow` 1/1, `permissions` 13/13. |
 | Ensayo de migración (`npm run db:ensayo`, `.audit/migration-rehearsal.json`, 28/09 23:06 UTC) | Correcto con las dos migraciones nuevas: filas existentes intactas, sin columnas nuevas en tablas existentes, combos y pasos obligados a la misma marca, restauración de 42 tablas con la misma huella. |
 
 Las pruebas unitarias cubren los criterios del flujo: grabación el próximo martes o jueves con el

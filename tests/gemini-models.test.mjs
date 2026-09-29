@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { load } from './load-module.mjs';
-import { simulatedRequest } from './ai-fixture.mjs';
+import { simulatedRequest, validScript } from './ai-fixture.mjs';
 
 const { resolveAiModel, normalizeAiModel } = load('src/lib/ai-models.ts');
 
@@ -161,7 +161,7 @@ test('el SDK real conserva errores HTTP y hace una sola petición, sin consumir 
   const originalFetch = globalThis.fetch;
   const { generateWithGemini } = load('src/lib/ai/providers.ts');
   try {
-    for (const [status, expected, retryable] of [[400, /configuración/, false], [401, /clave/, false], [403, /clave/, false], [404, /no reconoce/, false], [429, /limitando/, true], [500, /error de servidor/, true], [503, /error de servidor/, true], [504, /error de servidor/, true]]) {
+    for (const [status, expected, retryable] of [[400, /configuración/, false], [401, /clave/, false], [403, /clave/, false], [404, /no reconoce/, false], [429, /limitando/, true], [500, /error de servidor/, true], [503, /error de servidor/, true], [504, /tardó demasiado/, true]]) {
       let calls = 0;
       globalThis.fetch = async () => {
         calls++;
@@ -173,6 +173,103 @@ test('el SDK real conserva errores HTTP y hace una sola petición, sin consumir 
       assert.equal(calls, 1, `HTTP ${status} debe llegar al control de reintentos del job`);
     }
   } finally { globalThis.fetch = originalFetch; }
+});
+
+test('el esquema de Gemini mantiene el contrato completo y los límites siguen validándose localmente', () => {
+  const { GEMINI_SCRIPT_SCHEMA } = load('src/lib/ai/gemini-schema.ts');
+  const { GENERATED_SCRIPT_JSON_SCHEMA, GeneratedScriptSchema } = load('src/lib/ai/schema.ts');
+  function compare(full, wire) {
+    assert.equal(wire.type, full.type);
+    assert.deepEqual(wire.enum, full.enum);
+    assert.deepEqual(wire.required, full.required);
+    for (const key of ['$schema', 'additionalProperties', 'maxLength', 'maxItems', 'minItems', 'minimum', 'maximum']) assert.equal(wire[key], undefined);
+    if (full.properties) {
+      assert.deepEqual(Object.keys(wire.properties), Object.keys(full.properties));
+      for (const name of Object.keys(full.properties)) compare(full.properties[name], wire.properties[name]);
+    }
+    if (full.items) compare(full.items, wire.items);
+  }
+  compare(GENERATED_SCRIPT_JSON_SCHEMA, GEMINI_SCRIPT_SCHEMA);
+  assert.equal(GeneratedScriptSchema.safeParse(validScript).success, true);
+  for (const bad of [
+    { ...validScript, title: 'x'.repeat(12001) },
+    { ...validScript, scenes: Array(81).fill(validScript.scenes[0]) },
+    { ...validScript, totalSeconds: 691 },
+    { ...validScript, totalSeconds: 1.5 },
+    { ...validScript, scenes: [{ ...validScript.scenes[0], actors: Array(31).fill({ role: '', archetype: '', notes: '' }) }] },
+  ]) assert.equal(GeneratedScriptSchema.safeParse(bad).success, false);
+  assert.equal(GENERATED_SCRIPT_JSON_SCHEMA.properties.title.maxLength, 12000);
+  assert.equal(GENERATED_SCRIPT_JSON_SCHEMA.properties.scenes.maxItems, 80);
+});
+
+test('GEMINI_ESQUEMA_SIMPLE="false" vuelve a enviar el esquema anterior, con límites', async () => {
+  const { geminiScriptSchema, GEMINI_SCRIPT_SCHEMA, GEMINI_SCRIPT_SCHEMA_WITH_LIMITS } = load('src/lib/ai/gemini-schema.ts');
+  const { GENERATED_SCRIPT_JSON_SCHEMA } = load('src/lib/ai/schema.ts');
+  assert.deepEqual(geminiScriptSchema({}), GEMINI_SCRIPT_SCHEMA);
+  for (const value of ['true', '', 'no']) assert.deepEqual(geminiScriptSchema({ GEMINI_ESQUEMA_SIMPLE: value }), GEMINI_SCRIPT_SCHEMA);
+  for (const value of ['false', ' FALSE ']) assert.deepEqual(geminiScriptSchema({ GEMINI_ESQUEMA_SIMPLE: value }), GEMINI_SCRIPT_SCHEMA_WITH_LIMITS);
+  // La reversa es exactamente la transformación anterior: solo sin $schema ni additionalProperties.
+  const previous = node => Array.isArray(node) ? node.map(previous) : node && typeof node === 'object'
+    ? Object.fromEntries(Object.entries(node).filter(([key]) => key !== '$schema' && key !== 'additionalProperties').map(([key, value]) => [key, previous(value)]))
+    : node;
+  assert.deepEqual(GEMINI_SCRIPT_SCHEMA_WITH_LIMITS, previous(GENERATED_SCRIPT_JSON_SCHEMA));
+  assert.equal(GEMINI_SCRIPT_SCHEMA_WITH_LIMITS.properties.title.maxLength, 12000);
+
+  const originalFetch = globalThis.fetch, prior = process.env.GEMINI_ESQUEMA_SIMPLE, bodies = [];
+  const { generateWithGemini } = load('src/lib/ai/providers.ts');
+  try {
+    process.env.GEMINI_ESQUEMA_SIMPLE = 'false';
+    globalThis.fetch = async (_url, options) => {
+      bodies.push(JSON.parse(options.body));
+      return new Response(JSON.stringify({ error: { code: 401, status: 'UNAUTHENTICATED', message: 'fixture' } }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+    };
+    await assert.rejects(generateWithGemini({ ...call, model: 'gemini-3.6-flash' }));
+    assert.equal(bodies.length, 1);
+    assert.equal(bodies[0].generationConfig.responseJsonSchema.properties.title.maxLength, 12000);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prior === undefined) delete process.env.GEMINI_ESQUEMA_SIMPLE; else process.env.GEMINI_ESQUEMA_SIMPLE = prior;
+  }
+});
+
+test('regresión del incidente: 400 estructurado seguido de 504 conserva timeout y nunca se confunde con cuota', async () => {
+  const originalFetch = globalThis.fetch, requests = [];
+  const { generateWithGemini } = load('src/lib/ai/providers.ts');
+  try {
+    globalThis.fetch = async (url, options) => {
+      requests.push(JSON.parse(options.body));
+      const first = requests.length === 1;
+      const status = first ? 400 : 504;
+      return new Response(JSON.stringify({ error: { code: status, status: first ? 'INVALID_ARGUMENT' : 'DEADLINE_EXCEEDED', message: first ? 'Request contains an invalid argument.' : 'Deadline expired. PRIVATE-FIXTURE' } }), { status, headers: { 'Content-Type': 'application/json' } });
+    };
+    await assert.rejects(generateWithGemini({ ...call, model: 'gemini-3.6-flash' }), error => {
+      assert.equal(error.code, 'timeout'); assert.equal(error.retryable, true);
+      assert.equal(error.diagnostic.status, 504);
+      assert.equal(error.diagnostic.reason, 'deadline_exceeded');
+      assert.equal(error.diagnostic.providerStatus, 'DEADLINE_EXCEEDED');
+      assert.match(error.message, /tardó demasiado/);
+      assert.doesNotMatch(JSON.stringify(error), /PRIVATE-FIXTURE/);
+      return true;
+    });
+    assert.equal(requests.length, 2);
+    assert.ok(requests[0].generationConfig.responseJsonSchema);
+    assert.equal(requests[1].generationConfig.responseJsonSchema, undefined);
+    assert.equal(requests[0].generationConfig.maxOutputTokens, requests[1].generationConfig.maxOutputTokens);
+    assert.equal(requests[0].generationConfig.responseJsonSchema.properties.title.maxLength, undefined);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('408 y DEADLINE_EXCEEDED se reconocen aunque el mensaje no diga timeout', () => {
+  const { toAiError, esErrorDeSaturacion } = load('src/lib/ai/providers.ts');
+  for (const raw of [
+    { status: 408, message: 'Request expired' },
+    { status: 504, message: 'Deadline expired' },
+    { message: JSON.stringify({ error: { status: 'DEADLINE_EXCEEDED', message: 'Deadline expired' } }) },
+  ]) {
+    const error = toAiError(raw, 'google');
+    assert.equal(error.code, 'timeout'); assert.equal(error.retryable, true);
+    assert.equal(esErrorDeSaturacion(error), false);
+  }
 });
 
 test('los abortos y timeouts de transporte se reintentan y los diagnósticos no contienen secretos', async () => {

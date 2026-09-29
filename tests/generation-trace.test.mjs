@@ -68,6 +68,29 @@ test('fallos del logger y desactivación no interrumpen la generación', async (
   } finally { console.info = info;console.warn = warn;if (prior === undefined) delete process.env.GENERATION_LOGS;else process.env.GENERATION_LOGS = prior; }
 });
 
+test('las trazas distinguen argumento, esquema y deadline con códigos cerrados, sin mensajes privados', async () => {
+  const trace = load('src/lib/generation-trace.ts');
+  const { toAiError } = load('src/lib/ai/providers.ts');
+  for (const [status, providerStatus, message, reason] of [
+    [400, 'INVALID_ARGUMENT', 'Request contains an invalid argument.', 'invalid_argument'],
+    [400, 'INVALID_ARGUMENT', 'responseJsonSchema is too complex', 'schema_rejected'],
+    [504, 'DEADLINE_EXCEEDED', 'Deadline expired', 'deadline_exceeded'],
+  ]) {
+    const raw = { status, message: JSON.stringify({ error: { status: providerStatus, message: message + ' PRIVATE-FIXTURE', details: [{ request: 'PRIVATE-FIXTURE' }] } }) };
+    for (const error of [raw, toAiError(raw, 'google')]) {
+      const rows = await capture(() => assert.rejects(trace.withGenerationTrace({ jobId: jobA }, () =>
+        trace.generationStage('provider_request', () => { throw error; }, { structured: true, schemaBytes: 4000 })), e => e === error));
+      assert.equal(rows[1].reason, reason); assert.equal(rows[1].providerStatus, providerStatus);
+      assert.equal(rows[1].httpStatus, status); assert.equal(rows[1].schemaBytes, 4000);
+      if (status === 504) assert.equal(rows[1].errorCode, 'timeout');
+      assert.doesNotMatch(JSON.stringify(rows), /PRIVATE-FIXTURE|is too complex|Deadline expired/);
+    }
+  }
+  const rows = await capture(() => trace.withGenerationTrace({ jobId: jobA }, () =>
+    trace.generationEvent('schema_fallback', 'info', { providerStatus: 'PRIVATE-FIXTURE', reason: 'PRIVATE-FIXTURE' })));
+  assert.doesNotMatch(JSON.stringify(rows), /PRIVATE-FIXTURE/);
+});
+
 test('el error envuelto conserva saturación y el cambio de modelo solo registra campos permitidos', async () => {
   const trace = load('src/lib/generation-trace.ts');
   const { toAiError } = load('src/lib/ai/providers.ts');

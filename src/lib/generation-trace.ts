@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
+import { providerErrorDetails } from "@/lib/ai/error-diagnostics";
 
 const stages = ["document_extract", "enqueue", "brand_access", "dispatch_claim", "dispatch_start", "dispatch_save", "dispatch",
   "workflow_step", "cache_refresh", "process", "claim", "quota", "request_access", "generate",
@@ -13,10 +14,10 @@ type Fields = {
   jobId?: string; itemId?: string; runId?: string; attempt?: number; provider?: string; model?: string; nextModel?: string;
   keySource?: string | null; requestIndex?: number; structured?: boolean; durationMs?: number;
   referenceCount?: number; promptBytes?: number; responseBytes?: number; sceneCount?: number;
-  inputTokens?: number; outputTokens?: number; maxOutputTokens?: number; timeoutMs?: number;
+  inputTokens?: number; outputTokens?: number; maxOutputTokens?: number; timeoutMs?: number; schemaBytes?: number;
   retry?: boolean; waitMs?: number; reused?: boolean; affectedRows?: number; status?: string;
   finishReason?: string; blockReason?: string; reason?: string; httpStatus?: number;
-  errorCode?: string; databaseCode?: string; transportCode?: string;
+  errorCode?: string; databaseCode?: string; transportCode?: string; providerStatus?: string;
 };
 const context = new AsyncLocalStorage<Fields & { traceId: string }>();
 const observer = new AsyncLocalStorage<(stage: string) => Promise<void>>();
@@ -27,13 +28,14 @@ export function withGenerationObserver<T>(listener: (stage: string) => Promise<v
 const enumFields: Partial<Record<keyof Fields, readonly string[]>> = {
   provider: ["google", "anthropic", "Gemini", "Claude"], keySource: ["db", "env"],
   status: ["QUEUED", "RUNNING", "COMPLETED", "PARTIAL", "FAILED", "CANCELLED"],
-  reason: ["not_runnable", "access_revoked_or_expired", "lease_wait", "attempt_limit", "lease_lost", "provider_overloaded", "invalid_response", "quota_limit", "unknown"],
+  reason: ["not_runnable", "access_revoked_or_expired", "lease_wait", "attempt_limit", "lease_lost", "provider_overloaded", "deadline_exceeded", "schema_rejected", "invalid_argument", "invalid_response", "quota_limit", "unknown"],
+  providerStatus: ["INVALID_ARGUMENT", "FAILED_PRECONDITION", "UNAUTHENTICATED", "PERMISSION_DENIED", "NOT_FOUND", "RESOURCE_EXHAUSTED", "INTERNAL", "UNAVAILABLE", "DEADLINE_EXCEEDED"],
   errorCode: ["auth", "quota", "model", "server", "schema", "timeout"],
   transportCode: ["UND_ERR_CONNECT_TIMEOUT", "UND_ERR_HEADERS_TIMEOUT", "UND_ERR_BODY_TIMEOUT", "ECONNRESET", "ETIMEDOUT", "ECONNREFUSED"],
   finishReason: ["STOP", "MAX_TOKENS", "SAFETY", "RECITATION", "OTHER", "BLOCKLIST", "PROHIBITED_CONTENT", "SPII", "MALFORMED_FUNCTION_CALL", "end_turn", "max_tokens", "refusal", "stop_sequence", "tool_use"],
   blockReason: ["SAFETY", "OTHER", "BLOCKLIST", "PROHIBITED_CONTENT", "IMAGE_SAFETY"],
 };
-const numbers = ["attempt", "requestIndex", "durationMs", "referenceCount", "promptBytes", "responseBytes", "sceneCount", "inputTokens", "outputTokens", "maxOutputTokens", "timeoutMs", "waitMs", "affectedRows", "httpStatus"] as const;
+const numbers = ["attempt", "requestIndex", "durationMs", "referenceCount", "promptBytes", "responseBytes", "sceneCount", "inputTokens", "outputTokens", "maxOutputTokens", "timeoutMs", "schemaBytes", "waitMs", "affectedRows", "httpStatus"] as const;
 const booleans = ["structured", "retry", "reused", "brandSelected", "brandAuthorized"] as const;
 
 /** Lista permitida en runtime: ni un Error completo ni metadatos extra pueden filtrar contenido. */
@@ -74,11 +76,13 @@ function errorFields(error: unknown): Fields {
   };
   // El texto sólo se clasifica; nunca se incluye en el registro.
   const message = typeof e.message === "string" ? e.message : "";
-  if (status === 503 && (diagnostic.reason === "provider_overloaded" || /high demand|overload|capacity/i.test(message))) fields.reason = "provider_overloaded";
+  const details = providerErrorDetails(error);
+  if (details.reason) fields.reason = details.reason;
+  if (details.providerStatus) fields.providerStatus = details.providerStatus;
   if (/cupo de uso configurado/i.test(message)) fields.reason = "quota_limit";
   if (e.name === "GeneratedScriptValidationError") fields.reason = "invalid_response";
   if (e.name === "AiBudgetError") fields.errorCode = e.code === "timeout" ? "timeout" : "server";
-  if (e.name === "AbortError" || e.name === "TimeoutError" || /timeout|timed out/i.test(message)) fields.errorCode = "timeout";
+  if (details.reason === "deadline_exceeded" || e.name === "AbortError" || e.name === "TimeoutError" || /timeout|timed out/i.test(message)) fields.errorCode = "timeout";
   return fields;
 }
 

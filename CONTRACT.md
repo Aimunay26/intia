@@ -681,7 +681,7 @@ interruptor: nunca `git revert` ni `DROP`.
 | `PANEL_RENDER_MODE` | `together` | `"streaming"` | Panel del Dueño por secciones en vez de carga conjunta | — |
 | `PRODUCT_CATALOG_ENABLED` | apagado | exactamente `"true"` lo enciende | Catálogo de productos por marca, selector del paso 2 y línea `Tipo:` | Migración `20260928120000_brand_catalog` |
 | `PRODUCTION_FLOW_ENABLED` | apagado | exactamente `"true"` lo enciende | Equipo por marca, pasos con plazo, panel «Producción» y barrido diario | Migración `20260928180000_production_flow` |
-| `MANUAL_PROCEDIMIENTOS_ENABLED` | encendido | exactamente `"false"` lo apaga (distingue mayúsculas y espacios) | Manual de procedimientos: menú, tarjetas y `/manual/*` | — |
+| `MANUAL_PROCEDIMIENTOS_ENABLED` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Manual de procedimientos: menú, tarjetas y `/manual/*` | — |
 | `CALENDARIO_MENSUAL` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Vista mensual del calendario para Dueño y Equipo | — |
 | `GUIONES_AJUSTE_PANTALLA` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Modo ajuste del visor y de la biblioteca de guiones | — |
 

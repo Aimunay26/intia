@@ -213,6 +213,7 @@ export function Shell({
         brands={brands}
         activeId={activeBrandId}
         canCreate={user.role === "OWNER"}
+        allLabel={user.role === "OWNER" ? "Todas las marcas" : "Mis marcas"}
       />
 
       <nav aria-label="Navegación principal" className="flex-1 overflow-y-auto px-3.5 pb-4">
@@ -304,6 +305,7 @@ export function Shell({
                 brands={brands}
                 activeId={activeBrandId}
                 canCreate={user.role === "OWNER"}
+                allLabel={user.role === "OWNER" ? "Todas las marcas" : "Mis marcas"}
               />
               <ThemeToggle />
             </div>

@@ -422,7 +422,7 @@ export const PRODUCTION_STEPS: Option[] = [
     label: "Edición",
     chip: "bg-orange-500/12 text-orange-600 dark:text-orange-300 ring-orange-500/25",
     hex: "#f97316",
-    description: "En las 24 horas hábiles siguientes a la grabación.",
+    description: "Hasta el final del siguiente día hábil después de grabar (el domingo no se trabaja).",
   },
   {
     value: "PUBLICACION",

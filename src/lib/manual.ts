@@ -6,7 +6,7 @@
  *   solo arrastra el rol que muestra. Nunca importar estos JSON desde un componente
  *   cliente: el servidor entrega por props solo el módulo o la lección visibles.
  * - Kill-switch: MANUAL_PROCEDIMIENTOS_ENABLED. Encendido por defecto; solo el valor
- *   exacto "false" oculta el menú, las tarjetas y responde 404 en /manual/*.
+ *   "false" (sin importar mayúsculas ni espacios) oculta el menú, las tarjetas y responde 404 en /manual/*.
  */
 import { MANUAL_ROLE_INDEX, type ManualLevel, type ManualRoleId, type ManualRoleSummary } from "@/content/manual/index";
 
@@ -47,7 +47,7 @@ export type ManualRole = {
 
 /** Encendido salvo que la variable valga exactamente "false". */
 export function manualEnabled(env: Record<string, string | undefined> = process.env) {
-  return env.MANUAL_PROCEDIMIENTOS_ENABLED !== "false";
+  return env.MANUAL_PROCEDIMIENTOS_ENABLED?.trim().toLowerCase() !== "false";
 }
 
 /* ----------------------------------------------------------------- NIVELES -- */

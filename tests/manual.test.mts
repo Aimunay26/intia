@@ -38,12 +38,13 @@ const roleFiles = (): ManualRole[] => MANUAL_ROLE_INDEX.map(role => JSON.parse(f
 
 /* ------------------------------------------------------------ INTERRUPTOR -- */
 
-test("kill-switch: encendido por defecto; solo «false» exacto lo apaga", () => {
+test("kill-switch: encendido por defecto; «false» (sin importar mayúsculas ni espacios) lo apaga", () => {
   assert.equal(manualEnabled({}), true);
   assert.equal(manualEnabled({ MANUAL_PROCEDIMIENTOS_ENABLED: "true" }), true);
   assert.equal(manualEnabled({ MANUAL_PROCEDIMIENTOS_ENABLED: "0" }), true);
-  assert.equal(manualEnabled({ MANUAL_PROCEDIMIENTOS_ENABLED: "FALSE" }), true);
   assert.equal(manualEnabled({ MANUAL_PROCEDIMIENTOS_ENABLED: "false" }), false);
+  assert.equal(manualEnabled({ MANUAL_PROCEDIMIENTOS_ENABLED: "FALSE" }), false);
+  assert.equal(manualEnabled({ MANUAL_PROCEDIMIENTOS_ENABLED: " false " }), false);
 });
 
 /* ------------------------------------------------------------------ ORDEN -- */

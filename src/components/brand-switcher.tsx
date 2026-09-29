@@ -21,12 +21,15 @@ export function BrandSwitcher({
   activeId,
   canCreate,
   compact = false,
+  allLabel = "Todas las marcas",
 }: {
   brands: BrandChoice[];
   activeId: string | null;
   canCreate: boolean;
   /** Indicador de la cabecera móvil: color y nombre recortado; abre el mismo menú. */
   compact?: boolean;
+  /** Opción sin filtro: "Todas las marcas" para el Dueño; "Mis marcas" para el Equipo, que solo ve las autorizadas. */
+  allLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,7 +45,7 @@ export function BrandSwitcher({
     form.requestSubmit();
   };
 
-  const label = `Cambiar marca: ${active ? active.name : "Todas las marcas"}`;
+  const label = `Cambiar marca: ${active ? active.name : allLabel}`;
 
   return (
     <div className={compact ? "relative min-w-0" : "relative px-3.5 pb-3"}>
@@ -64,7 +67,7 @@ export function BrandSwitcher({
           ) : (
             <Layers size={13} className="text-inkmuted shrink-0" />
           )}
-          <span className="min-w-0 truncate">{active ? active.name : "Todas"}</span>
+          <span className="min-w-0 truncate">{active ? active.name : allLabel === "Mis marcas" ? "Mis marcas" : "Todas"}</span>
           <ChevronsUpDown size={13} className="text-inkmuted shrink-0" />
         </button>
       ) : (
@@ -93,7 +96,7 @@ export function BrandSwitcher({
             {active ? "Marca" : "Viendo"}
           </span>
           <span className="text-ink block truncate text-[12.5px] leading-tight font-semibold">
-            {active ? active.name : "Todas las marcas"}
+            {active ? active.name : allLabel}
           </span>
         </span>
 
@@ -114,7 +117,7 @@ export function BrandSwitcher({
             )}
           >
             <Layers size={14} className="shrink-0" />
-            <span className="flex-1">Todas las marcas</span>
+            <span className="flex-1">{allLabel}</span>
             {!active ? <Check size={13} /> : null}
           </DropdownMenuItem>
 

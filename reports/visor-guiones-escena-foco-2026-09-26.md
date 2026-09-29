@@ -87,3 +87,44 @@ debe verificarse por separado de la publicación del código en GitHub.
 Archivos principales: `src/components/scripts/script-workspace.tsx`,
 `script-workspace.module.css`, `script-scene.tsx`, la página
 `src/app/(app)/guiones/[id]/page.tsx` y `src/components/member/scripts.tsx`.
+
+## Actualización 28/09/2026: una pantalla y menú «Más»
+
+Commit `c2a9853`, rama `release/operacion-equipos`. Síntoma: el visor obligaba a desplazar la
+página en 1920×1080 y en celular. Interruptor `GUIONES_AJUSTE_PANTALLA`, encendido por defecto;
+`"false"` quita el modo ajuste sin tocar datos ni acciones.
+
+Cambios respecto de la tabla anterior:
+
+| Contenido o función | Antes | Ahora |
+|---|---|---|
+| Título, datos y acciones | Cabecera de página | Cabecera compacta (`ScriptHeader`): volver, título con tooltip, datos en chips y acciones en una fila |
+| Duplicar, variar ángulo y eliminar guion | Ficha e historial | Menú **Más** de la cabecera (`ScriptActionsMenu`), solo si la página entrega la acción; Eliminar sigue siendo solo del Dueño |
+| Editar ficha | Ficha e historial | Sigue en Ficha e historial y además en **Más** |
+| Imprimir | Cabecera | Cabecera en escritorio; dentro de **Más** en celular |
+| Copiar guion | Cabecera | Cabecera (solo Dueño, como antes) |
+| Asignar y desvincular videos, aprobaciones, autoría y prompt | Ficha e historial | Sin cambios |
+
+Presentación:
+
+- **Modo ajuste** desde 1280×600 (`FIT_MEDIA`): el visor ocupa el alto disponible y cada columna
+  (índice, escena, detalles técnicos, producción, ficha) se desplaza por dentro. Los detalles
+  técnicos quedan abiertos en su columna. Entre 768 y 1279 px, o con el interruptor apagado,
+  flujo normal con índice fijo.
+- **Celular** (<768 px): pestañas y barra de escena fijas bajo la barra superior, botones y
+  controles de 44 px y campos de 16 px para que el teléfono no haga zoom.
+- **Biblioteca** `/guiones`: filas compactas y, desde 1024×600 con el interruptor encendido, la
+  tabla se desplaza por dentro con la cabecera fija y la paginación siempre a la vista.
+- **`?escena=<id>`** conserva la escena al recargar o compartir; se escribe con `replaceState`,
+  sin nueva carga del servidor, solo si la URL ya lo traía o si la persona eligió una escena.
+- **←/→** cambian de escena en la vista Escenas, nunca dentro de campos, menús, pestañas,
+  listas de opciones o diálogos, ni con teclas modificadoras.
+
+Se conservan las Server Actions, permisos, revisiones, anclas de la guía (la guía sigue abriendo
+Ficha e historial para vincular el video) y la impresión de todas las escenas, a la que no
+afecta el modo ajuste. Pruebas: `tests/guiones-visor.test.mjs` (interruptor, `?escena`,
+selección por ID y atajos de teclado).
+
+Pendiente conocido: *Variar ángulo* sigue enviando `producto=` con el enfoque del guion
+(`script.focus`), no con el producto del catálogo. Está en el backlog de
+`reports/catalogo-productos-2026-09-28.md` (idea 5, aplazada).

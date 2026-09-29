@@ -565,7 +565,7 @@ export const MODULOS_GUIA: GuiaModulo[] = [
         target: GUIA_TARGETS.SELECT_ASIGNAR_VIDEO,
         url: "/guiones",
         fallbackTexto:
-          "Si no ves el selector, este guion no tiene videos libres de su marca: crea uno en Videos con esa misma marca, o cambia la marca del guion en «Editar ficha».",
+          "Si no ves el selector, este guion no tiene videos libres de su marca: crea uno en Videos con esa misma marca, o cambia la marca del guion con «Editar ficha» (en esta vista o en el menú «Más» de la cabecera).",
         posicionPreferida: "top",
         requiereAccion: true,
       },

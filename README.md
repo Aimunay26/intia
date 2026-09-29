@@ -14,6 +14,7 @@ el antiguo modo SQLite ya no es compatible.
 
 **Índice**
 
+- [Novedades 28/09/2026](#novedades-28092026): manual, calendario mensual, guiones a una pantalla, catálogo y producción por equipos
 - [Arrancarlo](#arrancarlo) · [Primer ingreso](#primer-ingreso)
 - [Cómo se trabaja](#cómo-se-trabaja): las tres fases de un video
 - [Las dos afinaciones de la IA](#las-dos-afinaciones-de-la-ia): la estructura y la persona
@@ -21,6 +22,44 @@ el antiguo modo SQLite ya no es compatible.
 - [Calendario en Google Calendar](#calendario-en-google-calendar) · [Entrar con Gmail](#entrar-con-gmail)
 - [Claves de IA](#claves-de-ia) · [Publicar en internet](#publicar-en-internet)
 - [Comandos](#comandos) · [Cómo está organizado](#cómo-está-organizado)
+
+---
+
+## Novedades 28/09/2026
+
+Entrega «operación por equipos». Cada parte tiene su propio interruptor; la tabla completa está
+en [CONTRACT.md](CONTRACT.md#interruptores-de-funciones).
+
+- **Manual de procedimientos.** Nuevo grupo **Formación** en el menú, con el manual primero y
+  *Cómo se usa* debajo. Ocho roles, tres niveles, 135 módulos y 618 lecciones, con videos de
+  YouTube por módulo y escenas 3D para filmmaker y actor. Lo ven todas las cuentas y tu rol sale
+  primero. Además, el inicio del equipo (`/`) y *Cómo se usa* (`/tutorial`) ya no muestran lo
+  mismo. Viene encendido; `MANUAL_PROCEDIMIENTOS_ENABLED="false"` lo oculta.
+- **Calendario mensual para todo el equipo.** El mes completo sin hacer clic, con «Grabar» y
+  «Publicar» en el día de cada cosa, detalle por día y lista en el celular. Viene encendido;
+  `CALENDARIO_MENSUAL="false"` vuelve a la vista anterior.
+- **Guiones a una pantalla.** El visor y la biblioteca caben en 1920×1080 sin desplazar la
+  página y se leen bien en el celular. *Duplicar*, *Variar ángulo* y *Eliminar* pasaron al menú
+  **Más** de la cabecera. La dirección recuerda la escena (`?escena=`) y las flechas ←/→ cambian
+  de escena. Viene encendido; `GUIONES_AJUSTE_PANTALLA="false"` quita el ajuste.
+- **Catálogo de productos por marca.** Productos, servicios, platos y combos que el generador
+  ofrece en la etapa 2, con cierres y ángulos según el tipo. Viene **apagado** hasta migrar;
+  `PRODUCT_CATALOG_ENABLED="true"` lo enciende.
+- **Producción por equipos.** Equipo y días de grabación por marca, asignación automática de
+  grabación, edición y publicación con plazo, y pedidos de diseño en 24 h. Viene **apagado**
+  hasta migrar;
+  `PRODUCTION_FLOW_ENABLED="true"` lo enciende.
+- **Celulares.** Los campos usan letra de 16 px (el teléfono no hace zoom al escribir), las
+  tablas anchas se leen como tarjetas y el menú lateral se abre como un cajón que se cierra con
+  Escape y no deja desplazar el fondo.
+
+**Orden de despliegue:** migrar (`20260928120000_brand_catalog` y
+`20260928180000_production_flow`, y volver a ejecutar `prisma/operations/deployment-gate.sql`)
+→ desplegar con `PRODUCT_CATALOG_ENABLED` y
+`PRODUCTION_FLOW_ENABLED` apagados → encenderlos en Vercel y redesplegar. Las dos migraciones
+solo crean tablas nuevas y el código no las consulta con sus interruptores apagados, así que
+desplegar antes de migrar tampoco rompe nada. Detalle en [la entrega](reports/release-operacion-equipos-2026-09-28.md)
+y en el [procedimiento de migraciones](reports/operacion-migraciones.md).
 
 ---
 
@@ -67,6 +106,15 @@ Si cargaste la demo local, el equipo de ejemplo (Ana, Paula, Diego, Lucía, Marc
 aleatorias que se imprimieron en la terminal cuando corriste el `seed`. Si las perdiste, se
 cambian desde **Equipo** una vez que entres.
 
+Para probar la producción por equipos y el alcance por marca en local, `npm run db:equipo-demo`
+crea o actualiza seis cuentas ficticias `@intia.test` (Edward, guionista y encargado; Carlos,
+filmmaker; Laudder, edición; Silvanna, community; Diego, diseño; Yoryo, dueño) y el equipo de la
+marca `con-amor`, con grabación los martes y jueves. Los miembros solo tienen acceso a esa marca.
+Necesita la demo local cargada (`npm run db:seed`) y se puede repetir sin duplicar nada. Las
+contraseñas se guardan únicamente en `.audit/equipo-demo.txt`, que Git ignora; no se imprimen.
+Solo funciona contra PostgreSQL local; en producción, las cuentas reales las crea el dueño en
+**Equipo**.
+
 > Si al arrancar te salen errores 500 en algunas pantallas, borra la carpeta `.next-dev` y
 > vuelve a arrancar. Pasa cuando se interrumpe una compilación a medias.
 
@@ -85,21 +133,57 @@ tener.
 **Fase 2 · El guion.** En **Generador IA** eliges la estructura y quién actúa, y la
 IA escribe el desglose escena por escena. También puedes escribirlo a mano desde **Guiones**.
 
-**Fase 3 · La unión.** Abres el guion y, en *Videos donde se graba este guion*, lo asignas a
-la tarjeta. En ese momento el video **hereda la estructura del guion** y pasa de *Idea* a
+**Fase 3 · La unión.** Abres el guion y, en *Ficha e historial → Videos donde se graba este
+guion*, lo asignas a la tarjeta. En ese momento el video **hereda la estructura del guion** y pasa de *Idea* a
 *Guion*. Se puede deshacer desde cualquiera de los dos lados. Si en el generador elegiste la
 tarjeta («¿Para qué video es?», o llegaste desde su botón *Crear guion con IA*), la unión la
 hace sola el trabajo de generación con el primer guion que termina.
 
 A partir de ahí el video avanza por sus estados (Aprobado → Grabación → Edición → Programado →
 Publicado), se marcan los checks de producción, se asigna quién hace qué y se cargan las
-métricas.
+métricas. Con la [producción por equipos](#producción-por-equipos) encendida, las fechas y los
+responsables de grabar, editar y publicar se ponen solos.
+
+### El calendario
+
+Abre en el **mes completo**, para el dueño y para el equipo. Cada video aparece dos veces: el
+día que se graba («Grabar») y el día que se publica («Publicar»). Toca un día para ver su
+detalle; en el celular, el mes se lee como una lista que empieza por hoy. Los totales del mes
+(programados, publicados, en producción y atrasados) se siguen contando por fecha de
+publicación. Cada miembro ve lo que sus perfiles le permiten dentro de sus marcas.
 
 ### La agenda
 
 El calendario no es solo videos. Con el botón **Agendar** se añaden reuniones, días de
 grabación, pendientes y recordatorios, con o sin hora y con o sin marca. Todo eso es lo que
 viaja a Google Calendar.
+
+### Producción por equipos
+
+Se enciende con `PRODUCTION_FLOW_ENABLED="true"`, después de migrar. En cada marca, la pestaña
+**Equipo** define quién es el encargado, el guionista, el filmmaker, el editor, el community y
+el diseñador, qué días se graba (de lunes a sábado) y si la asignación es automática. Desde ahí:
+
+| Cuando… | Se asigna | Con plazo |
+|---|---|---|
+| El guion se une al video, o se aprueba | La grabación, al filmmaker | El próximo día de grabación de la marca; si el video ya tenía fecha de grabación, esa |
+| Termina la grabación (checks completos, paso a Edición, alguien marca la grabación como hecha, o el repaso diario de las 05:00) | La edición, al editor | El día hábil siguiente; lo grabado el sábado se entrega el lunes |
+| Se aprueba la revisión final | La publicación, al community | El día hábil siguiente, o la fecha prevista si es posterior. Si la fecha del calendario era anterior, se mueve |
+| Alguien pulsa **Pedir diseño (24 h)** | El diseño, al diseñador | 24 horas; si vence en domingo, pasa al lunes |
+
+El domingo no se trabaja. **Lo que pone una persona siempre gana**: la automatización solo
+llena lo vacío y nunca pisa una fecha o una asignación puestas a mano. Cada paso crea su tarea
+en **Tareas** y aparece en el panel **Producción** de la ficha del video, donde se marca como
+hecho, se deja el enlace del material en la nube o se reasigna. Si la automatización falla, la
+acción que la disparó se guarda igual. Todo queda en **Actividad**; lo del repaso diario, firmado
+como «Sistema».
+
+### El manual de procedimientos
+
+En **Formación → Manual de procedimientos** está cómo se hace el trabajo de cada rol: misión,
+procedimiento, a quién le recibe y a quién le entrega, y una formación de principiante a
+avanzado con lecciones cortas, videos de YouTube y escenas 3D. *Cómo se usa* enseña a usar
+Intia; el manual enseña a hacer el trabajo.
 
 ### Prioridades
 
@@ -235,10 +319,12 @@ envenena en silencio todos los guiones que se generen después con ese formato.
 En vez de un formulario con scroll vertical largo, el generador organiza la creación de guiones en **5 etapas progresivas e interactivas**:
 
 1. **Formato (21 Estructuras Ganadoras Enriquecidas):** Filtra por objetivo (*Vende* vs *Entretiene*) o busca por nombre. Cada formato cuenta con su **ficha de referencia enriquecida**: modelo mental, gancho en segundos 0 a 3, regla de oro, secreto de retención y ejemplos ganadores reales cargados en el pre-prompt de la IA (incluye *Giro 180°*, *Camaleón 90/10*, *Ellos vs Nosotros*, *PAS*, *UGC*, *Historia de Fundador*, *ASMR Unboxing*, *Hack en 3 pasos*, *Respondiendo Comentarios* y más).
-2. **Identidad & Producto:** Elige la marca, la persona frente a cámara (con su indicador de encaje o fit con el formato) y detalla a fondo el **producto o servicio a grabar** (la IA asimila todas las características, beneficios y objeciones aunque el guion solo lo mencione sutilmente al final).
+2. **Identidad & Producto:** Elige la marca, la persona frente a cámara (con su indicador de encaje o fit con el formato) y detalla a fondo el **producto o servicio a grabar** (la IA asimila todas las características, beneficios y objeciones aunque el guion solo lo mencione sutilmente al final). Con el **catálogo de productos** encendido (`PRODUCT_CATALOG_ENABLED="true"`), eliges una tarjeta del catálogo de la marca (producto, servicio, plato o combo) y «Qué debe saber la IA» llega cargado; puedes ajustarlo solo para ese video sin tocar el catálogo. Si no está, **Cargar un nuevo producto** abre el formulario de texto, con su tipo, y quien puede editar la marca lo guarda en el catálogo desde ahí. El catálogo se administra en la pestaña **Productos** de cada marca.
 3. **Ángulo creativo e idea central (12 Enfoques Virales):** Botones de ángulos (*Camaleón 90/10*, *Ellos vs Nosotros*, *Impacto Visual*, *POV Real*, *Anti-Consejo*, *Experimento*, *Storytime / Confesión*, *Parodia Cotidiana*, *Frente al Hater*, *Hack Oculto*, *ASMR Unboxing*, *Detrás de Cámaras*) que definen el giro psicológico exacto, más la petición o historia del video.
 4. **Cierre CTA (Alex Hormozi):** Gatillos de alta conversión (*$100M Offers* y *$100M Leads*: escasez ética de cupos, urgencia temporal, motivo "porque...", incentivo/regalo, demostración visual en cámara) con fórmulas reactivas y ensamblado automático. El cierre tiene dos modos: **Vender** (esos gatillos) y **Sin venta · Comunidad** (seguir para la parte 2, guardar, enviárselo a alguien concreto, etiquetar con motivo, pregunta abierta, encuesta real, pedir el siguiente tema…). El generador arranca en comunidad cuando la estructura entretiene; en ese modo la IA tiene prohibido meter precios, ofertas, cupos, enlaces o DM aunque la estructura sea de venta. El modo elegido viaja con el trabajo y se aplica a todos los formatos del lote.
 5. **Motor de IA y generación:** Selector de proveedor (Claude / Gemini), modelo (del catálogo del proveedor; ver [Claves de IA](#claves-de-ia)), duración y checklist ejecutivo de ideación.
+
+Cuando se conoce el **tipo** de lo que se vende (por el catálogo o por «Cargar un nuevo producto»), los ángulos y los cierres se filtran según ese tipo: a una polera no se le propone por defecto un cierre de «solo puedo atender a 9 clientes», y a un restaurante se le habla de porciones y mesas en vez de cupos. La IA recibe además una línea `Tipo:` que le dice qué no inventar (cupos de atención en un producto, stock o envíos en un servicio). Sin tipo conocido, todo funciona como antes.
 
 ### La generación corre en segundo plano
 
@@ -259,6 +345,9 @@ Lo que admite el trabajo:
   no se pisa: el guion se crea igual, suelto, y el trabajo lo avisa junto a su estado.
 - **El modo de CTA** (*Vender* o *Sin venta · Comunidad*), que se aplica a todos los formatos
   del lote y queda anotado en el brief de cada guion.
+- **El producto del catálogo**, que el servidor lee de la base de datos (no del formulario) y
+  guarda en el pedido como texto. Si la ficha cambia o se borra después, los reintentos usan el
+  texto con el que se pidió.
 
 Si algo falla, el trabajo lo dice con el mismo criterio que la pantalla de Ajustes: qué pasó,
 qué hacer y, si la clave fue rechazada, de dónde salió. Cuota, error del proveedor o tiempo agotado se reintentan
@@ -273,6 +362,15 @@ Un guion desglosado escena por escena, listo para grabar, con: **voz** (el texto
 **encuadre**, **acción**, **actores** y qué perfil los interpreta, **emoción**, **iluminación**
 que refuerza esa emoción, **sonido**, **elementos de utilería**, **texto en pantalla**,
 **locación** y los tiempos de cada bloque.
+
+La ficha del guion muestra **una escena a la vez**, con su índice al lado (en el celular, un
+selector y botones de anterior y siguiente) y tres vistas: *Escenas*, *Producción* (utilería,
+locaciones y reparto) y *Ficha e historial* (ficha, videos donde se graba, aprobaciones y, para el
+dueño, el pedido y el prompt). En una pantalla de 1920×1080 todo cabe sin desplazar la página:
+cada columna se desplaza por dentro. La cabecera tiene *Copiar guion* (dueño), *Imprimir* y el
+menú **Más**, con *Editar ficha*, *Variar ángulo*, *Duplicar* y *Eliminar guion* según los
+permisos de cada uno. Las flechas ←/→ cambian de escena y la dirección (`?escena=`) recuerda en
+cuál estabas al recargar o compartir el enlace.
 
 ---
 
@@ -335,6 +433,14 @@ futuros de ese formato.** Una puntuación automática mala no se queda en una ta
 en silencio cada guion que se genere después. Por eso ningún motor escribe ahí solo, y solo el
 criterio humano —*A mano* o *Sembrado*— viaja al prompt. En cuanto tocas una fila, pasa a ser
 tuya.
+
+### Y quién lo graba, lo edita y lo publica
+
+Los motores deciden **quién actúa**. Quién graba, edita, publica y diseña es otra cosa: se
+asigna en la ficha del video y, con la [producción por equipos](#producción-por-equipos)
+encendida, sale del equipo de la marca. Si el video ya tiene a alguien en esa función, manda esa
+persona. Para prepararse, el actor y el filmmaker tienen su manual en **Formación**, con escenas
+3D de plano, luz, mirada y marcas.
 
 ---
 
@@ -414,6 +520,11 @@ modelo vigente del catálogo al leerlo. Verifica con `npx prisma migrate status`
 `SELECT column_name FROM information_schema.columns WHERE table_name = 'ContentItem' AND column_name = 'structureIds';`.
 Los scripts de `prisma/operations/` (control de despliegue, activación de perfiles) son
 operaciones del procedimiento, no sustituyen a las migraciones versionadas.
+La entrega del 28/09/2026 añade `20260928120000_brand_catalog` y
+`20260928180000_production_flow`: solo crean tablas, no tocan columnas ni filas existentes.
+Después de aplicarlas, vuelve a ejecutar `prisma/operations/deployment-gate.sql` para que el
+control de escrituras cubra las tablas nuevas, y solo entonces enciende `PRODUCT_CATALOG_ENABLED`
+y `PRODUCTION_FLOW_ENABLED`.
 
 **1. Crea la base de datos** en Neon, Supabase o quien prefieras, y copia su cadena de
 conexión.
@@ -546,10 +657,11 @@ Dos cosas que conviene saber:
 | `npm run db:baseline` | Comprueba, sin modificar, que la DB existente coincide con la línea base |
 | `npm run db:integridad` | Consulta referencias inválidas y archivos huérfanos |
 | `npm run db:seed` | Carga la demo únicamente en PostgreSQL local explícito |
+| `npm run db:equipo-demo` | Crea o actualiza seis cuentas de prueba y el equipo de la marca `con-amor`, solo en PostgreSQL local; contraseñas únicamente en `.audit/equipo-demo.txt` |
 | `npm run db:reset` | **Borra todo en la DB local indicada** y aplica migraciones; no carga demo |
 | `npm run db:ensayo` | Ensaya migración y restauración en bases locales efímeras |
 | `npm run lint` / `npm run typecheck` | Verifica estilo y tipos |
-| `npm test` / `npm run test:postgres` | Pruebas unitarias y de integración en PostgreSQL local efímero |
+| `npm test` / `npm run test:postgres` | Pruebas unitarias y de integración en PostgreSQL local efímero (`npm run test:postgres -- production-flow` corre solo la suite del flujo de producción) |
 | `npm run perf:local` | Mide la navbar y conflictos de edición con la compilación de producción local |
 | `npm run db:studio` | Abre Prisma Studio para ver la base de datos |
 | `npm run use:postgres` | Cambia el esquema a PostgreSQL |
@@ -558,8 +670,11 @@ Dos cosas que conviene saber:
 | `npm run ver:prompt -- eru` | Imprime el prompt exacto que se le manda a la IA por esa persona |
 | `npm run test:motores` | Calibra el motor de match contra la matriz de compatibilidad |
 | `npm run test:humo` | 37 comprobaciones: permisos, calendario, datos y archivos |
-| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos y CTA de comunidad) |
+| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos, CTA de comunidad, catálogo de productos, producto en el generador, calendario mensual, flujo de producción, visor de guiones, cierres por tipo y Manual) |
 | `npm run test:cta` | Vigila que los CTA de comunidad no lleven presión ni oferta (`tsx --test`) |
+| `npm run test:presets` | Cierres, fórmulas y ángulos por tipo de producto: sin tipo, todo como antes; un producto o un restaurante nunca reciben cupos ni asesorías |
+| `npm run test:manual` | Manual de procedimientos: interruptor, orden por rol, contenido generado, enlaces de YouTube y traducción de las 98 escenas 3D |
+| `node scripts/manual-content.mjs` | Regenera `src/content/manual/` desde `reports/manual-procedimientos/curriculo.json` |
 
 > `npm run build` falla si el servidor de desarrollo está corriendo: Windows tiene bloqueado
 > el motor de Prisma. Detén el servidor antes de compilar.
@@ -588,12 +703,22 @@ src/
     assets.tsx           Gestor de PDF de referencia
     charts.tsx           Gráficos en SVG, sin librerías
     ui.tsx               Tarjetas, chips, avatares, estados vacíos
+    manual/              Tarjetas, lecciones, videos y visor 3D del manual
+    scripts/             Visor de guiones: cabecera, menú «Más» y escena en foco
+  content/
+    manual/              Manual de procedimientos, generado por scripts/manual-content.mjs
   lib/
     ai/                  Generador: contexto, esquema y proveedores
     auth.ts              Sesiones, contraseñas y permisos
     audit.ts             Registro de auditoría
     brand-context.ts     Marca activa (servidor)
     brand-shared.ts      Lo de la marca activa que también usa el navegador
+    calendar-view.ts     Calendario mensual: reparto por día, detalle y lista móvil
+    domain/production-flow.ts  Flujo de producción por equipos
+    working-days.ts      Días hábiles y plazos (lunes a sábado, hora de Lima)
+    product-catalog.ts   Catálogo de productos por marca
+    product-focus.ts     Texto del producto que recibe la IA
+    manual.ts            Acceso al contenido del manual
     google.ts            OAuth de Google
     ical.ts              Generación del archivo .ics
     constants.ts         Catálogos de estados, roles, redes y prioridades
@@ -634,6 +759,9 @@ La auditoría y el plan describen la copia revisada el 7 de septiembre de 2026; 
 - [ ] Revisa quién tiene la posición de **Dueño**: es la única que puede eliminar.
 - [ ] Cambia la dirección del calendario si la compartiste durante las pruebas.
 - [ ] Verifica PostgreSQL y los respaldos del proveedor antes de usar datos reales.
+- [ ] Al encender la producción por equipos no se asigna nada hasta que cada marca tenga su
+      equipo. Crea antes las cuentas reales en **Equipo**, con acceso a su marca, y después define
+      en la pestaña **Equipo** de cada marca quién hace cada función y qué días se graba.
 
 ## Lo que NO hace todavía
 
@@ -652,11 +780,25 @@ Para que no haya sorpresas:
   o pegando un CSV. No hay conexión automática con TikTok,
   Meta ni YouTube.
 - **La IA admite hasta tres estructuras por solicitud**, con ejecución secuencial durable.
-  Cada envío genera una variante de cada estructura; los límites diarios se reservan antes de llamar al proveedor.
+  Cada envío genera una variante de cada estructura. Intia no pone cupos diarios propios: el
+  proveedor aplica los suyos.
 - **El motor automático de match está diseñado, no construido.** Hoy funciona el motor «Por
   tipo de video», que no gasta clave. El que lee el guion con IA es el siguiente paso.
-- **El generador sigue siendo un formulario largo.** El módulo conversacional con carga de
+- **El generador todavía no es conversacional.** Va por etapas; el módulo con chat, carga de
   audios, enlaces y referencias está diseñado y pendiente de construir.
+- **El catálogo de productos nace vacío.** No deduce productos del brief de la marca: se cargan
+  en la pestaña **Productos** o desde «Cargar un nuevo producto» del generador. Además,
+  *Variar ángulo* todavía abre el generador con el enfoque del guion en el campo de producto, no
+  con la ficha del catálogo.
+- **La producción por equipos no avisa fuera de Intia.** Crea la tarea con su plazo y la muestra
+  en el panel **Producción** del video, pero no manda WhatsApp ni correo. Una marca sin equipo
+  definido no recibe asignaciones automáticas, aunque el video tenga personas asignadas.
+- **El manual no guarda tu avance** ni califica las prácticas. ATC y jefe de editores tienen
+  manual, pero todavía no existen como perfiles de Intia.
+- **Las Personas todavía no se limitan por marca.** Un guionista o un estratega limitado a su
+  marca ve todas las fichas de Personas. La decisión ya está tomada (personas vinculadas a una o
+  varias marcas, o compartidas) y está pendiente de construir; ver la
+  [auditoría de alcance](reports/auditoria-alcance-marca-2026-09-28.md).
 - **No se pueden subir audios ni enlaces todavía.** Solo PDF, txt, md, csv y json, hasta 4 MB,
   y siempre atados a una ficha de marca, estructura o persona.
 - **La instalación sigue siendo de un equipo compartido.** Las descargas comprueban la sesión y

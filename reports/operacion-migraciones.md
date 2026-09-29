@@ -1,6 +1,8 @@
 # Migraciones y recuperación de Marketing OS
 
 Actualizado: 09/09/2026. Aplicable a PostgreSQL; no usar SQLite ni `db push` para actualizar producción.
+Añadido el 28/09/2026: [migraciones del catálogo y del flujo de producción](#entrega-28092026-catálogo-y-flujo-de-producción).
+Lo anterior se conserva como registro de la entrega del 09/09.
 
 ## Estado de esta entrega
 
@@ -174,3 +176,104 @@ Un rollback de la aplicación al código previo a esta entrega deja de ser compa
 archivos cuyo `data` ya sea NULL. Antes de volver a esa versión, restaurar los bytes verificados
 en PostgreSQL o usar una compilación de reversión que conserve el lector privado.
 No borrar el almacén Blob ni sus claves mientras existan adjuntos que lo referencien.
+
+## Entrega 28/09/2026: catálogo y flujo de producción
+
+Rama `release/operacion-equipos`. Dos migraciones nuevas, que Prisma aplica en este orden:
+
+1. `prisma/migrations/20260928120000_brand_catalog/migration.sql`: tablas `BrandProduct`,
+   `BrandCombo` y `BrandComboItem`. CHECK de tipo (`PRODUCTO`, `SERVICIO`, `RESTAURANTE`),
+   nombre y cantidad; FK compuestas `(id, brandId)` para que un combo no mezcle marcas; trigger
+   `intia_revision`.
+2. `prisma/migrations/20260928180000_production_flow/migration.sql`: tablas `BrandTeamMember`,
+   `BrandProductionSettings` y `ProductionStep`. CHECK de función, días de grabación (1 a 6),
+   paso, estado, origen, `doneAt`, enlace y notas; FK compuesta `(contentItemId, brandId)` hacia
+   `ContentItem`, que usa el índice único `ContentItem_id_brandId_key` de
+   `20260917180000_workflow_consistency`; trigger `intia_revision`.
+
+Qué hay que saber:
+
+- **Son aditivas.** Solo crean tablas, índices, restricciones y triggers. No añaden columnas a
+  tablas existentes ni cambian filas, así que no necesitan preflight ni relleno. El catálogo y el
+  flujo nacen vacíos: no se infieren productos, equipos ni pasos.
+- Son transaccionales, con `lock_timeout = 5s` y `statement_timeout = 60s`. Las FK nuevas toman
+  un bloqueo breve sobre `Brand`, `User`, `ContentItem` y `Task`. Si un escritor largo lo impide,
+  la migración vence y se revierte entera.
+- **No usan `IF NOT EXISTS`.** Si las tablas ya existen (por ejemplo, creadas con `db push`),
+  fallan en vez de darse por aplicadas sin sus CHECK. En ese caso, inspeccionar y comparar el
+  esquema; no marcar la migración como aplicada.
+- **Conviven con el código anterior y con el nuevo.** Con `PRODUCT_CATALOG_ENABLED` y
+  `PRODUCTION_FLOW_ENABLED` apagados, ningún código consulta las tablas nuevas; la procedencia de
+  los datos de ejemplo solo las lee si existen (`to_regclass`). La versión de escritor sigue
+  siendo `intia-secrets-20260925`: no hace falta script de activación ni una ventana con las
+  escrituras detenidas por incompatibilidad de versiones.
+- `npm run db:baseline` ya no aplica a producción: compara con la línea base de 24 tablas y solo
+  sirve antes de registrarla. Para esta entrega se usan `npx prisma migrate status` y
+  `npm run db:integridad`.
+
+### Ensayo
+
+`npm run db:ensayo` aplica las dos migraciones sobre la base de prueba, después de las anteriores,
+y comprueba que:
+
+- las filas existentes quedan intactas y no aparece ninguna columna nueva en `ContentItem`,
+  `Task`, `Assignment`, `Brand` ni `User`;
+- se rechazan combos y pasos de otra marca, y funciones, días, pasos y enlaces inválidos;
+- se rechazan claves de automatización repetidas o de otro video;
+- la revisión es monótona;
+- las filas caen en cascada al borrar la marca o la cuenta (el paso conserva su historial sin
+  responsable);
+- la restauración conserva filas y huella.
+
+Resultado del 28/09/2026: correcto, con 42 tablas (`.audit/migration-rehearsal.json`, local). Como
+antes, un ensayo con fixtures no sustituye una copia de producción: si hay una rama de Neon
+disponible, aplicarlas primero ahí.
+
+### Aplicación en producción
+
+Orden: **migrar → desplegar con los interruptores de base de datos apagados → encenderlos**.
+Como el código no consulta las tablas nuevas con los interruptores apagados, desplegar antes de
+migrar también es seguro. Lo que nunca se hace es encender un interruptor antes de migrar.
+
+1. Preparar un respaldo reciente y comprobar que se puede restaurar.
+2. Exportar la conexión solo en el proceso de operación, sin imprimirla. Desde el mismo commit
+   que se despliega:
+
+   ```bash
+   npm run db:migrate
+   npx prisma migrate status
+   npm run db:integridad
+   ```
+
+   No hace falta cerrar escrituras. Si la migración vence por `lock_timeout`, se revierte
+   entera: reintentar en un momento de menos uso o con el control de escrituras cerrado.
+3. Volver a ejecutar `prisma/operations/deployment-gate.sql` con la conexión de mantenimiento
+   (`application_name=intia-migrator-20260909`) para instalar la guarda en las seis tablas
+   nuevas. Reinstalarla no abre ni cierra el control y no cambia la versión requerida.
+   Comprobarlo con:
+
+   ```sql
+   SELECT tgrelid::regclass FROM pg_trigger
+   WHERE tgname = 'intia_deployment_guard'
+     AND tgrelid::regclass::text IN ('"BrandProduct"', '"BrandCombo"', '"BrandComboItem"',
+       '"BrandTeamMember"', '"BrandProductionSettings"', '"ProductionStep"');
+   ```
+
+   Deben salir seis filas.
+4. Desplegar o mantener el código con los dos interruptores apagados. Después, encender
+   `PRODUCT_CATALOG_ENABLED="true"` y `PRODUCTION_FLOW_ENABLED="true"` en Vercel y redesplegar.
+5. Observar 24 h: trabajos de generación fallidos, errores «Este envío ya fue utilizado», logs
+   `production_flow` con `reason: "error"` y el resultado `production` del mantenimiento diario
+   (`ops.maintenance.last`).
+
+### Reversa
+
+- Apagar el interruptor (`"false"` o sin valor) y redesplegar. Detiene la función al instante y
+  conserva los datos.
+- No hacer `DROP` de las tablas ni `git revert` como reversa. Retirar la función de verdad sería
+  una migración nueva y revisada.
+- Si falla una migración, PostgreSQL la revierte entera. Revisar `_prisma_migrations` y registrar
+  `prisma migrate resolve --rolled-back <migración>` solo después de confirmar que no quedó nada
+  persistido.
+- El código anterior a esta entrega funciona sobre el esquema nuevo, porque solo hay tablas
+  adicionales. Sus filas quedan sin uso hasta volver a desplegar esta versión.

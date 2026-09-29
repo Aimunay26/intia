@@ -285,7 +285,7 @@ export default async function TutorialPage() {
                 </p>
                 <ul className="list-disc pl-4 space-y-1 text-[12.5px] text-inksoft mt-1">
                   <li><strong>1 · Formato de guion (21 estructuras):</strong> Eliges la estructura ganadora con su ficha de referencia enriquecida (modelo mental, gancho 0-3s y retención).</li>
-                  <li><strong>2 · Identidad y producto:</strong> Seleccionas marca, actor y detallas el producto a fondo (la IA lo asimila completo en su pre-prompt aunque el formato no lo mencione de inmediato).</li>
+                  <li><strong>2 · Identidad y producto:</strong> Seleccionas marca y actor, y eliges el producto del catálogo de la marca (si está activo) o lo detallas a fondo (la IA lo asimila completo en su pre-prompt aunque el formato no lo mencione de inmediato).</li>
                   <li><strong>3 · Ángulo e idea (12 enfoques creativos):</strong> Seleccionas el giro psicológico exacto: <em>Camaleón</em>, <em>Ellos vs Nosotros</em>, <em>Impacto Visual</em>, <em>POV Real</em>, <em>Anti-Consejo</em>, <em>Experimento</em>, <em>Storytime</em>, <em>Parodia Cotidiana</em>, <em>Frente al Hater</em>, <em>Hack Oculto</em>, <em>ASMR Unboxing</em> o <em>Detrás de Cámaras</em>.</li>
                   <li><strong>4 · Cierre y CTA (Gatillos de Hormozi):</strong> Escasez ética de cupos, urgencia temporal, motivo de celebración, regalo o impacto visual en cámara.</li>
                   <li><strong>5 · Motor y generación:</strong> Checklist ejecutivo de confirmación y generación con Claude o Gemini escena por escena listo para rodar.</li>
@@ -300,7 +300,7 @@ export default async function TutorialPage() {
                 hecho={unidos > 0}
               >
                 <p>
-                  Abre el guion y asígnalo a su tarjeta. El video hereda el formato y pasa de{" "}
+                  Abre el guion y, en su vista «Ficha e historial», asígnalo a su tarjeta. El video hereda el formato y pasa de{" "}
                   <em>Idea</em> a <em>Guion</em>. Se puede deshacer desde cualquiera de los dos
                   lados.
                 </p>
@@ -315,7 +315,9 @@ export default async function TutorialPage() {
               >
                 <p>
                   En la ficha del video asignas quién actúa, quién graba y quién escribe. El
-                  checklist de 15 pasos va marcando el avance por etapas.
+                  checklist de 15 pasos va marcando el avance por etapas. Si la producción por
+                  equipos está activa, la grabación, la edición y la publicación se asignan solas
+                  con su plazo, según el equipo de la marca.
                 </p>
                 <p>
                   Todo lo que mueve cualquiera queda en <strong>Actividad</strong> con su
@@ -463,7 +465,7 @@ export default async function TutorialPage() {
               {[
                 ...(manualEnabled() ? [["/manual", "Manual de procedimientos", "Cómo se hace el trabajo de cada rol", BookOpen]] : []),
                 ["/", "Panel", "Qué se está logrando y qué está atrasado", TrendingUp],
-                ["/calendario", "Calendario", "Videos, reuniones y días de grabación", CalendarDays],
+                ["/calendario", "Calendario", "El mes: qué se graba, qué se publica y la agenda", CalendarDays],
                 ["/contenido", "Videos", "Las tarjetas, con su checklist y su equipo", Film],
                 ["/marcas", "Marcas", "Identidad, objetivos y prohibiciones", Building2],
                 ["/arquetipos", "Personas", "Quién sale en cámara y cómo habla", UserSquare2],

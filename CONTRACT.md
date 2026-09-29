@@ -22,13 +22,17 @@ Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pi
 
 | Ruta | Qué es |
 |---|---|
-| `/` | Panel general |
-| `/calendario` | Calendario mensual de contenido |
+| `/` | Panel general del Dueño; inicio de trabajo del Equipo |
+| `/manual` | Manual de procedimientos: una tarjeta por rol, en orden de flujo (ver «Manual de procedimientos») |
+| `/manual/[rol]` | Misión, procedimiento, traspasos e indicadores del rol; formación por nivel (`?nivel=`) |
+| `/manual/[rol]/[modulo]` | Lecciones (`?leccion=`), videos de YouTube y escenas 3D del módulo |
+| `/tutorial` | «Cómo se usa»: recorrido del Dueño; perfiles, flujo y ubicación para el Equipo |
+| `/calendario` | Calendario mensual: grabación y publicación de cada video, agenda y detalle del día (`?dia=`) |
 | `/contenido` · `/contenido/[id]` | Lista y ficha de cada video |
-| `/marcas` · `/marcas/[id]` | Marcas, identidad, brief, objetivos |
+| `/marcas` · `/marcas/[id]` | Marcas, identidad, brief, objetivos; `?vista=productos` y `?vista=equipo` solo con su interruptor |
 | `/generador` | Generador de guiones con IA |
 | `/generador/trabajos` · `/generador/trabajos/[id]` | Historial, progreso y recuperación de generaciones |
-| `/guiones` · `/guiones/[id]` | Biblioteca y visualizador de guiones |
+| `/guiones` · `/guiones/[id]` | Biblioteca y visualizador de guiones (`?escena=`) |
 | `/estructuras` · `/estructuras/[id]` | Formatos ganadores + prompt + PDFs |
 | `/arquetipos` · `/arquetipos/[id]` | Personas frente a cámara: perfil, marca personal y compatibilidad |
 | `/metricas` | Visualizador de métricas |
@@ -123,7 +127,7 @@ permisos de equipo a roles que ya no existían.
 
 Los nueve perfiles combinables, su matriz y la activación están en [Perfiles y permisos](reports/perfiles-permisos-2026-09-09.md). La política vive en `src/lib/permissions.ts` y los filtros en `src/lib/access-scope.ts`. Se aplican en páginas, acciones, descargas, CSV, tareas e IA. La cookie de marca no concede acceso.
 
-Equipo, Actividad y Ajustes requieren Dueño. Cambiar UserWorkProfile o UserBrandAccess revoca sesiones y aumenta la versión de acceso mediante triggers. No se asignan perfiles por inferencia durante la migración. Sin perfiles, un miembro conserva inicio, ayuda y Mi perfil.
+Equipo, Actividad y Ajustes requieren Dueño. Cambiar UserWorkProfile o UserBrandAccess revoca sesiones y aumenta la versión de acceso mediante triggers. No se asignan perfiles por inferencia durante la migración. Sin perfiles, un miembro conserva inicio, ayuda, Manual de procedimientos y Mi perfil.
 
 Las funciones de video en Assignment no sustituyen los perfiles de acceso. Los perfiles combinados suman capacidades sin ampliar el alcance de una capacidad distinta. Generar/escribir no concede aprobar o publicar. Publicación requiere la revisión final aprobada de postproducción; APROBADO sigue siendo una etapa previa a grabación.
 
@@ -166,6 +170,32 @@ de escena al reordenar. Imprimir debe incluir todas las escenas y sus detalles,
 aunque estén ocultas en pantalla. Conservar acciones, revisiones, permisos y
 anclas de la guía al modificar esta presentación. Ver
 `reports/visor-guiones-escena-foco-2026-09-26.md`.
+
+Desde el 28/09/2026:
+
+- **Cabecera compacta** (`ScriptHeader`): volver a Guiones, título (completo en el tooltip),
+  datos en chips y acciones. Dueño: «Copiar guion», «Imprimir» (escritorio) y «Más»; Equipo:
+  «Imprimir» y «Más». El menú «Más» (`ScriptActionsMenu`) reúne Imprimir (móvil), Editar
+  ficha, Variar ángulo, Duplicar («Duplicar como borrador propio» en el Equipo) y Eliminar
+  guion (solo Dueño). Cada acción aparece solo si la página la entrega con su permiso y la
+  acción del servidor lo vuelve a comprobar. «Ficha e historial» conserva la ficha y su botón
+  «Editar ficha», los videos vinculados (asignar y desvincular), aprobaciones, autoría y, solo
+  para el Dueño, modelo, proveedor, pedido y prompt.
+- **Modo ajuste** (`GUIONES_AJUSTE_PANTALLA`, encendido por defecto): en pantallas de al menos
+  1280×600 (`FIT_MEDIA` en `viewer-state.ts`, sincronizado con `script-workspace.module.css`)
+  el visor ocupa el alto disponible, cada columna se desplaza por dentro y los detalles
+  técnicos quedan abiertos en su columna. Entre 768 y 1279 px, o con el interruptor en
+  `"false"`, flujo normal con índice fijo. En móvil (<768 px), pestañas y barra de escena fijas,
+  botones de 44 px y campos de 16 px. La biblioteca `/guiones` desplaza la tabla por dentro
+  desde 1024×600, con la paginación siempre a la vista. El modo ajuste solo aplica en
+  `@media screen`: la impresión no cambia.
+- **`?escena=<id>`** conserva la escena al recargar. Se escribe con `replaceState` (sin nueva
+  carga del servidor) solo si la URL ya lo traía o si la persona eligió una escena; un valor
+  que no tiene forma de ID se ignora.
+- **←/→** cambian de escena en la vista Escenas. Nunca dentro de campos, menús, pestañas,
+  listas de opciones, deslizadores o diálogos, ni con teclas modificadoras.
+- Las funciones de presentación viven en `src/components/scripts/viewer-state.ts` (puras,
+  probadas en `tests/guiones-visor.test.mjs`).
 
 ## Las tres fases de un video
 
@@ -416,9 +446,12 @@ de API, quitarla, rotar el token del calendario y cambiar una contraseña regist
 Acciones válidas: `CREAR`, `EDITAR`, `ELIMINAR`, `COMPLETAR`, `REABRIR`, `ASIGNAR`,
 `DESASIGNAR`, `GENERAR`, `SUBIR`, `LOGIN`, `LOGOUT`.
 
-Entidades válidas: `Brand`, `BrandObjective`, `CalendarEvent`, `ContentItem`, `ChecklistItem`,
-`Assignment`, `Script`, `ScriptScene`, `Structure`, `Archetype`, `ArchetypeFit`, `Metric`,
-`Asset`, `User`, `Comment`, `AppSetting`, `Auth`.
+Entidades válidas (`AUDIT_ENTITIES`): `TaskColumn`, `Brand`, `BrandObjective`, `BrandProduct`,
+`BrandCombo`, `CalendarEvent`, `ContentItem`, `ChecklistItem`, `Assignment`, `Script`,
+`ScriptScene`, `Structure`, `Archetype`, `ArchetypeFit`, `Metric`, `Asset`, `User`, `Comment`,
+`AppSetting`, `Auth`, `Task`, `BrandTeamMember`, `ProductionStep`. Cada una lleva su etiqueta en
+`ENTITY_LABELS`. `/actividad` no ofrece en su filtro las entidades del catálogo ni las del flujo
+de producción mientras su interruptor está apagado.
 
 Al construir el motor automático de match hay que dar de alta `MatchRun` en `AUDIT_ENTITIES`
 **y** en `ENTITY_LABELS`: la pantalla de actividad valida el filtro contra ese array y sin la
@@ -473,6 +506,11 @@ Campos JSON por modelo:
 - `ContentItem`: `tags` → `string[]`, **`platforms` → `string[]`** (las redes donde sale)
 - `MatchRun`: `reparto` → `string[]`
 - `MatchRow`: `evidencia`, `papeles`, `riesgos` → `string[]`; `mejores`, `dificiles` → `number[]`
+- `BrandProduct`: `features`, `benefits`, `objections` → `string[]` (hasta 20 ítems de 200
+  caracteres cada uno; `PRODUCT_LIMITS`)
+- `BrandProductionSettings`: `recordingWeekdays` → `number[]` canónico, sin repetir y en orden,
+  de 1 (lunes) a 6 (sábado). Un CHECK de la migración lo exige; el domingo no se graba.
+  Leer con `parseRecordingWeekdays` y escribir con `normalizeWeekdays` (`src/lib/working-days.ts`).
 
 ### Los dos referentes del Archetype, que no son lo mismo
 
@@ -520,6 +558,9 @@ import {
   AI_PROVIDERS, AI_MODELS, DEFAULT_MODEL,
   PALETTE, FIT_SCORES,
   ACTIVE_STATUSES, DONE_STATUSES, DEAD_STATUSES,
+  PRODUCT_KINDS, PRODUCT_KIND_MAP, isProductKind,
+  BRAND_TEAM_ROLES, BRAND_TEAM_ROLE_MAP, RECORDING_WEEKDAYS,
+  PRODUCTION_STEPS, PRODUCTION_STEP_MAP, PRODUCTION_STEP_STATUSES, PRODUCTION_STEP_STATUS_MAP,
 } from "@/lib/constants";
 ```
 
@@ -620,3 +661,233 @@ y funcionen sin JavaScript.
 4. **Nada de `alert()`, `confirm()` ni `window.location`.** Usar `<Modal>` y `<DeleteButton>`.
 5. **Sin `any`.** Si hace falta, tipar con `unknown` y estrechar.
 6. **Sin datos inventados en la UI**: si un número no existe en la base, se muestra `—`.
+
+<!-- ================================================================== -->
+<!-- Entrega «operación por equipos» (28/09/2026). Secciones nuevas.       -->
+<!-- ================================================================== -->
+
+## Interruptores de funciones
+
+Cada función nueva o con riesgo tiene un interruptor por variable de entorno, leído en el
+servidor. En Vercel, un cambio de variable se aplica al redesplegar. La reversa es apagar el
+interruptor: nunca `git revert` ni `DROP`.
+
+| Variable | Por defecto | Qué valor lo cambia | Qué controla | Requisito |
+|---|---|---|---|---|
+| `AI_JOBS_ENABLED` | apagado | exactamente `"true"` lo enciende | Generación en segundo plano, llamadas de IA y recuperación diaria de trabajos | Migraciones de trabajos y Workflow en Vercel |
+| `BLOB_PRIVATE_ENABLED` | apagado | exactamente `"true"` lo enciende | Adjuntos nuevos en Blob privado | Almacén PRIVATE creado |
+| `CATALOG_CACHE_ENABLED` | apagado | `"1"` lo enciende (con `CATALOG_CACHE_NAMESPACE`) | Caché de nombres de estructuras | — |
+| `PERFORMANCE_LOGS` | apagado | `"1"` lo enciende | Logs de fases sin SQL ni datos | — |
+| `PANEL_RENDER_MODE` | `together` | `"streaming"` | Panel del Dueño por secciones en vez de carga conjunta | — |
+| `PRODUCT_CATALOG_ENABLED` | apagado | exactamente `"true"` lo enciende | Catálogo de productos por marca, selector del paso 2 y línea `Tipo:` | Migración `20260928120000_brand_catalog` |
+| `PRODUCTION_FLOW_ENABLED` | apagado | exactamente `"true"` lo enciende | Equipo por marca, pasos con plazo, panel «Producción» y barrido diario | Migración `20260928180000_production_flow` |
+| `MANUAL_PROCEDIMIENTOS_ENABLED` | encendido | exactamente `"false"` lo apaga (distingue mayúsculas y espacios) | Manual de procedimientos: menú, tarjetas y `/manual/*` | — |
+| `CALENDARIO_MENSUAL` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Vista mensual del calendario para Dueño y Equipo | — |
+| `GUIONES_AJUSTE_PANTALLA` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Modo ajuste del visor y de la biblioteca de guiones | — |
+
+- Los interruptores de funciones con **tablas nuevas vienen apagados**. Apagados, ninguna
+  pantalla, acción, gancho ni tarea programada consulta esas tablas: el código se puede
+  desplegar antes o después de migrar. Única excepción deliberada: la procedencia de los datos
+  de ejemplo lee y bloquea las tablas del catálogo y del flujo solo si ya existen
+  (`to_regclass`), para que «Revisar/Vaciar datos de ejemplo» funcione en ambos casos.
+- Los que **solo cambian la presentación vienen encendidos** y se apagan con `"false"`.
+- Apagar no borra nada: tablas y filas se conservan y vuelven a verse al encender.
+- Orden de activación: migrar → desplegar con los interruptores de base de datos apagados →
+  encenderlos en Vercel y redesplegar. Ver `reports/operacion-migraciones.md`.
+
+## Catálogo de productos por marca
+
+Interruptor `PRODUCT_CATALOG_ENABLED`. Mini-spec y decisiones: `reports/catalogo-productos-2026-09-28.md`.
+
+- **Modelos.** `BrandProduct` (tipo, nombre, slug único por marca, «Qué debe saber la IA»
+  en `aiNotes`, características, beneficios, objeciones, precio como texto en `priceLabel`,
+  activo y orden), `BrandCombo` (varios productos de la marca con su tipo, notas y precio) y
+  `BrandComboItem` (producto y cantidad mayor que cero). Una FK compuesta `(id, brandId)`
+  impide que un combo mezcle marcas. Todo cae en cascada con la marca. Revisión monótona y
+  `lockRevision`, como el resto de tablas editables.
+- **Tipos: `PRODUCTO`, `SERVICIO` y `RESTAURANTE`** (`PRODUCT_KINDS`; un CHECK los exige). El tipo
+  decide qué cierres, fórmulas, acciones y ángulos se ofrecen: `presetsPara`,
+  `cierreInicialPara`, `angulosPara`, `etiquetaAccion`, `verboAccion` y
+  `detallePlaceholderPara` en `src/lib/script-angles.ts`. Con el tipo desconocido (`null`) cada
+  función devuelve exactamente lo de antes. Un `PRODUCTO` no recibe por defecto un cierre de
+  cupos, agenda ni asesoría.
+- **Permisos.** Crear, editar y archivar exigen `brands.edit` sobre una marca autorizada;
+  eliminar, Dueño. «Cargar un nuevo producto» en el generador guarda con
+  `guardarProductoRapido` (`brands.edit`), idempotente por marca y nombre normalizado. Toda
+  escritura se audita en la misma transacción. Con el interruptor encendido, el alta de una
+  marca continúa en su pestaña «Productos».
+- **Coherencia.** Borrar un producto rehace sus combos en la misma transacción (tipo, revisión
+  y archivado si quedan menos de dos productos, con auditoría); cambiar su tipo recalcula el de
+  sus combos. Un producto archivado no entra en combos, y un combo que lo incluya no se ofrece
+  ni se acepta en el generador.
+- **Generador, paso 2.** Tarjetas por marca (hasta 100 productos y 50 combos activos, con aviso
+  si se recorta). «Qué debe saber la IA» se precarga con la ficha elegida y se puede ajustar
+  solo para ese video: la selección y los ajustes viven en la memoria del formulario y **no
+  modifican el catálogo**.
+- **El servidor arma el texto del producto desde la DB** (`productoDelCatalogo` en
+  `src/app/actions/scripts.ts`, `focoDeProducto` en `src/lib/product-focus.ts`). No usa el
+  nombre ni el tipo que manda el cliente: lee la ficha activa de la marca ya decidida, compara
+  su revisión y, si cambió, pide recargar. El texto empieza por `Producto/Servicio: …` y la
+  línea `Tipo: …` de su tipo (por ejemplo, «Tipo: Producto físico (no es un servicio…)»), sigue
+  con precio, «Incluye» (combos), características, beneficios y objeciones y, tras una línea en
+  blanco, `Detalle y descripción profunda:`. Tope: 6000 caracteres (`PRODUCT_LIMITS.focus`). Se
+  recortan primero las listas, luego «Incluye», luego el detalle y, como último recurso, precio
+  e «Incluye». Producto y Tipo nunca se cortan; un «Qué debe saber la IA» válido (hasta 3000)
+  tampoco. Lo que no entra se avisa en el paso 2 (`avisoDeRecorte`).
+- **Texto libre** («Cargar un nuevo producto») con el interruptor encendido: el tipo elegido
+  añade la misma línea `Tipo:`. Sin tipo válido, el texto de siempre.
+- **El payload guarda una instantánea de texto.** `productFocus` lleva la ficha completa y el
+  trabajo añade `productId` o `comboId`; `enqueueGeneration` comprueba que sean de la marca del
+  pedido. Los reintentos reusan el texto y no releen el catálogo; si la ficha ya no existe, el
+  reintento sigue sin su id. Con el interruptor apagado los ids se descartan sin consultar las
+  tablas y la huella de idempotencia no cambia.
+- **Apagado**, no se lee ni se escribe el catálogo: no aparecen la pestaña «Productos» ni el
+  selector, `/actividad` no ofrece Producto ni Combo, y el paso 2 y el payload son los de antes.
+
+## Flujo de producción por equipos
+
+Interruptor `PRODUCTION_FLOW_ENABLED`. Dominio: `src/lib/domain/production-flow.ts`; días
+hábiles: `src/lib/working-days.ts`; barrido: `src/lib/production-sweep.ts`; acciones:
+`src/app/actions/brand-team.ts` y `src/app/actions/production.ts`. Mini-spec:
+`reports/release-operacion-equipos-2026-09-28.md`.
+
+### Modelo
+
+- **Solo tablas nuevas.** Ninguna columna nueva en tablas existentes: el código anterior sigue
+  leyendo lo mismo y el nuevo puede desplegarse antes de migrar.
+- `BrandTeamMember`: una persona por función y marca (`ENCARGADO`, `GUIONISTA`, `FILMMAKER`,
+  `EDITOR`, `COMMUNITY`, `DISENADOR`; `BRAND_TEAM_ROLES`). Una persona puede llevar varias
+  funciones. Cae con la marca o con la cuenta.
+- `BrandProductionSettings`: días de grabación (`recordingWeekdays`, de lunes a sábado) y
+  asignación automática (`autoAssign`). Sin fila: asignación automática activa y sin días.
+- `ProductionStep`: paso con responsable y plazo (`GRABACION`, `EDICION`, `PUBLICACION`,
+  `DISENO`), estado (`PENDIENTE`, `HECHO`, `CANCELADO`; `doneAt` existe si y solo si está
+  `HECHO`), origen (`AUTO`, `MANUAL`), tarea del tablero enlazada (`taskId`, única), enlace
+  http(s) al material, notas y quién lo pidió. La FK compuesta `(contentItemId, brandId)` impide
+  que un paso sea de otra marca que su video. `automationKey` es única y empieza por el ID del
+  video (`<video>:GRABACION`, `:EDICION`, `:PUBLICACION`; cada diseño lleva un sufijo
+  aleatorio): repetir un disparo no duplica nada. Si se borra la cuenta responsable, el paso
+  conserva su historial sin responsable.
+- La función de video `COMMUNITY` («Community / publicación») se suma a `ASSIGNMENT_ROLES`.
+
+### Reglas
+
+Solo actúa en marcas con equipo definido y asignación automática activa (el pedido de diseño
+es explícito y no depende de esa opción). Las fechas son días de negocio de Lima
+(`APP_TIMEZONE`). Se trabaja de lunes a sábado; **el domingo no se trabaja**. Un plazo de día
+vence a las 23:59:59.999 de Lima.
+
+| Disparo | Paso y responsable | Plazo |
+|---|---|---|
+| Guion unido al video (`vincularGuionAVideo`, también desde un trabajo de generación), guion aprobado (cada video que lo usa) o video que pasa a Aprobado. Video en Idea, Guion o Aprobado | Grabación · filmmaker | Si el video no tiene fecha de grabación, el próximo día de grabación de la marca posterior a hoy (sin días elegidos, el siguiente día hábil), y se escribe en `shootDate`. Si ya la tenía, esa fecha manda. |
+| Grabación terminada: checks obligatorios de Grabación completos, paso a Edición, una persona marca hecho el paso de grabación, o el barrido diario de las 05:00 (Lima) | Edición · editor | El día hábil siguiente a la grabación (sábado → lunes). Nunca nace vencido: si ese día ya pasó, hoy si es hábil o el siguiente hábil. Recibe el enlace del material grabado y cierra la grabación. |
+| Revisión final aprobada (check `FINAL_APPROVAL`), con el video en Edición o Programado | Publicación · community | El día hábil siguiente, o la fecha prevista si es posterior. Si `scheduledDate` es anterior, se mueve a ese día (auditado). Cierra la edición. |
+| Video que pasa a Programado | Publicación · community | La fecha prevista si es hoy o posterior; si ya pasó, el día hábil siguiente. No mueve la fecha. |
+| «Pedir diseño (24 h)» en el panel «Producción» | Diseño · el diseñador elegido o el de la marca | 24 horas después; si cae en domingo, el lunes a la misma hora. |
+| Fecha de grabación cambiada a mano | Grabación | El paso automático pendiente y su tarea pasan a vencer ese día. |
+| Video cancelado | — | Sus pasos pendientes pasan a Cancelado. |
+
+Responsable: primero quien ya tiene esa función en el video (Cámara, Edición, Community o Diseño)
+si está activo y autorizado; si no, la persona de la marca, que recibe además la asignación en
+el video. Cada paso crea su tarea en el tablero («Grabar: …», «Editar: …», «Publicar: …»,
+«Diseño: …», prioridad alta) en la primera columna disponible para la marca.
+
+### Invariantes
+
+- **Apagado no toca la base.** Ninguna pantalla, acción, gancho del ciclo de vida ni el
+  mantenimiento consultan las tablas nuevas: cada entrada vuelve antes de la primera consulta.
+- **Lo manual siempre gana.** La automatización solo completa lo vacío: la fecha de grabación
+  solo se escribe si está vacía (`updateMany` condicionado); la asignación del video manda sobre
+  la persona de la marca; un paso reasignado a mano queda `MANUAL` y ya no se toca; no se pisan
+  asignaciones, fechas ni pasos existentes.
+- **Nunca rompe la acción principal.** Corre en la transacción de quien dispara, dentro de un
+  `SAVEPOINT`. Si falla, se deshacen solo sus escrituras, se registra un código de motivo
+  cerrado sin datos personales y la acción (unir, aprobar, cambiar estado, marcar un check) se
+  confirma igual.
+- La persona asignada siempre está activa y autorizada para la marca (Dueño o
+  `UserBrandAccess`), como en `assertAssignee`. La automatización no exige `content.assign` ni
+  `tasks.manage` a quien dispara: un guionista que une su guion no los tiene.
+- **Todo queda auditado** en la misma transacción (`ProductionStep`, `Task`, `Assignment`,
+  `ContentItem`, `TaskColumn`, `BrandTeamMember`), firmado por quien disparó o como «Sistema»
+  cuando lo hace el mantenimiento diario.
+- **Barrido diario** (`runProductionSweep` dentro de `/api/maintenance`; cron `0 10 * * *` UTC,
+  05:00 en Lima): videos en Aprobado o Grabación con fecha de grabación anterior a hoy y de los
+  últimos 14 días, sin paso de edición. Hasta 25 por ejecución, uno por transacción con
+  `FOR UPDATE SKIP LOCKED`; un fallo no detiene al resto. La ventana evita repartir de golpe el
+  histórico atascado al encender el interruptor.
+
+### Permisos y pantallas
+
+- Pestaña «Equipo» de la marca (`?vista=equipo`, también en la ficha de marca del Equipo):
+  `brands.edit` sobre una marca autorizada. Cada persona elegida debe estar activa y autorizada
+  para la marca. Vaciar una función es mover, no destruir: no exige Dueño. La revisión del
+  formulario es la de `BrandProductionSettings` (`"new"` si todavía no existe).
+- Panel «Producción» de la ficha del video: lo ve quien ya ve el video. «Pedir diseño» exige
+  `content.plan`, o `scripts.write` con acceso al video. «Marcar hecho», «Reabrir» y el enlace
+  del material: coordinación (`content.assign`) o la persona asignada al paso; el enlace de
+  grabación o edición también lo deja quien graba o edita ese video. «Reasignar» (persona y
+  plazo) solo con `content.assign`: el paso queda `MANUAL`, uno cancelado se reactiva y la tarea
+  enlazada se mueve con él.
+- Cuentas de prueba: `npm run db:equipo-demo`, **solo en una base local**. Las contraseñas van
+  únicamente a `.audit/equipo-demo.txt` (ignorado por Git) y nunca se imprimen. En producción,
+  las cuentas reales las crea el Dueño en Equipo.
+
+## Calendario mensual
+
+Interruptor `CALENDARIO_MENSUAL`. Funciones puras en `src/lib/calendar-view.ts` (probadas en
+`tests/calendario.test.mjs`); páginas en `src/app/(app)/calendario/` (`page.tsx` para el Dueño y
+`member-calendar.tsx` para el Equipo).
+
+- La vista por defecto, para Dueño y Equipo, es la **rejilla del mes** (seis semanas, de lunes a
+  domingo), sin clics previos. `?anio=&mes=` (mes de 0 a 11) cambia de mes; un valor inválido
+  cae en el mes actual de Lima.
+- **Un video aparece en sus dos fechas**: «Grabar» en `shootDate` y «Publicar» en
+  `scheduledDate`; dentro de un día va primero lo que se graba. La consulta toma los videos por
+  cualquiera de las dos fechas, pero los totales del mes (Programados, Publicados, En
+  producción, Atrasados y reparto por marca) se cuentan solo por publicación.
+- La agenda aparece en todos los días que ocupa, también si empezó antes del mes. Cada celda
+  muestra hasta cuatro entradas (la agenda ocupa como mucho dos) y «+N más».
+- `?dia=AAAA-MM-DD` abre el detalle del día dentro de su mes. Se filtra sobre lo ya consultado,
+  con el mismo alcance y la misma marca activa: nunca muestra más que la rejilla.
+- En pantallas estrechas el mes se lee como lista: hoy primero, los días pasados plegados y los
+  tramos sin nada agrupados.
+- Alcance del Equipo: videos con `contentScope(user, "calendar.view")`, agenda con
+  `eventScope` y la marca activa del selector. Topes de cordura por mes (400 videos y 300
+  eventos), con aviso si se alcanzan.
+- Apagado: el Equipo vuelve a la lista de 31 días con «Ver agenda» y el Dueño a la rejilla
+  anterior (solo publicación, sin detalle por día ni lista en celular; el día enlaza a
+  `/contenido?desde=&hasta=`).
+
+## Manual de procedimientos
+
+Interruptor `MANUAL_PROCEDIMIENTOS_ENABLED`: apagado, oculta el menú y las tarjetas, y
+`/manual/*` responde 404. Investigación y criterios: `reports/manual-procedimientos/`.
+
+- **Solo lectura y sin base de datos.** El contenido está versionado en `src/content/manual/`:
+  `index.ts` (tarjetas, orden y conteos) y un JSON por rol en `roles/`. Se genera con
+  `node scripts/manual-content.mjs` desde `reports/manual-procedimientos/curriculo.json`; no se
+  editan a mano los JSON generados.
+- 8 roles en orden de flujo: Guionista → Filmmaker → Actor → Editor → Jefe de editores →
+  Community manager → ATC → Dueño de negocio. Tres niveles (Principiante, Intermedio,
+  Avanzado), 135 módulos, 618 lecciones y 386 videos de referencia.
+- **Acceso: todas las cuentas activas** (sección `manual`, capacidad base `help.view`), también
+  un miembro sin perfiles. Todos leen todos los manuales; los de su perfil van primero con «Tu
+  rol»: `WRITER` → Guionista, `CAMERA` → Filmmaker, `TALENT` → Actor, `EDITOR` → Editor y Jefe
+  de editores, `PUBLISHER` → Community; la posición Dueño suma el suyo. ATC y Jefe de editores
+  todavía no tienen perfil propio.
+- **Menú «Formación»** (antes «Ayuda»): «Manual de procedimientos» primero y «Cómo se usa»
+  debajo. La tarjeta del manual es la primera del inicio del Equipo y de «Cómo se usa», y un
+  aviso compacto en el panel del Dueño.
+- **Inicio y ayuda del Equipo son pantallas distintas.** `/` muestra el trabajo (manual,
+  videos pendientes, tareas visibles y accesos); `/tutorial`, sus perfiles, su lugar en el
+  flujo, las reglas comunes y dónde está cada cosa.
+- Cada página carga en el servidor solo el JSON de su rol, con `import()` dinámico, y al cliente
+  viaja solo el módulo visible. Nunca importar esos JSON desde un componente cliente.
+- **Escenas 3D:** el visor usa three.js y se descarga solo al abrir una lección con escena
+  (`next/dynamic`, sin SSR). `src/lib/manual-scene.ts` traduce el texto de la escena a una
+  configuración tipada por palabras clave, sin IA; lo que no reconoce cae en valores prudentes
+  y los pasos en texto siempre acompañan a la escena. Con movimiento reducido no se reproduce
+  sola.
+- **Videos de YouTube:** fachada con miniatura. El `iframe` (`youtube-nocookie.com`) se crea al
+  pulsar, así la página no pide nada a YouTube hasta entonces. Solo se aceptan IDs de YouTube
+  válidos.

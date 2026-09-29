@@ -225,7 +225,7 @@ Qué hace y qué no hace el jefe de editores, cómo avanza un video por Intia (I
 **Pasos:**
 
 1. Confirma que la carpeta del video tenga la estructura estándar (01_BRUTO, 02_AUDIO, 03_PROYECTO…) y que el material esté copiado dos veces.
-2. Verifica que cada escena del guion tenga al menos 1 toma buena marcada, en 9:16 (u horizontal 4K con margen para reencuadrar), y que todo esté a la misma cadencia de cuadros (30 fps; 60 fps solo para cámara lenta).
+2. Verifica que cada escena del guion tenga al menos 1 toma buena marcada, en 9:16 (u horizontal 4K con margen para reencuadrar), y que la cadencia sea la del estándar: 60 fps; 120 fps solo en los clips de cámara lenta (_120) y 30 fps solo si el equipo no llega a 4K60 y viene anotado (_30).
 3. Busca parpadeo de las luces: en Perú la red eléctrica es de 60 Hz, así que el material a 30 o 60 fps no debería parpadear. Si parpadea (por ejemplo, porque se grabó a 25 o 50 fps), avisa al filmmaker.
 4. Escucha en audífonos 10 segundos de cada toma con diálogo: sin saturación, sin viento, sin ruido de cocina que tape la voz y con un aplauso o claqueta para sincronizar.
 5. Revisa el B-roll mínimo de cada marca. Con Amor: textura del afranelado, estampado en macro, taza girando y empaque. Restaurante: plato llegando, vapor y primer bocado. Servicio: proceso y resultado.

@@ -9,7 +9,7 @@
 ## Lo esencial
 
 - En Intia aparece un espacio nuevo, **Formación**, que ven todas las cuentas. Su primera tarjeta es **Manual de procedimientos**. Adentro hay una tarjeta por rol, ordenadas según el flujo del video. La de tu rol sale primero.
-- Cada rol tiene su misión, su procedimiento, sus traspasos (qué recibe y qué entrega) y una ruta de formación: **3 niveles, 135 módulos y 618 lecciones** en total. Las lecciones son botones cortos, y el botón «!» abre el detalle.
+- Cada rol tiene su misión, su procedimiento, sus traspasos (qué recibe y qué entrega) y una ruta de formación: **3 niveles, 139 módulos y 640 lecciones** en total. Las lecciones son botones cortos, y el botón «!» abre el detalle.
 - Cada módulo tiene espacio para videos de YouTube definidos de antemano. **Filmmaker** y **actor** tienen además escenas 3D con maniquíes, cámara y luces. **Editor** tiene sobre todo videos de referencia marcados al segundo exacto.
 - Al cruzar los 8 manuales con las reglas actuales de Intia salen **9 bloqueos reales**. El más grave: nadie marca «Guion escrito y revisado», y sin ese check ningún video puede pasar a GRABACION. También salen **11 tareas duplicadas**, **5 entregas sin receptor** y **4 roles de los que dependen muchas entregas pero que no tienen manual**: coordinación, producción, diseño y analista. Todo esto se detalla en la sección 3.
 
@@ -80,22 +80,26 @@ Entornos: estudio con fondo infinito, taller o tienda Con Amor (mostrador, poler
 
 | Rol | Módulo | Escena 3D propuesta |
 |---|---|---|
+| Filmmaker | Equipo básico | Luz LED de mano a 45° y por encima de los ojos, con la temperatura igualada al ambiente |
+| Filmmaker | Celular listo para grabar | Trípode a la altura del pecho (y los errores muy bajo y muy alto); vertical 9:16 y horizontal 16:9 |
 | Filmmaker | Tamaños de plano | El maniquí queda fijo y la cámara pasa de plano general a plano detalle, con la vista 9:16 al lado |
-| Filmmaker | Encuadre vertical | Recuadro de zona segura sobre la vista de cámara; cabeza en el tercio superior |
+| Filmmaker | Encuadre vertical | Recuadro de zona segura sobre la vista de cámara; la línea superior de la cuadrícula a la altura de los ojos |
 | Filmmaker | Luz natural | Ventana lateral, contraluz y hora dorada, con el sol en movimiento |
-| Filmmaker | Ángulos con intención | Picado, contrapicado, a la altura de los ojos, cenital y holandés |
-| Filmmaker | Movimientos de cámara | Paneo, travelling, dolly in, seguimiento y órbita, con su trayectoria dibujada |
-| Filmmaker | Luz de 3 puntos | Principal a 45°, relleno y contra, con conos visibles, temperatura y relación de luces |
+| Filmmaker | Ángulos con intención | Contrapicado de autoridad, picado cercano, semi-lateral de podcast, cenital y holandés |
+| Filmmaker | Movimientos de cámara | Paneo, travelling, dolly in, seguir al sujeto a su ritmo y órbita, con su trayectoria dibujada |
+| Filmmaker | Luz de 3 puntos | Principal a 45°, relleno y luz trasera de otro color, con conos visibles, temperatura y relación de luces |
 | Filmmaker | Producto, comida y servicio | Cenital sobre mesa, 45° para comida, macro de producto |
 | Filmmaker | Cámara Escondida | Dónde se oculta la cámara, a qué distancia y con qué ángulo respecto a la persona real |
-| Filmmaker | Set con talento | Marcas en el piso, bloqueo de posiciones (blocking) y eje de 180° con dos personas |
-| Actor | Tu cuerpo en 9:16 | Postura, distancia a cámara y cómo ocupar el cuadro vertical |
+| Filmmaker | Set con talento | Marcas en el piso, codos cerca del cuerpo, un pie adelantado con rodillas sueltas y eje de 180° con dos personas |
+| Actor | Tu cuerpo en 9:16 | Postura (pies, rodillas y codos), distancia a cámara y cómo ocupar el cuadro vertical |
 | Actor | Mirada y lente | Mirar al lente o fuera de él, y la línea de mirada en un diálogo |
 | Actor | Gancho en 2 segundos | Entrada a cuadro y gesto de apertura, sincronizados con el segundo 0 |
 | Actor | Mostrar el producto | A la altura del pecho, giro lento hacia la luz, sin tapar el logo |
 | Actor | Marcas y movimiento | Caminar hasta la marca y hacer giros abiertos hacia la cámara |
 | Actor | Reacciones creíbles | Tiempos de la reacción: escuchar, procesar, reaccionar |
 | Actor | Sketch y cámara escondida | Blocking de dos personajes y respeto del eje |
+
+Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de antemano: informativo al pecho, contrapicado, picado, podcast semi-lateral, seguimiento, 3 puntos con luz trasera de color y luz de mano) y una lista de **errores** que se comparan con lo correcto al pulsar «Incorrecto» (contraluz, codos abiertos, pies juntos, ojos fuera del tercio, trípode muy bajo o muy alto, movimiento brusco, sin luz trasera, cabeza cortada). El formato por defecto es vertical 9:16, con la opción de verlo en horizontal 16:9.
 
 **Piloto recomendado:** 4 escenas. Tamaños de plano y Luz de 3 puntos (filmmaker); Mirada y lente y Mostrar el producto (actor). Cuando se mida el rendimiento en celulares reales se amplía al resto.
 
@@ -104,14 +108,14 @@ Entornos: estudio con fondo infinito, taller o tienda Con Amor (mostrador, poler
 | Rol (orden en pantalla) | Perfil en Intia | Módulos P / I / A | Lecciones | Medio principal |
 |---|---|---|---|---|
 | Guionista | WRITER | 6 / 7 / 6 = 19 | 87 | Ejemplos de guion, análisis de ganchos y práctica en el Generador IA |
-| Filmmaker | CAMERA | 5 / 6 / 6 = 17 | 80 | Escenas 3D (plano, ángulo, luz, movimiento) y videos |
-| Actor / talento / voz | TALENT | 6 / 6 / 5 = 17 | 71 | Escenas 3D (cuerpo, mirada, marcas), videos y autograbación |
+| Filmmaker | CAMERA | 8 / 7 / 6 = 21 | 100 | Escenas 3D (plano, ángulo, luz, movimiento), guías ilustradas por equipo (iPhone, Samsung, Sony ZV-E10) y videos |
+| Actor / talento / voz | TALENT | 6 / 6 / 5 = 17 | 73 | Escenas 3D (cuerpo, mirada, marcas), videos y autograbación |
 | Editor | EDITOR | 6 / 7 / 5 = 18 | 78 | Videos de referencia al segundo exacto |
 | Jefe de editores | (no existe) | 5 / 6 / 4 = 15 | 81 | Rúbricas, QC, plantillas y referencias |
 | Community manager | PUBLISHER | 5 / 5 / 5 = 15 | 69 | Plantillas de copy, casos y videos |
 | ATC | (no existe) | 6 / 6 / 6 = 18 | 80 | Guiones de chat, respuestas rápidas y casos |
 | Dueño de negocio | OWNER (posición) | 6 / 5 / 5 = 16 | 72 | Tableros, plantillas y legal |
-| **Total** | | **135** | **618** | |
+| **Total** | | **139** | **640** | |
 
 ### 1.7 Reglas comunes a todos los manuales
 

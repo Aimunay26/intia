@@ -8,10 +8,11 @@
   "Revisar los guiones en etapa GUION y avisar a coordinación, antes de la aprobación, si alguna escena no se puede grabar (locación, permisos, tiempo, seguridad).",
   "Convertir el guion aprobado (escenas, hook, CTA) en lista de tomas, plan de luces y plan de audio antes del día de grabación.",
   "Hacer el scouting de cada locación nueva a la hora de grabación y marcar 'Locación e iluminación listas' en Intia.",
-  "Preparar, configurar y mantener el equipo: celulares, cámara, trípodes, gimbal, luces, micrófonos, baterías y tarjetas.",
-  "Encuadrar para 9:16 respetando las zonas seguras de Reels, TikTok y Shorts y los recortes 4:5 y 3:4 de Instagram.",
+  "Preparar, configurar y mantener el equipo: celulares, cámara (Sony ZV-E10 si la hay), trípodes, gimbal, luces (incluida la luz LED de mano), micrófonos, baterías, tarjetas y SSD.",
+  "Grabar con el estándar técnico de la agencia: 4K a 60 fps (4K a 120 fps en cámara lenta), siempre en Log si el equipo lo tiene, con el foco y la exposición bloqueados, y avisar al editor el perfil de color y la LUT de cada clip.",
+  "Encuadrar para 9:16 (y 16:9 cuando el video es para YouTube) con los ojos en la línea superior de la cuadrícula, respetando las zonas seguras de Reels, TikTok y Shorts y los recortes 4:5 y 3:4 de Instagram.",
   "Iluminar talento, producto (poleras afraneladas, tazas, casacas), comida de restaurante y servicios según el formato del guion.",
-  "Dar indicaciones técnicas al talento (marcas en el piso, mirada al lente, continuidad) en coordinación con quien dirige.",
+  "Dar indicaciones técnicas al talento (marcas en el piso, mirada al lente, postura de pies y codos, continuidad) en coordinación con quien dirige.",
   "Grabar audio limpio con lavalier o micrófono inalámbrico, controlar el ruido del set y grabar room tone.",
   "Asegurar la cobertura para edición: 5 variantes del hook, inserts de producto, b-roll, reacciones, colas de 2 s y fotos de portada.",
   "En Cámara Escondida y con personas reales: ocultar cámaras y micrófonos, proteger a las personas y gestionar las cesiones de imagen y voz (art. 15 del Código Civil y Ley 29733).",
@@ -23,15 +24,15 @@
  "sop": [
   "Etapa GUION (antes de la aprobación): cuando coordinación comparte un guion en revisión, leerlo y comentar en la ficha de Intia en menos de 24 h si alguna escena no se puede grabar (locación, permisos, presupuesto, seguridad o tiempo), proponiendo una alternativa.",
   "LUNES – Planificación (1 h): en Intia, filtrar los videos asignados en estado APROBADO (check 'Guion aprobado por la marca' marcado); leer cada guion escena por escena; armar la lista de tomas y el plan por bloques (locación > luz > talento); pedir a producción props, vestuario, locación y permisos, y confirmar con ella los checks de PREPRODUCCIÓN 'Actor asignado y confirmado' y 'Props / vestuario conseguidos'.",
-  "D-1 – Preproducción: hacer el scouting de las locaciones nuevas a la hora de grabación (foto de prueba 9:16, luz, ruido, enchufes, prueba de parpadeo); confirmar por escrito el permiso del local; enviar al talento la lista de tomas, marcas y vestuario; cargar baterías, vaciar las memorias ya respaldadas, limpiar lentes y cargar el overlay de zona segura; marcar 'Locación e iluminación listas'.",
+  "D-1 – Preproducción: hacer el scouting de las locaciones nuevas a la hora de grabación (foto de prueba 9:16, luz, ruido, enchufes, prueba de parpadeo); confirmar por escrito el permiso del local; enviar al talento la lista de tomas, marcas y vestuario; cargar baterías (celulares, luz LED de mano, power banks y, si la hay, la cámara), vaciar las memorias ya respaldadas, formatear el SSD si se graba ProRes Log en iPhone, limpiar lentes y cargar el overlay de zona segura; marcar 'Locación e iluminación listas'.",
   "DÍA DE GRABACIÓN, al llegar: pasar los videos del día de APROBADO a GRABACION en Intia.",
-  "T-45 min – Montaje: revisar la seguridad (pesos en trípodes, cables con cinta), montar luces según el esquema, apagar fluorescentes o fijar la obturación en 1/60 contra el parpadeo de la red de 60 Hz.",
-  "T-20 min – Configuración: 9:16, 4K, 30 fps, 1/60, SDR, balance de blancos fijo y AE/AF bloqueado; colocar el lavalier; prueba de audio con picos entre -12 y -6 dBFS; silenciar el set.",
-  "Ensayo con el talento: marcas en el piso, mirada al lente, movimientos y hook; revisar el encuadre con el overlay de zona segura; tomar fotos de continuidad.",
+  "T-45 min – Montaje: revisar la seguridad (pesos en trípodes, cables con cinta), montar luces según el esquema (principal, relleno y luz trasera de color si el guion lo pide), apagar fluorescentes o fijar la obturación en 1/120 (o 1/60) contra el parpadeo de la red de 60 Hz, y dejar la luz LED de mano lista para las zonas con poca luz.",
+  "T-20 min – Configuración: 9:16 (16:9 solo si la ficha dice YouTube), 4K a 60 fps (4K a 120 fps solo en las tomas de cámara lenta), Log siempre que el equipo lo tenga (Apple Log, Samsung Log o S-Log3), frecuencia automática de fps apagada, obturación 1/120 si la app o la cámara la dejan fijar, balance de blancos fijo y AE/AF bloqueado en los ojos; trípode a la altura del pecho del talento en los videos informativos, con los ojos en la línea superior de la cuadrícula; colocar el lavalier; prueba de audio con picos entre -12 y -6 dBFS; silenciar el set.",
+  "Ensayo con el talento: marcas en el piso, postura (un pie un poco adelantado, rodillas sueltas y codos cerca del cuerpo), mirada al lente, movimientos y hook; si hay que seguirlo, ensayar el recorrido a su ritmo; revisar el encuadre con el overlay de zona segura; tomar fotos de continuidad.",
   "Grabación por set-ups (no en el orden del guion): primero las 5 variantes del hook; luego las escenas, marcando cada toma (identificación, colas de 2 s y 'buena/no' en voz alta).",
   "Cobertura: inserts de producto, secuencia de 5 planos del proceso, reacciones, plano general de ubicación, room tone de 30 s por locación y fotos fijas para la portada.",
   "Cierre de set: revisar al 100 % de zoom y con audífonos el foco y el audio de las tomas buenas; recoger las cesiones firmadas si hubo personas reales; marcar en Intia 'Grabado (todas las tomas)', 'Audio revisado' y 'B-roll / tomas de apoyo'.",
-  "Post-set (máximo 2 h después): descargar, renombrar con la nomenclatura, hacer el respaldo 3-2-1 verificado, escribir el TXT de notas y pegar el link en la ficha; pasar el video a EDICION y avisar al editor.",
+  "Post-set (máximo 2 h después): descargar, renombrar con la nomenclatura, hacer el respaldo 3-2-1 verificado, escribir el TXT de notas (tomas buenas, fps, perfil de color y LUT a aplicar) y pegar el link en la ficha; pasar el video a EDICION y avisar al editor.",
   "Durante EDICION: responder las dudas del editor en menos de 2 h; regrabar un insert puntual si el jefe de editores lo pide, antes de la 'Revisión final aprobada'.",
   "PROGRAMADO/PUBLICADO: entregar al community manager los clips de detrás de cámaras y las fotos extra que pida.",
   "VIERNES – Revisión semanal: revisar con el jefe de editores y el community manager las notas de calidad, la retención a 3 s por variante de hook y las regrabaciones; escribir la causa raíz de cada error y actualizar el checklist personal; hacer mantenimiento e inventario del equipo."
@@ -46,7 +47,7 @@
   "Community manager (PUBLISHER): retención a 3 s por video y tendencias vigentes para los formatos Camaleón."
  ],
  "deliversTo": [
-  "Editor (EDITOR): material crudo nombrado y respaldado, con notas de tomas buenas, variantes del hook, room tone, fps usados e incidencias.",
+  "Editor (EDITOR): material crudo nombrado y respaldado, con notas de tomas buenas, variantes del hook, room tone, fps usados (60 fps; _120 en cámara lenta), perfil de color (Apple Log, Samsung Log, S-Log3 o estándar) con la LUT que hay que aplicar e incidencias.",
   "Jefe de editores: reporte de cobertura e incidencias de cada grabación.",
   "Actor / talento (TALENT): lista de tomas, marcas y vestuario el día anterior, e indicaciones técnicas en el set.",
   "Diseñador (DESIGNER): fotos fijas y planos limpios con espacio para los textos.",
@@ -57,6 +58,7 @@
  "kpis": [
   "Material completo al primer intento (sin regrabar): 90 % o más de los videos del mes.",
   "Tomas inutilizables por foco, exposición o audio: menos del 5 % de las tomas marcadas como buenas.",
+  "Clips con el estándar técnico (4K a 60 fps, Log si el equipo lo permite, perfil y LUT anotados en el TXT): 100 % de las tomas marcadas como buenas.",
   "Variantes del hook entregadas: 5 o más por video en el 100 % de los videos.",
   "Entrega del material nombrado y respaldado: 2 h como máximo después de grabar; 100 % con link en la ficha de Intia.",
   "Checks de GRABACION marcados y video pasado a EDICION el mismo día: 100 %.",
@@ -68,14 +70,16 @@
  ],
  "tools": [
   "App Intia: ficha del video, guion por escenas, checks de PREPRODUCCIÓN y GRABACION, estados APROBADO > GRABACION > EDICION y link del material.",
-  "Celular con 4K a 30/60 fps (idealmente con teleobjetivo 2x/3x); app Blackmagic Camera (control manual, anti-parpadeo, guías de encuadre, cebras).",
-  "Cámara mirrorless (opcional) con lente 50 mm f/1.8 y zoom estándar.",
-  "Trípode con cabezal fluido y adaptador vertical; brazo para cenitales; slider de 60-100 cm; palo selfie.",
+  "Celular con 4K a 60 fps y, de preferencia, Log (iPhone 15 Pro, 16 Pro, 17 Pro o 18 Pro; Galaxy S24, S25 o S26, Z Fold6, Fold7, Fold8 o Fold8 Ultra, o Z Flip6, Flip7, Flip7 FE o Flip8) y 4K a 120 fps para cámara lenta (iPhone 16 Pro, 17 Pro, 18 Pro o Duo; Galaxy S24 Ultra, S25 Ultra, S26 Ultra o Z Fold8 Ultra); idealmente con teleobjetivo 2x/3x. Apps Blackmagic Camera (control manual, anti-parpadeo, cebras) y Final Cut Camera (Apple Log en HEVC sin SSD).",
+  "Cámara Sony ZV-E10 o ZV-E10 II (opcional) con el zoom de kit 16-50 mm, filtro ND variable de 40,5 mm, tarjetas SDXC (U3/V30 en la ZV-E10; V60 en la ZV-E10 II) y baterías de repuesto; lente 50 mm f/1.8 para retratos.",
+  "Trípode con cabezal fluido y adaptador vertical que llegue a la altura del pecho del talento (1.15-1.30 m de pie) sin subir la columna; brazo para cenitales; slider de 60-100 cm; palo selfie.",
   "Gimbal de celular de 3 ejes.",
   "Micrófono inalámbrico con grabación interna en 32-bit float + lavalier con cable de respaldo; cortavientos (peluche); moleskin y cinta microporo; audífonos cerrados.",
   "Luces LED bicolor (2700-6500 K) con softbox de 60-90 cm; panel de relleno; ring light; rebotador 5 en 1, cartulina o tecnopor; banderas negras; papel mantequilla o tela de difusión.",
+  "Luz LED de mano bicolor con batería y difusor para las tomas con muy poca luz (referencia del dueño: Zhiyun Fiveray M40, unos S/ 400-500 en Falabella Perú según versión y vendedor); para una luz trasera de color, una luz RGB pequeña (Fiveray M20C, Ulanzi VL49) o gel de color.",
   "Filtros ND fijos (ND8, ND16) y variable para celular y cámara.",
-  "Tarjetas SD V30/V60, SSD externo, Google Drive compartido y software de descarga con verificación (checksum).",
+  "Tarjetas SD V30/V60, SSD externo USB-C (220 MB/s o más; 440 MB/s o más para 4K a 120 fps en ProRes Log), Google Drive compartido y software de descarga con verificación (checksum).",
+  "LUT oficiales para el editor: Apple Log → Rec.709 (developer.apple.com), 'Samsung Log to Rec709 3DLUT_v1.0.cube' (developer.samsung.com) y S-Log3/S-Gamut3.Cine → 709 de Sony.",
   "Apps de apoyo: posición del sol, teleprompter y fotómetro.",
   "Plantillas: overlay de zona segura Meta/TikTok, lista de tomas, plan por bloques, hoja de scouting, cesión de imagen y voz, registro de descarga.",
   "Kit de set: cinta gaffer y cinta de color para marcas, sacos de arena, extensiones, power banks, paño de microfibra, carta gris o cartulina blanca, vaporizador y rodillo quitapelusas."
@@ -83,13 +87,113 @@
  "levels": [
   {
    "level": "PRINCIPIANTE",
-   "goal": "Grabar solo, con celular, un video 9:16 nítido y bien expuesto, con buen uso de la luz natural, audio limpio y material nombrado y respaldado el mismo día (trabajando con la lista de tomas que prepara un filmmaker senior o coordinación).",
+   "goal": "Grabar solo, con celular, un video 9:16 (o 16:9 si es para YouTube) en 4K a 60 fps y en Log, nítido y bien expuesto, con el foco y la exposición bloqueados, buen uso de la luz natural y de la luz LED de mano, audio limpio y material nombrado y respaldado el mismo día (trabajando con la lista de tomas que prepara un filmmaker senior o coordinación).",
    "modules": [
+    {
+     "id": "fm-p0",
+     "slug": "fm-p0",
+     "title": "Equipo básico",
+     "summary": "El equipo que el filmmaker lleva a cada grabación y la luz LED de mano para las tomas con muy poca luz.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=mWEtxWE7DXw",
+       "title": "Zhiyun Fiveray M40 - 3 Years Later… Still Worth It?",
+       "channel": "Drew Hopes",
+       "language": "en",
+       "why": "Reseña de la Zhiyun Fiveray M40 después de 3 años de uso: potencia, batería, temperatura de color y límites. Es la luz LED de mano de referencia que pidió el dueño."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "fm-p0-l1",
+       "title": "Kit mínimo diario",
+       "objective": "Salir a cada grabación con todo lo necesario para grabar en 4K a 60 fps, en Log y con buena luz, sin depender de lo que haya en la locación.",
+       "procedure": [
+        "Revisa el kit la noche anterior (D-1) con esta lista y marca cada cosa al guardarla en la mochila.",
+        "Cámara: celular de trabajo (o la Sony ZV-E10) al 100 % y con 50 GB libres o más. Si grabas ProRes Log a 60 fps en iPhone, lleva el SSD USB-C formateado en exFAT y su cable USB 3.",
+        "Soporte: trípode que llegue a la altura del pecho del talento sin subir la columna, adaptador vertical y, si el guion tiene movimiento, el gimbal cargado.",
+        "Luz: la luz LED de mano cargada al 100 % con su difusor, un rebotador o cartulina blanca y, si el guion lo pide, la luz trasera.",
+        "Audio: micrófono inalámbrico o lavalier cargados, cortavientos y audífonos cerrados.",
+        "Energía y datos: power bank, cables USB-C y la memoria vacía y respaldada.",
+        "Varios: paño de microfibra, cinta de color para marcas y el filtro ND si se graba de día."
+       ],
+       "commonMistakes": [
+        "Llegar con la luz LED de mano descargada: la Fiveray M40 dura unos 29 min al 100 %.",
+        "Olvidar el SSD o su cable y no poder grabar ProRes Log a 60 fps en iPhone.",
+        "Trípode que no llega a la altura del pecho y obliga a grabar en contrapicado.",
+        "Descubrir en el set que la memoria está llena de la grabación anterior."
+       ],
+       "checklist": [
+        "Celular o cámara al 100 % y con 50 GB libres",
+        "Trípode y adaptador vertical",
+        "Luz LED de mano cargada, con difusor",
+        "Micrófono, cortavientos y audífonos",
+        "Power bank y cables",
+        "SSD y cable USB 3 si hay ProRes Log",
+        "Microfibra, cinta de color y ND"
+       ],
+       "practice": "Arma el kit completo desde cero con la lista y cronómetro; luego pide a un compañero que revise cada punto.",
+       "passCriteria": "El kit queda listo en 15 minutos o menos y el compañero no encuentra nada faltante ni descargado.",
+       "mediaType": "CHECKLIST"
+      },
+      {
+       "id": "fm-p0-l2",
+       "title": "Luz LED de mano",
+       "objective": "Usar la luz LED de mano para iluminar la cara del talento en tomas con muy poca luz (interiores oscuros, noche o contraluz) sin subir el ISO ni perder los 60 fps.",
+       "procedure": [
+        "Referencia del equipo: Zhiyun Fiveray M40 (40 W, bicolor de 2700 a 6200 K, batería interna), unos S/ 400-500 en Falabella Perú según versión y vendedor. La M40 SE (2026) es más liviana, dura hasta 3 h al 25 % y se puede usar mientras carga.",
+        "Úsala siempre que la cara se vea oscura o con ruido: a 60 fps (y más a 120 fps) entra menos luz por cuadro y en Log el ruido se nota más. Primero luz, después ISO.",
+        "Iguala la temperatura con el ambiente: unos 3200 K en interiores con luz cálida y 5600 K con luz de día o si controlas toda la escena. Si la cara queda de otro color que el entorno, se nota el truco.",
+        "Empieza al 20-40 % con el difusor puesto: al 100 % da unos 1050 lux a 1 m, deslumbra y la batería dura menos.",
+        "Colócala a 45° del eje de la cámara, un poco por encima de los ojos y a 0.5-1 m del rostro: la cara gana volumen y brillo en los ojos.",
+        "Si la luz se ve dura, rebótala contra una pared o un techo blanco cercano.",
+        "Si hay una ventana o el cielo detrás del talento (contraluz), la luz de mano va delante como relleno para que la cara no quede en silueta.",
+        "Si la sostiene un asistente, que la mantenga fija a la misma distancia toda la toma; si no, móntala en un minitrípode o en un brazo con rosca de 1/4\"."
+       ],
+       "commonMistakes": [
+        "Poner la luz pegada al lente y de frente: cara plana y brillos en la piel y en los lentes.",
+        "Usarla al 100 % sin difusor y muy cerca: sombras duras y piel quemada.",
+        "Poner 5600 K en la cara con un ambiente cálido de 3000 K: la cara se ve azulada.",
+        "Subir el ISO a 1600 en vez de encender la luz: ruido en la piel, peor aún en Log.",
+        "Mover la luz durante la toma: la luz 'baila' en la cara."
+       ],
+       "checklist": [
+        "Batería cargada y difusor puesto",
+        "Temperatura igual a la del ambiente",
+        "Potencia entre 20 y 40 % para empezar",
+        "A 45° y un poco por encima de los ojos",
+        "A 0.5-1 m del rostro",
+        "Fija durante toda la toma"
+       ],
+       "practice": "De noche o en una habitación con una lámpara débil, graba al talento en 4K a 60 fps: toma A sin luz de mano, toma B con la luz de frente pegada al lente y toma C a 45°, por encima de los ojos y con difusor. Compara al 100 % de zoom.",
+       "passCriteria": "En la toma C la cara se ve sin ruido, con volumen y brillo en los ojos, la temperatura coincide con el ambiente y el clip conserva los 60 fps.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Sala de una casa de noche, con una lámpara de pie cálida de 2700 K en (-1.5,0,-1.2) y una ventana oscura detrás del talento en z=-1.8. Convención estándar.",
+        "subjects": "Maniquí T (talento, 1.65 m, ojos a 1.53 m) de pie en (0,0,0) mirando a cámara, con un pie adelantado y los codos cerca del cuerpo. Maniquí A (asistente) en (-0.7,0,0.7) sostiene la luz LED de mano.",
+        "camera": "Celular en trípode en (0,1.30,1.75) a la altura del pecho, 4K a 60 fps, lente de 48 mm (FOV vertical de unos 43°), inclinación 0°: plano medio amplio con los ojos en la línea superior de la cuadrícula.",
+        "lighting": "Ambiente: lámpara cálida de 2700 K al 20 %. Luz LED de mano (panel de 14 x 8 cm con difusor) en (-0.7,1.75,0.7), a 45° del eje y 0.2 m por encima de los ojos, 3200 K al 30 %. Sin luz trasera.",
+        "beats": [
+         "[SIN_LUZ_DE_MANO] 0-2 s: sin la luz de mano: la cara queda oscura y con ruido (rojo 'poca luz').",
+         "[LUZ_PEGADA_AL_LENTE] 2-4 s: la luz de mano se enciende pegada al lente, de frente: cara plana y brillos (rojo).",
+         "4-7 s: A lleva la luz a 45° y un poco por encima de los ojos, con difusor al 30 %: volumen y brillo en los ojos (verde).",
+         "7-10 s: vista superior con el ángulo de 45°, la distancia de 0.8 m y la temperatura igualada a 3200 K (verde)."
+        ],
+        "preset": "LUZ_DE_MANO",
+        "errores": [
+         "SIN_LUZ_DE_MANO",
+         "LUZ_PEGADA_AL_LENTE",
+         "CONTRALUZ"
+        ]
+       }
+      }
+     ]
+    },
     {
      "id": "fm-p1",
      "slug": "fm-p1",
      "title": "Celular listo para grabar",
-     "summary": "Preparar y configurar el celular como cámara de trabajo: limpieza, formato estándar de la agencia, bloqueo de foco y exposición, agarre a mano y trípode.",
+     "summary": "Preparar y configurar el celular como cámara de trabajo: limpieza, 4K a 60 fps paso a paso en iPhone y en Samsung, cámara lenta en 4K a 120 fps, formato vertical u horizontal, agarre a mano y trípode a la altura del pecho.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=ac5GwDEXHP8",
@@ -106,11 +210,32 @@
        "why": "Guía completa de la app gratuita Blackmagic Camera para Android e iOS: resolución, fps, obturación, ISO, balance de blancos y bloqueo. Sirve para dejar fijo el formato estándar de la agencia."
       },
       {
-       "url": "https://www.youtube.com/watch?v=sbhqlFRubeQ",
-       "title": "Uso y bloqueo de AF/AE - Tutorial Video con Celular",
-       "channel": "Hola! Photography",
+       "url": "https://www.youtube.com/watch?v=pCE86SRnaDA",
+       "title": "Cómo CONFIGURAR la Cámara del iPhone AL MÁXIMO🔥Incluido iPhone 16 Pro/Max",
+       "channel": "Cristo Vega",
        "language": "es",
-       "why": "Tutorial corto (4 min) sobre cómo bloquear el enfoque y la exposición (AE/AF) al grabar video con el celular, para que la imagen no bombee a mitad de la toma."
+       "why": "Recorre la configuración de la app Cámara del iPhone (formatos, resolución y fps de video, cuadrícula). Sirve para dejar el 4K a 60 fps como estándar."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=LZU2n8unGxI",
+       "title": "📱📹 Como CONFIGURAR CÁMARA para GRABAR VÍDEO a 4K a 60 FPS en SAMSUNG GALAXY S25, S25+ o S25 ULTRA",
+       "channel": "Tutoriales Paso a Paso Online",
+       "language": "es",
+       "why": "Paso a paso para dejar el Samsung Galaxy en UHD a 60 fps en el modo VIDEO."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=GXc7k7c8zPE",
+       "title": "¡iPhone 16 Pro: Grabación en 4K a 120 FPS y Cámara Lenta Perfecta!",
+       "channel": "Fer Brenis Tech",
+       "language": "es",
+       "why": "Short que muestra dónde se elige 4K a 120 fps en el iPhone 16 Pro para la cámara lenta."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=ro_IUEcsq9A",
+       "title": "How To Unlock 120 FPS at 4k Video on Your Samsung",
+       "channel": "Samsung In A Minute",
+       "language": "en",
+       "why": "Muestra cómo llegar a 4K a 120 fps en VIDEO PRO en los Samsung Ultra (en inglés, pero se sigue con la imagen)."
       }
      ],
      "lessons": [
@@ -122,7 +247,7 @@
         "Limpia el lente trasero con un paño de microfibra haciendo círculos; una huella da halos e imagen lechosa.",
         "Revisa que la batería esté al 80 % o más y conecta un power bank si la grabación dura más de 1 hora.",
         "En la sierra con frío (menos de 5 °C) la batería cae rápido: guarda el celular y el power bank en un bolsillo interior entre tomas.",
-        "Libera al menos 30 GB: 4K a 30 fps ocupa entre 170 y 400 MB por minuto según el códec.",
+        "Libera al menos 50 GB: 4K a 60 fps en HEVC ocupa unos 400 MB por minuto, el Samsung Log de 10 bits pesa más y el ProRes Log del iPhone ocupa varios GB por minuto (por eso va a un SSD).",
         "Activa modo avión y No molestar: una llamada o notificación corta o arruina la toma.",
         "Sube el brillo de la pantalla al máximo y activa la cuadrícula 3x3 y el nivel.",
         "Quita la carcasa si tapa el micrófono o el flash, o si provoca reflejos."
@@ -135,7 +260,7 @@
        "checklist": [
         "Lente limpio con microfibra",
         "Batería al 80 % o más + power bank",
-        "30 GB libres o más",
+        "50 GB libres o más",
         "Modo avión y No molestar activos",
         "Cuadrícula y nivel activados"
        ],
@@ -145,61 +270,185 @@
       },
       {
        "id": "fm-p1-l2",
-       "title": "Formato 9:16 y 4K",
-       "objective": "Configurar el celular con la plantilla estándar de la agencia para que todo el material sea compatible en edición.",
+       "title": "4K a 60 fps siempre",
+       "objective": "Grabar todo el material de la agencia en 4K a 60 fps, con los celulares configurados igual en todo el equipo, para que el editor tenga nitidez para reencuadrar y fluidez para ralentizar.",
        "procedure": [
-        "Graba siempre en vertical 9:16. Solo graba horizontal si el guion lo pide para YouTube.",
-        "Usa resolución 4K (3840x2160 girado a vertical): así se puede reencuadrar a 1080x1920 sin perder nitidez.",
-        "Cuadros por segundo: 30 fps para diálogo (estándar de la casa) y 60 fps para las tomas que irán en cámara lenta. No los mezcles sin avisar al editor.",
-        "Desactiva HDR/Dolby Vision y no uses Apple Log ni perfiles planos, salvo que el jefe de editores lo pida: se ven lavados si no se corrigen.",
-        "Bloquea el balance de blancos: en iPhone, Ajustes > Cámara > Grabar video > Bloquear balance de blancos (si tu modelo lo tiene); en Android, modo Pro o Blackmagic Camera (5600 K de día).",
-        "Usa la cámara principal (1x). Para acercarte usa 2x/3x solo si tu celular tiene teleobjetivo o un sensor de 48-50 MP que recorta sin perder calidad; si la imagen se pixela, camina. Nunca uses zoom digital de 5x o más.",
-        "Plantilla que se anota en la ficha del video en Intia: 'vertical 9:16 · 4K · 30 fps · SDR · balance fijo · lente 1x · estabilización estándar · cuadrícula ON'."
+        "Regla del dueño: todo se graba en 4K (3840x2160) a 60 fps. Solo cambias a 120 fps en las tomas de cámara lenta (lección 'Cámara lenta 4K 120').",
+        "Por qué 4K: permite reencuadrar o recortar a 1080x1920 sin perder nitidez. Por qué 60 fps: el movimiento se ve fluido y el editor puede ralentizar al 50 % en una línea de tiempo de 30 fps.",
+        "Configúralo con la guía de tu equipo: '4K60 en iPhone', '4K60 en Samsung' o 'Formato y fps' de la Sony ZV-E10.",
+        "Apaga la frecuencia automática ('Frecuencia automática' o 'FPS para poca luz' en iPhone; 'FPS automático' en Samsung): con poca luz puede bajar el video a 24 o 30 fps sin avisar (en iPhone, en 4K solo pasa en el iPhone 18 Pro; en los demás, en 1080p y 720p). La falta de luz se resuelve con la luz LED de mano.",
+        "Graba siempre en Log si tu equipo lo tiene (módulo 'Grabar en Log'). Si no hay Log, graba en estándar con el HDR apagado: algunos editores muestran el HDR lavado.",
+        "Bloquea el balance de blancos y no uses el modo Acción (graba como máximo en 2.8K) ni el modo Cine (sin Log y, salvo en el iPhone 18 Pro y el Duo, sin 60 fps) para las tomas principales.",
+        "Usa el lente principal (1x); 2x/3x solo si es un teleobjetivo o el recorte de un sensor de 48-50 MP. Nunca zoom digital de 5x o más.",
+        "Si tu equipo no llega a 4K60 (Galaxy A56/A57 o Sony ZV-E10 original), graba en 4K a 30 fps o en 1080p a 60 fps, anótalo con el sufijo _30 y avisa al editor: ese equipo no debería ser la cámara principal.",
+        "Plantilla para la ficha del video en Intia: '9:16 · 4K · 60 fps (120 en cámara lenta) · Log (Apple, Samsung o S-Log3) o estándar sin HDR · fps automático apagado · balance fijo · lente 1x · cuadrícula ON'."
        ],
        "commonMistakes": [
-        "Grabar horizontal 'por si acaso' y después recortar: se pierde la mayor parte de la resolución.",
-        "Mezclar clips de 30 y 60 fps en la misma escena.",
+        "Dejar el celular en 1080p o en 4K a 30 fps 'porque pesa menos'.",
+        "Dejar activa la frecuencia automática: con poca luz el clip puede salir a 24 o 30 fps (Samsung, iPhone 18 Pro en 4K o cualquier iPhone en 1080p).",
+        "Grabar en modo Acción o Cine creyendo que da más calidad.",
         "Usar zoom digital de 5x a 10x, que pixela la imagen.",
-        "Dejar el HDR encendido: el editor recibe clips con colores lavados."
+        "Cambiar a un equipo sin 4K60 y no avisar al editor."
        ],
        "checklist": [
-        "Vertical 9:16",
-        "4K",
-        "30 fps (60 si hay cámara lenta)",
-        "HDR y perfiles planos apagados",
+        "4K a 60 fps",
+        "120 fps solo en cámara lenta",
+        "Frecuencia automática apagada",
+        "Log, o estándar sin HDR",
         "Balance de blancos bloqueado",
-        "Lente óptico, sin zoom digital"
+        "Lente óptico, sin zoom digital",
+        "Plantilla anotada en la ficha"
        ],
-       "practice": "Configura 2 celulares del equipo con la plantilla y graba 10 s de una polera afranelada colgada. Revisa la resolución, los fps y el HDR en las propiedades del archivo.",
-       "passCriteria": "Los dos archivos muestran 3840x2160 (o 2160x3840) con orientación vertical, 30 fps y sin HDR, y el color de la polera no cambia durante el clip.",
+       "practice": "Configura 2 celulares del equipo con la plantilla y graba 10 s de una polera afranelada colgada en una habitación con poca luz. Revisa la resolución y los fps en las propiedades del archivo.",
+       "passCriteria": "Los dos archivos muestran 3840x2160 (con rotación vertical) y 60 fps constantes aunque haya poca luz, y el color de la polera no cambia durante el clip.",
        "mediaType": "PLANTILLA"
       },
       {
-       "id": "fm-p1-l3",
-       "title": "Bloquear foco y exposición",
-       "objective": "Evitar que el celular cambie el brillo o el foco a mitad de la toma.",
+       "id": "fm-p1-l6",
+       "title": "4K60 en iPhone",
+       "objective": "Dejar el iPhone grabando por defecto en 4K a 60 fps, sin que baje de fps con poca luz.",
        "procedure": [
-        "Encuadra la toma final con el talento parado en su marca.",
-        "Mantén presionado sobre los ojos del talento (o sobre el logo del producto) hasta que aparezca 'Bloqueo AE/AF'.",
-        "Baja la exposición deslizando el sol entre -0.3 y -0.7 para que la piel y las poleras blancas no se quemen.",
-        "Si usas Blackmagic Camera o el modo Pro, fija obturación, ISO y balance, y activa las cebras al 95 %.",
-        "Si el talento camina hacia la cámara, vuelve a bloquear el foco en su marca final o usa el seguimiento de rostro.",
-        "Vuelve a bloquear cada vez que cambies de plano o de luz."
+        "Abre Configuración > Cámara > Formatos y elige 'Alta eficiencia' (HEVC): el 4K a 60 fps lo exige; con 'Más compatible' no aparece. En España el menú se llama 'Ajustes'.",
+        "Vuelve a Configuración > Cámara > Grabar video y toca '4K a 60 fps'.",
+        "En la misma pantalla, desactiva 'Frecuencia automática' (o apaga 'FPS para poca luz', según el modelo) para que no baje a 24 fps con poca luz. En 4K solo actúa en el iPhone 18 Pro; en los demás modelos afecta a 1080p y 720p, pero se apaga igual en todos.",
+        "Deja 'Estabilización mejorada' activada, activa 'Bloquear cámara' y 'Bloq. de balance de blancos', y desactiva 'Video HDR' si no grabas en Log.",
+        "En Configuración > Cámara activa 'Cuadrícula' y 'Nivel'.",
+        "Abre la app Cámara en modo Video y mira arriba el indicador '4K · 60'; si alguien lo cambió, toca la resolución y los fps hasta que diga 4K y 60.",
+        "No uses el modo Acción (máximo 2.8K) ni el modo Cine para las tomas principales.",
+        "Si vas a grabar en Log, el formato se elige en el selector de la app Cámara (lección 'Log en iPhone'): en la memoria interna el ProRes Log llega a 4K a 30 fps; para 4K a 60 fps hace falta un SSD o la app Final Cut Camera."
        ],
        "commonMistakes": [
-        "Tocar una sola vez (solo enfoca) en vez de mantener presionado; la exposición 'respira' cuando pasa alguien con ropa clara.",
-        "Bloquear en el fondo y dejar el rostro borroso.",
-        "Olvidar volver a bloquear al cambiar de plano."
+        "Dejar 'Más compatible' en Formatos: el 4K a 60 fps no aparece en la lista.",
+        "Olvidar la frecuencia automática: en el iPhone 18 Pro (y en 1080p en cualquier iPhone) el clip de noche sale a 24 fps.",
+        "Dejar 'Video HDR' encendido en material estándar: se ve lavado en algunos editores.",
+        "Confiar en que 'ya estaba configurado' sin mirar el indicador '4K · 60' antes de grabar."
        ],
        "checklist": [
-        "AE/AF bloqueado en los ojos o el logo",
-        "Exposición entre -0.3 y -0.7, con los blancos conservando textura",
-        "Nuevo bloqueo en cada set-up",
-        "Revisión al 100 % de zoom en la pantalla"
+        "Formatos en 'Alta eficiencia'",
+        "Grabar video: 4K a 60 fps",
+        "Frecuencia automática desactivada",
+        "Bloquear cámara y balance de blancos activados",
+        "Video HDR apagado (sin Log)",
+        "Cuadrícula y Nivel activados",
+        "Indicador '4K · 60' revisado en la app"
        ],
-       "practice": "Graba a un compañero con polera blanca Con Amor frente a una ventana. Toma A: en automático, pasando una mano por delante. Toma B: con AE/AF bloqueado y exposición en -0.5.",
-       "passCriteria": "En la toma B el brillo no cambia durante 20 s y la polera conserva la textura del afranelado.",
-       "mediaType": "VIDEO_REFERENCIA"
+       "practice": "Configura un iPhone con la guía ilustrada, revisa que 'Frecuencia automática' quede desactivada, apaga la luz de la habitación y graba 10 s. Revisa en Fotos (deslizando hacia arriba) o en la computadora que el clip diga 4K y 60 fps.",
+       "passCriteria": "El clip grabado con poca luz sigue en 3840x2160 a 60 fps, 'Frecuencia automática' aparece desactivada y la configuración se mantiene al cerrar y abrir la app Cámara.",
+       "mediaType": "CHECKLIST",
+       "guia": "iphone-formato-4k"
+      },
+      {
+       "id": "fm-p1-l7",
+       "title": "4K60 en Samsung",
+       "objective": "Dejar el Samsung Galaxy grabando en UHD (4K) a 60 fps en el modo VIDEO, sin que baje a 30 fps con poca luz.",
+       "procedure": [
+        "Abre la Cámara y toca VIDEO en el carrusel de modos.",
+        "Toca el indicador de resolución arriba a la derecha (junto a HDR); si no aparece, toca Controles rápidos (cuatro puntos, abajo a la derecha) y luego el ícono de resolución de video.",
+        "Elige 'UHD' (así llama Samsung al 4K) y, en la fila de fps, '60'. El indicador de arriba debe decir 'UHD' y '60'.",
+        "Entra a Ajustes de cámara (Controles rápidos > engranaje) y pon 'FPS automático' en Desactivado; deja 'Estabilización de video' activada si grabas a mano.",
+        "En 'Opciones de video avanzadas' (One UI 7 u 8) o 'Formato de video' (One UI 8.5 o superior): 'Videos de alta eficiencia' (HEVC) activado, 'Videos de alta tasa de bits' activado si existe y 'Videos HDR' desactivado si grabas en Log (HDR10+ y Log no se usan juntos).",
+        "Activa la cuadrícula 3x3 y el nivel en Ajustes > 'Guía de composición'.",
+        "Galaxy A56/A57: llegan como máximo a 4K a 30 fps; graba en 4K30 o en FHD a 60 fps y avísalo al editor.",
+        "Comprueba en Galería > video > información (i) que diga 3840x2160 y 60 fps. Los menús cambian entre versiones de One UI: si no encuentras una opción, sigue la guía ilustrada."
+       ],
+       "commonMistakes": [
+        "Elegir 8K: solo llega a 30 fps y no hace falta para redes.",
+        "Dejar 'FPS automático' activado: de noche baja a 30 fps.",
+        "Activar HDR10+ y Log a la vez: son excluyentes.",
+        "Grabar en modo VIDEO de un Galaxy A creyendo que está en 4K60."
+       ],
+       "checklist": [
+        "Modo VIDEO",
+        "UHD y 60 en el indicador",
+        "FPS automático desactivado",
+        "HEVC activado",
+        "HDR desactivado si hay Log",
+        "Guía de composición activada",
+        "Archivo revisado: 3840x2160 a 60 fps"
+       ],
+       "practice": "Configura un Galaxy con la guía ilustrada y graba 10 s en una habitación con poca luz; revisa en la Galería la resolución y los fps.",
+       "passCriteria": "El clip muestra 3840x2160 a 60 fps aunque haya poca luz y el indicador de la cámara sigue en 'UHD 60' al volver a abrirla.",
+       "mediaType": "CHECKLIST",
+       "guia": "samsung-formato-4k"
+      },
+      {
+       "id": "fm-p1-l8",
+       "title": "Cámara lenta 4K 120",
+       "objective": "Grabar las tomas de cámara lenta en 4K a 120 fps cuando el equipo lo permite y, si no, elegir la mejor alternativa sin perder calidad.",
+       "procedure": [
+        "Úsala solo en las tomas que irán lentas: vapor, cabello al viento, lanzar la polera, servir una bebida. El diálogo se graba a 60 fps.",
+        "Equipos con 4K a 120 fps: iPhone 16 Pro, 17 Pro y 18 Pro (y sus Pro Max) e iPhone Duo; Galaxy S24 Ultra, S25 Ultra y S26 Ultra y Z Fold8 Ultra (en VIDEO PRO, con el lente 1x o 0.6x; en el Fold8 Ultra confirma que el selector ofrezca UHD 120); Sony ZV-E10 II solo con la licencia gratuita de 4K 120p.",
+        "iPhone 16 Pro, 17 Pro, 18 Pro o Duo: en modo Video toca los fps y elige 120, o elige '4K a 120 fps' en Configuración > Cámara > Cámara lenta y graba en el modo CÁMARA LENTA (ese modo no admite ProRes ni Log).",
+        "Galaxy S24, S25 o S26 Ultra, o Z Fold8 Ultra: MÁS > VIDEO PRO > UHD y 120; el S26 Ultra también lo tiene en CÁMARA LENTA.",
+        "Equipos sin 4K a 120 fps (iPhone 17, Air, 17e, 15 Pro y anteriores; Galaxy S24, S25 y S26 normales y Plus, Z Flip y Z Fold7; Sony ZV-E10 original): usa la cámara lenta en 1080p a 120 o 240 fps, o graba en 4K a 60 fps y ralentiza al 50 %.",
+        "A 120 fps entra la mitad de luz que a 60: graba de día o con la luz LED de mano. Si puedes fijar la obturación, usa 1/240 (1/250 en Sony); si las luces del local parpadean, baja a 1/120.",
+        "Nombra el clip con el sufijo _120 y avisa al editor: en una línea de tiempo de 30 fps se usa al 25 % (4 veces más lento) y en una de 60 fps, al 50 %."
+       ],
+       "commonMistakes": [
+        "Grabar el diálogo a 120 fps: el audio no sirve en cámara lenta y el archivo pesa el doble.",
+        "Cámara lenta en un interior oscuro: imagen con ruido.",
+        "Usar el teleobjetivo en un Samsung Ultra: esos lentes no graban 4K a 120 fps.",
+        "No avisar al editor y que el clip se use a velocidad normal.",
+        "Buscar 4K a 120 fps en un equipo que no lo tiene en vez de pasar a la alternativa."
+       ],
+       "checklist": [
+        "Toma que realmente irá lenta",
+        "Equipo con 4K a 120 fps o alternativa elegida",
+        "Luz suficiente (día o luz de mano)",
+        "Obturación 1/240, o 1/120 si parpadea",
+        "Sufijo _120 en el nombre",
+        "Editor avisado"
+       ],
+       "practice": "Graba el mismo vertido de chicha morada a 60 fps y a 120 fps (o en la alternativa de tu equipo) y pide al editor que los ralentice al 50 % y al 25 %.",
+       "passCriteria": "El clip de 120 fps se ve fluido al 25 % de velocidad, sin ruido en la bebida, y el nombre del archivo lleva el sufijo _120.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "fm-p1-l9",
+       "title": "Vertical y horizontal",
+       "objective": "Grabar en vertical 9:16 por defecto (Reels, TikTok, Shorts) y en horizontal 16:9 solo cuando el video es para YouTube, con el mismo cuidado del encuadre en los dos.",
+       "procedure": [
+        "Por defecto, todo se graba en vertical 9:16, tipo Reels: sostén el celular o móntalo en el trípode en vertical.",
+        "Graba en horizontal 16:9 solo si la ficha del video en Intia dice YouTube o formato horizontal. Si se necesitan las dos versiones, grábalas por separado, primero la vertical.",
+        "No grabes horizontal 'por si acaso' para recortar después: de un 4K horizontal solo queda una franja vertical de 1215x2160 px y se pierde lo que está a los costados.",
+        "En los dos formatos, los ojos van sobre la línea horizontal superior de la cuadrícula (en 9:16, a 640 px de 1920; en 16:9, a 360 px de 1080).",
+        "En 9:16 el sujeto va al centro y respeta la zona segura (14 % arriba y 35 % abajo); en 16:9 ubícalo en el tercio izquierdo o derecho, con espacio de mirada hacia donde mira.",
+        "Con la Sony ZV-E10 II, si grabas horizontal y además necesitas un Reel, activa el marcador de aspecto 9:16 para ver el recorte vertical.",
+        "Si grabaste las dos versiones, marca la horizontal con el sufijo _H en el nombre del archivo."
+       ],
+       "commonMistakes": [
+        "Grabar en horizontal un video que va a Reels y recortarlo: se pierde resolución y la cabeza o las manos quedan cortadas.",
+        "Girar el celular a mitad de la toma.",
+        "En 16:9, dejar los ojos en el centro del cuadro: sobra aire arriba.",
+        "Repetir en horizontal el encuadre centrado del vertical, sin espacio de mirada."
+       ],
+       "checklist": [
+        "Vertical 9:16 por defecto",
+        "Horizontal solo si la ficha dice YouTube",
+        "Ojos en la línea superior en los dos formatos",
+        "Zona segura en 9:16",
+        "Espacio de mirada en 16:9",
+        "Sufijo _H en la versión horizontal"
+       ],
+       "practice": "Graba el mismo mensaje de 10 s dos veces, en 9:16 y en 16:9, con el trípode a la altura del pecho. Revisa las dos versiones con la cuadrícula.",
+       "passCriteria": "En las dos versiones los ojos quedan sobre la línea superior, nada importante cae en la zona segura del 9:16 y en la 16:9 el sujeto está en un tercio con espacio de mirada.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Estudio con fondo de pared lisa crema en z=-2.0 y una repisa con tazas Con Amor en (0.9,0,-1.8). Convención estándar.",
+        "subjects": "Maniquí T (1.65 m, ojos a 1.53 m, esternón a 1.30 m) de pie en (0,0,0) mirando a cámara, con un pie adelantado y los codos cerca del cuerpo.",
+        "camera": "Celular en trípode en (0,1.30,1.75) a la altura del pecho, lente de 48 mm. Fase A: vertical 9:16, inclinación 0°; el cuadro cubre de 0.61 m a 1.99 m y los ojos quedan sobre la línea superior de la cuadrícula. Fase B: el celular gira 90° a horizontal 16:9 e inclina +3° para que los ojos vuelvan a la línea superior; T queda en el tercio izquierdo. Overlay de cuadrícula 3x3 y de zona segura en 9:16.",
+        "lighting": "Key: softbox a 45° por la izquierda en (-1.0,2.0,1.0), 5600 K. Relleno suave a la derecha al 50 %.",
+        "beats": [
+         "0-3 s: vertical 9:16 por defecto: ojos sobre la línea superior y el cuerpo fuera de la zona segura inferior (verde).",
+         "[OJOS_FUERA_DEL_TERCIO] 3-5 s: el celular gira a horizontal 16:9 sin reencuadrar: los ojos quedan al centro y sobra aire arriba (rojo).",
+         "5-8 s: en 16:9 el sujeto pasa al tercio izquierdo y los ojos vuelven a la línea superior, con la repisa en el otro tercio (verde).",
+         "8-10 s: ojo: un recorte vertical sacado del 16:9 cortaría los hombros y dejaría poca resolución; por eso el Reel se graba en 9:16 (usa el botón de formato para comparar)."
+        ],
+        "preset": "INFORMATIVO_PECHO",
+        "errores": [
+         "OJOS_FUERA_DEL_TERCIO"
+        ]
+       }
       },
       {
        "id": "fm-p1-l4",
@@ -236,46 +485,61 @@
          "2-4 s: F pega los codos y flexiona las rodillas; el ruido baja a ±0.2 cm y la etiqueta pasa a verde.",
          "4-6 s: T camina 1 m hacia +X; F gira 25° desde la cadera y el recuadro lo acompaña con el horizonte recto (verde).",
          "6-8 s: F repite el paneo girando solo las muñecas; el horizonte se inclina 5° (rojo)."
+        ],
+        "errores": [
+         "CODOS_ABIERTOS",
+         "MOVIMIENTO_BRUSCO"
         ]
        }
       },
       {
        "id": "fm-p1-l5",
-       "title": "Trípode a la altura",
-       "objective": "Montar el trípode estable, nivelado y con el lente a la altura de los ojos del talento.",
+       "title": "Trípode a la altura del pecho",
+       "objective": "Montar el trípode estable, nivelado y con el lente a la altura del pecho del talento en los videos informativos, para un plano medio natural con los ojos en la línea superior.",
        "procedure": [
         "Abre las patas por completo y extiende primero las secciones gruesas; la columna central se sube al final y solo si hace falta.",
-        "Coloca el celular en el adaptador en posición vertical y aprieta la pinza hasta que no se deslice al tocarlo.",
+        "Coloca el celular en el adaptador en vertical (u horizontal si el video es para YouTube) y aprieta la pinza hasta que no se deslice al tocarlo.",
+        "Regla para videos informativos (explicar, enseñar o presentar un producto): el lente va a la altura del pecho del talento, a la altura del esternón. Como referencia, entre 1.15 y 1.30 m para personas de 1.60 a 1.75 m; sentado, entre 0.95 y 1.10 m según la silla.",
+        "Deja la inclinación en 0° y ajusta la distancia o el zoom hasta que los ojos caigan sobre la línea superior de la cuadrícula; si no llegan, inclina como máximo 5° hacia arriba o aléjate un paso. Más inclinación ya es un contrapicado.",
         "Nivela con la burbuja del trípode o con el nivel de la app de cámara.",
-        "Pon el lente a la altura de los ojos del talento (unos 1.50 m para una persona de 1.65 m; 1.20 m si está sentado), salvo que el guion pida otro ángulo.",
-        "Cuelga la mochila del gancho o pon un saco de arena si hay viento o gente pasando.",
-        "Inicia la grabación con el temporizador de 3 s o un control remoto para no mover el cuadro."
+        "Otros planos: en primer plano, el lente va a la altura de los ojos; en cuerpo entero, a la altura de la cintura. Si el guion pide autoridad o cercanía, cambia el ángulo a propósito (módulo 'Ángulos con intención').",
+        "Cuelga la mochila del gancho o pon un saco de arena si hay viento o gente pasando, e inicia con el temporizador de 3 s o un control remoto para no mover el cuadro."
        ],
        "commonMistakes": [
-        "Trípode bajo que crea un contrapicado sin querer: se ven la papada y el techo.",
+        "Trípode muy bajo (a la cintura o más abajo) en un video informativo: contrapicado sin querer, se ven la papada y el techo.",
+        "Trípode muy alto (por encima de la cabeza): picado sin querer, el talento se ve pequeño y con la cabeza grande.",
+        "Inclinar mucho la cámara para 'arreglar' la altura en vez de subir o bajar el trípode.",
         "Columna central totalmente extendida con las patas cerradas: el trípode vibra.",
         "Horizonte torcido por no nivelar."
        ],
        "checklist": [
         "Patas abiertas, columna al final",
-        "Celular firme en vertical",
+        "Celular firme en la orientación correcta",
+        "Lente a la altura del pecho (esternón)",
+        "Inclinación entre 0° y 5°",
+        "Ojos en la línea superior",
         "Burbuja nivelada",
-        "Lente a la altura de los ojos",
         "Trípode con peso"
        ],
-       "practice": "Monta el trípode con el lente a 1.20 m y luego a 1.50 m frente al talento de pie, y compara cómo se ven la cara y el fondo.",
-       "passCriteria": "A 1.50 m los ojos quedan en el tercio superior, el horizonte está recto y el cuadro no vibra al tocar el trípode.",
+       "practice": "Graba el mismo mensaje informativo de 10 s con el lente a la altura de la cintura, a la altura del pecho y por encima de la cabeza del talento, y compara las tres tomas con la cuadrícula.",
+       "passCriteria": "En la toma a la altura del pecho los ojos quedan en la línea superior con una inclinación de 5° o menos, no se ven la papada ni el techo, el horizonte está recto y el cuadro no vibra al tocar el trípode.",
        "mediaType": "ESCENA_3D",
        "scene3d": {
         "environment": "La misma sala blanca de 4 x 4 m, con techo a 2.6 m y un fluorescente en el techo en (0,2.6,-1.0). Convención estándar.",
-        "subjects": "Maniquí T (1.65 m, ojos a 1.53 m) de pie en (0,0,0) mirando a cámara. Trípode en (0,0,1.4) con las patas abiertas 30° y cabezal vertical.",
-        "camera": "Celular en el trípode, lente de 48 mm (FOV vertical de unos 43°), inclinación 0°. Fase A: lente a 1.20 m. Fase B: lente a 1.50 m. Cámara de observación lateral en (2.5,1.3,0.7) mirando a -X.",
+        "subjects": "Maniquí T (1.65 m, ojos a 1.53 m, esternón a 1.30 m) de pie en (0,0,0) mirando a cámara, con un pie adelantado y los codos cerca del cuerpo. Trípode en (0,0,1.75) con las patas abiertas 30° y cabezal vertical.",
+        "camera": "Celular en el trípode, lente de 48 mm (FOV vertical de unos 43°). Correcto: lente a 1.30 m (altura del pecho) e inclinación 0°; el cuadro cubre de 0.61 m a 1.99 m y los ojos caen sobre la línea superior de la cuadrícula. Muy bajo: lente a 0.90 m con inclinación +13° (contrapicado). Muy alto: lente a 2.00 m con inclinación -22° (picado). Cámara de observación lateral en (2.5,1.3,0.9) mirando a -X.",
         "lighting": "Luz de ventana suave desde -X en (-2,1.5,0.8), 5600 K al 70 %; ambiente al 30 %.",
         "beats": [
          "0-2 s: vista lateral: el trípode se abre, primero las secciones gruesas.",
-         "2-4 s: fase A, lente a 1.20 m; para encuadrar la cara hay que inclinar hacia arriba y aparecen la papada y el fluorescente del techo (rojo).",
-         "4-6 s: la columna sube a 1.50 m y la inclinación vuelve a 0°; los ojos caen en el tercio superior (verde 'altura de ojos').",
-         "6-8 s: la burbuja se centra y un saco de arena se cuelga del gancho."
+         "[TRIPODE_MUY_BAJO] 2-4 s: trípode muy bajo, lente a 0.90 m e inclinado +13°: aparecen la papada y el fluorescente del techo (rojo 'muy bajo').",
+         "[TRIPODE_MUY_ALTO] 4-6 s: trípode muy alto, lente a 2.00 m e inclinado -22°: el talento se ve pequeño y con la cabeza grande (rojo 'muy alto').",
+         "6-9 s: el lente queda a 1.30 m, a la altura del pecho, con inclinación 0°: los ojos caen sobre la línea superior (verde 'altura del pecho').",
+         "9-11 s: la burbuja se centra y un saco de arena se cuelga del gancho."
+        ],
+        "preset": "INFORMATIVO_PECHO",
+        "errores": [
+         "TRIPODE_MUY_BAJO",
+         "TRIPODE_MUY_ALTO"
         ]
        }
       }
@@ -387,7 +651,7 @@
        "procedure": [
         "Corta a la altura de la cintura o del ombligo, incluyendo las manos para los gestos y el producto.",
         "Usa 2x a 1.1 m, o 1x a 0.65 m si el estilo es selfie o UGC.",
-        "Pon el lente a la altura de los ojos (1.50 m), inclinado -8° para centrar el torso.",
+        "Pon el lente a la altura del pecho (unos 1.30 m, regla de los videos informativos) e inclínalo unos +4°: los ojos caen en la línea del tercio superior sin contrapicado visible.",
         "Deja los ojos en la línea del tercio superior y el producto entre el pecho y la cintura, fuera del 35 % inferior de la pantalla (la zona del texto).",
         "Cada 3 a 5 s de guion, alterna con un primer plano o un detalle para dar ritmo en edición."
        ],
@@ -408,10 +672,10 @@
        "scene3d": {
         "environment": "Sala con un sofá en z=-1.5 y una planta en (-1,0,-1.6); fondo cálido. Convención estándar.",
         "subjects": "Maniquí T en (0,0,0) sostiene con las dos manos una taza de 9.5 cm de alto a 1.15 m de altura; habla y la sube a 1.30 m al decir el beneficio.",
-        "camera": "Trípode en (0,1.50,1.1), inclinación -8°, lente de 48 mm (FOV vertical de unos 43°) que cubre unos 0.88 m de alto, de 0.88 m a 1.76 m. Los ojos quedan a un 26 % desde arriba. Overlay de zona segura de Meta: 14 % arriba, 35 % abajo y 6 % a los lados.",
+        "camera": "Trípode en (0,1.30,1.1) a la altura del pecho, inclinación +4°, lente de 48 mm (FOV vertical de unos 43°) que cubre unos 0.87 m de alto, de 0.94 m a 1.81 m. Los ojos quedan a un 32 % desde arriba, sobre la línea superior de la cuadrícula. Overlay de zona segura de Meta: 14 % arriba, 35 % abajo y 6 % a los lados.",
         "lighting": "Luz de ventana desde -X, fuente en (-1.5,1.6,0.9) a 5600 K; rebote en (0.9,1.2,0.6).",
         "beats": [
-         "0-2 s: vista lateral con la altura de 1.50 m y la inclinación de -8°.",
+         "0-2 s: vista lateral con el lente a 1.30 m (altura del pecho) y la inclinación de +4°.",
          "2-4 s: vista de cámara con el overlay: la taza a 1.15 m cae en el 35 % inferior (rojo).",
          "4-6 s: T sube la taza a 1.30 m y entra en la franja segura (verde).",
          "6-8 s: corte a un primer plano para mostrar cómo se alternan."
@@ -525,6 +789,13 @@
        "channel": "La Ciencia del Cine",
        "language": "es",
        "why": "Repasa 5 reglas básicas de composición (tercios, aire, líneas, profundidad, equilibrio) con ejemplos de cine, aplicables al encuadre vertical con fondo con profundidad."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=N-yOZv7SP68",
+       "title": "APRENDE la REGLA DE LOS TERCIOS en 1 MINUTO⏱️| shotbymarcos",
+       "channel": "shotbyMarcos",
+       "language": "es",
+       "why": "Explica en un minuto la regla de tercios: por qué los ojos van en la línea superior y no en el centro del cuadro."
       }
      ],
      "lessons": [
@@ -561,42 +832,49 @@
       },
       {
        "id": "fm-p3-l2",
-       "title": "Ojos en el tercio",
-       "objective": "Ubicar los ojos del talento en la línea superior de tercios, con el aire correcto sobre la cabeza, y al cuerpo en el lugar correcto del cuadro vertical.",
+       "title": "Ojos en el tercio superior",
+       "objective": "Poner la línea horizontal superior de la cuadrícula a la altura de los ojos del talento en cada toma, con el aire justo sobre la cabeza, en vertical y en horizontal.",
        "procedure": [
-        "Activa la cuadrícula 3x3.",
-        "Pon los ojos sobre la línea horizontal superior (a un 33 % desde arriba).",
+        "Activa la cuadrícula 3x3 (iPhone: Configuración > Cámara > Cuadrícula; Samsung: Ajustes > Guía de composición; Sony: Línea de cuadrícula de tercios).",
+        "Regla de la agencia: la línea horizontal de arriba va a la altura de los ojos. Mueve la cámara, la distancia o el zoom hasta que los dos ojos queden sobre esa línea (a un 33 % desde arriba).",
         "Aire sobre la cabeza: 5-10 % en primer plano y 10-15 % en plano medio; recuerda que el 14 % de arriba lo tapa la interfaz, así que ahí solo puede quedar cabello o fondo.",
-        "En vertical, el sujeto va al centro o un poco a la izquierda; usa el tercio izquierdo cuando haya un producto o una segunda persona a la derecha.",
+        "No cortes la cabeza con el borde superior en plano medio ni en plano americano; en un primer plano muy cerrado se puede cortar la parte alta del cabello, nunca los ojos.",
+        "En vertical, el sujeto va al centro o un poco a la izquierda; usa el tercio izquierdo cuando haya un producto o una segunda persona a la derecha. En horizontal 16:9, los ojos siguen en la línea superior y el sujeto va en un tercio.",
         "Si hay 2 personas, escalónalas en profundidad (una adelante a la izquierda y otra atrás a la derecha) en vez de ponerlas lado a lado.",
-        "Revisa el encuadre en cada set-up antes de grabar."
+        "Si el talento cambia de altura (se sienta o se agacha), vuelve a encuadrar antes de la siguiente toma."
        ],
        "commonMistakes": [
-        "Ojos en el centro exacto del cuadro: sobra aire arriba.",
-        "Cabeza pegada al borde superior.",
+        "Ojos en el centro exacto del cuadro: sobra aire arriba y el video se ve amateur.",
+        "Ojos por encima de la línea: la cabeza queda pegada o cortada por el borde superior.",
         "Dos personas lado a lado, cortadas por los bordes.",
         "Sujeto pegado a la derecha, debajo de los íconos."
        ],
        "checklist": [
         "Cuadrícula activa",
-        "Ojos en el tercio superior",
+        "Línea superior a la altura de los ojos",
         "Aire superior según el plano",
+        "Cabeza completa, sin cortar",
         "Sujeto al centro o a la izquierda",
         "Dos personas escalonadas en profundidad"
        ],
-       "practice": "Graba el mismo plano medio 3 veces: con los ojos al centro, con los ojos en el tercio superior y con dos personas escalonadas en profundidad.",
-       "passCriteria": "El equipo elige la versión en el tercio como la mejor, el aire superior está en el rango y en la versión con dos personas no se corta a ninguna.",
+       "practice": "Graba el mismo plano medio 4 veces: con los ojos al centro, con los ojos sobre la línea superior, con los ojos por encima de la línea (cabeza cortada) y con dos personas escalonadas en profundidad.",
+       "passCriteria": "El equipo elige la versión con los ojos sobre la línea superior como la mejor, el aire superior está en el rango, la cabeza no se corta y en la versión con dos personas no se corta a ninguna.",
        "mediaType": "ESCENA_3D",
        "scene3d": {
         "environment": "Cocina de restaurante con barra de acero en z=-1.5 y ollas en el fondo a 2.5 m. Convención estándar.",
         "subjects": "Maniquí T1 (cocinero) en (-0.15,0,0). Maniquí T2 (mesera) aparece primero al lado, en (0.45,0,0), y después se ubica en (0.35,0,-0.9); los dos miran a cámara.",
-        "camera": "Trípode en (0,1.5,1.3), lente de 48 mm (FOV vertical de unos 43°). Fase A: inclinación +1° (ojos al centro). Fase B: inclinación -6°; el cuadro cubre de 0.82 m a 1.86 m y los ojos quedan a un 32 % desde arriba. Overlay con la cuadrícula 3x3 y las zonas de la interfaz.",
+        "camera": "Trípode a la altura del pecho en (0,1.30,1.3), lente de 48 mm (FOV vertical de unos 43°); el cuadro mide unos 1.02 m de alto. Fase A: inclinación +10° (ojos al centro). Fase B: inclinación +3°; el cuadro cubre de 0.86 m a 1.88 m y los ojos quedan sobre la línea superior (33 % desde arriba). Fase C: inclinación -9°; el borde superior baja a 1.61 m y corta la cabeza. Overlay con la cuadrícula 3x3 y las zonas de la interfaz.",
         "lighting": "Luces de la cocina a 4000 K como ambiente; key LED suave en (-1.0,2.0,0.8) a 5600 K al 60 %.",
         "beats": [
-         "0-2 s: solo T1, con los ojos en el centro del cuadro (etiqueta 'sobra aire').",
-         "2-4 s: la inclinación pasa de +1° a -6° y los ojos quedan sobre la línea superior, con un 15 % de aire (verde).",
-         "4-6 s: T2 se pone al lado de T1 en la misma línea y los dos quedan cortados por los bordes (rojo).",
-         "6-8 s: T2 se reubica 0.9 m atrás y 0.35 m a la derecha: entran los dos, escalonados en profundidad (verde)."
+         "0-2 s: solo T1, con los ojos en el centro del cuadro (rojo 'sobra aire').",
+         "2-4 s: la inclinación baja de +10° a +3° y la línea superior de la cuadrícula queda a la altura de los ojos, con un 15 % de aire (verde).",
+         "4-5 s: la inclinación sigue hasta -9°: los ojos suben por encima de la línea y la cabeza se corta en el borde superior (rojo 'cabeza cortada').",
+         "5-7 s: vuelta a +3°; T2 se pone al lado de T1 en la misma línea y los dos quedan cortados por los bordes (rojo).",
+         "7-9 s: T2 se reubica 0.9 m atrás y 0.35 m a la derecha: entran los dos, escalonados en profundidad, con los ojos de T1 en la línea superior (verde)."
+        ],
+        "errores": [
+         "OJOS_FUERA_DEL_TERCIO",
+         "CABEZA_CORTADA"
         ]
        }
       },
@@ -677,6 +955,264 @@
      ]
     },
     {
+     "id": "fm-p6",
+     "slug": "fm-p6",
+     "title": "Foco y exposición",
+     "summary": "Bloquear el foco y la exposición en los ojos del talento para que la imagen no cambie a mitad de la toma, paso a paso en iPhone y en Samsung.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=sbhqlFRubeQ",
+       "title": "Uso y bloqueo de AF/AE - Tutorial Video con Celular",
+       "channel": "Hola! Photography",
+       "language": "es",
+       "why": "Tutorial corto (4 min) sobre cómo bloquear el enfoque y la exposición (AE/AF) al grabar video con el celular, para que la imagen no bombee a mitad de la toma."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=phg8I_mIqpk",
+       "title": "¿Cómo controlar el enfoque y a luz en la cámara del iPhone?",
+       "channel": "K-tuin · Apple Premium Partner",
+       "language": "es",
+       "why": "Muestra en la app Cámara del iPhone el bloqueo AE/AF y cómo subir o bajar la exposición con el sol."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=hIoQQmNfbIE",
+       "title": "COMO ACTIVAR O DESACTIVAR BLOQUEAR ENFOQUE Y EXPOSICION CON BOTON DE CONTROL DE CAMARA IPHONE 17 🟢",
+       "channel": "DVL",
+       "language": "es",
+       "why": "Paso a paso para activar el bloqueo de enfoque y exposición con el Control de la cámara del iPhone."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=YNzARxbKPcA",
+       "title": "Sacale el MÁXIMO a las CÁMARAS del Samsung S25 Ultra ¡MODO PRO!",
+       "channel": "Mundo Samsung",
+       "language": "es",
+       "why": "Explica los controles manuales de Samsung (ISO, velocidad, balance de blancos y enfoque) que se usan en VIDEO PRO."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=4xdTVs2z2GM",
+       "title": "El Bloqueo del enfoque y la exposición",
+       "channel": "Clara Sabat",
+       "language": "es",
+       "why": "El concepto detrás del bloqueo: por qué se fija el foco y la exposición en el sujeto antes de disparar o grabar."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "fm-p6-l1",
+       "title": "Foco y exposición en iPhone",
+       "objective": "Bloquear el enfoque y la exposición del iPhone en los ojos del talento (BLOQUEO de AE/AF) para que el brillo y el foco no cambien durante la toma.",
+       "procedure": [
+        "Encuadra primero: trípode a la altura del pecho y los ojos sobre la línea superior de la cuadrícula.",
+        "En modo Video, mantén el dedo presionado 1-2 s sobre los ojos del talento hasta que aparezca arriba la etiqueta amarilla 'BLOQUEO de AE/AF'. Un toque corto solo enfoca y no bloquea.",
+        "Sin soltar el bloqueo, desliza el dedo hacia abajo junto al ícono del sol para oscurecer un poco (hacia arriba aclara): la piel debe verse bien y el cielo o las ventanas no deben quemarse. En Log el visor se ve gris: expón por la piel.",
+        "Graba con el botón rojo o con un botón de volumen, sin volver a tocar el visor: tocar otro punto quita el bloqueo.",
+        "Si el talento cambia de distancia o cambias de plano o de luz, toca otro punto para quitar el bloqueo y repite el paso 2.",
+        "En modelos con Control de la cámara: activa 'Bloquear enfoque y exposición' en Configuración > Cámara > Control de la cámara; con una presión ligera sostenida en el botón se bloquea mientras mantienes el dedo (sirve para tomas cortas).",
+        "Para que la exposición no se reinicie, activa Configuración > Cámara > Conservar la configuración > 'Ajuste de exposición', y 'Bloq. de balance de blancos' en Grabar video.",
+        "iPhone 18 Pro: en Controles de cámara tienes enfoque manual, obturación, balance de blancos e histograma; si fijas la obturación a 60 fps, usa 1/120."
+       ],
+       "commonMistakes": [
+        "Tocar una sola vez (solo enfoca) en vez de mantener presionado: la exposición 'respira' cuando pasa alguien con ropa clara.",
+        "Bloquear en el fondo y dejar el rostro borroso.",
+        "Tocar el visor al empezar a grabar y quitar el bloqueo sin darse cuenta.",
+        "Olvidar volver a bloquear al cambiar de plano."
+       ],
+       "checklist": [
+        "'BLOQUEO de AE/AF' visible, sobre los ojos",
+        "Exposición ajustada con el sol, sin quemar blancos",
+        "Grabación sin tocar el visor",
+        "Nuevo bloqueo en cada set-up",
+        "Balance de blancos bloqueado"
+       ],
+       "practice": "Graba a un compañero con polera blanca Con Amor frente a una ventana. Toma A: en automático, pasando una mano por delante. Toma B: con BLOQUEO de AE/AF en los ojos y la exposición bajada con el sol.",
+       "passCriteria": "En la toma B el brillo y el foco no cambian durante 20 s y la polera conserva la textura del afranelado.",
+       "mediaType": "VIDEO_REFERENCIA",
+       "guia": "iphone-foco-exposicion"
+      },
+      {
+       "id": "fm-p6-l2",
+       "title": "Foco y exposición en Samsung",
+       "objective": "Fijar el enfoque y la exposición del Samsung Galaxy en los ojos del talento: con el bloqueo AF/AE en el modo VIDEO o con valores manuales en VIDEO PRO.",
+       "procedure": [
+        "Activa la cuadrícula en Controles rápidos > Ajustes > 'Guía de composición' (cuadrícula 3x3 y nivel) y encuadra con los ojos sobre la línea superior.",
+        "Modo VIDEO: mantén presionado sobre la cara 1-2 s hasta que aparezca 'Bloqueo AF/AE' (círculo amarillo o candado). Si la cara se ve muy clara u oscura, desliza la barra del sol sin tocar otra zona. Para quitarlo, toca otro punto.",
+        "El bloqueo en modo VIDEO puede variar según el modelo y la versión de One UI: antes de grabar, pasa una mano delante del lente y comprueba que el brillo no cambie. Si cambia, usa VIDEO PRO.",
+        "VIDEO PRO (MÁS > VIDEO PRO), donde también se graba el Log: toca SPEED y fija 1/120 para 60 fps (1/60 si falta luz; 1/240 para 120 fps).",
+        "Toca ISO y déjalo lo más bajo posible (50-400 de día). Si tienes que pasar de unos 800, enciende la luz LED de mano en vez de subir más.",
+        "Toca WB y fija los Kelvin: unos 5500 K de día, 3200-4000 K con luz cálida de interior o el valor de tu luz LED.",
+        "Toca FOCUS, pasa a MF y arrastra la regla hasta que los bordes verdes (peaking) aparezcan en los ojos. Si el talento camina hacia ti, deja AF y activa 'Rastreo con enfoque automático'.",
+        "Con Log activo, usa el Monitor de exposición (ícono de dos círculos): con Falso color la cara debe verse verde claro y con Zebra no debe haber rayas en la piel."
+       ],
+       "commonMistakes": [
+        "Dejar todo en automático: la exposición y el foco cambian cuando alguien cruza el cuadro.",
+        "Subir el ISO en vez de agregar luz: ruido en la piel, peor en Log.",
+        "Usar 1/50 o 1/100 de obturación: parpadeo con las luces de 60 Hz del Perú.",
+        "Dejar el balance de blancos en automático: el color de la piel salta entre tomas."
+       ],
+       "checklist": [
+        "Cuadrícula activa y ojos en la línea superior",
+        "Bloqueo AF/AE probado, o VIDEO PRO",
+        "SPEED 1/120 (1/240 a 120 fps)",
+        "ISO bajo: luz antes que ISO",
+        "WB fijo en Kelvin",
+        "Foco en los ojos (peaking verde)"
+       ],
+       "practice": "Graba en VIDEO PRO a un compañero junto a una ventana con SPEED 1/120, ISO fijo, WB 5500 K y foco manual en los ojos; pasa una mano delante del lente a mitad de la toma.",
+       "passCriteria": "Durante 20 s el brillo, el color y el foco no cambian al pasar la mano, y la cara se ve verde claro en Falso color (si el equipo tiene Log).",
+       "mediaType": "VIDEO_REFERENCIA",
+       "guia": "samsung-foco-exposicion"
+      }
+     ]
+    },
+    {
+     "id": "fm-p7",
+     "slug": "fm-p7",
+     "title": "Grabar en Log",
+     "summary": "Por qué la agencia graba en Log, cómo activarlo paso a paso en iPhone y en Samsung, cómo exponerlo y cómo avisar al editor la LUT que debe aplicar.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=oFfVbFWVDmA",
+       "title": "Videos PROFESIONALES con tu iPhone: Aprende a usar Apple Log",
+       "channel": "byronvini",
+       "language": "es",
+       "why": "Explica qué es el Apple Log, cómo activarlo en el iPhone y cómo se ve antes y después de aplicar la LUT."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=VqZ2CoeUhbw",
+       "title": "¡Final Cut Camera EXPLICADA! La app GRATUITA que convierte tu iPhone en una cámara PROFESIONAL",
+       "channel": "La Manzana Mordida - Todo sobre Apple",
+       "language": "es",
+       "why": "Recorre Final Cut Camera, la app gratuita de Apple para grabar Apple Log en HEVC (4K60 sin SSD) con vista previa de LUT."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=pgiWo7zQJO4",
+       "title": "SAMSUNG S25 Ultra: Grabación de VÍDEO usando modo LOG ¿Mejor que el iPhone 16 Pro?",
+       "channel": "Iván Ferrero",
+       "language": "es",
+       "why": "Muestra cómo se activa y cómo rinde el Samsung Log en el Galaxy S25 Ultra frente al Apple Log."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=-qWnuatnjDA",
+       "title": "Cómo grabar en LOG con tu Samsung (solo modelos compatibles)✅ #shorts #oneui7",
+       "channel": "Territorio Software by Alejandro",
+       "language": "es",
+       "why": "Short con la ruta exacta para activar el Log en One UI 7 y usarlo en VIDEO PRO."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=f65R7hsmfO8",
+       "title": "TUTORIAL Apple LOG a REC 709  |  DaVinci Resolve 20",
+       "channel": "Old Román",
+       "language": "es",
+       "why": "Lo que hace el editor con tu material: convertir Apple Log a Rec.709. Sirve para entender por qué hay que avisarle el perfil."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "fm-p7-l1",
+       "title": "Por qué grabar en Log",
+       "objective": "Entender qué es el Log, cuándo se usa y qué exige (exposición cuidadosa y LUT en edición) antes de activarlo en tu equipo.",
+       "procedure": [
+        "Regla del dueño: siempre se graba en Log (Apple Log en iPhone, Samsung Log en Samsung o S-Log3 en la Sony). La única excepción es un equipo que no tiene Log.",
+        "Qué es: una curva de imagen plana y gris que guarda más detalle en las luces y en las sombras. El editor la convierte a color normal (Rec.709) con una LUT y tiene más margen para corregir.",
+        "Equipos con Log: iPhone 15 Pro, 16 Pro, 17 Pro y 18 Pro (Log 2 en 17 Pro y 18 Pro); Galaxy S24, S25 y S26, Z Fold6, Fold7, Fold8 y Fold8 Ultra y Z Flip6/7/7 FE/8 con One UI 7 o superior; Sony ZV-E10 y ZV-E10 II.",
+        "Equipos sin Log: los iPhone que no son Pro (16, 16e, 17, 17e, Air; el Duo no lo menciona en su ficha), los iPhone 13 Pro y 14 Pro, los Galaxy de la serie A y los S23 o anteriores. En ellos graba en estándar (HDR apagado) con foco, exposición y balance bloqueados.",
+        "Es normal que el visor se vea gris y sin contraste: no subas la exposición para 'arreglarlo'. Expón por la piel: bloquea en la cara y cuida que no se quemen las luces (Falso color o cebras si tu equipo las tiene).",
+        "El Log con poca luz muestra más ruido: enciende la luz LED de mano antes de subir el ISO.",
+        "Aviso técnico, a confirmar con el dueño: un clip en Log publicado sin editar se ve gris. Si algún video tuviera que salir directo del celular, consúltalo con el dueño antes de grabar.",
+        "Aviso al editor (en el TXT de notas y en la ficha): 'Perfil: Apple Log / Samsung Log / S-Log3 · LUT: Apple Log → Rec.709 / Samsung Log to Rec709 / S-Log3 S-Gamut3.Cine → 709 · fps: 60 (120 en los _120)'. Sin ese aviso, el video puede publicarse gris."
+       ],
+       "commonMistakes": [
+        "Publicar el clip Log sin la LUT: el video sale gris y apagado.",
+        "Subir la exposición porque el visor se ve 'lavado' y quemar la piel.",
+        "Grabar en Log de noche sin luz: ruido en la cara.",
+        "No anotar el perfil y que el editor aplique la LUT de otra marca.",
+        "Exigir Log a un equipo que no lo tiene en vez de grabar en estándar."
+       ],
+       "checklist": [
+        "Equipo con Log confirmado",
+        "LUT aplicada en edición (nunca se publica en Log)",
+        "Exposición por la piel, sin luces quemadas",
+        "Luz de mano si hay poca luz",
+        "Perfil y LUT anotados para el editor"
+       ],
+       "practice": "Graba el mismo plano de 10 s frente a una ventana en estándar y en Log con tu equipo, aplica tú mismo la LUT oficial en CapCut o en el editor del equipo y compáralos con el editor.",
+       "passCriteria": "Con la LUT aplicada, el clip Log se ve con color normal y conserva más detalle en la ventana que el estándar, y el TXT dice el perfil y la LUT.",
+       "mediaType": "PLANTILLA"
+      },
+      {
+       "id": "fm-p7-l2",
+       "title": "Log en iPhone",
+       "objective": "Activar Apple Log (ProRes Log) en la app Cámara del iPhone y saber cuándo hace falta un SSD o la app Final Cut Camera para grabar 4K a 60 fps en Log.",
+       "procedure": [
+        "Confirma tu modelo: el Log solo existe en iPhone 15 Pro, 16 Pro, 17 Pro y 18 Pro (y sus Pro Max), con iOS 26 o 27.",
+        "Configuración > Cámara > Formatos > activa 'Apple ProRes' (sección 'Captura de video'). En el iPhone 18 Pro, la primera vez reserva el 'Almacenamiento de video profesional'.",
+        "En 17 Pro y 18 Pro, toca 'Codificación de video ProRes Log' y elige 'Log' (el Apple Log clásico, compatible con la LUT más usada), salvo que el editor pida 'Log 2'.",
+        "Configuración > Cámara > Conservar la configuración > activa 'Apple ProRes' para que la app no vuelva a HEVC al cerrarse.",
+        "En la app Cámara, modo Video, toca los valores de formato de arriba a la izquierda y elige 'ProRes Log' (no 'ProRes HDR'), 4K y los fps.",
+        "Límite de la memoria interna: el ProRes Log llega a 4K a 30 fps en equipos de 256 GB o más (1080p a 30 fps en los de 128 GB). Para 4K a 60 fps conecta antes un SSD USB-C de 220 MB/s o más (exFAT, sin contraseña y con cable USB 3 de 10 Gb/s); para 4K a 120 fps, uno de 440 MB/s o más (16 Pro, 17 Pro y 18 Pro). Sujeta el SSD a la jaula o al soporte.",
+        "Sin SSD, para cumplir 4K a 60 fps en Log usa la app gratuita de Apple Final Cut Camera: códec HEVC, espacio de color 'Apple Log', 4K y 60 fps, con 'Previsualizar con LUT' activado.",
+        "Recuerda que el ProRes Log no funciona en los modos Cine, Cámara lenta ni Cámara rápida, y que ocupa hasta 30 veces más que HEVC (más de 6.6 GB por minuto en 4K30 HQ).",
+        "Anota en el TXT: 'Apple Log · LUT Apple Log → Rec.709 · 4K60'."
+       ],
+       "commonMistakes": [
+        "Elegir 'ProRes HDR' en vez de 'ProRes Log'.",
+        "Buscar 4K a 60 fps en ProRes Log sin SSD: en la memoria interna no aparece.",
+        "Grabar ProRes sin espacio libre: un minuto ocupa varios GB y la grabación se corta.",
+        "Dejar el SSD colgando del cable: se desconecta y arruina la toma.",
+        "Olvidar 'Conservar la configuración' y grabar la siguiente toma en HEVC normal."
+       ],
+       "checklist": [
+        "iPhone Pro compatible (15 Pro o posterior)",
+        "Apple ProRes activado",
+        "Log (o Log 2) elegido en 17 Pro o 18 Pro",
+        "Conservar la configuración: Apple ProRes",
+        "'ProRes Log' elegido en la app",
+        "SSD para 4K60, o Final Cut Camera en HEVC",
+        "Perfil y LUT anotados para el editor"
+       ],
+       "practice": "Graba 15 s en ProRes Log 4K30 en la memoria interna y 15 s en Apple Log 4K60 con Final Cut Camera (o con SSD). Entrega los dos al editor con el aviso de perfil y LUT.",
+       "passCriteria": "El editor recibe los dos clips en Apple Log 4K (uno a 60 fps), aplica la LUT sin sorpresas y el TXT dice el perfil y la LUT.",
+       "mediaType": "CHECKLIST",
+       "guia": "iphone-log"
+      },
+      {
+       "id": "fm-p7-l3",
+       "title": "Log en Samsung",
+       "objective": "Activar Samsung Log en la cámara nativa del Galaxy y grabarlo en 4K a 60 fps con la exposición correcta.",
+       "procedure": [
+        "Confirma tu modelo: Galaxy S24, S24+ o S24 Ultra, serie S25 (incluidos FE y Edge), serie S26, Z Fold6, Fold7, Fold8 o Fold8 Ultra, o Z Flip6/7/7 FE/8, con One UI 7 o superior. La serie A y el S23 o anteriores no tienen Log.",
+        "One UI 7 u 8: Controles rápidos (cuatro puntos, abajo a la derecha) > engranaje Ajustes > 'Opciones de video avanzadas' > activa 'Log'. Si 'Videos HDR' está activado, desactívalo.",
+        "One UI 8.5 o superior (serie S26, S25 actualizado, Z Fold8, Z Fold8 Ultra y Z Flip8): Ajustes > 'Formato de video' > 'Log' > 'Modos Video y Video Pro'. Deja APV desactivado salvo pedido expreso: pesa muchísimo.",
+        "Vuelve al visor y entra a MÁS > VIDEO PRO. Toca 'LOG' arriba a la derecha hasta que se ponga amarillo: la imagen se verá gris y plana, y es normal.",
+        "Elige UHD y 60 fps (UHD y 120 solo en los S24, S25 y S26 Ultra y el Z Fold8 Ultra, con el lente 1x o 0.6x).",
+        "Toca el ícono de dos círculos (Monitor de exposición) y activa 'Falso color' y 'Zebra': ajusta el ISO o la luz hasta que la cara se vea verde claro y sin rayas.",
+        "La vista previa de LUT (One UI 8.5 o superior) solo cambia lo que ves: el archivo se graba en Log y el editor igual debe aplicar la LUT.",
+        "Anota en el TXT: 'Samsung Log · LUT Samsung Log to Rec709 3DLUT_v1.0.cube · 4K60'."
+       ],
+       "commonMistakes": [
+        "Buscar el interruptor de Log en 'Opciones de video avanzadas' con One UI 8.5: ahora está en 'Formato de video'.",
+        "Activar HDR10+ y Log a la vez: son excluyentes.",
+        "Creer que la vista previa de LUT queda grabada.",
+        "Dejar el botón LOG en blanco (apagado) y grabar en estándar sin darse cuenta.",
+        "Activar APV por defecto y llenar la memoria en minutos."
+       ],
+       "checklist": [
+        "Galaxy compatible con One UI 7 o superior",
+        "Log activado en la ruta de tu versión",
+        "HDR desactivado",
+        "VIDEO PRO con LOG en amarillo",
+        "UHD 60 (120 solo en Ultra o Fold8 Ultra)",
+        "Falso color: cara verde claro",
+        "Perfil y LUT anotados"
+       ],
+       "practice": "Graba 15 s en Samsung Log UHD 60 con Falso color, aplica la LUT oficial en CapCut y compáralos con 15 s grabados en el modo VIDEO estándar.",
+       "passCriteria": "El clip Log se grabó con LOG activo, se ve correcto con la LUT, conserva más detalle en las luces que el estándar y el TXT dice el perfil y la LUT.",
+       "mediaType": "CHECKLIST",
+       "guia": "samsung-log"
+      }
+     ]
+    },
+    {
      "id": "fm-p4",
      "slug": "fm-p4",
      "title": "Luz natural",
@@ -753,7 +1289,7 @@
        "procedure": [
         "Si hay una ventana o el cielo detrás del talento, la cámara expone para el fondo y la cara queda oscura.",
         "Solución 1: gira el set entre 90 y 180° para que la luz quede a un costado o delante del talento.",
-        "Solución 2: si necesitas el fondo (la vista del local), expón para el fondo y rellena la cara con un rebote o una luz LED.",
+        "Solución 2: si necesitas el fondo (la vista del local), expón para el fondo y rellena la cara con un rebote o con la luz LED de mano a 45°.",
         "Solución 3: cierra las cortinas y usa luz artificial.",
         "Usa el contraluz solo cuando sea intencional (una silueta dramática o para separar el cabello) y con relleno frontal."
        ],
@@ -780,6 +1316,9 @@
          "2-4 s: se sube la exposición y el fondo queda totalmente blanco (rojo).",
          "4-6 s: solución 1, el set gira 90° y la vitrina ilumina de costado (verde).",
          "6-8 s: vuelta a la posición original; entra el rebote, la cara recupera detalle y en el fondo se ve la calle (verde)."
+        ],
+        "errores": [
+         "CONTRALUZ"
         ]
        }
       },
@@ -1019,9 +1558,9 @@
        "procedure": [
         "Estructura de carpetas: MARCA / AAAA-MM-DD_IDVIDEO / A_CAM, B_CAM, AUDIO, BROLL, FOTOS.",
         "Nombre del archivo: MARCA_AAAAMMDD_IDVIDEO_E##_T##_ESTADO, donde ESTADO es OK (buena), NG (no usar) o ALT (alternativa).",
-        "Room tone: ..._E##_RT. B-roll: ..._BR##. Variantes del hook: ..._HOOKA a _HOOKE. Clips a 60 fps: sufijo _60.",
+        "Room tone: ..._E##_RT. B-roll: ..._BR##. Variantes del hook: ..._HOOKA a _HOOKE. Cámara lenta a 120 fps: sufijo _120; si un equipo no llegó a 60 fps, _30. Versión horizontal 16:9: _H.",
         "Renombra al descargar (no en el celular), usando renombrado por lotes.",
-        "Agrega un TXT de notas con la toma buena de cada escena, las incidencias y los fps usados.",
+        "Agrega un TXT de notas con la toma buena de cada escena, las incidencias, los fps usados y el perfil de color (Apple Log, Samsung Log, S-Log3 o estándar) con la LUT que debe aplicar el editor.",
         "Ejemplos: CONAMOR_20260928_V045_E02_T03_OK.mov y POLLERIA-SOL_20260928_V051_BR04.mov."
        ],
        "commonMistakes": [
@@ -1033,8 +1572,8 @@
         "Una carpeta por video",
         "Nombres con marca, fecha, ID, escena y toma",
         "Estado OK/NG/ALT",
-        "Sufijos _RT, _BR, _HOOK y _60",
-        "TXT de notas"
+        "Sufijos _RT, _BR, _HOOK, _120, _30 y _H",
+        "TXT de notas con fps, perfil y LUT"
        ],
        "practice": "Toma el material de una grabación anterior y renómbralo completo con la plantilla en menos de 20 minutos.",
        "passCriteria": "El editor encuentra la toma buena de 3 escenas elegidas al azar en menos de 1 minuto cada una.",
@@ -1073,13 +1612,13 @@
   },
   {
    "level": "INTERMEDIO",
-   "goal": "Usar la cámara con intención (ángulos, movimientos, esquema de 3 puntos, exposición manual), dirigir técnicamente al talento y entregar cobertura completa, con variantes del hook, para que el editor monte sin regrabar.",
+   "goal": "Usar la cámara con intención (ángulos según la emoción, seguir al sujeto a su ritmo, 3 puntos con luz trasera de color, exposición manual y la cámara Sony ZV-E10), dirigir técnicamente al talento (marcas, postura y mirada) y entregar cobertura completa, con variantes del hook, para que el editor monte sin regrabar.",
    "modules": [
     {
      "id": "fm-i1",
      "slug": "fm-i1",
      "title": "Ángulos con intención",
-     "summary": "Elegir la altura, la inclinación y el punto de vista de la cámara según lo que el guion quiere que sienta el espectador.",
+     "summary": "Elegir la altura, la inclinación y el punto de vista de la cámara según el tipo de video y lo que el guion quiere que sienta el espectador: altura del pecho para informar, contrapicado para autoridad, picado para cercanía y semi-lateral para podcast.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=0qf1svMgbrw",
@@ -1101,82 +1640,156 @@
        "channel": "Wondershare Filmora Video Editor Español",
        "language": "es",
        "why": "Cinco consejos para montar y grabar planos cenitales (desde arriba), útiles para producto, flat lay y formatos de tipo 'Cómo se usa'."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=wLfZL9PZI9k",
+       "title": "Ultimate Guide to Camera Angles: Every Camera Shot Explained [Shot List, Ep. 3]",
+       "channel": "StudioBinder",
+       "language": "en",
+       "why": "Guía visual de cada ángulo de cámara (altura de ojos, contrapicado, picado, cenital, holandés) y la emoción que provoca. En inglés, con ejemplos de películas."
       }
      ],
      "lessons": [
       {
        "id": "fm-i1-l1",
-       "title": "Contrapicado de poder",
-       "objective": "Hacer que el talento o el producto se vean poderosos, heroicos o imponentes.",
+       "title": "Contrapicado de autoridad",
+       "objective": "Grabar desde abajo hacia arriba para que el talento transmita superioridad, confianza y autoridad frente al público.",
        "procedure": [
-        "Baja la cámara por debajo de la línea de los ojos: 0.9-1.1 m para una persona de pie.",
-        "Inclínala hacia arriba entre 15 y 25°.",
-        "Úsalo en el cierre de venta ('garantía total'), con el dueño del negocio o en el 'después' de un Antes y Después.",
+        "Qué comunica: con la cámara por debajo de los ojos, mirando hacia arriba, el talento se ve superior, seguro y 'mejor' que los demás: genera confianza y autoridad.",
+        "Úsalo en el cierre de venta ('garantía total'), con el dueño del negocio o un experto, en un testimonio de éxito o en el 'después' de un Antes y Después.",
+        "Baja la cámara por debajo del pecho: unos 0.9-1.1 m para una persona de pie.",
+        "Inclínala hacia arriba entre 10 y 20°: leve para venta y autoridad; hasta 25° solo si el guion pide un héroe.",
         "Cuida el fondo: techo o cielo limpios, sin fluorescentes en cuadro.",
-        "No exageres con 1x muy cerca: deforma las piernas y la papada."
+        "Mantén los ojos en la línea superior de la cuadrícula y no exageres con el 1x muy cerca: deforma las piernas, la papada y las fosas nasales."
        ],
        "commonMistakes": [
-        "Contrapicado sin querer, por un trípode bajo.",
+        "Contrapicado sin querer, por un trípode bajo en un video informativo.",
+        "Ángulo tan extremo que deforma: papada, fosas nasales y piernas enormes.",
         "Mostrar fluorescentes o un techo sucio.",
-        "Ángulo tan extremo que ridiculiza al talento."
+        "Usarlo con un personaje que debe verse cercano o vulnerable."
        ],
        "checklist": [
-        "Cámara por debajo de los ojos",
-        "Inclinación de 15 a 25°",
+        "Intención de autoridad definida en el guion",
+        "Cámara por debajo del pecho",
+        "Inclinación de 10 a 20°",
+        "Ojos en la línea superior",
         "Fondo superior limpio",
-        "Intención definida en el guion"
+        "Rostro sin deformar"
        ],
-       "practice": "Graba al dueño de un restaurante diciendo 'Aquí el pollo se hace a la leña desde 1998', primero a la altura de los ojos y luego en contrapicado de 20°.",
-       "passCriteria": "El equipo percibe la versión en contrapicado como más segura y poderosa, sin que el dueño se vea deformado.",
+       "practice": "Graba al dueño de un restaurante diciendo 'Aquí el pollo se hace a la leña desde 1998', primero a la altura del pecho y luego en contrapicado de 15°.",
+       "passCriteria": "El equipo percibe la versión en contrapicado como más segura y con más autoridad, sin que el dueño se vea deformado.",
        "mediaType": "ESCENA_3D",
        "scene3d": {
         "environment": "Restaurante con un horno de leña al fondo en z=-2.5 y techo de madera a 3 m. Convención estándar.",
-        "subjects": "Maniquí T (dueño) en (0,0,0) con los brazos cruzados; en el último beat los descruza y señala el horno.",
-        "camera": "Posición neutra: (0,1.53,1.4), inclinación 0°. Contrapicado: trípode en (0,1.0,1.4), inclinación +18° hacia arriba. Lente de 26 mm (FOV de unos 72°), plano americano.",
+        "subjects": "Maniquí T (dueño) en (0,0,0) con los brazos cruzados y un pie adelantado; en el último beat los descruza y señala el horno.",
+        "camera": "Posición neutra: (0,1.30,1.4), a la altura del pecho, inclinación 0°. Contrapicado: trípode en (0,1.0,1.4), inclinación +15° hacia arriba. Exagerado: (0,0.5,1.0), inclinación +35°. Lente de 26 mm (FOV de unos 72°), plano americano.",
         "lighting": "Key: softbox en (-1.0,2.2,1.0), 5600 K. Contraluz cálido del horno a 3200 K en (0.4,1.2,-2.4).",
         "beats": [
-         "0-2 s: vista lateral con las dos posiciones de cámara y la línea de los ojos (1.53 m).",
-         "2-4 s: vista neutra.",
-         "4-6 s: la cámara baja a 1.0 m y se inclina +18°: el dueño se ve imponente, enmarcado por el techo de madera.",
-         "6-8 s: el dueño señala el horno."
+         "0-2 s: vista lateral con las posiciones de cámara y la línea de los ojos (1.53 m).",
+         "2-4 s: vista neutra a la altura del pecho: el dueño se ve cercano, sin jerarquía.",
+         "4-6 s: la cámara baja a 1.0 m y se inclina +15°: el dueño se ve seguro y con autoridad, enmarcado por el techo de madera (verde).",
+         "[CONTRAPICADO_EXAGERADO] 6-8 s: la cámara baja a 0.5 m y se inclina +35°: papada, fosas nasales y techo dominan el cuadro (rojo 'exagerado').",
+         "8-10 s: vuelta a +15°: el dueño descruza los brazos y señala el horno."
+        ],
+        "preset": "AUTORIDAD_CONTRAPICADO",
+        "errores": [
+         "CONTRAPICADO_EXAGERADO"
         ]
        }
       },
       {
        "id": "fm-i1-l2",
-       "title": "Picado que empequeñece",
-       "objective": "Mostrar vulnerabilidad, el problema o un 'antes' (un cliente abrumado, un regalo equivocado).",
+       "title": "Picado cercano y vulnerable",
+       "objective": "Grabar desde un poco más arriba de los ojos para que el talento se vea más cercano, vulnerable o coqueto, sin confrontación, y reconocer cuándo un picado fuerte lo empequeñece.",
        "procedure": [
-        "Sube la cámara por encima de los ojos: 1.9-2.2 m.",
-        "Inclínala hacia abajo entre 20 y 35°.",
-        "Úsalo en la parte 'Problema' de un PAS o en el 'antes'.",
-        "Mantén la cámara estable (monopié o trípode alto).",
-        "Después, contrástalo con un plano neutro o un contrapicado en la solución."
+        "Qué comunica: con la cámara por encima de los ojos, mirando hacia abajo, el talento 'baja la guardia'. Un picado suave lo muestra más cercano, amable y vulnerable, con un tono coqueto o sin pelea; en el set también se le dice encuadre 'sumiso/dama'.",
+        "Picado suave (el más usado): cámara 20-40 cm por encima de los ojos e inclinada hacia abajo entre 10 y 15°. Favorece el rostro: estiliza el mentón y destaca los ojos.",
+        "Úsalo en belleza, moda, lifestyle, contenido romántico o coqueto, confesiones ('te cuento algo') y reacciones tiernas.",
+        "Picado fuerte (cámara a 1.9-2.2 m e inclinación de 20 a 35°): el talento se ve pequeño e inferior. Resérvalo para el 'Problema' de un PAS o el 'antes' (alguien abrumado) y contrástalo después con un plano a la altura del pecho o un contrapicado.",
+        "Pide al talento que levante un poco la mirada hacia el lente: en picado, si mira al frente, parece que mira al piso.",
+        "Mantén la cámara estable (trípode alto o monopié) y los ojos en la línea superior."
        ],
        "commonMistakes": [
-        "Usar el picado para el producto 'héroe'.",
-        "Cortar los pies de forma extraña.",
-        "Movimiento de cámara por sostenerla en alto a mano."
+        "Usar un picado fuerte cuando se buscaba cercanía: el talento se ve débil o triste.",
+        "Usar el picado con el producto 'héroe' o con el experto que debe dar autoridad.",
+        "Talento que no levanta la mirada: parece que mira al piso.",
+        "Cortar los pies de forma extraña o mover la cámara por sostenerla en alto a mano."
        ],
        "checklist": [
-        "Cámara por encima de los ojos",
-        "Inclinación de 20 a 35°",
-        "Usado en el problema o el antes",
+        "Intención definida: cercanía o vulnerabilidad",
+        "Picado suave de 10-15° (fuerte solo para el problema)",
+        "Mirada levantada al lente",
+        "Ojos en la línea superior",
         "Cámara estable"
        ],
-       "practice": "Graba en picado a una persona sentada rodeada de regalos genéricos ('no sé qué regalar'), y la solución con la polera personalizada a la altura de los ojos.",
-       "passCriteria": "En la secuencia se percibe el cambio de ánimo solo por el cambio de ángulo.",
+       "practice": "Graba a la talento diciendo 'Te cuento un secreto de esta polera' en tres versiones: a la altura del pecho, en picado suave de 12° y en picado fuerte de 30°. Compara qué transmite cada una.",
+       "passCriteria": "El equipo percibe el picado suave como la versión más cercana y favorecedora y el picado fuerte como la que empequeñece; en las tres la mirada llega al lente.",
        "mediaType": "ESCENA_3D",
        "scene3d": {
-        "environment": "Dormitorio con una cama en z=-0.8 y 5 cajas de regalo genéricas encima. Convención estándar.",
-        "subjects": "Maniquí T sentada en el borde de la cama en (0,0,0), con los ojos a 1.15 m y las manos en la cabeza; luego recibe una polera personalizada y sonríe.",
-        "camera": "Fase A: trípode alto en (0,2.1,1.2), inclinación -30°, lente de 26 mm. Fase B: (0,1.15,1.1), inclinación 0°, lente de 48 mm.",
-        "lighting": "Fase A: luz fría de 6500 K, suave, desde (-1.5,2.0,0) al 60 %. Fase B: key cálida de 4300 K en (-1.0,1.8,0.9) al 80 %.",
+        "environment": "Dormitorio con luz cálida, una cama en z=-0.8 y una polera personalizada Con Amor sobre la cama. Convención estándar.",
+        "subjects": "Maniquí T (1.65 m, ojos a 1.53 m) de pie en (0,0,0), con un pie adelantado y los codos cerca del cuerpo; sostiene la polera a la altura del pecho y levanta un poco la mirada al lente.",
+        "camera": "Picado suave: trípode en (0,1.80,1.1), inclinación -12°, lente de 26 mm. Picado fuerte: (0,2.15,0.9), inclinación -30°. Referencia neutra: (0,1.30,1.3), a la altura del pecho, inclinación +3°.",
+        "lighting": "Key cálida de 4300 K en (-1.0,1.9,0.9) al 80 %, suave; relleno por rebote en (0.8,1.2,0.7).",
         "beats": [
-         "0-2 s: vista lateral con la cámara a 2.1 m e inclinada -30°.",
-         "2-5 s: vista de cámara: T se ve pequeña, rodeada de cajas.",
-         "5-7 s: entra la polera personalizada.",
-         "7-10 s: corte a la fase B, a la altura de los ojos: T sonríe."
+         "0-2 s: vista lateral con las tres alturas de cámara y la línea de los ojos.",
+         "2-4 s: referencia a la altura del pecho: plano neutro.",
+         "4-7 s: picado suave de -12°: T levanta la mirada al lente y se ve cercana, amable y favorecida (verde 'picado suave').",
+         "[PICADO_FUERTE] 7-9 s: picado fuerte de -30°: T se ve pequeña y cabizbaja (rojo 'demasiado alto').",
+         "9-11 s: vuelta al picado suave: T sonríe y muestra la polera."
+        ],
+        "preset": "VULNERABLE_PICADO",
+        "errores": [
+         "PICADO_FUERTE"
+        ]
+       }
+      },
+      {
+       "id": "fm-i1-l6",
+       "title": "Semi-lateral podcast",
+       "objective": "Grabar al talento en semi-lateral, mirando a su interlocutor al costado de la cámara, para entrevistas y podcasts donde se ve cómo conversa con otras personas.",
+       "procedure": [
+        "Qué comunica: el talento no le habla al público sino a otra persona, y el espectador 'escucha' una conversación real. Es el ángulo de entrevistas, podcasts y testimonios conversados.",
+        "Sienta al entrevistador junto a la cámara, a 30-60 cm del eje del lente y con los ojos a la misma altura que el talento; el talento lo mira a él, no al lente.",
+        "Gira el cuerpo del talento unos 30-45° hacia el entrevistador (vista 3/4): se ven los dos ojos y la cara no queda de perfil.",
+        "Ubica al talento en el tercio opuesto a donde mira y deja espacio de mirada hacia el entrevistador; los ojos, en la línea superior.",
+        "Cámara a la altura del pecho alto del talento sentado (unos 1.0-1.2 m), sin inclinar.",
+        "Si hay dos personas con una cámara cada una, las dos cámaras van del mismo lado del eje de mirada (eje de 180°) y con los mismos ajustes: resolución, 60 fps, balance de blancos y perfil Log.",
+        "En vertical 9:16 usa un plano medio corto; en horizontal 16:9 (YouTube) cabe un plano medio con la mesa y el micrófono."
+       ],
+       "commonMistakes": [
+        "Entrevistador lejos del eje: el talento queda de perfil y no se le ven los ojos.",
+        "Talento mirando al lente en un podcast: se rompe la sensación de conversación.",
+        "Talento centrado y sin espacio de mirada: parece que mira fuera del cuadro.",
+        "Cámaras a los dos lados del eje: en edición parece que miran al mismo lado.",
+        "Cámaras con distinto balance o perfil: los planos no empatan."
+       ],
+       "checklist": [
+        "Entrevistador a 30-60 cm del eje",
+        "Cuerpo girado 30-45° (3/4)",
+        "Mirada al entrevistador, no al lente",
+        "Espacio de mirada y ojos en la línea superior",
+        "Cámaras del mismo lado del eje",
+        "Mismos ajustes en todas las cámaras"
+       ],
+       "practice": "Graba 30 s de una conversación entre el dueño y un entrevistador: versión A con el entrevistador a 1.5 m del eje y versión B con el entrevistador a 40 cm del lente y el dueño girado a 3/4.",
+       "passCriteria": "En la versión B se ven los dos ojos del dueño, hay espacio de mirada hacia el entrevistador y el equipo percibe una conversación natural.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Set de podcast: mesa de 1.2 x 0.8 m con dos micrófonos de brazo y fondo con repisas y luces cálidas en z=-2.2. Convención estándar.",
+        "subjects": "Maniquí T (invitado) sentado en (0,0,0) con los ojos a 1.20 m, el cuerpo girado 35° hacia +X y la mirada en el maniquí I (entrevistador), sentado en (0.45,0,1.0) junto a la cámara. En la versión con error, I se sienta en (1.5,0,0.3).",
+        "camera": "Celular en trípode en (0,1.10,1.3), a la altura del pecho alto del invitado sentado, inclinación 0°, lente de 48 mm, plano medio corto. T queda en el tercio izquierdo con espacio de mirada hacia la derecha (+X) y los ojos en la línea superior.",
+        "lighting": "Key: softbox a 45° del lado hacia donde mira T, en (0.9,1.8,0.9), 5600 K. Relleno suave al 50 % del otro lado. Luz trasera cálida de 3200 K en (-0.8,2.0,-1.0) para separar del fondo.",
+        "beats": [
+         "0-2 s: vista superior: la cámara, el invitado girado 35° y el entrevistador a 45 cm del eje.",
+         "2-5 s: vista de cámara: el invitado conversa mirando al entrevistador; se ven los dos ojos y hay espacio de mirada (verde 'semi-lateral').",
+         "5-7 s: por qué el entrevistador va pegado a la cámara: si se sentara a 1.5 m del eje, el invitado quedaría casi de perfil.",
+         "[SIN_ESPACIO_DE_MIRADA] 7-9 s: el invitado queda centrado y sin espacio de mirada: parece que mira fuera del cuadro (rojo).",
+         "9-12 s: vuelta al encuadre correcto, ahora en 16:9: plano medio con la mesa y los micrófonos (verde)."
+        ],
+        "preset": "PODCAST_SEMILATERAL",
+        "errores": [
+         "SIN_ESPACIO_DE_MIRADA",
+         "OJOS_FUERA_DEL_TERCIO"
         ]
        }
       },
@@ -1295,6 +1908,37 @@
          "6-8 s: error: la cámara del plano 2 pasa a (-0.55,1.55,-1.3), del lado -X, y los dos personajes miran hacia la misma dirección (rojo)."
         ]
        }
+      },
+      {
+       "id": "fm-i1-l7",
+       "title": "Ángulo según el video",
+       "objective": "Elegir la altura y el ángulo de la cámara antes de grabar según el tipo de video y la emoción que el guion quiere provocar.",
+       "procedure": [
+        "Lee en el guion el tipo de video y la emoción de cada escena, y anota el ángulo en la columna 'Ángulo' de la lista de tomas.",
+        "Informativo (tutorial, explicación, presentar un producto): trípode a la altura del pecho, inclinación de 0 a 5°. Neutral y claro.",
+        "Venta, cierre, experto o dueño del negocio: contrapicado leve (cámara a 0.9-1.1 m, de 10 a 20° hacia arriba). Confianza y autoridad.",
+        "Romántico, coqueto, belleza o vulnerable: picado suave, el encuadre 'sumiso/dama' (20-40 cm por encima de los ojos, de 10 a 15° hacia abajo). Cercanía, sin confrontación.",
+        "Problema de un PAS o 'antes': picado fuerte (de 20 a 35° hacia abajo). El personaje se ve abrumado.",
+        "Podcast, entrevista o testimonio conversado: semi-lateral, con el talento mirando al entrevistador junto a la cámara.",
+        "Hook o CTA al lente en primer plano: a la altura de los ojos. Producto en mesa o receta: cenital. Sketch: según el personaje (el que manda, en contrapicado; la víctima, en picado; el resto, a la altura del pecho).",
+        "Plantilla para la lista de tomas: 'Informativo: pecho · Autoridad o venta: contrapicado leve · Cercano o coqueto (sumiso/dama): picado suave · Problema o antes: picado fuerte · Podcast: semi-lateral · Hook al lente: ojos · Producto: cenital'."
+       ],
+       "commonMistakes": [
+        "Grabar todo a la misma altura sin pensar en la emoción.",
+        "Cambiar de ángulo dentro de una misma escena sin motivo: el espectador se confunde.",
+        "Contrapicado para un personaje que debía verse cercano, o picado para el experto.",
+        "Exagerar los ángulos: deforman y distraen del mensaje."
+       ],
+       "checklist": [
+        "Tipo de video y emoción identificados",
+        "Ángulo anotado en la lista de tomas",
+        "Informativo a la altura del pecho",
+        "Ángulos leves salvo intención",
+        "Mismo ángulo dentro de la escena"
+       ],
+       "practice": "Toma 3 guiones de la semana (un tutorial, una venta y un podcast), completa la columna 'Ángulo' de sus listas de tomas y grábalos; el jefe de editores revisa si el ángulo coincide con la emoción.",
+       "passCriteria": "Los 3 videos usan el ángulo que indica la plantilla y el jefe de editores no pide regrabar ninguna toma por el ángulo.",
+       "mediaType": "PLANTILLA"
       }
      ]
     },
@@ -1302,7 +1946,7 @@
      "id": "fm-i2",
      "slug": "fm-i2",
      "title": "Movimientos de cámara",
-     "summary": "Mover la cámara con una razón: seguir, revelar, enfatizar o hacer una transición, sin temblor ni rebote.",
+     "summary": "Mover la cámara con una razón: seguir al sujeto a su ritmo, revelar, enfatizar o hacer una transición, sin temblor, rebote ni tirones.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=iN0rf5vUfxc",
@@ -1324,6 +1968,20 @@
        "channel": "Aprende Video en Línea",
        "language": "es",
        "why": "Video de 2025 que compara errores de principiante con técnica pro en gimbal de celular: postura, paso y suavidad. Sirve para evitar el temblor y el rebote."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Bj0EDKOG9SY",
+       "title": "Trucos para lograr tomas de cine con tu celular y gimbal si eres principiante",
+       "channel": "Aprende Video en Línea",
+       "language": "es",
+       "why": "Trucos para moverse con el celular y el gimbal junto al sujeto: distancia, ritmo y movimientos fluidos."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=WjAmvaf8bB4",
+       "title": "How to Gimbal (Ninja) Walk for Beginners (by a walking technique expert)",
+       "channel": "Todd Martin MD",
+       "language": "en",
+       "why": "Explica el paso ninja: rodillas flexionadas y pisada de talón a punta para que la cámara no rebote al caminar."
       }
      ],
      "lessons": [
@@ -1362,6 +2020,9 @@
          "2-7 s: paneo suave por el anaquel.",
          "7-9 s: versión rápida en 1 s, con estela y saltos (judder) (rojo).",
          "9-15 s: tilt de las zapatillas a la sonrisa, con pausas de 2 s."
+        ],
+        "errores": [
+         "MOVIMIENTO_BRUSCO"
         ]
        }
       },
@@ -1441,6 +2102,9 @@
          "3-6 s: F pasa al paso ninja y la línea de altura se estabiliza (verde).",
          "6-9 s: travelling frontal con A guiando a F.",
          "9-12 s: travelling lateral: las mesas del primer plano pasan rápido y el fondo lento (paralaje)."
+        ],
+        "errores": [
+         "MOVIMIENTO_BRUSCO"
         ]
        }
       },
@@ -1479,6 +2143,9 @@
          "2-5 s: versión correcta: leve 'respiración' de la cámara mientras la clienta abre la bolsa.",
          "5-7 s: F se acerca al rostro en la sonrisa.",
          "7-9 s: corte a un plano fijo de la taza para 'descansar'."
+        ],
+        "errores": [
+         "MOVIMIENTO_BRUSCO"
         ]
        }
       },
@@ -1489,7 +2156,7 @@
        "procedure": [
         "Planifica la pareja de tomas: la toma A termina con un paneo rápido hacia un lado y la toma B empieza con un paneo en la misma dirección y a la misma velocidad.",
         "Gira entre 60 y 90° en 0.2-0.3 s, desde la cadera.",
-        "Usa obturación de 1/60 a 30 fps para que quede estela de movimiento que tape el corte.",
+        "Graba a 60 fps con obturación de 1/60 (la más lenta posible a 60 fps) para que quede estela de movimiento que tape el corte.",
         "Graba de 3 a 5 intentos de cada par.",
         "Anota en las notas para el editor qué clips forman cada par."
        ],
@@ -1510,7 +2177,7 @@
        "scene3d": {
         "environment": "Taller con dos mesas: la mesa A en (-1.2,0,-1) con una polera lisa y la mesa B en (1.2,0,-1) con una polera estampada. Convención estándar.",
         "subjects": "Maniquí T sostiene la polera lisa en la mesa A; en la toma B aparece en la mesa B con la polera personalizada.",
-        "camera": "Celular en mano o en gimbal en (0,1.4,0.6), lente de 26 mm, 30 fps a 1/60. Toma A: 2 s fijos en la mesa A (37° a la izquierda) y luego un giro rápido de 80° hacia la derecha en 0.25 s. Toma B: empieza 80° a la izquierda de la mesa B y gira hacia la derecha en 0.25 s hasta quedar en la mesa B, con 2 s fijos al final.",
+        "camera": "Celular en mano o en gimbal en (0,1.4,0.6), lente de 26 mm, 60 fps a 1/60. Toma A: 2 s fijos en la mesa A (37° a la izquierda) y luego un giro rápido de 80° hacia la derecha en 0.25 s. Toma B: empieza 80° a la izquierda de la mesa B y gira hacia la derecha en 0.25 s hasta quedar en la mesa B, con 2 s fijos al final.",
         "lighting": "Key: softbox que cubre las dos mesas desde (0,2.2,0.5), 5600 K.",
         "beats": [
          "0-2 s: toma A estática.",
@@ -1520,6 +2187,57 @@
          "5-8 s: diagrama con las flechas de las dos direcciones: iguales (verde) frente a opuestas (rojo)."
         ]
        }
+      },
+      {
+       "id": "fm-i2-l6",
+       "title": "Seguir al sujeto",
+       "objective": "Moverte con el talento a su mismo ritmo, a distancia constante y con movimientos fluidos, para que el encuadre no se pierda mientras camina o se mueve.",
+       "procedure": [
+        "Antes de grabar, ensaya el recorrido con el talento: por dónde camina, dónde se detiene y a qué velocidad. Tú te adaptas a su ritmo, no al revés.",
+        "Sostén el celular o el gimbal con las dos manos y los codos pegados a las costillas; los brazos quedan flexibles, como amortiguadores.",
+        "Flexiona un poco las rodillas y camina con pasos cortos, pisando de talón a punta (paso ninja), para que la cámara no rebote.",
+        "Mantén la misma distancia con el talento (1-1.5 m): si acelera, aceleras; si se detiene, te detienes suave. Los ojos deben seguir en la línea superior durante todo el recorrido.",
+        "Arranca y frena de forma progresiva y gira desde el torso, pasando el peso de un pie al otro; nunca con la muñeca.",
+        "Con gimbal, usa el modo de seguimiento (Follow); a mano, la estabilización estándar del celular (en iPhone, el modo Acción baja a 2.8K).",
+        "Si caminas hacia atrás, pide a un asistente que te guíe tomándote de la cintura."
+       ],
+       "commonMistakes": [
+        "Caminar a otro ritmo que el talento: se sale del cuadro o queda cada vez más lejos.",
+        "Brazos estirados y codos abiertos: la imagen tiembla.",
+        "Arranques, frenadas o giros bruscos: tirones que marean.",
+        "Caminar normal, pisando fuerte: rebote vertical.",
+        "Caminar hacia atrás sin guía: riesgo de caída."
+       ],
+       "checklist": [
+        "Recorrido ensayado con el talento",
+        "Codos pegados y dos manos",
+        "Rodillas flexionadas, paso de talón a punta",
+        "Distancia constante",
+        "Arranque y frenado suaves",
+        "Ojos en la línea superior todo el recorrido",
+        "Guía si caminas hacia atrás"
+       ],
+       "practice": "Sigue al talento durante 20 s mientras camina por la tienda y se detiene a mostrar una taza: una vez caminando normal y otra con los codos pegados, paso ninja y su mismo ritmo.",
+       "passCriteria": "En la versión correcta la distancia y el tamaño del talento en el cuadro se mantienen, no hay rebote ni tirones visibles y los ojos quedan en la línea superior de principio a fin.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Tienda Con Amor con un pasillo de 6 m entre estantes de poleras y tazas. Convención estándar.",
+        "subjects": "Maniquí T camina hacia +Z a 0.8 m/s desde (0,0,-5) hasta (0,0,0), se detiene y muestra una taza. Maniquí F (filmmaker) retrocede delante de T a 1.2 m, con el celular a dos manos, los codos pegados a las costillas, las rodillas flexionadas 15° y paso de talón a punta. Maniquí A (asistente) guía a F con la mano en su cintura.",
+        "camera": "Celular en manos de F: cámara en mano con seguimiento de T a 1.2 m, a 1.35 m de altura, lente de 26 mm, vertical 9:16, 4K a 60 fps. Los ojos de T quedan en la línea superior de la cuadrícula durante todo el recorrido.",
+        "lighting": "Luces de la tienda a 4000 K; ventana lateral a 5600 K al 40 %.",
+        "beats": [
+         "[CODOS_ABIERTOS] 0-3 s: F camina a su propio ritmo, con los brazos estirados y los codos abiertos: la cámara rebota ±3 cm y T se agranda y se achica en el cuadro (rojo).",
+         "3-6 s: F pega los codos, flexiona las rodillas y pisa de talón a punta: la línea de altura se estabiliza (verde).",
+         "6-9 s: F acompaña el ritmo de T a 1.2 m constantes; los ojos siguen en la línea superior (verde 'mismo ritmo').",
+         "[MOVIMIENTO_BRUSCO] 9-11 s: T se detiene y F frena de golpe: tirón del cuadro (rojo 'brusco').",
+         "11-14 s: repetición con frenado progresivo en 1 s: T muestra la taza con el encuadre estable (verde)."
+        ],
+        "preset": "SEGUIMIENTO_RITMO",
+        "errores": [
+         "MOVIMIENTO_BRUSCO",
+         "CODOS_ABIERTOS"
+        ]
+       }
       }
      ]
     },
@@ -1527,7 +2245,7 @@
      "id": "fm-i3",
      "slug": "fm-i3",
      "title": "Luz de 3 puntos",
-     "summary": "Dominar la luz principal, el relleno y el contraluz, elegir entre ring light y softbox y controlar la temperatura de color.",
+     "summary": "Dominar la luz principal, el relleno y la luz trasera de un color distinto que separa al sujeto del fondo, elegir entre ring light y softbox y controlar la temperatura de color.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=A5AVoflhezM",
@@ -1549,6 +2267,13 @@
        "channel": "Hanns",
        "language": "es",
        "why": "Explica la temperatura de color (Kelvin) y el balance de blancos en video, para no mezclar luces cálidas y frías y mantener la piel natural."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=htuL-MU7J9s",
+       "title": "Cómo iluminar un vídeo: Luz de contra o Contraluz. Curso General de Cine y Vídeo",
+       "channel": "Juanjo Castro",
+       "language": "es",
+       "why": "Explica dónde va la luz de contra (trasera), cómo separa al sujeto del fondo y cómo evitar que entre al lente."
       }
      ],
      "lessons": [
@@ -1632,39 +2357,51 @@
       },
       {
        "id": "fm-i3-l3",
-       "title": "Contraluz de separación",
-       "objective": "Separar al talento del fondo con un contraluz (rim o backlight) que dibuje los hombros y el cabello.",
+       "title": "Luz trasera de color",
+       "objective": "Separar al talento del fondo con una tercera luz detrás de él, idealmente de un color distinto al de las luces de frente, que dibuje los hombros y el cabello.",
        "procedure": [
-        "Pon la luz detrás del talento, en el lado opuesto a la key (o en el mismo, según el estilo), a 1-1.5 m y entre 0.5 y 1 m por encima de la cabeza.",
-        "Apúntala a la nuca y los hombros; no debe entrar al lente (flare) ni iluminar la nariz.",
-        "Dale una intensidad parecida o algo menor que la key; en fondos oscuros, menos.",
-        "Usa banderas o viseras (barn doors) para cortar la luz que se escapa hacia la cámara.",
-        "En producto (tazas, botellas), el contraluz dibuja los bordes y el vapor."
+        "El esquema completo tiene 3 luces: la principal a 45°, el relleno del otro lado y la trasera detrás del talento. Sin la trasera, el talento se funde con el fondo, sobre todo con ropa o fondos oscuros.",
+        "Coloca la luz trasera detrás del talento y fuera de cuadro, en diagonal (del lado opuesto a la principal o del mismo, según el estilo), a 1-1.5 m y entre 0.5 y 1 m por encima de la cabeza.",
+        "Apúntala a la nuca, el cabello y los hombros; no debe entrar al lente (flare) ni iluminar la nariz.",
+        "Dale un color distinto al de las luces de frente para que la separación se note: con las frontales a 5600 K, una trasera cálida de 2700-3200 K funciona con una luz bicolor como la Fiveray M40; para cian, magenta o el color de la marca hace falta una luz RGB (por ejemplo, Fiveray M20C o Ulanzi VL49) o un gel de color.",
+        "Dale una intensidad parecida o algo menor que la principal; con cabello oscuro, un poco más.",
+        "Usa viseras o banderas para cortar la luz que se escapa hacia la cámara y revisa en el monitor que el borde de color no pinte la cara.",
+        "En producto (tazas, botellas), la luz trasera dibuja los bordes y el vapor."
        ],
        "commonMistakes": [
-        "Contraluz visible en el cuadro.",
-        "Flare que lava el contraste.",
-        "Contraluz tan fuerte que quema el cabello."
+        "Sin luz trasera: el talento con polera oscura se funde con el fondo.",
+        "Luz trasera visible en el cuadro o con flare que lava el contraste.",
+        "Trasera del mismo color que las frontales sobre un fondo del mismo tono: la separación casi no se nota.",
+        "Color tan saturado o tan fuerte que pinta la cara o quema el cabello.",
+        "Creer que la M40 es RGB: es bicolor y solo va de cálido a frío."
        ],
        "checklist": [
-        "Detrás y por encima del talento",
+        "Tres luces: principal, relleno y trasera",
+        "Trasera detrás, por encima y fuera de cuadro",
+        "Color distinto al de las frontales",
         "Sin flare",
-        "Bordes dibujados",
+        "Bordes dibujados y cara sin teñir",
         "Intensidad controlada"
        ],
-       "practice": "Graba al talento con polera oscura sobre fondo oscuro, sin contraluz y con contraluz.",
-       "passCriteria": "En la versión con contraluz se distingue el contorno de los hombros y del cabello, sin flare.",
+       "practice": "Graba al talento con polera oscura sobre fondo oscuro en tres versiones: sin luz trasera, con la trasera del mismo color que las frontales y con la trasera cálida o de color.",
+       "passCriteria": "En la versión con la trasera de color se distingue el contorno de los hombros y del cabello, la cara conserva su color natural y no hay flare.",
        "mediaType": "ESCENA_3D",
        "scene3d": {
         "environment": "Estudio con fondo negro en z=-2.5. Convención estándar.",
-        "subjects": "Maniquí T de pie en (0,0,0), con polera negra y cabello oscuro.",
-        "camera": "Trípode en (0,1.53,1.5), lente de 48 mm, plano medio.",
-        "lighting": "Key: softbox en (-1.0,1.95,1.0). Fill al 50 % en (0.6,1.5,1.3). Backlight: LED con viseras en (0.9,2.3,-1.1) apuntando a la nuca (0,1.6,0), 5600 K al 80 %.",
+        "subjects": "Maniquí T de pie en (0,0,0), con polera negra y cabello oscuro, un pie adelantado y los codos cerca del cuerpo.",
+        "camera": "Trípode en (0,1.30,1.5) a la altura del pecho, lente de 48 mm, plano medio con los ojos en la línea superior.",
+        "lighting": "Key: softbox en (-1.0,1.95,1.0), 5600 K. Fill al 50 % en (0.6,1.5,1.3), 5600 K. Luz trasera: LED con viseras en (0.9,2.3,-1.1) apuntando a la nuca (0,1.6,0), cálida de 2700 K (o cian con una luz RGB) al 80 %.",
         "beats": [
-         "0-2 s: solo key y fill: el talento se funde con el fondo negro (rojo).",
-         "2-4 s: se enciende el contraluz y aparece el contorno (verde).",
-         "4-6 s: el contraluz baja a 1.5 m y la luz entra al lente (flare, rojo).",
-         "6-8 s: vuelve arriba, se cierran las viseras y el contraste queda limpio."
+         "[SIN_LUZ_TRASERA] 0-2 s: solo key y fill: el talento se funde con el fondo negro (rojo 'sin luz trasera').",
+         "[TRASERA_MISMO_COLOR] 2-4 s: se enciende la luz trasera a 5600 K, igual que las frontales: aparece el contorno, pero apenas se distingue.",
+         "4-7 s: la trasera pasa a 2700 K cálida (o a cian): el borde de color separa los hombros y el cabello del fondo (verde 'luz trasera de color').",
+         "7-9 s: ojo con la altura: si la trasera bajara a 1.5 m entraría al lente (flare); por eso va a 2.3 m, detrás y por encima de la cabeza.",
+         "9-11 s: vuelve arriba, se cierran las viseras y el contraste queda limpio (verde)."
+        ],
+        "preset": "TRES_PUNTOS_COLOR",
+        "errores": [
+         "SIN_LUZ_TRASERA",
+         "TRASERA_MISMO_COLOR"
         ]
        }
       },
@@ -1739,7 +2476,7 @@
      "id": "fm-i4",
      "slug": "fm-i4",
      "title": "Exposición manual",
-     "summary": "Controlar obturación, fps, ISO, filtros ND y parpadeo para que la imagen sea estable y se mueva de forma natural.",
+     "summary": "Controlar obturación, fps, ISO, filtros ND y parpadeo con el estándar de 4K a 60 fps (120 fps en cámara lenta), para que la imagen sea estable y se mueva de forma natural.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=c7YOuSNHeJ8",
@@ -1761,6 +2498,13 @@
        "channel": "Jorge de Libra",
        "language": "es",
        "why": "Explica para qué sirve el filtro ND: mantener una obturación correcta con mucha luz sin sobreexponer. Aplica también a los ND para celular."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=l5llXuaHHW4",
+       "title": "La Regla de los 180 grados (bien explicada)",
+       "channel": "Luces, Cámara, Aprendo",
+       "language": "es",
+       "why": "Explica la regla de obturación = doble de los fps (1/120 a 60 fps) y qué pasa con el movimiento si no se respeta."
       }
      ],
      "lessons": [
@@ -1769,52 +2513,60 @@
        "title": "Obturación a 180°",
        "objective": "Fijar la velocidad de obturación en el doble de los fps para que el movimiento se vea natural.",
        "procedure": [
-        "Regla: obturación = 1/(2 x fps). A 30 fps, 1/60; a 60 fps, 1/120.",
-        "En Perú la red eléctrica es de 60 Hz: bajo luces de la red usa siempre 1/60 o 1/120. Si grabas a 24 fps, usa 1/60 en vez de 1/48 o 1/50 para evitar el parpadeo.",
-        "Fija la obturación en Blackmagic Camera o en el modo Pro; en la app nativa no se puede, así que usa el bloqueo AE.",
-        "Si a 1/60 hay demasiada luz (exteriores), no subas la obturación: baja el ISO al mínimo y usa un filtro ND.",
-        "Rompe la regla solo con intención: 1/250 a 1/500 para acción nítida (una salpicadura de ceviche, deporte) o 1/30 para una estela onírica."
+        "Regla: obturación = 1/(2 x fps). Con el estándar de la casa (60 fps), 1/120; a 120 fps, 1/240 (1/250 en Sony); si un equipo graba a 30 fps, 1/60.",
+        "En Perú la red eléctrica es de 60 Hz: bajo luces de la red usa 1/60 o 1/120. A 120 fps, si 1/240 parpadea con alguna luz LED o fluorescente, baja a 1/120. Si grabas a 24 fps, usa 1/60 en vez de 1/48 o 1/50.",
+        "Fija la obturación en VIDEO PRO (Samsung), Blackmagic Camera, Final Cut Camera o en el modo M (Sony); en la app nativa del iPhone no se puede (salvo en el iPhone 18 Pro), así que usa el bloqueo AE/AF.",
+        "Si a 1/120 hay demasiada luz (exteriores), no subas la obturación: baja el ISO al mínimo y usa un filtro ND.",
+        "Si falta luz a 60 fps, puedes bajar a 1/60 (más estela y sin parpadeo) antes de subir el ISO, y enciende la luz LED de mano.",
+        "Rompe la regla solo con intención: de 1/250 a 1/500 para una acción nítida (una salpicadura de ceviche, deporte)."
        ],
        "commonMistakes": [
         "Obturación de 1/1000 en exteriores: movimiento entrecortado, con 'efecto video'.",
-        "Usar 1/50 (configuración europea) con luces de 60 Hz: parpadeo.",
+        "Usar 1/50 o 1/100 (configuración europea) con luces de 60 Hz: parpadeo.",
+        "Dejar 1/60 al pasar a 120 fps: la cámara lenta sale borrosa.",
         "No saber que el celular cambia la obturación solo cuando está en automático."
        ],
        "checklist": [
-        "Obturación = 2 x fps",
+        "Obturación = 2 x fps (1/120 a 60 fps)",
         "Compatible con la red de 60 Hz",
         "ND si sobra luz",
+        "Luz de mano si falta luz",
         "Excepciones justificadas"
        ],
-       "practice": "Graba a alguien agitando las manos a 30 fps, con 1/60 y con 1/1000, y compara las dos tomas en pantalla completa.",
-       "passCriteria": "Explica la diferencia en la estela de movimiento y entrega la toma a 1/60 como estándar.",
+       "practice": "Graba a alguien agitando las manos a 60 fps, con 1/120 y con 1/1000, y compara las dos tomas en pantalla completa.",
+       "passCriteria": "Explica la diferencia en la estela de movimiento y entrega la toma a 1/120 como estándar.",
        "mediaType": "VIDEO_REFERENCIA"
       },
       {
        "id": "fm-i4-l2",
        "title": "FPS según el uso",
-       "objective": "Elegir los cuadros por segundo correctos antes de grabar, según cómo se usará la toma.",
+       "objective": "Elegir los cuadros por segundo antes de grabar con la regla de la casa: 60 fps siempre y 120 fps para cámara lenta.",
        "procedure": [
-        "30 fps: estándar de la casa para diálogo, UGC, sketches y testimonios.",
-        "60 fps: tomas que irán en cámara lenta al 50 % (vapor, cabello al viento, lanzar la polera) o movimientos rápidos con gimbal.",
-        "120-240 fps: cámara súper lenta (salsa que cae, bebida que se sirve); necesita mucha luz.",
-        "24 fps: solo si el guion pide look de cine y todo el video se graba así (con obturación de 1/60 bajo luces de la red).",
-        "Anota en la ficha y en el nombre del clip los fps que no sean 30 (sufijo _60, _120).",
-        "Plantilla: 'Diálogo: 30 · Lento al 50 %: 60 · Súper lento: 120/240 · Cine: 24 (todo el video)'."
+        "60 fps: estándar de la casa para todo (diálogo, UGC, sketches, testimonios y b-roll). El editor lo usa a velocidad normal en una línea de tiempo de 30 fps o lo ralentiza al 50 %.",
+        "120 fps: tomas de cámara lenta (vapor, cabello al viento, lanzar la polera, servir una bebida). Se ralentizan al 25 % en 30 fps y necesitan mucha luz.",
+        "240 fps (1080p): cámara súper lenta en equipos sin 4K a 120 fps o para un efecto extremo; necesita todavía más luz.",
+        "30 fps: solo si el equipo no llega a 4K60 (Galaxy A, Sony ZV-E10 original en 4K); anótalo con el sufijo _30.",
+        "24 fps: solo si el guion pide look de cine y todo el video se graba así (con obturación de 1/60 bajo luces de la red); no es el estándar.",
+        "Apaga la frecuencia automática (iPhone) o el 'FPS automático' (Samsung): con poca luz bajan los fps sin avisar.",
+        "Plantilla: 'Todo: 4K 60 · Cámara lenta: 4K 120 (sufijo _120) · Súper lento: 1080p 240 · Equipo sin 4K60: 4K 30 (sufijo _30) · Cine: 24 (todo el video)'."
        ],
        "commonMistakes": [
-        "Grabar todo a 60 fps 'por si acaso': más peso, menos luz, y la voz no sirve en cámara lenta.",
+        "Grabar a 30 fps por costumbre: el editor no puede ralentizar sin saltos.",
+        "Grabar el diálogo a 120 fps: más peso y menos luz, sin ninguna ventaja.",
         "Cámara lenta sin luz suficiente: ruido.",
-        "Mezclar 24 y 30 fps en el mismo video."
+        "Dejar activa la frecuencia automática y recibir clips a 24 fps.",
+        "Mezclar 24 y 60 fps en el mismo video."
        ],
        "checklist": [
-        "FPS elegido para cada toma",
+        "60 fps por defecto",
+        "120 fps solo en cámara lenta",
+        "Frecuencia automática apagada",
         "Luz suficiente para alta velocidad",
-        "Sufijo en el nombre del archivo",
+        "Sufijos _120 o _30 en el nombre",
         "Editor avisado"
        ],
        "practice": "Graba el mismo vertido de chicha morada en un vaso a 30, 60 y 120 fps, y pide al editor que ralentice cada uno.",
-       "passCriteria": "El clip a 120 fps se ve fluido al 25 % de velocidad y el de 30 fps se entrecorta, lo que demuestra la regla.",
+       "passCriteria": "El clip a 120 fps se ve fluido al 25 %, el de 60 fps al 50 % y el de 30 fps se entrecorta, lo que demuestra por qué el estándar es 60.",
        "mediaType": "PLANTILLA"
       },
       {
@@ -1824,7 +2576,8 @@
        "procedure": [
         "Orden de ajuste: fija los fps y la obturación, consigue luz (mueve al talento o las luces) y deja el ISO lo más bajo posible.",
         "En el celular, el ISO base de la cámara principal suele estar entre 50 y 100; por encima de 800 aparece ruido visible en la piel y en las sombras.",
-        "Si falta luz, acerca la luz o al talento a la ventana antes de subir el ISO: al doble de cerca hay 4 veces más luz.",
+        "Si falta luz, acerca la luz LED de mano o lleva al talento a la ventana antes de subir el ISO: al doble de cerca hay 4 veces más luz.",
+        "En Log el ruido se nota más: con S-Log3 el ISO mínimo ya es alto y en el celular el Log subexpuesto se llena de ruido, así que la luz es obligatoria.",
         "Revisa las cebras al 95 % o el histograma: la piel no debe quemarse ni quedar hundida en el lado izquierdo del histograma.",
         "Anota el ISO usado en el TXT de notas si pasó de 800."
        ],
@@ -1839,19 +2592,20 @@
         "Luz antes que ISO",
         "Cebras o histograma revisados"
        ],
-       "practice": "En un interior con poca luz, graba al talento con ISO 1600 y luego con ISO 200 agregando un LED; compara al 100 % de zoom.",
-       "passCriteria": "La toma corregida no tiene ruido visible en la piel y conserva la misma obturación de 1/60.",
+       "practice": "En un interior con poca luz, graba al talento con ISO 1600 y luego con ISO 200 agregando la luz LED de mano; compara al 100 % de zoom.",
+       "passCriteria": "La toma corregida no tiene ruido visible en la piel y conserva la misma obturación de 1/120.",
        "mediaType": "VIDEO_REFERENCIA"
       },
       {
        "id": "fm-i4-l4",
        "title": "Filtro ND",
-       "objective": "Mantener la obturación de 1/60 al sol usando un filtro de densidad neutra (ND).",
+       "objective": "Mantener la obturación de 1/120 al sol usando un filtro de densidad neutra (ND).",
        "procedure": [
-        "El celular tiene la apertura fija: en exteriores, con ISO al mínimo y 1/60, la imagen se quema. El filtro ND es la única forma de quitar luz sin tocar la obturación.",
+        "El celular tiene la apertura fija: en exteriores, con el ISO al mínimo y 1/120, la imagen se quema. El filtro ND es la única forma de quitar luz sin tocar la obturación.",
         "Elige la fuerza: ND8 (3 pasos) para sombra abierta o días nublados, ND16 (4 pasos) para sol, ND64 (6 pasos) para sol fuerte de mediodía o de la sierra.",
         "El ND variable (ND2-ND400) es práctico, pero no lo lleves al máximo: aparece una cruz oscura en X y dominantes de color.",
         "Colócalo cubriendo completo el lente que usas (1x o 2x); en celulares con varias cámaras revisa que no tape otro lente.",
+        "Con la Sony ZV-E10 y el 16-50 de kit, el filtro es de 40,5 mm; con S-Log3 (ISO mínimo alto) el ND es imprescindible de día.",
         "Después de ponerlo, revisa las cebras y el balance de blancos: algunos ND tiñen la imagen.",
         "Quítalo apenas entres a un interior."
        ],
@@ -1864,11 +2618,11 @@
         "ND elegido según la luz",
         "Cubre el lente en uso",
         "Sin cruz ni dominante de color",
-        "Obturación en 1/60",
+        "Obturación en 1/120",
         "ND retirado en interiores"
        ],
-       "practice": "Graba en exteriores al mediodía a 1/60 sin ND (quemado), con ND16 y con el ND variable al máximo; compara las tres tomas.",
-       "passCriteria": "La toma con ND16 no tiene zonas quemadas en la piel, mantiene 1/60 y no muestra cruz ni dominante de color.",
+       "practice": "Graba en exteriores al mediodía a 1/120 sin ND (quemado), con ND16 y con el ND variable al máximo; compara las tres tomas.",
+       "passCriteria": "La toma con ND16 no tiene zonas quemadas en la piel, mantiene 1/120 y no muestra cruz ni dominante de color.",
        "mediaType": "VIDEO_REFERENCIA"
       },
       {
@@ -1878,7 +2632,7 @@
        "procedure": [
         "Síntoma: franjas horizontales que suben o una imagen que 'late' en locales con fluorescentes o LED baratos.",
         "Causa: la red eléctrica del Perú es de 60 Hz, así que las luces parpadean 120 veces por segundo y la obturación no está sincronizada con ellas.",
-        "Solución: usa obturaciones de 1/60 o 1/120 (30 fps a 1/60; 60 fps a 1/120). En Blackmagic Camera, activa el anti-parpadeo de 60 Hz.",
+        "Solución: usa obturaciones de 1/60 o 1/120 (a 60 fps, 1/120; a 120 fps, 1/240 y, si parpadea, 1/120; a 30 fps, 1/60). En Blackmagic Camera, activa el anti-parpadeo de 60 Hz; en la Sony ZV-E10 II, [Obturad. variable].",
         "Si persiste (LED de mala calidad), apaga esas luces y usa tus luces a batería.",
         "Con pantallas (el televisor del restaurante, el celular del cliente), ajusta la obturación en pasos finos si la app lo permite (por ejemplo, de 1/60 a 1/59.9) o reemplaza el contenido de la pantalla en edición.",
         "Caso real: en una pollería con fluorescentes en la cocina, grabar a 30 fps con 1/50 dio franjas; se corrigió con 1/60 y luces LED propias."
@@ -2159,8 +2913,16 @@
      "id": "fm-i6",
      "slug": "fm-i6",
      "title": "Set con talento",
-     "summary": "Coordinar técnicamente con el actor o el cliente en cámara: marcas en el piso, mirada al lente y continuidad entre tomas.",
-     "videos": [],
+     "summary": "Coordinar técnicamente con el actor o el cliente en cámara: marcas en el piso, mirada al lente, continuidad entre tomas y postura (codos cerca del cuerpo, un pie adelantado y rodillas sueltas).",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=sFxaqemfq58",
+       "title": "Poses para fotos - Cómo posar y salir bien en una sesión de fotos profesional 📸 Poses de Pie 2/3",
+       "channel": "Cristina Robles",
+       "language": "es",
+       "why": "Muestra la postura de pie que se pide al talento: un pie adelantado, el peso atrás, las rodillas sueltas y los brazos separados del cuerpo sin abrir los codos."
+      }
+     ],
      "lessons": [
       {
        "id": "fm-i6-l1",
@@ -2200,6 +2962,9 @@
          "5-8 s: T se pasa 0.4 m: sale de la banda de foco y la cabeza se corta arriba (rojo).",
          "8-10 s: T baja la mirada a buscar la cinta justo antes del texto (rojo).",
          "10-13 s: T cuenta 5 pasos y llega mirando a cámara (verde)."
+        ],
+        "errores": [
+         "CABEZA_CORTADA"
         ]
        }
       },
@@ -2282,6 +3047,344 @@
          "6-8 s: se corrige comparando con la foto y el corte entre la toma 1 y la toma 2 queda limpio (verde)."
         ]
        }
+      },
+      {
+       "id": "fm-i6-l4",
+       "title": "Codos cerca del cuerpo",
+       "objective": "Indicar al talento que mantenga los codos cerca del cuerpo, sin aplastar los brazos, para que su silueta se vea bien formada y los gestos queden dentro del cuadro.",
+       "procedure": [
+        "Antes de la toma, revisa los brazos del talento en el monitor: los codos van cerca de la cintura, con un pequeño espacio (2-5 cm) entre el brazo y el torso.",
+        "Si los codos están abiertos hacia afuera (en jarra o 'aleteando'), la silueta se ensancha, los gestos se salen del cuadro vertical y el talento se ve tenso: pídele que los acerque.",
+        "Si los brazos están aplastados contra el torso, la silueta también se ensancha: pídele que deje ese pequeño espacio.",
+        "Los gestos van dentro de la 'caja' entre la parte alta del pecho y la cintura, con las palmas abiertas y a velocidad moderada.",
+        "Si sostiene un producto, los codos siguen cerca del cuerpo y el producto sube a la altura del pecho, fuera del 35 % inferior de la pantalla.",
+        "Da la indicación en positivo y con una referencia física: 'codos cerca de la cintura, sin apretar'."
+       ],
+       "commonMistakes": [
+        "Codos abiertos o en jarra: silueta ancha y gestos fuera del cuadro.",
+        "Brazos pegados y aplastados contra el torso: el cuerpo se ve más ancho.",
+        "Gestos por encima de los hombros o por debajo de la cintura: se cortan en vertical.",
+        "Corregir al talento con un 'no hagas eso' sin decirle qué hacer."
+       ],
+       "checklist": [
+        "Codos cerca de la cintura",
+        "Pequeño espacio entre brazo y torso",
+        "Gestos entre el pecho y la cintura",
+        "Producto a la altura del pecho",
+        "Indicación en positivo"
+       ],
+       "practice": "Graba al talento diciendo su hook en plano medio tres veces: con los codos abiertos, con los brazos aplastados y con los codos cerca del cuerpo dejando un pequeño espacio.",
+       "passCriteria": "En la tercera versión la silueta se ve más estilizada, los gestos quedan dentro del cuadro vertical y el talento no se ve tenso.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Estudio con fondo crema liso en z=-2.0. Convención estándar.",
+        "subjects": "Maniquí T (1.65 m, ojos a 1.53 m) de pie en (0,0,0) mirando a cámara; habla y gesticula. Versión incorrecta: codos abiertos 35 cm hacia afuera, manos en la cintura (en jarra) y gestos por encima de los hombros. Versión aplastada: brazos pegados al torso. Versión correcta: codos cerca de la cintura con 4 cm de espacio y gestos entre el pecho y la cintura.",
+        "camera": "Trípode en (0,1.30,1.1) a la altura del pecho, inclinación +4°, lente de 48 mm, plano medio vertical 9:16 con los ojos en la línea superior.",
+        "lighting": "Key: softbox a 45° por la izquierda en (-1.0,2.0,1.0), 5600 K. Relleno al 50 % a la derecha. Luz trasera cálida de 3200 K detrás del talento.",
+        "beats": [
+         "[CODOS_ABIERTOS] 0-3 s: codos abiertos y en jarra: silueta ancha y una mano sale del cuadro (rojo 'codos abiertos').",
+         "3-5 s: tampoco hay que aplastar los brazos contra el torso: el cuerpo se vería más ancho y rígido; deja un pequeño espacio.",
+         "5-8 s: codos cerca de la cintura, con un pequeño espacio: la silueta se estiliza (verde 'codos cerca').",
+         "8-11 s: dice su frase con gestos entre el pecho y la cintura, dentro del cuadro (verde)."
+        ],
+        "errores": [
+         "CODOS_ABIERTOS"
+        ]
+       }
+      },
+      {
+       "id": "fm-i6-l5",
+       "title": "Pies y rodillas",
+       "objective": "Indicar al talento una postura de pies estable y natural: un pie un poco adelantado y las rodillas levemente flexionadas, en vez de los pies juntos y las piernas rígidas.",
+       "procedure": [
+        "Revisa los pies en el ensayo, aunque el plano no los muestre: la postura de los pies se nota en los hombros, la cadera y el balanceo.",
+        "Pies juntos y rodillas trabadas son la postura rígida de 'tabla', que además hace que el talento se balancee: corrígela antes de grabar.",
+        "Pide un pie un poco adelantado (unos 15-20 cm) y el peso en el pie de atrás; el cuerpo queda en ligero ángulo y la cara al lente.",
+        "Las rodillas van sueltas, levemente flexionadas, nunca bloqueadas: se ve natural y no se cansa en las tomas largas.",
+        "Si camina y se detiene en una marca, que llegue con la misma postura: la barra de la marca en T indica dónde van las puntas de los pies.",
+        "Da la indicación en positivo: 'un pie adelante, peso atrás, rodillas sueltas'."
+       ],
+       "commonMistakes": [
+        "Pies juntos y piernas rígidas: el talento se ve tieso y se balancea.",
+        "Rodillas bloqueadas en tomas largas: tensión, cansancio y hasta mareo.",
+        "Peso en el pie de adelante: el cuerpo se inclina hacia la cámara.",
+        "Corregir solo el torso y olvidar los pies cuando el plano es medio."
+       ],
+       "checklist": [
+        "Un pie un poco adelantado",
+        "Peso en el pie de atrás",
+        "Rodillas sueltas, levemente flexionadas",
+        "Cuerpo en ligero ángulo y cara al lente",
+        "Sin balanceo"
+       ],
+       "practice": "Graba al talento 20 s en plano entero con los pies juntos y las rodillas trabadas, y 20 s con un pie adelantado y las rodillas sueltas; mira el balanceo de la cabeza.",
+       "passCriteria": "En la segunda versión el talento se ve más natural y estable: la cabeza no se desplaza más de 5 cm hacia los lados y el cuerpo mantiene el ángulo.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Estudio gris neutro con una marca en T en el piso y una retícula de 10 cm para medir el balanceo. Convención estándar.",
+        "subjects": "Maniquí T (1.65 m) en (0,0,0). Versión incorrecta: pies juntos, rodillas trabadas y cuerpo cuadrado a cámara, con balanceo lateral de ±6 cm. Versión correcta: pie izquierdo 0.18 m adelante, peso en el pie de atrás, rodillas flexionadas 8°, cuerpo girado 20° y cara al lente.",
+        "camera": "Trípode en (0,1.00,1.5) a la altura de la cintura (regla del plano entero), inclinación 0°, lente de 26 mm, plano entero vertical 9:16 para ver los pies. Vista auxiliar lateral para mostrar las rodillas.",
+        "lighting": "Key: softbox a 45° cámara-izquierda en (-1.0,2.1,1.0), 5600 K. Luz trasera en (0.6,2.4,-1.0), cálida de 3200 K (otro color que el frente), 40 %.",
+        "beats": [
+         "[PIES_JUNTOS] 0-3 s: pies juntos y rodillas trabadas: el cuerpo se ve rígido y la retícula marca un balanceo de ±6 cm (rojo 'pies juntos').",
+         "[PIES_JUNTOS] 3-5 s: vista lateral: rodillas bloqueadas, sin flexión (rojo).",
+         "5-8 s: T adelanta el pie izquierdo 18 cm, pasa el peso atrás y suelta las rodillas; el cuerpo gira 20° con la cara al lente (verde).",
+         "8-11 s: dice su frase: el balanceo baja a 0 cm y la retícula pasa a verde."
+        ],
+        "errores": [
+         "PIES_JUNTOS"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "id": "fm-i7",
+     "slug": "fm-i7",
+     "title": "Sony ZV-E10",
+     "summary": "Configurar y operar la cámara Sony ZV-E10 (y la ZV-E10 II) con el estándar de la agencia: qué formato y fps puede grabar cada modelo, S-Log3, enfoque, exposición, audio, batería y calor.",
+     "videos": [
+      {
+       "url": "https://www.youtube.com/watch?v=rs-CGAraDiA",
+       "title": "Sony ZV-E10: CONFIGURACIÓN de Vídeo para NOVATOS",
+       "channel": "Frame Rate [by Dani Espla]",
+       "language": "es",
+       "why": "Configuración de video de la ZV-E10 original paso a paso: formato, fps, modo manual y enfoque."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=RlONrw4QBZg",
+       "title": "Sony ZV-E10 II: CONFIGURACIÓN de Vídeo para NOVATOS",
+       "channel": "Frame Rate [by Dani Espla]",
+       "language": "es",
+       "why": "La misma configuración en la ZV-E10 II, con su menú nuevo y el 4K a 60 fps en 10 bits."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=Ko1E6OyjYAo",
+       "title": "Sony ZV-E10 II: desbloquea 4K 120p con la licencia oficial (tutorial completo)",
+       "channel": "TECNO REVIEW EN ESPAÑOL",
+       "language": "es",
+       "why": "Cómo generar e instalar la licencia gratuita de Sony que habilita 4K a 120p en la ZV-E10 II."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=fDa1aZs8Yhg",
+       "title": "LA MEJOR CONFIGURACIÓN PERFIL DE COLOR S-LOG 3 | GUÍA COMPLETA SONY ZVE10",
+       "channel": "Jagg",
+       "language": "es",
+       "why": "Guía del S-Log3 (PP8) en la ZV-E10: configuración, exposición y corrección de color."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=08SIWaqL7is",
+       "title": "Cómo activar S-Log3 en Sony ZV-E10 II",
+       "channel": "HardReset CARs ES",
+       "language": "es",
+       "why": "Ruta exacta para activar la Toma Log (S-Log3) en la ZV-E10 II."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=6S91-8Z9F_4",
+       "title": "DOMINA el Enfoque Automático de la ZV-E10",
+       "channel": "Aaron Estevez",
+       "language": "es",
+       "why": "Explica el AF continuo, la detección de ojos, el enfoque táctil y el seguimiento de la ZV-E10."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=63DndCodh_8",
+       "title": "🛑 Cómo usar las CEBRAS 🎥🦓",
+       "channel": "Luces, Cámara, Aprendo",
+       "language": "es",
+       "why": "Cómo leer las cebras para no quemar la piel ni el fondo, útil en modo manual y en S-Log3."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=pDsXGMBmVJo",
+       "title": "Cómo Ajustar el NIVEL DE AUDIO para Grabar en la Cámara Sony ZV-E10",
+       "channel": "Mundo Tech",
+       "language": "es",
+       "why": "Ajuste del nivel de grabación de audio de la ZV-E10 para que la voz no sature."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=qNjGLGXL2_A",
+       "title": "SOLUCIÓN - Calentamiento Sony ZV-E10 - Cómo Evitar que se Apague Rápido",
+       "channel": "Mundo Tech",
+       "language": "es",
+       "why": "Qué hacer para que la ZV-E10 no se apague por calor: temperatura de apagado automático y hábitos de grabación."
+      }
+     ],
+     "lessons": [
+      {
+       "id": "fm-i7-l1",
+       "title": "Formato y fps",
+       "objective": "Configurar la Sony ZV-E10 o ZV-E10 II con el mejor formato posible frente a la regla de 4K a 60 fps, sabiendo qué puede y qué no puede grabar cada modelo.",
+       "procedure": [
+        "Identifica el modelo: ZV-E10 (2021, menú con fichas arriba) o ZV-E10 II (2024, menú con fichas en una columna a la izquierda). Las rutas cambian entre los dos.",
+        "Pon la cámara en modo película (ZV-E10: botón Imagen/Película/S&Q; ZV-E10 II: conmutador en Película) y en 'Exposición manual' (M).",
+        "Revisa que el sistema esté en NTSC (24p/30p/60p/120p): ZV-E10 en MENU > Ajustes > [Selector NTSC/PAL]; ZV-E10 II en MENU > Ajustes > [Área/fecha] > [Selector NTSC/PAL].",
+        "ZV-E10 II (sí cumple 4K60): MENU > Toma > [Calid. img/grab.] > [Formato archivo] 'XAVC S 4K' (o 'XAVC HS 4K'); luego [Ajustes de vídeo] > [Vel. transm. grab.] '60p' y [Grabar ajuste] '200M 4:2:2 10bit'. En 4K60 recorta 1,1x.",
+        "ZV-E10 original (NO graba 4K a 60 fps): para las tomas normales, 'XAVC S 4K' + '30p 100M' (recorta 1,23x; el 24p no recorta); cuando hagan falta 60 fps, 'XAVC S HD' + '60p 50M'. Anótalo en la ficha (_30) y avisa al editor.",
+        "Cámara lenta en Full HD, con sonido: en la ZV-E10, [Formato archivo] 'XAVC S HD' + [Grabar ajuste] '120p 100M'; en la ZV-E10 II sin licencia, 'XAVC S HD' + [Vel. transm. grab.] '120p' + [Grabar ajuste] '100M 4:2:0 8bit'. En la ZV-E10 II con la licencia gratuita '4K 120p Upgrade License' de Sony (Creators' Cloud): 4K a 120p '280M 4:2:2 10bit', con recorte de 1,6x, sin SteadyShot Activo y con tarjeta V60 o superior.",
+        "Vertical: monta la cámara en un soporte en L o una jaula girados 90°. En la ZV-E10 II activa MENU > Ajustes > [Monitor] > [Visualización vertical]; la ZV-E10 no gira la interfaz.",
+        "Cuadrícula de tercios: ZV-E10 en Ajustes de cámara2 > [Línea de cuadrícula]; ZV-E10 II en Toma > [Visualizac. toma] > [Vis. lín. cuadrícul.]. Los ojos van en la línea superior.",
+        "No uses [Ajust. vlogs cinemat.] de la ZV-E10 II: fija 24 fps y pone barras negras."
+       ],
+       "commonMistakes": [
+        "Buscar 4K a 60 fps en la ZV-E10 original: no existe; hay que elegir 4K30 o HD60.",
+        "Dejar el sistema en PAL (25p/50p): parpadeo con las luces de 60 Hz del Perú.",
+        "Usar una tarjeta lenta: en la ZV-E10 II, U3 alcanza para 4K 60p a 200M sin proxy; pide V60 con proxy, en S&Q o en 4K 120p (280M), y V90 para XAVC S-I y, con la licencia, para cualquier cámara lenta S&Q (también en HD).",
+        "Grabar en 4K120 sin contar el recorte de 1,6x: el plano queda mucho más cerrado.",
+        "Activar el modo vlog cinematográfico: 24 fps y barras negras."
+       ],
+       "checklist": [
+        "Modelo identificado",
+        "Modo película en M",
+        "Sistema en NTSC",
+        "ZV-E10 II: 4K 60p 10 bits / ZV-E10: 4K 30p o HD 60p anotado",
+        "Cámara lenta en HD 120p, o 4K 120p con licencia",
+        "Tarjeta adecuada (U3/V30; en la ZV-E10 II, V60 o V90 según el formato)",
+        "Cuadrícula de tercios activada"
+       ],
+       "practice": "Configura la cámara con la guía ilustrada y graba 10 s en el formato principal y 10 s en cámara lenta; revisa en la computadora la resolución y los fps de cada clip.",
+       "passCriteria": "Los clips tienen el formato correcto para el modelo (ZV-E10 II: 3840x2160 a 60p; ZV-E10: 3840x2160 a 30p o 1920x1080 a 60p), la cámara lenta está a 120 fps y la ficha dice qué se grabó.",
+       "mediaType": "CHECKLIST",
+       "guia": "zve10-formato"
+      },
+      {
+       "id": "fm-i7-l2",
+       "title": "S-Log3 paso a paso",
+       "objective": "Grabar en S-Log3 en la ZV-E10 (Perfil de imagen PP8) o en la ZV-E10 II (Toma Log con LUT de vista previa), con la exposición correcta y el aviso al editor.",
+       "procedure": [
+        "Antes de activar el Log, fija el balance de blancos (Luz diurna, Incandescente o temperatura de color): el balance personalizado puede fallar con S-Log3.",
+        "ZV-E10: MENU > Ajustes de cámara1 > [Perfil de imagen] > 'PP8' (S-Log3 + S-Gamut3.Cine). Luego MENU > Ajustes > [Asist. visual. Gamma] > 'Automático' para ver contraste normal en la pantalla.",
+        "ZV-E10 II: MENU > Toma > [Calid. img/grab.] > [Ajuste de toma Log] > [Toma Log] 'Activ. (ISO flexible)', [Gama de color] 'S-Gamut3.Cine' e [Insertar archivo LUT] 'Activar' (necesita tarjeta SDXC).",
+        "ZV-E10 II: MENU > Exposición/color > [Color/tono] > [Seleccionar LUT] 's709' y MENU > Ajustes > [Opción de visual.] > [Visualizar LUT] 'Activar': ves el color corregido y el archivo se graba en S-Log3.",
+        "Formato: ZV-E10 II en 4K 60p '200M 4:2:2 10bit' (evita el 8 bits para Log); ZV-E10 en 4K '30p 100M', lo máximo que ofrece.",
+        "ISO: el más bajo que ofrezca la cámara en Log (ese es el mínimo de S-Log3; suele citarse 800, confírmalo en tu cámara). Ajusta la abertura, la luz o el ND hasta que el indicador MM marque entre +1 y +1,7 (práctica común en S-Log3, no un dato oficial de Sony).",
+        "Cebras: activa el nivel alto ('100 IRE o +' o Personalizado 2) para ver lo quemado; no deben tocar la piel.",
+        "En interiores o de noche la luz LED de mano es obligatoria: la ZV-E10 graba en 8 bits y el S-Log3 subexpuesto se llena de ruido y bandas. De día usa el ND de 40,5 mm.",
+        "Anota en el TXT: 'S-Log3 / S-Gamut3.Cine · LUT S-Log3 → 709 (o LUT incrustado) · fps'."
+       ],
+       "commonMistakes": [
+        "Buscar PP8 en la ZV-E10 II: ahí se usa [Ajuste de toma Log].",
+        "Subexponer el S-Log3: ruido y bandas, sobre todo en la ZV-E10 de 8 bits.",
+        "Hacer el balance personalizado con el S-Log3 ya activo.",
+        "Grabar S-Log3 en 8 bits en la ZV-E10 II teniendo 10 bits disponibles.",
+        "Entregar el material sin decir que es S-Log3."
+       ],
+       "checklist": [
+        "Balance fijo antes del Log",
+        "PP8 (ZV-E10) o Toma Log (ZV-E10 II)",
+        "Vista previa: Asist. visual. Gamma o LUT s709",
+        "10 bits en la ZV-E10 II",
+        "ISO mínimo de Log y MM entre +1 y +1,7",
+        "Cebras sin tocar la piel",
+        "Luz de mano o ND según la luz",
+        "Perfil y LUT anotados"
+       ],
+       "practice": "En un interior con la luz de mano, graba 15 s en S-Log3 con MM en 0 y 15 s con MM en +1,3; aplica la LUT de Sony en el editor y compara el ruido en la piel.",
+       "passCriteria": "La toma a +1,3 se ve limpia tras aplicar la LUT, sin luces quemadas en la piel, y el TXT dice el perfil y la LUT.",
+       "mediaType": "CHECKLIST",
+       "guia": "zve10-log"
+      },
+      {
+       "id": "fm-i7-l3",
+       "title": "Enfoque en la ZV-E10",
+       "objective": "Mantener el foco en los ojos del talento con la ZV-E10 o la ZV-E10 II y saber fijarlo con un toque, seguir a quien camina y enfocar productos.",
+       "procedure": [
+        "Modo de enfoque 'AF continuo' (en video solo existen AF continuo y manual): ZV-E10 en Ajustes de cámara1 > [Modo de enfoque]; ZV-E10 II en Enfoque > [AF/MF] > [Modo de enfoque].",
+        "Área de enfoque 'Ancho' para una persona que habla a cámara, o 'Zona' si hay objetos delante.",
+        "Detección de ojos: ZV-E10 en [Ajust. AF cara/ojos] > [Priorid. cara/ojos AF] 'Activar' y 'Humano'; ZV-E10 II en Enfoque > [Reconoc. motivo] > [Rec. motivo en AF] 'Activar' y 'Humano'.",
+        "Activa la operación táctil (MENU > Ajustes > [Operación táctil]) y elige qué hace el toque: 'Enfoque táctil' para FIJAR el foco en un punto o 'Seguimiento táctil' para seguir a quien camina.",
+        "Para fijar el foco: con AF continuo y 'Enfoque táctil', toca la cara en la pantalla; la cámara enfoca ahí y deja el foco fijo aunque algo cruce delante. Para soltarlo, toca el ícono de cancelar o pulsa el centro de la rueda de control.",
+        "Velocidad del AF: como punto de partida, Vel. transición AF en 4-5 y S. camb motiv. AF en 2-3 (no son valores oficiales).",
+        "Productos: pulsa 'Present. producto' para que enfoque lo más cercano; desactívalo al volver a grabar a una persona, porque ignora las caras.",
+        "A 120p o en S&Q a 120fps, la ZV-E10 no tiene detección de cara ni de ojos (a 120p tampoco seguimiento táctil): fija el foco con un toque o en manual con resalte ([Ajuste de resalte] 'Activar', color rojo) antes de grabar."
+       ],
+       "commonMistakes": [
+        "Dejar 'Present. producto' activado: la cámara ignora la cara del talento.",
+        "Confundir 'Enfoque táctil' (fija) con 'Seguimiento táctil' (sigue).",
+        "Grabar la cámara lenta a 120p o en S&Q a 120fps en la ZV-E10 confiando en la detección de ojos.",
+        "AF demasiado rápido: el foco salta al fondo cuando el talento gira."
+       ],
+       "checklist": [
+        "AF continuo",
+        "Área Ancho o Zona",
+        "Detección de ojos: Humano",
+        "Operación táctil configurada",
+        "Present. producto solo con productos",
+        "Foco fijado antes de grabar a 120p o en S&Q a 120fps"
+       ],
+       "practice": "Graba 20 s al talento caminando hacia la cámara con Seguimiento táctil y 20 s fijo con Enfoque táctil mientras alguien cruza delante; revisa los ojos al 100 %.",
+       "passCriteria": "En las dos tomas los ojos quedan nítidos y el foco no salta al fondo ni a quien cruza.",
+       "mediaType": "VIDEO_REFERENCIA",
+       "guia": "zve10-enfoque"
+      },
+      {
+       "id": "fm-i7-l4",
+       "title": "Exposición y AEL",
+       "objective": "Fijar la exposición de la ZV-E10 en modo M con la obturación según los fps, ISO fijo y ND, para que el brillo no cambie durante la toma.",
+       "procedure": [
+        "Trabaja en modo M (Exposición manual): controlas obturador, abertura e ISO.",
+        "Obturación según los fps (red de 60 Hz del Perú): 30p o 24p → 1/60; 60p → 1/125; 120p → 1/250.",
+        "Si una luz parpadea a 1/125 o 1/250: en la ZV-E10 II activa [Ajust. sin parpadeo] > [Obturad. variable] y ajusta a ~1/120, que no parpadea con la red de 60 Hz; en la ZV-E10, baja a 1/60.",
+        "ISO fijo, nunca ISO AUTO: sin Log, 100-800 con buena luz; con Log, el mínimo que permita la cámara. En M con ISO fijo, la exposición ya queda bloqueada. Deja [Auto obtur. lento] en 'Desactivar'.",
+        "Elige el zoom antes de grabar y no lo muevas durante la toma: el 16-50 de kit pasa de f/3.5 a f/5.6 y el brillo cambia.",
+        "Con mucha luz, pon el ND variable de 40,5 mm en vez de subir la obturación; con poca, la luz LED de mano.",
+        "Si trabajas en A/S/P o con ISO AUTO, asigna [Alternar AEL] a una tecla (ZV-E10: Ajustes de cámara2 > [Tecla person.]; ZV-E10 II: Ajustes > [Personal. operac.]), mide en la cara y púlsala para bloquear.",
+        "Solo si trabajas en P/A/S o en M con ISO AUTO (ZV-E10 II): con [Func. táctil dur. toma] en 'AE táctil' o 'Enfoq. táctil+AE', toca la cara y la exposición se mide ahí. No la bloquea: sigue ajustándose si cambia la luz; para fijarla usa [Alternar AEL] o M con ISO fijo.",
+        "Cebras en '100 IRE o +' (o Personalizado 2): baja la exposición hasta que no toquen la piel. SteadyShot en 'Desactivar' sobre trípode; 'Activo' o 'Estándar' en mano."
+       ],
+       "commonMistakes": [
+        "ISO AUTO: el brillo cambia cuando cambia el fondo.",
+        "Usar 1/50 o 1/100 con luces de 60 Hz: parpadeo.",
+        "Hacer zoom durante la toma con el lente de kit: la imagen se oscurece.",
+        "Subir la obturación a 1/1000 al sol en vez de usar el ND.",
+        "Dejar [Auto obtur. lento] activado: baja a 1/30 con poca luz y el movimiento sale borroso."
+       ],
+       "checklist": [
+        "Modo M",
+        "Obturación 1/60, 1/125 o 1/250 según los fps",
+        "ISO fijo",
+        "Zoom elegido antes de grabar",
+        "ND de día, luz de mano de noche",
+        "Cebras sin tocar la piel",
+        "SteadyShot según el soporte"
+       ],
+       "practice": "Graba al talento junto a una ventana en modo M con ISO fijo y la obturación según los fps; a mitad de la toma abre y cierra una cortina detrás.",
+       "passCriteria": "El brillo de la cara no cambia al mover la cortina, no hay parpadeo y las cebras no aparecen en la piel.",
+       "mediaType": "VIDEO_REFERENCIA",
+       "guia": "zve10-exposicion"
+      },
+      {
+       "id": "fm-i7-l5",
+       "title": "Audio, batería y calor",
+       "objective": "Grabar audio limpio con la ZV-E10 y evitar que la cámara se quede sin batería o se apague por calor a mitad de la jornada.",
+       "procedure": [
+        "Coloca el paravientos en la zapata sin tapar el micrófono; con viento, activa la reducción de ruido de viento (no funciona con micrófono externo).",
+        "Grabación de sonido en 'Activar' y el medidor visible; ajusta [Nivel grabac. audio] para que la voz no llegue al máximo del medidor.",
+        "ZV-E10 II: [Direccionalidad mic.] en 'Parte delantera' si el talento habla a cámara y en 'Parte trasera' si narra el filmmaker.",
+        "Con un micrófono externo de 3,5 mm, el interno se desactiva; escucha siempre una prueba con audífonos antes de la toma.",
+        "Las tomas S&Q (cámara lenta o rápida hecha en la cámara) no graban audio: la cámara lenta con sonido se hace en HD 120p normal.",
+        "Calor: la ZV-E10 II a 4K60 se apaga a los ~5 min con [Temp. APAGA auto] en 'Estándar' (a 25 °C); en 'Alto' llega a ~30 min, pero Sony indica usarlo solo en trípode por riesgo de quemaduras leves en la mano. La ZV-E10 aguanta ~20 min en 4K.",
+        "Graba clips cortos, apaga entre tomas, evita el sol directo y, si te mueves con el sujeto, usa una jaula o un gimbal con agarre.",
+        "Batería: ZV-E10 con NP-FW50 (~80 min de toma real); ZV-E10 II con NP-FZ100 (~130 min). Lleva repuestos o un power bank USB-C (USB-PD 9V/3A en la ZV-E10 II).",
+        "Formatea la tarjeta en la cámara al empezar cada jornada, solo después de respaldar: borra todo."
+       ],
+       "commonMistakes": [
+        "Grabar 4K60 con la ZV-E10 II en mano en 'Alto' y quemarse, o en 'Estándar' sin prever que se apaga a los 5 min.",
+        "Grabar la cámara lenta en S&Q esperando sonido.",
+        "Voz saturada por no mirar el medidor.",
+        "Formatear la tarjeta sin haber respaldado.",
+        "Usar una SDHC: los archivos se cortan cada 4 GB."
+       ],
+       "checklist": [
+        "Paravientos puesto",
+        "Nivel de audio revisado con audífonos",
+        "Direccionalidad correcta (ZV-E10 II)",
+        "Temp. APAGA auto según el soporte",
+        "Baterías o power bank de repuesto",
+        "Tarjeta SDXC formateada tras el respaldo"
+       ],
+       "practice": "Graba 3 tomas de 2 min en 4K con la configuración de la jornada, controlando el audio con audífonos y anotando la temperatura de la cámara y la batería restante.",
+       "passCriteria": "Las 3 tomas tienen audio limpio y sin saturar, la cámara no se apaga por calor y la batería alcanza para la jornada con el repuesto.",
+       "mediaType": "CHECKLIST",
+       "guia": "zve10-audio-y-energia"
       }
      ]
     }
@@ -2541,7 +3644,7 @@
        "scene3d": {
         "environment": "Restaurante de noche: mesa para 2 en (0,0,0), lámpara colgante cálida a 1.7 m sobre la mesa en (0,1.7,0) y letrero de neón rojo al fondo en z=-3. Convención estándar.",
         "subjects": "Maniquí A (comensal) sentado en (-0.45,0,0) y maniquí B sentado en (0.45,0,0) brindan con vasos de chicha morada.",
-        "camera": "Trípode en (0.2,1.3,1.6), lente de 48 mm, balance de 3500 K, ISO 400, 30 fps a 1/60.",
+        "camera": "Trípode en (0.2,1.3,1.6), lente de 48 mm, balance de 3500 K, ISO 400, 60 fps a 1/60 (la obturación más lenta a 60 fps, para ganar luz sin parpadeo).",
         "lighting": "Práctica: la lámpara colgante de 2700 K. Refuerzo: LED con softbox pequeño de 2700 K en (0.2,2.1,0.3), justo detrás de la lámpara y fuera de cuadro, al 40 %. Contraluz azul suave de 6500 K desde la ventana en (1.5,1.8,-1.5), al 20 %. El neón rojo funciona como práctica del fondo.",
         "beats": [
          "0-2 s: solo con las prácticas: caras oscuras y con ruido (rojo).",
@@ -3210,6 +4313,9 @@
          "5-7 s: el palo baja a 1.2 m: contrapicado con papada (rojo).",
          "7-9 s: T se da vuelta y el sol queda detrás de su cabeza: silueta (rojo).",
          "9-11 s: T vuelve a caminar hacia +Z y tapa el lente con la mano para la transición al siguiente tramo."
+        ],
+        "errores": [
+         "CONTRALUZ"
         ]
        }
       },
@@ -3326,7 +4432,7 @@
        "procedure": [
         "Visita la locación (o pide una videollamada) 1 a 3 días antes, a la misma hora de la grabación.",
         "Toma fotos de prueba en 9:16 desde las posiciones de cámara previstas.",
-        "Anota la dirección de la luz: ventanas, posición del sol a esa hora (con una app de posición del sol) y tipo de luces del local; graba 5 s a 1/60 para probar el parpadeo.",
+        "Anota la dirección de la luz: ventanas, posición del sol a esa hora (con una app de posición del sol) y tipo de luces del local; graba 5 s a 60 fps con 1/120 (la obturación estándar) para probar el parpadeo.",
         "Escucha 1 minuto en silencio: extractor, refrigeradora, calle, música. Pregunta si se pueden apagar y quién lo hace.",
         "Ubica enchufes, llaves de luz y la distancia disponible (3 m o más para planos generales).",
         "Confirma por escrito con el dueño o encargado el horario sin clientes, el acceso y el permiso para grabar a los empleados.",

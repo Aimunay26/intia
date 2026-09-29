@@ -7,6 +7,9 @@
  *
  * Uso: node scripts/manual-content.mjs
  * Se quitan youtubeQueries, sources, researchNotes y verified: no se muestran.
+ * Se conservan y validan «guia» (GuideId), «scene3d.preset» / «scene3d.errores» y el error
+ * entre corchetes al inicio de un paso («[CONTRALUZ] 0-2 s: …»)
+ * (ScenePreset / SceneMistake), leídos de las uniones de src/lib/manual.ts.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,7 +23,7 @@ const curriculum = JSON.parse(fs.readFileSync(source, "utf8"));
 /** Orden de flujo del video. Los perfiles de Intia deciden qué tarjeta sale primero («Tu rol»). */
 const ROLES = [
   { id: "GUIONISTA", slug: "guionista", name: "Guionista", profiles: ["WRITER"], tagline: "Convierte cada idea en un guion listo para grabar." },
-  { id: "FILMMAKER", slug: "filmmaker", name: "Filmmaker", profiles: ["CAMERA"], tagline: "Graba material vertical nítido, con buena luz y audio limpio." },
+  { id: "FILMMAKER", slug: "filmmaker", name: "Filmmaker", profiles: ["CAMERA"], tagline: "Graba en 4K a 60 fps material nítido y bien encuadrado, con buena luz y audio limpio." },
   { id: "ACTOR", slug: "actor", name: "Actor", profiles: ["TALENT"], tagline: "Da vida al guion frente a cámara, dentro de su marca personal." },
   { id: "EDITOR", slug: "editor", name: "Editor", profiles: ["EDITOR"], tagline: "Monta, ritma y subtitula el corte final en vertical." },
   { id: "JEFE_EDITORES", slug: "jefe-de-editores", name: "Jefe de editores", profiles: ["EDITOR"], tagline: "Asigna, revisa y aprueba la calidad de cada edición." },
@@ -32,6 +35,49 @@ const LEVELS = ["PRINCIPIANTE", "INTERMEDIO", "AVANZADO"];
 const MEDIA = ["ESCENA_3D", "VIDEO_REFERENCIA", "CHECKLIST", "PLANTILLA", "CASO_PRACTICO"];
 const text = value => String(value ?? "").trim();
 const list = value => (Array.isArray(value) ? value.map(text).filter(Boolean) : []);
+
+/**
+ * Guías, presets y errores válidos: se leen de las uniones de src/lib/manual.ts para que el
+ * currículo y los tipos no se separen. Un valor fuera de la lista detiene la generación.
+ */
+const typesSource = fs.readFileSync(path.join(root, "src/lib/manual.ts"), "utf8");
+function unionValues(name) {
+  const found = new RegExp(`export type ${name} =([^;]+);`).exec(typesSource);
+  assert.ok(found, `No encontré el tipo ${name} en src/lib/manual.ts`);
+  const values = [...found[1].matchAll(/"([^"]+)"/g)].map(match => match[1]);
+  assert.ok(values.length > 0, `El tipo ${name} de src/lib/manual.ts no tiene valores`);
+  return values;
+}
+const GUIDES = unionValues("GuideId");
+const PRESETS = unionValues("ScenePreset");
+const MISTAKES = unionValues("SceneMistake");
+
+function guideOf(lesson) {
+  if (lesson.guia === undefined) return undefined;
+  assert.ok(GUIDES.includes(lesson.guia), `${lesson.id}: guía desconocida «${lesson.guia}». Válidas: ${GUIDES.join(", ")}`);
+  return lesson.guia;
+}
+
+function sceneOf(lesson) {
+  const s = lesson.scene3d;
+  const scene = { environment: text(s.environment), subjects: text(s.subjects), camera: text(s.camera), lighting: text(s.lighting), beats: list(s.beats) };
+  // Un paso puede mostrar un error mientras dura: «[TRIPODE_MUY_BAJO] 2-4 s: …».
+  for (const beat of scene.beats) {
+    const tag = /^\[([^\]]*)\]/.exec(beat);
+    if (tag) assert.ok(MISTAKES.includes(tag[1]), `${lesson.id}: error 3D desconocido en un paso «${tag[1]}». Válidos: ${MISTAKES.join(", ")}`);
+  }
+  if (s.preset !== undefined) {
+    assert.ok(PRESETS.includes(s.preset), `${lesson.id}: preset 3D desconocido «${s.preset}». Válidos: ${PRESETS.join(", ")}`);
+    scene.preset = s.preset;
+  }
+  if (s.errores !== undefined) {
+    assert.ok(Array.isArray(s.errores) && s.errores.length > 0, `${lesson.id}: «errores» debe ser una lista con al menos un error`);
+    for (const mistake of s.errores) assert.ok(MISTAKES.includes(mistake), `${lesson.id}: error 3D desconocido «${mistake}». Válidos: ${MISTAKES.join(", ")}`);
+    assert.equal(new Set(s.errores).size, s.errores.length, `${lesson.id}: errores 3D repetidos`);
+    scene.errores = [...s.errores];
+  }
+  return scene;
+}
 
 fs.mkdirSync(path.join(outDir, "roles"), { recursive: true });
 const summaries = [];
@@ -73,7 +119,10 @@ for (const meta of ROLES) {
               passCriteria: text(l.passCriteria),
               mediaType: l.mediaType,
             };
-            if (l.scene3d) lesson.scene3d = { environment: text(l.scene3d.environment), subjects: text(l.scene3d.subjects), camera: text(l.scene3d.camera), lighting: text(l.scene3d.lighting), beats: list(l.scene3d.beats) };
+            const guia = guideOf(l);
+            if (guia) lesson.guia = guia;
+            assert.equal(Boolean(l.scene3d), l.mediaType === "ESCENA_3D", `${l.id}: solo las lecciones ESCENA_3D llevan scene3d (y todas la llevan)`);
+            if (l.scene3d) lesson.scene3d = sceneOf(l);
             return lesson;
           }),
         };

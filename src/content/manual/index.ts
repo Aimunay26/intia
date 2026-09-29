@@ -61,22 +61,22 @@ export const MANUAL_ROLE_INDEX: readonly ManualRoleSummary[] = [
     "id": "FILMMAKER",
     "slug": "filmmaker",
     "name": "Filmmaker",
-    "tagline": "Graba material vertical nítido, con buena luz y audio limpio.",
+    "tagline": "Graba en 4K a 60 fps material nítido y bien encuadrado, con buena luz y audio limpio.",
     "profiles": [
       "CAMERA"
     ],
-    "modules": 17,
-    "lessons": 80,
-    "videos": 44,
-    "scenes": 55,
+    "modules": 21,
+    "lessons": 100,
+    "videos": 74,
+    "scenes": 61,
     "levels": [
       {
         "level": "PRINCIPIANTE",
-        "modules": 5
+        "modules": 8
       },
       {
         "level": "INTERMEDIO",
-        "modules": 6
+        "modules": 7
       },
       {
         "level": "AVANZADO",
@@ -86,9 +86,9 @@ export const MANUAL_ROLE_INDEX: readonly ManualRoleSummary[] = [
     "sopPreview": [
       "Etapa GUION (antes de la aprobación): cuando coordinación comparte un guion en revisión, leerlo y comentar en la ficha de Intia en menos de 24 h si alguna escena no se puede grabar (locación, permisos, presupuesto, seguridad o tiempo), proponiendo una alternativa.",
       "LUNES – Planificación (1 h): en Intia, filtrar los videos asignados en estado APROBADO (check 'Guion aprobado por la marca' marcado); leer cada guion escena por escena; armar la lista de tomas y el plan por bloques (locación > luz > talento); pedir a producción props, vestuario, locación y permisos, y confirmar con ella los checks de PREPRODUCCIÓN 'Actor asignado y confirmado' y 'Props / vestuario conseguidos'.",
-      "D-1 – Preproducción: hacer el scouting de las locaciones nuevas a la hora de grabación (foto de prueba 9:16, luz, ruido, enchufes, prueba de parpadeo); confirmar por escrito el permiso del local; enviar al talento la lista de tomas, marcas y vestuario; cargar baterías, vaciar las memorias ya respaldadas, limpiar lentes y cargar el overlay de zona segura; marcar 'Locación e iluminación listas'.",
+      "D-1 – Preproducción: hacer el scouting de las locaciones nuevas a la hora de grabación (foto de prueba 9:16, luz, ruido, enchufes, prueba de parpadeo); confirmar por escrito el permiso del local; enviar al talento la lista de tomas, marcas y vestuario; cargar baterías (celulares, luz LED de mano, power banks y, si la hay, la cámara), vaciar las memorias ya respaldadas, formatear el SSD si se graba ProRes Log en iPhone, limpiar lentes y cargar el overlay de zona segura; marcar 'Locación e iluminación listas'.",
       "DÍA DE GRABACIÓN, al llegar: pasar los videos del día de APROBADO a GRABACION en Intia.",
-      "T-45 min – Montaje: revisar la seguridad (pesos en trípodes, cables con cinta), montar luces según el esquema, apagar fluorescentes o fijar la obturación en 1/60 contra el parpadeo de la red de 60 Hz."
+      "T-45 min – Montaje: revisar la seguridad (pesos en trípodes, cables con cinta), montar luces según el esquema (principal, relleno y luz trasera de color si el guion lo pide), apagar fluorescentes o fijar la obturación en 1/120 (o 1/60) contra el parpadeo de la red de 60 Hz, y dejar la luz LED de mano lista para las zonas con poca luz."
     ]
   },
   {
@@ -100,9 +100,9 @@ export const MANUAL_ROLE_INDEX: readonly ManualRoleSummary[] = [
       "TALENT"
     ],
     "modules": 17,
-    "lessons": 71,
-    "videos": 51,
-    "scenes": 33,
+    "lessons": 73,
+    "videos": 52,
+    "scenes": 35,
     "levels": [
       {
         "level": "PRINCIPIANTE",

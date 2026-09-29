@@ -12,7 +12,66 @@ import { MANUAL_ROLE_INDEX, type ManualLevel, type ManualRoleId, type ManualRole
 
 export type { ManualLevel, ManualRoleId, ManualRoleSummary };
 export type ManualMediaType = "ESCENA_3D" | "VIDEO_REFERENCIA" | "CHECKLIST" | "PLANTILLA" | "CASO_PRACTICO";
-export type ManualScene3d = { environment: string; subjects: string; camera: string; lighting: string; beats: string[] };
+
+/**
+ * Guía ilustrada paso a paso de un equipo (maquetas SVG propias en src/content/manual/guias.ts).
+ * scripts/manual-content.mjs lee esta unión para validar el currículo: agregar un id aquí
+ * exige su guía en DEVICE_GUIDES.
+ */
+export type GuideId =
+  | "iphone-log"
+  | "iphone-formato-4k"
+  | "iphone-foco-exposicion"
+  | "samsung-log"
+  | "samsung-formato-4k"
+  | "samsung-foco-exposicion"
+  | "zve10-formato"
+  | "zve10-log"
+  | "zve10-enfoque"
+  | "zve10-exposicion"
+  | "zve10-audio-y-energia";
+
+/** Escena 3D armada de antemano (cámara, sujeto y luces) que el visor usa en vez de adivinar por el texto. */
+export type ScenePreset =
+  | "INFORMATIVO_PECHO"
+  | "AUTORIDAD_CONTRAPICADO"
+  | "VULNERABLE_PICADO"
+  | "PODCAST_SEMILATERAL"
+  | "SEGUIMIENTO_RITMO"
+  | "TRES_PUNTOS_COLOR"
+  | "LUZ_DE_MANO";
+
+/**
+ * Error que el visor 3D puede mostrar al pulsar «Incorrecto» para compararlo con lo correcto.
+ * Un paso de la escena también puede mostrarlo mientras dura: el texto del paso empieza con
+ * el error entre corchetes («[TRIPODE_MUY_BAJO] 2-4 s: …»).
+ */
+export type SceneMistake =
+  | "CONTRALUZ"
+  | "CODOS_ABIERTOS"
+  | "PIES_JUNTOS"
+  | "OJOS_FUERA_DEL_TERCIO"
+  | "TRIPODE_MUY_BAJO"
+  | "TRIPODE_MUY_ALTO"
+  | "MOVIMIENTO_BRUSCO"
+  | "SIN_LUZ_TRASERA"
+  | "CABEZA_CORTADA"
+  | "CONTRAPICADO_EXAGERADO"
+  | "PICADO_FUERTE"
+  | "SIN_LUZ_DE_MANO"
+  | "LUZ_PEGADA_AL_LENTE"
+  | "TRASERA_MISMO_COLOR"
+  | "SIN_ESPACIO_DE_MIRADA";
+
+export type ManualScene3d = {
+  environment: string;
+  subjects: string;
+  camera: string;
+  lighting: string;
+  beats: string[];
+  preset?: ScenePreset;
+  errores?: SceneMistake[];
+};
 export type ManualLesson = {
   id: string;
   title: string;
@@ -23,6 +82,8 @@ export type ManualLesson = {
   practice: string;
   passCriteria: string;
   mediaType: ManualMediaType;
+  /** Guía ilustrada del equipo (iPhone, Samsung o Sony ZV-E10) que acompaña a la lección. */
+  guia?: GuideId;
   scene3d?: ManualScene3d;
 };
 export type ManualVideo = { url: string; title: string; channel: string; language: string; why: string };

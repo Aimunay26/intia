@@ -248,7 +248,7 @@ Cómo recibir el material, nombrarlo, respaldarlo, revisar los problemas típico
 
 **Pasos:**
 
-1. Revisa en MediaInfo o en las propiedades del clip los fps del material. En Perú la red eléctrica es de 60 Hz, así que el estándar del equipo es 30 fps (29,97); los 60 fps se reservan para cámara lenta.
+1. Revisa en MediaInfo o en las propiedades del clip los fps del material. En Perú la red eléctrica es de 60 Hz: el filmmaker graba a 60 fps (120 fps en las tomas de cámara lenta, con sufijo _120) y la línea de tiempo estándar del equipo es de 30 fps (29,97).
 2. Crea el lienzo o secuencia de 1080x1920 (9:16) a 30 fps, o a 29,97 si todo el material es de 29,97. En CapCut: proporción 9:16. En Premiere: secuencia personalizada de 1080x1920. En Resolve: línea de tiempo de 1080x1920.
 3. Usa el material de 60 fps al 100% si el movimiento es normal, o al 50% de velocidad para cámara lenta (en Premiere, con 'Interpretar metraje' a 30 fps). La secuencia no se cambia a 60.
 4. Pon el overlay PNG de zona segura en la pista superior y desactívalo al exportar.
@@ -1683,15 +1683,16 @@ Conversión de material Log, corrección primaria con scopes, pieles naturales, 
 
 #### Material Log a Rec.709 · _Video de referencia_
 
-**Objetivo:** Convertir correctamente el material grabado en perfil Log (Apple Log, S-Log3, V-Log) antes de corregir el color.
+**Objetivo:** Convertir correctamente el material grabado en perfil Log (Apple Log, Samsung Log, S-Log3, V-Log) antes de corregir el color.
 
 **Pasos:**
 
-1. Reconoce el Log: se ve gris, lavado y sin contraste. Confirma en la nota del filmmaker qué perfil usó (por ejemplo, Apple Log en iPhone 15 Pro o posterior, S-Log3 en Sony). Si no lo sabe, no adivines.
-2. Resolve: arma los nodos en este orden: 1) exposición y balance, 2) Color Space Transform o LUT oficial del fabricante a Rec.709, 3) look de la marca.
-3. Premiere: las versiones recientes detectan el Log de muchas cámaras con la gestión de color automática; si no, carga el LUT oficial como 'LUT de entrada' en Lumetri y corrige después.
-4. CapCut: importa el LUT oficial en Ajustes > LUT y aplícalo antes de cualquier filtro.
-5. Revisa piel y producto en el vectorscopio y compara con un clip SDR del mismo día.
+1. Reconoce el Log: se ve gris, lavado y sin contraste. Confirma en el TXT de notas del filmmaker qué perfil usó (Apple Log en iPhone 15 Pro, 16 Pro, 17 Pro o 18 Pro, Samsung Log en Galaxy S24 o posterior, S-Log3 en la Sony ZV-E10). Si no lo sabe, no adivines.
+2. Usa la LUT oficial del fabricante: Apple Log → Rec.709 (developer.apple.com, con una Cuenta de Apple), 'Samsung Log to Rec709 3DLUT_v1.0.cube' (developer.samsung.com) o S-Log3/S-Gamut3.Cine → 709 de Sony (DaVinci trae 'SLog3SGamut3.CineToLC-709'). La ZV-E10 II puede traer el LUT incrustado en el archivo.
+3. Resolve: arma los nodos en este orden: 1) exposición y balance, 2) Color Space Transform o LUT oficial del fabricante a Rec.709, 3) look de la marca.
+4. Premiere: las versiones recientes detectan el Log de muchas cámaras con la gestión de color automática; si no, carga el LUT oficial como 'LUT de entrada' en Lumetri y corrige después.
+5. CapCut: importa el LUT oficial en Ajustes > LUT y aplícalo antes de cualquier filtro.
+6. Revisa piel y producto en el vectorscopio y compara con un clip SDR del mismo día.
 
 **Errores comunes:**
 
@@ -1709,6 +1710,13 @@ Conversión de material Log, corrección primaria con scopes, pieles naturales, 
 **Práctica:** Convierte 3 clips en Apple Log (o S-Log3) de un vlog en la tienda de Con Amor y compáralos con un clip SDR del mismo día.
 
 **Se aprueba cuando:** Los clips convertidos y los SDR se ven iguales en exposición y color, validado por el Jefe de Editores.
+
+<details><summary>Fuentes</summary>
+
+- https://developer.samsung.com/mobile/samsung-log-video.html
+- https://helpguide.sony.net/ilc/2430/v1/es/print.pdf
+
+</details>
 
 #### Exposición y balance · _Video de referencia_
 
@@ -2496,7 +2504,7 @@ Pasar material horizontal a 9:16, sacar varios encuadres de una sola toma 4K ver
 - **Entorno:** La tienda de Con Amor, con un estante de tazas y poleras al fondo. Sobre la escena hay un marco grande vertical 4K (2160x3840) y, dentro de él, tres rectángulos 9:16: verde para el general (todo el marco), amarillo para el medio y rojo para el primer plano.
 - **Cuerpos y movimiento:** Una presentadora 3D de pie que habla gesticulando con las manos. Al mencionar el precio levanta una taza. Mueve levemente la cabeza.
 - **Cámara:** Cámara virtual fija sobre trípode, frontal, a la altura de los ojos, 24-35 mm equivalente, con encuadre vertical 4K y aire arriba y a los lados. No se mueve: los recortes 9:16 se animan como si fueran cámaras digitales dentro del cuadro.
-- **Luz:** Luz principal suave a 45° desde la derecha, relleno suave desde la izquierda y un contraluz tenue que la separa del fondo, a 5000-5600K. Luces prácticas cálidas en el estante.
+- **Luz:** Luz principal suave a 45° desde la derecha, relleno suave desde la izquierda y un contraluz tenue y cálido (3200 K) que la separa del fondo; principal y relleno a 5000-5600K. Luces prácticas cálidas en el estante.
 - **Momentos:**
   1. 0-2 s: vista completa del marco 4K con los tres rectángulos visibles.
   2. 2-5 s: la presentadora dice la frase de contexto y se ilumina el rectángulo verde (general, 1x).

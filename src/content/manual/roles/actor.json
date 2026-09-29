@@ -91,7 +91,7 @@
      "id": "ACT-P1",
      "slug": "act-p1",
      "title": "Tu cuerpo en 9:16",
-     "summary": "El cuadro vertical: qué ve la cámara en cada plano, qué tapa la interfaz de cada app y de los anuncios, cómo pararte y cómo encontrar tu luz.",
+     "summary": "El cuadro vertical: qué ve la cámara en cada plano, qué tapa la interfaz de cada app y de los anuncios, cómo pararte (un pie adelantado, rodillas sueltas y codos cerca del cuerpo) y cómo encontrar tu luz.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=aaK4xhAX_ms",
@@ -113,6 +113,13 @@
        "channel": "Agus Tocalini",
        "language": "es",
        "why": "Muestra las zonas seguras de TikTok, Reels y Shorts, es decir, qué tapa la interfaz de la app. Sirve para que el talento no ponga cara ni producto donde luego van botones o texto."
+      },
+      {
+       "url": "https://www.youtube.com/watch?v=sFxaqemfq58",
+       "title": "Poses para fotos - Cómo posar y salir bien en una sesión de fotos profesional 📸 Poses de Pie 2/3",
+       "channel": "Cristina Robles",
+       "language": "es",
+       "why": "Postura de pie paso a paso: un pie adelantado, el peso atrás, las rodillas sueltas y los brazos separados del cuerpo sin abrir los codos."
       }
      ],
      "lessons": [
@@ -149,7 +156,7 @@
         "environment": "Estudio blanco infinito de 6×6 m con piso gris claro y una marca en T en el origen (0,0,0). Sobre la imagen, un marco 9:16 que cambia de tamaño según el plano y una etiqueta con el nombre del plano.",
         "subjects": "Maniquí actor de 1,70 m (ojos a 1,60 m) en la marca, yaw 0° (mira a cámara), sosteniendo una polera doblada a 1,10 m. Repite el mismo gesto de presentar la polera con distinta amplitud. Plano entero: brazos a 60 cm del torso. Plano medio: 30 cm, con la polera subida a 1,25 m. Plano medio corto: polera junto a la cara en (-0,12, 1,50, 0,15). Primer plano: sin manos, cejas arriba 0,2 s, sonrisa y cabeza inclinada 5°.",
         "camera": "Celular vertical 9:16 con dolly lineal (1,5 s por transición). Entero: 26 mm en (0,1,30,1,60), target (0,0,92,0), cuadro de ≈2,1 m de alto. Americano: 26 mm en (0,1,45,1,15), target (0,1,22,0). Medio: 26 mm en (0,1,50,0,75), target (0,1,42,0). Medio corto: cambio a 50 mm (2x); la cámara retrocede a (0,1,55,1,00), target (0,1,52,0). Primer plano: 50 mm en (0,1,60,0,70), target (0,1,60,0). Etiqueta en pantalla: '1x nunca a menos de 60 cm de la cara'.",
-        "lighting": "Key: softbox de 90 cm a 45° cámara-izquierda en (-1,0, 2,1, 1,0), 5600 K, 100%. Relleno: panel blanco de rebote en (1,0, 1,2, 0,8). Contraluz: LED de 30 cm en (0,5, 2,4, -1,0), 5600 K, 40%.",
+        "lighting": "Key: softbox de 90 cm a 45° cámara-izquierda en (-1,0, 2,1, 1,0), 5600 K, 100%. Relleno: panel blanco de rebote en (1,0, 1,2, 0,8). Contraluz: LED de 30 cm en (0,5, 2,4, -1,0), cálido de 3200 K (otro color que el key), 40%.",
         "beats": [
          "0-3 s: plano entero. El maniquí abre los brazos y presenta la polera. Etiqueta: 'En plano entero habla el cuerpo'.",
          "3-6 s: dolly a plano americano. Mismo gesto, más contenido.",
@@ -209,23 +216,24 @@
        "title": "Postura base",
        "objective": "Pararte estable, abierto a cámara y sin balancearte, en una postura neutra activa desde la que arranca cualquier acción.",
        "procedure": [
-        "Pon los pies al ancho de las caderas sobre la marca, con el peso repartido 50/50 y las rodillas sueltas (no bloqueadas).",
+        "Sobre la marca, adelanta un poco un pie (15-20 cm), deja el peso en el pie de atrás y las rodillas sueltas, levemente flexionadas; nunca pies juntos ni rodillas trabadas (lección 'Pies y rodillas').",
         "Gira el torso 15-20° respecto al lente (el hombro más cercano a cámara, ligeramente adelante) y deja la cara de frente.",
         "Hombros abajo y atrás, cuello largo y barbilla 1-2 cm hacia adelante y hacia abajo.",
-        "Brazos sueltos, o manos juntas a la altura del ombligo con el producto listo. Nunca cruzados ni en los bolsillos.",
+        "Codos cerca del cuerpo, con un pequeño espacio entre el brazo y el torso, y manos a la altura del ombligo con el producto listo. Nunca brazos cruzados, en jarra ni en los bolsillos (lección 'Codos cerca del cuerpo').",
         "Antes de 'acción', respira una vez por la nariz y suelta los hombros. Mantén el peso fijo mientras dices la frase."
        ],
        "commonMistakes": [
         "Balancearte de un pie a otro: en plano medio se nota y te saca de foco.",
         "Brazos cruzados o manos en los bolsillos: se lee como cierre o desinterés.",
         "Cuerpo cuadrado a cámara: ensancha la figura.",
-        "Levantar la barbilla al hablar fuerte."
+        "Levantar la barbilla al hablar fuerte.",
+        "Pies juntos y rodillas trabadas: postura rígida que te hace balancear."
        ],
        "checklist": [
-        "Pies en la marca al ancho de caderas.",
+        "Un pie adelantado, peso atrás y rodillas sueltas.",
         "Torso girado 15-20° y cara al lente.",
         "Hombros sueltos.",
-        "Manos visibles y listas.",
+        "Codos cerca del cuerpo y manos visibles.",
         "Cero balanceo."
        ],
        "practice": "Graba 30 s presentando un servicio ('Lavamos tu sofá en tu casa en 2 horas') con un palo de escoba vertical detrás como referencia. Revisa cuánto se mueve tu cabeza.",
@@ -233,15 +241,107 @@
        "mediaType": "ESCENA_3D",
        "scene3d": {
         "environment": "Estudio gris neutro. En el piso, una marca en T (la barra superior va en las puntas de los pies y el tallo apunta a cámara) y una retícula de 10 cm para medir desplazamientos.",
-        "subjects": "Maniquí de 1,70 m. Versión incorrecta: yaw 0°, pies juntos, brazos cruzados y balanceo lateral de ±8 cm a 0,5 Hz. Versión correcta: pies separados 0,30 m, torso con yaw +18° (hombro izquierdo del actor adelantado hacia cámara), cabeza con yaw 0° mirando al lente y manos juntas a 1,05 m sosteniendo una polera doblada.",
+        "subjects": "Maniquí de 1,70 m. Versión incorrecta: yaw 0°, pies juntos con las rodillas trabadas, brazos cruzados y balanceo lateral de ±8 cm a 0,5 Hz. Versión correcta: pie izquierdo 0,18 m adelante con el peso en el pie de atrás y las rodillas sueltas, torso con yaw +18° (hombro izquierdo del actor adelantado hacia cámara), cabeza con yaw 0° mirando al lente, codos cerca del cuerpo y manos juntas a 1,05 m sosteniendo una polera doblada.",
         "camera": "Celular vertical de 26 mm en (0, 1,55, 1,00), target (0, 1,25, 0). Plano americano-medio, con un cuadro de ≈1,33 m de alto. Vista auxiliar cenital desde 3,5 m de altura para mostrar el ángulo de los pies y del torso.",
-        "lighting": "Key: softbox a 45° cámara-izquierda en (-1,0, 2,1, 1,0), 5600 K. Contraluz en (0,6, 2,4, -1,0), 5600 K, 40%, para separar la silueta. Sin relleno, para que se lea el volumen del torso girado.",
+        "lighting": "Key: softbox a 45° cámara-izquierda en (-1,0, 2,1, 1,0), 5600 K. Contraluz en (0,6, 2,4, -1,0), cálido de 3200 K, 40%, para separar la silueta. Sin relleno, para que se lea el volumen del torso girado.",
         "beats": [
          "0-4 s: versión incorrecta con balanceo y brazos cruzados. La retícula marca ±8 cm en rojo.",
          "4-6 s: imagen congelada. Etiqueta: 'Cuerpo cuadrado + balanceo'.",
-         "6-9 s: el maniquí separa los pies a 30 cm, suelta los brazos y gira el torso a +18° sin quitar la cabeza del lente.",
+         "6-9 s: el maniquí adelanta el pie izquierdo 18 cm, pasa el peso atrás, suelta los brazos con los codos cerca del cuerpo y gira el torso a +18° sin quitar la cabeza del lente.",
          "9-12 s: la vista cenital muestra el ángulo de 18° y los pies en la T.",
          "12-16 s: dice su frase con microgestos a la altura del ombligo. La retícula pasa a verde (0 cm de desplazamiento)."
+        ],
+        "errores": [
+         "PIES_JUNTOS",
+         "CODOS_ABIERTOS"
+        ]
+       }
+      },
+      {
+       "id": "ACT-P1-L5",
+       "title": "Pies y rodillas",
+       "objective": "Pararte con un pie un poco adelantado y las rodillas levemente flexionadas para verte natural, estable y sin balanceo, en vez de con los pies juntos y las piernas rígidas.",
+       "procedure": [
+        "Desde la marca, adelanta un pie unos 15-20 cm con la punta hacia la cámara; el pie de atrás queda un poco abierto hacia afuera.",
+        "Deja el peso en el pie de atrás: el cuerpo queda relajado y en ligero ángulo, con la cara al lente.",
+        "Suelta las rodillas: levemente flexionadas, sobre todo la de adelante. Nunca las trabes.",
+        "Los pies juntos son la postura de 'tabla': te ves rígido, ocupas más ancho de frente y te balanceas sin darte cuenta.",
+        "Si caminas hasta la marca, llega ya con esta postura: frena con el pie de atrás y deja el de adelante suelto.",
+        "En tomas largas, cambia el peso solo entre frases o durante el corte, nunca mientras hablas."
+       ],
+       "commonMistakes": [
+        "Pies juntos y rodillas trabadas: te ves tieso y te balanceas.",
+        "Peso en el pie de adelante: el cuerpo se va hacia la cámara y sale de foco.",
+        "Cambiar el peso de un pie a otro mientras hablas: en plano medio se nota.",
+        "Abrir mucho las piernas: postura de 'vaquero' que ensancha la figura."
+       ],
+       "checklist": [
+        "Un pie adelantado 15-20 cm.",
+        "Peso en el pie de atrás.",
+        "Rodillas sueltas.",
+        "Cuerpo en ligero ángulo y cara al lente.",
+        "Cero balanceo."
+       ],
+       "practice": "Grábate 20 s en plano entero diciendo tu presentación con los pies juntos y 20 s con un pie adelantado y las rodillas sueltas, con un palo de escoba vertical detrás como referencia.",
+       "passCriteria": "En la segunda toma la cabeza no se desplaza más de 5 cm hacia los lados y el filmmaker la elige como la más natural.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Estudio gris neutro. En el piso, una marca en T y una retícula de 10 cm para medir el balanceo.",
+        "subjects": "Maniquí de 1,70 m en (0, 0, 0). Versión incorrecta: pies juntos, rodillas trabadas y cuerpo cuadrado a cámara, con balanceo lateral de ±6 cm a 0,5 Hz. Versión correcta: pie izquierdo 0,18 m adelante con la punta hacia la cámara, peso en el pie de atrás, rodillas flexionadas 8°, torso girado 18° y cara al lente.",
+        "camera": "Celular vertical en trípode a la altura de la cintura en (0, 1,00, 1,6), inclinación 0°, lente de 26 mm, plano entero. Vista auxiliar lateral para ver las rodillas.",
+        "lighting": "Key: softbox a 45° cámara-izquierda en (-1,0, 2,1, 1,0), 5600 K. Luz trasera en (0,6, 2,4, -1,0), cálida de 3200 K (otro color que el frente), 40 %.",
+        "beats": [
+         "[PIES_JUNTOS] 0-3 s: pies juntos y rodillas trabadas: cuerpo rígido y la retícula marca ±6 cm de balanceo (rojo 'pies juntos').",
+         "[PIES_JUNTOS] 3-5 s: vista lateral: las rodillas no tienen flexión (rojo).",
+         "5-8 s: el maniquí adelanta el pie izquierdo, pasa el peso atrás y suelta las rodillas (verde).",
+         "8-12 s: dice su frase: el balanceo baja a 0 cm y la retícula pasa a verde."
+        ],
+        "errores": [
+         "PIES_JUNTOS"
+        ]
+       }
+      },
+      {
+       "id": "ACT-P1-L6",
+       "title": "Codos cerca del cuerpo",
+       "objective": "Mantener los codos cerca del cuerpo, sin aplastar los brazos, para que tu silueta se vea bien formada y tus gestos queden dentro del cuadro vertical.",
+       "procedure": [
+        "Deja los codos cerca de la cintura, con un pequeño espacio (2-5 cm) entre el brazo y el torso: la cintura se marca y la silueta se estiliza.",
+        "No abras los codos hacia afuera ni pongas las manos en la cintura 'en jarra': ensanchas la figura y los gestos se salen del cuadro 9:16.",
+        "No aplastes los brazos contra el cuerpo: el brazo se ensancha y te ves rígido.",
+        "Gesticula dentro de la 'caja' que va de la parte alta del pecho a la cintura, con las palmas abiertas y sin prisa.",
+        "Cuando muestras un producto, los codos siguen cerca del cuerpo y el producto sube a la altura del pecho, fuera del 35 % inferior de la pantalla.",
+        "Antes de la primera toma, mira en el monitor del filmmaker cómo se ve tu silueta."
+       ],
+       "commonMistakes": [
+        "Codos abiertos o manos en la cintura: silueta ancha y postura agresiva.",
+        "Brazos aplastados contra el torso: más ancho y tenso.",
+        "Gestos grandes por encima de los hombros: se cortan en vertical.",
+        "Manos que se mueven muy rápido: distraen del mensaje."
+       ],
+       "checklist": [
+        "Codos cerca de la cintura.",
+        "Pequeño espacio entre brazo y torso.",
+        "Gestos entre el pecho y la cintura.",
+        "Palmas abiertas y gestos lentos.",
+        "Producto a la altura del pecho."
+       ],
+       "practice": "Graba tu hook en plano medio tres veces: con los codos abiertos, con los brazos aplastados y con los codos cerca del cuerpo dejando un pequeño espacio. Compara la silueta.",
+       "passCriteria": "En la tercera toma la silueta se ve más estilizada, ningún gesto se sale del cuadro vertical y el equipo la elige como la mejor.",
+       "mediaType": "ESCENA_3D",
+       "scene3d": {
+        "environment": "Estudio con fondo crema liso.",
+        "subjects": "Maniquí de 1,70 m de pie en (0, 0, 0) mirando al lente, con un pie adelantado. Versión incorrecta: codos abiertos 35 cm, manos en la cintura (en jarra) y gestos por encima de los hombros. Versión aplastada: brazos pegados al torso. Versión correcta: codos cerca de la cintura con 4 cm de espacio y gestos entre el pecho y la cintura; sostiene una taza a la altura del pecho.",
+        "camera": "Celular vertical en trípode a la altura del pecho en (0, 1,30, 1,1), inclinación +4°, lente de 48 mm, plano medio con los ojos en la línea superior.",
+        "lighting": "Key: softbox a 45° cámara-izquierda en (-1,0, 2,1, 1,0), 5600 K. Relleno al 50 % a la derecha.",
+        "beats": [
+         "[CODOS_ABIERTOS] 0-3 s: codos abiertos y en jarra: silueta ancha y una mano sale del cuadro (rojo 'codos abiertos').",
+         "3-5 s: tampoco hay que aplastar los brazos contra el torso: el cuerpo se vería más ancho y rígido; deja un pequeño espacio.",
+         "5-8 s: codos cerca de la cintura, con un pequeño espacio: la silueta se estiliza (verde).",
+         "8-12 s: dice su frase y muestra la taza a la altura del pecho, con los gestos dentro del cuadro (verde)."
+        ],
+        "errores": [
+         "CODOS_ABIERTOS"
         ]
        }
       },
@@ -784,7 +884,7 @@
         "environment": "Restaurante criollo: mesa de 0,75 m con mantel, pared de ladrillo al fondo y lámpara colgante cálida. Marca de cinta en la mesa en (0, 0,75, 0,30).",
         "subjects": "Actor sentado detrás de la mesa en (0,0,0), ojos a 1,20 m, yaw 0°. Plato hondo de Ø 28 cm con lomo saltado. Posición 1: recibe el plato de un mozo (maniquí gris) que entra por cámara-derecha y lo sostiene con las dos manos en (0, 1,05, 0,25), inclinado 10° hacia cámara. Posición 2: lo coloca en la marca girándolo para que la carne quede al frente. Posición 3: tenedor en la mano derecha y porción de la zona trasera del plato (z 0,20), llevada a la boca por el lado derecho.",
         "camera": "Celular vertical de 26 mm en (0, 1,35, 0,95), target (0, 1,00, 0,20), con un picado suave de 15°: plano medio con el plato y el rostro. Inserto de 50 mm en (0, 1,25, 0,85), target (0, 0,75, 0,30), para el plato.",
-        "lighting": "Lámpara colgante de 2700-3000 K sobre la mesa en (0, 1,9, 0,25), al 60%. Key de rostro: softbox de 60 cm a 45° cámara-izquierda en (-0,8, 1,6, 0,8), 4300 K, 70%. Contraluz de 3200 K en (0,4, 2,0, -0,8) al 50%, para resaltar el vapor.",
+        "lighting": "Lámpara colgante de 2700-3000 K sobre la mesa en (0, 1,9, 0,25), al 60%. Key de rostro: softbox de 60 cm a 45° cámara-izquierda en (-0,8, 1,6, 0,8), 4300 K, 70%. Contraluz frío de 6000 K en (0,4, 2,0, -0,8) al 50%, para resaltar el vapor y separar al actor del fondo cálido.",
         "beats": [
          "0-2 s: el mozo entrega el plato y el actor lo inclina 10° hacia el lente. Etiqueta: 'Inclínalo'.",
          "2-4 s: lo coloca en la marca con la carne al frente.",
@@ -1309,7 +1409,7 @@
         "environment": "Tienda Con Amor: pasillo de 3,5 m entre exhibidores de poleras. A la izquierda del punto final hay un mostrador cuya esquina, en (-0,9, 0,95, 0,1), sirve de referencia periférica. Marcas de cinta: inicio verde en (0,0,-2,4) y final en T roja en (0,0,0), con el tallo hacia +Z (cámara).",
         "subjects": "Actor de 1,70 m con zancada de 0,60 m. Camina desde el inicio hacia cámara en 4 pasos a 0,8 m/s, yaw 0°. Variantes. A: se queda corto (para en z = -0,20). B: se pasa (z = +0,20). C: llega, pero baja la cabeza (pitch -35° en el último paso). D, correcta: z = 0,00, cabeza nivelada y mirada al lente.",
         "camera": "Cámara con lente de 50 mm vertical en (0, 1,55, 1,60), target (0, 1,50, 0), en plano medio al llegar (cuadro de ≈1,1 m). Foco fijado a 1,60 m. Profundidad de campo simulada de ±8 cm (cámara de cine a f/2) para mostrar el desenfoque en A y B. Nota en pantalla: en celular el desenfoque es menor y el castigo principal es salir de la luz y del encuadre. Vista cenital auxiliar para medir el error.",
-        "lighting": "Key: softbox a 40° cámara-izquierda en (-1,0, 2,1, 1,1), apuntado a la marca; a ±30 cm de ella cae un paso de diafragma. Fluorescentes de tienda de 4000 K al 40%. Contraluz de 5600 K en (0,5, 2,5, -1,0).",
+        "lighting": "Key: softbox a 40° cámara-izquierda en (-1,0, 2,1, 1,1), apuntado a la marca; a ±30 cm de ella cae un paso de diafragma. Fluorescentes de tienda de 4000 K al 40%. Contraluz cálido de 3200 K en (0,5, 2,5, -1,0), de otro color que el key.",
         "beats": [
          "0-3 s: vista cenital con los 4 pasos numerados de la marca verde a la roja y la referencia periférica resaltada.",
          "3-6 s: variante A. Frena 20 cm antes: la cara queda desenfocada y fuera del círculo de luz.",
@@ -1886,7 +1986,7 @@
         "environment": "Comedor de casa con una torta de cumpleaños sobre la mesa y una guirnalda de 'Feliz día'.",
         "subjects": "La mamá (actriz) de pie en (0,0,0), yaw -25°, hacia el hijo. El hijo en (-0,60, 0, 0,20), yaw +50°. La taza está en manos de la mamá en (0,05, 1,20, 0,20), con la foto (del perro) mirando al principio hacia ella. Movimientos de la mamá: gira la taza y mira la foto (pitch -15°), mira al hijo (yaw -40°), hace la doble toma a la taza en 0,2 s y gira la cabeza al lente (yaw 0°) con una ceja levantada.",
         "camera": "Celular vertical de 26 mm en (-0,30, 1,50, 1,30), target (-0,30, 1,35, 0,10), en plano medio con los dos personajes. A la distancia de los actores, el cuadro mide ≈1,6 m de alto y 0,9 m de ancho.",
-        "lighting": "Key cálido de 3500 K: softbox a 45° cámara-derecha en (0,9, 2,0, 1,0). Relleno de 5000 K al 30% por cámara-izquierda. Luces prácticas de la guirnalda (2700 K) al fondo. Contraluz de 3200 K.",
+        "lighting": "Key cálido de 3500 K: softbox a 45° cámara-derecha en (0,9, 2,0, 1,0). Relleno de 5000 K al 30% por cámara-izquierda. Luces prácticas de la guirnalda (2700 K) al fondo. Contraluz frío de 6000 K, de otro color que el key cálido.",
         "beats": [
          "0-2 s: el hijo entrega la taza: 'Con mi foto, mamá'.",
          "2-3 s: la mamá gira la taza y la mira sonriendo.",

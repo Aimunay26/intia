@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Box, CircleAlert, CircleCheck, ClipboardList, FileText, Film, Lightbulb, ListChecks, Target, X } from "lucide-react";
+import { Box, CircleAlert, CircleCheck, ClipboardList, FileText, Film, Images, Lightbulb, ListChecks, Target, X } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -14,6 +14,11 @@ const SceneViewer = dynamic(() => import("@/components/manual/scene-viewer"), {
   loading: () => (
     <div className="skel w-full rounded-xl" style={{ height: "min(50vh, 520px)", minHeight: 260 }} role="status" aria-label="Cargando escena 3D" />
   ),
+});
+
+// La guía ilustrada (datos + maquetas SVG) también se descarga solo si la lección tiene «guia».
+const DeviceGuide = dynamic(() => import("@/components/manual/device-guide"), {
+  loading: () => <div className="skel w-full rounded-xl" style={{ height: 420 }} role="status" aria-label="Cargando guía paso a paso" />,
 });
 
 export type LessonView = ManualLesson & { mediaLabel: string };
@@ -103,6 +108,9 @@ export function ModuleLessons({ lessons, initialLessonId }: { lessons: LessonVie
   const [infoId, setInfoId] = useState<string | null>(null);
   const [show3d, setShow3d] = useState(false);
   const detailRef = useRef<HTMLDivElement>(null);
+  const guideRef = useRef<HTMLElement>(null);
+  const sceneRef = useRef<HTMLDivElement>(null);
+  const jumpRef = useRef<"guia" | "escena" | null>(null);
   const selected = lessons.find(l => l.id === selectedId) ?? lessons[0];
   const info = lessons.find(l => l.id === infoId) ?? null;
 
@@ -119,6 +127,29 @@ export function ModuleLessons({ lessons, initialLessonId }: { lessons: LessonVie
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       requestAnimationFrame(() => detailRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }));
     }
+  }
+
+  /** Desde la ficha «!»: abre la lección y lleva a su guía o a su escena 3D. */
+  function jumpTo(id: string, target: "guia" | "escena") {
+    select(id, false);
+    if (target === "escena") setShow3d(true);
+    jumpRef.current = target;
+    setInfoId(null);
+  }
+
+  function afterDialogClose(event: Event) {
+    const target = jumpRef.current;
+    if (!target) return;
+    jumpRef.current = null;
+    // Sin esto, el foco vuelve al botón «!» y la página salta de regreso a la lista.
+    event.preventDefault();
+    requestAnimationFrame(() => {
+      const element = target === "guia" ? guideRef.current : sceneRef.current;
+      if (!element) return;
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      element.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+      element.focus({ preventScroll: true });
+    });
   }
 
   if (!selected) return <p className="text-inkmuted text-[13px]">Este módulo todavía no tiene lecciones.</p>;
@@ -169,7 +200,7 @@ export function ModuleLessons({ lessons, initialLessonId }: { lessons: LessonVie
         </div>
 
         {selected.scene3d ? (
-          <div className="mb-5">
+          <div ref={sceneRef} tabIndex={-1} className="mb-5 scroll-mt-20 outline-none">
             {show3d ? (
               <SceneViewer key={selected.id} scene={selected.scene3d} title={selected.title} />
             ) : (
@@ -185,6 +216,15 @@ export function ModuleLessons({ lessons, initialLessonId }: { lessons: LessonVie
               </div>
             )}
           </div>
+        ) : null}
+        {selected.guia ? (
+          <section ref={guideRef} tabIndex={-1} aria-labelledby={`guia-${selected.id}`} className="border-line mb-5 scroll-mt-20 rounded-xl border p-3 outline-none sm:p-4">
+            <h4 id={`guia-${selected.id}`} className="text-ink mb-3 flex items-center gap-1.5 text-[13.5px] font-bold">
+              <Images size={15} className="text-brand" aria-hidden="true" />
+              Paso a paso con imágenes
+            </h4>
+            <DeviceGuide key={`${selected.id}-${selected.guia}`} guideId={selected.guia} />
+          </section>
         ) : null}
         {selected.mediaType === "VIDEO_REFERENCIA" ? (
           <p className="text-inkmuted mb-4 text-[12.5px]">
@@ -206,11 +246,25 @@ export function ModuleLessons({ lessons, initialLessonId }: { lessons: LessonVie
 
       <Dialog open={info !== null} onOpenChange={open => { if (!open) setInfoId(null); }}>
         {info ? (
-          <DialogContent className="max-w-xl">
+          <DialogContent className="max-w-xl" onCloseAutoFocus={afterDialogClose}>
             <DialogTitle>{info.title}</DialogTitle>
-            <DialogDescription className="-mt-2 mb-4">{info.mediaLabel}{info.scene3d ? " · la escena se ve al abrir la lección" : ""}</DialogDescription>
+            <DialogDescription className="-mt-2 mb-4">
+              {info.mediaLabel}
+              {info.guia ? " · con paso a paso en imágenes" : ""}
+              {info.scene3d ? " · con escena 3D" : ""}
+            </DialogDescription>
             <LessonDetail lesson={info} compact />
-            <div className="border-line mt-5 flex justify-end border-t pt-4">
+            <div className="border-line mt-5 flex flex-wrap justify-end gap-2 border-t pt-4">
+              {info.guia ? (
+                <button type="button" className="btn btn-sm" onClick={() => jumpTo(info.id, "guia")}>
+                  <Images size={14} aria-hidden="true" /> Paso a paso con imágenes
+                </button>
+              ) : null}
+              {info.scene3d ? (
+                <button type="button" className="btn btn-sm" onClick={() => jumpTo(info.id, "escena")}>
+                  <Box size={14} aria-hidden="true" /> Ver escena 3D
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="btn btn-primary btn-sm"

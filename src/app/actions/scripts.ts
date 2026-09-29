@@ -7,6 +7,7 @@ import { assertContentAccess, assertScriptAccess, assertVideoOpen, contentScope 
 
 import { enqueueGeneration } from "@/lib/generation-jobs";
 import { dispatchGeneration } from "@/lib/generation-dispatch";
+import { generationEvent, withGenerationTrace } from "@/lib/generation-trace";
 import { revalidatePath } from "next/cache";
 import { invalidateDomain } from "@/lib/view-invalidation";
 import { redirect } from "next/navigation";
@@ -293,6 +294,15 @@ export async function generarGuion(
       };
     }
     brandId = tarjeta.brandId;
+  }
+
+  if (user.role !== "OWNER" && !brandId) {
+    // Mismo registro que el encolado (marca ausente): solo presencia y cantidad, sin IDs ni datos del pedido.
+    withGenerationTrace({}, () => generationEvent("brand_access", "info", { brandSelected: false, brandAuthorized: false, authorizedBrandCount: user.brandIds?.length ?? 0 }));
+    return {
+      error: "Elige una marca para generar el guion.",
+      detail: "En Identidad y producto, selecciona una de tus marcas autorizadas. Si no aparece ninguna, pide al Dueño que te asigne una marca activa desde Equipo.",
+    };
   }
 
   // Catálogo de productos (kill-switch PRODUCT_CATALOG_ENABLED): con una ficha

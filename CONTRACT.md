@@ -57,6 +57,7 @@ Las pantallas de negocio viven bajo `src/app/(app)/`, con `requireUser()` y carc
 
 ## Generación durable, cuotas y almacenamiento
 
+- Gemini recibe un esquema derivado del contrato Zod con todos los campos, tipos, enums y obligatorios, pero sin las restricciones de tamaño/rango que elevan la complejidad de compilación del proveedor (`geminiScriptSchema` en `src/lib/ai/gemini-schema.ts`; `GEMINI_ESQUEMA_SIMPLE="false"` vuelve al esquema anterior con límites). El prompt y la validación local conservan esos límites; no guardar una respuesta sin validarla. HTTP 408/504 y `DEADLINE_EXCEEDED` son timeouts, nunca evidencia de cuota ni motivo de descenso por saturación. Los logs sólo admiten códigos/reasons cerrados y tamaño del esquema, sin mensajes crudos. Ver `reports/diagnostico-gemini-400-504-2026-09-25.md`.
 - La acción de generar registra un trabajo y lo despacha a Workflow. Nunca mantiene una llamada de IA ligada a la pestaña del usuario.
 - Idempotencia por usuario/clave de envío; un guion por elemento de trabajo. Reclamar cada elemento con token y concesión temporal. Comprobar usuario activo y versión de acceso antes de llamar y antes de guardar.
 - No pasar prompts, documentos, claves ni respuestas a los argumentos/resultados del workflow. El ejecutor recibe sólo el ID; los datos se resuelven en el paso autorizado y quedan en PostgreSQL.
@@ -280,6 +281,7 @@ intentó.
 
 ## IA: claves, modelos y errores
 
+- **Marca y autorización del generador**: Equipo debe elegir una marca activa autorizada. Si solo tiene una disponible, se preselecciona; con varias se conserva la del video o la selección válida y, si no hay ninguna elegida, se solicita en Identidad y producto. Sin marcas disponibles se explica que el Dueño debe asignar una. El envío toma la marca del estado que muestra el resumen y el servidor vuelve a validar permisos. El Dueño conserva la generación generalista. `generation_trace` registra `brand_access` con presencia de marca, resultado de autorización y cantidad de marcas asignadas, sin IDs de usuario/marca, correos ni contenido del pedido.
 - **Las claves de IA pertenecen a la organización, no al usuario ni a la marca.**
   La instalación actual representa un único tenant lógico. Todos los usuarios
   autorizados consumen la misma credencial de cada proveedor a través del servidor;
@@ -296,11 +298,13 @@ intentó.
 - Los errores del proveedor se convierten en `AiError` en `toAiError` (`src/lib/ai/providers.ts`)
   con `code` (`auth | quota | model | server | schema | timeout`), `retryable` (`true` solo para
   `quota`, `server` y `timeout`; clave, modelo y esquema no se reintentan) y `diagnostic`
-  (`{ provider, status?, code? }`: proveedor, código HTTP y código de transporte conocido; nunca
-  claves, prompts ni el mensaje crudo). `clasificarError` mira primero los timeouts de
-  transporte, luego las clases tipadas del SDK de Anthropic, después el `status` de Gemini
-  (401/403 → `auth`, 429 → `quota`, 404 → `model`, 5xx → `server`) y solo al final el texto del
-  mensaje. Los mensajes dicen **qué pasó y qué hacer**: clave rechazada → de dónde salió
+  (`{ provider, status?, code?, reason?, providerStatus? }`: proveedor, código HTTP, código de
+  transporte conocido y motivo/estado del proveedor de listas cerradas en
+  `src/lib/ai/error-diagnostics.ts`; nunca claves, prompts ni el mensaje crudo).
+  `clasificarError` mira primero los timeouts (de transporte, y también HTTP 408/504 o
+  `DEADLINE_EXCEEDED`), luego las clases tipadas del SDK de Anthropic, después el `status` de
+  Gemini (401/403 → `auth`, 429 → `quota`, 404 → `model`, otros 5xx → `server`) y solo al final
+  el texto del mensaje. Los mensajes dicen **qué pasó y qué hacer**: clave rechazada → de dónde salió
   (`describeKeySource`) y dónde generar otra. `provider-quota` distingue cuota diaria gratuita
   agotada, cuota gratuita no disponible, falta de saldo/facturación, cuota diaria de proyecto
   y límites temporales. Solo los temporales o 429 sin causa precisa admiten reintentos.
@@ -684,6 +688,7 @@ interruptor: nunca `git revert` ni `DROP`.
 | `MANUAL_PROCEDIMIENTOS_ENABLED` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Manual de procedimientos: menú, tarjetas y `/manual/*` | — |
 | `CALENDARIO_MENSUAL` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Vista mensual del calendario para Dueño y Equipo | — |
 | `GUIONES_AJUSTE_PANTALLA` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Modo ajuste del visor y de la biblioteca de guiones | — |
+| `GEMINI_ESQUEMA_SIMPLE` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Esquema de Gemini sin límites de tamaño/rango; apagado envía el anterior con límites. La validación local no cambia | — |
 
 - Los interruptores de funciones con **tablas nuevas vienen apagados**. Apagados, ninguna
   pantalla, acción, gancho ni tarea programada consulta esas tablas: el código se puede

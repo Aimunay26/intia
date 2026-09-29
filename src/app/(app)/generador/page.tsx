@@ -290,7 +290,9 @@ export default async function GeneradorPage({
   const marcaPedida = videoElegido?.brandId ?? brandCtx.activeId ?? sp.marca;
   const marcaInicial = brandOptions.some((b) => b.id === marcaPedida)
     ? (marcaPedida as string)
-    : "";
+    : user.role !== "OWNER" && brandOptions.length === 1
+      ? brandOptions[0].id
+      : "";
 
   // null con el flag apagado: el paso 2 queda idéntico al de siempre.
   const catalog: GeneratorCatalog | null = catalogRows
@@ -323,10 +325,19 @@ export default async function GeneradorPage({
             }
           />
         </Card>
+      ) : user.role !== "OWNER" && brandOptions.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<Lock size={19} />}
+            title="Necesitas una marca asignada"
+            description="Pide al Dueño que te asigne una marca activa desde Equipo para poder generar guiones."
+          />
+        </Card>
       ) : (
         <><div className="mb-4"><Link href="/generador/trabajos" className="text-brand font-semibold">Mis generaciones →</Link><p className="text-sm text-inkmuted">Hasta {maxBatch} estructuras por solicitud. Se usa la clave de IA de la organización y la tarifa de su proveedor.</p></div>
       <GeneratorForm
           canManageAi={user.role === "OWNER"}
+          requiresBrand={user.role !== "OWNER"}
           defaultModels={{ google: resolveAiModel("google", undefined, modelSettings[SETTING_KEYS.defaultGoogleModel]), anthropic: resolveAiModel("anthropic", undefined, modelSettings[SETTING_KEYS.defaultAnthropicModel]) }}
           maxBatch={maxBatch}
           structures={structureOptions}

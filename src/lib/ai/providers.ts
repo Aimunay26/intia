@@ -4,7 +4,6 @@ import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { ApiError as GeminiApiError, GoogleGenAI } from "@google/genai";
 
 import {
-  GENERATED_SCRIPT_JSON_SCHEMA,
   GeneratedScriptSchema,
   type GeneratedScript,
 } from "@/lib/ai/schema";
@@ -12,6 +11,8 @@ import { describeKeySource, type KeySource } from "@/lib/settings";
 import { generationEvent, generationStage, withGenerationTrace } from "@/lib/generation-trace";
 import { AiBudgetError, type AiRequest } from "@/lib/ai/request-budget";
 import { classifyProviderQuota, providerQuotaMessage } from "@/lib/ai/provider-quota";
+import { geminiScriptSchema } from "@/lib/ai/gemini-schema";
+import { providerErrorDetails, type ProviderErrorReason, type ProviderErrorStatus } from "@/lib/ai/error-diagnostics";
 
 export type AiProviderId = "anthropic" | "google";
 
@@ -59,10 +60,11 @@ export type ProviderCall = {
 export type AiErrorCode = "auth" | "quota" | "model" | "server" | "schema" | "timeout";
 
 /**
- * Solo metadatos para el registro del trabajo: proveedor, código HTTP y
- * código de transporte conocido. Nunca claves, prompts ni el mensaje crudo.
+ * Solo metadatos para el registro del trabajo: proveedor, código HTTP,
+ * código de transporte conocido y motivo/estado del proveedor de listas
+ * cerradas (error-diagnostics.ts). Nunca claves, prompts ni el mensaje crudo.
  */
-export type AiDiagnostic = { provider: string; status?: number; code?: string; reason?: "provider_overloaded" };
+export type AiDiagnostic = { provider: string; status?: number; code?: string; reason?: ProviderErrorReason; providerStatus?: ProviderErrorStatus };
 
 /** Error legible para mostrar en la interfaz. */
 export class AiError extends Error {
@@ -159,23 +161,6 @@ async function generateClaude(call: ProviderCall): Promise<GenerationResult> {
 
 /* ---------------------------------------------------------------- GEMINI -- */
 
-/** Gemini no acepta todos los dialectos de JSON Schema: se limpia lo que sobra. */
-function geminiSchema(): unknown {
-  const strip = (node: unknown): unknown => {
-    if (Array.isArray(node)) return node.map(strip);
-    if (node && typeof node === "object") {
-      const out: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
-        if (key === "additionalProperties" || key === "$schema") continue;
-        out[key] = strip(value);
-      }
-      return out;
-    }
-    return node;
-  };
-  return strip(GENERATED_SCRIPT_JSON_SCHEMA);
-}
-
 export async function generateWithGemini(call: ProviderCall): Promise<GenerationResult> {
   return withGenerationTrace({ provider: "google", model: call.model, keySource: call.keySource }, () => generateGemini(call));
 }
@@ -189,6 +174,8 @@ async function generateGemini(call: ProviderCall): Promise<GenerationResult> {
     responseMimeType: "application/json",
     maxOutputTokens: resourceLimit("AI_MAX_OUTPUT_TOKENS", 32000),
   };
+  // Sin límites de tamaño salvo GEMINI_ESQUEMA_SIMPLE="false"; Zod los valida igual al recibir.
+  const schema = geminiScriptSchema();
 
   let text = "";
   let usage: { input?: number; output?: number } = {};
@@ -197,8 +184,8 @@ async function generateGemini(call: ProviderCall): Promise<GenerationResult> {
     const response = await call.request(({ timeoutMs, signal }) => generationStage("provider_request", () => new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: timeoutMs } }).models.generateContent({
       model: call.model,
       contents: call.user,
-      config: { ...baseConfig, abortSignal: signal, responseJsonSchema: geminiSchema() },
-    }), { requestIndex: 1, structured: true, timeoutMs, maxOutputTokens: baseConfig.maxOutputTokens }));
+      config: { ...baseConfig, abortSignal: signal, responseJsonSchema: schema },
+    }), { requestIndex: 1, structured: true, schemaBytes: Buffer.byteLength(JSON.stringify(schema)), timeoutMs, maxOutputTokens: baseConfig.maxOutputTokens }));
     generationEvent("provider_response", "info", { finishReason: response.candidates?.[0]?.finishReason, blockReason: response.promptFeedback?.blockReason, responseBytes: Buffer.byteLength(response.text ?? ""), inputTokens: response.usageMetadata?.promptTokenCount, outputTokens: response.usageMetadata?.candidatesTokenCount });
     text = response.text ?? "";
     usage = {
@@ -221,7 +208,7 @@ async function generateGemini(call: ProviderCall): Promise<GenerationResult> {
     if (!reintentable) {
       throw toAiError(schemaError, "google", call.keySource);
     }
-    generationEvent("schema_fallback", "info", { requestIndex: 2, structured: false });
+    generationEvent("schema_fallback", "info", { requestIndex: 2, structured: false, ...providerErrorDetails(schemaError) });
     try {
       const response = await call.request(({ timeoutMs, signal }) => generationStage("provider_request", () => new GoogleGenAI({ apiKey: call.apiKey, httpOptions: { timeout: timeoutMs } }).models.generateContent({
         model: call.model,
@@ -387,6 +374,7 @@ function esTimeout(error: unknown): boolean {
   const fields = errorFields(error);
   const code = transportCode(error);
   return (
+    providerErrorDetails(error).reason === "deadline_exceeded" ||
     fields.name === "AbortError" ||
     fields.name === "TimeoutError" ||
     Boolean(code?.includes("TIMEOUT")) ||
@@ -527,7 +515,7 @@ export function toAiError(
     provider: label,
     status: status !== undefined && status >= 400 && status <= 599 ? status : undefined,
     code: transportCode(error),
-    reason: esErrorDeSaturacion(error) ? "provider_overloaded" : undefined,
+    ...providerErrorDetails(error),
   };
   const fallo = (resumen: string, detalle: string, retryable = false) =>
     new AiError(resumen, detalle, code ?? undefined, retryable, diagnostic);
@@ -555,7 +543,7 @@ export function toAiError(
     case "timeout":
       return fallo(
         `${label} tardó demasiado en responder.`,
-        "Se reintentará dentro del límite de intentos de este trabajo.",
+        "Se agotó el plazo de respuesta. El trabajo reintenta si quedan intentos; si terminó, usa el botón de reintento.",
         true
       );
     case "server":

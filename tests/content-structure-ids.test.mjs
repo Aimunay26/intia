@@ -182,9 +182,10 @@ const NORMALIZAR = { normalizeSceneTimes: (scenes) => scenes.map((s) => ({ start
  * se comprueba es qué decide la Server Action antes de registrar nada y con
  * qué datos registra el trabajo. vincularGuionAVideo es la real.
  */
-function scriptsModule(prisma, { enqueue, dispatch } = {}) {
+function scriptsModule(prisma, { enqueue, dispatch, user = USER } = {}) {
   const trabajos = [];
   const mod = load("src/app/actions/scripts.ts", mocks(prisma, {
+    "@/lib/auth": { ...mocks(prisma)["@/lib/auth"], requirePermission: async () => user },
     "@/lib/ai": NORMALIZAR,
     "@/lib/generation-jobs": {
       enqueueGeneration: enqueue ?? (async (user, requestKey, structureIds, input) => { trabajos.push({ user, requestKey, structureIds, input }); return "job-1"; }),
@@ -270,13 +271,116 @@ test("generarGuion devuelve el error legible del registro y, si el despacho fall
   const { prisma, calls } = fakePrisma({ video: VIDEO });
   const mensaje = "Ya tienes dos generaciones pendientes. Espera a que terminen o cancela una.";
   const rechazado = scriptsModule(prisma, { enqueue: async () => { throw new Error(mensaje); } });
-  assert.deepEqual(await rechazado.generarGuion(null, form(BRIEF)), { error: mensaje });
+  assert.deepEqual(await rechazado.generarGuion(null, form([...BRIEF, ["marca", "marca-1"]])), { error: mensaje });
   assert.equal(calls.jobUpdates.length, 0);
 
   const sinDespacho = scriptsModule(prisma, { dispatch: async () => { throw new Error("sin cupo de ejecuciones"); } });
-  assert.deepEqual(await sinDespacho.generarGuion(null, form(BRIEF)), { jobId: "job-1" }, "el trabajo quedó registrado y se abre su avance");
+  assert.deepEqual(await sinDespacho.generarGuion(null, form([...BRIEF, ["marca", "marca-1"]])), { jobId: "job-1" }, "el trabajo quedó registrado y se abre su avance");
   assert.deepEqual(calls.jobUpdates[0].where, { id: "job-1", status: "QUEUED" });
   assert.match(calls.jobUpdates[0].data.error, /quedó guardada, pero no pudo comenzar.*Mis generaciones/);
+});
+
+test("generarGuion distingue la marca sin elegir de los permisos y conserva los guiones generalistas del Dueño", async () => {
+  const { prisma } = fakePrisma();
+  let dispatches = 0;
+  const member = scriptsModule(prisma, { dispatch: async () => { dispatches++; } });
+  const info = console.info, rows = [];
+  console.info = (line) => rows.push(JSON.parse(line));
+  let response;
+  try { response = await member.generarGuion(null, form(BRIEF)); } finally { console.info = info; }
+  // La marca ausente también queda en la traza, sin IDs, correos ni el pedido.
+  assert.deepEqual(rows.map(({ stage, brandSelected, brandAuthorized, authorizedBrandCount }) => ({ stage, brandSelected, brandAuthorized, authorizedBrandCount })),
+    [{ stage: "brand_access", brandSelected: false, brandAuthorized: false, authorizedBrandCount: 0 }]);
+  assert.doesNotMatch(JSON.stringify(rows), /incomode|@|marca-1/);
+  assert.equal(response.error, "Elige una marca para generar el guion.");
+  assert.match(response.detail, /Identidad y producto/);
+  assert.equal(member.trabajos.length, 0);
+  assert.equal(dispatches, 0);
+  const owner = scriptsModule(prisma, { user: { ...USER, role: "OWNER" } });
+  assert.deepEqual(await owner.generarGuion(null, form(BRIEF)), { jobId: "job-1" });
+  assert.equal(owner.trabajos[0].input.brandId, null);
+});
+
+test("formulario envía la marca del resumen aunque el campo oculto esté desincronizado", async () => {
+  let action, sent;
+  const { GeneratorForm } = load("src/app/(app)/generador/generator-form.tsx", {
+    react: {
+      useState: value => [typeof value === "function" ? value() : value, () => {}],
+      useRef: value => ({ current: value }), useMemo: fn => fn(), useEffect() {},
+      useActionState: fn => { action = fn; return [null, () => {}, false]; },
+    },
+    "next/navigation": { useRouter: () => ({ push() {} }) },
+    "@/app/actions/scripts": { generarGuion: async (_previous, data) => { sent = data; return { jobId: "fixture" }; } },
+    "./format-step": { FormatStep: "section" },
+    "./step-ui": { StepCard: "section", StepDetails: "details", StepField: "label", StepFooter: "footer" },
+    "./product-picker": { ProductPicker: "section" },
+    "./step-ui.module.css": {}, "@/components/ui": { Badge: "span", Callout: "aside", Card: "section", CardHeader: "header" },
+  });
+  for (const brandId of ["marca-1", "marca-2", ""]) {
+    GeneratorForm({
+      structures: [{ id: "format", name: "Formato", category: "VENDE", beats: [], docs: 0, defaultDurationSec: 45, defaultProvider: "google" }],
+      brands: [{ id: "marca-1", name: "Marca uno" }, { id: "marca-2", name: "Marca dos" }].map(b => ({ ...b, color: "#000000", docs: 0, valueProps: [], doNots: [], keywords: [] })),
+      archetypes: [], providersReady: { google: true, anthropic: false },
+      initialStructureId: "format", initialBrandId: brandId, requiresBrand: Boolean(brandId),
+    });
+    const data = form([...BRIEF, ["marca", "otra-marca-obsoleta"]]);
+    await action(null, data);
+    assert.equal(sent.get("marca"), brandId);
+    assert.deepEqual(sent.getAll("marca"), [brandId]);
+    assert.ok(sent.get("requestKey"));
+    assert.equal(sent.get("peticion"), "Quiero un video que incomode");
+  }
+});
+
+test("página del generador: marca inicial según acceso, selección y video; sin marcas no ofrece enviar", async () => {
+  const GeneratorForm = () => null, EmptyState = () => null;
+  const find = (node, type) => {
+    if (!node || typeof node !== "object") return null;
+    if (node.type === type) return node.props;
+    for (const child of [node.props?.children].flat(Infinity)) { const found = find(child, type); if (found) return found; }
+    return null;
+  };
+  const oldJobs = process.env.AI_JOBS_ENABLED;
+  process.env.AI_JOBS_ENABLED = "true";
+  try {
+    for (const scenario of [
+      { name: "una marca", ids: ["A"], expected: "A" },
+      { name: "varias marcas", ids: ["A", "B"], expected: "" },
+      { name: "marca activa", ids: ["A", "B"], activeId: "B", expected: "B" },
+      { name: "marca en URL", ids: ["A", "B"], params: { marca: "B" }, expected: "B" },
+      { name: "marca ajena", ids: ["A"], params: { marca: "ajena" }, expected: "A" },
+      { name: "video precede a marca activa", ids: ["A", "B"], activeId: "A", params: { video: "video", marca: "A" }, expected: "B" },
+      { name: "dueño generalista", ids: ["A"], role: "OWNER", expected: "" },
+      { name: "sin marcas", ids: [], expected: null },
+    ]) {
+      const user = { ...USER, role: scenario.role ?? "MEMBER", brandIds: scenario.ids };
+      const prisma = {
+        structure: { findMany: async () => [{ id: "format", name: "Formato", beats: "[]" }] },
+        brand: { findMany: async () => scenario.ids.map(id => ({ id, name: id })) },
+        archetype: { findMany: async () => [] }, archetypeFit: { findMany: async () => [] }, asset: { groupBy: async () => [] },
+        contentItem: { findMany: async () => [], findFirst: async () => ({ ...VIDEO, id: "video", brandId: "B", structureIds: "[]" }) },
+      };
+      const page = load("src/app/(app)/generador/page.tsx", mocks(prisma, {
+        "./generator-form": { GeneratorForm },
+        "@/components/ui": { Card: "div", EmptyState, PageHeader: "header" },
+        "@/lib/auth": { can: () => true, LEVEL: { MEMBER: 1 } },
+        "@/lib/render-context": { requirePageSection: async () => user, getPageBrandContext: async () => ({ activeId: scenario.activeId ?? null }) },
+        "@/lib/performance-page": { measurePagePhase: (_name, fn) => fn() },
+        "@/lib/settings": { aiStatus: async () => ({ google: { configured: true }, anthropic: { configured: true } }), getSettings: async () => ({}), SETTING_KEYS: {} },
+      }));
+      const tree = await page.default({ searchParams: Promise.resolve(scenario.params ?? {}) });
+      const props = find(tree, GeneratorForm);
+      if (scenario.expected === null) {
+        assert.equal(props, null, scenario.name);
+        assert.equal(find(tree, EmptyState).title, "Necesitas una marca asignada");
+      } else {
+        assert.equal(props.initialBrandId, scenario.expected, scenario.name);
+        assert.equal(props.requiresBrand, user.role !== "OWNER", scenario.name);
+      }
+    }
+  } finally {
+    if (oldJobs === undefined) delete process.env.AI_JOBS_ENABLED; else process.env.AI_JOBS_ENABLED = oldJobs;
+  }
 });
 
 /* -------------------------------------------------------------- VINCULAR -- */

@@ -59,8 +59,8 @@ export type GeneratedScript = z.infer<typeof GeneratedScriptSchema>;
 export type GeneratedScene = z.infer<typeof SceneSchema>;
 
 /**
- * El mismo contrato en JSON Schema, para Gemini (responseJsonSchema).
- * Se deriva del mismo Zod para que sus límites no diverjan.
+ * Contrato canónico derivado de Zod. gemini-schema.ts simplifica las
+ * restricciones de la copia enviada al proveedor; Zod conserva los límites.
  */
 export const GENERATED_SCRIPT_JSON_SCHEMA = z.toJSONSchema(GeneratedScriptSchema);
 

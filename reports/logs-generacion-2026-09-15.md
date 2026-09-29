@@ -37,6 +37,15 @@ distintas ejecuciones y `itemId`/`attempt` identifican el guion y su intento.
 Las subllamadas HTTP se distinguen por `requestIndex`. `release` identifica
 el commit cuando lo proporciona Vercel.
 
+Desde el ajuste del 25/09, `provider_request` incluye `schemaBytes` al enviar
+el esquema. Los fallos y `schema_fallback` pueden incluir `providerStatus`
+con un código reconocido de Google (por ejemplo `INVALID_ARGUMENT` o
+`DEADLINE_EXCEEDED`), y `reason` distingue `invalid_argument`,
+`schema_rejected` y `deadline_exceeded`. El 400 genérico no confirma qué
+parámetro fue rechazado. Un HTTP 408/504 se clasifica como `timeout` aunque
+el mensaje del SDK no use esa palabra. Se conservan los HTTP y la separación
+entre intentos y subllamadas; estos campos nunca incluyen mensajes crudos.
+
 ## Cómo interpretar un fallo
 
 Ejemplo representativo, sin datos reales:

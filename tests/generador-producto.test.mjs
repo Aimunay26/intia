@@ -111,9 +111,10 @@ function catalogoFalso({ productos = [POLERA, TAZA, AJENA], combos = [PACK] } = 
 }
 
 /** scripts.ts real con el registro y el despacho simulados: se mira con qué datos registra el trabajo. */
-function scriptsModule(prisma) {
+function scriptsModule(prisma, user = USER) {
   const trabajos = [];
   const mod = load("src/app/actions/scripts.ts", mocks(prisma, {
+    "@/lib/auth": { ...mocks(prisma)["@/lib/auth"], requirePermission: async () => user },
     "@/lib/ai": { normalizeSceneTimes: (scenes) => scenes },
     "@/lib/generation-jobs": { enqueueGeneration: async (user, requestKey, structureIds, input) => { trabajos.push({ user, requestKey, structureIds, input }); return "job-1"; } },
     "@/lib/generation-dispatch": { dispatchGeneration: async () => true },
@@ -171,11 +172,17 @@ test("una ficha de otra marca, archivada o sin marca se rechaza antes de registr
   res = await scripts.generarGuion(null, form(conCombo("combo-x")));
   assert.equal(res.error, "Ese combo ya no está en el catálogo de la marca.");
 
+  // Equipo necesita una marca antes que cualquier ficha; el Dueño puede generar
+  // sin marca, pero una ficha del catálogo siempre exige la suya.
   const sinMarca = conFicha("prod-1").filter(([k]) => k !== "marca");
   res = await scripts.generarGuion(null, form(sinMarca));
+  assert.equal(res.error, "Elige una marca para generar el guion.");
+  const duenio = scriptsModule(prisma, { ...USER, role: "OWNER" });
+  res = await duenio.generarGuion(null, form(sinMarca));
   assert.equal(res.error, "Elige la marca del producto antes de generar.");
 
   assert.equal(scripts.trabajos.length, 0, "no se registra ningún trabajo");
+  assert.equal(duenio.trabajos.length, 0);
 }));
 
 test("si la ficha cambió después de abrir el generador, se pide recargar", () => conCatalogo("true", async () => {

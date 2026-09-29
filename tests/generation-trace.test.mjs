@@ -44,6 +44,18 @@ test('los errores conservan identidad y sólo exponen metadatos permitidos', asy
   assert.equal(rows[1].stage, 'provider_request');assert.equal(rows[1].state, 'error');
 });
 
+test('acceso de marca registra presencia y autorización sin IDs, nombres ni datos del pedido', async () => {
+  const trace = load('src/lib/generation-trace.ts');
+  const rows = await capture(() => trace.withGenerationTrace({}, () => trace.generationEvent('brand_access', 'info', {
+    brandSelected: true, brandAuthorized: false, authorizedBrandCount: 2,
+    brandId: 'private-brand', userId: 'private-user', email: 'private@example.test', prompt: 'private-prompt',
+  })));
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].stage, 'brand_access'); assert.equal(rows[0].brandSelected, true);
+  assert.equal(rows[0].brandAuthorized, false); assert.equal(rows[0].authorizedBrandCount, 2);
+  assert.doesNotMatch(JSON.stringify(rows), /private/);
+});
+
 test('fallos del logger y desactivación no interrumpen la generación', async () => {
   const trace = load('src/lib/generation-trace.ts'), info = console.info, warn = console.warn;
   const prior = process.env.GENERATION_LOGS;
@@ -54,6 +66,29 @@ test('fallos del logger y desactivación no interrumpen la generación', async (
     const rows = await capture(async () => assert.equal(await trace.generationStage('quota', () => 7), 7));
     assert.equal(rows.length, 0);
   } finally { console.info = info;console.warn = warn;if (prior === undefined) delete process.env.GENERATION_LOGS;else process.env.GENERATION_LOGS = prior; }
+});
+
+test('las trazas distinguen argumento, esquema y deadline con códigos cerrados, sin mensajes privados', async () => {
+  const trace = load('src/lib/generation-trace.ts');
+  const { toAiError } = load('src/lib/ai/providers.ts');
+  for (const [status, providerStatus, message, reason] of [
+    [400, 'INVALID_ARGUMENT', 'Request contains an invalid argument.', 'invalid_argument'],
+    [400, 'INVALID_ARGUMENT', 'responseJsonSchema is too complex', 'schema_rejected'],
+    [504, 'DEADLINE_EXCEEDED', 'Deadline expired', 'deadline_exceeded'],
+  ]) {
+    const raw = { status, message: JSON.stringify({ error: { status: providerStatus, message: message + ' PRIVATE-FIXTURE', details: [{ request: 'PRIVATE-FIXTURE' }] } }) };
+    for (const error of [raw, toAiError(raw, 'google')]) {
+      const rows = await capture(() => assert.rejects(trace.withGenerationTrace({ jobId: jobA }, () =>
+        trace.generationStage('provider_request', () => { throw error; }, { structured: true, schemaBytes: 4000 })), e => e === error));
+      assert.equal(rows[1].reason, reason); assert.equal(rows[1].providerStatus, providerStatus);
+      assert.equal(rows[1].httpStatus, status); assert.equal(rows[1].schemaBytes, 4000);
+      if (status === 504) assert.equal(rows[1].errorCode, 'timeout');
+      assert.doesNotMatch(JSON.stringify(rows), /PRIVATE-FIXTURE|is too complex|Deadline expired/);
+    }
+  }
+  const rows = await capture(() => trace.withGenerationTrace({ jobId: jobA }, () =>
+    trace.generationEvent('schema_fallback', 'info', { providerStatus: 'PRIVATE-FIXTURE', reason: 'PRIVATE-FIXTURE' })));
+  assert.doesNotMatch(JSON.stringify(rows), /PRIVATE-FIXTURE/);
 });
 
 test('el error envuelto conserva saturación y el cambio de modelo solo registra campos permitidos', async () => {

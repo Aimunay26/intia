@@ -69,6 +69,11 @@ export async function enqueueGeneration(user: SessionUser, requestKey: string, s
 }
 
 async function enqueueValidatedGeneration(user: SessionUser, requestKey: string, structures: string[], input: EnqueueInput, retry?: { tx: AppTransaction; jobId: string; sourceId: string }) {
+  generationEvent("brand_access", "info", {
+    brandSelected: Boolean(input.brandId),
+    brandAuthorized: user.role === "OWNER" || Boolean(input.brandId && user.brandIds?.includes(input.brandId)),
+    authorizedBrandCount: user.brandIds?.length ?? 0,
+  });
   assertBrandPermission(user, input.brandId, "scripts.generate");
   if (process.env.AI_JOBS_ENABLED !== "true") throw new GenerationRequestError("La generación en segundo plano aún no está habilitada.");
   if (!z.string().uuid().safeParse(requestKey).success) throw new Error("Recarga el formulario antes de generar.");

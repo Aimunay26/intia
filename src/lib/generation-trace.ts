@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 
-const stages = ["document_extract", "enqueue", "dispatch_claim", "dispatch_start", "dispatch_save", "dispatch",
+const stages = ["document_extract", "enqueue", "brand_access", "dispatch_claim", "dispatch_start", "dispatch_save", "dispatch",
   "workflow_step", "cache_refresh", "process", "claim", "quota", "request_access", "generate",
   "context_load", "references_load", "prompt_build", "settings_load", "model_resolve", "key_resolve",
   "provider_request", "provider_response", "schema_fallback", "model_fallback", "response_parse",
@@ -9,6 +9,7 @@ const stages = ["document_extract", "enqueue", "dispatch_claim", "dispatch_start
 type Stage = typeof stages[number];
 type State = "start" | "success" | "error" | "info";
 type Fields = {
+  brandSelected?: boolean; brandAuthorized?: boolean; authorizedBrandCount?: number;
   jobId?: string; itemId?: string; runId?: string; attempt?: number; provider?: string; model?: string; nextModel?: string;
   keySource?: string | null; requestIndex?: number; structured?: boolean; durationMs?: number;
   referenceCount?: number; promptBytes?: number; responseBytes?: number; sceneCount?: number;
@@ -33,12 +34,12 @@ const enumFields: Partial<Record<keyof Fields, readonly string[]>> = {
   blockReason: ["SAFETY", "OTHER", "BLOCKLIST", "PROHIBITED_CONTENT", "IMAGE_SAFETY"],
 };
 const numbers = ["attempt", "requestIndex", "durationMs", "referenceCount", "promptBytes", "responseBytes", "sceneCount", "inputTokens", "outputTokens", "maxOutputTokens", "timeoutMs", "waitMs", "affectedRows", "httpStatus"] as const;
-const booleans = ["structured", "retry", "reused"] as const;
+const booleans = ["structured", "retry", "reused", "brandSelected", "brandAuthorized"] as const;
 
 /** Lista permitida en runtime: ni un Error completo ni metadatos extra pueden filtrar contenido. */
 function safeFields(fields: Fields): Record<string, string | number | boolean> {
   const out: Record<string, string | number | boolean> = {};
-  for (const key of numbers) {
+  for (const key of [...numbers, "authorizedBrandCount"] as const) {
     const value = fields[key];
     if (typeof value === "number" && Number.isFinite(value) && value >= 0) out[key] = Math.round(value * 100) / 100;
   }

@@ -280,6 +280,7 @@ intentó.
 
 ## IA: claves, modelos y errores
 
+- **Marca y autorización del generador**: Equipo debe elegir una marca activa autorizada. Si solo tiene una disponible, se preselecciona; con varias se conserva la del video o la selección válida y, si no hay ninguna elegida, se solicita en Identidad y producto. Sin marcas disponibles se explica que el Dueño debe asignar una. El envío toma la marca del estado que muestra el resumen y el servidor vuelve a validar permisos. El Dueño conserva la generación generalista. `generation_trace` registra `brand_access` con presencia de marca, resultado de autorización y cantidad de marcas asignadas, sin IDs de usuario/marca, correos ni contenido del pedido.
 - **Las claves de IA pertenecen a la organización, no al usuario ni a la marca.**
   La instalación actual representa un único tenant lógico. Todos los usuarios
   autorizados consumen la misma credencial de cada proveedor a través del servidor;

@@ -510,6 +510,32 @@ test('B01–B06: acciones reales y PostgreSQL, sin proveedores externos', async 
       list = await generationHistory(user); assert.equal(list.total, 1); assert.equal(list.jobs[0].id, separate[1]);
       await drain(owned); assert.equal((await generationHistory(user)).total, 1);
     });
+    await check('generación: marca obligatoria para Equipo, acceso asignado y guion guardado en esa marca', async () => {
+      const dispatched = [];
+      const actions = load('src/app/actions/scripts.ts', { ...mocks, '@/lib/generation-dispatch': { dispatchGeneration: async id => { dispatched.push(id); } } });
+      const brief = extra => fd({ estructuras: 'format', peticion: 'Pedido ficticio de prueba', proveedor: 'google', requestKey: randomUUID(), ...extra });
+      const beforeJobs = await prisma.generationJob.count(), beforeCalls = calls;
+      const missing = await as('writer', () => actions.generarGuion(null, brief({})));
+      assert.equal(missing.error, 'Elige una marca para generar el guion.');
+      const forbidden = await as('writer', () => actions.generarGuion(null, brief({ marca: 'B' })));
+      assert.match(forbidden.error, /No tienes acceso a esta marca/);
+      assert.equal(await prisma.generationJob.count(), beforeJobs);
+      assert.equal(calls, beforeCalls); assert.deepEqual(dispatched, []);
+      // La guarda de servicio tampoco concede acceso sin marca al saltarse el formulario.
+      await assert.rejects(jobs.enqueueGeneration(await actor('writer'), randomUUID(), ['format'], { request: 'Fixture', provider: 'google', brandId: null }), /acceso/);
+      const allowed = await as('writer', () => actions.generarGuion(null, brief({ marca: 'A' })));
+      assert.ok(allowed.jobId); assert.deepEqual(dispatched, [allowed.jobId]);
+      await drain(allowed.jobId);
+      assert.equal((await prisma.script.findFirstOrThrow({ where: { generationItem: { jobId: allowed.jobId } } })).brandId, 'A');
+      // Un video autorizado aporta la marca, aunque el formulario no la incluya.
+      await video('brand-from-video');
+      const linked = await as('writer', () => actions.generarGuion(null, brief({ video: 'brand-from-video' })));
+      assert.ok(linked.jobId); await drain(linked.jobId);
+      assert.ok((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'brand-from-video' } })).scriptId);
+      const general = await as('owner', () => actions.generarGuion(null, brief({})));
+      assert.ok(general.jobId); await drain(general.jobId);
+      assert.equal((await prisma.script.findFirstOrThrow({ where: { generationItem: { jobId: general.jobId } } })).brandId, null);
+    });
     await check('acción de reintento: registra antes de despachar y nunca expone errores internos', async () => {
       const sourceId = await enqueue(); await jobs.cancelGeneration(await actor('writer'), sourceId);
       const dispatched = [];

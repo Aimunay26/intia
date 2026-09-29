@@ -211,6 +211,7 @@ export function GeneratorForm({
   canManageAi = false,
   catalog = null,
   canSaveProducts = false,
+  requiresBrand,
 }: {
   structures: GeneratorStructure[];
   brands: GeneratorBrand[];
@@ -242,11 +243,16 @@ export function GeneratorForm({
   catalog?: GeneratorCatalog | null;
   /** Muestra "Guardar en el catálogo" (brands.edit); guardarProductoRapido lo vuelve a comprobar. */
   canSaveProducts?: boolean;
+  /** Equipo debe elegir una marca autorizada; el servidor vuelve a validarla. */
+  requiresBrand: boolean;
 }) {
   const router = useRouter();
   const submission = useRef({ fingerprint: "", key: "" });
   const [state, formAction, pending] = useActionState<GenerateState, FormData>(
     async (previous, data) => {
+      // Enviar la misma marca que muestra el resumen, incluso si el navegador
+      // restauró o alteró el campo oculto. El servidor verifica su autorización.
+      data.set("marca", brandId);
       const fingerprint = JSON.stringify(Array.from(data.entries()));
       if (submission.current.fingerprint !== fingerprint) submission.current = { fingerprint, key: crypto.randomUUID() };
       data.set("requestKey", submission.current.key);
@@ -655,8 +661,9 @@ export function GeneratorForm({
   const docsTotal = docsEstructura + docsArquetipo + docsMarca;
 
   const sinClaves = !AI_PROVIDERS.some((p) => providersReady[p.value]);
+  const marcaValida = !requiresBrand || Boolean(brand);
   const puedeGenerar = Boolean(
-    selectedStructureIds.length > 0 && providersReady[provider] && !pending
+    selectedStructureIds.length > 0 && marcaValida && providersReady[provider] && !pending
   );
 
   const modelosSugeridos = AI_MODELS[provider] ?? [];
@@ -697,7 +704,7 @@ export function GeneratorForm({
       descripcion: "Marca, actor y producto",
       icono: <Package size={13} />,
       resumen: producto.trim() ? (producto.length > 18 ? producto.slice(0, 18) + "…" : producto) : "Pendiente",
-      completo: Boolean(producto.trim()),
+      completo: Boolean(producto.trim()) && marcaValida,
     },
     {
       id: 3,
@@ -725,13 +732,13 @@ export function GeneratorForm({
       titulo: "Generar IA",
       descripcion: "Checklist y motor",
       icono: <Bot size={13} />,
-      resumen: providersReady[provider] ? "Listo" : "Sin clave",
-      completo: Boolean(selectedStructureIds.length > 0 && providersReady[provider]),
+      resumen: !marcaValida ? "Falta marca" : providersReady[provider] ? "Listo" : "Sin clave",
+      completo: Boolean(selectedStructureIds.length > 0 && marcaValida && providersReady[provider]),
     },
   ];
 
-  // Una ficha del catálogo elegida, o un producto escrito.
-  const puedeAvanzarPaso2 = Boolean(fichaElegida || producto.trim().length > 0);
+  // Una ficha del catálogo elegida, o un producto escrito; Equipo, además, con una marca autorizada.
+  const puedeAvanzarPaso2 = Boolean(fichaElegida || producto.trim().length > 0) && marcaValida;
   const puedeAvanzarPaso3 = Boolean(peticion.trim().length >= 5);
 
 
@@ -854,9 +861,9 @@ export function GeneratorForm({
                   {videosVisibles.map((v) => <option key={v.id} value={v.id}>{v.title} · {v.brandName} · {v.dateLabel}</option>)}
                 </select>
               </StepField>
-              <StepField id="generator-brand" label="Marca" hint={video ? `El video pertenece a ${video.brandName}. Cambiar a otra marca desvincula el video.` : "Opcional. Aporta identidad y canales para el cierre."}>
-                <select id="generator-brand" className="select" value={brandId} onChange={(e) => elegirMarca(e.target.value)} data-guia={GUIA_TARGETS.SELECT_GENERADOR_MARCA}>
-                  <option value="">Sin marca (generalista)</option>
+              <StepField id="generator-brand" label="Marca" required={requiresBrand} hint={video ? `El video pertenece a ${video.brandName}. Cambiar a otra marca desvincula el video.` : requiresBrand ? "Elige una de tus marcas autorizadas para generar el guion." : "Opcional. Aporta identidad y canales para el cierre."}>
+                <select id="generator-brand" className="select" value={brandId} aria-required={requiresBrand} onChange={(e) => elegirMarca(e.target.value)} data-guia={GUIA_TARGETS.SELECT_GENERADOR_MARCA}>
+                  <option value="">{requiresBrand ? "Elige una marca" : "Sin marca (generalista)"}</option>
                   {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </StepField>
@@ -925,7 +932,7 @@ export function GeneratorForm({
             <StepDetails title="Ayuda para describir el producto">
               <p className="text-inksoft text-sm leading-relaxed">Incluye características, beneficios, precio, para qué sirve y objeciones que resuelve. Aunque el producto solo aparezca al final, la IA necesita conocerlo para fundamentar el video con veracidad.</p>
             </StepDetails>
-            <StepFooter back="Volver a Formato" onBack={() => setCurrentStep(1)} next="Ángulo e idea" onNext={() => avanzarPaso(3)} disabled={!puedeAvanzarPaso2} reason={catalog ? "Elige un producto o carga uno nuevo para continuar." : "Escribe el producto o servicio para continuar."} guide={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_2} />
+            <StepFooter back="Volver a Formato" onBack={() => setCurrentStep(1)} next="Ángulo e idea" onNext={() => avanzarPaso(3)} disabled={!puedeAvanzarPaso2} reason={!marcaValida ? "Elige una marca autorizada para continuar." : catalog ? "Elige un producto o carga uno nuevo para continuar." : "Escribe el producto o servicio para continuar."} guide={GUIA_TARGETS.BTN_GENERADOR_CONTINUAR_2} />
           </StepCard>
         )}
 
@@ -1000,6 +1007,7 @@ export function GeneratorForm({
 
         {currentStep === 5 && (
           <StepCard title="Revisa y genera tus guiones" description="Confirma el pedido y elige con qué modelo trabajará la IA.">
+            {!marcaValida ? <Callout tone="warn" title="Falta elegir la marca del guion"><button type="button" className="btn" onClick={() => setCurrentStep(2)}>Elegir marca</button></Callout> : null}
             <section aria-label="Resumen del pedido">
               <div className={stepStyles.reviewRow}><div><h3 className="text-inkmuted text-xs">Formatos</h3><p className="mt-1 text-sm font-semibold">{selectedStructureIds.map((id) => structures.find((s) => s.id === id)?.name ?? id).join(" · ") || "Sin formatos seleccionados"}</p><p className="text-inkmuted mt-1 text-xs">Un guion por formato · Duración objetivo: {duracion || 0}s</p></div><button type="button" className="btn btn-ghost" aria-label="Editar formatos" onClick={() => setCurrentStep(1)}>Editar</button></div>
               <div className={stepStyles.reviewRow}><div><h3 className="text-inkmuted text-xs">Identidad y producto</h3><p className="mt-1 text-sm font-semibold">{producto || "Producto pendiente"}</p><p className="text-inksoft mt-1 text-sm">{brand?.name ?? "Sin marca"} · {archetype?.name ?? "Sin actor asignado"}</p>{productoDetalle ? <p className="text-inkmuted mt-1 text-xs">Descripción del producto incluida</p> : null}</div><button type="button" className="btn btn-ghost" aria-label="Editar identidad y producto" onClick={() => setCurrentStep(2)}>Editar</button></div>

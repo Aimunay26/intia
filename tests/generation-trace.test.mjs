@@ -44,6 +44,18 @@ test('los errores conservan identidad y sólo exponen metadatos permitidos', asy
   assert.equal(rows[1].stage, 'provider_request');assert.equal(rows[1].state, 'error');
 });
 
+test('acceso de marca registra presencia y autorización sin IDs, nombres ni datos del pedido', async () => {
+  const trace = load('src/lib/generation-trace.ts');
+  const rows = await capture(() => trace.withGenerationTrace({}, () => trace.generationEvent('brand_access', 'info', {
+    brandSelected: true, brandAuthorized: false, authorizedBrandCount: 2,
+    brandId: 'private-brand', userId: 'private-user', email: 'private@example.test', prompt: 'private-prompt',
+  })));
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].stage, 'brand_access'); assert.equal(rows[0].brandSelected, true);
+  assert.equal(rows[0].brandAuthorized, false); assert.equal(rows[0].authorizedBrandCount, 2);
+  assert.doesNotMatch(JSON.stringify(rows), /private/);
+});
+
 test('fallos del logger y desactivación no interrumpen la generación', async () => {
   const trace = load('src/lib/generation-trace.ts'), info = console.info, warn = console.warn;
   const prior = process.env.GENERATION_LOGS;

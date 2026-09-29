@@ -84,7 +84,7 @@ export function FilterSelect({
         <span className="text-inkmuted pointer-events-none absolute left-2.5 z-10">{icon}</span>
       ) : null}
       <NativeSelect
-        className={cn("select h-[34px] text-[12.5px]", responsive && "max-md:h-11! max-md:text-[16px]!", Boolean(icon) && "pl-8")}
+        className={cn("select h-[34px] md:text-[12.5px]!", responsive && "max-md:h-11! max-md:text-[16px]!", Boolean(icon) && "pl-8!")}
         value={value}
         onChange={(e) => setParam({ [param]: e.target.value || null })}
         aria-label={allLabel}
@@ -153,7 +153,7 @@ export function SearchInput({
         {pending ? <Loader2 size={14} className="spin" /> : <Search size={14} />}
       </span>
       <input
-        className={cn("input h-[34px] pr-8 pl-8 text-[12.5px]", responsive && "max-md:h-11! max-md:text-[16px]!")}
+        className={cn("input h-[34px] pr-8! pl-8! md:text-[12.5px]!", responsive && "max-md:h-11! max-md:text-[16px]!")}
         value={value}
         placeholder={placeholder}
         aria-label={responsive ? placeholder : undefined}
@@ -222,22 +222,33 @@ export function FilterDate({
   param,
   label,
   width = 150,
+  responsive = false,
 }: {
   param: string;
   label?: string;
   width?: number;
+  /** Ancho completo y campo táctil (44 px, 16 px) en móvil; `width` desde md. */
+  responsive?: boolean;
 }) {
   const { setParam, searchParams } = useSetParam();
   const value = searchParams.get(param) ?? "";
-  return (
+  const input = (
     <input
       type="date"
-      className="input h-[34px] text-[12.5px]"
-      style={{ width, borderColor: value ? "var(--brand)" : undefined }}
+      className={cn("input h-[34px] md:text-[12.5px]!", responsive && "max-md:h-11! max-md:text-[16px]! min-w-0 flex-1")}
+      style={{ ...(responsive ? {} : { width }), borderColor: value ? "var(--brand)" : undefined }}
       value={value}
       aria-label={label}
       onChange={(e) => setParam({ [param]: e.target.value || null })}
     />
+  );
+  if (!responsive) return input;
+  // En móvil la fecha lleva su etiqueta visible: un campo de fecha vacío no dice qué filtra.
+  return (
+    <label className="flex w-full min-w-0 items-center gap-2 md:w-[var(--filter-w)]" style={responsiveWidth(width, true)}>
+      {label ? <span className="text-inkmuted w-14 shrink-0 text-[12.5px] font-semibold md:hidden">{label}</span> : null}
+      {input}
+    </label>
   );
 }
 
@@ -254,6 +265,18 @@ export function SegmentedControl({
 }) {
   const { setParam, searchParams } = useSetParam();
   const current = searchParams.get(param) ?? defaultValue;
+  const activeRef = useRef<HTMLButtonElement>(null);
+
+  // Dentro de un contenedor con desplazamiento horizontal (pestañas en móvil),
+  // la pestaña activa siempre queda a la vista.
+  useEffect(() => {
+    const button = activeRef.current;
+    const scroller = button?.closest<HTMLElement>(".overflow-x-auto");
+    if (!button || !scroller) return;
+    const b = button.getBoundingClientRect();
+    const s = scroller.getBoundingClientRect();
+    if (b.left < s.left || b.right > s.right) scroller.scrollLeft += b.left - s.left - 16;
+  }, [current]);
 
   return (
     <div className="bg-surface3 inline-flex items-center gap-0.5 rounded-lg p-0.5">
@@ -262,11 +285,12 @@ export function SegmentedControl({
         return (
           <button
             key={o.value}
+            ref={active ? activeRef : undefined}
             type="button"
             data-guia={o.guia}
             onClick={() => setParam({ [param]: o.value === defaultValue ? null : o.value })}
             className={cn(
-              "flex items-center gap-1.5 rounded-md px-2.5 py-[5px] text-[12px] font-semibold transition-all",
+              "flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-[5px] text-[12px] font-semibold whitespace-nowrap transition-all pointer-coarse:py-2.5",
               active
                 ? "bg-surface text-ink shadow-[var(--shadow-1)]"
                 : "text-inkmuted hover:text-ink"

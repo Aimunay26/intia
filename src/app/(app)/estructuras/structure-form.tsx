@@ -9,7 +9,7 @@ import {
 	crearEstructura,
 	type StructureState,
 } from "@/app/actions/structures";
-import { Modal, SubmitButton } from "@/components/forms";
+import { Modal, MODAL_FOOTER_STICKY, SubmitButton } from "@/components/forms";
 import { Callout, Field } from "@/components/ui";
 import { AI_MODELS, AI_PROVIDERS, STRUCTURE_CATEGORIES } from "@/lib/constants";
 
@@ -223,7 +223,7 @@ export function StructureForm({
 
           {state?.error ? <Callout tone="danger">{state.error}</Callout> : null}
 
-          <div className="flex justify-end gap-2 pt-1">
+          <div className={`flex flex-wrap justify-end gap-2 pt-1 ${MODAL_FOOTER_STICKY}`}>
             <button type="button" className="btn" onClick={() => setOpen(false)}>
               Cancelar
             </button>

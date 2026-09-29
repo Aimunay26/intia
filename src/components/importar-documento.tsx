@@ -27,7 +27,7 @@ import {
 } from "@/lib/branding-parser";
 import { cn } from "@/lib/utils";
 import { Callout } from "@/components/ui";
-import { Modal } from "@/components/forms";
+import { Modal, MODAL_FOOTER_STICKY } from "@/components/forms";
 
 /**
  * Importación de un brief maestro o de un informe de branding en PDF.
@@ -190,14 +190,14 @@ export function TablaPrevisualizacion({ filas, compacta }: { filas: Fila[]; comp
         </span>
       </div>
       <div className={cn("overflow-y-auto", compacta ? "max-h-[220px]" : "max-h-[46vh]")}>
-        <table className="tbl w-full">
+        <table className="tbl tbl-cards w-full">
           <tbody>
             {filas.map((f) => (
               <tr key={f.clave} className={f.fuente === "vacio" ? "opacity-60" : undefined}>
                 <td className="text-inksoft w-[150px] align-top text-[12px] font-semibold whitespace-nowrap">
                   {f.etiqueta}
                 </td>
-                <td className="align-top text-[12px]">
+                <td className="tbl-card-full align-top text-[12px]">
                   {f.valor ? (
                     <span className="line-clamp-3 break-words" title={f.valor}>
                       {f.valor}
@@ -211,7 +211,7 @@ export function TablaPrevisualizacion({ filas, compacta }: { filas: Fila[]; comp
                     </span>
                   ) : null}
                 </td>
-                <td className="w-[70px] align-top text-right">
+                <td className="tbl-card-end w-[70px] align-top text-right">
                   <ChipFuente fuente={f.fuente} />
                 </td>
               </tr>
@@ -554,13 +554,13 @@ export function ImportarDocumentoModal({
               </label>
             ) : null}
 
-            <div className="border-line flex items-center justify-between gap-2 border-t pt-4">
-              <span className="text-inkmuted text-[11.5px]">
+            <div className={cn("border-line flex flex-wrap items-center justify-between gap-2 border-t pt-4", MODAL_FOOTER_STICKY)}>
+              <span className="text-inkmuted min-w-0 flex-1 basis-56 text-[11.5px]">
                 {modo === "aplicar"
                   ? "Aplicar rellena el formulario; nada se guarda hasta que pulses Guardar."
                   : "Se guarda en la ficha y el PDF queda en Documentos."}
               </span>
-              <div className="flex gap-2">
+              <div className="ml-auto flex flex-wrap justify-end gap-2">
                 <button type="button" onClick={cerrar} className="btn">
                   Cancelar
                 </button>

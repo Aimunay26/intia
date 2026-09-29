@@ -26,8 +26,8 @@ import {
 	revisarEliminacionColumna,
 } from "@/app/actions/tasks";
 import { EditForm, RevisionField } from "@/components/edit-form";
-import { FilterSelect, SearchInput } from "@/components/filters";
-import { Modal, SubmitButton } from "@/components/forms";
+import { FilterDisclosure, FilterSelect, SearchInput } from "@/components/filters";
+import { Modal, MODAL_FOOTER_STICKY, SubmitButton } from "@/components/forms";
 import { Field } from "@/components/ui";
 import { TASK_PRIORITIES } from "@/lib/tasks-constants";
 import { cn } from "@/lib/utils";
@@ -227,20 +227,22 @@ export function TaskBoard({
       {moveError ? <p role="alert" className="text-danger text-sm">No se movió la tarea. Recarga para comprobar cambios de otra persona.</p> : null}
       {/* ------------------------------------------------ FILTROS SUPERIORES -- */}
       <div className="card-flat flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
-        <div className="flex flex-wrap items-center gap-2.5 min-w-0 flex-1">
-          <SearchInput placeholder="Buscar tareas…" param="q" width={250} />
-          <FilterSelect param="tipo" allLabel="Ideas y acciones" options={[{ value: "IDEA", label: "Ideas" }, { value: "ACCION", label: "Acciones" }]} />
-          <FilterSelect param="responsable" allLabel="Todos los encargados" options={[{ value: "UNASSIGNED", label: "Sin asignar" }, ...users.map((u) => ({ value: u.id, label: u.name }))]} />
-          {!activeBrandId ? <FilterSelect param="sin_marca" allLabel="Con y sin marca" options={[{ value: "1", label: "Sin marca" }]} /> : null}
+        <div className="flex flex-wrap items-center gap-2.5 min-w-0 flex-1 max-md:basis-full">
+          <SearchInput placeholder="Buscar tareas…" param="q" width={250} responsive />
+          <FilterDisclosure count={[filters.tipo, filters.responsable, filters.sin_marca].filter(Boolean).length}>
+            <FilterSelect param="tipo" allLabel="Ideas y acciones" options={[{ value: "IDEA", label: "Ideas" }, { value: "ACCION", label: "Acciones" }]} responsive />
+            <FilterSelect param="responsable" allLabel="Todos los encargados" options={[{ value: "UNASSIGNED", label: "Sin asignar" }, ...users.map((u) => ({ value: u.id, label: u.name }))]} responsive />
+            {!activeBrandId ? <FilterSelect param="sin_marca" allLabel="Con y sin marca" options={[{ value: "1", label: "Sin marca" }]} responsive /> : null}
+          </FilterDisclosure>
 
         </div>
 
         {/* Acciones principales */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-md:w-full">
           <button
             type="button"
             onClick={() => setIsCreatingColumn(true)}
-            className="btn btn-sm"
+            className="btn btn-sm max-md:flex-1"
           >
             <Plus size={13} />
             Nueva columna
@@ -248,7 +250,7 @@ export function TaskBoard({
           <button
             type="button"
             onClick={() => setCreatingInColumnId(columns[0]?.id || null)}
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm max-md:flex-1"
           >
             <Plus size={13} />
             Nueva tarea
@@ -257,13 +259,14 @@ export function TaskBoard({
       </div>
 
       {/* ------------------------------------------------ TABLERO KANBAN -- */}
-      <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start min-h-[calc(100vh-250px)]">
+      {/* En móvil cada columna ocupa casi toda la pantalla y el desplazamiento encaja columna a columna. */}
+      <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start min-h-[calc(100vh-250px)] max-sm:-mx-4 max-sm:gap-3 max-sm:px-4 max-sm:scroll-px-4 max-sm:snap-x max-sm:snap-mandatory">
         {columns.map((column, colIdx) => (
           <div
             key={column.id}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, column.id)}
-            className="flex flex-col w-[300px] shrink-0 rounded-xl border border-[var(--line)] bg-[var(--surface-2)]/60 max-h-[calc(100vh-210px)]"
+            className="flex flex-col w-[85vw] max-w-[300px] shrink-0 snap-start rounded-xl border border-[var(--line)] bg-[var(--surface-2)]/60 max-h-[calc(100vh-210px)] sm:w-[300px]"
           >
             {/* Cabecera de la columna */}
             <div className="flex items-center justify-between p-3 border-b border-[var(--line)] bg-[var(--surface)]/70 rounded-t-xl">
@@ -285,7 +288,7 @@ export function TaskBoard({
                   type="button"
                   title="Configurar columna (nombre y color)"
                   onClick={() => setEditingColumn(column)}
-                  className="rounded p-1 text-inkmuted hover:text-ink hover:bg-[var(--surface-3)] transition-colors"
+                  className="rounded p-1 pointer-coarse:p-2.5 text-inkmuted hover:text-ink hover:bg-[var(--surface-3)] transition-colors"
                 >
                   <Pencil size={12.5} />
                 </button>
@@ -293,7 +296,7 @@ export function TaskBoard({
                   type="button"
                   title="Añadir tarea a esta columna"
                   onClick={() => setCreatingInColumnId(column.id)}
-                  className="rounded p-1 text-inkmuted hover:text-ink hover:bg-[var(--surface-3)] transition-colors"
+                  className="rounded p-1 pointer-coarse:p-2.5 text-inkmuted hover:text-ink hover:bg-[var(--surface-3)] transition-colors"
                 >
                   <Plus size={14} />
                 </button>
@@ -590,7 +593,7 @@ export function TaskBoard({
               </Field>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-[var(--line)]">
+            <div className={`flex flex-wrap justify-end gap-2 pt-3 border-t border-[var(--line)] ${MODAL_FOOTER_STICKY}`}>
               <button
                 type="button"
                 onClick={() => setCreatingInColumnId(null)}
@@ -750,7 +753,7 @@ export function TaskBoard({
               </Field>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-[var(--line)]">
+            <div className={`flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[var(--line)] ${MODAL_FOOTER_STICKY}`}>
               {canDelete ? <button
                 type="button"
                 onClick={() => { setDeleteError(null); setDeletion({ kind: "task", id: editingTask.id, name: editingTask.title, tasks: 0 }); }}
@@ -843,7 +846,7 @@ export function TaskBoard({
               </div>
             </Field>
 
-            <div className="flex items-center justify-between pt-3 border-t border-[var(--line)]">
+            <div className={`flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[var(--line)] ${MODAL_FOOTER_STICKY}`}>
               {canDelete && columns.length > 1 ? (
                 <button
                   type="button"
@@ -933,7 +936,7 @@ export function TaskBoard({
               </div>
             </Field>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-[var(--line)]">
+            <div className={`flex flex-wrap justify-end gap-2 pt-3 border-t border-[var(--line)] ${MODAL_FOOTER_STICKY}`}>
               <button
                 type="button"
                 onClick={() => setIsCreatingColumn(false)}

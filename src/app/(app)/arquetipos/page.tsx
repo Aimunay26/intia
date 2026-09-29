@@ -222,6 +222,7 @@ export default async function ArquetiposPage({
         <SearchInput
           placeholder="Buscar por nombre, arquetipo, tono o vocabulario…"
           width={340}
+          responsive
         />
         <span className="text-inkmuted ml-auto text-[12px]">
           {totalPersonas} {totalPersonas === 1 ? "persona" : "personas"} · {conVoz} con voz

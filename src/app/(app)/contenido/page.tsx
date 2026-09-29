@@ -13,6 +13,7 @@ import {
 	ActiveFilters,
 	FilterBar,
 	FilterDate,
+	FilterDisclosure,
 	FilterSelect,
 	Pagination,
 	SearchInput,
@@ -151,6 +152,8 @@ export default async function ContenidoPage({
   };
 
   const hayFiltros = Object.keys(etiquetas).some((k) => Boolean(sp[k as keyof SearchParams]));
+  // Lo que queda plegado tras «Filtros» en móvil.
+  const filtrosActivos = [sp.estado, sp.plataforma, sp.persona, sp.estructura, sp.desde, sp.hasta].filter(Boolean).length;
   const puedeCrear = can(user.role, LEVEL.MEMBER);
 
   const nuevoVideo = puedeCrear ? (
@@ -172,37 +175,43 @@ export default async function ContenidoPage({
       />
 
       <FilterBar>
-        <SearchInput param="q" placeholder="Buscar por título o hook…" width={230} />
-        <FilterSelect
-          param="estado"
-          allLabel="Todos los estados"
-          icon={<Clapperboard size={13} />}
-          options={CONTENT_STATUSES.map((o) => ({ value: o.value, label: o.label }))}
-          width={172}
-        />
-        <FilterSelect
-          param="plataforma"
-          allLabel="Todas las plataformas"
-          icon={<Film size={13} />}
-          options={PLATFORMS.map((o) => ({ value: o.value, label: o.label }))}
-          width={184}
-        />
-        <FilterSelect
-          param="persona"
-          allLabel="Todo el equipo"
-          icon={<UserIcon size={13} />}
-          options={people.map((p) => ({ value: p.id, label: p.name }))}
-          width={172}
-        />
-        <FilterSelect
-          param="estructura"
-          allLabel="Todas las estructuras"
-          icon={<Shapes size={13} />}
-          options={structures.map((s) => ({ value: s.id, label: s.name }))}
-          width={184}
-        />
-        <FilterDate param="desde" label="Desde" />
-        <FilterDate param="hasta" label="Hasta" />
+        <SearchInput param="q" placeholder="Buscar por título o hook…" width={230} responsive />
+        <FilterDisclosure count={filtrosActivos}>
+          <FilterSelect
+            param="estado"
+            allLabel="Todos los estados"
+            icon={<Clapperboard size={13} />}
+            options={CONTENT_STATUSES.map((o) => ({ value: o.value, label: o.label }))}
+            width={172}
+            responsive
+          />
+          <FilterSelect
+            param="plataforma"
+            allLabel="Todas las plataformas"
+            icon={<Film size={13} />}
+            options={PLATFORMS.map((o) => ({ value: o.value, label: o.label }))}
+            width={184}
+            responsive
+          />
+          <FilterSelect
+            param="persona"
+            allLabel="Todo el equipo"
+            icon={<UserIcon size={13} />}
+            options={people.map((p) => ({ value: p.id, label: p.name }))}
+            width={172}
+            responsive
+          />
+          <FilterSelect
+            param="estructura"
+            allLabel="Todas las estructuras"
+            icon={<Shapes size={13} />}
+            options={structures.map((s) => ({ value: s.id, label: s.name }))}
+            width={184}
+            responsive
+          />
+          <FilterDate param="desde" label="Desde" responsive />
+          <FilterDate param="hasta" label="Hasta" responsive />
+        </FilterDisclosure>
         <div className="ml-auto">
           <ActiveFilters labels={etiquetas} />
         </div>
@@ -222,7 +231,7 @@ export default async function ContenidoPage({
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="tbl">
+            <table className="tbl tbl-cards">
               <thead>
                 <tr>
                   <th>Fecha</th>
@@ -251,15 +260,15 @@ export default async function ContenidoPage({
 
                   return (
                     <tr key={item.id}>
-                      <td className="text-inkmuted whitespace-nowrap">
+                      <td className="text-inkmuted whitespace-nowrap" data-label="Fecha">
                         {formatDate(item.scheduledDate)}
                       </td>
-                      <td>
+                      <td data-label="Marca">
                         <ColorChip color={item.brand.colorPrimary} href={`/marcas/${item.brand.id}`}>
                           {item.brand.name}
                         </ColorChip>
                       </td>
-                      <td className="max-w-[340px] min-w-[240px]">
+                      <td className="tbl-card-head max-w-[340px] min-w-[240px]">
                         <Link
                           href={`/contenido/${item.id}`}
                           className="text-ink hover:text-brand block text-[13px] leading-snug font-semibold transition-colors"
@@ -281,7 +290,7 @@ export default async function ContenidoPage({
                           </Link>
                         ) : null}
                       </td>
-                      <td className="text-inkmuted">
+                      <td className="text-inkmuted" data-label="Estructura">
                         {item.structure ? (
                           <Link
                             href={`/estructuras/${item.structure.id}`}
@@ -304,13 +313,13 @@ export default async function ContenidoPage({
                           "—"
                         )}
                       </td>
-                      <td>
+                      <td data-label="Estado">
                         <Badge option={estado} fallback={item.status} />
                       </td>
-                      <td>
+                      <td data-label="Plataforma">
                         <PlatformBadges platforms={parseList(item.platforms)} max={2} />
                       </td>
-                      <td>
+                      <td data-label="Equipo">
                         <AvatarStack
                           size={22}
                           people={item.assignments.map((a) => ({
@@ -322,7 +331,7 @@ export default async function ContenidoPage({
                           }))}
                         />
                       </td>
-                      <td className="min-w-[104px]">
+                      <td className="min-w-[104px]" data-label="Checklist">
                         {totalChecks ? (
                           <>
                             <div className="text-inksoft mb-1 text-[11.5px] font-semibold">
@@ -338,7 +347,7 @@ export default async function ContenidoPage({
                           <span className="text-inkmuted">—</span>
                         )}
                       </td>
-                      <td className="text-ink text-right font-semibold tabular-nums">
+                      <td className="text-ink text-right font-semibold tabular-nums" data-label="Vistas">
                         {vistas !== null ? compactNumber(vistas) : "—"}
                       </td>
                     </tr>

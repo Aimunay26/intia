@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { EditForm, RevisionField } from "@/components/edit-form";
 import { FileCheck2, Lock, Save, Sparkles, X } from "lucide-react";
 
-import { SubmitButton } from "@/components/forms";
+import { MODAL_FOOTER_STICKY, SubmitButton } from "@/components/forms";
 import { Callout, Divider, Field } from "@/components/ui";
 import { PALETTE } from "@/lib/constants";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
@@ -673,7 +673,7 @@ export function BrandForm({
       )}
 
       {canEdit ? (
-        <div className="border-line flex items-center justify-end gap-2 border-t pt-4">
+        <div className={cn("border-line flex items-center justify-end gap-2 border-t pt-4", mode === "crear" && MODAL_FOOTER_STICKY)}>
           <SubmitButton
             className="btn btn-primary"
             icon={mode === "crear" ? <Sparkles size={14} /> : <Save size={14} />}

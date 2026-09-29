@@ -8,7 +8,7 @@ import type { Prisma } from "@prisma/client";
 import { Activity, Clock, Users, Zap } from "lucide-react";
 
 import { RankBars, type Point } from "@/components/charts";
-import { FilterBar, FilterDate, FilterSelect, Pagination, SearchInput } from "@/components/filters";
+import { FilterBar, FilterDate, FilterDisclosure, FilterSelect, Pagination, SearchInput } from "@/components/filters";
 import {
 	Avatar,
 	Badge,
@@ -254,27 +254,32 @@ export default async function ActividadPage({
       </div>
 
       <FilterBar>
-        <SearchInput param="q" placeholder="Buscar en el movimiento o la persona…" width={270} />
-        <FilterSelect
-          param="persona"
-          allLabel="Todas las personas"
-          options={personas.map((p) => ({ value: p.id, label: p.name }))}
-        />
-        <FilterSelect
-          param="accion"
-          allLabel="Todas las acciones"
-          options={AUDIT_ACTIONS.map((a) => ({ value: a.value, label: a.label }))}
-        />
-        <FilterSelect
-          param="entidad"
-          allLabel="Todo tipo de cosa"
-          options={AUDIT_ENTITIES.filter((e) => (productCatalogEnabled() || !CATALOG_ENTITIES.includes(e)) && (productionFlowEnabled() || !PRODUCTION_ENTITIES.includes(e))).map((e) => ({
-            value: e,
-            label: ENTITY_LABELS[e] ?? e,
-          }))}
-        />
-        <FilterDate param="desde" label="Desde" />
-        <FilterDate param="hasta" label="Hasta" />
+        <SearchInput param="q" placeholder="Buscar en el movimiento o la persona…" width={270} responsive />
+        <FilterDisclosure count={[sp.persona, sp.accion, sp.entidad, sp.desde, sp.hasta].filter(Boolean).length}>
+          <FilterSelect
+            param="persona"
+            allLabel="Todas las personas"
+            options={personas.map((p) => ({ value: p.id, label: p.name }))}
+            responsive
+          />
+          <FilterSelect
+            param="accion"
+            allLabel="Todas las acciones"
+            options={AUDIT_ACTIONS.map((a) => ({ value: a.value, label: a.label }))}
+            responsive
+          />
+          <FilterSelect
+            param="entidad"
+            allLabel="Todo tipo de cosa"
+            options={AUDIT_ENTITIES.filter((e) => (productCatalogEnabled() || !CATALOG_ENTITIES.includes(e)) && (productionFlowEnabled() || !PRODUCTION_ENTITIES.includes(e))).map((e) => ({
+              value: e,
+              label: ENTITY_LABELS[e] ?? e,
+            }))}
+            responsive
+          />
+          <FilterDate param="desde" label="Desde" responsive />
+          <FilterDate param="hasta" label="Hasta" responsive />
+        </FilterDisclosure>
       </FilterBar>
 
       <Card>
@@ -295,7 +300,7 @@ export default async function ActividadPage({
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="tbl">
+            <table className="tbl tbl-cards">
               <thead>
                 <tr>
                   <th className="whitespace-nowrap">Cuándo</th>
@@ -316,7 +321,7 @@ export default async function ActividadPage({
 
                   return (
                     <tr key={m.id}>
-                      <td className="align-top whitespace-nowrap">
+                      <td className="align-top whitespace-nowrap" data-label="Cuándo">
                         <div className="text-inksoft text-[12.5px] font-medium tabular-nums">
                           {formatDateTime(m.createdAt)}
                         </div>
@@ -325,24 +330,24 @@ export default async function ActividadPage({
                         </div>
                       </td>
 
-                      <td className="align-top">
-                        <div className="flex items-center gap-2">
+                      <td className="align-top" data-label="Quién">
+                        <div className="flex min-w-0 items-center gap-2">
                           <Avatar name={nombre} color={color} size={24} />
-                          <span className="text-ink text-[12.5px] font-semibold whitespace-nowrap">
+                          <span className="text-ink min-w-0 text-[12.5px] font-semibold md:whitespace-nowrap">
                             {nombre}
                           </span>
                         </div>
                       </td>
 
-                      <td className="align-top">
+                      <td className="align-top" data-label="Acción">
                         <Badge option={AUDIT_ACTION_MAP[m.action]} fallback={m.action} />
                       </td>
 
-                      <td className="text-inkmuted align-top text-[12.5px] whitespace-nowrap">
+                      <td className="text-inkmuted align-top text-[12.5px] whitespace-nowrap" data-label="Sobre">
                         {ENTITY_LABELS[m.entity] ?? m.entity}
                       </td>
 
-                      <td className="align-top">
+                      <td className="tbl-card-head align-top">
                         <div className="text-inksoft text-[13px] leading-snug">{m.summary}</div>
 
                         {listaCambios.length ? (
@@ -381,7 +386,7 @@ export default async function ActividadPage({
                         ) : null}
                       </td>
 
-                      <td className="align-top">
+                      <td className="align-top" data-label="Marca">
                         {marca ? (
                           <ColorChip color={marca.colorPrimary} href={`/marcas/${marca.id}`}>
                             {marca.name}

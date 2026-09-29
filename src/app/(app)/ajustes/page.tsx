@@ -105,8 +105,8 @@ export default async function AjustesPage() {
         icon={<Settings size={19} />}
       />
 
-      <OperationsStatus />
-      {snapshot.legacySecretKeys.length > 0 && <Callout tone="danger" title="Migración de secretos pendiente">Completa B22 antes de usar las claves guardadas. No se leerán valores antiguos sin cifrar.</Callout>}
+      <div className="mb-4"><OperationsStatus /></div>
+      {snapshot.legacySecretKeys.length > 0 && <div className="mb-4"><Callout tone="danger" title="Migración de secretos pendiente">Completa B22 antes de usar las claves guardadas. No se leerán valores antiguos sin cifrar.</Callout></div>}
       {secretoDebil ? (
         <div className="mb-4">
           <Callout tone="danger" title="Define AUTH_SECRET antes de publicar en internet">
@@ -120,8 +120,8 @@ export default async function AjustesPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="min-w-0 lg:col-span-2">
           <SettingsForm revision={snapshot.revision}
             orgName={settings[SETTING_KEYS.orgName] ?? ""}
             defaultProvider={settings[SETTING_KEYS.defaultProvider] || "anthropic"}

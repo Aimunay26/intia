@@ -3,9 +3,10 @@
 import { ChevronDown, FileSpreadsheet, Upload } from "lucide-react";
 import { useActionState, useState, useEffect } from "react";
 
-import { importarMetricasCsv, continuarImportacion, misImportaciones, type ImportState } from "@/app/actions/metrics";
+import { importarMetricasCsv, continuarImportacion, misImportaciones } from "@/app/actions/metrics";
 import { CopyButton, SubmitButton } from "@/components/forms";
 import { Callout, Field } from "@/components/ui";
+import type { ImportState } from "@/lib/metric-import-parser";
 import { cn } from "@/lib/utils";
 
 /** Columnas que entiende el importador, en el orden recomendado. */

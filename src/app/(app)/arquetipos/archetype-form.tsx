@@ -12,7 +12,7 @@ import { PALETTE } from "@/lib/constants";
 import { cn, readableOn } from "@/lib/utils";
 import type { Fuentes, PersonaCampos } from "@/lib/branding-parser";
 import { Callout, Field } from "@/components/ui";
-import { Modal, SubmitButton } from "@/components/forms";
+import { Modal, MODAL_FOOTER_STICKY, SubmitButton } from "@/components/forms";
 import {
   Avisos,
   BotonImportarDocumento,
@@ -414,7 +414,7 @@ export function ArchetypeCreateButton({
             </Field>
           </div>
 
-          <div className="border-line mt-1 flex justify-end gap-2 border-t pt-4">
+          <div className={cn("border-line mt-1 flex flex-wrap justify-end gap-2 border-t pt-4", MODAL_FOOTER_STICKY)}>
             <button type="button" onClick={() => setOpen(false)} className="btn">
               Cancelar
             </button>

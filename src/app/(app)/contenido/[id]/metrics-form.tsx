@@ -52,11 +52,18 @@ export function MetricsPanel({ contentItemId, metrics, canEdit, canManage }: {
         <div className="flex gap-2"><button className="btn btn-primary" type="submit">Guardar semana</button><button className="btn" type="button" onClick={() => setEditing(null)}>Cancelar</button></div>
       </EditForm> : null}
     </div>
-    <div className="overflow-x-auto"><table className="tbl"><thead><tr><th>Semana / fecha histórica</th><th>Red</th><th>Vistas</th><th>Retención</th><th /></tr></thead>
-      <tbody>{metrics.map(metric => <tr key={metric.id}>
-        <td>{metric.dateLabel}{metric.period !== "WEEKLY" ? " · Histórico" : " · lunes"}</td><td>{PLATFORM_MAP[metric.platform]?.label ?? "Sin atribuir"}</td><td>{formatNumber(metric.views)}</td><td>{metric.retention3s === null ? "Sin dato" : formatPercent(metric.retention3s)}</td>
-        <td><div className="flex gap-2">{canEdit && metric.period === "WEEKLY" ? <button className="btn btn-sm" disabled={Boolean(editing)} onClick={() => setEditing(metric)}>Corregir</button> : null}
-          {canManage ? <EditForm action={eliminarMetrica}><input type="hidden" name="id" value={metric.id}/><button className="btn btn-sm text-danger" type="submit">Eliminar</button></EditForm> : null}</div></td>
-      </tr>)}</tbody></table></div>
+    {/* Lista y no tabla: el panel vive en la columna lateral (340 px) y en móvil; así no hace falta desplazarse en horizontal. */}
+    {metrics.length ? <ul className="divide-line border-line divide-y border-t" aria-label="Semanas registradas">{metrics.map(metric => <li key={metric.id} className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-4 py-3 text-[13px]">
+      <div className="min-w-0">
+        <div className="text-ink font-semibold">{metric.dateLabel}{metric.period !== "WEEKLY" ? " · Histórico" : " · lunes"}</div>
+        <div className="text-inkmuted text-[12px]">{PLATFORM_MAP[metric.platform]?.label ?? "Sin atribuir"}</div>
+      </div>
+      <div className="text-right">
+        <div className="text-ink font-semibold tabular-nums">{formatNumber(metric.views)} vistas</div>
+        <div className="text-inkmuted text-[12px]">Retención {metric.retention3s === null ? "sin dato" : formatPercent(metric.retention3s)}</div>
+      </div>
+      {(canEdit && metric.period === "WEEKLY") || canManage ? <div className="flex w-full flex-wrap justify-end gap-2">{canEdit && metric.period === "WEEKLY" ? <button className="btn btn-sm" disabled={Boolean(editing)} onClick={() => setEditing(metric)}>Corregir</button> : null}
+        {canManage ? <EditForm action={eliminarMetrica}><input type="hidden" name="id" value={metric.id}/><button className="btn btn-sm text-danger" type="submit">Eliminar</button></EditForm> : null}</div> : null}
+    </li>)}</ul> : null}
   </Card>;
 }

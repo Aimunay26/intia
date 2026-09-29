@@ -177,12 +177,13 @@ export default async function EstructurasPage({
       </div>
 
       <FilterBar>
-        <SearchInput placeholder="Buscar formato, familia o resumen…" width={280} />
+        <SearchInput placeholder="Buscar formato, familia o resumen…" width={280} responsive />
         <FilterSelect
           param="categoria"
           allLabel="Todas las categorías"
           options={STRUCTURE_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
           width={200}
+          responsive
         />
         <div className="ml-auto">
           <ActiveFilters
@@ -297,7 +298,7 @@ function StructureCard({ row, hex }: { row: Row; hex: string }) {
       </div>
 
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-        {row.family ? <span className="chip chip-plain">{row.family}</span> : null}
+        {row.family ? <span className="chip chip-plain chip-wrap">{row.family}</span> : null}
         <span className="text-inkmuted inline-flex items-center gap-1 text-[11.5px]">
           <ListOrdered size={11} />
           {row.beats} {row.beats === 1 ? "beat" : "beats"}

@@ -2,15 +2,17 @@
 import assert from 'node:assert/strict';
 import { expect } from '@playwright/test';
 
+// Secciones con ruta propia en la barra lateral; /generador/trabajos también está en NAV (Generaciones).
 const sections=['/','/calendario','/contenido','/tareas','/marcas','/generador','/guiones','/estructuras','/arquetipos','/metricas','/manual','/tutorial','/equipo','/actividad','/ajustes'];
+const navLinks=[...sections,'/generador/trabajos'];
 
 export async function checkDesignUi(page, base, db) {
   const checks={routes:[],viewports:[],interactions:[]};
   const main=page.getByRole('main');
   const desktopNav=page.locator('aside').first().getByRole('navigation',{name:'Navegación principal'});
-  await expect(desktopNav.locator('a')).toHaveCount(sections.length);
+  await expect(desktopNav.locator('a')).toHaveCount(navLinks.length);
   await expect(page.getByRole('button',{name:'Cerrar menú',exact:true})).toHaveCount(0);
-  assert.deepEqual((await desktopNav.locator('a').evaluateAll(links=>links.map(link=>link.getAttribute('href')))).sort(),[...sections].sort());
+  assert.deepEqual((await desktopNav.locator('a').evaluateAll(links=>links.map(link=>link.getAttribute('href')))).sort(),[...navLinks].sort());
   for(const route of [...sections,'/generador/trabajos','/guiones/script','/contenido/assigned','/marcas/A','/estructuras/structure','/arquetipos/person','/mi-perfil','/manual/filmmaker','/manual/filmmaker/fm-p2']) {
     const response=await page.goto(base+route);
     assert.equal(response.status(),200,route);
@@ -86,7 +88,7 @@ export async function checkDesignUi(page, base, db) {
       if(width<1024){
         await page.getByRole('button',{name:'Abrir menú',exact:true}).click();
         const mobileNav=page.getByRole('navigation',{name:'Navegación principal'}).filter({visible:true});
-        await expect(mobileNav.locator('a')).toHaveCount(sections.length);
+        await expect(mobileNav.locator('a')).toHaveCount(navLinks.length);
         await mobileNav.getByRole('link',{name:'Guiones',exact:true}).click();
         await expect(main.getByRole('heading',{name:'Guiones',exact:true})).toBeVisible();
         await expect(mobileNav).toHaveCount(0);

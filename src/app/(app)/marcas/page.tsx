@@ -154,7 +154,7 @@ export default async function MarcasPage({
       {brands.length === 0 && !q && !archivadas ? <GuiaBienvenidaBanner /> : null}
 
       <FilterBar>
-        <SearchInput param="q" placeholder="Buscar marca…" width={260} />
+        <SearchInput param="q" placeholder="Buscar marca…" width={260} responsive />
         <SegmentedControl
           param="estado"
           defaultValue="activas"

@@ -125,7 +125,7 @@ export default async function EstructuraPage({
           <span className="flex flex-wrap items-center gap-2.5">
             {structure.name}
             <Badge option={categoria} fallback={structure.category} />
-            {structure.family ? <span className="chip chip-plain">{structure.family}</span> : null}
+            {structure.family ? <span className="chip chip-plain chip-wrap">{structure.family}</span> : null}
             {!structure.active ? <span className="chip chip-plain">Desactivada</span> : null}
           </span>
         }
@@ -561,7 +561,7 @@ async function ArquetiposTab({ structureId }: { structureId: string }) {
         icon={<UserSquare2 size={14} />}
       />
       <div className="overflow-x-auto">
-        <table className="tbl">
+        <table className="tbl tbl-cards">
           <thead>
             <tr>
               <th>Arquetipo</th>
@@ -575,7 +575,7 @@ async function ArquetiposTab({ structureId }: { structureId: string }) {
               const fit = f.score === null ? null : FIT_SCORES.find((s) => s.value === f.score);
               return (
                 <tr key={f.id}>
-                  <td>
+                  <td className="tbl-card-head">
                     <div className="flex items-center gap-2">
                       <Avatar name={f.name} color={f.color} size={24} />
                       <div className="min-w-0">
@@ -593,14 +593,14 @@ async function ArquetiposTab({ structureId }: { structureId: string }) {
                       </div>
                     </div>
                   </td>
-                  <td>
+                  <td data-label="Compatibilidad">
                     {fit ? (
                       <ColorChip color={fit.hex}>{fit.label}</ColorChip>
                     ) : (
                       <span className="chip chip-plain">Sin evaluar</span>
                     )}
                   </td>
-                  <td className="text-[12.5px]">
+                  <td className="tbl-card-full text-[12.5px]" data-label="Notas del match">
                     {f.notes ? f.notes : <span className="text-inkmuted">—</span>}<p className="text-xs text-inkmuted">{f.source === "MANO" ? `Manual · revisión ${f.revision} · ${f.updatedByName ?? "autor histórico no registrado"}` : f.source ? "Sugerencia sin validar" : "Sin evaluar"}</p>
                   </td>
                   <td className="text-right">
@@ -662,7 +662,7 @@ async function GuionesTab({ structureId }: { structureId: string }) {
         actions={<span className="chip chip-plain">{scripts.length}</span>}
       />
       <div className="overflow-x-auto">
-        <table className="tbl">
+        <table className="tbl tbl-cards">
           <thead>
             <tr>
               <th>Guion</th>
@@ -675,7 +675,7 @@ async function GuionesTab({ structureId }: { structureId: string }) {
           <tbody>
             {scripts.map((s) => (
               <tr key={s.id}>
-                <td>
+                <td className="tbl-card-head">
                   <Link
                     href={`/guiones/${s.id}`}
                     className="text-ink hover:text-brand text-[12.5px] font-semibold transition-colors"
@@ -688,7 +688,7 @@ async function GuionesTab({ structureId }: { structureId: string }) {
                     </span>
                   ) : null}
                 </td>
-                <td>
+                <td data-label="Marca">
                   {s.brand ? (
                     <ColorChip color={s.brand.colorPrimary} href={`/marcas/${s.brand.id}`}>
                       {s.brand.name}
@@ -697,11 +697,11 @@ async function GuionesTab({ structureId }: { structureId: string }) {
                     <span className="text-inkmuted">—</span>
                   )}
                 </td>
-                <td>
+                <td data-label="Estado">
                   <Badge option={SCRIPT_STATUS_MAP[s.status]} fallback={s.status} />
                 </td>
-                <td className="text-[12.5px] whitespace-nowrap">{formatDate(s.createdAt)}</td>
-                <td>
+                <td className="text-[12.5px] whitespace-nowrap" data-label="Fecha">{formatDate(s.createdAt)}</td>
+                <td data-label="Autor">
                   {s.author ? (
                     <span className="flex items-center gap-2 text-[12.5px]">
                       <Avatar name={s.author.name} color={s.author.color} size={22} />

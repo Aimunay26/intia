@@ -77,25 +77,28 @@ export function Modal({
 
   if (!open) return null;
 
+  // En móvil es una hoja que sube desde abajo: ocupa el ancho entero, crece
+  // hasta la altura de la pantalla y la cabecera queda fija al desplazarse.
+  // Los formularios largos fijan su pie con MODAL_FOOTER.
   return (
-    <div className="no-print fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto p-4 sm:p-8">
+    <div className="no-print fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto overscroll-contain px-0 pt-6 sm:p-8">
       <div className="fixed inset-0 bg-black/45 backdrop-blur-[2px]" onClick={onClose} />
       <div
         ref={dialogRef}
-        className="card fade-in relative my-auto w-full shadow-[var(--shadow-3)]"
+        className="card fade-in relative w-full shadow-[var(--shadow-3)] max-sm:mt-auto max-sm:rounded-b-none! max-sm:border-b-0! sm:my-auto"
         style={{ maxWidth: width }}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
       >
-        <div className="card-hd">
+        <div className="card-hd max-sm:bg-surface max-sm:sticky max-sm:top-0 max-sm:z-20 max-sm:rounded-t-[var(--radius)]">
           <div className="min-w-0">
             <div id={titleId} className="card-title">{title}</div>
             {description ? <div id={descriptionId} className="card-sub mt-0.5">{description}</div> : null}
           </div>
           {/* type="button": el Modal vive dentro de formularios (marca, persona) y el aspa nunca debe enviar. */}
-          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon" aria-label="Cerrar">
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon shrink-0" aria-label="Cerrar">
             <X size={16} />
           </button>
         </div>
@@ -104,6 +107,15 @@ export function Modal({
     </div>
   );
 }
+
+/**
+ * Pie de acciones de un formulario dentro de <Modal>: en móvil queda fijo
+ * abajo para no tener que desplazarse hasta el botón de guardar (mismo
+ * enfoque que los editores de escenas de guiones).
+ */
+export const MODAL_FOOTER_STICKY =
+  "max-md:bg-surface max-md:border-line max-md:sticky max-md:bottom-0 max-md:z-10 max-md:-mx-5 max-md:border-t max-md:px-5 max-md:pt-3 max-md:pb-4";
+export const MODAL_FOOTER = `border-line flex flex-wrap justify-end gap-2 border-t pt-4 ${MODAL_FOOTER_STICKY}`;
 
 /** Botón que abre un modal con un formulario dentro. */
 export function ModalForm({

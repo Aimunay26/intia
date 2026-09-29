@@ -296,6 +296,7 @@ export default async function CalendarioPage({
           icon={<Clapperboard size={13} />}
           options={CONTENT_STATUSES.map((o) => ({ value: o.value, label: o.label }))}
           width={180}
+          responsive
         />
         <FilterSelect
           param="plataforma"
@@ -303,6 +304,7 @@ export default async function CalendarioPage({
           icon={<Film size={13} />}
           options={PLATFORMS.map((o) => ({ value: o.value, label: o.label }))}
           width={190}
+          responsive
         />
         <FilterSelect
           param="persona"
@@ -310,6 +312,7 @@ export default async function CalendarioPage({
           icon={<UserIcon size={13} />}
           options={people.map((p) => ({ value: p.id, label: p.name }))}
           width={180}
+          responsive
         />
         <div className="ml-auto">
           <ActiveFilters labels={etiquetas} />

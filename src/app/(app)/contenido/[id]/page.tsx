@@ -248,7 +248,7 @@ export default async function VideoPage({ params, searchParams }: { params: Prom
             {previstos.map((p) => (
               <span
                 key={p.id}
-                className="chip chip-plain text-[11px]"
+                className="chip chip-plain chip-wrap text-[11px]"
                 title="Formato previsto: el guion fijará la estructura definitiva"
               >
                 <Layers size={11} /> {p.name}
@@ -308,7 +308,8 @@ export default async function VideoPage({ params, searchParams }: { params: Prom
         }
       />
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      {/* grid-cols-1 (minmax(0,1fr)) en móvil: la tabla de métricas del lateral no puede ensanchar la columna única. */}
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         {/* ------------------------------------------------------ principal -- */}
         <div className="min-w-0 space-y-4">
           <Card>
@@ -525,7 +526,7 @@ export default async function VideoPage({ params, searchParams }: { params: Prom
         </div>
 
         {/* -------------------------------------------------------- lateral -- */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <TeamPanel
             contentItemId={item.id}
             assignments={asignaciones}

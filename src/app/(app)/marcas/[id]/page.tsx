@@ -269,7 +269,7 @@ export default async function MarcaPage({
         }
       />
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Stat
           label="Videos"
           value={formatNumber(brand._count.content)}
@@ -306,8 +306,8 @@ export default async function MarcaPage({
         />
       </div>
 
-      {/* Con la pestaña Productos son cinco: en móvil se desplazan en vez de desbordar la página. */}
-      <div className={catalogoActivo || produccionActiva ? "no-scrollbar mb-4 overflow-x-auto" : "mb-4"}>
+      {/* Las pestañas se desplazan en horizontal en móvil en vez de desbordar la página (con Productos y Equipo son seis). */}
+      <div className="no-scrollbar mb-4 overflow-x-auto">
         <SegmentedControl
           param="vista"
           defaultValue="identidad"
@@ -418,7 +418,7 @@ export default async function MarcaPage({
               {keywords.length ? (
                 <div className="flex flex-wrap gap-1.5">
                   {keywords.map((k, i) => (
-                    <ColorChip key={i} color={brand.colorSecondary}>
+                    <ColorChip key={i} color={brand.colorSecondary} className="chip-wrap">
                       {k}
                     </ColorChip>
                   ))}
@@ -482,7 +482,7 @@ export default async function MarcaPage({
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="tbl">
+              <table className="tbl tbl-cards">
                 <thead>
                   <tr>
                     <th className="min-w-[240px]">Video</th>
@@ -495,7 +495,7 @@ export default async function MarcaPage({
                 <tbody>
                   {videos.map((v) => (
                     <tr key={v.id}>
-                      <td>
+                      <td className="tbl-card-head">
                         <Link
                           href={`/contenido/${v.id}`}
                           className="text-ink hover:text-brand font-semibold transition-colors"
@@ -503,16 +503,16 @@ export default async function MarcaPage({
                           {v.title}
                         </Link>
                       </td>
-                      <td>
+                      <td data-label="Estado">
                         <Badge option={CONTENT_STATUS_MAP[v.status]} fallback={v.status} />
                       </td>
-                      <td>
+                      <td data-label="Plataforma">
                         <PlatformBadges platforms={parseList(v.platforms)} max={2} />
                       </td>
-                      <td className="text-inkmuted whitespace-nowrap">
+                      <td className="text-inkmuted whitespace-nowrap" data-label="Fecha">
                         {formatDate(v.publishedAt ?? v.scheduledDate)}
                       </td>
-                      <td>
+                      <td data-label="Publicación">
                         {v.publishedUrl ? (
                           <a
                             href={v.publishedUrl}

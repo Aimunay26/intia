@@ -33,8 +33,9 @@ export function CardHeader({
   icon?: ReactNode;
   actions?: ReactNode;
 }) {
+  // En móvil las acciones bajan a su propia línea en vez de estrujar el título.
   return (
-    <div className="card-hd">
+    <div className="card-hd max-sm:flex-wrap">
       <div className="flex min-w-0 items-center gap-2.5">
         {icon ? <span className="text-inkmuted shrink-0">{icon}</span> : null}
         <div className="min-w-0">
@@ -42,7 +43,7 @@ export function CardHeader({
           {subtitle ? <div className="card-sub mt-0.5">{subtitle}</div> : null}
         </div>
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </div>
   );
 }
@@ -118,7 +119,7 @@ export function ColorChip({
   const content = (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-2 py-[3px] text-[11.5px] font-semibold leading-snug whitespace-nowrap",
+        "inline-flex max-w-full items-center gap-1.5 overflow-clip rounded-md px-2 py-[3px] text-[11.5px] font-semibold leading-snug whitespace-nowrap",
         className
       )}
       style={{
@@ -242,20 +243,21 @@ export function Stat({
   href?: string;
 }) {
   const body = (
-    <div className="card h-full p-5 transition-shadow hover:shadow-[var(--shadow-2)]">
+    <div className="card h-full p-4 transition-shadow hover:shadow-[var(--shadow-2)] sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-inkmuted text-[11px] font-semibold tracking-wider uppercase">
             {label}
           </div>
-          <div className="text-ink mt-2.5 text-[28px] leading-none font-bold tracking-tight tabular-nums">
+          <div className="text-ink mt-2.5 text-[24px] leading-none font-bold tracking-tight tabular-nums sm:text-[28px]">
             {value}
           </div>
           {sub ? <div className="text-inkmuted mt-1.5 text-xs leading-snug">{sub}</div> : null}
         </div>
+        {/* En móvil las cifras van de dos en dos: el icono cede su sitio al número. */}
         {icon ? (
           <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+            className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:flex"
             style={{
               background: accent ? withAlpha(accent, 0.12) : "var(--brand-soft)",
               color: accent ?? "var(--brand)",

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { actualizarVideo, crearVideo } from "@/app/actions/content";
-import { ModalForm, SubmitButton } from "@/components/forms";
+import { ModalForm, MODAL_FOOTER_STICKY, SubmitButton } from "@/components/forms";
 import { Field } from "@/components/ui";
 import {
 	CONTENT_STATUSES,
@@ -327,7 +327,7 @@ export function NuevoVideoBoton({
           </span>
         </div>
 
-        <div className="flex justify-end gap-2 pt-1">
+        <div className={cn("flex flex-wrap justify-end gap-2 pt-1", MODAL_FOOTER_STICKY)}>
           <SubmitButton
             className="btn btn-primary"
             icon={<Plus size={14} />}

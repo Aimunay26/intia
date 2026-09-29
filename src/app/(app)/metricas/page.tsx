@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 
 import { DonutChart, LineChart, RankBars, type Point } from "@/components/charts";
-import { ActiveFilters, FilterBar, FilterDate, FilterSelect } from "@/components/filters";
+import { ActiveFilters, FilterBar, FilterDate, FilterDisclosure, FilterSelect } from "@/components/filters";
 import {
 	Card,
 	CardHeader,
@@ -159,28 +159,34 @@ async function MetricsFilters({ filters, range, sp }: MetricsSectionProps) {
 
 
   return <FilterBar>
+        <FilterDisclosure count={[sp.plataforma, sp.estructura, sp.persona, sp.desde, sp.hasta].filter(Boolean).length}>
         <FilterSelect
           param="plataforma"
           allLabel="Todas las plataformas"
           options={PLATFORMS.map((p) => ({ value: p.value, label: p.label }))}
           width={158}
+          responsive
         />
         <FilterSelect
           param="estructura"
           allLabel="Todas las estructuras"
           options={estructuras.map((e) => ({ value: e.id, label: e.name }))}
           width={186}
+          responsive
         />
         <FilterSelect
           param="persona"
           allLabel="Todo el equipo"
           options={personas.map((p) => ({ value: p.id, label: p.name }))}
           width={158}
+          responsive
         />
-        <span className="text-inkmuted pl-1 text-[12px] font-semibold">Del</span>
-        <FilterDate param="desde" label="Desde" />
-        <span className="text-inkmuted text-[12px] font-semibold">al</span>
-        <FilterDate param="hasta" label="Hasta" />
+        {/* En móvil cada fecha ya lleva su etiqueta (Desde/Hasta). */}
+        <span className="text-inkmuted hidden pl-1 text-[12px] font-semibold md:inline">Del</span>
+        <FilterDate param="desde" label="Desde" responsive />
+        <span className="text-inkmuted hidden text-[12px] font-semibold md:inline">al</span>
+        <FilterDate param="hasta" label="Hasta" responsive />
+        </FilterDisclosure>
         <div className="ml-auto">
           <ActiveFilters labels={etiquetasFiltro} />
         </div>
@@ -197,7 +203,7 @@ async function MetricsOverview({ filters, range }: MetricsSectionProps) {
     <p className="text-inkmuted mb-3 text-xs">Semanas completas de lunes a domingo. Las cifras pertenecen a la plataforma registrada. Retención: media simple por registro semanal; incluye 0 % y omite solo datos ausentes.</p>
     {historical ? <p className="text-warn mb-3 text-xs">{historical} registros históricos conservados en las fichas de video; excluidos de estos totales semanales.</p> : null}
     <p className="text-inkmuted mb-3 text-xs">{formatNumber(hoy.videos)} videos con datos · {formatNumber(hoy.records)} registros</p>
-    {hoy.records ? <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+    {hoy.records ? <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
             <Stat
               label="Vistas"
               value={compactNumber(hoy.views)}

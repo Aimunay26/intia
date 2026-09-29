@@ -160,7 +160,7 @@ export function FitMatrix({
                       <div className="text-ink flex items-center gap-2 text-[13px] font-semibold">
                         {row.name}
                         {row.family ? (
-                          <span className="chip chip-plain">{row.family}</span>
+                          <span className="chip chip-plain chip-wrap">{row.family}</span>
                         ) : null}
                         {guardando === row.structureId ? (
                           <Loader2 size={12} className="spin text-inkmuted" />

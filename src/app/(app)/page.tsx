@@ -185,7 +185,7 @@ async function PanelStats() {
     })
   ]));
   const vistas = vistasMes._sum.views ?? 0;
-  return <section data-ready-block="panel.stats"><div className="mb-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+  return <section data-ready-block="panel.stats"><div className="mb-5 grid grid-cols-2 gap-3 sm:gap-3.5 xl:grid-cols-4">
         <Stat
           label="Publicados este mes"
           value={formatNumber(publicados)}
@@ -271,7 +271,7 @@ async function PanelPending() {
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="tbl">
+                <table className="tbl tbl-cards">
                   <thead>
                     <tr>
                       <th>Video</th>
@@ -295,7 +295,7 @@ async function PanelPending() {
 
                       return (
                         <tr key={item.id}>
-                          <td>
+                          <td className="tbl-card-head">
                             <Link
                               href={`/contenido/${item.id}`}
                               className="flex min-w-0 items-center gap-2.5"
@@ -318,13 +318,13 @@ async function PanelPending() {
                               </span>
                             </Link>
                           </td>
-                          <td>
+                          <td data-label="Estado">
                             <Badge
                               option={CONTENT_STATUS_MAP[item.status]}
                               fallback={item.status}
                             />
                           </td>
-                          <td>
+                          <td data-label="Fecha">
                             <div className="text-inksoft text-[12.5px] font-medium">
                               {formatDate(item.scheduledDate)}
                             </div>
@@ -338,7 +338,7 @@ async function PanelPending() {
                               {etiquetaPlazo(dias)}
                             </div>
                           </td>
-                          <td>
+                          <td data-label="Equipo">
                             <AvatarStack
                               size={22}
                               people={item.assignments.map((a) => ({
@@ -350,7 +350,7 @@ async function PanelPending() {
                               }))}
                             />
                           </td>
-                          <td>
+                          <td data-label="Checklist">
                             {total === 0 ? (
                               <span className="text-inkmuted text-xs">—</span>
                             ) : (

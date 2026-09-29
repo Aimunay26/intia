@@ -129,10 +129,58 @@ export function Shell({
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
+  // Se cierra al navegar y también al cambiar de marca: la ruta no cambia,
+  // pero lo que se ve sí, y el cajón abierto lo taparía.
   useEffect(() => {
     setMobileOpen(false);
-  }, [pathname]);
+  }, [pathname, activeBrandId]);
+
+  // Cajón abierto: Escape lo cierra, el fondo no se desplaza, el foco entra
+  // en el cajón (y no sale con Tab) y al cerrar vuelve al botón del menú.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const drawer = drawerRef.current;
+    const menuButton = menuButtonRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    drawer?.querySelector<HTMLElement>("[data-drawer-close]")?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      // Un menú desplegable abierto dentro del cajón consume su propio Escape.
+      if (e.defaultPrevented || !drawer) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMobileOpen(false);
+        return;
+      }
+      if (e.key !== "Tab" || !drawer.contains(document.activeElement)) return;
+      const focusables = [...drawer.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )].filter((el) => el.getClientRects().length > 0);
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (!first || !last) return;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = previousOverflow;
+      const active = document.activeElement;
+      if (!active || active === document.body || drawer?.contains(active)) {
+        menuButton?.focus({ preventScroll: true });
+      }
+    };
+  }, [mobileOpen]);
 
   const activeHref = NAV.flatMap(group => group.items).filter(item =>
     pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href + "/"))
@@ -152,6 +200,7 @@ export function Shell({
           onClick={() => setMobileOpen(false)}
           className="btn btn-ghost btn-icon"
           aria-label="Cerrar menú"
+          data-drawer-close
         >
           <X size={16} />
         </button>
@@ -222,24 +271,40 @@ export function Shell({
               className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
               onClick={() => setMobileOpen(false)}
             />
-            <aside className="bg-surface border-line absolute inset-y-0 left-0 flex w-[260px] flex-col border-r shadow-2xl">
+            <aside
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menú"
+              className="bg-surface border-line absolute inset-y-0 left-0 flex w-[min(300px,86vw)] flex-col overscroll-contain border-r shadow-2xl"
+            >
               {nav}
             </aside>
           </div>
         ) : null}
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="bg-canvas/85 border-line no-print sticky top-0 z-30 flex h-14 items-center gap-3 border-b px-4 backdrop-blur-md lg:hidden">
+          <header className="bg-canvas/85 border-line no-print sticky top-0 z-30 flex h-14 items-center gap-2 border-b px-3 backdrop-blur-md sm:gap-3 sm:px-4 lg:hidden">
             <button
+              ref={menuButtonRef}
+              type="button"
               onClick={() => setMobileOpen(true)}
-              className="btn btn-ghost btn-icon"
+              className="btn btn-ghost btn-icon shrink-0"
               aria-label="Abrir menú"
+              aria-expanded={mobileOpen}
             >
               <Menu size={18} />
             </button>
-            <Link href="/" aria-label="Intia · Ir al panel"><IntiaWordmark className="text-[24px]" /></Link>
-            <span className="text-inkmuted truncate text-xs">{orgName}</span>
-            <div className="ml-auto">
+            <Link href="/" aria-label="Intia · Ir al panel" className="shrink-0"><IntiaWordmark className="text-[24px]" /></Link>
+            <span className="text-inkmuted hidden min-w-0 truncate text-xs sm:inline">{orgName}</span>
+            {/* Marca activa siempre a la vista en móvil; abre el mismo menú que el selector del cajón. */}
+            <div className="ml-auto flex min-w-0 items-center gap-1">
+              <BrandSwitcher
+                compact
+                brands={brands}
+                activeId={activeBrandId}
+                canCreate={user.role === "OWNER"}
+              />
               <ThemeToggle />
             </div>
           </header>

@@ -6,7 +6,7 @@ import { measurePagePhase } from "@/lib/performance-page";
 import { getTeamList, getTeamStats, teamMemberSelect, type TeamFilters } from "@/lib/team-list";
 import { Mail, Phone, ShieldCheck, UserCog, Users, UserSquare2 } from "lucide-react";
 
-import { FilterBar, FilterSelect, SearchInput } from "@/components/filters";
+import { FilterBar, FilterDisclosure, FilterSelect, SearchInput } from "@/components/filters";
 import {
 	Avatar,
 	Badge,
@@ -104,7 +104,7 @@ export default async function EquipoPage({
         }
       />
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat
           label="Personas activas"
           value={stats.active}
@@ -135,13 +135,16 @@ export default async function EquipoPage({
       </div>
 
       <FilterBar>
-        <SearchInput param="q" placeholder="Buscar por nombre, correo…" width={250} />
-        <FilterSelect
-          param="rol"
-          allLabel="Todos los roles"
-          options={USER_ROLES.map((r) => ({ value: r.value, label: r.label }))}
-        />
-        <FilterSelect param="estado" allLabel="Activas y desactivadas" options={ESTADOS} />
+        <SearchInput param="q" placeholder="Buscar por nombre, correo…" width={250} responsive />
+        <FilterDisclosure count={[sp.rol, sp.estado].filter(Boolean).length}>
+          <FilterSelect
+            param="rol"
+            allLabel="Todos los roles"
+            options={USER_ROLES.map((r) => ({ value: r.value, label: r.label }))}
+            responsive
+          />
+          <FilterSelect param="estado" allLabel="Activas y desactivadas" options={ESTADOS} responsive />
+        </FilterDisclosure>
         <span className="text-inkmuted ml-auto pr-1 text-[12.5px]">
           {page.total} {page.total === 1 ? "persona" : "personas"}
         </span>
@@ -165,7 +168,7 @@ export default async function EquipoPage({
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="tbl">
+            <table className="tbl tbl-cards">
               <thead>
                 <tr>
                   <th>Persona</th>
@@ -193,7 +196,7 @@ export default async function EquipoPage({
 
                   return (
                     <tr key={p.id} className={cn(!p.active && "opacity-60")}>
-                      <td>
+                      <td className="tbl-card-head">
                         <div className="flex items-center gap-2.5">
                           <Avatar name={p.name} color={p.color} size={30} />
                           <div className="min-w-0">
@@ -203,9 +206,9 @@ export default async function EquipoPage({
                                 <span className="chip chip-plain">Tú</span>
                               ) : null}
                             </div>
-                            <div className="text-inkmuted mt-0.5 flex items-center gap-2 text-[11.5px]">
-                              <span className="inline-flex items-center gap-1">
-                                <Mail size={11} />
+                            <div className="text-inkmuted mt-0.5 flex flex-wrap items-center gap-x-2 text-[11.5px]">
+                              <span className="inline-flex min-w-0 items-center gap-1">
+                                <Mail size={11} className="shrink-0" />
                                 <span className="truncate">{p.email}</span>
                               </span>
                               {p.phone ? (
@@ -219,11 +222,11 @@ export default async function EquipoPage({
                         </div>
                       </td>
 
-                      <td>
+                      <td data-label="Rol">
                         <Badge option={USER_ROLE_MAP[p.role]} fallback={p.role} />
                       </td>
 
-                      <td>
+                      <td data-label="Arquetipo">
                         {p.archetype ? (
                           <ColorChip
                             color={p.archetype.color}
@@ -236,7 +239,7 @@ export default async function EquipoPage({
                         )}
                       </td>
 
-                      <td className="text-right">
+                      <td className="text-right" data-label="Videos">
                         <span
                           className={cn(
                             "text-[13px] font-semibold tabular-nums",
@@ -247,7 +250,7 @@ export default async function EquipoPage({
                         </span>
                       </td>
 
-                      <td>
+                      <td className="tbl-card-full max-md:order-last" data-label="En qué participó">
                         {papeles.length ? (
                           <div className="flex flex-wrap gap-1">
                             {papeles.map((r) => (
@@ -267,7 +270,7 @@ export default async function EquipoPage({
                         )}
                       </td>
 
-                      <td>
+                      <td data-label="Estado">
                         <Badge
                           option={
                             ACCOUNT_STATUS_MAP[p.active ? "ACTIVA" : "DESACTIVADA"]
@@ -275,11 +278,11 @@ export default async function EquipoPage({
                         />
                       </td>
 
-                      <td className="text-inkmuted text-right text-[12px] whitespace-nowrap">
+                      <td className="text-inkmuted text-right text-[12px] whitespace-nowrap" data-label="Alta">
                         {formatDate(p.createdAt)}
                       </td>
 
-                      <td className="text-right">
+                      <td className="tbl-card-end text-right">
                         {canManage || isSelf ? (
                           <EditUserButton
                             member={toMember(p)}

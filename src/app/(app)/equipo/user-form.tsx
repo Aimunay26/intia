@@ -24,7 +24,7 @@ import { WORK_PROFILES } from "@/lib/permissions";
 import { PALETTE, USER_ROLES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Divider, Field, SectionTitle } from "@/components/ui";
-import { DeleteButton, Modal } from "@/components/forms";
+import { DeleteButton, Modal, MODAL_FOOTER_STICKY } from "@/components/forms";
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 
 /* ------------------------------------------------------------------ TIPOS -- */
@@ -274,7 +274,7 @@ export function InviteUserButton({ archetypes, brands = [] }: { archetypes: Arch
 
           <Aviso state={state} />
 
-          <div className="flex justify-end gap-2 pt-1">
+          <div className={cn("flex flex-wrap justify-end gap-2 pt-1", MODAL_FOOTER_STICKY)}>
             <button type="button" className="btn" onClick={() => setOpen(false)}>
               Cancelar
             </button>
@@ -349,7 +349,7 @@ export function EditUserButton({
           <input type="hidden" name="id" value={member.id} />
           <input type="hidden" name="selfProfile" value={canManage ? "0" : "1"} /><CamposPersona member={member} archetypes={archetypes} brands={brands} canManage={canManage} />
           <Aviso state={datos} />
-          <div className="flex justify-end">
+          <div className={cn("flex justify-end", MODAL_FOOTER_STICKY)}>
             <button type="submit" className="btn btn-primary">
               Guardar datos
             </button>

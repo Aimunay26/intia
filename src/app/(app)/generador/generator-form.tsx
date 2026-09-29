@@ -1333,7 +1333,7 @@ export function GeneratorForm({
                       {duracion || 0} segundos
                     </PanelRow>
                     <PanelRow icon={<Bot size={13} />} label="Modelo">
-                      <span className="font-mono text-[11.5px]">
+                      <span className="font-mono text-[11.5px] [overflow-wrap:anywhere]">
                         {model || "por defecto"}
                       </span>
                     </PanelRow>

@@ -20,10 +20,13 @@ export function BrandSwitcher({
   brands,
   activeId,
   canCreate,
+  compact = false,
 }: {
   brands: BrandChoice[];
   activeId: string | null;
   canCreate: boolean;
+  /** Indicador de la cabecera móvil: color y nombre recortado; abre el mismo menú. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -39,18 +42,36 @@ export function BrandSwitcher({
     form.requestSubmit();
   };
 
+  const label = `Cambiar marca: ${active ? active.name : "Todas las marcas"}`;
+
   return (
-    <div className="relative px-3.5 pb-3">
+    <div className={compact ? "relative min-w-0" : "relative px-3.5 pb-3"}>
       <form action={cambiarMarcaActiva} ref={formRef} className="hidden">
         <input type="hidden" name="brandId" defaultValue={TODAS} />
       </form>
 
       <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
       <DropdownMenuTrigger asChild>
+      {compact ? (
+        <button
+          type="button"
+          className="border-line bg-surface2 hover:border-linestrong text-ink flex h-10 max-w-full min-w-0 items-center gap-1.5 rounded-lg border px-2 text-[12.5px] font-semibold transition-colors"
+          aria-label={label}
+          title={label}
+        >
+          {active ? (
+            <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: active.colorPrimary }} />
+          ) : (
+            <Layers size={13} className="text-inkmuted shrink-0" />
+          )}
+          <span className="min-w-0 truncate">{active ? active.name : "Todas"}</span>
+          <ChevronsUpDown size={13} className="text-inkmuted shrink-0" />
+        </button>
+      ) : (
       <button
         type="button"
         className="border-line hover:border-linestrong bg-surface2 flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors"
-        aria-label={`Cambiar marca: ${active ? active.name : "Todas las marcas"}`}
+        aria-label={label}
       >
         <span
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
@@ -78,9 +99,13 @@ export function BrandSwitcher({
 
         <ChevronsUpDown size={14} className="text-inkmuted shrink-0" />
       </button>
+      )}
       </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+        <DropdownMenuContent
+          align={compact ? "end" : "start"}
+          className={compact ? "w-64 max-w-[calc(100vw-2rem)]" : "w-[var(--radix-dropdown-menu-trigger-width)]"}
+        >
           <DropdownMenuItem
             onSelect={() => elegir(TODAS)}
             className={cn(

@@ -285,7 +285,7 @@ export function ObjectivesPanel({
         />
       ) : (
         <div className="overflow-x-auto">
-          <table className="tbl">
+          <table className="tbl tbl-cards">
             <thead>
               <tr>
                 <th className="min-w-[220px]">Objetivo</th>
@@ -318,7 +318,7 @@ export function ObjectivesPanel({
                 if (editingId === o.id && canEdit) {
                   return (
                     <tr key={o.id}>
-                      <td colSpan={canEdit ? 8 : 7} className="bg-surface2 p-4">
+                      <td colSpan={canEdit ? 8 : 7} className="tbl-card-full bg-surface2 p-4">
                         <EditForm
                           action={actualizarObjetivo}
                           onSuccess={() => setEditingId(null)}
@@ -350,7 +350,7 @@ export function ObjectivesPanel({
 
                 return (
                   <tr key={o.id}>
-                    <td>
+                    <td className="tbl-card-head">
                       <div className="text-ink font-semibold">{o.name}</div><p className="text-xs text-inkmuted">{o.calculationMode === "WEEKLY_SUM" ? `Calculado · ${o.calculationFrom} a ${o.calculationTo} · ${o.records ?? 0} registros semanales` : "Valor manual"}</p>
                       {o.description ? (
                         <div className="text-inkmuted mt-0.5 text-[11.5px] leading-snug">
@@ -363,7 +363,7 @@ export function ObjectivesPanel({
                         </div>
                       ) : null}
                     </td>
-                    <td>
+                    <td className="tbl-card-full" data-label="Avance">
                       <ProgressBar value={avance} color={color} />
                       <div className="text-inkmuted mt-1 flex items-center gap-1.5 text-[11.5px]">
                         <span className="font-semibold" style={{ color }}>
@@ -372,25 +372,25 @@ export function ObjectivesPanel({
                         {!o.higherIsBetter ? <span>· menos es mejor</span> : null}
                       </div>
                     </td>
-                    <td className="text-right font-semibold">
+                    <td className="text-right font-semibold" data-label="Actual">
                       {num(o.currentValue)}
                       {o.unit ? (
                         <span className="text-inkmuted font-normal"> {o.unit}</span>
                       ) : null}
                     </td>
-                    <td className="text-right">
+                    <td className="text-right" data-label="Meta">
                       {num(o.targetValue)}
                       {o.unit ? (
                         <span className="text-inkmuted"> {o.unit}</span>
                       ) : null}
                     </td>
-                    <td className="text-inkmuted">
+                    <td className="text-inkmuted" data-label="Periodo">
                       {OBJECTIVE_PERIODS.find((p) => p.value === o.period)?.label ?? o.period}
                     </td>
-                    <td className="text-inkmuted whitespace-nowrap">
+                    <td className="text-inkmuted whitespace-nowrap" data-label="Límite">
                       {o.deadline ? formatDate(fromDateKey(o.deadline)) : "—"}
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       <span
                         className="inline-flex items-center gap-1"
                         title={
@@ -407,7 +407,7 @@ export function ObjectivesPanel({
                     </td>
                     {canEdit ? (
                       <td>
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1 max-md:justify-start">
                           <button
                             type="button"
                             onClick={() => {

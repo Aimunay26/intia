@@ -816,8 +816,96 @@ export function solveLimbLive(cal: RigCalibration, kind: "arm" | "leg", side: Si
   return { upper: localFrom(cal.rest[limb.upper], d.upper), lower: localFrom(cal.rest[limb.lower], d.lower), reached: ik.reached };
 }
 
-/** Huesos que se retocan encima de un clip: la cadera (baja o sube), las piernas y los brazos. */
-const OVER_CLIP = ["pelvis", "thighL", "calfL", "footL", "thighR", "calfR", "footR", "upperArmL", "lowerArmL", "upperArmR", "lowerArmR"] as const satisfies readonly HuesoPersonaje[];
+/** Posición y giro de un objeto en el espacio de la raíz (las matrices tienen que estar al día). */
+function inRootSpace(rootInv: Matrix4, object: Object3D) {
+  const position = new Vector3();
+  const rotation = new Quaternion();
+  new Matrix4().multiplyMatrices(rootInv, object.matrixWorld).decompose(position, rotation, new Vector3());
+  return { position, rotation };
+}
+
+const ARM_KEYS = {
+  L: { upper: "upperArmL", lower: "lowerArmL", hand: "handL" },
+  R: { upper: "upperArmR", lower: "lowerArmR", hand: "handR" },
+} as const satisfies Record<Side, { upper: HuesoPersonaje; lower: HuesoPersonaje; hand: HuesoPersonaje }>;
+
+/**
+ * Centro de la palma (espacio del personaje) tal como están los huesos ahora: un poco más allá de la
+ * muñeca, siguiendo a los dedos (o al antebrazo si el rig no tiene dedos). Es el mismo punto que
+ * `PoseSolution.grip`. Las matrices del modelo tienen que estar al día.
+ */
+export function palmLive(root: Object3D, bones: BoneMap, cal: RigCalibration, side: Side): Vector3 {
+  const rootInv = root.matrixWorld.clone().invert();
+  const keys = ARM_KEYS[side];
+  const hand = inRootSpace(rootInv, bones[keys.hand]);
+  const fingers = cal.fingers[side];
+  const along = fingers
+    ? fingers.clone().applyQuaternion(hand.rotation.multiply(cal.rest[keys.hand].worldInv))
+    : hand.position.clone().sub(inRootSpace(rootInv, bones[keys.lower]).position).normalize();
+  return hand.position.clone().addScaledVector(along, GRIP_REACH);
+}
+
+/** Agarre de una mano en el espacio del personaje: dónde va el centro de la palma y, si se pide, hacia dónde apuntan los dedos y la palma. */
+export type LiveGrip = {
+  point: Vector3;
+  fingers?: Vector3 | null;
+  palm?: Vector3 | null;
+  /** De la palma al punto (m), a lo largo de `palm`: la mano se apoya en un asa sin atravesarla. */
+  gap?: number;
+};
+
+/**
+ * Mano de quien graba en un asa del rig, encima de lo que dejó el clip: el brazo se resuelve con IK
+ * de dos huesos y la muñeca gira para que los dedos y la palma rodeen el asa, así el centro de la
+ * palma cae en `point` (menos `gap`). Sin dedos o palma pedidos, la mano sigue al antebrazo y la
+ * muñeca se corrige dos veces hasta que la palma llega al punto. Con `optional`, si el punto queda
+ * fuera del alcance cómodo deja el brazo del clip y devuelve false. Todo en el espacio del
+ * personaje; las matrices del modelo tienen que estar al día.
+ */
+export function gripLive(root: Object3D, bones: BoneMap, cal: RigCalibration, side: Side, grip: LiveGrip, pole: Vector3, optional = false): boolean {
+  const keys = ARM_KEYS[side];
+  const upper = bones[keys.upper];
+  const lower = bones[keys.lower];
+  const hand = bones[keys.hand];
+  const upperParent = upper.parent;
+  const handParent = hand.parent;
+  if (!upperParent || !handParent) return false;
+  const rootInv = root.matrixWorld.clone().invert();
+  const shoulder = inRootSpace(rootInv, upper).position;
+  const fingers = cal.fingers[side];
+  const restPalm = cal.palm[side];
+  let handRotation: Quaternion | null = null;
+  const wrist = grip.point.clone();
+  if (grip.fingers && fingers) {
+    const towards = grip.fingers.clone().normalize();
+    const turn = grip.palm && restPalm ? frameRotation(fingers, restPalm, towards, grip.palm) : new Quaternion().setFromUnitVectors(fingers, towards);
+    handRotation = turn.multiply(cal.rest[keys.hand].world);
+    wrist.addScaledVector(towards, -GRIP_REACH);
+    if (grip.palm) wrist.addScaledVector(grip.palm.clone().normalize(), -(grip.gap ?? 0));
+  }
+  const limb = cal.arm[side];
+  if (optional && shoulder.distanceTo(wrist) > (limb.upperLen + limb.lowerLen) * 0.97) return false;
+  const solveTo = (target: Vector3) => {
+    const solved = solveArmLive(cal, side, inRootSpace(rootInv, upperParent).rotation, shoulder, target, pole);
+    upper.quaternion.copy(solved.upper);
+    lower.quaternion.copy(solved.lower);
+    upper.updateMatrixWorld(true);
+  };
+  solveTo(wrist);
+  if (handRotation) {
+    hand.quaternion.copy(inRootSpace(rootInv, handParent).rotation.invert().multiply(handRotation));
+    hand.updateMatrixWorld(true);
+  } else {
+    for (let pass = 0; pass < 2; pass += 1) {
+      wrist.add(grip.point.clone().sub(palmLive(root, bones, cal, side)));
+      solveTo(wrist);
+    }
+  }
+  return true;
+}
+
+/** Huesos que se retocan encima de un clip: la cadera (baja o sube), las piernas, los brazos y las muñecas (agarre del rig). */
+const OVER_CLIP = ["pelvis", "thighL", "calfL", "footL", "thighR", "calfR", "footR", "upperArmL", "lowerArmL", "upperArmR", "lowerArmR", "handL", "handR"] as const satisfies readonly HuesoPersonaje[];
 
 /**
  * Retoques encima de un clip sin que se acumulen. El AnimationMixer solo reescribe un hueso cuando

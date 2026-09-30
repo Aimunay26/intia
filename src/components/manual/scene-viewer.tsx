@@ -20,6 +20,12 @@
  * a los livianos (y tras un fallo, «Personajes» reintenta). Quien graba nunca aparece en
  * la «Vista de cámara». La pose se resuelve sobre el esqueleto en
  * src/lib/manual-characters.ts.
+ *
+ * Quien graba está en todas las escenas con un small rig (src/lib/manual-rig.ts): jaula, dos asas,
+ * luz LED en la zapata y power bank con su cable. El celular del rig es la cámara de la escena. En
+ * mano toma las dos asas (o una y la luz de mano); en trípode, una. Las luces del esquema se ven
+ * como soportes físicos (softbox, panel de relleno y fresnel trasero detrás del sujeto) con su cara
+ * del color de la luz, el haz y un rótulo; cada luz sale de su soporte.
  */
 import { ChevronLeft, ChevronRight, CircleCheck, Pause, PersonStanding, Play, RectangleHorizontal, RectangleVertical, RotateCcw, TriangleAlert, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -32,7 +38,9 @@ import {
   BufferAttribute,
   BufferGeometry,
   CameraHelper,
+  CanvasTexture,
   CapsuleGeometry,
+  CatmullRomCurve3,
   CircleGeometry,
   Color,
   ConeGeometry,
@@ -52,13 +60,17 @@ import {
   Object3D,
   PerspectiveCamera,
   PlaneGeometry,
-  Quaternion,
   Scene,
   type SkinnedMesh,
   Sphere,
   SphereGeometry,
   SpotLight,
+  Sprite,
+  SpriteMaterial,
+  SRGBColorSpace,
+  type Texture,
   TorusGeometry,
+  TubeGeometry,
   Vector3,
   WebGLRenderer,
 } from "three";
@@ -79,15 +91,17 @@ import {
   characterActionPose,
   clipOverlay,
   characterEyeHeight,
+  gripLive,
   headLocals,
   legsLive,
   measureClipYaw,
   measureWalkStride,
+  palmLive,
   parseManifest,
   productHold,
   resolveBoneMap,
-  solveArmLive,
   solvePose,
+  solveTwoBone,
   stepFeet,
   travelInFrame,
   type BoneMap,
@@ -129,6 +143,7 @@ import {
   type SceneMistake,
   type SubjectAction,
 } from "@/lib/manual-scene";
+import { HANDLE_PALM_GAP, RIG_SIZES, backLightSpot, clampToReach, crewHands, crewStand, handLedPoint, handleGrip, rigLayout, rigToWorld, type HandleGrip, type RigLayout } from "@/lib/manual-rig";
 import { cn } from "@/lib/utils";
 
 /* ------------------------------------------------------------ CONSTANTES -- */
@@ -160,6 +175,14 @@ const VIEWS = {
   Arriba: [0.3, 6.4, 1.2],
 } as const;
 type ViewName = keyof typeof VIEWS;
+
+/**
+ * Quien graba está siempre en la escena (con el small rig), lo nombre o no el texto de la escena:
+ * el reparto siempre lleva al camarógrafo.
+ */
+function crewSubjects(subjects: SceneConfig["subjects"]): SceneConfig["subjects"] {
+  return { ...subjects, operator: true };
+}
 
 export function lightGizmoColor(light: Pick<SceneLight, "kelvin" | "rgb">) {
   if (light.rgb) return light.rgb.hex;
@@ -314,40 +337,22 @@ function actionPose(action: SubjectAction, p: number, time: number, seated: bool
   return pose;
 }
 
-/** Quien graba: con codos pegados y rodillas flexionadas (fluido) o brazos estirados y piernas rígidas (brusco). */
-function operatorPose(tucked: boolean, walking: boolean, time: number): Pose {
+/**
+ * Quien graba: con codos pegados y rodillas flexionadas (fluido) o brazos estirados y piernas rígidas
+ * (brusco). Los brazos que toman el rig (o la luz de mano) los pone después `reachMannequin`; en
+ * trípode está parado junto al rig, sin flexionar las rodillas.
+ */
+function operatorPose(tucked: boolean, walking: boolean, time: number, onTripod: boolean): Pose {
   const pose = stancePose({ elbows: "pegados", feet: tucked ? "adelantado" : "juntos" });
   if (walking) gait(pose, time, tucked ? 0.26 : 0.46, false);
-  if (tucked) {
+  if (tucked && !onTripod) {
     pose.hipsY -= walking ? 0.03 : 0.055;
     pose.lHip -= 0.3;
     pose.rHip -= 0.3;
     pose.lKnee += 0.55;
     pose.rKnee += 0.55;
-    pose.lShX = pose.rShX = -0.55;
-    pose.lShZ = 0.1;
-    pose.rShZ = -0.1;
-    pose.lEl = pose.rEl = -1.55;
-    pose.lElZ = 0.35;
-    pose.rElZ = -0.35;
-  } else {
-    pose.lShX = pose.rShX = -1.3;
-    pose.lShZ = -0.12;
-    pose.rShZ = 0.12;
-    pose.lEl = pose.rEl = -0.1;
   }
   pose.look = 0;
-  return pose;
-}
-
-/** Quien sostiene la luz de mano: brazo derecho arriba y adelante. */
-function assistantPose(): Pose {
-  const pose = stancePose({ elbows: "pegados", feet: "adelantado" });
-  pose.rShX = -1.9;
-  pose.rShZ = -0.05;
-  pose.rEl = -0.2;
-  pose.rElZ = 0;
-  pose.look = 1;
   return pose;
 }
 
@@ -365,6 +370,8 @@ type Rig = {
   lHip: Group; lKnee: Group; rHip: Group; rKnee: Group; product: Group; shadow: Mesh;
   /** Punto medio entre los ojos: lo que se encuadra en la línea superior. */
   eyes: Object3D;
+  /** Centro de cada mano (lo que toma el asa del rig o la luz de mano). */
+  lHand: Object3D;
   rHand: Object3D;
 };
 
@@ -507,7 +514,7 @@ function buildMannequin(color: string, product: SceneConfig["props"]["product"])
     root, hips, spine, head,
     lShoulder: left.shoulder, lElbow: left.elbow, rShoulder: right.shoulder, rElbow: right.elbow,
     lHip: leftLeg.hip, lKnee: leftLeg.knee, rHip: rightLeg.hip, rKnee: rightLeg.knee,
-    product: held, shadow, eyes, rHand: right.grip,
+    product: held, shadow, eyes, lHand: left.grip, rHand: right.grip,
   };
 }
 
@@ -548,6 +555,30 @@ function aimHead(rig: Rig, pose: Pose, point: Vector3) {
   const pitch = -Math.atan2(point.y - origin.y, Math.max(0.1, flat));
   rig.head.rotation.y = lerp(pose.headYaw, clamp(yaw, -1.2, 1.2), pose.look);
   rig.head.rotation.x = lerp(pose.headPitch, clamp(pitch, -0.6, 0.6), pose.look);
+}
+
+/** Brazo del maniquí: hombro → codo y codo → centro de la mano (m). */
+const MANNEQUIN_ARM = { upper: 0.3, lower: 0.29 } as const;
+
+/**
+ * Brazo del maniquí hacia un punto del mundo (IK de dos huesos en el espacio del tronco): el brazo
+ * apunta al codo resuelto y el antebrazo se dobla sobre su eje X (así se dobla hacia adelante en la
+ * pose). `pole`: hacia dónde apunta el codo, en el espacio del tronco. Devuelve dónde quedó la mano.
+ */
+function reachMannequin(rig: Rig, side: Side, target: Vector3, pole: Vector3) {
+  const shoulder = side === "L" ? rig.lShoulder : rig.rShoulder;
+  const elbow = side === "L" ? rig.lElbow : rig.rElbow;
+  rig.root.updateMatrixWorld(true);
+  const local = rig.spine.worldToLocal(target.clone());
+  const ik = solveTwoBone(shoulder.position, local, MANNEQUIN_ARM.upper, MANNEQUIN_ARM.lower, pole);
+  const down = ik.upper.clone().negate();
+  const bend = ik.lower.clone().addScaledVector(ik.upper, -ik.lower.dot(ik.upper));
+  if (bend.lengthSq() < 1e-8) bend.copy(pole).addScaledVector(ik.upper, -pole.dot(ik.upper));
+  bend.normalize();
+  shoulder.quaternion.setFromRotationMatrix(new Matrix4().makeBasis(new Vector3().crossVectors(down, bend), down, bend));
+  elbow.rotation.set(-ik.upper.angleTo(ik.lower), 0, 0);
+  rig.root.updateMatrixWorld(true);
+  return (side === "L" ? rig.lHand : rig.rHand).getWorldPosition(new Vector3());
 }
 
 /* ------------------------------------------------------------- ENTORNO -- */
@@ -632,7 +663,7 @@ function buildEnvironment(config: SceneConfig, windowSide: -1 | 1, tablePos: Vec
     // De noche (poca luz ambiente) la ventana se ve oscura.
     const glass = mesh(new PlaneGeometry(1.1, 1.3), new MeshBasicMaterial({ color: lowLight(config) ? "#1f2937" : "#fdfbf3" }));
     glass.rotation.y = -windowSide * (Math.PI / 2);
-    glass.position.set(windowSide * 2.58, 1.55, 0.5);
+    glass.position.set(windowSide * 2.572, 1.55, 0.5);
     const frame = box(0.04, 1.4, 1.2, "#8a7a6a", windowSide * 2.6, 1.55, 0.5);
     group.add(frame, glass);
   }
@@ -677,20 +708,41 @@ function buildEnvironment(config: SceneConfig, windowSide: -1 | 1, tablePos: Vec
 
 /* --------------------------------------------------------------- LUCES -- */
 
-function lightPosition(light: SceneLight, windowSide: -1 | 1, eyeY: number, handAt: Vector3 | null, lensAt: Vector3): Vector3 {
+/** Nombre corto de cada soporte: se lee desde lejos en la vista libre. */
+const FIXTURE_NAMES: Record<SceneLight["role"], string> = { key: "Principal", fill: "Relleno", back: "Trasera", background: "Fondo" };
+/** Luz LED del rig: de día y chica, una fuente más que no aplana el esquema de 3 puntos. */
+const RIG_LED = { kelvin: 5600, strength: 0.45 };
+const HAND_LED_STRENGTH = 2.6;
+const UP = new Vector3(0, 1, 0);
+const DOWN = new Vector3(0, -1, 0);
+const OFF_FACE = "#3a3f46";
+
+/**
+ * La luz LED del rig se enciende salvo cuando el error es que no haya luz delante (contraluz, sin
+ * luz de mano) o cuando la lección es la luz de mano (la luz la lleva la otra mano, o va pegada al
+ * lente y entonces es la del rig con la intensidad de la luz de mano).
+ */
+export function rigLedOn(config: Pick<SceneConfig, "mistake" | "lights">) {
+  if (config.mistake === "CONTRALUZ" || config.mistake === "SIN_LUZ_DE_MANO") return false;
+  return !config.lights.some(light => light.source === "mano");
+}
+
+/** La luz de mano pegada al lente (error): va en la zapata del rig. */
+function lensLight(config: Pick<SceneConfig, "lights">) {
+  return config.lights.find(light => light.source === "mano" && light.side === 0) ?? null;
+}
+
+function lightPosition(light: SceneLight, windowSide: -1 | 1, eyeY: number): Vector3 {
   const side = light.side === 0 ? 1 : light.side;
-  // Luz de mano con `side: 0` (error «Luz pegada al lente»): sobre el celular, en el eje de la cámara.
-  if (light.source === "mano" && light.side === 0) return lensAt.clone().add(new Vector3(0, 0.1, 0));
-  if (light.source === "mano") return handAt ? handAt.clone() : new Vector3(side * 0.46, eyeY + 0.08, 0.6);
+  // La luz de mano la lleva quien graba: se mueve con su mano en cada cuadro; esto es solo el punto de partida.
+  if (light.source === "mano") return new Vector3(side * 0.46, eyeY + 0.08, 0.6);
   if (light.source === "lampara") return new Vector3(LAMP.x, LAMP.y, LAMP.z);
   // Contraluz de ventana (error «Contraluz»): la fuente está detrás, delante de la pared.
   if (light.role === "back" && light.source === "window") return new Vector3(0, 1.75, -2.25);
   if (light.source === "window") return new Vector3(windowSide * 2.3, 1.6, 0.5);
   if (light.source === "sun") return new Vector3(side * 3.2, 4.2, 1.6);
-  if (light.role === "fill") return new Vector3(side * 1.45, 1.35, 1.25);
-  // Contraluz de separación: detrás y en diagonal, por encima de la cabeza. Desde la cámara al pecho no se ven
-  // los hombros por arriba, así que va bastante de costado para que el borde de color se lea en la silueta.
-  if (light.role === "back") return new Vector3(side * 1.1, eyeY + 0.4, -1.0);
+  // Relleno a unos 60° del eje, del otro lado: no tapa al sujeto desde la vista 3/4.
+  if (light.role === "fill") return new Vector3(side * 1.65, 1.35, 0.95);
   if (light.role === "background") return new Vector3(0, 1.9, -1.5);
   return new Vector3(side * 1.48, KEY_HEIGHT, 1.48); // 45° del eje de cámara
 }
@@ -702,32 +754,234 @@ function lightTarget(light: SceneLight, eyeY: number, wallZ: number) {
   return new Vector3(0, Math.min(1.3, eyeY - 0.3), 0);
 }
 
-/** Luz principal móvil: la luz y sus ayudas giran alrededor del sujeto cuando un paso lo pide. */
-type KeyRig = { light: Group; gizmos: Group; side: -1 | 1 };
+/** Contraluz de separación (no la ventana ni la lámpara del error «Contraluz»): sale del soporte detrás del sujeto. */
+function isRim(light: SceneLight) {
+  return light.role === "back" && light.source !== "window" && light.source !== "lampara";
+}
 
-function buildLights(config: SceneConfig, scene: Scene, helpers: Group, windowSide: -1 | 1, ringAt: Vector3, handAt: Vector3 | null): KeyRig | null {
+/**
+ * Rótulo que siempre mira a la cámara y mide lo mismo en pantalla a cualquier distancia (se lee en
+ * el celular). Apagado: fondo rojo. El lienzo se libera con el visor (`textures`).
+ */
+function labelSprite(text: string, color: string, textures: Texture[], off = false) {
+  const px = 2;
+  const font = `700 ${24 * px}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  const pad = 12 * px;
+  const dot = 12 * px;
+  const height = 42 * px;
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  let width = 180 * px;
+  if (context) {
+    context.font = font;
+    width = Math.ceil(context.measureText(text).width) + pad * 2 + dot + 8 * px;
+  }
+  canvas.width = width;
+  canvas.height = height;
+  if (context) {
+    context.font = font;
+    context.beginPath();
+    context.roundRect(px, px, width - 2 * px, height - 2 * px, 10 * px);
+    context.fillStyle = off ? WRONG_COLOR : "rgba(255,255,255,0.94)";
+    context.fill();
+    context.lineWidth = 3 * px;
+    context.strokeStyle = off ? "#ffffff" : color;
+    context.stroke();
+    context.beginPath();
+    context.arc(pad + dot / 2, height / 2, dot / 2, 0, Math.PI * 2);
+    context.fillStyle = off ? OFF_FACE : color;
+    context.fill();
+    context.fillStyle = off ? "#ffffff" : "#1b1e23";
+    context.textBaseline = "middle";
+    context.fillText(text, pad + dot + 8 * px, height / 2 + px);
+  }
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  textures.push(texture);
+  const sprite = new Sprite(new SpriteMaterial({ map: texture, depthTest: false, depthWrite: false, transparent: true, sizeAttenuation: false }));
+  const tall = 0.036;
+  sprite.scale.set((tall * width) / height, tall, 1);
+  // Medida base: en visores bajos (celular) se agranda para que el texto se siga leyendo (ver `resize`).
+  sprite.userData.labelScale = [sprite.scale.x, sprite.scale.y];
+  sprite.center.set(0.5, 0);
+  sprite.renderOrder = 20;
+  return sprite;
+}
+
+/** Orienta un objeto para que su +Z apunte de `from` a `to`. */
+function aim(object: Object3D, from: Vector3, to: Vector3) {
+  object.quaternion.setFromRotationMatrix(new Matrix4().lookAt(to, from, UP));
+}
+
+/** Pie de luz: tres patas en el piso y una columna hasta la cabeza. `height`: del piso a la cabeza. */
+function buildStand(height: number) {
+  const stand = new Group();
+  stand.position.y = -height;
+  const metal = new MeshStandardMaterial({ color: "#3f4650", roughness: 0.5, metalness: 0.3 });
+  const poleGeometry = new CylinderGeometry(0.013, 0.017, 1, 8);
+  poleGeometry.translate(0, 0.5, 0);
+  const pole = mesh(poleGeometry, metal);
+  pole.scale.y = Math.max(0.1, height - 0.05);
+  stand.add(pole);
+  const hub = new Vector3(0, 0.34, 0);
+  for (let k = 0; k < 3; k += 1) {
+    const angle = (k / 3) * Math.PI * 2 + 0.5;
+    const foot = new Vector3(Math.cos(angle) * 0.3, 0, Math.sin(angle) * 0.3);
+    const along = foot.clone().sub(hub);
+    const leg = mesh(new CylinderGeometry(0.009, 0.009, along.length(), 6), metal);
+    leg.position.copy(hub).addScaledVector(along, 0.5);
+    leg.quaternion.setFromUnitVectors(UP, along.normalize());
+    stand.add(leg);
+  }
+  return { stand, pole };
+}
+
+/** Haz de luz: cono translúcido de largo 1 (se escala) con el vértice en el origen, apuntando a −Y. */
+function beamCone(color: string, spread: number, hard: boolean) {
+  const geometry = new ConeGeometry(Math.tan(spread), 1, 24, 1, true);
+  geometry.translate(0, -0.5, 0);
+  return mesh(geometry, new MeshBasicMaterial({ color, transparent: true, opacity: hard ? 0.16 : 0.1, side: DoubleSide, depthWrite: false }));
+}
+
+/** Apunta el haz de `from` a `to` (largo: 80 % de la distancia) y la línea hasta el sujeto. Ambos cuelgan del grupo en `from`. */
+function aimBeam(beam: Mesh, line: Line, from: Vector3, to: Vector3) {
+  const direction = to.clone().sub(from);
+  const length = direction.length() * 0.8;
+  beam.scale.setScalar(Math.max(0.01, length));
+  beam.quaternion.setFromUnitVectors(DOWN, direction.normalize());
+  setLine(line, new Vector3(), to.clone().sub(from));
+}
+
+type FixtureKind = "softbox" | "panel" | "fresnel" | "hand" | "ring" | null;
+
+type Fixture = {
+  group: Group;
+  head: Group;
+  beam: Mesh | null;
+  line: Line | null;
+  stand: { stand: Group; pole: Mesh } | null;
+};
+
+/**
+ * Soporte físico de una luz, en `position` y apuntando a `target`: la cabeza (softbox, panel,
+ * fresnel, luz de mano o aro) con su cara emisora del color de la luz, el pie hasta el piso (si
+ * `stand`), el haz y el rótulo. `kind: null` (ventana, sol, lámpara): solo haz y rótulo, la fuente ya
+ * está en el entorno. Apagada: cara oscura, sin haz y rótulo rojo.
+ */
+function buildFixture(kind: FixtureKind, options: { position: Vector3; target: Vector3; face: string; gizmo: string; label: string; stand: boolean; hard: boolean; off?: boolean; textures: Texture[] }): Fixture {
+  const { position, target, off = false } = options;
+  const group = new Group();
+  group.position.copy(position);
+  const head = new Group();
+  aim(head, position, target);
+  group.add(head);
+  const housing = new MeshStandardMaterial({ color: "#3b424c", roughness: 0.7 });
+  const face = new MeshBasicMaterial({ color: off ? OFF_FACE : options.face, side: DoubleSide });
+  let top = 0.12;
+  if (kind === "softbox") {
+    const body = new CylinderGeometry(0.36, 0.09, 0.3, 4, 1);
+    body.rotateX(Math.PI / 2);
+    body.rotateZ(Math.PI / 4);
+    body.translate(0, 0, -0.152);
+    const front = mesh(new PlaneGeometry(0.49, 0.49), face);
+    front.position.z = 0.002;
+    head.add(mesh(body, housing), front);
+    top = 0.34;
+  } else if (kind === "panel") {
+    const frame = mesh(new BoxGeometry(0.4, 0.5, 0.035), housing);
+    frame.position.z = -0.021;
+    const front = mesh(new PlaneGeometry(0.36, 0.46), face);
+    front.position.z = 0.001;
+    head.add(frame, front);
+    top = 0.3;
+  } else if (kind === "fresnel") {
+    const body = new CylinderGeometry(0.075, 0.085, 0.17, 20);
+    body.rotateX(Math.PI / 2);
+    body.translate(0, 0, -0.086);
+    const front = mesh(new CircleGeometry(0.064, 24), face);
+    front.position.z = 0.002;
+    head.add(mesh(body, housing), front);
+    // Viseras: cuatro hojas abiertas alrededor de la lente.
+    for (let k = 0; k < 4; k += 1) {
+      const door = mesh(new PlaneGeometry(0.15, 0.07), new MeshStandardMaterial({ color: "#1f242b", roughness: 0.8, side: DoubleSide }));
+      const pivot = new Group();
+      pivot.rotation.z = (k * Math.PI) / 2;
+      door.position.set(0, 0.085 + 0.03, 0.02);
+      door.rotation.x = -0.6;
+      pivot.add(door);
+      head.add(pivot);
+    }
+    top = 0.2;
+  } else if (kind === "hand") {
+    const body = mesh(new BoxGeometry(0.11, 0.075, 0.022), housing);
+    body.position.z = -0.012;
+    const front = mesh(new PlaneGeometry(0.1, 0.065), face);
+    front.position.z = 0.001;
+    head.add(body, front);
+    top = 0.07;
+  } else if (kind === "ring") {
+    head.add(mesh(new TorusGeometry(0.2, 0.025, 10, 32), face));
+    top = 0.24;
+  }
+  let stand: Fixture["stand"] = null;
+  if (options.stand && kind && kind !== "hand") {
+    stand = buildStand(position.y);
+    group.add(stand.stand);
+  }
+  let beam: Mesh | null = null;
+  let line: Line | null = null;
+  if (!off) {
+    beam = beamCone(options.gizmo, options.hard ? 0.18 : 0.3, options.hard);
+    line = dynamicLine(options.gizmo);
+    group.add(beam, line);
+    aimBeam(beam, line, position, target);
+  }
+  const label = labelSprite(options.label, options.gizmo, options.textures, off);
+  label.position.y = top;
+  group.add(label);
+  return { group, head, beam, line, stand };
+}
+
+/** Luz principal móvil: la luz y sus ayudas giran alrededor del sujeto cuando un paso lo pide; el pie sigue en el piso. */
+type KeyRig = { light: Group; gizmos: Group; side: -1 | 1; stand: Fixture["stand"]; baseY: number };
+
+/** Luz que sigue a quien graba (la de mano, en su mano; la del rig, en la zapata): se reubica en cada cuadro. */
+type HandLight = { spot: SpotLight; fixture: Fixture };
+
+type LightSet = {
+  key: KeyRig | null;
+  hand: HandLight | null;
+  /** SpotLight de la zapata del rig: la LED del rig o, con el error, la luz de mano pegada al lente. */
+  rigSpot: SpotLight | null;
+  textures: Texture[];
+};
+
+function buildLights(config: SceneConfig, scene: Scene, helpers: Group, windowSide: -1 | 1, ringAt: Vector3, rim: { position: Vector3; target: Vector3 }, textures: Texture[]): LightSet {
   // Base suave para que ninguna pared quede negra; las luces del esquema marcan la diferencia.
   scene.add(new AmbientLight("#ffffff", 0.5 * config.ambient), new HemisphereLight("#ffffff", envColors(config).floor, 0.55 * config.ambient));
   const eyeY = eyeHeight(config.subjects.seated, config.body.feet);
   const wallZ = wallDepth(config);
   let keyRig: KeyRig | null = null;
+  let hand: HandLight | null = null;
   for (const light of config.lights) {
+    // Pegada al lente: la pone la zapata del rig (más abajo).
+    if (light.source === "mano" && light.side === 0) continue;
     const movable = light.role === "key" && (light.source === "softbox" || light.source === "led");
     const lightParent = movable ? new Group() : scene;
     const gizmoParent = movable ? new Group() : helpers;
     if (movable) {
       scene.add(lightParent);
       helpers.add(gizmoParent);
-      keyRig = { light: lightParent as Group, gizmos: gizmoParent as Group, side: light.side === 1 ? 1 : -1 };
     }
     const color = new Color(lightHex(light));
     const gizmo = lightGizmoColor(light);
-    const position = light.source === "ring" ? ringAt.clone() : lightPosition(light, windowSide, eyeY, handAt, ringAt);
-    const target = lightTarget(light, eyeY, wallZ);
+    const rimLight = isRim(light);
+    const position = light.source === "ring" ? ringAt.clone() : rimLight ? rim.position.clone() : lightPosition(light, windowSide, eyeY);
+    const target = rimLight ? rim.target.clone() : lightTarget(light, eyeY, wallZ);
     // El contraluz va fuerte: su borde de color tiene que leerse en hombros y cabeza.
-    const rim = light.role === "back" && light.source !== "window" && light.source !== "lampara";
-    const factor = light.role === "fill" ? 1.1 : rim ? 10 : light.role === "back" ? 4.2 : light.source === "mano" ? 2.6 : 2.2;
+    const factor = light.role === "fill" ? 1.1 : rimLight ? 10 : light.role === "back" ? 4.2 : light.source === "mano" ? HAND_LED_STRENGTH : 2.2;
     const strength = light.intensity * factor;
+    let spot: SpotLight | null = null;
     if (light.source === "sun") {
       const sun = new DirectionalLight(color, strength);
       sun.position.copy(position);
@@ -736,67 +990,141 @@ function buildLights(config: SceneConfig, scene: Scene, helpers: Group, windowSi
     } else {
       const wide = light.source === "window" || light.source === "bounce";
       // El contraluz se corta a 3 m: dibuja el borde del sujeto sin pintar el piso de adelante.
-      const spot = new SpotLight(color, strength, rim ? 3 : 0, rim ? 0.45 : wide ? 0.95 : 0.6, rim ? 0.5 : light.hard ? 0.15 : 0.85, 0);
+      spot = new SpotLight(color, strength, rimLight ? 3 : 0, rimLight ? 0.45 : wide ? 0.95 : 0.6, rimLight ? 0.5 : light.hard ? 0.15 : 0.85, 0);
       spot.position.copy(position);
       spot.target.position.copy(target);
       lightParent.add(spot, spot.target);
     }
-    // Ayudas visibles: esfera, cono de luz y línea hasta el sujeto.
-    const small = light.source === "mano";
-    const bulb = mesh(new SphereGeometry(light.role === "key" && !small ? 0.09 : small ? 0.045 : 0.07, 16, 12), new MeshBasicMaterial({ color: gizmo }));
-    bulb.position.copy(position);
-    const direction = target.clone().sub(position);
-    const length = direction.length() * 0.8;
-    const coneGeometry = new ConeGeometry(Math.tan(light.hard ? 0.3 : 0.55) * length, length, 28, 1, true);
-    coneGeometry.translate(0, -length / 2, 0);
-    const beamCone = mesh(coneGeometry, new MeshBasicMaterial({ color: gizmo, transparent: true, opacity: light.hard ? 0.2 : 0.13, side: DoubleSide, depthWrite: false }));
-    beamCone.position.copy(position);
-    beamCone.quaternion.setFromUnitVectors(new Vector3(0, -1, 0), direction.clone().normalize());
-    const beam = new Line(new BufferGeometry().setFromPoints([position, target]), new LineBasicMaterial({ color: gizmo }));
-    gizmoParent.add(bulb, beamCone, beam);
-    if (light.source === "softbox" || light.source === "bounce" || small) {
-      // Semitransparente: marca dónde va la fuente sin tapar al talento en la vista libre.
-      const bounce = light.source === "bounce";
-      const size = small ? [0.14, 0.09] : bounce ? [0.5, 0.65] : [0.45, 0.45];
-      const panel = mesh(new BoxGeometry(size[0], size[1], 0.03), new MeshBasicMaterial({ color: small ? gizmo : bounce ? "#f8fafc" : "#fff7ed", transparent: true, opacity: small ? 0.9 : bounce ? 0.4 : 0.6, depthWrite: false }));
-      panel.position.copy(position);
-      panel.lookAt(target);
-      gizmoParent.add(panel);
-    }
-    if (light.source === "ring") {
-      const ring = mesh(new TorusGeometry(0.2, 0.025, 10, 32), new MeshBasicMaterial({ color: gizmo }));
-      ring.position.copy(position);
-      ring.lookAt(target);
-      gizmoParent.add(ring);
-    }
+    const name = light.source === "mano" ? "Luz de mano"
+      : light.source === "window" ? (light.role === "back" ? "Ventana detrás" : `${FIXTURE_NAMES[light.role]} · ventana`)
+      : light.source === "sun" ? `${FIXTURE_NAMES[light.role]} · sol`
+      : light.source === "lampara" ? "Lámpara detrás"
+      : light.role === "back" && light.rgb ? `Trasera · ${light.rgb.name}`
+      : FIXTURE_NAMES[light.role];
+    const kind: FixtureKind = light.source === "mano" ? "hand"
+      : light.source === "ring" ? "ring"
+      : light.source === "window" || light.source === "sun" || light.source === "lampara" ? null
+      : light.source === "softbox" ? "softbox"
+      : light.role === "back" || light.role === "background" ? "fresnel"
+      : "panel";
+    const fixture = buildFixture(kind, { position, target, face: lightHex(light), gizmo, label: name, stand: kind !== "ring", hard: light.hard, textures });
+    gizmoParent.add(fixture.group);
+    if (movable) keyRig = { light: lightParent as Group, gizmos: gizmoParent as Group, side: light.side === 1 ? 1 : -1, stand: fixture.stand, baseY: position.y };
+    if (light.source === "mano" && spot) hand = { spot, fixture };
   }
-  return keyRig;
+  // «Sin luz trasera»: el soporte sigue ahí, apagado, para que se vea qué falta.
+  if (config.mistake === "SIN_LUZ_TRASERA") {
+    const fixture = buildFixture("fresnel", { position: rim.position, target: rim.target, face: OFF_FACE, gizmo: WRONG_COLOR, label: "Trasera · apagada", stand: true, hard: false, off: true, textures });
+    helpers.add(fixture.group);
+  }
+  // Zapata del rig: la LED del rig (chica) o la luz de mano pegada al lente (el error); apagada, no hay luz.
+  const onLens = lensLight(config);
+  let rigSpot: SpotLight | null = null;
+  if (onLens || rigLedOn(config)) {
+    const kelvinColor = new Color(lightHex(onLens ?? { kelvin: RIG_LED.kelvin }));
+    rigSpot = onLens
+      ? new SpotLight(kelvinColor, onLens.intensity * HAND_LED_STRENGTH, 0, 0.6, onLens.hard ? 0.15 : 0.6, 0)
+      : new SpotLight(kelvinColor, RIG_LED.strength, 4, 0.55, 0.8, 0);
+    scene.add(rigSpot, rigSpot.target);
+  }
+  return { key: keyRig, hand, rigSpot, textures };
 }
 
 /* -------------------------------------------------------------- CÁMARA -- */
 
-function buildCameraRig() {
+/**
+ * Small rig de quien graba (ver src/lib/manual-rig.ts): jaula alrededor del celular, dos asas, la
+ * luz LED en la zapata y el power bank debajo con su cable. El lente es el origen del grupo: el grupo
+ * se pone donde está la cámara de la escena.
+ */
+function buildCameraRig(layout: RigLayout, led: { face: string; on: boolean; label: string | null; tone: string }, textures: Texture[]) {
   const rig = new Group();
-  const body = mesh(new BoxGeometry(0.08, 0.16, 0.012), new MeshStandardMaterial({ color: "#1f2937", roughness: 0.4 }));
-  const lens = mesh(new CylinderGeometry(0.014, 0.014, 0.012, 16), new MeshBasicMaterial({ color: CAMERA_COLOR }));
-  lens.rotation.x = Math.PI / 2;
-  lens.position.set(0.02, 0.05, -0.012);
-  const marker = mesh(new SphereGeometry(0.03, 12, 10), new MeshBasicMaterial({ color: CAMERA_COLOR }));
-  marker.position.set(0, 0.12, 0);
-  rig.add(body, lens, marker);
+  const black = new MeshStandardMaterial({ color: "#111827", roughness: 0.35 });
+  const metal = new MeshStandardMaterial({ color: "#a3aab4", roughness: 0.35, metalness: 0.6 });
+  const rubber = new MeshStandardMaterial({ color: "#1f2937", roughness: 0.95 });
+  const [pw, ph, pd] = layout.phone.size;
+  const phone = mesh(new BoxGeometry(pw, ph, pd), black);
+  phone.position.copy(layout.phone.center);
+  // Pantalla hacia quien graba (+Z) y lente hacia el sujeto (−Z), en el origen.
+  const screen = mesh(new PlaneGeometry(pw - 0.007, ph - 0.007), new MeshBasicMaterial({ color: "#3b4b63" }));
+  screen.position.set(layout.phone.center.x, layout.phone.center.y, layout.phone.center.z + pd / 2 + 0.0006);
+  const lensGeometry = new CylinderGeometry(0.011, 0.011, 0.004, 18);
+  lensGeometry.rotateX(Math.PI / 2);
+  const lens = mesh(lensGeometry, new MeshBasicMaterial({ color: CAMERA_COLOR }));
+  lens.position.set(0, 0, -0.002);
+  rig.add(phone, screen, lens);
+  // Jaula: cuatro barrotes alrededor del celular.
+  const bar = RIG_SIZES.bar;
+  const { width: cw, height: ch, center: cc } = layout.cage;
+  for (const dy of [-1, 1]) {
+    const piece = mesh(new BoxGeometry(cw + 2 * bar, bar, 0.022), metal);
+    piece.position.set(cc.x, cc.y + dy * (ch / 2 + bar / 2), cc.z);
+    rig.add(piece);
+  }
+  for (const dx of [-1, 1]) {
+    const piece = mesh(new BoxGeometry(bar, ch, 0.022), metal);
+    piece.position.set(cc.x + dx * (cw / 2 + bar / 2), cc.y, cc.z);
+    rig.add(piece);
+  }
+  // Asas a los costados, unidas a la jaula por dos brazos cada una.
+  for (const side of ["L", "R"] as const) {
+    const handle = layout.handles[side];
+    const grip = mesh(new CylinderGeometry(RIG_SIZES.handle.radius, RIG_SIZES.handle.radius, RIG_SIZES.handle.length, 14), rubber);
+    grip.position.copy(handle.center);
+    rig.add(grip);
+    const edge = cc.x + (side === "L" ? -1 : 1) * (cw / 2 + bar);
+    const span = Math.abs(handle.center.x - edge);
+    for (const dy of [-0.045, 0.045]) {
+      const arm = mesh(new BoxGeometry(span, 0.012, 0.014), metal);
+      arm.position.set((handle.center.x + edge) / 2, handle.center.y + dy, handle.center.z);
+      rig.add(arm);
+    }
+  }
+  // Zapata fría y luz LED arriba, con la cara hacia el sujeto.
+  const shoe = mesh(new BoxGeometry(0.026, RIG_SIZES.shoe, 0.02), metal);
+  shoe.position.copy(layout.shoe);
+  const [lw, lh, ld] = layout.led.size;
+  const ledBody = mesh(new BoxGeometry(lw, lh, ld), black);
+  ledBody.position.copy(layout.led.center);
+  const faceGeometry = new PlaneGeometry(lw - 0.008, lh - 0.008);
+  faceGeometry.rotateY(Math.PI);
+  const ledFace = mesh(faceGeometry, new MeshBasicMaterial({ color: led.on ? led.face : OFF_FACE }));
+  ledFace.position.set(layout.led.center.x, layout.led.center.y, layout.led.center.z - ld / 2 - 0.0008);
+  rig.add(shoe, ledBody, ledFace);
+  // Power bank debajo y cable hasta la luz, por detrás de la jaula.
+  const [bw, bh, bd] = layout.bank.size;
+  const bank = mesh(new BoxGeometry(bw, bh, bd), new MeshStandardMaterial({ color: "#334155", roughness: 0.6 }));
+  bank.position.copy(layout.bank.center);
+  const charge = mesh(new BoxGeometry(0.014, 0.005, 0.003), new MeshBasicMaterial({ color: "#22c55e" }));
+  charge.position.set(layout.bank.center.x - bw / 4, layout.bank.center.y, layout.bank.center.z + bd / 2 + 0.0015);
+  const cable = mesh(new TubeGeometry(new CatmullRomCurve3(layout.cable), 28, 0.0035, 6, false), new MeshStandardMaterial({ color: "#0b0f14", roughness: 0.6 }));
+  rig.add(bank, charge, cable);
+  if (led.label) {
+    const label = labelSprite(led.label, led.tone, textures, false);
+    label.position.set(layout.led.center.x, layout.led.center.y + lh / 2 + 0.02, layout.led.center.z);
+    rig.add(label);
+  }
+  return rig;
+}
+
+/** Trípode: tres patas desde la base del rig hasta el piso (se escala a la altura de la base). */
+function buildTripod() {
   const tripod = new Group();
-  const legMaterial = new MeshBasicMaterial({ color: "#4b5563" });
+  const legMaterial = new MeshStandardMaterial({ color: "#4b5563", roughness: 0.6 });
   for (let k = 0; k < 3; k += 1) {
     const angle = (k / 3) * Math.PI * 2;
     const foot = new Vector3(Math.cos(angle) * 0.32, -1, Math.sin(angle) * 0.32);
-    const legGeometry = new CylinderGeometry(0.008, 0.008, 1, 6);
+    const legGeometry = new CylinderGeometry(0.009, 0.009, 1, 6);
     legGeometry.translate(0, -0.5, 0);
     const legMesh = mesh(legGeometry, legMaterial);
-    legMesh.quaternion.setFromUnitVectors(new Vector3(0, -1, 0), foot.clone().normalize());
+    legMesh.quaternion.setFromUnitVectors(DOWN, foot.clone().normalize());
     legMesh.scale.y = foot.length();
     tripod.add(legMesh);
   }
-  return { rig, tripod };
+  const head = mesh(new CylinderGeometry(0.025, 0.03, 0.04, 12), legMaterial);
+  head.position.y = 0.005;
+  tripod.add(head);
+  return tripod;
 }
 
 /** Línea de dos puntos que se actualiza cada cuadro sin crear geometría nueva. */
@@ -1091,32 +1419,14 @@ function poseActress(character: CharacterInstance, pose: CharacterPose, placemen
   }
 }
 
-const LIVE = { rootInv: new Matrix4(), relative: new Matrix4(), parent: new Quaternion(), position: new Vector3(), scale: new Vector3() };
-
 /** Si el hombro llega cómodo a un punto (sin estirar del todo el brazo). Todo en el espacio del personaje. */
 function withinReach(character: CharacterInstance, side: Side, shoulder: Vector3, target: Vector3) {
   const limb = character.asset.cal.arm[side];
   return shoulder.distanceTo(target) <= (limb.upperLen + limb.lowerLen) * 0.97;
 }
 
-/**
- * Brazo del camarógrafo hacia un punto (espacio del personaje) sobre lo que dejó el clip. Con
- * `optional`, si no llega cómodo deja el brazo del clip (el celular en un trípode muy alto o muy bajo).
- */
-function reachLive(character: CharacterInstance, side: Side, target: Vector3, pole: Vector3, optional: boolean) {
-  const upper = character.bones[side === "L" ? "upperArmL" : "upperArmR"];
-  const lower = character.bones[side === "L" ? "lowerArmL" : "lowerArmR"];
-  const parent = upper.parent;
-  if (!parent) return;
-  LIVE.rootInv.copy(character.root.matrixWorld).invert();
-  LIVE.relative.multiplyMatrices(LIVE.rootInv, parent.matrixWorld).decompose(LIVE.position, LIVE.parent, LIVE.scale);
-  const shoulder = upper.getWorldPosition(new Vector3()).applyMatrix4(LIVE.rootInv);
-  if (optional && !withinReach(character, side, shoulder, target)) return;
-  const solved = solveArmLive(character.asset.cal, side, LIVE.parent, shoulder, target, pole);
-  upper.quaternion.copy(solved.upper);
-  lower.quaternion.copy(solved.lower);
-  upper.updateMatrixWorld(true);
-}
+/** La luz de mano va con el brazo casi estirado (93 % del largo), no trabado. */
+const LED_REACH = 0.93;
 
 type CrewMotion = {
   walking: boolean;
@@ -1128,9 +1438,11 @@ type CrewMotion = {
   /** Codos pegados y rodillas flexionadas (fluido) o no (brusco / codos abiertos). */
   tucked: boolean;
   elbowsOut: boolean;
-  /** Muñecas en el mundo: el celular con las dos manos, o el celular y la luz. null = brazos del clip. */
-  hands: Partial<Record<Side, Vector3 | null>>;
-  /** En trípode sostener es opcional: si el celular queda lejos de las manos, brazos sueltos. */
+  /** Asa del rig que toma cada mano (mundo). Sin asa, el brazo del clip. */
+  grips: Partial<Record<Side, HandleGrip>>;
+  /** Mano que lleva la luz de mano y hacia dónde la estira (mundo). */
+  led: { side: Side; point: Vector3 } | null;
+  /** En trípode tomar el asa es opcional: si el rig queda lejos de la mano (trípode muy alto o muy bajo), brazo suelto. */
   optional: boolean;
   /** Del lugar de quien graba hacia el celular (unitaria y horizontal). */
   toward: Vector3;
@@ -1142,13 +1454,13 @@ const CREW_KNEES = { still: 0.055, walking: 0.03, rigid: -0.03 } as const;
 const CREW_MAX_STEP = 0.25;
 
 /**
- * En mano, si el celular queda lejos de un hombro (a más del 97 % del largo del brazo), quien graba
- * da un paso hacia él: lo justo para que los dos brazos lleguen, hasta `CREW_MAX_STEP`.
+ * En mano, si un asa del rig queda lejos de su hombro (a más del 97 % del largo del brazo), quien
+ * graba da un paso hacia el rig: lo justo para que los dos brazos lleguen, hasta `CREW_MAX_STEP`.
  */
 function stepToward(character: CharacterInstance, motion: CrewMotion) {
   let step = 0;
   for (const side of ["L", "R"] as const) {
-    const target = motion.hands[side];
+    const target = motion.grips[side]?.point;
     if (!target) continue;
     const limb = character.asset.cal.arm[side];
     const reach = (limb.upperLen + limb.lowerLen) * 0.97;
@@ -1174,12 +1486,13 @@ function stepToward(character: CharacterInstance, motion: CrewMotion) {
  * a ajustar su timeScale, pero es determinista al saltar entre pasos); lo que quede de costado lo
  * cubren pasos cortos. Si va de costado (cámara en mano que acompaña a quien cruza el cuadro), no se
  * mezcla «walk»: da pasos cortos en la dirección del recorrido, sin patinar. Encima del clip: las
- * piernas (rodillas flexionadas o rígidas) y los brazos, que sostienen el celular. Sin clips, marcha
- * procedural.
+ * piernas (rodillas flexionadas o rígidas), las manos en las asas del rig (IK del brazo y giro de la
+ * muñeca, `gripLive`) y, si la lleva, la luz de mano con el brazo estirado hacia su lugar. Sin
+ * clips, marcha procedural. Devuelve dónde quedó la palma que lleva la luz de mano (mundo).
  */
-function poseCrew(character: CharacterInstance, placement: { x: number; z: number; yaw: number }, motion: CrewMotion) {
+function poseCrew(character: CharacterInstance, placement: { x: number; z: number; yaw: number }, motion: CrewMotion): Vector3 | null {
   const { cal, idleYaw, walkYaw } = character.asset;
-  const { mixer, idle, walk } = character;
+  const { mixer, idle, walk, root, bones } = character;
   const moving = motion.walking && motion.heading !== null;
   // Respecto de hacia dónde mira (el celular): ¿de frente/hacia atrás o de costado?
   const facing = moving ? travelInFrame(motion.heading!, placement.yaw) : { frontal: 0, lateral: 0 };
@@ -1188,10 +1501,11 @@ function poseCrew(character: CharacterInstance, placement: { x: number; z: numbe
   const yaw = placement.yaw - (mixer && idle ? idleYaw * (1 - walkWeight) + walkYaw * walkWeight : 0);
   placeCharacter(character, placement.x, placement.z, yaw);
   const poleFor = (side: Side) => new Vector3(side === "L" ? 1 : -1, 0, 0).multiplyScalar(motion.elbowsOut ? 1 : 0.5).add(new Vector3(0, motion.elbowsOut ? -0.15 : -1, motion.elbowsOut ? -0.2 : -0.3));
-  const local = (side: Side) => {
-    const world = motion.hands[side];
-    return world ? character.root.worldToLocal(world.clone()) : null;
-  };
+  const ledPole = (side: Side) => new Vector3(side === "L" ? 0.6 : -0.6, -1, -0.2);
+  // Del mundo al espacio del personaje (la raíz cuelga de la escena y solo gira sobre Y).
+  const toLocal = (point: Vector3) => root.worldToLocal(point.clone());
+  const toLocalDirection = (direction: Vector3) => direction.clone().applyQuaternion(root.quaternion.clone().invert());
+  const ledReach = (side: Side) => (cal.arm[side].upperLen + cal.arm[side].lowerLen) * LED_REACH;
   // El recorrido en el marco de la raíz (sus pies): +Z su frente, +X su izquierda.
   const travel = moving ? travelInFrame(motion.heading!, yaw) : { frontal: 0, lateral: 0 };
   const frontal: Gait = { distance: motion.gait.distance * travel.frontal, speed: motion.gait.speed * Math.abs(travel.frontal) };
@@ -1207,27 +1521,36 @@ function poseCrew(character: CharacterInstance, placement: { x: number; z: numbe
     }
     mixer.update(0);
     character.overlay?.save();
-    character.root.updateMatrixWorld(true);
-    // Con el celular por encima de los hombros (picado en mano) nadie se agacha: sin flexión extra.
-    const shoulderY = character.root.position.y + cal.rest.upperArmL.pos.y;
-    const overhead = [motion.hands.L, motion.hands.R].some(point => point && point.y > shoulderY);
+    root.updateMatrixWorld(true);
+    // Con el rig por encima de los hombros (picado en mano) nadie se agacha: sin flexión extra.
+    const shoulderY = root.position.y + cal.rest.upperArmL.pos.y;
+    const overhead = [motion.grips.L, motion.grips.R].some(grip => grip && grip.point.y > shoulderY);
     const drop = motion.tucked ? (overhead ? 0 : motion.walking ? CREW_KNEES.walking : CREW_KNEES.still) : motion.walking ? 0 : CREW_KNEES.rigid;
     let feet: Record<Side, Vector3> | undefined;
     if (moving && walkClip && Math.abs(travel.lateral) > 0.05) feet = stepFeet(motion.gait.distance * travel.lateral, motion.gait.speed * Math.abs(travel.lateral));
     else if (moving && !walkClip) feet = stepFeet(motion.gait.distance, motion.gait.speed, { x: travel.lateral, z: travel.frontal });
-    if (drop !== 0 || feet) legsLive(character.root, character.bones, cal, { drop, feet });
+    if (drop !== 0 || feet) legsLive(root, bones, cal, { drop, feet });
     if (!motion.optional) stepToward(character, motion);
     for (const side of ["L", "R"] as const) {
-      const target = local(side);
-      if (target) reachLive(character, side, target, poleFor(side), motion.optional);
+      const grip = motion.grips[side];
+      if (!grip) continue;
+      gripLive(root, bones, cal, side, { point: toLocal(grip.point), fingers: toLocalDirection(grip.fingers), palm: toLocalDirection(grip.palm), gap: HANDLE_PALM_GAP }, poleFor(side), motion.optional);
     }
-    return;
+    if (!motion.led) return null;
+    const { side, point } = motion.led;
+    const shoulder = toLocal(bones[side === "L" ? "upperArmL" : "upperArmR"].getWorldPosition(new Vector3()));
+    gripLive(root, bones, cal, side, { point: clampToReach(shoulder, toLocal(point), ledReach(side)) }, ledPole(side));
+    return root.localToWorld(palmLive(root, bones, cal, side));
   }
-  const reach = { L: local("L"), R: local("R") };
+  // Sin clips: la pose procedural lleva las muñecas a un costado de cada asa (la mano sigue al antebrazo).
+  const reach: Record<Side, Vector3 | null> = { L: null, R: null };
   for (const side of ["L", "R"] as const) {
-    const target = reach[side];
-    if (target && motion.optional && !withinReach(character, side, cal.rest[side === "L" ? "upperArmL" : "upperArmR"].pos, target)) reach[side] = null;
+    const grip = motion.grips[side];
+    if (!grip) continue;
+    const wrist = toLocal(grip.point).addScaledVector(toLocalDirection(grip.fingers), -0.07).addScaledVector(toLocalDirection(grip.palm), -HANDLE_PALM_GAP);
+    reach[side] = motion.optional && !withinReach(character, side, cal.rest[side === "L" ? "upperArmL" : "upperArmR"].pos, wrist) ? null : wrist;
   }
+  if (motion.led) reach[motion.led.side] = clampToReach(cal.rest[motion.led.side === "L" ? "upperArmL" : "upperArmR"].pos, toLocal(motion.led.point), ledReach(motion.led.side));
   const pose = characterActionPose({
     action: motion.walking ? "walk" : "idle",
     p: 0,
@@ -1236,7 +1559,9 @@ function poseCrew(character: CharacterInstance, placement: { x: number; z: numbe
     body: { elbows: "pegados", feet: motion.tucked ? "adelantado" : "juntos" },
     gait: motion.walking ? frontal : null,
   });
-  applySolution(character, solvePose(cal, pose, { reach, reachPole: { L: reach.L ? poleFor("L") : undefined, R: reach.R ? poleFor("R") : undefined } }));
+  const poleOf = (side: Side) => (!reach[side] ? undefined : motion.led?.side === side ? ledPole(side) : poleFor(side));
+  applySolution(character, solvePose(cal, pose, { reach, reachPole: { L: poleOf("L"), R: poleOf("R") } }));
+  return motion.led ? root.localToWorld(palmLive(root, bones, cal, motion.led.side)) : null;
 }
 
 const BODY_OK: SceneBody = { elbows: "pegados", feet: "adelantado" };
@@ -1345,40 +1670,41 @@ function createViewer(options: {
   const bases = [subjectBase(config), podcast ? { x: interviewer.x, z: interviewer.z, yaw: Math.atan2(-interviewer.x, -interviewer.z) } : { x: 0.78, z: -0.15, yaw: -0.45 }];
   for (const person of people) scene.add(person.root, person.shadow);
   people[0].root.visible = people[0].shadow.visible = !productOnly;
-  // Quien graba (maniquí F) aparece detrás del celular, con los brazos hacia él. Va en su capa: sus
-  // manos quedan junto al lente y la «Vista de cámara» no debe dibujarlas.
-  const operator = config.subjects.operator ? buildMannequin(OPERATOR_COLOR, config.props.product) : null;
-  if (operator) {
-    onCrewLayer(operator.root, operator.shadow);
-    scene.add(operator.root, operator.shadow);
-  }
-  // Personajes que reemplazan a los maniquíes (a lo sumo 3); la persona de la luz de mano sigue como maniquí.
-  const cast = castCharacters(config.subjects);
+  // Quien graba (el filmmaker) está en todas las escenas, detrás del small rig: lo sostiene con las dos
+  // manos o, en trípode, con una. Va en su capa: la «Vista de cámara» nunca lo dibuja.
+  const operator = buildMannequin(OPERATOR_COLOR, config.props.product);
+  onCrewLayer(operator.root, operator.shadow);
+  scene.add(operator.root, operator.shadow);
+  // Personajes que reemplazan a los maniquíes (a lo sumo 3): el camarógrafo siempre es quien graba.
+  const cast = castCharacters(crewSubjects(config.subjects));
   const actors: { subject: CharacterInstance | null; second: CharacterInstance | null; operator: CharacterInstance | null } = { subject: null, second: null, operator: null };
   // Asiento: el sofá es más bajo que la silla, la banca y las sillas del podcast.
   const seatTop = config.props.sofa && !podcast ? 0.42 : SEAT_TOP;
   // Las palmas de la actriz se apoyan en las caras del producto de la escena.
   const holdHalf = PRODUCT_HALF_WIDTH[config.props.product];
 
-  // Luz de mano: una persona la sostiene a 45°, un poco por encima de los ojos.
+  // Luz de mano: la lleva quien graba en la mano del lado de la luz (la otra toma el rig). Pegada al
+  // lente (`side: 0`, el error) va en la zapata del rig.
   const hand = config.lights.find(light => light.source === "mano");
-  let handAt: Vector3 | null = null;
-  // Pegada al lente (`side: 0`) va sobre el celular: no hay asistente que la sostenga.
-  if (hand && hand.side !== 0 && !productOnly) {
-    const assistant = buildMannequin(OPERATOR_COLOR, config.props.product);
-    const side = hand.side === 1 ? 1 : -1;
-    const spot = { x: side * 1.0, z: 0.75 };
-    applyPose(assistant, assistantPose(), { ...spot, yaw: Math.atan2(-spot.x, -spot.z) }, 0);
-    scene.add(assistant.root, assistant.shadow);
-    handAt = assistant.rHand.getWorldPosition(new Vector3());
-  }
+  const ledHand: Side | null = hand && hand.side !== 0 ? (hand.side === 1 ? "R" : "L") : null;
 
-  // Cámaras: la del celular (inserto) y un clon corto para dibujar su frustum.
+  // Cámaras: la del celular del rig (inserto) y un clon corto para dibujar su frustum.
   const shotCam = new PerspectiveCamera(40, aspect, 0.03, 60);
   const frustumCam = new PerspectiveCamera(40, aspect, 0.05, 1);
   const frustum = new CameraHelper(frustumCam);
   frustum.setColors(new Color(CAMERA_COLOR), new Color(CAMERA_COLOR), new Color(CAMERA_COLOR), new Color(CAMERA_COLOR), new Color(CAMERA_COLOR));
-  const { rig: cameraRig, tripod } = buildCameraRig();
+  const layout: RigLayout = rigLayout(format);
+  const textures: Texture[] = [];
+  const onLens = lensLight(config);
+  const ledShown = Boolean(onLens) || rigLedOn(config);
+  const cameraRig = buildCameraRig(layout, {
+    face: lightHex(onLens ?? { kelvin: RIG_LED.kelvin }),
+    on: ledShown,
+    // Con la luz de mano en la otra mano, la del rig no se usa: sin rótulo que tape al de la luz de mano.
+    label: onLens ? "Luz de mano en el lente" : ledShown ? "LED del rig" : ledHand ? null : "LED del rig · apagada",
+    tone: onLens ? lightGizmoColor(onLens) : lightGizmoColor({ kelvin: RIG_LED.kelvin }),
+  }, textures);
+  const tripod = buildTripod();
   helpers.add(frustum, cameraRig, tripod);
   // Regla de altura (pecho o los errores): línea del lente al sujeto y aro a esa altura.
   const heightRule = config.framing.heightRule;
@@ -1394,7 +1720,12 @@ function createViewer(options: {
 
   const firstBeat = config.beats[0];
   const first = firstBeat ? placementForBeat(config, firstBeat) : placementForBeat(config, { shot: "medio", angle: "ojos", focalMm: config.camera.focalMm });
-  const keyRig = buildLights(config, scene, helpers, windowSide, new Vector3(...first.position), handAt);
+  // Luz trasera: su soporte va detrás del sujeto (respecto de la cámara), del lado contrario a la principal, sin que la pared lo tape.
+  const backLight = config.lights.find(light => light.role === "back");
+  const rimSide: -1 | 1 = backLight && backLight.side !== 0 ? backLight.side : key?.side === 1 ? -1 : 1;
+  const rim = backLightSpot(bases[0], { x: first.position[0], z: first.position[2] }, eyeHeight(seated, body.feet), rimSide, wallDepth(config));
+  const lights = buildLights(config, scene, helpers, windowSide, new Vector3(...first.position), rim, textures);
+  const keyRig = lights.key;
   onHelperLayer(helpers);
 
   const viewCam = new PerspectiveCamera(45, 1, 0.05, 80);
@@ -1434,8 +1765,6 @@ function createViewer(options: {
   let canonicalEyeY = eyeHeight(seated, body.feet);
   const MANNEQUIN_PRODUCT = new Vector3(0, MANNEQUIN.hips + MANNEQUIN.spine + 0.2, 0.36);
   const productFocus = MANNEQUIN_PRODUCT.clone();
-  // Luz de mano pegada al lente: con camarógrafo, la sostiene con la otra mano sobre el celular.
-  const lensLight = hand && hand.side === 0 ? new Vector3(...first.position).add(new Vector3(0, 0.1, 0)) : null;
   // `settled`: el sujeto ya llegó a su marca (o la cámara lo acompaña); mientras camina hacia una cámara quieta, el marcador es neutro.
   const eyeScreen = { x: 0.5, y: EYE_LINE, shown: false, settled: true };
 
@@ -1465,10 +1794,11 @@ function createViewer(options: {
   const actressState = (item: SceneBeat, q: number, t: number) => ({ action: item.action, p: q, time: t, seated, body, gait: gaitFor(item.action, q, item.end - item.start) });
 
   /**
-   * Camarógrafo detrás del celular. En mano o en seguimiento lo sostiene con las dos manos (o con una y
-   * la luz pegada al lente en la otra) y camina al ritmo del sujeto; en trípode lo toma si le queda a mano.
+   * Camarógrafo detrás del small rig. En mano o en seguimiento toma las dos asas (o una, si la otra
+   * mano lleva la luz de mano) y camina al ritmo del sujeto; en trípode está parado al lado del rig
+   * con una mano en el asa. Devuelve dónde quedó la luz de mano (mundo), si la lleva.
    */
-  function poseCamarographer(character: CharacterInstance, beat: SceneBeat, p: number, t: number, placement: { x: number; z: number; yaw: number }, state: { tucked: boolean; walking: boolean; onTripod: boolean; toward: Vector3 }) {
+  function poseCamarographer(character: CharacterInstance, beat: SceneBeat, p: number, t: number, placement: { x: number; z: number; yaw: number }, state: { tucked: boolean; walking: boolean; onTripod: boolean; toward: Vector3; grips: Partial<Record<Side, HandleGrip>>; led: { side: Side; point: Vector3 } | null }) {
     const moving = tracks(beat) && (beat.action === "walk" || beat.action === "walkIn");
     // La cámara lo arrastra: a tirones con el error de movimiento brusco.
     const gait = moving ? gaitFor(beat.action, p, beat.end - beat.start, jerky ? q => followProgress(q, "brusco") : undefined) : { distance: 0, speed: 0 };
@@ -1477,25 +1807,78 @@ function createViewer(options: {
     // Quien graba recorre el mismo camino que el sujeto. En su marco, poseCrew decide: si el sujeto viene
     // hacia la cámara retrocede (el clip va al revés) y si cruza de costado da pasos laterales.
     const heading = new Vector3(to.x - from.x, 0, to.z - from.z);
-    const right = new Vector3(1, 0, 0).applyQuaternion(shotCam.quaternion);
-    const up = new Vector3(0, 1, 0).applyQuaternion(shotCam.quaternion);
-    const behind = new Vector3(0, 0, 1).applyQuaternion(shotCam.quaternion);
-    // Muñecas un poco detrás y debajo de los bordes del celular (los dedos lo rodean). Su derecha es la derecha de la pantalla.
-    const grip = (offset: number) => shotCam.position.clone().addScaledVector(right, offset).addScaledVector(behind, 0.06).addScaledVector(up, -0.03);
-    const hands = lensLight
-      ? { L: lensLight.clone().addScaledVector(behind, 0.05).add(new Vector3(0, -0.05, 0)), R: grip(0) }
-      : { L: grip(-0.05), R: grip(0.05) };
-    poseCrew(character, placement, {
+    return poseCrew(character, placement, {
       walking: state.walking,
       gait,
       heading: heading.lengthSq() > 1e-6 ? heading.normalize() : null,
       time: t,
       tucked: state.tucked,
       elbowsOut: crewElbows,
-      hands,
+      grips: state.grips,
+      led: state.led,
       optional: state.onTripod,
       toward: state.toward,
     });
+  }
+
+  /**
+   * Quien graba (camarógrafo o maniquí) con el rig, que ya está donde está la cámara: en mano, detrás
+   * y con las dos manos en las asas (o una, si la otra lleva la luz de mano); en trípode, parado al
+   * costado con una mano en el asa. Después se reubican las luces que lleva: la LED de la zapata y la
+   * luz de mano, en su palma, apuntando al rostro.
+   */
+  function poseOperator(beat: SceneBeat, p: number, t: number, aimAt: Vector3, onTripod: boolean) {
+    const tucked = !jerky && !crewElbows;
+    const walking = tracks(beat) && (beat.action === "walk" || beat.action === "walkIn") && p < 0.95;
+    const back = new Vector3(0, 0, 1).applyQuaternion(shotCam.quaternion).setY(0);
+    if (back.lengthSq() < 0.01) back.set(0, 0, 1);
+    back.normalize();
+    // Derecha de la toma, en horizontal (la cámara mira hacia −back).
+    const right = new Vector3(back.z, 0, -back.x);
+    const plan = crewHands({ tripod: onTripod, ledHand });
+    const spot = crewStand(shotCam.position, back, right, { distance: onTripod ? 0.3 : tucked ? 0.34 : 0.55, standSide: plan.standSide });
+    const yaw = Math.atan2(aimAt.x - spot.x, aimAt.z - spot.z);
+    const grips: Partial<Record<Side, HandleGrip>> = {};
+    for (const side of ["L", "R"] as const) {
+      const handle = plan.grips[side];
+      if (handle) grips[side] = handleGrip(layout, handle, shotCam.position, shotCam.quaternion);
+    }
+    const lit = productOnly ? aimAt.clone() : eyeWorld.clone();
+    const led = ledHand && hand ? { side: ledHand, point: handLedPoint(shotCam.position, shotCam.quaternion, hand.side === 1 ? 1 : -1) } : null;
+    let ledAt: Vector3 | null = null;
+    if (actors.operator) {
+      ledAt = poseCamarographer(actors.operator, beat, p, t, { x: spot.x, z: spot.z, yaw }, { tucked, walking, onTripod, toward: back.clone().negate(), grips, led });
+    } else {
+      applyPose(operator, operatorPose(tucked, walking, t, onTripod), { x: spot.x, z: spot.z, yaw }, t);
+      operator.root.updateMatrixWorld(true);
+      const armReach = MANNEQUIN_ARM.upper + MANNEQUIN_ARM.lower;
+      const shoulderOf = (side: Side) => (side === "L" ? operator.lShoulder : operator.rShoulder).getWorldPosition(new Vector3());
+      for (const side of ["L", "R"] as const) {
+        const grip = grips[side];
+        if (!grip) continue;
+        // La mano (una esfera) se apoya en el asa por fuera, sin atravesarla.
+        const target = grip.point.clone().addScaledVector(grip.palm, -0.03);
+        if (onTripod && shoulderOf(side).distanceTo(target) > armReach * 0.97) continue;
+        reachMannequin(operator, side, target, new Vector3(side === "L" ? 0.5 : -0.5, -1, -0.3));
+      }
+      if (led) ledAt = reachMannequin(operator, led.side, clampToReach(shoulderOf(led.side), led.point, armReach * LED_REACH), new Vector3(led.side === "L" ? 0.6 : -0.6, -1, -0.2));
+    }
+    // Luces que van con quien graba.
+    if (lights.rigSpot) {
+      lights.rigSpot.position.copy(rigToWorld(layout.led.center, shotCam.position, shotCam.quaternion));
+      lights.rigSpot.target.position.copy(lit);
+    }
+    if (lights.hand) {
+      const palm = ledAt ?? led?.point ?? shotCam.position.clone();
+      // La cara de la luz asoma delante de la palma, hacia el rostro.
+      const at = palm.clone().addScaledVector(lit.clone().sub(palm).normalize(), 0.05);
+      const { fixture, spot: handSpot } = lights.hand;
+      fixture.group.position.copy(at);
+      aim(fixture.head, at, lit);
+      if (fixture.beam && fixture.line) aimBeam(fixture.beam, fixture.line, at, lit);
+      handSpot.position.copy(at);
+      handSpot.target.position.copy(lit);
+    }
   }
 
   type Cast = { subject: CharacterInstance | null; second: CharacterInstance | null; operator: CharacterInstance | null };
@@ -1771,6 +2154,12 @@ function createViewer(options: {
         holder.rotation.y = (keyRig.side * (angle - 45) * Math.PI) / 180;
         holder.position.y = lift;
       }
+      // El pie de la principal sigue apoyado en el piso cuando la luz sube o baja.
+      if (keyRig.stand) {
+        const tall = Math.max(0.2, keyRig.baseY + lift);
+        keyRig.stand.stand.position.y = -tall;
+        keyRig.stand.pole.scale.y = Math.max(0.1, tall - 0.05);
+      }
     }
     shotCam.position.copy(cam.position);
     shotCam.up.set(0, 1, 0);
@@ -1788,11 +2177,14 @@ function createViewer(options: {
     frustum.update();
     cameraRig.position.copy(shotCam.position);
     cameraRig.quaternion.copy(shotCam.quaternion);
-    const onTripod = !config.camera.handheld && !["seguimiento", "orbita", "travelling"].includes(config.camera.move) && beat.angle !== "cenital";
+    // Con luz de mano, quien graba lleva el rig en una mano y la luz en la otra (sin trípode).
+    const onTripod = !config.camera.handheld && !ledHand && !["seguimiento", "orbita", "travelling"].includes(config.camera.move) && beat.angle !== "cenital";
     tripod.visible = onTripod;
     if (onTripod) {
-      tripod.position.set(shotCam.position.x, shotCam.position.y - 0.09, shotCam.position.z);
-      tripod.scale.set(1, Math.max(0.1, shotCam.position.y - 0.09), 1);
+      // El rig va atornillado al trípode por debajo del power bank.
+      const base = rigToWorld(layout.bank.center.clone().add(new Vector3(0, -layout.bank.size[1] / 2, 0)), shotCam.position, shotCam.quaternion);
+      tripod.position.copy(base);
+      tripod.scale.set(1, Math.max(0.1, base.y), 1);
     }
     if (heightLine && heightRing) {
       const standing = actors.subject ? actors.subject.root : people[0].root;
@@ -1825,17 +2217,7 @@ function createViewer(options: {
         aimHead(people[1], second, target);
       }
     }
-    if (operator) {
-      const tucked = !jerky && !crewElbows;
-      const walking = tracks(beat) && (beat.action === "walk" || beat.action === "walkIn") && p < 0.95;
-      const back = new Vector3(0, 0, 1).applyQuaternion(shotCam.quaternion).setY(0);
-      if (back.lengthSq() < 0.01) back.set(0, 0, 1);
-      back.normalize().multiplyScalar(tucked ? 0.34 : 0.55);
-      const x = shotCam.position.x + back.x, z = shotCam.position.z + back.z;
-      const yaw = Math.atan2(cam.target.x - x, cam.target.z - z);
-      if (actors.operator) poseCamarographer(actors.operator, beat, p, t, { x, z, yaw }, { tucked, walking, onTripod, toward: back.clone().normalize().negate() });
-      else applyPose(operator, operatorPose(tucked, walking, t), { x, z, yaw }, t);
-    }
+    poseOperator(beat, p, t, cam.target, onTripod);
     progress.style.width = `${config.duration ? (t / config.duration) * 100 : 0}%`;
   }
 
@@ -1901,6 +2283,12 @@ function createViewer(options: {
     // En pantallas verticales se abre el ángulo para que entren sujeto, cámara y luces.
     viewCam.fov = Math.min(80, Math.max(45, (2 * Math.atan(Math.tan((28 * Math.PI) / 180) / viewCam.aspect) * 180) / Math.PI));
     viewCam.updateProjectionMatrix();
+    // Rótulos de las luces y del rig: miden lo mismo en pantalla; en un visor bajo se agrandan un poco.
+    const labelZoom = clamp(420 / height, 1, 1.9);
+    scene.traverse(object => {
+      const base = object.userData.labelScale as [number, number] | undefined;
+      if (base) object.scale.set(base[0] * labelZoom, base[1] * labelZoom, 1);
+    });
     const rect = insetRect(width, height, format);
     Object.assign(inset.style, { top: `${rect.margin}px`, right: `${rect.margin}px`, width: `${rect.w}px`, height: `${rect.h}px` });
     schedule();
@@ -1980,7 +2368,13 @@ function createViewer(options: {
         // Los personajes liberan lo suyo (esqueletos, mezclador, sombra); geometría, materiales y texturas son del caché.
         for (const character of castMembers(actors)) disposeCharacter(character);
         actors.subject = actors.second = actors.operator = null;
+        // Rótulos: su lienzo y su material (la geometría de los Sprite es compartida por three.js).
+        for (const texture of textures) texture.dispose();
         scene.traverse(object => {
+          if ((object as Sprite).isSprite) {
+            (object as Sprite).material.dispose();
+            return;
+          }
           const item = object as Partial<Mesh>;
           if (item.userData?.sharedAsset) return;
           item.geometry?.dispose();
@@ -2057,8 +2451,8 @@ export default function SceneViewer({ scene, title, personajes }: { scene: Manua
     [base],
   );
 
-  // Personajes: quién aparece no cambia con el formato ni con los errores, solo con la escena.
-  const castKey = useMemo(() => castIds(castCharacters(base.subjects)).join(","), [base]);
+  // Personajes: quién aparece no cambia con el formato ni con los errores, solo con la escena (quien graba, siempre).
+  const castKey = useMemo(() => castIds(castCharacters(crewSubjects(base.subjects))).join(","), [base]);
   const ids = useMemo(() => (castKey ? (castKey.split(",") as PersonajeId[]) : []), [castKey]);
   const [figures, setFigures] = useState<Figures>(() => (prefersLightFigures() ? "maniqui" : "personajes"));
   const [characters, setCharacters] = useState<CharacterSet | null>(() => (personajes ? readyCharacters(ids) : null));
@@ -2248,6 +2642,11 @@ export default function SceneViewer({ scene, title, personajes }: { scene: Manua
               <span className="dot" style={{ background: lightGizmoColor(light) }} />{lightLegend(light)}
             </span>
           ))}
+          {rigLedOn(config) ? (
+            <span className="bg-surface/90 text-inksoft flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10.5px] font-semibold">
+              <span className="dot" style={{ background: lightGizmoColor({ kelvin: RIG_LED.kelvin }) }} />LED del rig · {RIG_LED.kelvin} K
+            </span>
+          ) : null}
         </div>
         {loadingCharacters || failureNote ? (
           <span className="bg-surface/90 text-inkmuted pointer-events-none absolute right-2.5 bottom-2 max-w-[60%] rounded-md px-2 py-0.5 text-right text-[10.5px] font-semibold shadow-[var(--shadow-1)]" aria-hidden="true">

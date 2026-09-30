@@ -20,10 +20,12 @@ import {
   characterActionPose,
   characterEyeHeight,
   clipOverlay,
+  gripLive,
   headLocals,
   legsLive,
   measureClipYaw,
   measureWalkStride,
+  palmLive,
   parseManifest,
   productHold,
   resolveBoneMap,
@@ -38,6 +40,7 @@ import {
   type PoseSolution,
   type RigCalibration,
 } from "../src/lib/manual-characters";
+import { HANDLE_PALM_GAP, crewHands, handleGrip, rigLayout, type RigSide } from "../src/lib/manual-rig";
 
 /**
  * Personajes 3D del visor: manifiesto, mapa de huesos, poses procedurales (correctas e
@@ -660,6 +663,99 @@ test("GLB reales: quien graba flexiona las rodillas sobre el clip y el giro del 
   assert.ok(mean(tucked.knees) > mean(clip.knees) + 12, `rodillas ${mean(clip.knees).toFixed(1)}° → ${mean(tucked.knees).toFixed(1)}°`);
   assert.ok(Math.min(...rigid.knees) < Math.min(...clip.knees) - 5, `rígidas ${rigid.knees.map(v => v.toFixed(1))} vs clip ${clip.knees.map(v => v.toFixed(1))}`);
   assert.ok(mean(tucked.knees) - mean(rigid.knees) > 20);
+  mixer.stopAllAction();
+  mixer.uncacheRoot(gltf.scene);
+});
+
+/* --------------------------------------------------- SMALL RIG EN LAS MANOS -- */
+
+/**
+ * Rig delante de quien graba (su raíz en el origen del mundo, girada `yaw`): la cámara a `height` m,
+ * `ahead` m delante de él y `aside` m hacia su izquierda, mirando hacia donde él mira.
+ */
+function rigAhead(yaw: number, height: number, ahead: number, aside = 0) {
+  const facing = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), yaw);
+  const forward = new Vector3(0, 0, 1).applyQuaternion(facing);
+  const left = new Vector3(1, 0, 0).applyQuaternion(facing);
+  const position = new Vector3(0, height, 0).addScaledVector(forward, ahead).addScaledVector(left, aside);
+  // El rig mira hacia −Z en su marco: medio giro para que mire hacia adelante de quien graba.
+  const quaternion = facing.clone().multiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI));
+  return { position, quaternion };
+}
+
+/** Manos en las asas como en el visor: del mundo al espacio del personaje, IK y palma medida sobre los huesos. */
+function gripHandles(root: Object3D, bones: BoneMap, cal: RigCalibration, rig: { position: Vector3; quaternion: Quaternion }, tripod: boolean, label: string) {
+  const layout = rigLayout("vertical");
+  const plan = crewHands({ tripod, ledHand: null });
+  const toLocalDirection = (direction: Vector3) => direction.clone().applyQuaternion(root.quaternion.clone().invert());
+  root.updateMatrixWorld(true);
+  let count = 0;
+  for (const side of ["L", "R"] as const) {
+    const handle: RigSide | undefined = plan.grips[side];
+    if (!handle) continue;
+    count += 1;
+    const grip = handleGrip(layout, handle, rig.position, rig.quaternion);
+    const point = root.worldToLocal(grip.point.clone());
+    const pole = new Vector3(side === "L" ? 0.5 : -0.5, -1, -0.3);
+    assert.ok(gripLive(root, bones, cal, side, { point, fingers: toLocalDirection(grip.fingers), palm: toLocalDirection(grip.palm), gap: HANDLE_PALM_GAP }, pole), `${label} ${side}: llega al asa`);
+    root.updateMatrixWorld(true);
+    const palm = palmLive(root, bones, cal, side);
+    const miss = palm.distanceTo(point);
+    assert.ok(miss < 0.03, `${label} ${side}: la palma quedó a ${(miss * 100).toFixed(1)} cm del asa ${handle}`);
+    // La palma está del lado de afuera del asa y mira hacia ella (la rodea: no flota ni la atraviesa).
+    assert.ok(point.clone().sub(palm).normalize().dot(toLocalDirection(grip.palm)) > 0.8, `${label} ${side}: la palma mira al asa`);
+  }
+  assert.equal(count, tripod ? 1 : 2, `${label}: manos en el rig`);
+}
+
+test("small rig: las manos quedan en las asas (a menos de 3 cm) en mano y en trípode, con los dos rigs", () => {
+  for (const kind of ["ue", "biped"] as const) {
+    const { root, names, spec } = buildRig(kind);
+    const bones = resolveBoneMap(root, names);
+    const cal = calibrateRig(root, spec, bones);
+    const cases = [
+      { label: "pecho en mano", yaw: 0, rig: rigAhead(0, 1.22, 0.34), tripod: false },
+      { label: "ojos en mano", yaw: 0, rig: rigAhead(0, 1.45, 0.3), tripod: false },
+      { label: "girado en mano", yaw: 0.7, rig: rigAhead(0.7, 1.25, 0.34), tripod: false },
+      // En trípode está parado a la izquierda de la toma y detrás: el rig le queda adelante y a su derecha.
+      { label: "trípode", yaw: 0, rig: rigAhead(0, 1.25, 0.3, -0.3), tripod: true },
+    ];
+    for (const item of cases) {
+      root.rotation.y = item.yaw;
+      for (const key of HUESOS) bones[key].quaternion.copy(cal.rest[key].local);
+      gripHandles(root, bones, cal, item.rig, item.tripod, `${kind} ${item.label}`);
+    }
+  }
+});
+
+test("GLB reales: el camarógrafo toma las asas del rig sobre su clip «idle»", { skip: !hasModels && "faltan los modelos en src/content/modelos-3d" }, async () => {
+  const manifest = parseManifest(JSON.parse(fs.readFileSync(path.join(MODELS_DIR, "manifest.json"), "utf8")));
+  const spec = manifest.personajes.find(item => item.id === "camarografo")!;
+  const gltf = await loadGlb(spec.archivo);
+  const bones: BoneMap = resolveBoneMap(gltf.scene, spec.huesos);
+  const cal = calibrateRig(gltf.scene, spec, bones);
+  const idle = gltf.animations.find(clip => clip.name === spec.animaciones!.reposo)!;
+  const yaw = measureClipYaw(gltf.scene, bones, idle);
+  const mixer = new AnimationMixer(gltf.scene);
+  const action = mixer.clipAction(idle);
+  action.play();
+  const overlay = clipOverlay(bones);
+  // Como el visor: la raíz descuenta el giro del torso del clip para quedar de frente al rig.
+  gltf.scene.rotation.y = -yaw;
+  const cases = [
+    { label: "pecho", rig: rigAhead(0, 1.3, 0.36), tripod: false },
+    { label: "ojos", rig: rigAhead(0, 1.55, 0.32), tripod: false },
+    { label: "trípode", rig: rigAhead(0, 1.28, 0.3, -0.3), tripod: true },
+  ];
+  for (const item of cases) {
+    for (const time of [0.2, 1.1]) {
+      overlay.restore();
+      action.time = time;
+      mixer.update(0);
+      overlay.save();
+      gripHandles(gltf.scene, bones, cal, item.rig, item.tripod, `camarógrafo ${item.label} t=${time}`);
+    }
+  }
   mixer.stopAllAction();
   mixer.uncacheRoot(gltf.scene);
 });

@@ -17,6 +17,7 @@ import type { Beat } from "@/app/actions/structures";
 import { AssetSummary } from "@/components/assets";
 import { ActiveFilters, FilterBar, FilterSelect, SearchInput } from "@/components/filters";
 import { Badge, Callout, Card, EmptyState, PageHeader, Stat } from "@/components/ui";
+import { archiveEpoch, liveScript } from "@/lib/archive-scope";
 import { can, LEVEL } from "@/lib/auth";
 import {
 	AI_PROVIDER_MAP,
@@ -59,11 +60,14 @@ export default async function EstructurasPage({
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="structures" query={await searchParams} />;
   const sp = singleQueryValues(await searchParams);
   const puedeEditar = can(user.role, LEVEL.MEMBER);
+  // Archivo total: como la ficha, la lista cuenta solo guiones vivos (sin marcas archivadas ni lo sin
+  // marca anterior a la época). Con el interruptor vacío, la consulta de siempre.
+  const epoch = archiveEpoch();
 
   const [structures, docTotals, docEnIa] = await Promise.all([
     prisma.structure.findMany({
       orderBy: [{ active: "desc" }, { name: "asc" }],
-      include: { _count: { select: { scripts: true } } },
+      include: { _count: { select: { scripts: epoch ? { where: liveScript(epoch) } : true } } },
     }),
     prisma.asset.groupBy({
       by: ["ownerId"],

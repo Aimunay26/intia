@@ -105,6 +105,8 @@ export type ShellUser = {
   color: string;
   level: number;
   profiles?: string[];
+  /** Marcas de la sesión (sin las archivadas con ARCHIVO_TOTAL_DESDE): el menú aplica la misma regla de «solo base» que el servidor. */
+  brandIds?: string[];
 };
 
 export function Shell({

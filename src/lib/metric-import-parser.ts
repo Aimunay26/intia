@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import type { SessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { contentScope } from "@/lib/access-scope";
+import { archiveEpoch, liveContent } from "@/lib/archive-scope";
 import { parseCsvMoney } from "@/lib/money";
 import { PLATFORM_MAP } from "@/lib/constants";
 import { requireWeekStart } from "@/lib/weekly-metrics";
@@ -296,8 +297,11 @@ export async function prepareCsvImport(user: SessionUser, formData: FormData): P
 
   // Índice de videos por id y por título, para resolver la columna "video".
   const refs = [...new Set(lineas.slice(1).map(line => splitCsvLine(line, delimiter)?.[cabeceras.indexOf("video")]?.trim()).filter((s): s is string => Boolean(s)))];
+  // Archivo total: un video de una marca archivada no se resuelve (ni por id ni por título), así un
+  // título repetido con uno archivado no vuelve ambigua la fila del video vivo.
+  const epoch = archiveEpoch();
   const videos = await prisma.contentItem.findMany({
-    where: { AND: [contentScope(user, "metrics.write"), { OR: [{ id: { in: refs } }, { title: { in: refs, mode: "insensitive" } }] }] },
+    where: { AND: [contentScope(user, "metrics.write"), { OR: [{ id: { in: refs } }, { title: { in: refs, mode: "insensitive" } }] }, ...(epoch ? [liveContent(epoch)] : [])] },
     select: { id: true, title: true, brandId: true },
   });
   const porId = new Map<string, VideoRef>(videos.map((v) => [v.id, v]));

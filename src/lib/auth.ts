@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
+import { Prisma } from "@prisma/client";
+import { archiveEpoch, liveBrandSql } from "@/lib/archive-scope";
 import { isStrongSecret, passwordError } from "@/lib/auth-policy";
 import { BOOTSTRAP_COMPLETE, withAuthLock } from "@/lib/auth-transactions";
 
@@ -160,11 +162,15 @@ export async function getSession(): Promise<SessionUser | null> {
     const id = typeof payload.sub === "string" ? payload.sub : null;
     if (!id || typeof payload.jti !== "string" || !Number.isInteger(payload.sv)) return null;
 
+    // Archivado total (ARCHIVO_TOTAL_DESDE): encendido, brandIds trae solo las marcas vivas; los
+    // accesos a marcas archivadas siguen en la base, sin tocar. Apagado, la consulta es la de antes.
+    const epoch = archiveEpoch();
+    const liveAccess = epoch ? Prisma.sql`AND ${liveBrandSql('b."brandId"', { epoch })}` : Prisma.empty;
     // Una sola consulta para sesión, revocación, versión y permisos frescos.
     const [user] = await prisma.$queryRaw<(SessionUser & { sessionVersion: number })[]>`
       SELECT u."id", u."name", u."email", u."role", u."color", u."archetypeId", u."sessionVersion",
         ARRAY(SELECT p.profile FROM "UserWorkProfile" p WHERE p."userId"=u.id ORDER BY p.profile) AS profiles,
-        ARRAY(SELECT b."brandId" FROM "UserBrandAccess" b WHERE b."userId"=u.id ORDER BY b."brandId") AS "brandIds"
+        ARRAY(SELECT b."brandId" FROM "UserBrandAccess" b WHERE b."userId"=u.id ${liveAccess} ORDER BY b."brandId") AS "brandIds"
       FROM "AuthSession" s JOIN "User" u ON u."id" = s."userId"
       WHERE s."id" = ${createHash("sha256").update(payload.jti).digest("hex")}
         AND u."id" = ${id} AND u."active" = true AND u."sessionVersion" = ${payload.sv}

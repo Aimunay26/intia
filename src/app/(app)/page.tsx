@@ -40,6 +40,7 @@ import {
 	SectionTitle,
 	Stat,
 } from "@/components/ui";
+import { archiveEpoch, liveBrand, liveContent, liveScript } from "@/lib/archive-scope";
 import { brandWhere } from "@/lib/brand-context";
 import {
 	ACTIVE_STATUSES,
@@ -96,6 +97,11 @@ const getPanelContext = cache(async () => {
   const user = await requireUser();
   const brandCtx = await getBrandContext();
   const soloMarca = brandWhere(brandCtx.activeId);
+  // Archivo total (ARCHIVO_TOTAL_DESDE): el panel no cuenta nada de marcas archivadas ni lo
+  // personal anterior a la época. Con el interruptor vacío, los filtros quedan como antes.
+  const epoch = archiveEpoch();
+  const videos: Prisma.ContentItemWhereInput = epoch ? { AND: [soloMarca, liveContent(epoch)] } : soloMarca;
+  const guiones: Prisma.ScriptWhereInput = epoch ? { AND: [soloMarca, liveScript(epoch)] } : soloMarca;
 
   const ahora = new Date();
   const [businessYear, businessMonth] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Lima", year: "numeric", month: "2-digit", day: "2-digit" }).format(ahora).split("-").map(Number);
@@ -111,7 +117,7 @@ const getPanelContext = cache(async () => {
   // Un video cuenta como publicado este mes por su fecha real de publicacion;
   // si nunca se registro, se usa la fecha en la que estaba programado.
   const publicadoEsteMes: Prisma.ContentItemWhereInput = {
-    ...soloMarca,
+    ...videos,
     status: "PUBLICADO",
     OR: [
       { publishedAt: { gte: inicioMes, lte: finMes } },
@@ -120,13 +126,13 @@ const getPanelContext = cache(async () => {
   };
 
   const atrasadosWhere: Prisma.ContentItemWhereInput = {
-    ...soloMarca,
+    ...videos,
     scheduledDate: { lt: inicioHoy },
     status: { notIn: CERRADOS },
   };
 
 
-  return { user, brandCtx, soloMarca, ahora, inicioMes, finMes, semanasMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere };
+  return { user, brandCtx, soloMarca, epoch, videos, guiones, ahora, inicioMes, finMes, semanasMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere };
 });
 
 export default async function PanelGeneral() {
@@ -176,17 +182,17 @@ export default async function PanelGeneral() {
 }
 
 async function PanelStats() {
-  const { brandCtx, soloMarca, inicioMes, finMes, semanasMes, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
+  const { brandCtx, epoch, videos, inicioMes, finMes, semanasMes, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
   const [publicados, enProduccion, atrasados, vistasMes] = await measurePhase("panel.stats", () => Promise.all([
     prisma.contentItem.count({ where: publicadoEsteMes }),
-    prisma.contentItem.count({ where: { ...soloMarca, status: { in: ACTIVE_STATUSES } } }),
+    prisma.contentItem.count({ where: { ...videos, status: { in: ACTIVE_STATUSES } } }),
     prisma.contentItem.count({ where: atrasadosWhere }),
     prisma.metric.aggregate({
       _sum: { views: true },
       where: {
         period: "WEEKLY",
         date: { gte: fromDateKey(semanasMes.desde), lte: fromDateKey(semanasMes.hasta) },
-        ...(brandCtx.activeId ? { contentItem: { brandId: brandCtx.activeId } } : {}),
+        ...(brandCtx.activeId || epoch ? { contentItem: videos } : {}),
       },
     })
   ]));
@@ -228,11 +234,11 @@ async function PanelStats() {
 }
 
 async function PanelPending() {
-  const { soloMarca, hoy, limite7 } = await getPanelContext();
+  const { videos, hoy, limite7 } = await getPanelContext();
   const [pendientes] = await measurePhase("panel.pending", () => Promise.all([
     prisma.contentItem.findMany({
       where: {
-        ...soloMarca,
+        ...videos,
         status: { notIn: CERRADOS },
         scheduledDate: { lte: limite7 },
       },
@@ -383,10 +389,11 @@ async function PanelPending() {
 }
 
 async function PanelObjectives() {
-  const { user, soloMarca } = await getPanelContext();
+  const { user, soloMarca, epoch } = await getPanelContext();
   const [objetivosBase] = await measurePhase("panel.objectives", () => Promise.all([
     prisma.brandObjective.findMany({
-      where: { ...soloMarca, status: { in: ["EN_CURSO", "EN_RIESGO"] } },
+      // Archivo total: solo objetivos de marcas vivas.
+      where: { ...soloMarca, status: { in: ["EN_CURSO", "EN_RIESGO"] }, ...(epoch ? { brand: liveBrand(epoch) } : {}) },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       select: {
         id: true,
@@ -463,9 +470,9 @@ async function PanelObjectives() {
 }
 
 async function PanelFunnel() {
-  const { soloMarca } = await getPanelContext();
+  const { videos } = await getPanelContext();
   const [porEstado] = await measurePhase("panel.funnel", () => Promise.all([
-    prisma.contentItem.groupBy({ by: ["status"], _count: { _all: true }, where: soloMarca })
+    prisma.contentItem.groupBy({ by: ["status"], _count: { _all: true }, where: videos })
   ]));
   const conteoEstado = new Map<string, number>(
     porEstado.map((r) => [r.status, r._count._all] as const)
@@ -490,10 +497,17 @@ async function PanelFunnel() {
 }
 
 async function PanelActivity() {
-  const { brandCtx } = await getPanelContext();
+  const { brandCtx, epoch } = await getPanelContext();
+  // Archivo total: con «todas las marcas», solo lo de marcas vivas (las del selector, que nunca
+  // incluye archivadas) y lo sin marca desde la época. /actividad conserva el historial completo.
+  const actividadWhere: Prisma.AuditLogWhereInput = brandCtx.activeId
+    ? { brandId: brandCtx.activeId }
+    : epoch
+      ? { OR: [{ brandId: { in: brandCtx.brands.map((b) => b.id) } }, { brandId: null, createdAt: { gte: epoch } }] }
+      : {};
   const [actividad] = await measurePhase("panel.activity", () => Promise.all([
     prisma.auditLog.findMany({
-      where: brandCtx.activeId ? { brandId: brandCtx.activeId } : {},
+      where: actividadWhere,
       orderBy: { createdAt: "desc" },
       take: 8,
       select: {
@@ -550,7 +564,7 @@ async function PanelActivity() {
 }
 
 async function PanelBrands() {
-  const { brandCtx, soloMarca, inicioMes, finMes, publicadoEsteMes } = await getPanelContext();
+  const { brandCtx, videos, guiones, inicioMes, finMes, publicadoEsteMes } = await getPanelContext();
   const [marcas, videosPorMarca, publicadosPorMarca, guionesPorMarca] = await measurePhase("panel.brands", () => Promise.all([
     prisma.brand.findMany({
       where: {
@@ -564,14 +578,14 @@ async function PanelBrands() {
     prisma.contentItem.groupBy({
       by: ["brandId"],
       _count: { _all: true },
-      where: { ...soloMarca, scheduledDate: { gte: inicioMes, lte: finMes } },
+      where: { ...videos, scheduledDate: { gte: inicioMes, lte: finMes } },
     }),
     prisma.contentItem.groupBy({
       by: ["brandId"],
       _count: { _all: true },
       where: publicadoEsteMes,
     }),
-    prisma.script.groupBy({ by: ["brandId"], _count: { _all: true }, where: soloMarca })
+    prisma.script.groupBy({ by: ["brandId"], _count: { _all: true }, where: guiones })
   ]));
   const videosMarca = new Map<string, number>(
     videosPorMarca.map((r) => [r.brandId, r._count._all] as const)

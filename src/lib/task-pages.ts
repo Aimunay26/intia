@@ -1,11 +1,15 @@
 import { createHash } from "node:crypto";
 import type { Prisma } from "@prisma/client";
+import { archiveEpoch, liveColumn, liveTask } from "@/lib/archive-scope";
 import { prisma } from "@/lib/prisma";
 import { taskListOptions, type TaskFilters } from "@/lib/task-list";
 
 export const TASK_PAGE_SIZE = 50;
+/** Archivo total: las columnas de marcas archivadas no se muestran; las globales, siempre. */
 export function taskColumnWhere(activeBrandId: string | null): Prisma.TaskColumnWhereInput {
-  return activeBrandId ? { OR: [{ brandId: null }, { brandId: activeBrandId }] } : {};
+  const brand: Prisma.TaskColumnWhereInput = activeBrandId ? { OR: [{ brandId: null }, { brandId: activeBrandId }] } : {};
+  const epoch = archiveEpoch();
+  return epoch ? { AND: [brand, liveColumn(epoch)] } : brand;
 }
 
 function scopeKey(columnId: string, brandId: string | null, filters: TaskFilters) {
@@ -28,8 +32,11 @@ export function taskCursorWhere(cursor: string | null | undefined, scope: string
 export async function getTaskColumnPage(columnId: string, brandId: string | null, filters: TaskFilters, cursor?: string | null, access: Prisma.TaskWhereInput = {}) {
   const scope = scopeKey(columnId, brandId, filters);
   const after = taskCursorWhere(cursor, scope);
+  // Archivo total: sin tareas de marcas archivadas ni personales anteriores a la época.
+  const epoch = archiveEpoch();
+  const live = epoch ? [liveTask(epoch)] : [];
   const tasks = await prisma.task.findMany({
-    where: { AND: [{ columnId }, taskListOptions(brandId, filters).where, after, access] },
+    where: { AND: [{ columnId }, taskListOptions(brandId, filters).where, after, access, ...live] },
     take: TASK_PAGE_SIZE + 1,
     orderBy: [{ order: "asc" }, { id: "asc" }],
     include: { assignee: { select: { id: true, name: true, color: true, avatarUrl: true } }, brand: { select: { id: true, name: true, colorPrimary: true } } },

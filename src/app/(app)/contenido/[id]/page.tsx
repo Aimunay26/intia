@@ -45,6 +45,7 @@ import {
 	SCRIPT_STATUS_MAP,
 	USER_ROLE_MAP
 } from "@/lib/constants";
+import { archiveEpoch, liveContent } from "@/lib/archive-scope";
 import { prisma } from "@/lib/prisma";
 import {
 	dateKey,
@@ -86,8 +87,10 @@ export default async function VideoPage({ params, searchParams }: { params: Prom
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="content" id={(await params).id} query={query} />;
   const { id } = await params;
 
-  const record = await prisma.contentItem.findUnique({
-    where: { id },
+  // Archivo total: un video de una marca archivada responde igual que uno inexistente.
+  const epoch = archiveEpoch();
+  const record = await prisma.contentItem.findFirst({
+    where: epoch ? { AND: [{ id }, liveContent(epoch)] } : { id },
     include: {
       brand: { select: { id: true, name: true, colorPrimary: true } },
       structure: { select: { id: true, name: true } },

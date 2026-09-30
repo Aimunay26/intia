@@ -42,6 +42,7 @@ import {
 	Field,
 } from "@/components/ui";
 import type { Beat } from "@/lib/ai/context";
+import { archiveEpoch, liveContent, liveScript } from "@/lib/archive-scope";
 import { LEVEL, can } from "@/lib/auth";
 import {
 	AI_PROVIDER_MAP,
@@ -87,8 +88,11 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="scripts" id={(await params).id} />;
   const { id } = await params;
 
-  const script = await prisma.script.findUnique({
-    where: { id },
+  // Archivo total: un guion de una marca archivada (o sin marca y anterior a la época)
+  // responde igual que uno inexistente.
+  const epoch = archiveEpoch();
+  const script = await prisma.script.findFirst({
+    where: epoch ? { AND: [{ id }, liveScript(epoch)] } : { id },
     include: {
       brand: { select: { id: true, name: true, colorPrimary: true } },
       structure: { select: { id: true, name: true, family: true, beats: true } },
@@ -130,6 +134,7 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
       scriptId: null,
       status: { notIn: ["PUBLICADO", "CANCELADO"] },
       ...(script.brandId ? { brandId: script.brandId } : {}),
+      ...(epoch ? { AND: [liveContent(epoch)] } : {}),
     },
     orderBy: { scheduledDate: "asc" },
     take: 60,

@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { contentScope } from "@/lib/access-scope";
+import { liveBrand, liveStep, withLive } from "@/lib/archive-scope";
 import { ACTIVE_STATUSES, CHAIN_ORDER, CHAIN_STEP_RULES, CONTENT_STATUS_MAP, DEAD_STATUSES, PRODUCTION_STEP_MAP, chainChecksToMark, type ChainStep } from "@/lib/constants";
 import { allows, type AccessUser, type Capability } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +16,8 @@ import { addDaysToKey, dueLabel, weekdayOfKey } from "@/lib/working-days";
  *  - Solo lectura, con `prisma` (sin transacción) y siempre dentro de las marcas autorizadas:
  *    el Dueño ve todo; un miembro, sus marcas y, dentro de ellas, sus pasos o los de videos de
  *    su alcance (contentScope). El canario (PRODUCTION_CHAIN_BRANDS) también filtra.
+ *  - Archivado total (ARCHIVO_TOTAL_DESDE encendido): nadie, tampoco el Dueño, ve pasos ni
+ *    coordinación de marcas archivadas (liveStep, liveBrand). Apagado, todo queda como antes.
  *  - Con la cadena apagada no consulta nada y devuelve estructuras vacías con enabled:false
  *    (grabadoDeVideo y chainStateForScripts caen en el check «Grabado (todas las tomas)»).
  *  - «Vencido» se calcula al leer (dueAt < now). Nada queda en memoria entre peticiones.
@@ -165,10 +168,14 @@ export type ScriptChainState = { videos: number; grabados: number; items: VideoC
 const DAY_MS = 86_400_000;
 const CHAIN_KINDS: string[] = [...CHAIN_ORDER];
 
-/** Pasos que la persona puede ver: Dueño todo; miembro, en sus marcas, los suyos o los de videos de su alcance. */
+/**
+ * Pasos que la persona puede ver: Dueño todo; miembro, en sus marcas, los suyos o los de videos de
+ * su alcance. Con el archivado total, ninguno de marcas archivadas (tampoco para el Dueño).
+ */
 export function productionStepScope(user: AccessUser, capability: Capability = "content.view"): Prisma.ProductionStepWhereInput {
-  if (user.role === "OWNER") return {};
-  return { brandId: { in: [...user.brandIds ?? []] }, OR: [{ assigneeId: user.id }, { contentItem: contentScope(user, capability) }] };
+  const live = liveStep();
+  if (user.role === "OWNER") return live;
+  return withLive({ brandId: { in: [...user.brandIds ?? []] }, OR: [{ assigneeId: user.id }, { contentItem: contentScope(user, capability) }] }, live);
 }
 
 function canaryWhere(): Prisma.ProductionStepWhereInput {
@@ -385,7 +392,8 @@ async function coordinationBrands(user: AccessUser, brandId: string | null): Pro
   }
   const allowed = [...ids].filter((id) => !canary || canary.includes(id));
   if (!allowed.length) return [];
-  return prisma.brand.findMany({ where: { id: { in: allowed } }, orderBy: [{ name: "asc" }, { id: "asc" }], select: { id: true, name: true } });
+  // Archivado total: la bandeja de coordinación no nombra marcas archivadas (sus equipos siguen en la base).
+  return prisma.brand.findMany({ where: { id: { in: allowed }, ...liveBrand() }, orderBy: [{ name: "asc" }, { id: "asc" }], select: { id: true, name: true } });
 }
 
 /**

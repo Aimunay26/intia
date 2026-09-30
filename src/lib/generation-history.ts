@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generationScope } from "@/lib/access-scope";
+import { liveJobSql } from "@/lib/archive-scope";
 import { assertPermission, type AccessUser } from "@/lib/permissions";
 import { pageNumber } from "@/lib/query-params";
 
@@ -17,6 +18,9 @@ export async function generationHistory(user: AccessUser, requestedPage?: string
   const brandScope = user.role === "OWNER" ? Prisma.sql`TRUE`
     : user.brandIds?.length ? Prisma.sql`j."payload"->>'brandId' IN (${Prisma.join(user.brandIds)})` : Prisma.sql`FALSE`;
   const statusFilter = failedOnly ? Prisma.sql`j."status" IN ('FAILED', 'PARTIAL', 'CANCELLED')` : Prisma.sql`TRUE`;
+  // Archivo total: sin trabajos de marcas archivadas ni sin marca anteriores a la época, también
+  // para el Dueño. Apagado es TRUE.
+  const liveFilter = liveJobSql("j");
 
   return prisma.$transaction(async tx => {
     // Un solo sucesor determinista por origen. El NOT EXISTS elimina TODOS los
@@ -27,7 +31,7 @@ export async function generationHistory(user: AccessUser, requestedPage?: string
       WITH pending AS MATERIALIZED (
         SELECT j."id", j."createdAt"
         FROM "GenerationJob" j
-        WHERE j."userId" = ${user.id} AND ${brandScope} AND ${statusFilter}
+        WHERE j."userId" = ${user.id} AND ${brandScope} AND ${statusFilter} AND ${liveFilter}
           AND EXISTS (
             SELECT 1 FROM "GenerationItem" i
             WHERE i."jobId" = j."id" AND i."status" IN (${Prisma.join(pendingStatuses)})

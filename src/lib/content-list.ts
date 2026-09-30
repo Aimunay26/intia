@@ -1,8 +1,13 @@
+import { archiveEpoch, liveContent } from "@/lib/archive-scope";
 import { loadPage } from "@/lib/list-pagination";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
 
-export async function getContentList(where: Prisma.ContentItemWhereInput, requestedPage?: string) {
+export async function getContentList(filters: Prisma.ContentItemWhereInput, requestedPage?: string) {
+  // Archivo total (ARCHIVO_TOTAL_DESDE): la lista del Dueño no muestra videos de marcas archivadas.
+  // Con el interruptor vacío el filtro queda exactamente igual que antes.
+  const epoch = archiveEpoch();
+  const where: Prisma.ContentItemWhereInput = epoch ? { AND: [filters, liveContent(epoch)] } : filters;
   const result = await loadPage(requestedPage, 50,
     () => prisma.contentItem.count({ where }),
     (range) => prisma.contentItem.findMany({

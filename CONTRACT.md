@@ -164,7 +164,7 @@ permisos de equipo a roles que ya no existían.
 
 Los nueve perfiles combinables, su matriz y la activación están en [Perfiles y permisos](reports/perfiles-permisos-2026-09-09.md). La política vive en `src/lib/permissions.ts` y los filtros en `src/lib/access-scope.ts`. Se aplican en páginas, acciones, descargas, CSV, tareas e IA. La cookie de marca no concede acceso.
 
-Equipo, Actividad y Ajustes requieren Dueño. Cambiar UserWorkProfile o UserBrandAccess revoca sesiones y aumenta la versión de acceso mediante triggers. No se asignan perfiles por inferencia durante la migración. Sin perfiles, un miembro conserva inicio, ayuda, Manual de procedimientos y Mi perfil.
+Equipo, Actividad y Ajustes requieren Dueño. Cambiar UserWorkProfile o UserBrandAccess revoca sesiones y aumenta la versión de acceso mediante triggers. No se asignan perfiles por inferencia durante la migración. Sin perfiles, un miembro conserva inicio, ayuda, Manual de procedimientos y Mi perfil. Con el archivo total encendido (`ARCHIVO_TOTAL_DESDE`), un MEMBER **sin marcas vivas** también conserva solo eso (`base`), tenga los perfiles que tenga; ver «Archivo total: ocultamiento por archivado».
 
 Las funciones de video en Assignment no sustituyen los perfiles de acceso. Los perfiles combinados suman capacidades sin ampliar el alcance de una capacidad distinta. Generar/escribir no concede aprobar o publicar. Publicación requiere la revisión final aprobada de postproducción; APROBADO sigue siendo una etapa previa a grabación.
 
@@ -743,6 +743,7 @@ interruptor: nunca `git revert` ni `DROP`.
 | `CALENDARIO_MENSUAL` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Vista mensual del calendario para Dueño y Equipo | — |
 | `GUIONES_AJUSTE_PANTALLA` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Modo ajuste del visor y de la biblioteca de guiones | — |
 | `GEMINI_ESQUEMA_SIMPLE` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Esquema de Gemini sin límites de tamaño/rango; apagado envía el anterior con límites. La validación local no cambia | — |
+| `ARCHIVO_TOTAL_DESDE` | vacío (apagado) | una fecha ISO válida lo enciende (la del lote aplicado); inválida = apagado con aviso en el log | Archivo total: nadie, tampoco el Dueño en las pantallas operativas, ve marcas archivadas ni lo sin marca anterior a esa fecha; un MEMBER sin marcas vivas queda con `base`. Ver «Archivo total: ocultamiento por archivado» | Registro `prisma/operations/archive-registry.sql` y un lote aplicado con `npm run datos:archivo` (sin él solo oculta las marcas ya archivadas a mano) |
 
 **Estado en producción:** las migraciones `20260928120000_brand_catalog` y
 `20260928180000_production_flow` se aplicaron en Neon el 29/09/2026, y `PRODUCT_CATALOG_ENABLED`
@@ -758,6 +759,110 @@ código sigue siendo apagado; la reversa sigue siendo apagar el interruptor y re
 - Apagar no borra nada: tablas y filas se conservan y vuelven a verse al encender.
 - Orden de activación: migrar → desplegar con los interruptores de base de datos apagados →
   encenderlos en Vercel y redesplegar. Ver `reports/operacion-migraciones.md`.
+
+## Archivo total: ocultamiento por archivado
+
+M0 del GO «ALSOS marcas independientes» (30/09/2026). Interruptor `ARCHIVO_TOTAL_DESDE`
+(época, fecha ISO). Script de operador `scripts/archivo-total.ts` (`npm run datos:archivo`).
+Procedimiento de producción y reversa: `reports/archivo-total-2026-09-30.md`.
+
+**Qué escribe el archivo total (y nada más).** `Brand.archived=true` y `Brand.active=false` en
+las marcas creadas antes de la época, guardando antes su estado exacto en
+`intia_ops.archive_entry`, más la auditoría firmada como «Sistema» (una fila por marca y una de
+resumen). No toca contenido, guiones, aprobaciones, pasos, cuentas, perfiles, accesos, sesiones,
+adjuntos ni blobs, y **nunca ejecuta DELETE**. Lo que no tiene marca y es anterior a la época
+(tareas, eventos, guiones y generaciones personales) no se modifica: queda registrado como
+`HIDDEN` y la app lo oculta por fecha.
+
+**Registro `intia_ops`** (`prisma/operations/archive-registry.sql`, idempotente, solo con la
+conexión de mantenimiento `application_name=intia-migrator-20260909`):
+- `archive_batch`: un lote por `--apply`; **solo uno `APPLIED`** a la vez (índice único parcial);
+  un lote solo pasa de `APPLIED` a `RESTORED`.
+- `archive_entry`: `ARCHIVED` (marca, con `prev_archived`/`prev_active`/`prev_updated_at`) o
+  `HIDDEN` (id sin datos). Una entrada solo registra su restauración, una vez: con el script o,
+  durante M0, con «Reactivar» en `/marcas` (ver abajo).
+- `archive_owner_grant`: una fila por marca en la que `--restore --dueno` (con `BrandMembership`,
+  M1) creó o cambió la membresía del dueño, con la membresía anterior exacta (`prev_role`,
+  `prev_status`; NULL = no tenía). Es la reversa de ese permiso. Inmutable.
+- Triggers bloquean `DELETE`, `TRUNCATE` y reescrituras. `REVOKE ALL` a `PUBLIC`.
+- Copia secundaria `.audit/archivo-total-<lote>.json` (o `ARCHIVO_TOTAL_AUDIT_DIR`), solo ids
+  (marcas, ocultos y concesiones de dueño).
+- M1 clasifica como «archivada por M0» la marca con entrada `ARCHIVED` sin `restored_at` en el
+  lote `APPLIED` **y que sigue archivada** (`Brand.archived`): una marca viva nunca cuenta como
+  archivada. Nunca por la fecha: una migración no lee el entorno.
+
+**Modos del script** (salida JSON; nunca imprime la conexión, nombres ni correos):
+- ensayo (por defecto): solo lectura; conteos, bloqueos, cuentas OWNER, `token` y el valor exacto
+  de `ARCHIVO_TOTAL_DESDE`;
+- `--apply --lote --token [--desde]`: Serializable con `LOCK TABLE` del registro y
+  `pg_advisory_xact_lock`; se aborta si el recuento cambió desde el ensayo, si hay generaciones
+  `QUEUED`/`RUNNING`, importaciones `PENDING`, época futura u otro lote aplicado; comprueba A1-A5
+  en la misma transacción. En remoto exige la puerta de despliegue cerrada. Repetir el mismo lote
+  no duplica nada;
+- `--restore --lote [--dueno]` y `--restore-marca=<id> --dueno`: devuelve cada marca a su estado
+  exacto; nunca reactiva una marca archivada antes del lote y respeta los cambios hechos a mano
+  después. Con `BrandMembership` (M1), `--dueno` es obligatorio y la cuenta recibe `DUENO_MARCA`
+  **solo en las marcas que el restore devuelve a la vida** (`RESTAURADA` y no archivadas antes del
+  lote): sin membresía se crea; una `MIEMBRO` activa sube a dueña; **una membresía `SUSPENDED` no
+  se toca** (se informa). Las vivas por un cambio a mano (`YA_ESTABA`/`RESPETADA`) solo se
+  informan. Cada concesión guarda la membresía anterior en `archive_owner_grant` y una fila
+  «Sistema» (`ASIGNAR`) con rol, estado e id de la cuenta antes y después; `restored_owner_id` solo
+  se registra donde se creó o cambió una membresía. La salida lista `marcasVivasSinDueno` (B1).
+  Sin M1, `--dueno` solo se valida. Un lote restaurado no se vuelve a aplicar: se aplica otro con
+  nombre nuevo;
+- `--verificar --lote`: A1-A6 (y R1 si está restaurado) y la copia. `ok` compara también A3/A4 con
+  la foto del apply (vale justo después, con la puerta cerrada); con la app abierta, el uso normal
+  los cambia y el seguimiento es `vigente` (A1, A2, A5 y A6 = 0 filas nuevas en marcas que el
+  lote mantiene archivadas y que siguen archivadas; restaurado: R1 y A5). Una entrada sin
+  restaurar cuya marca está viva (reactivada por fuera de «Reactivar») sale en `vivasSinRegistro`
+  y se concilia con `--restore-marca=<id> --dueno=<correo>`.
+
+**Qué oculta la app con la época encendida** (`src/lib/archive-epoch.ts` y
+`src/lib/archive-scope.ts`; se lee `process.env` en cada llamada):
+- A **todos**, también al Dueño en las pantallas operativas: todo lo que cuelga de una marca
+  archivada (`liveBrand`, `liveContent`, `liveStep`, `liveScript`, `liveTask`, `liveEvent`,
+  `liveColumn`, `liveBrandSql`, `liveJobSql`) y lo sin marca anterior a la época. Los alcances de
+  `access-scope.ts` y `production-scope.ts` lo aplican con `withLive`; las consultas directas del
+  Dueño (Panel, Contenido, Guiones, Calendario, Tareas, Métricas, Generaciones, Estructuras y su
+  ficha, Equipo —participación en videos—, Tutorial, ICS de marca) llevan su filtro explícito.
+- Eliminar una columna del tablero sigue bloqueado mientras guarde cualquier tarea (el borrado
+  sería en cascada), pero el diálogo cuenta solo las visibles y, si guarda archivadas, dice que no
+  se puede eliminar y que se renombre, sin decir cuántas ni pedir que se muevan.
+- **`liveColumn` nunca oculta columnas globales** (`brandId` NULL): solo las de marcas archivadas.
+- `getSession`, `actorForJob` y el ICS personal leen `brandIds` sin marcas archivadas; los
+  accesos siguen intactos en `UserBrandAccess`.
+- **Regla de `allows`:** un MEMBER cuya lista `brandIds` (ya sin archivadas) está vacía conserva
+  solo `base`; si `brandIds` no viene, la regla no aplica. Inicio y `/sin-acceso` muestran «ALSOS
+  se está renovando: pronto podrás crear tu marca o unirte a la de tu equipo» con el Manual, Mi
+  perfil y «Cómo se usa».
+- **Equipo** no ofrece marcas archivadas; los accesos que una persona tiene en ellas viajan
+  ocultos (`keptBrandIds`) y, además, `saveTeamAccess` los conserva en el servidor aunque el
+  formulario no los traiga. No quitar ninguna de las dos defensas: guardar una ficha no puede
+  borrar accesos archivados.
+- **Vista de administración intacta** (hasta M1): `/marcas?estado=archivadas`, «Reactivar»,
+  `/actividad` y Ajustes siguen viendo todo. «Reactivar» sobre una marca del lote `APPLIED`
+  registra en la misma transacción la restauración de su entrada (`YA_ESTABA` si volvió a su
+  estado exacto, `RESPETADA` si no; sin conceder dueño) y lo dice en la auditoría («…y la sacó del
+  archivo total <lote>»). Sin registro o sin privilegios sobre `intia_ops`, no hace nada.
+
+**Guardas siempre activas** (con la variable vacía o llena): el barrido de producción, encolar y
+reintentar generaciones («La marca está archivada…») y la recuperación diaria excluyen las marcas
+archivadas. La recuperación no despacha sus trabajos (`staleJobs`) y **cancela los que quedaron
+colgados** (`closeArchivedJobs`: en cola o en curso, 6 minutos sin avanzar, sin concesión vigente;
+sin llamar al proveedor, aunque la IA esté apagada), para que no ocupen para siempre el cupo de
+2 pendientes de su dueño ni bloqueen el `--apply` de un lote nuevo.
+
+**Criterio de HECHO (SQL):** A1 0 marcas anteriores a la época sin archivar; A2 0 entradas del
+lote con la marca viva; A3 md5 por tabla igual antes y después del apply; A4 `sum(sessionVersion)`
+igual; A5 filas de «Sistema» = marcas + 1; A6 48 h sin filas nuevas en marcas archivadas y sin
+5xx; R1 0 diferencias después de restaurar.
+
+**Reversa en 3 niveles** (nunca `git revert`): (1) vaciar `ARCHIVO_TOTAL_DESDE` y redesplegar:
+lo archivado vuelve a verse como antes de M0 (contenido de marcas archivadas y lo personal
+anterior; los miembros recuperan sus perfiles), pero las marcas siguen archivadas en los datos y
+las guardas siempre activas siguen valiendo; (2) cerrar la puerta,
+`--restore` (con `--dueno` desde M1) y vaciar la variable; (3) último recurso: la rama de Neon
+`antes-archivo-<lote>` creada en T0, que descarta todo lo escrito después.
 
 ## Catálogo de productos por marca
 

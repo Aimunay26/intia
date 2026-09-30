@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { archiveEpoch, liveBrandSql } from "@/lib/archive-scope";
 import { loadPage } from "@/lib/list-pagination";
 
 export type TeamFilters = { rol?: string; estado?: string; q?: string; pagina?: string };
@@ -27,10 +28,15 @@ export function getTeamList(filters: TeamFilters) {
 }
 
 export async function getTeamStats() {
+  // Archivo total (ARCHIVO_TOTAL_DESDE): la participación no cuenta videos de marcas archivadas. Vacío, la consulta de siempre.
+  const epoch = archiveEpoch();
   const [users, archetypes, participation] = await Promise.all([
     prisma.user.groupBy({ by: ["role", "active"], _count: { _all: true } }),
     prisma.user.count({ where: { archetypeId: { not: null } } }),
-    prisma.$queryRaw<Array<{ people: number; assignments: number }>>`SELECT COUNT(DISTINCT "userId")::int AS "people", COUNT(*)::int AS "assignments" FROM "Assignment"`,
+    epoch
+      ? prisma.$queryRaw<Array<{ people: number; assignments: number }>>`SELECT COUNT(DISTINCT a."userId")::int AS "people", COUNT(*)::int AS "assignments"
+        FROM "Assignment" a JOIN "ContentItem" ci ON ci."id" = a."contentItemId" WHERE ${liveBrandSql('ci."brandId"', { epoch })}`
+      : prisma.$queryRaw<Array<{ people: number; assignments: number }>>`SELECT COUNT(DISTINCT "userId")::int AS "people", COUNT(*)::int AS "assignments" FROM "Assignment"`,
   ]);
   return {
     total: users.reduce((sum, group) => sum + group._count._all, 0),

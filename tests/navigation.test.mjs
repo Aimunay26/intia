@@ -192,3 +192,71 @@ test("el estado de claves usa solo metadatos: la clave guardada manda y el entor
     for (const key of names) { if (before[key] === undefined) delete process.env[key]; else process.env[key] = before[key]; }
   }
 });
+
+/* Archivo total (M0, ARCHIVO_TOTAL_DESDE): pantallas y lecturas directas del Dueño. */
+async function withArchiveEpoch(value, work) {
+  const before = process.env.ARCHIVO_TOTAL_DESDE;
+  try {
+    if (value === undefined) delete process.env.ARCHIVO_TOTAL_DESDE; else process.env.ARCHIVO_TOTAL_DESDE = value;
+    return await work();
+  } finally {
+    if (before === undefined) delete process.env.ARCHIVO_TOTAL_DESDE; else process.env.ARCHIVO_TOTAL_DESDE = before;
+  }
+}
+
+test("archivo total: Contenido oculta los videos de marcas archivadas solo con la época", async () => {
+  const where = { brandId: "marca-A" };
+  const seen = [];
+  const prisma = { contentItem: { count: async (query) => (seen.push(query.where), 0), findMany: async (query) => (seen.push(query.where), []) } };
+  const { getContentList } = load("src/lib/content-list.ts", { "@/lib/prisma": { prisma } });
+  await withArchiveEpoch("2026-10-01", () => getContentList(where));
+  assert.deepEqual(seen, [{ AND: [where, { brand: { archived: false } }] }, { AND: [where, { brand: { archived: false } }] }]);
+  seen.length = 0;
+  await withArchiveEpoch(undefined, () => getContentList(where));
+  assert.deepEqual(seen, [where, where], "con el interruptor vacío el filtro no cambia");
+  seen.length = 0;
+  await withArchiveEpoch("no-es-fecha", () => getContentList(where));
+  assert.deepEqual(seen, [where, where], "un valor inválido deja el interruptor apagado");
+});
+
+test("archivo total: el tablero conserva las columnas globales y oculta tareas archivadas o personales viejas", async () => {
+  const seen = [];
+  const prisma = { task: { findMany: async (query) => (seen.push(query.where), []) } };
+  const { taskColumnWhere, getTaskColumnPage } = load("src/lib/task-pages.ts", { "@/lib/prisma": { prisma } });
+  await withArchiveEpoch(undefined, async () => {
+    assert.deepEqual(taskColumnWhere(null), {});
+    assert.deepEqual(taskColumnWhere("A"), { OR: [{ brandId: null }, { brandId: "A" }] });
+    await getTaskColumnPage("col-1", null, {});
+  });
+  assert.equal(seen[0].AND.length, 4, "apagado: la consulta de tareas queda igual");
+  await withArchiveEpoch("2026-10-01", async () => {
+    const liveColumns = { OR: [{ brandId: null }, { brand: { is: { archived: false } } }] };
+    assert.deepEqual(taskColumnWhere(null), { AND: [{}, liveColumns] }, "las columnas globales nunca se ocultan por la época");
+    assert.deepEqual(taskColumnWhere("A"), { AND: [{ OR: [{ brandId: null }, { brandId: "A" }] }, liveColumns] });
+    await getTaskColumnPage("col-1", null, {});
+  });
+  const live = seen[1].AND.at(-1);
+  assert.deepEqual(live.OR[0], { brand: { is: { archived: false } } });
+  assert.equal(live.OR[1].brandId, null);
+  assert.ok(live.OR[1].createdAt.gte instanceof Date, "lo personal sin marca se oculta si es anterior a la época");
+});
+
+test("archivo total: métricas y generaciones pendientes filtran marcas archivadas en SQL directo", async () => {
+  const owner = { id: "duena", role: "OWNER" };
+  const filters = { user: owner, brandId: null, desde: "2026-09-01", hasta: "2026-09-28" };
+  const { metricSource } = load("src/lib/metric-dashboard.ts", { "@/lib/prisma": { prisma: {} } });
+  const off = await withArchiveEpoch(undefined, () => metricSource(filters));
+  const on = await withArchiveEpoch("2026-10-01", () => metricSource(filters));
+  assert.doesNotMatch(off.sql, /"Brand" ab/);
+  assert.match(on.sql, /NOT EXISTS \(SELECT 1 FROM "Brand" ab WHERE ab\."id" = ci\."brandId" AND ab\."archived"\)/);
+
+  const queries = [];
+  const tx = { $queryRaw: async (query) => (queries.push(query), [{ id: null, total: 0, page: 1 }]), generationJob: { findMany: () => assert.fail("Sin ids no consulta trabajos") } };
+  const prisma = { $transaction: async (work) => work(tx) };
+  const { generationHistory } = load("src/lib/generation-history.ts", { "@/lib/prisma": { prisma } });
+  await withArchiveEpoch(undefined, () => generationHistory(owner));
+  await withArchiveEpoch("2026-10-01", () => generationHistory(owner));
+  assert.doesNotMatch(queries[0].sql, /"Brand" ab/);
+  assert.match(queries[1].sql, /NOT EXISTS \(SELECT 1 FROM "Brand" ab WHERE ab\."id" = j\."payload"->>'brandId' AND ab\."archived"\)/);
+  assert.ok(queries[1].values.some((value) => value instanceof Date), "los trabajos sin marca anteriores a la época también se ocultan");
+});

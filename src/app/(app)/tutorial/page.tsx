@@ -20,6 +20,7 @@ import type { ReactNode } from "react";
 import { GuiaLauncherBoton } from "@/components/guia";
 import { ManualCard } from "@/components/manual/manual-card";
 import { Callout, Card, CardHeader, PageHeader } from "@/components/ui";
+import { archiveEpoch, liveContent, liveScript } from "@/lib/archive-scope";
 import { manualEnabled } from "@/lib/manual";
 import { prisma } from "@/lib/prisma";
 
@@ -134,6 +135,10 @@ export default async function TutorialPage() {
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="help" />;
 
   // El tutorial mira la base para saber en qué paso estás de verdad.
+  // Archivo total: lo de marcas archivadas (y lo sin marca anterior a la época) no cuenta como
+  // hecho, para que el recorrido empiece desde 0. Con el interruptor vacío, cuenta todo como antes.
+  const epoch = archiveEpoch();
+  const videoVivo = epoch ? liveContent(epoch) : {};
   const [marcas, personas, conVoz, estructuras, videos, guiones, unidos, metricas, equipo] =
     await Promise.all([
       prisma.brand.count({ where: { archived: false } }),
@@ -142,13 +147,13 @@ export default async function TutorialPage() {
         where: { isPerson: true, active: true, NOT: { voiceTone: null } },
       }),
       prisma.structure.count({ where: { active: true } }),
-      prisma.contentItem.count(),
-      prisma.script.count(),
+      prisma.contentItem.count({ where: videoVivo }),
+      prisma.script.count({ where: epoch ? liveScript(epoch) : {} }),
       // Un guion UNIDO a su video. No vale contar guiones: el paso 6 es
       // justamente unirlos, y usar el mismo número que el paso 5 lo pintaba
       // en verde sin que nadie hubiera unido nada.
-      prisma.contentItem.count({ where: { NOT: { scriptId: null } } }),
-      prisma.metric.count(),
+      prisma.contentItem.count({ where: { AND: [{ NOT: { scriptId: null } }, videoVivo] } }),
+      prisma.metric.count(epoch ? { where: { contentItem: videoVivo } } : undefined),
       prisma.user.count({ where: { active: true } }),
     ]);
 

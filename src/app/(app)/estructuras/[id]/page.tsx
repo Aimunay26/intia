@@ -40,6 +40,7 @@ import {
 	Field,
 	PageHeader,
 } from "@/components/ui";
+import { archiveEpoch, liveContent, liveScript } from "@/lib/archive-scope";
 import { can, LEVEL } from "@/lib/auth";
 import {
 	AI_MODELS,
@@ -100,16 +101,26 @@ export default async function EstructuraPage({
   const categoria = STRUCTURE_CATEGORY_MAP[structure.category];
   const proveedor = AI_PROVIDER_MAP[structure.defaultProvider];
 
-  const [docCount, archetypeCount] = await Promise.all([
+  // Archivo total: la ficha solo cuenta guiones y videos vivos (sin marcas archivadas ni lo sin
+  // marca anterior a la época). El borrado sigue decidiéndose con el total real, que incluye lo archivado.
+  const epoch = archiveEpoch();
+  const [docCount, archetypeCount, vivos] = await Promise.all([
     prisma.asset.count({ where: { ownerType: "structure", ownerId: id } }),
     prisma.archetype.count(),
+    epoch
+      ? Promise.all([
+          prisma.script.count({ where: { AND: [{ structureId: id }, liveScript(epoch)] } }),
+          prisma.contentItem.count({ where: { AND: [{ structureId: id }, liveContent(epoch)] } }),
+        ]).then(([scripts, content]) => ({ scripts, content }))
+      : Promise.resolve(structure._count),
   ]);
+  const guionesArchivados = structure._count.scripts > vivos.scripts;
 
   const counts: Record<string, number> = {
     beats: beats.length,
     ejemplos: examples.length,
     arquetipos: archetypeCount,
-    guiones: structure._count.scripts,
+    guiones: vivos.scripts,
     documentos: docCount,
   };
 
@@ -175,7 +186,9 @@ export default async function EstructuraPage({
                   title="¿Eliminar esta estructura?"
                   description={
                     structure._count.scripts > 0
-                      ? `Esta estructura ya tiene ${structure._count.scripts} guiones generados con ella, así que no se borra: se desactivará para que deje de aparecer en el generador y no se pierda la trazabilidad.`
+                      ? guionesArchivados
+                        ? "Esta estructura ya tiene guiones generados con ella, también en marcas archivadas, así que no se borra: se desactivará para que deje de aparecer en el generador y no se pierda la trazabilidad."
+                        : `Esta estructura ya tiene ${structure._count.scripts} guiones generados con ella, así que no se borra: se desactivará para que deje de aparecer en el generador y no se pierda la trazabilidad.`
                       : "Se borrará la estructura con sus beats, su prompt, sus ejemplos y sus documentos de referencia. No se puede deshacer."
                   }
                 />
@@ -194,8 +207,8 @@ export default async function EstructuraPage({
         modelo={structure.defaultModel}
         temperatura={structure.temperature}
         reglas={rules.length}
-        guiones={structure._count.scripts}
-        videos={structure._count.content}
+        guiones={vivos.scripts}
+        videos={vivos.content}
         actualizado={structure.updatedAt}
       />
 
@@ -621,8 +634,10 @@ async function ArquetiposTab({ structureId }: { structureId: string }) {
 /* --------------------------------------------------------------- GUIONES -- */
 
 async function GuionesTab({ structureId }: { structureId: string }) {
+  // Archivo total: sin guiones de marcas archivadas ni sin marca anteriores a la época.
+  const epoch = archiveEpoch();
   const scripts = await prisma.script.findMany({
-    where: { structureId },
+    where: epoch ? { AND: [{ structureId }, liveScript(epoch)] } : { structureId },
     orderBy: { createdAt: "desc" },
     take: 100,
     select: {

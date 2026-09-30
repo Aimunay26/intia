@@ -18,6 +18,7 @@ import Link from "next/link";
 
 import { ActiveFilters, FilterBar, FilterSelect } from "@/components/filters";
 import { Card, EmptyState, PageHeader, Stat } from "@/components/ui";
+import { archiveEpoch, liveContent, liveEvent } from "@/lib/archive-scope";
 import { LEVEL, can } from "@/lib/auth";
 import { brandWhere } from "@/lib/brand-context";
 import {
@@ -141,11 +142,13 @@ export default async function CalendarioPage({
       : null;
 
   const { desde, hasta } = monthWindow(year, month);
+  // Archivo total: sin videos ni agenda de marcas archivadas, ni agenda sin marca anterior a la época.
+  const epoch = archiveEpoch();
 
   const [filas, brands, people, eventosBase, structures, calPasos] = await Promise.all([
     prisma.contentItem.findMany({
       // Con la vista mensual, un video entra por su grabación o por su publicación.
-      where: { AND: [where, videoDateWhere(desde, hasta, mensual)] },
+      where: { AND: [where, videoDateWhere(desde, hasta, mensual), ...(epoch ? [liveContent(epoch)] : [])] },
       select: {
         id: true,
         title: true,
@@ -168,6 +171,7 @@ export default async function CalendarioPage({
         AND: [
           brandWhere(brandCtx.activeId),
           mensual ? eventOverlapWhere(desde, hasta) : { startAt: { gte: desde, lte: hasta } },
+          ...(epoch ? [liveEvent(epoch)] : []),
         ],
       },
       orderBy: { startAt: "asc" },

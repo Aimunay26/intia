@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { buildIcs, type IcsEvent } from "@/lib/ical";
 import { CALENDAR_CACHE_HEADERS, resolveCalendarSubscription } from "@/lib/calendar-subscriptions";
 import { contentScope, eventScope } from "@/lib/access-scope";
+import { archiveEpoch, liveContent, liveEvent } from "@/lib/archive-scope";
 import { feedStepTitle } from "@/lib/calendar-view";
 import { DEAD_STATUSES } from "@/lib/constants";
 import type { AccessUser } from "@/lib/permissions";
@@ -44,10 +45,13 @@ async function downloadCalendar(request: Request) {
   }
   const scope = subscription.scope === "BRAND" ? { brandId: subscription.brandId! } : {};
   const window = { gte: desde, lte: hasta };
+  // Archivo total: los enlaces del Dueño (ALL/BRAND) no pasan por access-scope; sin videos ni agenda
+  // de marcas archivadas, ni agenda sin marca anterior a la época. Vacío: igual que antes.
+  const epoch = archiveEpoch();
   const [videos, events] = await Promise.all([
-    prisma.contentItem.findMany({ where: { ...scope, brand: { active: true }, status: { notIn: DEAD_STATUSES }, OR: [{ scheduledDate: window }, { shootDate: window }] },
+    prisma.contentItem.findMany({ where: { ...scope, brand: { active: true }, status: { notIn: DEAD_STATUSES }, OR: [{ scheduledDate: window }, { shootDate: window }], ...(epoch ? { AND: [liveContent(epoch)] } : {}) },
       take: LIMIT + 1, orderBy: { id: "asc" }, select: { id: true, title: true, scheduledDate: true, shootDate: true, updatedAt: true, brand: { select: { name: true } } } }),
-    prisma.calendarEvent.findMany({ where: { ...scope, AND: [{ OR: [{ brandId: null }, { brand: { active: true } }] }, { startAt: { lte: hasta }, OR: [{ startAt: { gte: desde } }, { endAt: { gte: desde } }] }] },
+    prisma.calendarEvent.findMany({ where: { ...scope, AND: [{ OR: [{ brandId: null }, { brand: { active: true } }] }, { startAt: { lte: hasta }, OR: [{ startAt: { gte: desde } }, { endAt: { gte: desde } }] }, ...(epoch ? [liveEvent(epoch)] : [])] },
       take: LIMIT + 1, orderBy: { id: "asc" }, select: { id: true, title: true, startAt: true, endAt: true, allDay: true, updatedAt: true } }),
   ]);
   if (videos.length > LIMIT || events.length > LIMIT) return respond("El calendario supera el límite de esta suscripción. Usa un enlace por marca.", 503);

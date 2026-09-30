@@ -2,44 +2,60 @@ import { assertChecklistApproved, assertScriptApproved } from "@/lib/approvals";
 import type { Prisma } from "@prisma/client";
 import type { AppTransaction } from "@/lib/prisma";
 import { allows, assertPermission, capabilityScope, profileGrants, isFinalApproval, type AccessUser, type Capability } from "@/lib/permissions";
+import { liveBrand, liveContent, liveEvent, liveScript, liveTask, withLive } from "@/lib/archive-scope";
 
+/*
+ * Archivado total (ARCHIVO_TOTAL_DESDE, archive-scope.ts): encendido, cada alcance suma su filtro
+ * vivo, también para el Dueño (sin marcas archivadas ni lo personal anterior a la época). Para
+ * un miembro es defensa en profundidad: su sesión ya trae brandIds sin las marcas archivadas.
+ * Apagado, withLive devuelve el alcance tal cual y las consultas quedan como antes.
+ */
 const none = { id: { in: [] as string[] } };
 export function brandScope(user: AccessUser): Prisma.BrandWhereInput {
-  return user.role === "OWNER" ? {} : { id: { in: [...user.brandIds ?? []] } };
+  return withLive(user.role === "OWNER" ? {} : { id: { in: [...user.brandIds ?? []] } }, liveBrand());
 }
 export function contentScope(user: AccessUser, capability: Capability = "content.view"): Prisma.ContentItemWhereInput {
   if (!allows(user, capability)) return none;
-  if (user.role === "OWNER") return {};
+  const live = liveContent();
+  if (user.role === "OWNER") return live;
   const scopes: Prisma.ContentItemWhereInput[] = profileGrants(user, capability).map(p => p.id === "PUBLISHER"
     ? { checklist: { some: { kind: "FINAL_APPROVAL", done: true } } }
     : p.scope === "assigned" ? { assignments: { some: { userId: user.id } } } : {});
-  return { brandId: { in: [...user.brandIds ?? []] }, ...(scopes.some(scope => Object.keys(scope).length === 0) ? {} : { OR: scopes }) };
+  return withLive({ brandId: { in: [...user.brandIds ?? []] }, ...(scopes.some(scope => Object.keys(scope).length === 0) ? {} : { OR: scopes }) }, live);
 }
 export function scriptScope(user: AccessUser, capability: Capability = "scripts.view"): Prisma.ScriptWhereInput {
   if (!allows(user, capability)) return none;
-  if (user.role === "OWNER") return {};
+  const live = liveScript();
+  if (user.role === "OWNER") return live;
   const brands = { brandId: { in: [...user.brandIds ?? []] } };
-  if (capability === "scripts.write") return { ...brands, OR: [{ authorId: user.id }, { content: { some: { assignments: { some: { userId: user.id, role: "GUIONISTA" } } } } }] };
-  return { ...brands, ...(capabilityScope(user, capability) === "assigned" ? { content: { some: contentScope(user, capability) } } : {}) };
+  if (capability === "scripts.write") return withLive({ ...brands, OR: [{ authorId: user.id }, { content: { some: { assignments: { some: { userId: user.id, role: "GUIONISTA" } } } } }] }, live);
+  return withLive({ ...brands, ...(capabilityScope(user, capability) === "assigned" ? { content: { some: contentScope(user, capability) } } : {}) }, live);
 }
 export function taskScope(user: AccessUser, capability: Capability = "tasks.view"): Prisma.TaskWhereInput {
   if (!allows(user, capability)) return none;
-  if (user.role === "OWNER") return {};
-  return { OR: [{ brandId: { in: [...user.brandIds ?? []] }, ...(capabilityScope(user, capability) === "assigned" || !allows(user, "tasks.manage") ? { assigneeId: user.id } : {}) }, { brandId: null, assigneeId: user.id }] };
+  const live = liveTask();
+  if (user.role === "OWNER") return live;
+  return withLive({ OR: [{ brandId: { in: [...user.brandIds ?? []] }, ...(capabilityScope(user, capability) === "assigned" || !allows(user, "tasks.manage") ? { assigneeId: user.id } : {}) }, { brandId: null, assigneeId: user.id }] }, live);
 }
 export function eventScope(user: AccessUser): Prisma.CalendarEventWhereInput {
   if (!allows(user, "calendar.view")) return none;
-  if (user.role === "OWNER") return {};
-  return { OR: [
+  const live = liveEvent();
+  if (user.role === "OWNER") return live;
+  return withLive({ OR: [
     { brandId: { in: [...user.brandIds ?? []] }, ...(capabilityScope(user, "calendar.view") === "assigned" ? { OR: [{ contentItem: contentScope(user) }, { createdById: user.id }] } : {}) },
     { brandId: null, createdById: user.id },
-  ] };
+  ] }, live);
 }
 export function archetypeScope(user: AccessUser): Prisma.ArchetypeWhereInput {
   if (!allows(user, "archetypes.view")) return none;
   if (user.role === "OWNER" || capabilityScope(user, "archetypes.view") === "brand") return {};
   return user.archetypeId ? { id: user.archetypeId } : none;
 }
+/**
+ * GenerationJob no tiene columna de marca hasta M1 (va en payload.brandId), así que su filtro vivo
+ * solo existe en SQL (liveJobSql): quien lee trabajos por id o en lista lo aplica además de este
+ * alcance (generation-jobs.ts, generation-history.ts). Para un miembro ya basta con brandIds.
+ */
 export function generationScope(user: AccessUser): Prisma.GenerationJobWhereInput {
   if (!allows(user, "scripts.generate")) return none;
   if (user.role === "OWNER") return {};

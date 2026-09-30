@@ -1,3 +1,4 @@
+import { archiveEpoch, liveBrandSql } from "@/lib/archive-scope";
 import { loadPage } from "@/lib/list-pagination";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -19,6 +20,10 @@ export function metricSource(filters: MetricFilters) {
     if (!grants.some(p => p.scope === "brand")) conditions.push(Prisma.sql`EXISTS (SELECT 1 FROM "Assignment" scope_a WHERE scope_a."contentItemId" = ci.id AND scope_a."userId" = ${user.id})`);
   }
   if (filters.brandId) conditions.push(Prisma.sql`ci."brandId" = ${filters.brandId}`);
+  // Archivo total: sin métricas de videos de marcas archivadas, también para el Dueño (SQL directo,
+  // no pasa por access-scope). Con el interruptor vacío la consulta queda igual que antes.
+  const epoch = archiveEpoch();
+  if (epoch) conditions.push(liveBrandSql('ci."brandId"', { epoch }));
   if (filters.plataforma) conditions.push(Prisma.sql`m."platform" = ${filters.plataforma}`);
   if (filters.estructura) conditions.push(Prisma.sql`ci."structureId" = ${filters.estructura}`);
   if (filters.persona) conditions.push(Prisma.sql`EXISTS (SELECT 1 FROM "Assignment" a WHERE a."contentItemId" = ci."id" AND a."userId" = ${filters.persona})`);

@@ -6,6 +6,7 @@ import { invalidateDomain } from "@/lib/view-invalidation";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { registerManualBrandRestore } from "@/lib/archive-registry";
 import { borrarAssetsDe } from "@/lib/assets-cleanup";
 import { auditInTransaction, diffFields, FIELD_LABELS } from "@/lib/audit";
 import { LEVEL, requireLevel, requirePermission, type SessionUser } from "@/lib/auth";
@@ -331,6 +332,10 @@ export async function archivarMarca(formData: FormData) {
       data: { archived, active: !archived },
     });
 
+    // Archivo total (M0): reactivar una marca del lote aplicado deja registrada su restauración
+    // (YA_ESTABA o RESPETADA) para que --verificar y M1 la traten como viva. Sin registro, no hace nada.
+    const lote = archived ? null : await registerManualBrandRestore(tx, id, { archived, active: !archived });
+
     await auditInTransaction(tx, {
       user,
       action: "EDITAR",
@@ -339,7 +344,9 @@ export async function archivarMarca(formData: FormData) {
       brandId: id,
       summary: archived
         ? `Archivó la marca "${before.name}"`
-        : `Reactivó la marca "${before.name}"`,
+        : lote
+          ? `Reactivó la marca "${before.name}" y la sacó del archivo total ${lote}`
+          : `Reactivó la marca "${before.name}"`,
       changes: {
         archived: { etiqueta: "Archivada", antes: before.archived, despues: archived },
       },

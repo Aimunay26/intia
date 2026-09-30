@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { archiveEpoch } from "@/lib/archive-scope";
 import type { AccessUser } from "@/lib/permissions";
 import { prisma, type AppTransaction } from "@/lib/prisma";
 import { calendarFeedPersonalEnabled } from "@/lib/production-chain-flag";
@@ -22,13 +23,17 @@ export function calendarToken() {
  * marca sigue activa). USER (CALENDAR_FEED_PERSONAL): la persona dueña del feed debe estar
  * activa; sus perfiles y marcas se leen aquí, en cada descarga, así que perder una marca o un
  * perfil quita sus fechas en la siguiente lectura. Con el interruptor apagado, USER no resuelve.
+ * Archivado total (ARCHIVO_TOTAL_DESDE encendido): las marcas de la persona se leen sin las
+ * archivadas, igual que la sesión. Un enlace BRAND de una marca archivada ya no resuelve porque
+ * archivar deja la marca inactiva.
  */
 export async function resolveCalendarSubscription(token: string | null, db: AppTransaction = prisma) {
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
   const tokenHash = createHash("sha256").update(token).digest("hex");
+  const epoch = archiveEpoch();
   const row = await db.calendarSubscription.findUnique({ where: { tokenHash }, select: {
     id: true, scope: true, brandId: true, expiresAt: true, revokedAt: true,
-    createdBy: { select: { id: true, active: true, role: true, workProfiles: { select: { profile: true } }, brandAccess: { select: { brandId: true } } } },
+    createdBy: { select: { id: true, active: true, role: true, workProfiles: { select: { profile: true } }, brandAccess: { ...(epoch ? { where: { brand: { archived: false } } } : {}), select: { brandId: true } } } },
     brand: { select: { name: true, active: true } },
   } });
   if (!row || row.revokedAt || row.expiresAt <= new Date() || !row.createdBy.active) return null;

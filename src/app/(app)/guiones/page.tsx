@@ -5,6 +5,7 @@ import { loadPage } from "@/lib/list-pagination";
 import { measurePagePhase } from "@/lib/performance-page";
 import { getPageBrandContext as getBrandContext } from "@/lib/render-context";
 import { getStructureChoices } from "@/lib/structure-choices";
+import type { Prisma } from "@prisma/client";
 import { Clapperboard, Film, Search, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -13,6 +14,7 @@ import { fitModeEnabled } from "@/components/scripts/viewer-state";
 import lib from "@/components/scripts/script-library.module.css";
 import { GUIA_TARGETS } from "@/components/guia";
 import { Avatar, Badge, Card, ColorChip, EmptyState, PageHeader } from "@/components/ui";
+import { archiveEpoch, liveScript } from "@/lib/archive-scope";
 import { can, LEVEL } from "@/lib/auth";
 import {
 	AI_PROVIDER_MAP,
@@ -47,7 +49,7 @@ export default async function GuionesPage({
   const estado = sp.estado ?? "";
   const proveedor = sp.proveedor ?? "";
 
-  const where = {
+  const filtros: Prisma.ScriptWhereInput = {
     ...(q
       ? {
           OR: [
@@ -63,6 +65,9 @@ export default async function GuionesPage({
     ...(estado ? { status: estado } : {}),
     ...(proveedor ? { provider: proveedor } : {}),
   };
+  // Archivo total: sin guiones de marcas archivadas ni guiones sin marca anteriores a la época.
+  const epoch = archiveEpoch();
+  const where: Prisma.ScriptWhereInput = epoch ? { AND: [filtros, liveScript(epoch)] } : filtros;
 
   const [listing, structures] = await Promise.all([
     loadPage(sp.pagina, 50, () => prisma.script.count({ where }), (range) => prisma.script.findMany({

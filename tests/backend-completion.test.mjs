@@ -39,7 +39,7 @@ test('B14: el fallo de limpieza no impide despachar; límites de espera distingu
   const calls=[];
   try{
     const m=load('src/lib/maintenance.ts',{
-      '@/lib/prisma':{prisma:{generationJob:{findMany:async()=>[{id:'job',createdAt:new Date(Date.now()-3600000)}]},appSetting:{upsert:async()=>({})}}},
+      '@/lib/prisma':{prisma:{$queryRaw:async()=>[{id:'job',createdAt:new Date(Date.now()-3600000)}],$transaction:async fn=>fn({$queryRaw:async()=>[]}),appSetting:{upsert:async()=>({})}}},
       '@/lib/generation-dispatch':{dispatchGeneration:async()=>{calls.push('dispatch');return true;}},
       '@/lib/private-storage':{cleanupPrivateFiles:async()=>{calls.push('cleanup');throw Error('failed blob');}},
       '@/lib/retention':{runRetention:async()=>{calls.push('retention');return {enabled:false,changed:0};}},
@@ -59,7 +59,7 @@ test('B14: una limpieza que nunca responde agota su presupuesto después de recu
   let dispatched=false;
   try{
     const m=load('src/lib/maintenance.ts',{
-      '@/lib/prisma':{prisma:{generationJob:{findMany:async()=>[{id:'slow-cleanup-job',createdAt:new Date()}]},appSetting:{upsert:async()=>({})}}},
+      '@/lib/prisma':{prisma:{$queryRaw:async()=>[{id:'slow-cleanup-job',createdAt:new Date()}],$transaction:async fn=>fn({$queryRaw:async()=>[]}),appSetting:{upsert:async()=>({})}}},
       '@/lib/generation-dispatch':{dispatchGeneration:async()=>{dispatched=true;return true;}},
       '@/lib/private-storage':{cleanupPrivateFiles:async()=>{assert.equal(dispatched,true);return new Promise(()=>{});}},
       '@/lib/retention':{runRetention:async()=>({enabled:false,changed:0})},

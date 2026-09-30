@@ -7,9 +7,11 @@ import { memberSectionLinks } from "@/components/member/help";
 import { Callout, PageHeader, SectionTitle, Stat } from "@/components/ui";
 import { MyWorkSection } from "@/components/work/my-work";
 import { contentScope, taskScope } from "@/lib/access-scope";
+import { archiveEpoch } from "@/lib/archive-scope";
 import type { SessionUser } from "@/lib/auth";
+import type { BrandContext } from "@/lib/brand-context";
 import { DEAD_STATUSES } from "@/lib/constants";
-import { allows } from "@/lib/permissions";
+import { allows, type Section } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { productionChainActiveFor } from "@/lib/production-chain-flag";
 import { getPageBrandContext } from "@/lib/render-context";
@@ -35,6 +37,59 @@ async function openTasksWhere(user: SessionUser): Promise<Prisma.TaskWhereInput>
   };
 }
 
+/* ------------------------------------------------- ARCHIVO TOTAL (M0) -- */
+
+/** Lo único que queda a mano mientras la cuenta no tiene marcas vivas. */
+const RENOVACION: readonly Section[] = ["manual", "profile", "help"];
+
+/**
+ * Archivo total (ARCHIVO_TOTAL_DESDE encendido): la cuenta del equipo no tiene ninguna marca viva
+ * (el selector nunca lista archivadas). Con el interruptor vacío siempre es false.
+ */
+export function sinMarcasVivas(user: SessionUser, context: BrandContext): boolean {
+  return user.role !== "OWNER" && archiveEpoch() !== null && context.brands.length === 0;
+}
+
+/**
+ * Pantalla provisional para quien no tiene marcas vivas: el aviso de la renovación más el Manual,
+ * Mi perfil y «Cómo se usa». Sin consultas; la comparten el inicio y /sin-acceso.
+ */
+export function RenovacionAviso({ user }: { user: SessionUser }) {
+  const links = memberSectionLinks(user).filter(({ key }) => RENOVACION.includes(key));
+  return (
+    <div className="space-y-6">
+      <Callout tone="info" title="ALSOS se está renovando: pronto podrás crear tu marca o unirte a la de tu equipo">
+        Mientras tanto, tienes a mano el Manual, tu perfil y «Cómo se usa».
+      </Callout>
+      <ManualCard user={user} />
+      <AccessLinks links={links} />
+    </div>
+  );
+}
+
+function AccessLinks({ links }: { links: ReturnType<typeof memberSectionLinks> }) {
+  return (
+    <section>
+      <SectionTitle>Accesos</SectionTitle>
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {links.map(({ key, href, label, icon: Icon }) => (
+          <li key={key}>
+            <Link
+              href={href}
+              className={`card flex h-full min-h-[64px] items-center gap-2.5 p-3.5 transition-shadow hover:shadow-[var(--shadow-2)] ${key === "manual" ? "border-brand" : ""}`}
+            >
+              <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${key === "manual" ? "bg-brandsoft text-brand" : "bg-surface3 text-inkmuted"}`}>
+                <Icon size={16} />
+              </span>
+              <span className="text-ink min-w-0 text-[13px] leading-tight font-semibold">{label}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /**
  * Inicio del equipo. Con la cadena de entregas encendida para sus marcas (o para la marca
  * activa, con el canario), «Mi trabajo» va primero (decisión del Dueño, 30/09/2026) y los
@@ -43,6 +98,11 @@ async function openTasksWhere(user: SessionUser): Promise<Prisma.TaskWhereInput>
  */
 export async function MemberHome({ user }: { user: SessionUser }) {
   const context = await getPageBrandContext();
+  const firstName = user.name.trim().split(/\s+/)[0] || user.name;
+  const today = formatDateLong(new Date());
+  const header = <PageHeader title={`Hola, ${firstName}`} subtitle={today.charAt(0).toUpperCase() + today.slice(1)} icon={<Sparkles size={19} />} />;
+  // Archivo total: sin marcas vivas no hay trabajo que contar; pantalla provisional sin consultas.
+  if (sinMarcasVivas(user, context)) return <div className="space-y-6">{header}<RenovacionAviso user={user} /></div>;
   const brand = context.activeId ? { brandId: context.activeId } : {};
   const chain = productionChainActiveFor(user, context.activeId);
   const hasProfiles = Boolean(user.profiles?.length);
@@ -58,14 +118,12 @@ export async function MemberHome({ user }: { user: SessionUser }) {
         : prisma.task.count({ where: { AND: [taskScope(user), brand] } })
       : 0,
   ]);
-  const firstName = user.name.trim().split(/\s+/)[0] || user.name;
-  const today = formatDateLong(new Date());
   const scope = context.activeId ? "En la marca activa" : "En tus marcas autorizadas";
   const links = memberSectionLinks(user, ["panel"]);
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Hola, ${firstName}`} subtitle={today.charAt(0).toUpperCase() + today.slice(1)} icon={<Sparkles size={19} />} />
+      {header}
       {chain ? <MyWorkSection user={user} brandId={context.activeId} /> : null}
       <ManualCard user={user} />
 
@@ -93,24 +151,7 @@ export async function MemberHome({ user }: { user: SessionUser }) {
         )}
       </section>
 
-      <section>
-        <SectionTitle>Accesos</SectionTitle>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {links.map(({ key, href, label, icon: Icon }) => (
-            <li key={key}>
-              <Link
-                href={href}
-                className={`card flex h-full min-h-[64px] items-center gap-2.5 p-3.5 transition-shadow hover:shadow-[var(--shadow-2)] ${key === "manual" ? "border-brand" : ""}`}
-              >
-                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${key === "manual" ? "bg-brandsoft text-brand" : "bg-surface3 text-inkmuted"}`}>
-                  <Icon size={16} />
-                </span>
-                <span className="text-ink min-w-0 text-[13px] leading-tight font-semibold">{label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <AccessLinks links={links} />
     </div>
   );
 }

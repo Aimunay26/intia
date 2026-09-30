@@ -1,4 +1,5 @@
 import type { AppTransaction } from "@/lib/prisma";
+import { archiveEpoch } from "@/lib/archive-epoch";
 import { SecurityError } from "@/lib/auth-transactions";
 import { validProfiles } from "@/lib/permissions";
 
@@ -11,6 +12,17 @@ export function parseTeamAccess(form: FormData) {
   return { profiles, brandIds };
 }
 
+/**
+ * Accesos que se conservan aunque el formulario no los traiga. Archivo total (ARCHIVO_TOTAL_DESDE
+ * encendido): Equipo no ofrece las marcas archivadas y M0 no toca accesos, así que los de una marca
+ * archivada siguen tal cual (además de los keptBrandIds ocultos del formulario). Apagado, no consulta
+ * nada y el formulario manda, como antes.
+ */
+async function archivedAccess(tx: AppTransaction, brandIds: string[]): Promise<string[]> {
+  if (!archiveEpoch() || !brandIds.length) return [];
+  return (await tx.brand.findMany({ where: { id: { in: brandIds }, archived: true }, select: { id: true } })).map(b => b.id);
+}
+
 /** Solo el administrador llama a este servicio, dentro de la transacción autenticada. */
 export async function saveTeamAccess(tx: AppTransaction, userId: string, access: ReturnType<typeof parseTeamAccess>) {
   if (!access) return null;
@@ -20,7 +32,8 @@ export async function saveTeamAccess(tx: AppTransaction, userId: string, access:
     tx.userBrandAccess.findMany({ where: { userId }, select: { brandId: true } }),
   ]);
   const before = { profiles: previousProfiles.map(p => p.profile).sort(), brandIds: previousBrands.map(b => b.brandId).sort() };
-  const after = { profiles: [...access.profiles].sort(), brandIds: access.brandIds };
+  const kept = await archivedAccess(tx, before.brandIds.filter(id => !access.brandIds.includes(id)));
+  const after = { profiles: [...access.profiles].sort(), brandIds: kept.length ? [...new Set([...access.brandIds, ...kept])].sort() : access.brandIds };
   if (JSON.stringify(before) === JSON.stringify(after)) return null;
   await tx.userWorkProfile.deleteMany({ where: { userId, profile: { notIn: after.profiles } } });
   await tx.userBrandAccess.deleteMany({ where: { userId, brandId: { notIn: after.brandIds } } });

@@ -22,6 +22,8 @@ import { dateKey, instantInZone } from "@/lib/utils";
  *   edición ni cierra grabaciones que no se hicieron; el atraso del filmmaker queda visible
  *   como vencido. Con la cadena en todas las marcas no consulta nada; con canario
  *   (PRODUCTION_CHAIN_BRANDS) excluye esas marcas y sigue igual para el resto.
+ * - Nunca toca videos de marcas archivadas, esté o no encendido el archivado total
+ *   (ARCHIVO_TOTAL_DESDE): una marca archivada no recibe pasos nuevos ni firmas de «Sistema».
  */
 const WINDOW_DAYS = 14;
 const DAY_MS = 86_400_000;
@@ -39,13 +41,17 @@ export async function runProductionSweep(limit = 25, now = new Date(), budgetMs 
   const candidates = await prisma.$queryRaw<{ id: string }[]>`SELECT c.id FROM "ContentItem" c
     WHERE c.status IN ('APROBADO','GRABACION') AND c."shootDate" < ${todayStart} AND c."shootDate" >= ${windowStart}
       AND NOT EXISTS (SELECT 1 FROM "ProductionStep" s WHERE s."automationKey" = c.id || ':EDICION') ${excluded}
+      AND NOT EXISTS (SELECT 1 FROM "Brand" b WHERE b.id = c."brandId" AND b.archived)
     ORDER BY c."shootDate", c.id LIMIT ${take}`;
   let assigned = 0, skipped = 0, failed = 0;
   for (const { id } of candidates) {
     if (Date.now() - started > budgetMs) break;
     try {
       const result = await prisma.$transaction(async (tx) => {
-        const [row] = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "ContentItem" WHERE id = ${id} FOR UPDATE SKIP LOCKED`;
+        // Se vuelve a mirar la marca dentro de la transacción: una marca archivada entre la
+        // búsqueda y el bloqueo tampoco recibe la edición.
+        const [row] = await tx.$queryRaw<{ id: string }[]>`SELECT c.id FROM "ContentItem" c WHERE c.id = ${id}
+          AND NOT EXISTS (SELECT 1 FROM "Brand" b WHERE b.id = c."brandId" AND b.archived) FOR UPDATE OF c SKIP LOCKED`;
         if (!row) return null;
         return assignEditing(tx, null, id, { now });
       }, { isolationLevel: "Serializable", maxWait: 1000, timeout: 5000 });

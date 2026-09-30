@@ -1,4 +1,5 @@
 /** Política compartida por servidor y UI. Los perfiles nunca conceden administración. */
+import { archiveEpochEnabled } from "@/lib/archive-epoch";
 import { calendarStepsEnabled } from "@/lib/production-chain-flag";
 
 export const WORK_PROFILES = [
@@ -59,14 +60,22 @@ const base = new Set<Capability>(["home.view", "profile.self", "help.view"]);
  * así que el layout le pasa el valor resuelto (Shell) y los componentes lo reenvían.
  *  - designerCalendar: DESIGNER recibe calendar.view (alcance «assigned») solo con la cadena de
  *    entregas y CALENDARIO_PASOS encendidos.
+ *  - archiveEpoch: archivado total (ARCHIVO_TOTAL_DESDE) encendido. Un MEMBER sin marcas vivas
+ *    conserva solo base (inicio, manual, ayuda y su perfil). «Sin marcas vivas» se mira en
+ *    `brandIds`, que la sesión ya trae sin las archivadas; si la lista no viene (undefined), la
+ *    regla no se aplica, porque no se sabe. Opcional: sin él, apagado.
  */
-export type PermissionFlags = { designerCalendar: boolean };
+export type PermissionFlags = { designerCalendar: boolean; archiveEpoch?: boolean };
 export function permissionFlags(): PermissionFlags {
-  return { designerCalendar: calendarStepsEnabled() };
+  return { designerCalendar: calendarStepsEnabled(), archiveEpoch: archiveEpochEnabled() };
 }
 function grantsOf(profile: WorkProfile, flags: PermissionFlags): readonly Capability[] {
   const grants = profiles[profile].grants;
   return profile === "DESIGNER" && flags.designerCalendar ? [...grants, "calendar.view"] : grants;
+}
+/** Archivado total: un MEMBER cuya lista de marcas (ya sin las archivadas) está vacía no usa sus perfiles. */
+function baseOnly(user: AccessUser, flags: PermissionFlags): boolean {
+  return Boolean(flags.archiveEpoch) && user.role === "MEMBER" && Array.isArray(user.brandIds) && user.brandIds.length === 0;
 }
 
 export function validProfiles(values: readonly string[]): WorkProfile[] {
@@ -75,12 +84,15 @@ export function validProfiles(values: readonly string[]): WorkProfile[] {
 export function allows(user: AccessUser, capability: Capability, flags: PermissionFlags = permissionFlags()): boolean {
   if (user.role === "OWNER") return true;
   if (user.role !== "MEMBER") return false;
-  return base.has(capability) || validProfiles(user.profiles ?? []).some(p => grantsOf(p, flags).includes(capability));
+  if (base.has(capability)) return true;
+  if (baseOnly(user, flags)) return false;
+  return validProfiles(user.profiles ?? []).some(p => grantsOf(p, flags).includes(capability));
 }
 export function capabilityScope(user: AccessUser, capability: Capability, flags: PermissionFlags = permissionFlags()): Scope {
   return user.role === "OWNER" || validProfiles(user.profiles ?? []).some(p => profiles[p].scope === "brand" && grantsOf(p, flags).includes(capability)) ? "brand" : "assigned";
 }
 export function profileGrants(user: AccessUser, capability: Capability, flags: PermissionFlags = permissionFlags()) {
+  if (baseOnly(user, flags)) return [];
   return validProfiles(user.profiles ?? []).filter(p => grantsOf(p, flags).includes(capability)).map(id => ({ id, scope: profiles[id].scope }));
 }
 export function canAccessSection(user: AccessUser, section: Section, flags?: PermissionFlags) { return allows(user, SECTIONS[section].capability, flags); }

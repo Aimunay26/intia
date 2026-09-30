@@ -2,6 +2,7 @@
 import { requirePermission, type SessionUser } from "@/lib/auth";
 import { allows, assertBrandPermission } from "@/lib/permissions";
 import { assertTaskAccess, assertAssignee, lockVideoLifecycle } from "@/lib/access-scope";
+import { archiveEpoch, liveTask } from "@/lib/archive-scope";
 
 import { revalidatePath } from "next/cache";
 
@@ -353,8 +354,15 @@ export async function eliminarColumna(columnId: string) {
     await tx.$queryRaw`SELECT "id" FROM "TaskColumn" WHERE "id" = ${columnId} FOR UPDATE`;
     const column = await tx.taskColumn.findUniqueOrThrow({ where: { id: columnId } });
     if (await tx.taskColumn.count() <= 1) throw new Error("No puedes eliminar la única columna restante del tablero.");
+    // El bloqueo usa siempre el total real: borrar la columna borraría sus tareas (CASCADE), también las archivadas.
     const count = await tx.task.count({ where: { columnId } });
-    if (count) throw new Error(`La columna contiene ${count} tareas, incluidas las ocultas por filtros. Muévelas antes de eliminarla.`);
+    if (count) {
+      const epoch = archiveEpoch();
+      // Archivo total: solo se nombran (y se piden mover) las tareas que el tablero muestra.
+      const visibles = epoch ? await tx.task.count({ where: { AND: [{ columnId }, liveTask(epoch)] } }) : count;
+      if (visibles) throw new Error(`La columna contiene ${visibles} tareas, incluidas las ocultas por filtros. Muévelas antes de eliminarla.`);
+      throw new Error(COLUMNA_CON_ARCHIVADAS);
+    }
     // Cadena de entregas: sin su «Listo», otra columna pasaría a serlo en silencio.
     if (productionChainConfigured() && await esColumnaListo(tx, column)) throw new Error(`"${column.name}" es la columna «Listo» de la cadena de entregas: ahí terminan las tareas de los pasos. Renómbrala en vez de eliminarla.`);
     await tx.taskColumn.delete({ where: { id: columnId } });
@@ -365,8 +373,25 @@ export async function eliminarColumna(columnId: string) {
   return { ok: true };
 }
 
+const COLUMNA_CON_ARCHIVADAS = "La columna guarda tareas archivadas (de marcas archivadas o anteriores a la renovación), así que no se puede eliminar. Si ya no te sirve, renómbrala.";
+
+/**
+ * Antes de eliminar una columna: cuántas tareas tiene. Con el archivo total encendido, `tasks` cuenta
+ * solo las que el tablero muestra y `archived` avisa que además guarda tareas ocultas (sin decir
+ * cuántas): esas no se pueden mover, así que la columna no se elimina. Apagado, lo de siempre.
+ */
 export async function revisarEliminacionColumna(columnId: string) {
   await requireLevel(LEVEL.OWNER);
-  const column = await prisma.taskColumn.findUniqueOrThrow({ where: { id: columnId }, select: { name: true, _count: { select: { tasks: true } } } });
-  return { name: column.name, tasks: column._count.tasks };
+  const epoch = archiveEpoch();
+  if (!epoch) {
+    const column = await prisma.taskColumn.findUniqueOrThrow({ where: { id: columnId }, select: { name: true, _count: { select: { tasks: true } } } });
+    return { name: column.name, tasks: column._count.tasks, archived: false };
+  }
+  // Ocultas = total - visibles (un NOT sobre el filtro vivo no sirve: la marca NULL daría NULL en SQL).
+  const [column, total] = await Promise.all([
+    prisma.taskColumn.findUniqueOrThrow({ where: { id: columnId }, select: { name: true, _count: { select: { tasks: { where: liveTask(epoch) } } } } }),
+    prisma.task.count({ where: { columnId } }),
+  ]);
+  const archived = total > column._count.tasks;
+  return { name: column.name, tasks: column._count.tasks, archived, ...(archived ? { archivedMessage: COLUMNA_CON_ARCHIVADAS } : {}) };
 }

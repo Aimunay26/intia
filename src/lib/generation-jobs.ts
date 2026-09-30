@@ -16,6 +16,7 @@ import { revalidatePath } from "next/cache";
 import { recordUsage, resourceLimit, usageDay } from "@/lib/resource-limits";
 import { allows, assertBrandPermission, assertPermission } from "@/lib/permissions";
 import { contentScope, generationScope, scriptScope, closedVideoWhere } from "@/lib/access-scope";
+import { archiveEpoch, liveJobSql } from "@/lib/archive-scope";
 import { generationEvent, generationStage, withGenerationTrace, withGenerationObserver } from "@/lib/generation-trace";
 import { createAiRequest, AiBudgetError } from "@/lib/ai/request-budget";
 import { GeneratedScriptValidationError } from "@/lib/ai/validate-script";
@@ -59,6 +60,29 @@ export type EnqueueInput = Omit<GenerateInput, "structureId"> & {
   comboId?: string | null;
 };
 const json = (value: unknown) => JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+
+/**
+ * Guarda siempre activa del archivado total (con ARCHIVO_TOTAL_DESDE encendido o apagado): no se
+ * encola ni se reintenta una generación para una marca archivada. Una marca viva cuesta una sola
+ * consulta, como antes; solo al fallar se mira si la marca existe, para decir por qué.
+ */
+async function assertBrandForGeneration(tx: AppTransaction, brandId: string) {
+  if (await tx.brand.count({ where: { id: brandId, archived: false } })) return;
+  if (await tx.brand.count({ where: { id: brandId } })) throw new GenerationRequestError("La marca está archivada: no se puede generar para ella. Elige una marca activa.");
+  throw new GenerationRequestError("La marca ya no existe.");
+}
+
+/**
+ * Archivado total encendido: ¿el trabajo sigue a la vista? (ni de una marca archivada ni sin marca
+ * y anterior a la época; ver liveJobSql). GenerationJob no tiene columna de marca hasta M1, así que
+ * se mira en SQL, además de generationScope. Apagado, no consulta nada.
+ */
+async function jobIsLive(db: Pick<AppTransaction, "$queryRaw">, id: string): Promise<boolean> {
+  const epoch = archiveEpoch();
+  if (!epoch) return true;
+  const rows = await db.$queryRaw<{ id: string }[]>`SELECT j."id" FROM "GenerationJob" j WHERE j."id" = ${id} AND ${liveJobSql("j", epoch)}`;
+  return rows.length > 0;
+}
 
 export async function enqueueGeneration(user: SessionUser, requestKey: string, structures: string[], input: EnqueueInput) {
   return withGenerationTrace({}, () => generationStage("enqueue", async () => {
@@ -105,7 +129,7 @@ async function enqueueValidatedGeneration(user: SessionUser, requestKey: string,
     }
     if (await tx.generationJob.count({ where: { userId: user.id, status: { in: active } } }) >= 2) throw new GenerationRequestError("Ya tienes dos generaciones pendientes. Espera a que terminen o cancela una.");
     if (await tx.structure.count({ where: { id: { in: structureIds }, active: true } }) !== structureIds.length) throw new GenerationRequestError("Una estructura ya no existe o está desactivada. Inicia una nueva generación con los formatos disponibles.");
-    if (payload.brandId && !await tx.brand.count({ where: { id: payload.brandId } })) throw new GenerationRequestError("La marca ya no existe.");
+    if (payload.brandId) await assertBrandForGeneration(tx, payload.brandId);
     if (payload.archetypeId && !await tx.archetype.count({ where: { id: payload.archetypeId } })) throw new GenerationRequestError("El arquetipo ya no existe.");
     // Solo con una ficha del catálogo: tiene que ser de la marca del pedido (sin marca no hay ficha válida).
     if (payload.productId && (!payload.brandId || !await tx.brandProduct.count({ where: { id: payload.productId, brandId: payload.brandId } }))) throw new GenerationRequestError("Ese producto ya no existe o no es de la marca elegida. Recarga el generador y vuelve a elegirlo.");
@@ -146,7 +170,7 @@ export async function retryFailedGeneration(user: SessionUser, sourceId: string,
     await assertActor(tx, user);
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`generation:${user.id}`}, 0))`;
     const source = await lockJob(tx, sourceId);
-    if (!source || !await tx.generationJob.count({ where: { AND: [{ id: sourceId }, generationScope(user)] } })) throw new GenerationRequestError("Generación no encontrada o sin acceso.");
+    if (!source || !await tx.generationJob.count({ where: { AND: [{ id: sourceId }, generationScope(user)] } }) || !await jobIsLive(tx, sourceId)) throw new GenerationRequestError("Generación no encontrada o sin acceso.");
     const id = retryJobId(sourceId);
     const previous = await tx.generationJob.findUnique({ where: { id }, select: { id: true, payload: true } });
     if (previous) {
@@ -163,6 +187,8 @@ export async function retryFailedGeneration(user: SessionUser, sourceId: string,
     const parsed = payloadSchema.safeParse(source.payload);
     if (!parsed.success) throw new GenerationRequestError("El pedido original ya no está disponible. Inicia una nueva generación.");
     const payload = parsed.data;
+    // Antes de tocar claves o modelos: una marca archivada no se reintenta (también lo impide el encolado).
+    if (payload.brandId) await assertBrandForGeneration(tx, payload.brandId);
     const provider = requestedProvider ?? payload.provider;
     const status = await aiStatus(undefined, tx);
     if (!status[provider].configured) throw new GenerationRequestError(`La organización no tiene una clave de ${provider === "google" ? "Gemini" : "Claude"} configurada. Elige el otro proveedor o pide al Dueño configurarla en Ajustes.`);
@@ -196,10 +222,19 @@ async function lockJob(tx: AppTransaction, id: string) {
   return tx.generationJob.findUnique({ where: { id }, include: { items: { orderBy: { order: "asc" } } } });
 }
 
+/** Con el archivado total encendido, las marcas vivas de la lista; apagado, la lista tal cual sin consultar. */
+async function liveBrandIdsForJob(tx: AppTransaction, ids: string[]): Promise<string[]> {
+  if (!archiveEpoch() || !ids.length) return ids;
+  const live = new Set((await tx.brand.findMany({ where: { id: { in: ids }, archived: false }, select: { id: true } })).map(b => b.id));
+  return ids.filter(id => live.has(id));
+}
+
 async function actorForJob(tx: AppTransaction, job: { userId: string; sessionVersion: number; payload: Prisma.JsonValue }) {
   const user = await tx.user.findUnique({ where: { id: job.userId }, select: { id: true, name: true, email: true, role: true, color: true, archetypeId: true, sessionVersion: true, active: true, workProfiles: { select: { profile: true } }, brandAccess: { select: { brandId: true } } } });
   if (!user?.active || user.sessionVersion !== job.sessionVersion || !["OWNER", "MEMBER"].includes(user.role)) return null;
-  const actor = { ...user, profiles: user.workProfiles.map(p => p.profile), brandIds: user.brandAccess.map(b => b.brandId) };
+  // Archivado total: como la sesión, sus marcas sin las archivadas (un miembro pierde el pedido de una marca archivada).
+  const brandIds = await liveBrandIdsForJob(tx, user.brandAccess.map(b => b.brandId));
+  const actor = { ...user, profiles: user.workProfiles.map(p => p.profile), brandIds };
   const payload = payloadSchema.safeParse(job.payload);
   if (!payload.success || !allows(actor, "scripts.generate") || (actor.role !== "OWNER" && (!payload.data.brandId || !actor.brandIds.includes(payload.data.brandId)))) return null;
   await assertActor(tx, actor);
@@ -399,7 +434,7 @@ export async function generationStatus(user: SessionUser, id: string) {
     id: true, status: true, error: true, createdAt: true, runId: true, payload: true,
     items: { orderBy: { order: "asc" }, select: { id: true, order: true, structureId: true, structure: { select: { name: true } }, status: true, stage: true, diagnostics: true, attempts: true, error: true, inputTokens: true, outputTokens: true, script: { where: scriptScope(user), select: { id: true, title: true } } } },
   } });
-  if (!job) return null;
+  if (!job || !await jobIsLive(prisma, id)) return null;
   const retryableCount = finishedStatuses.includes(job.status) ? job.items.filter(item => retryableStatuses.includes(item.status) && !item.script).length : 0;
   const retry = retryableCount ? await prisma.generationJob.findFirst({ where: { AND: [{ id: retryJobId(id) }, generationScope(user)] }, select: { id: true } }) : null;
   const { payload, ...publicJob } = job;

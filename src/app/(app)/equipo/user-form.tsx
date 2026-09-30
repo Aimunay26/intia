@@ -44,6 +44,8 @@ export type TeamMember = {
   archetypeId: string | null;
   profiles?: string[];
   brandIds?: string[];
+  /** Accesos a marcas que el selector no ofrece (archivadas, con ARCHIVO_TOTAL_DESDE): se conservan al guardar. */
+  keptBrandIds?: string[];
 };
 
 /* -------------------------------------------------------------- AVISOS -- */
@@ -201,6 +203,8 @@ function CamposPersona({
         {WORK_PROFILES.map(p => <label key={p.id} className="flex gap-2 text-sm"><input type="checkbox" name="profiles" value={p.id} defaultChecked={member?.profiles?.includes(p.id)} /><span><strong>{p.label}</strong><br />{p.description}</span></label>)}
         <p className="font-semibold">Marcas</p>
         {brands.map(b => <label key={b.id} className="flex gap-2 text-sm"><input type="checkbox" name="brandIds" value={b.id} defaultChecked={member?.brandIds?.includes(b.id)} />{b.name}</label>)}
+        {member?.keptBrandIds?.map(id => <input key={id} type="hidden" name="brandIds" value={id} />)}
+        {member?.keptBrandIds?.length ? <p className="text-sm text-inkmuted">{member.keptBrandIds.length === 1 ? "Conserva además el acceso a 1 marca archivada." : `Conserva además el acceso a ${member.keptBrandIds.length} marcas archivadas.`}</p> : null}
         <p className="text-sm text-inkmuted">Cámara, talento, edición y diseño requieren además una asignación al video o tarea. Cambiar accesos cierra las sesiones anteriores.</p>
       </fieldset> : null}
       <Field label="Nota interna" hint="Qué hace, en qué es buena, disponibilidad…">

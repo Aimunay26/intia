@@ -17,6 +17,7 @@ import {
 	PageHeader,
 	Stat,
 } from "@/components/ui";
+import { archiveEpoch, liveBrand } from "@/lib/archive-scope";
 import { can, LEVEL } from "@/lib/auth";
 import {
 	ACCOUNT_STATUS_MAP,
@@ -51,13 +52,17 @@ export default async function EquipoPage({
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="team" query={await searchParams} />;
   const sp = singleQueryValues(await searchParams);
   const canManage = can(user.role, LEVEL.OWNER);
+  // Archivo total (ARCHIVO_TOTAL_DESDE): el selector de marcas no ofrece las archivadas. Los accesos
+  // que una persona conserva en ellas NO se tocan: viajan ocultos en el formulario (keptBrandIds)
+  // para que guardar no los borre. Con el interruptor vacío se ofrecen todas, como antes.
+  const epoch = archiveEpoch();
 
   const [page, archetypes, stats, yo, brands] = await Promise.all([
     getTeamList(sp),
     prisma.archetype.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     getTeamStats(),
     prisma.user.findUnique({ where: { id: user.id }, select: teamMemberSelect }),
-    prisma.brand.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.brand.findMany({ ...(epoch ? { where: liveBrand(epoch) } : {}), select: { id: true, name: true }, orderBy: { name: "asc" } }),
   ]);
   const personas = page.items;
   const lista = personas;
@@ -79,6 +84,12 @@ export default async function EquipoPage({
     archetypeId: p.archetypeId, profiles: p.workProfiles.map(w => w.profile), brandIds: p.brandAccess.map(b => b.brandId),
   });
 
+  const ofrecidas = new Set(brands.map((b) => b.id));
+  const conArchivadas = (p: (typeof personas)[number]): TeamMember => ({
+    ...toMember(p),
+    keptBrandIds: p.brandAccess.map((b) => b.brandId).filter((id) => !ofrecidas.has(id)),
+  });
+
   return (
     <>
       <PageHeader
@@ -89,7 +100,7 @@ export default async function EquipoPage({
           <>
             {yo ? (
               <EditUserButton
-                member={toMember(yo)}
+                member={conArchivadas(yo)}
                 archetypes={opcionesArquetipo} brands={brands}
                 canManage={canManage}
                 isSelf
@@ -285,7 +296,7 @@ export default async function EquipoPage({
                       <td className="tbl-card-end text-right">
                         {canManage || isSelf ? (
                           <EditUserButton
-                            member={toMember(p)}
+                            member={conArchivadas(p)}
                             archetypes={opcionesArquetipo} brands={brands}
                             canManage={canManage}
                             isSelf={isSelf}

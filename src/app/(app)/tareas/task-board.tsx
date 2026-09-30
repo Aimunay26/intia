@@ -125,7 +125,8 @@ export function TaskBoard({
 }) {
   const [columns, setColumns] = useState<BoardColumn[]>(initialColumns);
   const [isPending, startTransition] = useTransition();
-  const [deletion, setDeletion] = useState<{ kind: "task" | "column"; id: string; name: string; tasks: number } | null>(null);
+  /** archivedMessage: la columna guarda tareas archivadas (archivo total) que no se ven ni se pueden mover. */
+  const [deletion, setDeletion] = useState<{ kind: "task" | "column"; id: string; name: string; tasks: number; archivedMessage?: string } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [moveError, setMoveError] = useState<string | null>(null);
   const [boardNotice, setBoardNotice] = useState<string | null>(null);
@@ -891,7 +892,7 @@ export function TaskBoard({
                     setDeletion({ kind: "column", id: editingColumn.id, name: editingColumn.name, tasks: -1 });
                     try {
                       const info = await revisarEliminacionColumna(editingColumn.id);
-                      setDeletion(current => current?.id === editingColumn.id ? { ...current, tasks: info.tasks } : current);
+                      setDeletion(current => current?.id === editingColumn.id ? { ...current, tasks: info.tasks, archivedMessage: info.archivedMessage } : current);
                     } catch { setDeleteError("No se pudo comprobar la columna. Cierra esta ventana y vuelve a intentarlo."); }
                   }}
                   className="btn btn-sm text-danger hover:bg-danger/10 border-transparent"
@@ -988,12 +989,13 @@ export function TaskBoard({
       {deletion ? <Modal open onClose={() => { if (!isPending) setDeletion(null); }} title={`Eliminar ${deletion.kind === "task" ? "tarea" : "columna"}`}>
         <p className="text-sm">{deletion.name}</p>
         {deletion.kind === "column" ? <p className="text-inkmuted text-sm mt-2">
-          {deletion.tasks < 0 ? "Comprobando todas las tareas…" : deletion.tasks > 0 ? `Tareas en la columna: ${deletion.tasks}, incluidas las ocultas por filtros. Muévelas antes de eliminar la columna.` : "La columna está vacía. Esta acción no se puede deshacer."}
+          {deletion.tasks < 0 ? "Comprobando todas las tareas…" : deletion.tasks > 0 ? `Tareas en la columna: ${deletion.tasks}, incluidas las ocultas por filtros. Muévelas antes de eliminar la columna.` : deletion.archivedMessage ? deletion.archivedMessage : "La columna está vacía. Esta acción no se puede deshacer."}
         </p> : <p className="text-inkmuted text-sm mt-2">Esta acción no se puede deshacer.</p>}
+        {deletion.kind === "column" && deletion.tasks > 0 && deletion.archivedMessage ? <p className="text-inkmuted text-sm mt-2">{deletion.archivedMessage}</p> : null}
         {deleteError ? <p role="alert" className="text-danger text-sm mt-2">{deleteError}</p> : null}
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" className="btn" disabled={isPending} onClick={() => setDeletion(null)}>Cancelar</button>
-          <button type="button" className="btn btn-danger" disabled={isPending || (deletion.kind === "column" && deletion.tasks !== 0)} onClick={() => startTransition(async () => {
+          <button type="button" className="btn btn-danger" disabled={isPending || (deletion.kind === "column" && (deletion.tasks !== 0 || Boolean(deletion.archivedMessage)))} onClick={() => startTransition(async () => {
             try {
               if (deletion.kind === "task") { await eliminarTarea(deletion.id); setEditingTask(null); }
               else { await eliminarColumna(deletion.id); setEditingColumn(null); }

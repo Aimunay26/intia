@@ -1,6 +1,8 @@
-# CONTRATO INTERNO DEL PROYECTO
+# CONTRATO INTERNO DE ALSOS
 
 Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pie de la letra.
+El producto se llama **ALSOS** desde el 30/09/2026 (antes, Intia); ver «Nombre del producto e
+identificadores técnicos».
 
 ## Stack
 
@@ -10,13 +12,45 @@ Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pi
 - **Server Components por defecto.** `"use client"` solo cuando hace falta estado o eventos.
 - **Server Actions** para escrituras del usuario. Los callbacks técnicos de autenticación, Workflow y mantenimiento usan rutas protegidas; no sustituyen los controles de sesión y permisos.
 - Iconos: `lucide-react`.
-- Identidad Intia: blanco y cobre, fuente Manrope local; tema oscuro y colores propios de marcas/estados conservados. shadcn/ui (Radix) selectivo en `src/components/ui/`; componentes de negocio compatibles en `src/components/ui.tsx`. No convertir toda la aplicación en cliente ni sustituir formularios nativos para cambiar su estilo. Ver `reports/identidad-intia-2026-09-25.md`.
+- Identidad ALSOS: blanco y cobre, logotipo `alsos.` (`src/components/alsos-wordmark.tsx`), favicon «a.» y fuente Manrope local; tema oscuro y colores propios de marcas/estados conservados. shadcn/ui (Radix) selectivo en `src/components/ui/`; componentes de negocio compatibles en `src/components/ui.tsx`. No convertir toda la aplicación en cliente ni sustituir formularios nativos para cambiar su estilo. Ver `reports/identidad-alsos-2026-09-30.md` (vigente) y `reports/identidad-intia-2026-09-25.md` (paleta, tokens y validación de origen).
 
 ## Idioma
 
 - Todo el texto visible va en **español con tildes correctas** (`ó`, `í`, `ñ`, `¿`, `¡`).
 - Los identificadores de código van en inglés o español sin tildes.
 - Los valores de enum en base de datos van en MAYÚSCULAS sin tildes (`PUBLICADO`, `GRABACION`).
+
+## Nombre del producto e identificadores técnicos
+
+- **Nombre visible: ALSOS.** En textos, títulos, manual, guía, calendario y documentación se
+  escribe «ALSOS». El logotipo va en minúsculas con punto cobre (`AlsosWordmark`, `aria-label`
+  «ALSOS»). Los títulos usan la plantilla `%s · ALSOS` de `src/app/layout.tsx`. No escribir
+  «Intia» ni «Marketing OS» en texto nuevo; los informes fechados anteriores al 30/09/2026 se
+  conservan como registro.
+- **Íconos.** Fuente: `src/app/icon.svg` («a» en tinta `#293238` y punto cobre `#a34d2b` sobre
+  blanco). Derivados: `src/app/favicon.ico` (16, 32 y 48 px), `src/app/apple-icon.png` (180 px,
+  opaco, sin esquinas redondeadas), `public/icon-192.png` y `public/icon-512.png`. Si cambia el
+  SVG, se regeneran todos. `src/app/manifest.ts` usa `display: "browser"` y `layout.tsx`
+  declara `appleWebApp.capable: false`: la app guardada en la pantalla de inicio se abre en el
+  navegador, no como app independiente (la entrada con Google quedaría en otra ventana).
+- **Los identificadores técnicos conservan `intia` por compatibilidad. No se renombran.** Cambiar
+  cualquiera rompe producción, descifrado o datos:
+
+  | Identificador | Qué se rompe si cambia |
+  |---|---|
+  | Esquema `intia_ops`, funciones y triggers `intia_*` (`intia_revision`, `intia_deployment_guard`, `intia_asset_cleanup`, `intia_approval_immutable`, `intia_event_brand_required`…) y `SAVEPOINT intia_production_flow` | Viven en migraciones ya aplicadas, que nunca se editan; el código y los scripts de `prisma/operations/` los nombran |
+  | `application_name` (`intia-migrator-*`, `intia-schema-*`, `intia-secrets-*`, `intia-profiles-*`, `intia-workflow-*`, `intia-completion-*`) y `APPLICATION_SCHEMA_VERSION` | La guarda de despliegue rechaza escrituras de un escritor que no reconoce; los scripts de operación exigen `intia-migrator-20260909` |
+  | AAD de cifrado `intia:secret:v1:` | Las claves de Claude, Gemini y Google OAuth guardadas en Ajustes dejan de descifrarse |
+  | Ruta `intia/assets/` del Blob privado y almacén `intia-private` | Los adjuntos existentes no pasan la validación de rutas |
+  | Sufijo `@intia` de los UID del calendario | Google Calendar duplica o reemplaza los eventos suscritos |
+  | Cookies `mos_session`, `mos_brand` y `mos_google_state`; claves del navegador `mos-theme` e `intia.measure-navigation` | Se cierran las sesiones y se pierden la marca activa y el tema elegido |
+  | Bases de prueba `intia_test` / `intia_*_test` (CI y scripts) y cuentas demo `@intia.test` | CI y `db:equipo-demo` dejan de encontrar sus bases y cuentas |
+  | Dominio `intia-lovat.vercel.app`, proyecto de Vercel, repositorio `conamormarket-lgtm/intia`, carpeta `intia-main` y copia del keyring en `%LOCALAPPDATA%/Intia/secrets/` | Enlaces, suscripciones de calendario, OAuth, despliegues y la recuperación de la clave de cifrado |
+
+- Las etiquetas de log `[marketing-os]` y el nombre `marketing-os` de `.claude/launch.json` también
+  se conservan (búsquedas de logs y arranque local).
+- Un identificador técnico nuevo de una familia existente sigue el patrón de esa familia. Si hay
+  duda de si algo es técnico, se deja como está y se consulta.
 
 ## Rutas
 
@@ -692,6 +726,11 @@ interruptor: nunca `git revert` ni `DROP`.
 | `GUIONES_AJUSTE_PANTALLA` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Modo ajuste del visor y de la biblioteca de guiones | — |
 | `GEMINI_ESQUEMA_SIMPLE` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Esquema de Gemini sin límites de tamaño/rango; apagado envía el anterior con límites. La validación local no cambia | — |
 
+**Estado en producción:** las migraciones `20260928120000_brand_catalog` y
+`20260928180000_production_flow` se aplicaron en Neon el 29/09/2026, y `PRODUCT_CATALOG_ENABLED`
+y `PRODUCTION_FLOW_ENABLED` están encendidos en Vercel desde ese día. El valor por defecto del
+código sigue siendo apagado; la reversa sigue siendo apagar el interruptor y redesplegar.
+
 - Los interruptores de funciones con **tablas nuevas vienen apagados**. Apagados, ninguna
   pantalla, acción, gancho ni tarea programada consulta esas tablas: el código se puede
   desplegar antes o después de migrar. Única excepción deliberada: la procedencia de los datos
@@ -876,7 +915,8 @@ Interruptor `MANUAL_PROCEDIMIENTOS_ENABLED`: apagado, oculta el menú y las tarj
   editan a mano los JSON generados.
 - 8 roles en orden de flujo: Guionista → Filmmaker → Actor → Editor → Jefe de editores →
   Community manager → ATC → Dueño de negocio. Tres niveles (Principiante, Intermedio,
-  Avanzado), 135 módulos, 618 lecciones y 386 videos de referencia.
+  Avanzado), 139 módulos, 640 lecciones, 417 videos de referencia y 106 escenas 3D (61 de
+  filmmaker y 35 de actor).
 - **Acceso: todas las cuentas activas** (sección `manual`, capacidad base `help.view`), también
   un miembro sin perfiles. Todos leen todos los manuales; los de su perfil van primero con «Tu
   rol»: `WRITER` → Guionista, `CAMERA` → Filmmaker, `TALENT` → Actor, `EDITOR` → Editor y Jefe
@@ -894,7 +934,28 @@ Interruptor `MANUAL_PROCEDIMIENTOS_ENABLED`: apagado, oculta el menú y las tarj
   (`next/dynamic`, sin SSR). `src/lib/manual-scene.ts` traduce el texto de la escena a una
   configuración tipada por palabras clave, sin IA; lo que no reconoce cae en valores prudentes
   y los pasos en texto siempre acompañan a la escena. Con movimiento reducido no se reproduce
-  sola.
+  sola. Formato vertical 9:16 por defecto u horizontal 16:9, y «Compara con lo incorrecto»: cada
+  error rearma la escena (luces, cuerpo o encuadre) sobre el mismo `WebGLRenderer` y «Correcto»
+  vuelve a la versión buena. En la «Vista de cámara», la línea superior de tercios va a la altura
+  de los ojos del sujeto.
+- **Small rig y luces como equipos** (`src/lib/manual-rig.ts`, geometría pura probada en
+  `tests/manual-rig.test.mts`): quien graba lleva en todas las escenas el celular en una jaula
+  con dos asas, LED en la zapata y power bank con cable hasta la luz. El lente es el origen del
+  rig y **es la cámara de la escena**: la «Vista de cámara» ve lo que ve ese celular y nunca
+  dibuja a quien graba. En mano o en seguimiento toma las dos asas (o una y la luz de mano); en
+  trípode, una. Las luces del esquema se dibujan como soportes físicos (softbox principal, panel
+  de relleno y fresnel trasero detrás del sujeto, del lado contrario a la principal) con la cara
+  del color de la luz, el haz y un rótulo; cada luz sale de su soporte. Sin luz trasera, el
+  soporte queda apagado («Trasera · apagada»).
+- **Guías de cámara** (`src/content/manual/guias.ts`; componente
+  `src/components/manual/device-guide.tsx` con sus maquetas en `device-guide-layout.ts` y
+  `device-guide-screens.tsx`): 11 guías paso a paso para iPhone, Samsung Galaxy y Sony ZV-E10 / ZV-E10 II (Log, 4K60 y 4K120,
+  bloqueo de enfoque y exposición, formato, enfoque, exposición, audio y energía). Una lección
+  las enlaza con su campo `guia` (`GuideId` de `src/lib/manual.ts`; `GUIDE_IDS` debe cubrir la
+  unión completa o no compila). Las maquetas son SVG propias, nunca capturas de los fabricantes;
+  solo se enlaza documentación oficial y los pasos inciertos dicen «Puede variar según versión».
+  El componente se carga con `next/dynamic` solo en lecciones con guía. Pruebas:
+  `tests/manual-guias.test.mts` (`npm run test:manual-guias`).
 - **Personajes 3D** (interruptor `MANUAL_3D_PERSONAJES`): modelos con derechos de terceros
   autorizados por el dueño solo para uso interno el 29/09/2026; antes de vender el sistema a
   terceros deben reemplazarse por modelos con licencia; se sirven solo con sesión.
@@ -917,9 +978,11 @@ Interruptor `MANUAL_PROCEDIMIENTOS_ENABLED`: apagado, oculta el menú y las tarj
   - El servidor calcula `personajes3dEnabled()` en la página del módulo y lo baja por props
     (`ModuleLessons` → `SceneViewer`, prop `personajes`). Desde el cliente, `manual-3d.ts` se
     importa solo con `import type`.
-  - Asignación: quien graba = `camarografo`; sujeto principal = `actriz-1`; segunda persona
-    (podcast, pareja, dos personas) = `actriz-2`. Más de dos sujetos además de quien graba: los
-    extras siguen como maniquí.
+  - Asignación: quien graba = `camarografo` (Spider-Man, con clips de reposo y caminar);
+    sujeto principal = `actriz-1` (Invisible Woman); segunda persona (podcast, pareja, dos
+    personas) = `actriz-2` (Magik). Las actrices usan posturas procedurales sobre su esqueleto
+    (`src/lib/manual-characters.ts`). Más de dos sujetos además de quien graba: los extras
+    siguen como maniquí.
   - Los GLB usan `EXT_meshopt_compression`, `KHR_mesh_quantization` y `EXT_texture_webp`: el
     cargador necesita `MeshoptDecoder`. Escala en metros, pies en y=0, miran hacia +Z y la pose de
     reposo es la bind pose (A-pose). Las vistas previas de revisión no van al repositorio.

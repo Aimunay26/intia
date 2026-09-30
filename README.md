@@ -1,12 +1,21 @@
-# Intia
+# ALSOS
 
 Sistema de operación de contenido para varias marcas: calendario y agenda, fichas de marca con
 su identidad y sus objetivos, checklist por video, asignación de quién actuó / grabó / escribió,
 métricas, log de auditoría, y un generador de guiones con IA afinado por formato y por la
 marca personal de quien actúa.
 
-Identidad visual: **Blanco y cobre**, Manrope y componentes shadcn/ui selectivos sobre
-Next.js y Tailwind. [Decisiones de diseño y validación](reports/identidad-intia-2026-09-25.md).
+Identidad visual: **Blanco y cobre**, logotipo `alsos.` con punto cobre, favicon «a.» y Manrope,
+con componentes shadcn/ui selectivos sobre Next.js y Tailwind.
+[Identidad ALSOS](reports/identidad-alsos-2026-09-30.md) ·
+[decisiones de diseño y validación de origen](reports/identidad-intia-2026-09-25.md).
+
+> Hasta el 29/09/2026 el producto se llamaba **Intia**. Los identificadores técnicos con
+> `intia` (esquemas, funciones y triggers SQL, `application_name`, bases de prueba, rutas de
+> archivos privados, claves de cifrado y del navegador, dominio `intia-lovat.vercel.app`,
+> proyecto de Vercel y repositorio) **se conservan a propósito**: cambiarlos rompería
+> producción o datos. La lista y el motivo están en
+> [CONTRACT.md](CONTRACT.md#nombre-del-producto-e-identificadores-técnicos).
 
 Funciona con PostgreSQL tanto en desarrollo como en producción. La instalación publicada
 usa Neon en Vercel. Las consultas analíticas y la paginación requieren PostgreSQL;
@@ -14,6 +23,7 @@ el antiguo modo SQLite ya no es compatible.
 
 **Índice**
 
+- [Novedades 30/09/2026](#novedades-30092026): nombre ALSOS, catálogo y producción por equipos en producción, personajes 3D y guías de cámara
 - [Novedades 28/09/2026](#novedades-28092026): manual, calendario mensual, guiones a una pantalla, catálogo y producción por equipos
 - [Arrancarlo](#arrancarlo) · [Primer ingreso](#primer-ingreso)
 - [Cómo se trabaja](#cómo-se-trabaja): las tres fases de un video
@@ -24,6 +34,36 @@ el antiguo modo SQLite ya no es compatible.
 - [Comandos](#comandos) · [Cómo está organizado](#cómo-está-organizado)
 
 ---
+
+## Novedades 30/09/2026
+
+- **El producto se llama ALSOS.** Cambian el logotipo (`alsos.`), el favicon, el ícono de la
+  pantalla de inicio (iPhone y Android), el título de las pestañas («ALSOS · Ideas que se
+  publican»), el manual y la guía. El calendario de Google pasa a llamarse «ALSOS · …» y el
+  archivo, `alsos.ics`. La dirección de suscripción y los eventos no cambian, así que no se
+  duplican. En el manual, el preset de CapCut ahora es `ALSOS_9x16_1080_30`: quien ya guardó
+  `INTIA_9x16_1080_30` tiene que renombrarlo. Detalle en
+  [la identidad ALSOS](reports/identidad-alsos-2026-09-30.md).
+- **Catálogo y producción por equipos, encendidos en producción.** El 29/09/2026 se aplicaron
+  en Neon las migraciones `20260928120000_brand_catalog` y `20260928180000_production_flow`,
+  y en Vercel se encendieron `PRODUCT_CATALOG_ENABLED` y `PRODUCTION_FLOW_ENABLED`. Si algo
+  falla, se apaga el interruptor y se redespliega; los datos se conservan.
+- **Personajes 3D en el manual.** En las escenas, quien graba es Spider-Man y las actrices
+  son Invisible Woman y Magik. Spider-Man sostiene en todas las escenas un **small rig**
+  (celular en una jaula con dos asas, luz LED en la zapata y power bank con su cable), que es la
+  cámara de la escena. Con la cámara en mano o siguiendo al sujeto usa las dos manos; en
+  trípode, una. Las **tres luces** (principal, relleno y trasera, de otro color) se ven como
+  equipos en sus soportes, con su haz y un rótulo, y la luz sale de cada equipo; si la escena no
+  tiene luz trasera, su soporte aparece apagado. El visor trae formato 9:16 (por defecto) y 16:9, y
+  «Compara con lo incorrecto». Son modelos de terceros **solo para uso interno**:
+  `MANUAL_3D_PERSONAJES="false"` vuelve a los maniquíes.
+- **Guías de cámara con imágenes.** Once guías paso a paso con maquetas propias de iPhone,
+  Samsung Galaxy y Sony ZV-E10 / ZV-E10 II: grabar en Log, 4K a 60 fps y cámara lenta en 4K a
+  120 fps, bloqueo de enfoque y exposición, formato, enfoque, exposición, audio y batería.
+  Aparecen dentro de las lecciones del filmmaker, que además suma luz LED de mano, trípode a la
+  altura del pecho, ángulos según la emoción, seguir al sujeto, codos y pies, vertical y
+  horizontal, y un módulo de la Sony ZV-E10. El manual queda en 139 módulos, 640 lecciones, 417
+  videos y 106 escenas 3D.
 
 ## Novedades 28/09/2026
 
@@ -43,17 +83,18 @@ en [CONTRACT.md](CONTRACT.md#interruptores-de-funciones).
   **Más** de la cabecera. La dirección recuerda la escena (`?escena=`) y las flechas ←/→ cambian
   de escena. Viene encendido; `GUIONES_AJUSTE_PANTALLA="false"` quita el ajuste.
 - **Catálogo de productos por marca.** Productos, servicios, platos y combos que el generador
-  ofrece en la etapa 2, con cierres y ángulos según el tipo. Viene **apagado** hasta migrar;
-  `PRODUCT_CATALOG_ENABLED="true"` lo enciende.
+  ofrece en la etapa 2, con cierres y ángulos según el tipo. En el código viene **apagado** hasta
+  migrar; `PRODUCT_CATALOG_ENABLED="true"` lo enciende. En producción, encendido desde el 29/09/2026.
 - **Producción por equipos.** Equipo y días de grabación por marca, asignación automática de
-  grabación, edición y publicación con plazo, y pedidos de diseño en 24 h. Viene **apagado**
-  hasta migrar;
-  `PRODUCTION_FLOW_ENABLED="true"` lo enciende.
+  grabación, edición y publicación con plazo, y pedidos de diseño en 24 h. En el código viene
+  **apagado** hasta migrar; `PRODUCTION_FLOW_ENABLED="true"` lo enciende. En producción,
+  encendido desde el 29/09/2026.
 - **Celulares.** Los campos usan letra de 16 px (el teléfono no hace zoom al escribir), las
   tablas anchas se leen como tarjetas y el menú lateral se abre como un cajón que se cierra con
   Escape y no deja desplazar el fondo.
 
-**Orden de despliegue:** migrar (`20260928120000_brand_catalog` y
+**Orden de despliegue** (en producción ya se completó el 29/09/2026; sirve para otra
+instalación): migrar (`20260928120000_brand_catalog` y
 `20260928180000_production_flow`, y volver a ejecutar `prisma/operations/deployment-gate.sql`)
 → desplegar con `PRODUCT_CATALOG_ENABLED` y
 `PRODUCTION_FLOW_ENABLED` apagados → encenderlos en Vercel y redesplegar. Las dos migraciones
@@ -160,7 +201,8 @@ viaja a Google Calendar.
 
 ### Producción por equipos
 
-Se enciende con `PRODUCTION_FLOW_ENABLED="true"`, después de migrar. En cada marca, la pestaña
+Se enciende con `PRODUCTION_FLOW_ENABLED="true"`, después de migrar; en producción está
+encendido desde el 29/09/2026. En cada marca, la pestaña
 **Equipo** define quién es el encargado, el guionista, el filmmaker, el editor, el community y
 el diseñador, qué días se graba (de lunes a sábado) y si la asignación es automática. Desde ahí:
 
@@ -182,16 +224,30 @@ como «Sistema».
 
 En **Formación → Manual de procedimientos** está cómo se hace el trabajo de cada rol: misión,
 procedimiento, a quién le recibe y a quién le entrega, y una formación de principiante a
-avanzado con lecciones cortas, videos de YouTube y escenas 3D. *Cómo se usa* enseña a usar
-Intia; el manual enseña a hacer el trabajo.
+avanzado con lecciones cortas, videos de YouTube, guías de cámara y escenas 3D. *Cómo se usa*
+enseña a usar ALSOS; el manual enseña a hacer el trabajo. Hoy son 139 módulos, 640 lecciones,
+417 videos y 106 escenas 3D.
 
 En las escenas 3D, quien graba, el sujeto principal y la segunda persona (podcast, pareja) son
-personajes 3D en vez de maniquíes: un camarógrafo y dos actrices. Son modelos con derechos de
-terceros que el dueño autorizó el 29/09/2026 **solo para uso interno del equipo**: se descargan
-únicamente con la sesión iniciada (`/api/modelos-3d/…`, nunca desde `public/`) y antes de vender
-el sistema a terceros hay que reemplazarlos por modelos con licencia. Si algo falla,
-`MANUAL_3D_PERSONAJES="false"` vuelve a los maniquíes sin tocar código: se cambia la variable en
-Vercel y se redespliega.
+personajes 3D en vez de maniquíes: Spider-Man como camarógrafo, e Invisible Woman y Magik como
+actrices. Son modelos con derechos de terceros que el dueño autorizó el 29/09/2026 **solo para
+uso interno del equipo**: se descargan únicamente con la sesión iniciada (`/api/modelos-3d/…`,
+nunca desde `public/`) y antes de vender el sistema a terceros hay que reemplazarlos por modelos
+con licencia. Si algo falla, `MANUAL_3D_PERSONAJES="false"` vuelve a los maniquíes sin tocar
+código: se cambia la variable en Vercel y se redespliega.
+
+Quien graba lleva siempre un **small rig**: el celular en una jaula con dos asas, una luz LED en
+la zapata y un power bank con su cable. Ese celular es la cámara de la escena y la «Vista de
+cámara» muestra lo que ve. Las luces del esquema se ven como equipos en sus soportes (principal,
+relleno y trasera de otro color), con su haz y su rótulo; una luz trasera que falta aparece
+apagada. Cada escena se puede ver en 9:16 o 16:9 y comparar con lo incorrecto (luces, postura o
+encuadre).
+
+Las **guías de cámara** son pasos ilustrados con maquetas propias (nunca capturas de los
+fabricantes) para iPhone, Samsung Galaxy y Sony ZV-E10 / ZV-E10 II: Log, 4K60 y cámara lenta
+4K120, enfoque, exposición, formato, audio y batería. Aparecen en la lección que las enlaza y se
+descargan solo al abrir esa lección. Los pasos cuyos menús cambian entre versiones dicen «Puede
+variar según versión».
 
 ### Prioridades
 
@@ -485,7 +541,7 @@ dicen además **de dónde salió la que se usó** («guardada en Ajustes» o «d
 entorno GEMINI_API_KEY del servidor»): está revocada o mal copiada, así que genera otra y
 pégala en Ajustes, que manda sobre la variable de entorno.
 
-**Intia no impone cupos diarios de IA:** registra las peticiones, pero no las bloquea por
+**ALSOS no impone cupos diarios de IA:** registra las peticiones, pero no las bloquea por
 cantidad de llamadas, trabajos, despachos ni repeticiones de un documento. El proveedor
 aplica sus propias cuotas. Si confirma que se agotó la cuota diaria gratuita, la app indica
 que puedes usar un proyecto de API con facturación habilitada y actualizar su clave en
@@ -517,6 +573,10 @@ La app se despliega en Vercel con PostgreSQL. Para una instalación existente, u
 [procedimiento de migraciones y recuperación](reports/operacion-migraciones.md).
 Los siguientes pasos corresponden a una instalación nueva y vacía.
 
+La instalación publicada de ALSOS sigue en `intia-lovat.vercel.app`: el dominio, el proyecto de
+Vercel, el almacén `intia-private` y el repositorio conservan el nombre anterior. Vercel despliega
+cada push a `main`, así que el cambio de nombre y el favicon se publican al integrarse en `main`.
+
 **0. Si la base ya existe, aplica antes las migraciones pendientes** con `npm run db:migrate`
 (`prisma migrate deploy`), siguiendo el [procedimiento de migraciones](reports/operacion-migraciones.md)
 desde el mismo commit que vas a publicar. Esta versión trae
@@ -532,7 +592,8 @@ La entrega del 28/09/2026 añade `20260928120000_brand_catalog` y
 `20260928180000_production_flow`: solo crean tablas, no tocan columnas ni filas existentes.
 Después de aplicarlas, vuelve a ejecutar `prisma/operations/deployment-gate.sql` para que el
 control de escrituras cubra las tablas nuevas, y solo entonces enciende `PRODUCT_CATALOG_ENABLED`
-y `PRODUCTION_FLOW_ENABLED`.
+y `PRODUCTION_FLOW_ENABLED`. En la instalación publicada ya se aplicaron el 29/09/2026 y los dos
+interruptores están encendidos.
 
 **1. Crea la base de datos** en Neon, Supabase o quien prefieras, y copia su cadena de
 conexión.
@@ -678,10 +739,11 @@ Dos cosas que conviene saber:
 | `npm run ver:prompt -- eru` | Imprime el prompt exacto que se le manda a la IA por esa persona |
 | `npm run test:motores` | Calibra el motor de match contra la matriz de compatibilidad |
 | `npm run test:humo` | 37 comprobaciones: permisos, calendario, datos y archivos |
-| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos, CTA de comunidad, catálogo de productos, producto en el generador, calendario mensual, flujo de producción, visor de guiones, personajes 3D del manual, cierres por tipo y Manual) |
+| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos, CTA de comunidad, catálogo de productos, producto en el generador, calendario mensual, flujo de producción, visor de guiones, personajes 3D del manual, cierres por tipo, Manual y guías de cámara) |
 | `npm run test:cta` | Vigila que los CTA de comunidad no lleven presión ni oferta (`tsx --test`) |
 | `npm run test:presets` | Cierres, fórmulas y ángulos por tipo de producto: sin tipo, todo como antes; un producto o un restaurante nunca reciben cupos ni asesorías |
-| `npm run test:manual` | Manual de procedimientos: interruptor, orden por rol, contenido generado, enlaces de YouTube y traducción de las 98 escenas 3D |
+| `npm run test:manual` | Manual de procedimientos: interruptor, orden por rol, contenido generado, enlaces de YouTube, traducción de las 106 escenas 3D, poses de los personajes y small rig con sus luces |
+| `npm run test:manual-guias` | Guías de cámara: que cada guía enlazada exista y que sus pasos y maquetas sean válidos |
 | `node scripts/manual-content.mjs` | Regenera `src/content/manual/` desde `reports/manual-procedimientos/curriculo.json` |
 
 > `npm run build` falla si el servidor de desarrollo está corriendo: Windows tiene bloqueado
@@ -707,15 +769,20 @@ src/
       assets/[id]/       Descarga de los PDF de referencia
       modelos-3d/[archivo]/  Personajes 3D del manual, solo con sesión
     login/               Entrada y alta del primer dueño
+    layout.tsx           Título («ALSOS · …») y metadatos de la app
+    icon.svg · favicon.ico · apple-icon.png  Favicon e ícono de iPhone de ALSOS
+    manifest.ts          Nombre e íconos al guardar la app en la pantalla de inicio
   components/
+    alsos-wordmark.tsx   Logotipo «alsos.» con punto cobre
     brand-switcher.tsx   Selector de marca activa (barra lateral)
     assets.tsx           Gestor de PDF de referencia
     charts.tsx           Gráficos en SVG, sin librerías
     ui.tsx               Tarjetas, chips, avatares, estados vacíos
-    manual/              Tarjetas, lecciones, videos y visor 3D del manual
+    manual/              Tarjetas, lecciones, videos, guías de cámara y visor 3D del manual
     scripts/             Visor de guiones: cabecera, menú «Más» y escena en foco
   content/
     manual/              Manual de procedimientos, generado por scripts/manual-content.mjs
+    manual/guias.ts      Guías de cámara paso a paso (iPhone, Samsung, Sony ZV-E10)
     modelos-3d/          Personajes 3D del manual (uso interno; nunca en public/)
   lib/
     ai/                  Generador: contexto, esquema y proveedores
@@ -730,10 +797,14 @@ src/
     product-focus.ts     Texto del producto que recibe la IA
     manual.ts            Acceso al contenido del manual
     manual-3d.ts         Interruptor, lista de archivos y tipos de los personajes 3D
+    manual-characters.ts Poses de los personajes 3D sobre su esqueleto
+    manual-rig.ts        Small rig de quien graba y soportes de luz del visor 3D
     google.ts            OAuth de Google
     ical.ts              Generación del archivo .ics
     constants.ts         Catálogos de estados, roles, redes y prioridades
     utils.ts             Formato, fechas, zona horaria y utilidades
+public/
+  icon-192.png · icon-512.png  Íconos de ALSOS para Android (los usa manifest.ts)
 CONTRACT.md              Reglas internas de desarrollo
 ```
 
@@ -791,7 +862,7 @@ Para que no haya sorpresas:
   o pegando un CSV. No hay conexión automática con TikTok,
   Meta ni YouTube.
 - **La IA admite hasta tres estructuras por solicitud**, con ejecución secuencial durable.
-  Cada envío genera una variante de cada estructura. Intia no pone cupos diarios propios: el
+  Cada envío genera una variante de cada estructura. ALSOS no pone cupos diarios propios: el
   proveedor aplica los suyos.
 - **El motor automático de match está diseñado, no construido.** Hoy funciona el motor «Por
   tipo de video», que no gasta clave. El que lee el guion con IA es el siguiente paso.
@@ -801,14 +872,15 @@ Para que no haya sorpresas:
   en la pestaña **Productos** o desde «Cargar un nuevo producto» del generador. Además,
   *Variar ángulo* todavía abre el generador con el enfoque del guion en el campo de producto, no
   con la ficha del catálogo.
-- **La producción por equipos no avisa fuera de Intia.** Crea la tarea con su plazo y la muestra
+- **La producción por equipos no avisa fuera de ALSOS.** Crea la tarea con su plazo y la muestra
   en el panel **Producción** del video, pero no manda WhatsApp ni correo. Una marca sin equipo
   definido no recibe asignaciones automáticas, aunque el video tenga personas asignadas.
 - **El manual no guarda tu avance** ni califica las prácticas. ATC y jefe de editores tienen
-  manual, pero todavía no existen como perfiles de Intia.
+  manual, pero todavía no existen como perfiles de ALSOS.
 - **Los personajes 3D del manual no se pueden vender con el sistema.** Son modelos con derechos
-  de terceros, autorizados solo para uso interno; antes de ofrecer Intia a otra empresa hay que
-  reemplazarlos por modelos con licencia (o apagar `MANUAL_3D_PERSONAJES`).
+  de terceros (Spider-Man, Invisible Woman y Magik), autorizados solo para uso interno; antes de
+  ofrecer ALSOS a otra empresa hay que reemplazarlos por modelos con licencia (o apagar
+  `MANUAL_3D_PERSONAJES`).
 - **Las Personas todavía no se limitan por marca.** Un guionista o un estratega limitado a su
   marca ve todas las fichas de Personas. La decisión ya está tomada (personas vinculadas a una o
   varias marcas, o compartidas) y está pendiente de construir; ver la

@@ -3,6 +3,15 @@
 Rama `release/operacion-equipos` = `main` + catálogo de productos + investigación del manual + los cambios de esta entrega.
 El dueño pidió explícitamente ejecutar todo, subirlo y desplegarlo en Vercel.
 
+> **Estado al 30/09/2026.** Las migraciones `20260928120000_brand_catalog` y
+> `20260928180000_production_flow` se aplicaron en producción el 29/09/2026, y
+> `PRODUCT_CATALOG_ENABLED` y `PRODUCTION_FLOW_ENABLED` están encendidos. Este informe no
+> registra la observación de 24 h ni la nueva ejecución de `deployment-gate.sql` (ver
+> «Pendiente para el cierre»). Después de esta entrega se sumaron las guías de cámara con
+> imágenes y el small rig de Spider-Man con las tres luces visibles como equipos (commits
+> `cb32a3d`, `c5529fa` y `1b57cb8`). Desde el 30/09/2026 el producto se llama **ALSOS**; las
+> menciones a Intia de abajo se refieren al mismo sistema.
+
 ## 1. Ideas (síntomas reportados en producción)
 
 | # | Síntoma | Dónde |

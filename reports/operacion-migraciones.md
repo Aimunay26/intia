@@ -1,8 +1,15 @@
-# Migraciones y recuperación de Marketing OS
+# Migraciones y recuperación de ALSOS
 
 Actualizado: 09/09/2026. Aplicable a PostgreSQL; no usar SQLite ni `db push` para actualizar producción.
-Añadido el 28/09/2026: [migraciones del catálogo y del flujo de producción](#entrega-28092026-catálogo-y-flujo-de-producción).
+Añadido el 28/09/2026: [migraciones del catálogo y del flujo de producción](#entrega-28092026-catálogo-y-flujo-de-producción),
+aplicadas en producción el 29/09/2026.
 Lo anterior se conserva como registro de la entrega del 09/09.
+
+> Desde el 30/09/2026 el producto se llama ALSOS (antes Marketing OS e Intia). Los nombres
+> técnicos de este procedimiento (`intia_ops`, `intia_revision`, `intia_deployment_guard`,
+> `application_name=intia-*`) **no cambian**: están en migraciones ya aplicadas y en la guarda
+> de despliegue. Ver
+> [CONTRACT.md](../CONTRACT.md#nombre-del-producto-e-identificadores-técnicos).
 
 ## Estado de esta entrega
 
@@ -178,6 +185,12 @@ en PostgreSQL o usar una compilación de reversión que conserve el lector priva
 No borrar el almacén Blob ni sus claves mientras existan adjuntos que lo referencien.
 
 ## Entrega 28/09/2026: catálogo y flujo de producción
+
+**Estado:** aplicadas en producción (Neon) el 29/09/2026, con `PRODUCT_CATALOG_ENABLED` y
+`PRODUCTION_FLOW_ENABLED` encendidos en Vercel. Lo que sigue queda como procedimiento para otra
+instalación y para la reversa. Si no quedó registrado que se volvió a ejecutar
+`prisma/operations/deployment-gate.sql` después de migrar, compruébalo con la consulta del paso 3
+de «Aplicación en producción»: deben salir seis filas.
 
 Rama `release/operacion-equipos`. Dos migraciones nuevas, que Prisma aplica en este orden:
 

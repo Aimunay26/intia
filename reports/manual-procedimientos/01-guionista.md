@@ -1,6 +1,6 @@
 # Manual de procedimientos — Guionista / Creativo (WRITER)
 
-Perfil en Intia: WRITER · Borrador v1 (2026-09-28) para revisión del dueño.
+Perfil en ALSOS: WRITER · Borrador v1 (2026-09-28) para revisión del dueño.
 
 ## Misión
 
@@ -10,7 +10,7 @@ Convertir los objetivos de venta y de comunidad de cada marca en guiones vertica
 
 - Investigar producto, audiencia y objeciones reales con lo que aportan el dueño, ATC, community y el analista. Mantener al día las fichas de producto, el avatar y el glosario del cliente por marca y región.
 - Proponer y priorizar ideas en el tablero (etapa IDEA) según los objetivos del mes, los pilares, el nivel de conciencia del público y el calendario estacional peruano.
-- Escribir guiones con el Generador IA de Intia (marca, producto, contexto, actor, idea, estructura, ángulo, variante, cierre, duración), auditarlos y llevarlos de GUION a APROBADO con coordinación.
+- Escribir guiones con el Generador IA de ALSOS (marca, producto, contexto, actor, idea, estructura, ángulo, variante, cierre, duración), auditarlos y llevarlos de GUION a APROBADO con coordinación.
 - Escribir el gancho A y al menos un gancho B por cada guion de venta, y dejar registrados el ángulo, el formato y la hipótesis.
 - Escribir para lo que se ve y lo que se oye: acciones filmables, planos sugeridos con su propósito, emoción por escena, utilería, locación, texto en pantalla dentro de las zonas seguras y audio con licencia de uso comercial.
 - Entregar briefs al filmmaker y a producción, al talento, al jefe de editores y al editor, al community manager y a ATC para que todos ejecuten y vendan lo mismo que promete el guion.
@@ -20,7 +20,7 @@ Convertir los objetivos de venta y de comunidad de cada marca en guiones vertica
 
 ## Procedimiento (SOP)
 
-1. LUNES 9:00 · Lectura de datos: revisar en Intia las métricas semanales de los videos PUBLICADOS (vistas, retención 3 s, guardados, compartidos, clics, leads, pedidos, ingresos). Recibir de ATC el top 5 de preguntas y objeciones de DM/WhatsApp, y de community los comentarios destacados, los pedidos de «parte 2» y los audios en tendencia que sí están disponibles para cuentas de empresa.
+1. LUNES 9:00 · Lectura de datos: revisar en ALSOS las métricas semanales de los videos PUBLICADOS (vistas, retención 3 s, guardados, compartidos, clics, leads, pedidos, ingresos). Recibir de ATC el top 5 de preguntas y objeciones de DM/WhatsApp, y de community los comentarios destacados, los pedidos de «parte 2» y los audios en tendencia que sí están disponibles para cuentas de empresa.
 2. LUNES · Sesión de ideas (45 min) con coordinación: ganadores y perdedores, fechas del calendario estacional de las próximas 4 semanas, matriz ángulo × gancho × formato, priorización por impacto y facilidad de producción, y carga de las IDEAS en el tablero con avatar, objetivo (venta o comunidad), formato, nivel de conciencia y responsable.
 3. IDEA → GUION: por cada idea asignada, validar con el dueño o coordinación los datos de la ficha (precio final en S/, tallas, tiempos de entrega por zona, stock, vigencia de la oferta) y completar el Generador IA: video al que se unirá, marca, producto, «Qué debe saber la IA sobre el producto», quién actúa frente a cámara, idea en 3 frases, estructura, ángulo, variante, objetivo del cierre, gatillo de venta o cierre de comunidad y duración objetivo (20-45 s para venta; 30-60 s por defecto; hasta 90 s para vlog o storytime).
 4. Autorrevisión antes de enviar (15 min): cabecera coherente (título, avatar, enfoque, gancho, CTA), tiempos continuos, acciones filmables, planos posibles con el equipo real, lectura del diálogo en voz alta con cronómetro, búsqueda de datos inventados, revisión legal (afirmaciones, promociones, divulgación, rubro regulado), audio con licencia y redacción del gancho B.
@@ -73,9 +73,9 @@ Convertir los objetivos de venta y de comunidad de cada marca en guiones vertica
 
 ## Herramientas
 
-- Intia: Generador IA de guiones (video, marca, producto, contexto, quién actúa, idea, estructura, ángulo, variante, cierre de venta o de comunidad, duración, proveedor y modelo, historial y «Ver reintento»)
-- Intia: Estructuras (PAS, Antes y Después, Tutorial, UGC, Testimonio, Sketch, Cámara Escondida, Camaleón, Vlog, POV, etc.) y los 12 Ángulos creativos
-- Intia: tablero de contenido (IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO) y métricas semanales por video
+- ALSOS: Generador IA de guiones (video, marca, producto, contexto, quién actúa, idea, estructura, ángulo, variante, cierre de venta o de comunidad, duración, proveedor y modelo, historial y «Ver reintento»)
+- ALSOS: Estructuras (PAS, Antes y Después, Tutorial, UGC, Testimonio, Sketch, Cámara Escondida, Camaleón, Vlog, POV, etc.) y los 12 Ángulos creativos
+- ALSOS: tablero de contenido (IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO) y métricas semanales por video
 - Plantilla de guion a dos columnas (VIDEO | AUDIO), plantilla 9:16 con zonas seguras y cronómetro para la lectura en voz alta
 - TikTok Creative Center (Top Ads, tendencias) y Biblioteca de anuncios de Meta, para investigar referencias
 - YouTube Studio (Shorts: «Visto vs. deslizado», curva de retención), Instagram Insights (reels de prueba, tasa de omisión si está disponible) y TikTok Studio (curva de retención)
@@ -87,7 +87,7 @@ Convertir los objetivos de venta y de comunidad de cada marca en guiones vertica
 
 ## Nivel Principiante
 
-En 4-6 semanas, escribir guiones de 20-45 s que coordinación aprueba a la primera: una sola idea, gancho en los primeros 3 s, escenas filmables, texto y sonido bien planteados y un solo CTA. Usar bien el Generador IA de Intia y cumplir desde el primer guion las reglas básicas de publicidad y promociones del Perú.
+En 4-6 semanas, escribir guiones de 20-45 s que coordinación aprueba a la primera: una sola idea, gancho en los primeros 3 s, escenas filmables, texto y sonido bien planteados y un solo CTA. Usar bien el Generador IA de ALSOS y cumplir desde el primer guion las reglas básicas de publicidad y promociones del Perú.
 
 ### Anatomía del guion corto `GUI-P1`
 
@@ -97,7 +97,7 @@ Qué es un guion vertical, sus tres partes, cómo reducirlo a una idea, cómo me
 
 - [Cómo ser un Maestro del Guion (Sin experiencia)](https://www.youtube.com/watch?v=xcxhPCxgP_U) — Andrea Estratega l Marketing de Contenidos (es). Explica desde cero cómo se arma un guion de video corto (gancho, desarrollo, cierre) para redes; base ideal para la anatomía del guion vertical.
 - [Cómo hacer 7 guiones virales en menos de 30 min CON UNA ESTRUCTURA copia y pega](https://www.youtube.com/watch?v=R0SYgrojo3c) — Andrea Estratega l Marketing de Contenidos (es). Muestra una estructura repetible para escribir varios guiones cortos rápido: sirve para practicar reducir cada video a una idea y a tres partes.
-- [Video ensayo 4. El guion a dos columnas V 2023](https://www.youtube.com/watch?v=AK0lgU5N09g) — FRANCISCO UTRAY (UC3M) (es). Clase breve universitaria (UC3M) que explica el formato a dos columnas audio/video, el mismo que usa el guion de Intia.
+- [Video ensayo 4. El guion a dos columnas V 2023](https://www.youtube.com/watch?v=AK0lgU5N09g) — FRANCISCO UTRAY (UC3M) (es). Clase breve universitaria (UC3M) que explica el formato a dos columnas audio/video, el mismo que usa el guion de ALSOS.
 
 #### Gancho, cuerpo y cierre · _Plantilla_
 
@@ -220,7 +220,7 @@ Qué es un guion vertical, sus tres partes, cómo reducirlo a una idea, cómo me
 2. Columna VIDEO: plano sugerido, acción física, texto en pantalla y utilería.
 3. Columna AUDIO: diálogo palabra por palabra, voz en off (V.O.), música y efectos (SFX).
 4. Si el beat cambia de plano, abre una fila nueva.
-5. Comprueba que coincida con los campos de escena de Intia: beat, plano, acción, diálogo, sonido y texto en pantalla.
+5. Comprueba que coincida con los campos de escena de ALSOS: beat, plano, acción, diálogo, sonido y texto en pantalla.
 
 **Errores comunes:**
 
@@ -595,7 +595,7 @@ Escribir lo que se puede grabar y oír: acciones, planos sugeridos con propósit
 
 - [El SHOW DON'T TELL de una vez por todas | Consejos de escritura | Javier Miró](https://www.youtube.com/watch?v=JskjxgSFlH4) — Javier Miró (es). Explica con ejemplos cómo mostrar en lugar de contar: base para escribir acciones grabables en vez de explicaciones.
 - [CINEMATOGRAFÍA - Lenguaje Audiovisual (I): escalas de plano, ángulos, movimientos...](https://www.youtube.com/watch?v=CmPg9POBvV0) — Officium (es). Repaso claro de escalas de plano, ángulos y movimientos para que el guionista sugiera planos con propósito al filmmaker.
-- [Como hacer un DESGLOSE DE GUION - como escribir hojas de desglose, y realizar el marcaje de guion](https://www.youtube.com/watch?v=fd9EcHwSaQA) — OriginalScript (es). Enseña a desglosar un guion en utilería, locación y personajes: lo que el guion de Intia debe dejar listo para filmmaker y talento.
+- [Como hacer un DESGLOSE DE GUION - como escribir hojas de desglose, y realizar el marcaje de guion](https://www.youtube.com/watch?v=fd9EcHwSaQA) — OriginalScript (es). Enseña a desglosar un guion en utilería, locación y personajes: lo que el guion de ALSOS debe dejar listo para filmmaker y talento.
 
 #### Acción, no adjetivos · _Plantilla_
 
@@ -829,7 +829,7 @@ Escribir lo que se puede grabar y oír: acciones, planos sugeridos con propósit
 
 </details>
 
-### Generador IA de Intia `GUI-P5`
+### Generador IA de ALSOS `GUI-P5`
 
 Cómo llenar el pedido, darle buen contexto a la IA, elegir estructura y variante, auditar lo que devuelve y enviarlo a aprobación.
 
@@ -1030,7 +1030,7 @@ Elegir entre cierre de venta y de comunidad, pedir una sola acción y cumplir de
 
 **Pasos:**
 
-1. Objetivo de alcance o comunidad: cierre de comunidad del catálogo de Intia (Seguir · Parte 2, Guardar, Mándaselo, Etiquetar, Pregunta, Encuesta, Próximo tema, Tu duda en video, Muéstranos, Notificaciones, Hasta el final o Sin pedido), sin precios ni enlaces.
+1. Objetivo de alcance o comunidad: cierre de comunidad del catálogo de ALSOS (Seguir · Parte 2, Guardar, Mándaselo, Etiquetar, Pregunta, Encuesta, Próximo tema, Tu duda en video, Muéstranos, Notificaciones, Hasta el final o Sin pedido), sin precios ni enlaces.
 2. Objetivo de venta: gatillo de venta (Escasez, Urgencia, Motivo / Razón, Incentivo / Regalo, Impacto Visual o Directo).
 3. Marca el objetivo del cierre en el generador.
 4. Haz que el motivo del cierre salga del contenido del video.
@@ -1208,7 +1208,7 @@ Elegir entre cierre de venta y de comunidad, pedir una sola acción y cumplir de
 
 ## Nivel Intermedio
 
-Dominar los formatos ganadores de la agencia (PAS, Antes y Después, Tutorial, Testimonio, UGC, Sketch, Cámara Escondida, Camaleón, Vlog, Storytime y POV), sostener la retención después del gancho, trabajar con los 12 ángulos de Intia, escribir diálogos naturales y entregar paquetes completos (guion + gancho B + briefs) que se graban sin reescrituras, con criterio ético, legal y de políticas de plataforma.
+Dominar los formatos ganadores de la agencia (PAS, Antes y Después, Tutorial, Testimonio, UGC, Sketch, Cámara Escondida, Camaleón, Vlog, Storytime y POV), sostener la retención después del gancho, trabajar con los 12 ángulos de ALSOS, escribir diálogos naturales y entregar paquetes completos (guion + gancho B + briefs) que se graban sin reescrituras, con criterio ético, legal y de políticas de plataforma.
 
 ### Formatos que venden `GUI-I1`
 
@@ -1788,7 +1788,7 @@ Sostener la atención después del gancho: bucles abiertos, re-ganchos a mitad d
 
 ### Ángulos creativos `GUI-I3`
 
-Separar ángulo, gancho y formato, dominar los 12 ángulos de Intia, construir matrices de conceptos y usar ángulos de contraste y de contradicción sin engañar.
+Separar ángulo, gancho y formato, dominar los 12 ángulos de ALSOS, construir matrices de conceptos y usar ángulos de contraste y de contradicción sin engañar.
 
 **Videos del módulo:**
 
@@ -1798,11 +1798,11 @@ Separar ángulo, gancho y formato, dominar los 12 ángulos de Intia, construir m
 
 #### Ángulo, gancho, formato · _Plantilla_
 
-**Objetivo:** Distinguir el ángulo (por qué le importa al espectador), el gancho (cómo abre) y el formato (cómo se cuenta), y conocer los 12 ángulos de Intia.
+**Objetivo:** Distinguir el ángulo (por qué le importa al espectador), el gancho (cómo abre) y el formato (cómo se cuenta), y conocer los 12 ángulos de ALSOS.
 
 **Pasos:**
 
-1. Ángulo: el argumento de fondo. En Intia hay 12: Camaleón, Ellos vs Nosotros, Impacto Visual, POV Real, Anti-Consejo, Experimento, Storytime, Parodia / Humor, Frente al Hater, Hack Oculto, ASMR / Unboxing y Detrás de Cámaras.
+1. Ángulo: el argumento de fondo. En ALSOS hay 12: Camaleón, Ellos vs Nosotros, Impacto Visual, POV Real, Anti-Consejo, Experimento, Storytime, Parodia / Humor, Frente al Hater, Hack Oculto, ASMR / Unboxing y Detrás de Cámaras.
 2. Gancho: los primeros 3 s, que expresan ese ángulo.
 3. Formato: la estructura (PAS, sketch, tutorial…).
 4. Escribe primero el ángulo, luego 3 ganchos y al final elige el formato.
@@ -2530,7 +2530,7 @@ Leer retención 3 s, hold, guardados, compartidos, leads y pedidos para decidir 
 
 1. Pauta en Meta: hook rate = reproducciones de 3 s ÷ impresiones.
 2. Orgánico: en YouTube Shorts, «Visto vs. deslizado»; en Instagram, la tasa de omisión de los Reels si la cuenta ya la muestra; en TikTok, el punto de la curva de retención en el segundo 3.
-3. Registra la retención 3 s en la métrica semanal del video en Intia.
+3. Registra la retención 3 s en la métrica semanal del video en ALSOS.
 4. Compárala con la mediana propia de la cuenta por formato y por red (últimos 30 días), no con benchmarks genéricos ni entre redes distintas.
 5. Si está por debajo, reescribe solo el gancho y anota su tipo en el banco de ganchos.
 
@@ -3167,7 +3167,7 @@ Niveles de conciencia, pilares, series, calendario estacional peruano y adaptaci
 
 ### IA avanzada `GUI-A5`
 
-Sacar lo mejor del Generador de Intia: ejemplos ganadores, variantes controladas, control de calidad y qué hacer cuando la generación falla.
+Sacar lo mejor del Generador de ALSOS: ejemplos ganadores, variantes controladas, control de calidad y qué hacer cuando la generación falla.
 
 **Videos del módulo:**
 
@@ -3455,7 +3455,7 @@ Dirigir la sesión de ideas, dar retroalimentación objetiva a otros guionistas,
 
 CRÍTICA Y CORRECCIONES PRINCIPALES
 1) Lecciones que mezclaban dos temas: «Storytime y POV» se dividió en I2-05 «Storytime en tensión» e I2-06 «POV bien escrito» (nueva ESCENA_3D, con cámara a la altura de los ojos y manos desde abajo). «Brief a community y ATC» se dividió en I5-04 y I5-05. «Publicidad y claims» (P6-04) quedó solo en divulgación («Marcar la publicidad») y se creó P6-05 «Nada sin prueba».
-2) Progresión: P5-03 pedía elegir entre los 12 ángulos en Principiante, cuando se enseñan en I3. Ahora es «Estructura y variante», con el ángulo que asigna coordinación, y la lista completa de los 12 ángulos de Intia pasó a I3-01 (faltaban Parodia / Humor, Frente al Hater y ASMR / Unboxing). I6-02 dejó de repetir P6 y ahora es una auditoría que distingue exageración publicitaria, afirmación objetiva y promesa de resultado.
+2) Progresión: P5-03 pedía elegir entre los 12 ángulos en Principiante, cuando se enseñan en I3. Ahora es «Estructura y variante», con el ángulo que asigna coordinación, y la lista completa de los 12 ángulos de ALSOS pasó a I3-01 (faltaban Parodia / Humor, Frente al Hater y ASMR / Unboxing). I6-02 dejó de repetir P6 y ahora es una auditoría que distingue exageración publicitaria, afirmación objetiva y promesa de resultado.
 3) Huecos cubiertos: texto en pantalla y zonas seguras 9:16 (P4-05); sonido y música con licencia para cuentas de empresa (P4-06: Biblioteca de Música Comercial de TikTok, Meta Sound Collection, Biblioteca de audio de YouTube); retención a mitad del video (módulo nuevo GUI-I7: bucle abierto, re-ganchos cada 5-8 s, final en bucle); políticas de anuncios de Meta y TikTok (I6-04: atributos personales, funciones falsas, Spark Ads y anuncios de socio); rubros regulados (I6-05: alcohol Ley 28681, alimentos procesados Ley 30021, sorteos y apuestas, salud, finanzas); capturas de chats y datos personales (I6-06, Ley 29733); adaptación a cada red (A4-05) y manual de voz de marca (A6-04).
 4) Datos técnicos corregidos:
 - ESCENA_3D de planos (P4-02): ahora usa equivalencias reales de celular (principal ≈24-26 mm, 2x ≈48-52 mm, macro). Antes pedía 85 mm a 0,3 m, distancia a la que un teleobjetivo de celular no enfoca. Se añadió como error mostrado el gran angular pegado a la cara.
@@ -3487,7 +3487,7 @@ Se mantienen las del currículo base: TikTok Creative best practices, Meta/Insta
 - las etiquetas de la Guía 2024 (Publicidad, #Publicidad, #AnuncioContratado; evitar #Publi, #Embajador, #Ad);
 - que los testimonios deben ser genuinos y recientes;
 - el tope de multa de 700 UIT.
-En el código de Intia se verificaron los rótulos del formulario, los 12 ángulos, los 6 gatillos, los 12 cierres de comunidad, los estados del tablero y la lógica de reintentos.
+En el código de ALSOS se verificaron los rótulos del formulario, los 12 ángulos, los 6 gatillos, los 12 cierres de comunidad, los estados del tablero y la lógica de reintentos.
 
 LIMITACIONES
 El cupo de búsquedas web de la sesión ya estaba agotado, y las páginas de Indecopi, gob.pe y LP Derecho devolvieron 403/418. Por eso estos puntos se redactaron con conocimiento previo y lenguaje prudente, sin verificarlos en línea:

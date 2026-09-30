@@ -144,7 +144,7 @@ export function manualRoleSummary(slug: string): ManualRoleSummary | undefined {
   return MANUAL_ROLE_INDEX.find(role => role.slug === slug);
 }
 
-/** Perfil de trabajo de Intia → manual. ATC y jefe de editores todavía no tienen perfil propio. */
+/** Perfil de trabajo de ALSOS → manual. ATC y jefe de editores todavía no tienen perfil propio. */
 const PROFILE_TO_MANUAL: Record<string, readonly ManualRoleId[]> = {
   WRITER: ["GUIONISTA"],
   CAMERA: ["FILMMAKER"],

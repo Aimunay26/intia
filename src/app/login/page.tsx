@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertCircle } from "lucide-react";
-import { IntiaWordmark } from "@/components/intia-wordmark";
+import { AlsosWordmark } from "@/components/alsos-wordmark";
 
 import { getSession, needsBootstrap } from "@/lib/auth";
 import { isGoogleConfigured } from "@/lib/google";
@@ -47,7 +47,7 @@ export default async function LoginPage({
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-[420px]">
         <div className="mb-7 flex flex-col items-center text-center">
-          <IntiaWordmark className="mb-3 text-[48px]" />
+          <AlsosWordmark className="mb-3 text-[48px]" />
           <p className="text-brandtext mb-7 text-sm font-semibold">Ideas que se publican</p>
           <h1 className="text-ink text-[24px] font-bold tracking-tight">
             {bootstrap ? "Crea tu cuenta" : "Tu estudio, en un solo lugar"}

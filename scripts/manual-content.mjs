@@ -20,7 +20,7 @@ const source = path.join(root, "reports/manual-procedimientos/curriculo.json");
 const outDir = path.join(root, "src/content/manual");
 const curriculum = JSON.parse(fs.readFileSync(source, "utf8"));
 
-/** Orden de flujo del video. Los perfiles de Intia deciden qué tarjeta sale primero («Tu rol»). */
+/** Orden de flujo del video. Los perfiles de ALSOS deciden qué tarjeta sale primero («Tu rol»). */
 const ROLES = [
   { id: "GUIONISTA", slug: "guionista", name: "Guionista", profiles: ["WRITER"], tagline: "Convierte cada idea en un guion listo para grabar." },
   { id: "FILMMAKER", slug: "filmmaker", name: "Filmmaker", profiles: ["CAMERA"], tagline: "Graba en 4K a 60 fps material nítido y bien encuadrado, con buena luz y audio limpio." },

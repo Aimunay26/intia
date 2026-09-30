@@ -1,6 +1,6 @@
 "use client";
 
-// Adaptado de shadcn/ui (MIT), con los tokens y tamaños de Intia.
+// Adaptado de shadcn/ui (MIT), con los tokens y tamaños de ALSOS.
 import * as React from "react";
 import { DropdownMenu as Menu } from "radix-ui";
 import { cn } from "@/lib/ui-utils";

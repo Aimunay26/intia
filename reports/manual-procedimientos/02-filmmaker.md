@@ -1,16 +1,16 @@
 # Manual de procedimientos — Filmmaker / Cámara
 
-Perfil en Intia: CAMERA · Borrador v1 (2026-09-28) para revisión del dueño.
+Perfil en ALSOS: CAMERA · Borrador v1 (2026-09-28) para revisión del dueño.
 
 ## Misión
 
-Convertir cada guion aprobado en Intia en material vertical 9:16 nítido, bien iluminado, con audio limpio y cobertura completa (incluidas 5 variantes del hook), entregado nombrado y respaldado el mismo día, para que el editor monte un video que retenga en los primeros 3 segundos y venda sin tener que regrabar.
+Convertir cada guion aprobado en ALSOS en material vertical 9:16 nítido, bien iluminado, con audio limpio y cobertura completa (incluidas 5 variantes del hook), entregado nombrado y respaldado el mismo día, para que el editor monte un video que retenga en los primeros 3 segundos y venda sin tener que regrabar.
 
 ## Responsabilidades
 
 - Revisar los guiones en etapa GUION y avisar a coordinación, antes de la aprobación, si alguna escena no se puede grabar (locación, permisos, tiempo, seguridad).
 - Convertir el guion aprobado (escenas, hook, CTA) en lista de tomas, plan de luces y plan de audio antes del día de grabación.
-- Hacer el scouting de cada locación nueva a la hora de grabación y marcar 'Locación e iluminación listas' en Intia.
+- Hacer el scouting de cada locación nueva a la hora de grabación y marcar 'Locación e iluminación listas' en ALSOS.
 - Preparar, configurar y mantener el equipo: celulares, cámara (Sony ZV-E10 si la hay), trípodes, gimbal, luces (incluida la luz LED de mano), micrófonos, baterías, tarjetas y SSD.
 - Grabar con el estándar técnico de la agencia: 4K a 60 fps (4K a 120 fps en cámara lenta), siempre en Log si el equipo lo tiene, con el foco y la exposición bloqueados, y avisar al editor el perfil de color y la LUT de cada clip.
 - Encuadrar para 9:16 (y 16:9 cuando el video es para YouTube) con los ojos en la línea superior de la cuadrícula, respetando las zonas seguras de Reels, TikTok y Shorts y los recortes 4:5 y 3:4 de Instagram.
@@ -20,22 +20,22 @@ Convertir cada guion aprobado en Intia en material vertical 9:16 nítido, bien i
 - Asegurar la cobertura para edición: 5 variantes del hook, inserts de producto, b-roll, reacciones, colas de 2 s y fotos de portada.
 - En Cámara Escondida y con personas reales: ocultar cámaras y micrófonos, proteger a las personas y gestionar las cesiones de imagen y voz (art. 15 del Código Civil y Ley 29733).
 - Descargar, nombrar y respaldar (3-2-1) el material y entregarlo al editor con notas de tomas buenas.
-- Marcar en Intia los checks de GRABACION ('Grabado (todas las tomas)', 'Audio revisado', 'B-roll / tomas de apoyo'), pasar el video a EDICION y reportar incidencias.
+- Marcar en ALSOS los checks de GRABACION ('Grabado (todas las tomas)', 'Audio revisado', 'B-roll / tomas de apoyo'), pasar el video a EDICION y reportar incidencias.
 - Mantener el set seguro para personas, locales y equipos.
 - Revisar cada semana el feedback de edición y la retención a 3 s para mejorar su trabajo en el set.
 
 ## Procedimiento (SOP)
 
-1. Etapa GUION (antes de la aprobación): cuando coordinación comparte un guion en revisión, leerlo y comentar en la ficha de Intia en menos de 24 h si alguna escena no se puede grabar (locación, permisos, presupuesto, seguridad o tiempo), proponiendo una alternativa.
-2. LUNES – Planificación (1 h): en Intia, filtrar los videos asignados en estado APROBADO (check 'Guion aprobado por la marca' marcado); leer cada guion escena por escena; armar la lista de tomas y el plan por bloques (locación > luz > talento); pedir a producción props, vestuario, locación y permisos, y confirmar con ella los checks de PREPRODUCCIÓN 'Actor asignado y confirmado' y 'Props / vestuario conseguidos'.
+1. Etapa GUION (antes de la aprobación): cuando coordinación comparte un guion en revisión, leerlo y comentar en la ficha de ALSOS en menos de 24 h si alguna escena no se puede grabar (locación, permisos, presupuesto, seguridad o tiempo), proponiendo una alternativa.
+2. LUNES – Planificación (1 h): en ALSOS, filtrar los videos asignados en estado APROBADO (check 'Guion aprobado por la marca' marcado); leer cada guion escena por escena; armar la lista de tomas y el plan por bloques (locación > luz > talento); pedir a producción props, vestuario, locación y permisos, y confirmar con ella los checks de PREPRODUCCIÓN 'Actor asignado y confirmado' y 'Props / vestuario conseguidos'.
 3. D-1 – Preproducción: hacer el scouting de las locaciones nuevas a la hora de grabación (foto de prueba 9:16, luz, ruido, enchufes, prueba de parpadeo); confirmar por escrito el permiso del local; enviar al talento la lista de tomas, marcas y vestuario; cargar baterías (celulares, luz LED de mano, power banks y, si la hay, la cámara), vaciar las memorias ya respaldadas, formatear el SSD si se graba ProRes Log en iPhone, limpiar lentes y cargar el overlay de zona segura; marcar 'Locación e iluminación listas'.
-4. DÍA DE GRABACIÓN, al llegar: pasar los videos del día de APROBADO a GRABACION en Intia.
+4. DÍA DE GRABACIÓN, al llegar: pasar los videos del día de APROBADO a GRABACION en ALSOS.
 5. T-45 min – Montaje: revisar la seguridad (pesos en trípodes, cables con cinta), montar luces según el esquema (principal, relleno y luz trasera de color si el guion lo pide), apagar fluorescentes o fijar la obturación en 1/120 (o 1/60) contra el parpadeo de la red de 60 Hz, y dejar la luz LED de mano lista para las zonas con poca luz.
 6. T-20 min – Configuración: 9:16 (16:9 solo si la ficha dice YouTube), 4K a 60 fps (4K a 120 fps solo en las tomas de cámara lenta), Log siempre que el equipo lo tenga (Apple Log, Samsung Log o S-Log3), frecuencia automática de fps apagada, obturación 1/120 si la app o la cámara la dejan fijar, balance de blancos fijo y AE/AF bloqueado en los ojos; trípode a la altura del pecho del talento en los videos informativos, con los ojos en la línea superior de la cuadrícula; colocar el lavalier; prueba de audio con picos entre -12 y -6 dBFS; silenciar el set.
 7. Ensayo con el talento: marcas en el piso, postura (un pie un poco adelantado, rodillas sueltas y codos cerca del cuerpo), mirada al lente, movimientos y hook; si hay que seguirlo, ensayar el recorrido a su ritmo; revisar el encuadre con el overlay de zona segura; tomar fotos de continuidad.
 8. Grabación por set-ups (no en el orden del guion): primero las 5 variantes del hook; luego las escenas, marcando cada toma (identificación, colas de 2 s y 'buena/no' en voz alta).
 9. Cobertura: inserts de producto, secuencia de 5 planos del proceso, reacciones, plano general de ubicación, room tone de 30 s por locación y fotos fijas para la portada.
-10. Cierre de set: revisar al 100 % de zoom y con audífonos el foco y el audio de las tomas buenas; recoger las cesiones firmadas si hubo personas reales; marcar en Intia 'Grabado (todas las tomas)', 'Audio revisado' y 'B-roll / tomas de apoyo'.
+10. Cierre de set: revisar al 100 % de zoom y con audífonos el foco y el audio de las tomas buenas; recoger las cesiones firmadas si hubo personas reales; marcar en ALSOS 'Grabado (todas las tomas)', 'Audio revisado' y 'B-roll / tomas de apoyo'.
 11. Post-set (máximo 2 h después): descargar, renombrar con la nomenclatura, hacer el respaldo 3-2-1 verificado, escribir el TXT de notas (tomas buenas, fps, perfil de color y LUT a aplicar) y pegar el link en la ficha; pasar el video a EDICION y avisar al editor.
 12. Durante EDICION: responder las dudas del editor en menos de 2 h; regrabar un insert puntual si el jefe de editores lo pide, antes de la 'Revisión final aprobada'.
 13. PROGRAMADO/PUBLICADO: entregar al community manager los clips de detrás de cámaras y las fotos extra que pida.
@@ -69,7 +69,7 @@ Convertir cada guion aprobado en Intia en material vertical 9:16 nítido, bien i
 - Tomas inutilizables por foco, exposición o audio: menos del 5 % de las tomas marcadas como buenas.
 - Clips con el estándar técnico (4K a 60 fps, Log si el equipo lo permite, perfil y LUT anotados en el TXT): 100 % de las tomas marcadas como buenas.
 - Variantes del hook entregadas: 5 o más por video en el 100 % de los videos.
-- Entrega del material nombrado y respaldado: 2 h como máximo después de grabar; 100 % con link en la ficha de Intia.
+- Entrega del material nombrado y respaldado: 2 h como máximo después de grabar; 100 % con link en la ficha de ALSOS.
 - Checks de GRABACION marcados y video pasado a EDICION el mismo día: 100 %.
 - Cumplimiento del plan de rodaje: ±30 min por jornada; 95 % o más de los videos planificados quedan grabados.
 - Nota de calidad del jefe de editores: promedio mensual de 4/5 o más.
@@ -79,7 +79,7 @@ Convertir cada guion aprobado en Intia en material vertical 9:16 nítido, bien i
 
 ## Herramientas
 
-- App Intia: ficha del video, guion por escenas, checks de PREPRODUCCIÓN y GRABACION, estados APROBADO > GRABACION > EDICION y link del material.
+- App ALSOS: ficha del video, guion por escenas, checks de PREPRODUCCIÓN y GRABACION, estados APROBADO > GRABACION > EDICION y link del material.
 - Celular con 4K a 60 fps y, de preferencia, Log (iPhone 15 Pro, 16 Pro, 17 Pro o 18 Pro; Galaxy S24, S25 o S26, Z Fold6, Fold7, Fold8 o Fold8 Ultra, o Z Flip6, Flip7, Flip7 FE o Flip8) y 4K a 120 fps para cámara lenta (iPhone 16 Pro, 17 Pro, 18 Pro o Duo; Galaxy S24 Ultra, S25 Ultra, S26 Ultra o Z Fold8 Ultra); idealmente con teleobjetivo 2x/3x. Apps Blackmagic Camera (control manual, anti-parpadeo, cebras) y Final Cut Camera (Apple Log en HEVC sin SSD).
 - Cámara Sony ZV-E10 o ZV-E10 II (opcional) con el zoom de kit 16-50 mm, filtro ND variable de 40,5 mm, tarjetas SDXC (U3/V30 en la ZV-E10; V60 en la ZV-E10 II) y baterías de repuesto; lente 50 mm f/1.8 para retratos.
 - Trípode con cabezal fluido y adaptador vertical que llegue a la altura del pecho del talento (1.15-1.30 m de pie) sin subir la columna; brazo para cenitales; slider de 60-100 cm; palo selfie.
@@ -274,7 +274,7 @@ Preparar y configurar el celular como cámara de trabajo: limpieza, 4K a 60 fps 
 6. Bloquea el balance de blancos y no uses el modo Acción (graba como máximo en 2.8K) ni el modo Cine (sin Log y, salvo en el iPhone 18 Pro y el Duo, sin 60 fps) para las tomas principales.
 7. Usa el lente principal (1x); 2x/3x solo si es un teleobjetivo o el recorte de un sensor de 48-50 MP. Nunca zoom digital de 5x o más.
 8. Si tu equipo no llega a 4K60 (Galaxy A56/A57 o Sony ZV-E10 original), graba en 4K a 30 fps o en 1080p a 60 fps, anótalo con el sufijo _30 y avisa al editor: ese equipo no debería ser la cámara principal.
-9. Plantilla para la ficha del video en Intia: '9:16 · 4K · 60 fps (120 en cámara lenta) · Log (Apple, Samsung o S-Log3) o estándar sin HDR · fps automático apagado · balance fijo · lente 1x · cuadrícula ON'.
+9. Plantilla para la ficha del video en ALSOS: '9:16 · 4K · 60 fps (120 en cámara lenta) · Log (Apple, Samsung o S-Log3) o estándar sin HDR · fps automático apagado · balance fijo · lente 1x · cuadrícula ON'.
 
 **Errores comunes:**
 
@@ -454,7 +454,7 @@ Preparar y configurar el celular como cámara de trabajo: limpieza, 4K a 60 fps 
 **Pasos:**
 
 1. Por defecto, todo se graba en vertical 9:16, tipo Reels: sostén el celular o móntalo en el trípode en vertical.
-2. Graba en horizontal 16:9 solo si la ficha del video en Intia dice YouTube o formato horizontal. Si se necesitan las dos versiones, grábalas por separado, primero la vertical.
+2. Graba en horizontal 16:9 solo si la ficha del video en ALSOS dice YouTube o formato horizontal. Si se necesitan las dos versiones, grábalas por separado, primero la vertical.
 3. No grabes horizontal 'por si acaso' para recortar después: de un 4K horizontal solo queda una franja vertical de 1215x2160 px y se pierde lo que está a los costados.
 4. En los dos formatos, los ojos van sobre la línea horizontal superior de la cuadrícula (en 9:16, a 640 px de 1920; en 16:9, a 360 px de 1080).
 5. En 9:16 el sujeto va al centro y respeta la zona segura (14 % arriba y 35 % abajo); en 16:9 ubícalo en el tercio izquierdo o derecho, con espacio de mirada hacia donde mira.
@@ -1783,7 +1783,7 @@ Captar la voz clara, controlar el ruido del set, grabar room tone y entregar mat
 1. Descarga el material el mismo día, como máximo 2 horas después de terminar.
 2. Copia 1: en el disco SSD o la laptop de la agencia. Copia 2: en el Drive compartido de la marca. El original sigue en el celular o la tarjeta.
 3. Verifica que las copias tengan la misma cantidad de archivos y el mismo peso total que el origen, y abre 3 clips al azar.
-4. Pega el link de la carpeta en la ficha del video en Intia y marca los checks de GRABACION.
+4. Pega el link de la carpeta en la ficha del video en ALSOS y marca los checks de GRABACION.
 5. No borres el celular ni formatees la tarjeta hasta que el editor confirme que abrió el material.
 
 **Errores comunes:**
@@ -3011,11 +3011,11 @@ Planificar y grabar todo lo que el editor necesita: lista de tomas, variantes de
 
 #### Guion a lista de tomas · _Plantilla_
 
-**Objetivo:** Convertir el guion aprobado en Intia en una lista de tomas (shot list) antes del día de grabación.
+**Objetivo:** Convertir el guion aprobado en ALSOS en una lista de tomas (shot list) antes del día de grabación.
 
 **Pasos:**
 
-1. Abre en Intia el guion del video en estado APROBADO y recórrelo escena por escena (hook, desarrollo, cierre).
+1. Abre en ALSOS el guion del video en estado APROBADO y recórrelo escena por escena (hook, desarrollo, cierre).
 2. Para cada escena define plano, ángulo, movimiento, lente, luz, audio, props y duración estimada.
 3. Agrega la cobertura extra: 5 variantes del hook, 1 plano general, inserts de producto, b-roll, reacciones y fotos de portada.
 4. Ordena las tomas por set-up (misma luz y misma posición de cámara juntas), no en el orden del guion.
@@ -5033,7 +5033,7 @@ Explorar locaciones, planificar jornadas con varios videos, proteger el material
 4. Escucha 1 minuto en silencio: extractor, refrigeradora, calle, música. Pregunta si se pueden apagar y quién lo hace.
 5. Ubica enchufes, llaves de luz y la distancia disponible (3 m o más para planos generales).
 6. Confirma por escrito con el dueño o encargado el horario sin clientes, el acceso y el permiso para grabar a los empleados.
-7. Sube las fotos y notas a la ficha en Intia y marca 'Locación e iluminación listas' cuando todo esté resuelto.
+7. Sube las fotos y notas a la ficha en ALSOS y marca 'Locación e iluminación listas' cuando todo esté resuelto.
 
 **Errores comunes:**
 
@@ -5049,7 +5049,7 @@ Explorar locaciones, planificar jornadas con varios videos, proteger el material
 - [ ] Ruidos identificados
 - [ ] Enchufes y distancia
 - [ ] Permiso por escrito
-- [ ] Check en Intia
+- [ ] Check en ALSOS
 
 **Práctica:** Haz el scouting de una pollería y de un taller, y entrega la hoja de scouting de cada uno.
 
@@ -5068,13 +5068,13 @@ Explorar locaciones, planificar jornadas con varios videos, proteger el material
 
 **Pasos:**
 
-1. Lista en Intia los videos de la semana en estado APROBADO.
+1. Lista en ALSOS los videos de la semana en estado APROBADO.
 2. Agrúpalos por locación, luego por esquema de luz y luego por talento y vestuario.
 3. Calcula el tiempo por video: UGC sencillo, 20-30 min; sketch, 45-90 min; Cámara Escondida, 2-3 h.
 4. Pon primero lo que depende de la luz natural o del horario del local (el restaurante, antes de que abra).
 5. Deja 15 min de colchón cada 2 horas y un bloque para b-roll general.
 6. Comparte el plan con producción y con el talento 24 h antes.
-7. Columnas de la plantilla: Hora | Locación | Video (ID de Intia) | Escenas | Set-up/luz | Talento | Vestuario | Props | Estado.
+7. Columnas de la plantilla: Hora | Locación | Video (ID de ALSOS) | Escenas | Set-up/luz | Talento | Vestuario | Props | Estado.
 
 **Errores comunes:**
 
@@ -5181,7 +5181,7 @@ Explorar locaciones, planificar jornadas con varios videos, proteger el material
 
 **Pasos:**
 
-1. Después de cada entrega, revisa en Intia las notas del editor y del jefe de editores sobre tu material.
+1. Después de cada entrega, revisa en ALSOS las notas del editor y del jefe de editores sobre tu material.
 2. Clasifica cada nota: técnica (foco, audio, exposición), cobertura (faltó un plano o una variante del hook), continuidad o zona segura.
 3. Busca la causa raíz. Por ejemplo, 'audio con roce' viene de un lavalier sobre una polera sintética sin moleskin.
 4. Agrega lo aprendido a tu checklist personal.
@@ -5217,7 +5217,7 @@ Explorar locaciones, planificar jornadas con varios videos, proteger el material
 
 CRÍTICA DEL CURRÍCULO RECIBIDO (resumen) Y CORRECCIONES APLICADAS
 
-1) Flujo y SOP desalineados con la app. En Intia el estado se llama APROBADO (no 'GUION aprobado'): la secuencia real es IDEA > GUION > APROBADO > GRABACION > EDICION > PROGRAMADO > PUBLICADO, y existen checks de PREPRODUCCIÓN ('Guion aprobado por la marca', 'Actor asignado y confirmado', 'Props / vestuario conseguidos', 'Locación e iluminación listas'), verificados en src/lib/constants.ts. El SOP ahora filtra por APROBADO, incluye pasar el video a GRABACION al iniciar la jornada, agrega la revisión de factibilidad durante GUION (antes de la aprobación), el paso por PROGRAMADO/PUBLICADO y la revisión semanal por variante de hook. Se agregaron traspasos que faltaban: filmmaker > talento (lista de tomas y marcas el día anterior) y community manager > filmmaker (retención y tendencias).
+1) Flujo y SOP desalineados con la app. En ALSOS el estado se llama APROBADO (no 'GUION aprobado'): la secuencia real es IDEA > GUION > APROBADO > GRABACION > EDICION > PROGRAMADO > PUBLICADO, y existen checks de PREPRODUCCIÓN ('Guion aprobado por la marca', 'Actor asignado y confirmado', 'Props / vestuario conseguidos', 'Locación e iluminación listas'), verificados en src/lib/constants.ts. El SOP ahora filtra por APROBADO, incluye pasar el video a GRABACION al iniciar la jornada, agrega la revisión de factibilidad durante GUION (antes de la aprobación), el paso por PROGRAMADO/PUBLICADO y la revisión semanal por variante de hook. Se agregaron traspasos que faltaban: filmmaker > talento (lista de tomas y marcas el día anterior) y community manager > filmmaker (retención y tendencias).
 
 2) Huecos importantes cubiertos (13 lecciones nuevas o separadas; en total quedan 80):
 - 'Variantes del hook' (fm-i5): la misión exige retención a 3 s, pero ninguna lección enseñaba a grabar el hook. Ahora son 5 variantes obligatorias con sufijo _HOOKA a _HOOKE, más un KPI nuevo.

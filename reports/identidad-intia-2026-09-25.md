@@ -1,5 +1,12 @@
 # Identidad visual de Intia · Blanco y cobre
 
+> **Desde el 30/09/2026 la marca es ALSOS.** Este informe se conserva como registro de la
+> identidad del 25/09/2026: la paleta, la tipografía y los componentes siguen vigentes, pero el
+> nombre, el logotipo (`alsos.`) y el favicon cambiaron. La identidad vigente está en
+> [identidad-alsos-2026-09-30.md](identidad-alsos-2026-09-30.md). Las menciones a Intia y a
+> `.audit/intia-*.png` de abajo son históricas; las capturas nuevas se guardan como
+> `.audit/alsos-*.png`.
+
 Fecha: 25 de septiembre de 2026. Estado: implementado y validado localmente. Despliegue productivo pendiente de comprobar.
 
 ## Decisión y alcance

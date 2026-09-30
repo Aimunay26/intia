@@ -1,6 +1,6 @@
 # Manual de procedimientos — Editor audiovisual
 
-Perfil en Intia: EDITOR · Borrador v1 (2026-09-28) para revisión del dueño.
+Perfil en ALSOS: EDITOR · Borrador v1 (2026-09-28) para revisión del dueño.
 
 ## Misión
 
@@ -10,14 +10,14 @@ Convertir el material grabado y el guion aprobado en videos verticales que deten
 
 - Recibir el material del filmmaker, respaldarlo con la regla 3-2-1 y organizar el proyecto con la estructura de carpetas y la nomenclatura estándar del equipo.
 - Detectar en la ingesta los problemas típicos del material de celular (fps variable, video HDR, perfil Log) y resolverlos antes de editar; devolver al filmmaker lo que no se puede salvar.
-- Leer el guion aprobado en Intia y convertirlo en un mapa de edición: gancho, desarrollo, prueba y CTA, con su duración objetivo.
+- Leer el guion aprobado en ALSOS y convertirlo en un mapa de edición: gancho, desarrollo, prueba y CTA, con su duración objetivo.
 - Seleccionar las mejores tomas con un criterio claro: emoción, historia, ritmo y, al final, lo técnico.
 - Montar el video con gancho visual en 0-3 s, un cambio visual o sonoro cada 1-3 s y un CTA claro, según el formato (Cámara Escondida, Sketch, Vlog, Antes y Después, Camaleón, Tutorial, UGC, Testimonio, PAS).
 - Poner subtítulos y textos en pantalla sin faltas, con precios totales en S/ y promociones con su vigencia y stock, siempre dentro de la zona segura de TikTok, Reels y Shorts.
 - Hacer el diseño sonoro: voz limpia, música con licencia válida para cada plataforma, SFX con propósito y mezcla alrededor de -14 LUFS con picos de -1 dBTP como máximo.
 - Corregir color y exposición, estabilizar y reencuadrar a 9:16, cuidando que la piel se vea natural y que el producto conserve su color real.
 - Exportar las versiones por plataforma (TikTok, Reels, Shorts, WhatsApp) con las especificaciones correctas, en SDR y sin marcas de agua.
-- Gestionar las rondas de revisión con comentarios por timecode (máximo 2 rondas) y marcar los checks de postproducción en Intia ('Editado', 'Subtítulos y textos en pantalla', 'Música y efectos de sonido'); nunca marcar 'Revisión final aprobada'.
+- Gestionar las rondas de revisión con comentarios por timecode (máximo 2 rondas) y marcar los checks de postproducción en ALSOS ('Editado', 'Subtítulos y textos en pantalla', 'Música y efectos de sonido'); nunca marcar 'Revisión final aprobada'.
 - Entregar al community manager el paquete completo (video por plataforma, portada y nota de entrega) y a ATC el corte para WhatsApp.
 - Confirmar con coordinación, antes de entregar, las autorizaciones de imagen (Cámara Escondida, clientes reales, menores), la identificación de publicidad y la etiqueta de IA cuando correspondan.
 - Archivar el proyecto, liberar espacio y avisar al filmmaker qué tomas faltaron o sobraron.
@@ -25,9 +25,9 @@ Convertir el material grabado y el guion aprobado en videos verticales que deten
 
 ## Procedimiento (SOP)
 
-1. INICIO DEL DÍA (15 min): en el tablero de Intia, filtra los videos en EDICION y los de GRABACION que ya tengan marcado 'Grabado (todas las tomas)'. Ordénalos por fecha programada de publicación y confirma prioridades con el Jefe de Editores. Los videos en PAUSADO o CANCELADO no se tocan.
+1. INICIO DEL DÍA (15 min): en el tablero de ALSOS, filtra los videos en EDICION y los de GRABACION que ya tengan marcado 'Grabado (todas las tomas)'. Ordénalos por fecha programada de publicación y confirma prioridades con el Jefe de Editores. Los videos en PAUSADO o CANCELADO no se tocan.
 2. RECEPCIÓN (por video): verifica en la ficha que estén marcados 'Guion aprobado por la marca' (preproducción), 'Grabado (todas las tomas)' y 'Audio revisado' (grabación), y mira si está 'B-roll / tomas de apoyo'. Si falta material o el guion no está aprobado, avisa ese mismo día al filmmaker y a coordinación. No se edita sin guion aprobado. Si el video tiene Cámara Escondida, clientes reales o menores, pregunta a coordinación si ya están las autorizaciones de imagen firmadas.
-3. INGESTA: copia el material a MARCA_AAAAMMDD_FORMATO_TEMA/01_BRUTO, compara la cantidad de archivos y el peso, prueba 3 clips y completa el respaldo 3-2-1. Solo después autorizas al filmmaker a formatear la tarjeta. Revisa con MediaInfo si hay fps variable, HDR o Log y conviértelo si hace falta. Pega la ruta en la ficha de Intia.
+3. INGESTA: copia el material a MARCA_AAAAMMDD_FORMATO_TEMA/01_BRUTO, compara la cantidad de archivos y el peso, prueba 3 clips y completa el respaldo 3-2-1. Solo después autorizas al filmmaker a formatear la tarjeta. Revisa con MediaInfo si hay fps variable, HDR o Log y conviértelo si hace falta. Pega la ruta en la ficha de ALSOS.
 4. PREPARACIÓN: abre la plantilla de proyecto (1080x1920 a 30 fps, pistas nombradas y overlay de zona segura) e importa la música con licencia, los SFX y los gráficos de la marca.
 5. SELECCIÓN: ve todo el material una vez, marca las tomas por color (verde, amarillo, rojo) y arma la secuencia SELECTS, relacionando cada toma con su bloque del guion.
 6. ARMADO (rough cut, máximo 30 min): pon los selects en el orden del guion (GANCHO, DESARROLLO, PRUEBA, CTA), mide la duración y guarda la secuencia V0_ARMADO.
@@ -35,7 +35,7 @@ Convertir el material grabado y el guion aprobado en videos verticales que deten
 8. TEXTOS: corrige los subtítulos al 100%, copia los textos del guion (precio total en S/, promoción con vigencia y stock, CTA) y revísalos con el overlay de zona segura. Marca el check 'Subtítulos y textos en pantalla'.
 9. SONIDO: limpia la voz, pon la música con licencia de cada plataforma, suma SFX, haz ducking y aplica el preset de master del equipo (-14 LUFS / -1 dBTP). Marca el check 'Música y efectos de sonido' y anota la pista y su licencia.
 10. IMAGEN: conversión de Log/HDR si aplica, exposición y balance con scopes, tono de piel, igualación entre planos, color fiel del producto, estabilización y reencuadre.
-11. AUTORREVISIÓN Y V1: exporta con el preset INTIA_9x16_1080_30 y velo en el celular dos veces, con y sin sonido. Marca 'Editado', sube el link de la V1 a la ficha y pide revisión al Jefe de Editores o a coordinación.
+11. AUTORREVISIÓN Y V1: exporta con el preset ALSOS_9x16_1080_30 y velo en el celular dos veces, con y sin sonido. Marca 'Editado', sube el link de la V1 a la ficha y pide revisión al Jefe de Editores o a coordinación.
 12. CORRECCIONES: junta los comentarios por timecode, conviértelos en una lista de tareas, resuélvelos todos y sube la V2 como nueva versión. Máximo 2 rondas: la primera para estructura y la segunda para pulido. El revisor marca 'Revisión final aprobada'; el editor nunca la marca.
 13. ENTREGA: con 'Revisión final aprobada' marcada, exporta las versiones por plataforma (_TT, _IG, _YT, _WA), la portada (_COVER) y, si se pide, la versión 4:5. Déjalas en 07_ENTREGA y escribe la nota para el community (pista y licencia, si el audio va dentro de la app, textos clave, identificación de publicidad o etiqueta de IA). Avísale con el link de la ficha. El community marca los checks de publicación y mueve el video a PROGRAMADO o PUBLICADO; el editor no cambia ese estado.
 14. TRASPASO A ATC: manda a ATC el corte _WA con el precio y la vigencia de la promoción, para que responda por WhatsApp con el mismo mensaje del video.
@@ -58,7 +58,7 @@ Convertir el material grabado y el guion aprobado en videos verticales que deten
 
 **Entrega a:**
 
-- Jefe de Editores y coordinación (STRATEGY): versiones V1/V2 para revisión, con el link en la ficha de Intia.
+- Jefe de Editores y coordinación (STRATEGY): versiones V1/V2 para revisión, con el link en la ficha de ALSOS.
 - Community manager (PUBLISHER): archivo final por plataforma, portada, versión 4:5 si se pide y nota de entrega (pista y licencia, textos clave, identificación de publicidad o etiqueta de IA).
 - ATC: cortes cortos y livianos para Estados de WhatsApp, con el precio y la vigencia de la promoción.
 - Analista (ANALYST): lista de variantes (HOOK-A/B/C, _15/_30, TEST) con la descripción de qué cambia en cada una.
@@ -70,7 +70,7 @@ Convertir el material grabado y el guion aprobado en videos verticales que deten
 - Aprobación en primera revisión: ≥ 60% en nivel intermedio y ≥ 75% en nivel avanzado.
 - Rondas de corrección promedio: ≤ 1,5 por video.
 - Errores técnicos después de publicar: 0 (faltas ortográficas, texto tapado por la interfaz, audio saturado o desfasado, marca de agua, precio incorrecto, saltos de brillo por HDR sin convertir).
-- Checks de postproducción en Intia coherentes con el estado real del video: 100%.
+- Checks de postproducción en ALSOS coherentes con el estado real del video: 100%.
 - Retención a 3 s igual o mayor que el promedio del perfil (medida con el analista); en anuncios, hook rate de referencia ≥ 25-30%.
 - Loudness de entrega dentro de -14 LUFS ±1 y pico ≤ -1 dBTP en el 100% de los videos.
 - Reclamos o silenciamientos por copyright: 0.
@@ -79,7 +79,7 @@ Convertir el material grabado y el guion aprobado en videos verticales que deten
 
 ## Herramientas
 
-- Intia: tablero, fichas de video, checks de postproducción y links de versiones
+- ALSOS: tablero, fichas de video, checks de postproducción y links de versiones
 - CapCut (escritorio y móvil): subtítulos automáticos, beat, curvas de velocidad, seguimiento, LUT y plantillas (algunas funciones requieren plan Pro)
 - Adobe Premiere Pro: Transcripción y edición basada en texto, Sonido esencial (Mejorar voz, Ducking), Lumetri, Warp Stabilizer, Reencuadre automático, plantillas .mogrt
 - DaVinci Resolve gratuito: páginas Cut/Edit, Color (scopes, Shot Match, Color Space Transform), Fairlight (medidor de loudness)
@@ -97,7 +97,7 @@ Convertir el material grabado y el guion aprobado en videos verticales que deten
 
 ## Nivel Principiante
 
-En 4 semanas, entregar sin ayuda un Reel o TikTok de 20-45 s con proyecto ordenado y respaldado, material de celular revisado (fps constante, SDR), tomas bien elegidas, subtítulos sin faltas dentro de la zona segura, voz clara con música con licencia, master con el preset del equipo y export 1080x1920 correcto, marcando a tiempo los checks de postproducción en Intia y entregando el paquete completo al community.
+En 4 semanas, entregar sin ayuda un Reel o TikTok de 20-45 s con proyecto ordenado y respaldado, material de celular revisado (fps constante, SDR), tomas bien elegidas, subtítulos sin faltas dentro de la zona segura, voz clara con música con licencia, master con el preset del equipo y export 1080x1920 correcto, marcando a tiempo los checks de postproducción en ALSOS y entregando el paquete completo al community.
 
 ### Orden y preparación `ed-p1`
 
@@ -119,7 +119,7 @@ Cómo recibir el material, nombrarlo, respaldarlo, revisar los problemas típico
 2. Copia dentro la plantilla de subcarpetas del equipo: 01_BRUTO (una subcarpeta por cámara o celular), 02_AUDIO, 03_MUSICA_SFX, 04_GRAFICOS, 05_PROYECTO, 06_EXPORTS y 07_ENTREGA.
 3. Nombra los exports como MARCA_AAAAMMDD_FORMATO_TEMA_V1_9x16.mp4 y sube el número de versión en cada cambio (V2, V3...). Nunca uses 'final' ni 'final2'.
 4. Guarda el proyecto de CapCut, Premiere o Resolve dentro de 05_PROYECTO, nunca en el escritorio.
-5. Pega la ruta de la carpeta o el link de Drive en la ficha del video en Intia.
+5. Pega la ruta de la carpeta o el link de Drive en la ficha del video en ALSOS.
 
 **Errores comunes:**
 
@@ -133,7 +133,7 @@ Cómo recibir el material, nombrarlo, respaldarlo, revisar los problemas típico
 - [ ] La carpeta raíz tiene el nombre estándar.
 - [ ] Están las 7 subcarpetas numeradas.
 - [ ] Cada export tiene su versión en el nombre.
-- [ ] La ruta está pegada en la ficha de Intia.
+- [ ] La ruta está pegada en la ficha de ALSOS.
 
 **Práctica:** Arma la estructura completa para tres videos de prueba: una Cámara Escondida de Con Amor (polera), un Tutorial de un servicio (limpieza de muebles a domicilio) y un Antes y Después de una cevichería.
 
@@ -157,7 +157,7 @@ Cómo recibir el material, nombrarlo, respaldarlo, revisar los problemas típico
 3. Abre 3 clips al azar (uno del inicio, uno del medio y uno del final) para confirmar que se reproducen.
 4. Aplica la regla 3-2-1: una copia en el disco de trabajo, otra en un disco externo y una tercera en la nube del equipo.
 5. Solo cuando existan las 3 copias, avisa al filmmaker que ya puede formatear su tarjeta o borrar el celular.
-6. Anota en la ficha de Intia la cantidad de clips y el peso total.
+6. Anota en la ficha de ALSOS la cantidad de clips y el peso total.
 
 **Errores comunes:**
 
@@ -282,11 +282,11 @@ Cómo recibir el material, nombrarlo, respaldarlo, revisar los problemas típico
 
 #### Leer el guion · _Caso práctico_
 
-**Objetivo:** Convertir el guion aprobado de Intia en un mapa de edición antes de tocar la línea de tiempo.
+**Objetivo:** Convertir el guion aprobado de ALSOS en un mapa de edición antes de tocar la línea de tiempo.
 
 **Pasos:**
 
-1. Abre la ficha del video en Intia y confirma que esté marcado 'Guion aprobado por la marca'. Sin ese check, no se edita.
+1. Abre la ficha del video en ALSOS y confirma que esté marcado 'Guion aprobado por la marca'. Sin ese check, no se edita.
 2. Ubica en el guion el gancho (0-3 s), el desarrollo o las escenas, la prueba (demostración o testimonio) y el cierre con CTA (estilo Hormozi o de comunidad).
 3. Subraya los textos en pantalla obligatorios (precio en S/, vigencia y stock de la promoción, nombre del producto) y los momentos en que el producto sale en cámara.
 4. Anota la duración objetivo de cada bloque. Ejemplo para 30 s: gancho 3 s, desarrollo 17 s, prueba 5 s y CTA 5 s.
@@ -733,7 +733,7 @@ Subtítulos y textos en pantalla correctos, legibles y dentro de la zona segura,
 
 **Pasos:**
 
-1. Copia los textos exactos del guion aprobado en Intia; no los reescribas de memoria.
+1. Copia los textos exactos del guion aprobado en ALSOS; no los reescribas de memoria.
 2. Pon el gancho escrito entre 0 y 3 s, dentro de la zona segura y en 7 palabras o menos.
 3. Escribe el precio total en soles (con IGV incluido), con el formato de la marca: 'S/ 69' o 'S/ 69.90'.
 4. Si hay promoción, pon su vigencia y el stock mínimo disponible, como exige el Código de Protección al Consumidor (Ley 29571), con los datos que te pasa coordinación (ej. 'Solo hasta el 12/05 · 50 unidades').
@@ -892,7 +892,7 @@ Voz limpia, música que el negocio tiene derecho a usar y una mezcla donde la vo
 
 ### Exportar y entregar `ed-p6`
 
-Exportar con las especificaciones correctas, revisar en el celular, dejar la trazabilidad en Intia y entregar el paquete completo al community y a ATC.
+Exportar con las especificaciones correctas, revisar en el celular, dejar la trazabilidad en ALSOS y entregar el paquete completo al community y a ATC.
 
 **Videos del módulo:**
 
@@ -910,7 +910,7 @@ Exportar con las especificaciones correctas, revisar en el celular, dejar la tra
 2. Códec H.264 en MP4, perfil High, con bitrate VBR de unos 10-16 Mbps para 1080p30. YouTube recomienda como mínimo 8 Mbps a 30 fps y 12 Mbps a 60 fps.
 3. Audio AAC a 48 kHz, 320 kbps, estéreo.
 4. Espacio de color Rec.709 (SDR). No exportes en HDR ni en 4K para Reels, porque la app lo baja a 1080 de todas formas.
-5. En CapCut, quita la marca de agua y la escena final de CapCut. Guarda el preset como 'INTIA_9x16_1080_30'.
+5. En CapCut, quita la marca de agua y la escena final de CapCut. Guarda el preset como 'ALSOS_9x16_1080_30'.
 
 **Errores comunes:**
 
@@ -976,9 +976,9 @@ Exportar con las especificaciones correctas, revisar en el celular, dejar la tra
 
 </details>
 
-#### Checklist en Intia · _Checklist_
+#### Checklist en ALSOS · _Checklist_
 
-**Objetivo:** Dejar registrado en Intia cada paso de la postproducción, para que coordinación y el community sepan en qué va cada video.
+**Objetivo:** Dejar registrado en ALSOS cada paso de la postproducción, para que coordinación y el community sepan en qué va cada video.
 
 **Pasos:**
 
@@ -1181,7 +1181,7 @@ Los primeros 3 segundos: qué hace que alguien deje de hacer scroll y cómo prep
 1. Duplica la secuencia final aprobada.
 2. Cambia solo los primeros 3 s (otro plano, otro texto u otra frase). El cuerpo y el CTA quedan iguales.
 3. Usa tres tipos de gancho distintos: una pregunta, el resultado y una cifra o dato concreto.
-4. Nombra las versiones _HOOK-A, _HOOK-B y _HOOK-C y describe cada gancho en la ficha de Intia.
+4. Nombra las versiones _HOOK-A, _HOOK-B y _HOOK-C y describe cada gancho en la ficha de ALSOS.
 5. Entrégalas al community y al analista; ellos deciden cómo se prueban (días distintos, anuncios o Trial Reels) y te devuelven la retención a 3 s de cada una.
 
 **Errores comunes:**
@@ -2799,7 +2799,7 @@ Rondas de revisión con timecode, QC técnico completo, feedback útil a otros e
 
 **Pasos:**
 
-1. Sube la versión al sistema de revisión del equipo (Frame.io o Drive con comentarios) y pega el link en la ficha de Intia.
+1. Sube la versión al sistema de revisión del equipo (Frame.io o Drive con comentarios) y pega el link en la ficha de ALSOS.
 2. Pide que los comentarios lleven timecode y, cuando ayude, un dibujo sobre el cuadro.
 3. Ronda 1: estructura, ritmo y contenido. Ronda 2: pulido (color, textos, sonido). Máximo 2 rondas.
 4. Convierte los comentarios en una lista de tareas y marca cada una al resolverla.
@@ -2960,7 +2960,7 @@ Plantillas, presets, atajos, proxies, herramientas de IA y archivo: el sistema q
 **Pasos:**
 
 1. Arma un proyecto plantilla por programa, con las pistas, el overlay y las secuencias 9:16 y 4:5.
-2. Crea los presets: export (INTIA_9x16_1080_30), subtítulos por marca, cadena de audio del master y corrección base o LUT por marca.
+2. Crea los presets: export (ALSOS_9x16_1080_30), subtítulos por marca, cadena de audio del master y corrección base o LUT por marca.
 3. Arma las bibliotecas: SFX clasificados, música con licencia por mood y gráficos por marca.
 4. Guarda todo en la carpeta maestra compartida, con versión y fecha.
 5. Revisa y limpia el sistema cada mes con el Jefe de Editores.
@@ -3102,7 +3102,7 @@ Plantillas, presets, atajos, proxies, herramientas de IA y archivo: el sistema q
 
 **Pasos:**
 
-1. Cuando el video esté PUBLICADO en Intia, consolida el proyecto: el bruto usado, el proyecto, los exports finales, las autorizaciones y la música y los SFX con licencia.
+1. Cuando el video esté PUBLICADO en ALSOS, consolida el proyecto: el bruto usado, el proyecto, los exports finales, las autorizaciones y la música y los SFX con licencia.
 2. Verifica el 3-2-1 del paquete final.
 3. Borra la caché, los proxies y los renders temporales.
 4. Actualiza la ficha con la ruta del archivo y la pista y licencia usadas.
@@ -3135,4 +3135,4 @@ Plantillas, presets, atajos, proxies, herramientas de IA y archivo: el sistema q
 
 ## Notas de investigación y revisión
 
-CRÍTICA DEL BORRADOR (resumen): (1) HUECOS: faltaban 3 de los 9 formatos del equipo (Vlog, Camaleón y PAS), el Testimonio iba mezclado con el UGC, no se trataban los problemas más comunes del material de celular (fps variable que desfasa el audio, video HDR del iPhone que se ve lavado, perfil Log), faltaban la cámara lenta y las rampas de velocidad, la portada para la grilla 3:4 de Instagram, el uso responsable y el etiquetado de la IA, y la normativa peruana de imagen de las personas (clave para la Cámara Escondida), de promociones y de productos con advertencias. (2) DATOS TÉCNICOS INCORRECTOS O INCOMPLETOS: Voice Isolation, Smart Reframe, Magic Mask y Speed Warp de DaVinci Resolve son de la versión Studio, no de la gratuita (verificado en la página oficial de Blackmagic); los subtítulos desde audio también se marcan como función de Studio. La regla 'secuencia a los mismos fps de la grabación' rompía la cámara lenta: ahora la secuencia va a 30 fps (Perú es 60 Hz) y el material de 60 fps se interpreta. Las líneas de subtítulo de 32-40 caracteres (norma de TV 16:9) son demasiado largas para 9:16: se bajaron a 20-25. La música bajo la voz pasó de 18-24 dB a 12-18 dB. Límites de zoom unificados (1080: 110-115%; 4K vertical: hasta 2x = 100% real). En 'Un plano, tres encuadres' se aclaró que solo el 4K vertical permite 3 encuadres (el 4K horizontal recortado da 1215x2160). La grilla del perfil de Instagram es 3:4 (caja central de 1080x1440, verificado en PostFast), no 1:1. -14 LUFS se presenta como referencia del equipo (YouTube normaliza a ese nivel; TikTok e Instagram no publican una meta oficial) y se sugiere un medidor externo (Youlean) para quien edita en CapCut. Se agregó que un Short de más de 1 min con reclamo de Content ID puede bloquearse, y que la música de la biblioteca de CapCut no se usa en videos de marca salvo que indique uso comercial. Atajo de Premiere corregido a Ctrl+K. (3) PROGRESIÓN: el principiante ya construía la cadena de loudness que luego repetía el intermedio. Ahora el principiante aplica el preset de master del equipo y el intermedio lo construye. 'Variantes de gancho' (intermedio) quedó como el oficio de hacer ganchos y 'Pruebas A/B' (avanzado) como el diseño de la prueba con el analista, para que no se repitan. (4) LECCIONES QUE MEZCLABAN COSAS: 'Editar UGC y Testimonio' se separó en dos; '4:5 y portada' se separó en 'Recorte 4:5 del feed' y 'Portada del Reel'; 'Checklist en Intia' ya no incluye la entrega, que pasó a una lección propia ('Entrega al community', con el traspaso a ATC). (5) FLUJO E INTIA: se alinearon el SOP y las lecciones con src/lib/constants.ts: estados IDEA, GUION, APROBADO, GRABACION, EDICION, PROGRAMADO, PUBLICADO, PAUSADO y CANCELADO. El editor marca los checks 'Editado', 'Subtítulos y textos en pantalla' y 'Música y efectos de sonido'. 'Revisión final aprobada' la marca el revisor. Los checks de publicación ('Copy y hashtags escritos', 'Subido a la plataforma', 'Link guardado en la ficha') y el cambio de estado a PROGRAMADO o PUBLICADO son del community. Se agregaron los traspasos con ATC en las dos direcciones: el editor le envía el corte _WA y ATC devuelve preguntas y reclamos. (6) NORMATIVA PERUANA: 'Publicidad' o 'Anuncio contratado' en vez de '#Publi' o '#Ad', y advertencias de productos como el alcohol (verificado en Gestión sobre la guía de Indecopi). También se agregaron el Código Civil, art. 15 (imagen y voz solo con autorización expresa), la Ley 29571 (en las promociones deben verse la vigencia y el stock mínimo; precio total), la Ley 28681 (advertencia 'TOMAR BEBIDAS ALCOHÓLICAS EN EXCESO ES DAÑINO' en tragos de restaurantes), la Ley 30021 (octógonos, derivada a coordinación) y el DL 822. ESTRUCTURA E IDS: se conservaron todos los ids de módulos originales (ed-p1…ed-a5) y los ids de las lecciones que siguen existiendo. Hay un módulo nuevo, ed-i7 ('Formatos ganadores II'), que no tiene videos verificados: hay que buscarle videos (se dejaron youtubeQueries). El antiguo ed-i6-l6 'Cierre de venta' se movió a ed-i7-l4. El ed-i6-l5 ahora es solo 'Editar UGC' y el Testimonio es ed-i6-l7. El ed-a2-l3 ahora es solo el recorte 4:5 y la portada pasó a ed-a2-l4. Lecciones nuevas: ed-p1-l5, ed-p1-l6, ed-p6-l4, ed-i2-l5, ed-i5-l6, ed-i6-l7, ed-i7-l1 a ed-i7-l4, ed-a2-l4, ed-a3-l5 y ed-a5-l5. Los ids no son correlativos a propósito, para no reasignar un id viejo a otra lección; el orden de las tarjetas es el orden del arreglo. Se mantuvieron 2 ESCENA_3D (corte en acción, ahora con el eje de 180°, y un plano con tres encuadres, con escalas corregidas), porque para el editor el dueño pidió sobre todo videos de referencia. LIMITACIONES: se agotó el cupo de búsquedas web de la sesión. Solo se verificaron por WebFetch la página de Resolve Studio, el artículo de Gestión sobre Indecopi y la guía de portadas de PostFast. No se verificaron en esta sesión la redacción exacta de la Ley 29571 (art. 14), la Ley 28681 y el Código Civil (art. 15), las reglas de etiquetado de IA de TikTok y Meta, el límite de 60 s de los Estados de WhatsApp, el bloqueo de Shorts de más de 1 min con Content ID ni que los subtítulos automáticos de Resolve sean solo de Studio: conviene que el área legal y el Jefe de Editores los confirmen antes de publicar el manual. Las lecciones nuevas no llevan 'sources' porque no se pudieron consultar fuentes para ellas. Los umbrales de KPIs y tiempos siguen siendo propuestas iniciales para calibrar con los datos del equipo.
+CRÍTICA DEL BORRADOR (resumen): (1) HUECOS: faltaban 3 de los 9 formatos del equipo (Vlog, Camaleón y PAS), el Testimonio iba mezclado con el UGC, no se trataban los problemas más comunes del material de celular (fps variable que desfasa el audio, video HDR del iPhone que se ve lavado, perfil Log), faltaban la cámara lenta y las rampas de velocidad, la portada para la grilla 3:4 de Instagram, el uso responsable y el etiquetado de la IA, y la normativa peruana de imagen de las personas (clave para la Cámara Escondida), de promociones y de productos con advertencias. (2) DATOS TÉCNICOS INCORRECTOS O INCOMPLETOS: Voice Isolation, Smart Reframe, Magic Mask y Speed Warp de DaVinci Resolve son de la versión Studio, no de la gratuita (verificado en la página oficial de Blackmagic); los subtítulos desde audio también se marcan como función de Studio. La regla 'secuencia a los mismos fps de la grabación' rompía la cámara lenta: ahora la secuencia va a 30 fps (Perú es 60 Hz) y el material de 60 fps se interpreta. Las líneas de subtítulo de 32-40 caracteres (norma de TV 16:9) son demasiado largas para 9:16: se bajaron a 20-25. La música bajo la voz pasó de 18-24 dB a 12-18 dB. Límites de zoom unificados (1080: 110-115%; 4K vertical: hasta 2x = 100% real). En 'Un plano, tres encuadres' se aclaró que solo el 4K vertical permite 3 encuadres (el 4K horizontal recortado da 1215x2160). La grilla del perfil de Instagram es 3:4 (caja central de 1080x1440, verificado en PostFast), no 1:1. -14 LUFS se presenta como referencia del equipo (YouTube normaliza a ese nivel; TikTok e Instagram no publican una meta oficial) y se sugiere un medidor externo (Youlean) para quien edita en CapCut. Se agregó que un Short de más de 1 min con reclamo de Content ID puede bloquearse, y que la música de la biblioteca de CapCut no se usa en videos de marca salvo que indique uso comercial. Atajo de Premiere corregido a Ctrl+K. (3) PROGRESIÓN: el principiante ya construía la cadena de loudness que luego repetía el intermedio. Ahora el principiante aplica el preset de master del equipo y el intermedio lo construye. 'Variantes de gancho' (intermedio) quedó como el oficio de hacer ganchos y 'Pruebas A/B' (avanzado) como el diseño de la prueba con el analista, para que no se repitan. (4) LECCIONES QUE MEZCLABAN COSAS: 'Editar UGC y Testimonio' se separó en dos; '4:5 y portada' se separó en 'Recorte 4:5 del feed' y 'Portada del Reel'; 'Checklist en ALSOS' ya no incluye la entrega, que pasó a una lección propia ('Entrega al community', con el traspaso a ATC). (5) FLUJO Y ALSOS: se alinearon el SOP y las lecciones con src/lib/constants.ts: estados IDEA, GUION, APROBADO, GRABACION, EDICION, PROGRAMADO, PUBLICADO, PAUSADO y CANCELADO. El editor marca los checks 'Editado', 'Subtítulos y textos en pantalla' y 'Música y efectos de sonido'. 'Revisión final aprobada' la marca el revisor. Los checks de publicación ('Copy y hashtags escritos', 'Subido a la plataforma', 'Link guardado en la ficha') y el cambio de estado a PROGRAMADO o PUBLICADO son del community. Se agregaron los traspasos con ATC en las dos direcciones: el editor le envía el corte _WA y ATC devuelve preguntas y reclamos. (6) NORMATIVA PERUANA: 'Publicidad' o 'Anuncio contratado' en vez de '#Publi' o '#Ad', y advertencias de productos como el alcohol (verificado en Gestión sobre la guía de Indecopi). También se agregaron el Código Civil, art. 15 (imagen y voz solo con autorización expresa), la Ley 29571 (en las promociones deben verse la vigencia y el stock mínimo; precio total), la Ley 28681 (advertencia 'TOMAR BEBIDAS ALCOHÓLICAS EN EXCESO ES DAÑINO' en tragos de restaurantes), la Ley 30021 (octógonos, derivada a coordinación) y el DL 822. ESTRUCTURA E IDS: se conservaron todos los ids de módulos originales (ed-p1…ed-a5) y los ids de las lecciones que siguen existiendo. Hay un módulo nuevo, ed-i7 ('Formatos ganadores II'), que no tiene videos verificados: hay que buscarle videos (se dejaron youtubeQueries). El antiguo ed-i6-l6 'Cierre de venta' se movió a ed-i7-l4. El ed-i6-l5 ahora es solo 'Editar UGC' y el Testimonio es ed-i6-l7. El ed-a2-l3 ahora es solo el recorte 4:5 y la portada pasó a ed-a2-l4. Lecciones nuevas: ed-p1-l5, ed-p1-l6, ed-p6-l4, ed-i2-l5, ed-i5-l6, ed-i6-l7, ed-i7-l1 a ed-i7-l4, ed-a2-l4, ed-a3-l5 y ed-a5-l5. Los ids no son correlativos a propósito, para no reasignar un id viejo a otra lección; el orden de las tarjetas es el orden del arreglo. Se mantuvieron 2 ESCENA_3D (corte en acción, ahora con el eje de 180°, y un plano con tres encuadres, con escalas corregidas), porque para el editor el dueño pidió sobre todo videos de referencia. LIMITACIONES: se agotó el cupo de búsquedas web de la sesión. Solo se verificaron por WebFetch la página de Resolve Studio, el artículo de Gestión sobre Indecopi y la guía de portadas de PostFast. No se verificaron en esta sesión la redacción exacta de la Ley 29571 (art. 14), la Ley 28681 y el Código Civil (art. 15), las reglas de etiquetado de IA de TikTok y Meta, el límite de 60 s de los Estados de WhatsApp, el bloqueo de Shorts de más de 1 min con Content ID ni que los subtítulos automáticos de Resolve sean solo de Studio: conviene que el área legal y el Jefe de Editores los confirmen antes de publicar el manual. Las lecciones nuevas no llevan 'sources' porque no se pudieron consultar fuentes para ellas. Los umbrales de KPIs y tiempos siguen siendo propuestas iniciales para calibrar con los datos del equipo.

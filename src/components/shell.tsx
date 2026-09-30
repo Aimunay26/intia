@@ -30,7 +30,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { BrandSwitcher } from "@/components/brand-switcher";
-import { IntiaWordmark } from "@/components/intia-wordmark";
+import { AlsosWordmark } from "@/components/alsos-wordmark";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { GUIA_TARGETS, GuiaOverlay, GuiaProvider } from "@/components/guia";
 import { NavigationMeasurements } from "@/components/navigation-measurements";
@@ -199,7 +199,7 @@ export function Shell({
     <>
       <div className="flex shrink-0 items-center gap-2.5 px-6 pt-6 pb-5">
         <div className="min-w-0">
-          <Link href="/" aria-label="Intia · Ir al panel"><IntiaWordmark /></Link>
+          <Link href="/" aria-label="ALSOS · Ir al panel"><AlsosWordmark /></Link>
           <p className="text-inkmuted mt-2 text-[10.5px] font-medium">Ideas que se publican</p>
         </div>
         <div className="ml-auto lg:hidden">
@@ -304,7 +304,7 @@ export function Shell({
             >
               <Menu size={18} />
             </button>
-            <Link href="/" aria-label="Intia · Ir al panel" className="shrink-0"><IntiaWordmark className="text-[24px]" /></Link>
+            <Link href="/" aria-label="ALSOS · Ir al panel" className="shrink-0"><AlsosWordmark className="text-[24px]" /></Link>
             <span className="text-inkmuted hidden min-w-0 truncate text-xs sm:inline">{orgName}</span>
             {/* Marca activa siempre a la vista en móvil; abre el mismo menú que el selector del cajón. */}
             <div className="ml-auto flex min-w-0 items-center gap-1">

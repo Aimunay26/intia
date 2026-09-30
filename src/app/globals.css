@@ -80,7 +80,7 @@
   --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Consolas,
     monospace;
 
-  /* shadcn/ui comparte los tokens de Intia; no hay un segundo tema. */
+  /* shadcn/ui comparte los tokens de ALSOS; no hay un segundo tema. */
   --color-background: var(--canvas);
   --color-foreground: var(--ink);
   --color-card: var(--surface);

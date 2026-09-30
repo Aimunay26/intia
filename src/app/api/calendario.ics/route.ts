@@ -35,12 +35,12 @@ async function downloadCalendar(request: Request) {
   const hasta = new Date(); hasta.setUTCFullYear(hasta.getUTCFullYear() + 1);
   const uid = (kind: string, id: string) => createHash("sha256").update(`${subscription.id}:${kind}:${id}`).digest("hex") + "@intia";
   const ics = (name: string, items: IcsEvent[]) => new NextResponse(buildIcs(name, items), {
-    headers: { ...CALENDAR_CACHE_HEADERS, "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": 'inline; filename="intia.ics"' },
+    headers: { ...CALENDAR_CACHE_HEADERS, "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": 'inline; filename="alsos.ics"' },
   });
   if (subscription.person) {
     const items = await personalItems(subscription.person, { desde, hasta }, uid);
     if (!items) return respond("Tu calendario supera el límite de esta suscripción. Pide a coordinación que cierre pasos antiguos.", 503);
-    return ics("Intia · Mi trabajo", items);
+    return ics("ALSOS · Mi trabajo", items);
   }
   const scope = subscription.scope === "BRAND" ? { brandId: subscription.brandId! } : {};
   const window = { gte: desde, lte: hasta };
@@ -54,7 +54,7 @@ async function downloadCalendar(request: Request) {
   const items: IcsEvent[] = [];
   pushVideoDates(items, videos, { desde, hasta }, uid);
   for (const event of events) items.push({ uid: uid("event", event.id), title: event.title, start: event.startAt, end: event.endAt, allDay: event.allDay, updatedAt: event.updatedAt });
-  return ics(subscription.brand ? `Intia · ${subscription.brand.name}` : "Intia · Agenda completa", items);
+  return ics(subscription.brand ? `ALSOS · ${subscription.brand.name}` : "ALSOS · Agenda completa", items);
 }
 
 type VideoRow = { id: string; title: string; scheduledDate: Date; shootDate: Date | null; updatedAt: Date; brand: { name: string } };

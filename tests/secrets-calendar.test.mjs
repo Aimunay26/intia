@@ -75,7 +75,7 @@ test('feed personal: sus pasos, sus videos sin duplicar Grabar/Publicar y la age
   const {state,get}=feedFixture();
   const response=await get();assert.equal(response.status,200);assert.match(response.headers.get('cache-control'),/private, no-store/);
   const body=(await response.text()).replace(/\r\n /g,'');
-  assert.match(body,/X-WR-CALNAME:Intia · Mi trabajo/);
+  assert.match(body,/X-WR-CALNAME:ALSOS · Mi trabajo/);
   assert.match(body,/SUMMARY:Editar · Marca A: Receta/);
   assert.match(body,/SUMMARY:Diseño · Marca A: Portada/);
   assert.match(body,/SUMMARY:Publicar · Marca A: Receta/,'la publicación no es suya: queda la fecha del video');
@@ -123,7 +123,7 @@ test('los enlaces del Dueño no cambian: exigen Dueño y nunca llevan pasos ni p
   assert.equal((await get()).status,401,'un miembro nunca emite un enlace global');
   person.role='OWNER';
   const body=(await (await get()).text()).replace(/\r\n /g,'');
-  assert.match(body,/X-WR-CALNAME:Intia · Agenda completa/);assert.match(body,/Grabar · Marca A: Receta/);assert.match(body,/Publicar · Marca A: Receta/);
+  assert.match(body,/X-WR-CALNAME:ALSOS · Agenda completa/);assert.match(body,/Grabar · Marca A: Receta/);assert.match(body,/Publicar · Marca A: Receta/);
   assert.equal(state.calls.filter(([kind])=>kind==='step').length,0);
   const [,videos]=state.calls.find(([kind])=>kind==='video');assert.equal(videos.where.assignments,undefined);
 }));

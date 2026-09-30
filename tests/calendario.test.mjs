@@ -226,3 +226,195 @@ test("lista móvil: hoy primero, días pasados aparte y días vacíos agrupados"
   ]);
   assert.deepEqual(cal.shortDay("2026-09-28"), { semana: "Lun", dia: 28 });
 });
+
+/* ------------------------------------------------ PASOS DE LA CADENA -- */
+// Cadena de entregas + CALENDARIO_PASOS: chips por paso con responsable y estado, sin
+// duplicar Grabar/Publicar y con «Solo lo mío» por defecto según el perfil.
+
+const scope = load("src/lib/production-scope.ts", { "@/lib/prisma": { prisma: new Proxy({}, { get: () => assert.fail("No debe consultar la base") }) } });
+const ahora = new Date("2026-09-30T15:00:00.000Z");
+const finDe = (key) => new Date(`${key}T23:59:59.999-05:00`);
+const fila = (id, step, status, dueAt, extra = {}) => ({
+  id,
+  step,
+  status,
+  dueAt,
+  contentItemId: extra.video ?? "v1",
+  brandId: "b1",
+  assigneeId: "assigneeId" in extra ? extra.assigneeId : "ana",
+  assignee: "assigneeId" in extra ? (extra.assigneeId ? { name: extra.name ?? "Otra" } : null) : { name: "Ana Pérez" },
+  contentItem: { title: extra.title ?? "Receta", brand: { name: "Con Amor" } },
+});
+
+test("los chips de paso llevan verbo corto, responsable y estado (vencido, devuelto, sin asignar, hecho)", () => {
+  const filas = [
+    fila("g", "GRABACION", "PENDIENTE", finDe("2026-09-29")),
+    fila("e", "EDICION", "DEVUELTO", finDe("2026-10-01")),
+    fila("gu", "GUION", "PENDIENTE", finDe("2026-10-01"), { video: "v2", assigneeId: null }),
+    fila("p", "PUBLICACION", "HECHO", finDe("2026-09-28"), { video: "v3" }),
+    fila("d", "DISENO", "PENDIENTE", new Date("2026-10-01T20:30:00.000Z"), { video: "v4", assigneeId: "yo", name: "Yo" }),
+  ];
+  const devueltos = cal.returnedStepKeys(filas.map((f) => ({ contentItemId: f.contentItemId, step: f.step, status: f.status })));
+  assert.deepEqual([...devueltos], ["v1:GRABACION"], "la edición devuelta reabre la grabación de ese video");
+  const pasos = cal.toCalendarSteps(scope.toStepEntries(filas, ahora), { returned: devueltos, userId: "yo" });
+  const porId = Object.fromEntries(pasos.map((p) => [p.id, p]));
+  assert.equal(porId.e, undefined, "el paso devuelto no se pinta: se pinta el que volvió a abrirse");
+  assert.deepEqual(pasos.map((p) => [p.id, p.label]), [["p", "Publicar"], ["g", "Grabar"], ["gu", "Guion"], ["d", "Diseño"]]);
+  assert.deepEqual(cal.stepFlags(porId.g), ["Vencido", "Devuelto"]);
+  assert.deepEqual(cal.stepFlags(porId.gu), ["Sin asignar"]);
+  assert.deepEqual(cal.stepFlags(porId.p), ["Hecho"], "lo hecho no sale vencido ni devuelto");
+  assert.deepEqual(cal.stepFlags(porId.d), ["Pendiente"]);
+  assert.equal(porId.d.time, "15:30", "solo el diseño lleva hora");
+  assert.equal(porId.g.time, null);
+  assert.equal(porId.d.mine, true);
+  assert.equal(porId.g.mine, false);
+  assert.equal(porId.gu.assigneeName, null);
+  assert.equal(cal.stepDescription(porId.g), "Grabar · Con Amor · Receta · Ana Pérez · Vencido · Devuelto");
+  assert.match(cal.stepDescription(porId.gu), /Sin asignar/);
+  assert.match(cal.stepDescription(porId.d), /vence a las 15:30/);
+});
+
+test("solo DEVUELTO marca devuelto, y solo al paso al que se devuelve", () => {
+  const keys = cal.returnedStepKeys([
+    { contentItemId: "v1", step: "PUBLICACION", status: "DEVUELTO" },
+    { contentItemId: "v2", step: "EDICION", status: "CANCELADO" },
+    { contentItemId: "v3", step: "GUION", status: "DEVUELTO" },
+    { contentItemId: "v4", step: "GRABACION", status: "DEVUELTO" },
+  ]);
+  assert.deepEqual([...keys], ["v1:EDICION"], "Guion y Grabar no devuelven a nadie");
+  const [editar] = cal.toCalendarSteps(scope.toStepEntries([fila("e", "EDICION", "PENDIENTE", finDe("2026-10-05"), { video: "v1" })], ahora), {
+    returned: keys,
+    userId: "ana",
+  });
+  assert.equal(editar.returned, true);
+  const [hecho] = cal.toCalendarSteps(scope.toStepEntries([fila("e", "EDICION", "HECHO", finDe("2026-10-05"), { video: "v1" })], ahora), {
+    returned: keys,
+    userId: "ana",
+  });
+  assert.equal(hecho.returned, false, "un paso hecho ya no está devuelto");
+});
+
+test("un paso Grabar/Publicar reemplaza al chip de la fecha del video: una sola fecha por cosa", () => {
+  const derivadas = cal.videoEntries(
+    [video("v1", "Receta", "2026-10-02T17:00:00.000Z", "2026-09-30T15:00:00.000Z"), video("v2", "Sin paso", "2026-10-02T17:00:00.000Z", "2026-09-30T15:00:00.000Z")],
+    { grabacion: true }
+  );
+  const filas = [fila("g", "GRABACION", "PENDIENTE", finDe("2026-09-30")), fila("p", "PUBLICACION", "CANCELADO", finDe("2026-10-02"))];
+  const cubiertas = scope.coveredVideoDates(filas);
+  assert.deepEqual(cubiertas, ["v1:GRABACION"], "un paso cancelado no cubre nada");
+  const quedan = cal.dedupeVideoEntries(derivadas, cubiertas);
+  assert.deepEqual(quedan.map((e) => `${e.kind}:${e.id}`), ["PUBLICACION:v1", "GRABACION:v2", "PUBLICACION:v2"]);
+  assert.equal(cal.dedupeVideoEntries(derivadas, []), derivadas, "sin pasos, el calendario de siempre");
+  // En el mismo día: el paso ocupa el lugar de Grabar (orden de la cadena) y no hay dos Grabar de v1.
+  const pasos = cal.toCalendarSteps(scope.toStepEntries(filas, ahora), { userId: "ana" });
+  const dia = cal.itemsOfDay("2026-09-30", [...quedan, ...pasos], []);
+  assert.deepEqual(dia.videos.map((e) => (e.kind === "PASO" ? `PASO:${e.step}:${e.videoId}` : `${e.kind}:${e.id}`)), ["PASO:GRABACION:v1", "GRABACION:v2"]);
+});
+
+test("dentro del día manda el orden de la cadena: Guion, Grabar, Editar, Publicar y Diseño", () => {
+  const dia = new Date("2026-10-01T17:00:00.000Z");
+  const paso = (step, title) => ({ kind: "PASO", step, title, date: dia });
+  const entradas = [
+    paso("DISENO", "A"),
+    { kind: "PUBLICACION", title: "B", date: dia },
+    paso("EDICION", "C"),
+    paso("GUION", "D"),
+    { kind: "GRABACION", title: "E", date: dia },
+    paso("GRABACION", "A"),
+  ];
+  const orden = cal.groupEntriesByDay(entradas).get("2026-10-01").map((e) => `${e.step ?? e.kind}:${e.title}`);
+  assert.deepEqual(orden, ["GUION:D", "GRABACION:A", "GRABACION:E", "EDICION:C", "PUBLICACION:B", "DISENO:A"]);
+});
+
+test("«Solo lo mío» viene activo para perfiles por asignación y el community, y ?mio= lo cambia", () => {
+  const miembro = (profiles) => ({ id: "yo", role: "MEMBER", profiles, brandIds: ["b1"] });
+  const casos = [
+    [{ id: "d", role: "OWNER" }, false],
+    [miembro(["CAMERA"]), true],
+    [miembro(["EDITOR"]), true],
+    [miembro(["TALENT"]), true],
+    [miembro(["DESIGNER"]), true],
+    [miembro(["PUBLISHER"]), true],
+    [miembro(["STRATEGY"]), false],
+    [miembro(["WRITER"]), false],
+    [miembro(["PRODUCTION"]), false],
+    [miembro(["CAMERA", "STRATEGY"]), false],
+    [miembro(["PUBLISHER", "PRODUCTION"]), false],
+    [miembro(["PUBLISHER", "EDITOR"]), true],
+  ];
+  for (const [user, esperado] of casos) {
+    const quien = `${user.role} ${user.profiles ?? ""}`;
+    assert.equal(cal.mineByDefault(user), esperado, quien);
+    assert.equal(cal.resolveMine(undefined, user), esperado, quien);
+    assert.equal(cal.resolveMine("1", user), true, quien);
+    assert.equal(cal.resolveMine("0", user), false, quien);
+    assert.equal(cal.resolveMine("sí", user), esperado, "valores raros caen al de su perfil");
+    // El enlace solo lleva ?mio= cuando se aparta del valor de su perfil.
+    assert.equal(cal.mineParam(esperado, user), undefined, quien);
+    assert.equal(cal.mineParam(!esperado, user), esperado ? "0" : "1", quien);
+  }
+});
+
+test("capa de pasos de la página: filtros del video, devueltos y fechas cubiertas con el mismo filtro de persona", async () => {
+  const previo = process.env.PRODUCTION_CHAIN_BRANDS;
+  const llamadas = [];
+  const prisma = {
+    contentItem: { findMany: async (args) => (llamadas.push(["video", args]), [{ id: "v1" }]) },
+    productionStep: {
+      findMany: async (args) => {
+        llamadas.push(["paso", args]);
+        return args.where.status === "DEVUELTO"
+          ? [{ contentItemId: "v1", step: "EDICION", status: "DEVUELTO" }]
+          : [{ contentItemId: "v9", step: "PUBLICACION", status: "HECHO" }];
+      },
+    },
+  };
+  const ui = new Proxy({}, { get: () => () => null });
+  const pagina = load("src/app/(app)/calendario/member-calendar.tsx", {
+    "@/lib/prisma": { prisma },
+    "@/lib/render-context": ui,
+    "@/lib/brand-context": ui,
+    "@/components/ui": ui,
+    "./calendar-day": ui,
+    "./calendar-grid": ui,
+    "./event-form": ui,
+  });
+  try {
+    process.env.PRODUCTION_CHAIN_BRANDS = "b1";
+    const yo = { id: "yo", role: "MEMBER", profiles: ["CAMERA"], brandIds: ["b1"] };
+    // Sin cadena (o sin CALENDARIO_PASOS) no se consulta nada: el calendario de hoy.
+    assert.equal(await pagina.completarPasos(yo, null, { videoIds: ["v1"], assigneeId: null }), pagina.SIN_PASOS);
+    assert.equal(await pagina.completarPasos(yo, { enabled: false, entries: [], covered: [] }, { videoIds: ["v1"], assigneeId: null }), pagina.SIN_PASOS);
+    assert.equal(llamadas.length, 0);
+
+    const entries = scope.toStepEntries(
+      [fila("g", "GRABACION", "PENDIENTE", finDe("2026-10-02"), { assigneeId: "yo", name: "Yo" }), fila("e2", "EDICION", "PENDIENTE", finDe("2026-10-02"), { video: "v2" })],
+      ahora
+    );
+    const capa = await pagina.completarPasos(yo, { enabled: true, entries, covered: [] }, { videoIds: ["v1", "v9"], assigneeId: "yo", videoFilter: { status: "APROBADO" } });
+    assert.deepEqual(capa.steps.map((s) => [s.id, s.returned, s.mine]), [["g", true, true]], "el filtro de estado deja fuera v2; la edición devuelta marca la grabación");
+    assert.deepEqual([...capa.covered], ["v9:PUBLICACION"]);
+    assert.equal(capa.truncated, false);
+    const [filtro] = llamadas.filter(([k]) => k === "video");
+    assert.deepEqual(filtro[1].where, { AND: [{ id: { in: ["v1", "v2"] } }, { status: "APROBADO" }] });
+    const devueltos = llamadas.find(([k, a]) => k === "paso" && a.where.status === "DEVUELTO")[1];
+    assert.deepEqual(devueltos.where, { contentItemId: { in: ["v1", "v2"] }, status: "DEVUELTO" });
+    const cubiertas = llamadas.find(([k, a]) => k === "paso" && a.where.AND)[1].where.AND;
+    assert.deepEqual(cubiertas[0], scope.productionStepScope(yo, "calendar.view"), "mismo alcance que la rejilla");
+    assert.deepEqual(cubiertas[1], { brandId: { in: ["b1"] } }, "el canario también filtra lo que cubre");
+    assert.deepEqual(cubiertas[2], { assigneeId: "yo" }, "en «Solo lo mío» solo cubren mis pasos");
+    assert.deepEqual(cubiertas[3].contentItemId, { in: ["v1", "v9"] });
+    assert.deepEqual(cubiertas[3].status, { in: ["PENDIENTE", "HECHO"] });
+    assert.deepEqual(cubiertas[3].contentItem, { status: { notIn: ["CANCELADO", "PAUSADO"] } }, "un video pausado conserva su fecha");
+  } finally {
+    if (previo === undefined) delete process.env.PRODUCTION_CHAIN_BRANDS;
+    else process.env.PRODUCTION_CHAIN_BRANDS = previo;
+  }
+});
+
+test("el feed personal titula cada paso con su verbo, marca y video", () => {
+  assert.equal(cal.feedStepTitle("EDICION", "Con Amor", "Receta"), "Editar · Con Amor: Receta");
+  assert.equal(cal.feedStepTitle("GUION", "Con Amor", "Receta"), "Escribir guion · Con Amor: Receta");
+  assert.equal(cal.feedStepTitle("DISENO", "Con Amor", "Receta"), "Diseño · Con Amor: Receta");
+  assert.equal(cal.feedStepTitle("OTRO", "Con Amor", "Receta"), "OTRO · Con Amor: Receta");
+});

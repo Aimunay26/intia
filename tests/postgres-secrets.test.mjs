@@ -73,3 +73,98 @@ test('B22: secretos cifrados y calendario con alcance persistido',async t=>{
     for(const[key,value]of [['APP_SECRETS_KEYS',before.keys],['APP_SECRETS_ACTIVE_KEY',before.active]]) {if(value===undefined)delete process.env[key];else process.env[key]=value;}
   }
 });
+
+/* Calendario personal (scope USER, CALENDAR_FEED_PERSONAL, migración 20260930091000_calendar_feed_user). */
+test('Calendario personal: cada persona gestiona su enlace y el feed sigue sus pasos y marcas en cada descarga',async t=>{
+  const keys=['CALENDAR_FEED_PERSONAL','PRODUCTION_FLOW_ENABLED','PRODUCTION_CHAIN_ENABLED','PRODUCTION_CHAIN_BRANDS','CALENDARIO_PASOS'];
+  const before=Object.fromEntries(keys.map(key=>[key,process.env[key]]));
+  try {
+    Object.assign(process.env,{CALENDAR_FEED_PERSONAL:'true',PRODUCTION_FLOW_ENABLED:'true',PRODUCTION_CHAIN_ENABLED:'true'});delete process.env.PRODUCTION_CHAIN_BRANDS;delete process.env.CALENDARIO_PASOS;
+    const owner=await db.user.findUniqueOrThrow({where:{id:'owner'}});
+    const ana=await db.user.create({data:{id:'ana-feed',name:'Ana Editora',email:'ana@secrets.test',passwordHash:'fixture',workProfiles:{create:[{profile:'EDITOR'}]},brandAccess:{create:[{brandId:'A'},{brandId:'B'}]}}});
+    const luis=await db.user.create({data:{id:'luis-feed',name:'Luis Cámara',email:'luis@secrets.test',passwordHash:'fixture',workProfiles:{create:[{profile:'CAMERA'}]},brandAccess:{create:[{brandId:'A'}]}}});
+    // Cambiar perfiles o marcas sube sessionVersion (revoca sesiones): la sesión se relee de la base.
+    const session=async(user,extra)=>({...await db.user.findUniqueOrThrow({where:{id:user.id}}),profiles:extra.profiles,brandIds:extra.brandIds});
+    let current=await session(ana,{profiles:['EDITOR'],brandIds:['A','B']});
+    const personal={...mocks,'@/lib/auth':{...mocks['@/lib/auth'],requirePermission:async()=>current,requireLevel:async()=>current}};
+    const actions=load('src/app/actions/calendar-feed.ts',personal),subs=load('src/lib/calendar-subscriptions.ts',personal);
+    const day=86400000,soon=new Date(Date.now()+day),later=new Date(Date.now()+2*day);
+    await db.contentItem.createMany({data:[
+      {id:'feed-a',brandId:'A',title:'EDITAR_A',scheduledDate:later,shootDate:new Date()},
+      {id:'feed-b',brandId:'B',title:'EDITAR_B',scheduledDate:later},
+      {id:'feed-otro',brandId:'A',title:'AJENO_LUIS',scheduledDate:later},
+      {id:'feed-cancelado',brandId:'A',title:'CANCELADO_A',scheduledDate:later,status:'CANCELADO'},
+    ]});
+    await db.assignment.createMany({data:['feed-a','feed-b','feed-cancelado'].map(contentItemId=>({contentItemId,userId:ana.id,role:'EDITOR'}))});
+    const step=(video,brandId,kind,assigneeId,extra={})=>({id:`${video}-${kind}`,contentItemId:video,brandId,step:kind,assigneeId,dueAt:soon,automationKey:`${video}:${kind}`,...extra});
+    await db.productionStep.createMany({data:[
+      step('feed-a','A','GRABACION',luis.id,{status:'HECHO',doneAt:new Date()}),
+      step('feed-a','A','EDICION',ana.id),
+      step('feed-b','B','EDICION',ana.id),
+      step('feed-otro','A','EDICION',luis.id),
+      step('feed-cancelado','A','EDICION',ana.id),
+    ]});
+    let token,row;
+    const body=async value=>{const response=await get(value);return {status:response.status,text:response.status===200?(await response.text()).replace(/\r\n /g,''):''};};
+    await t.test('crear: uno vigente por persona, token solo en la respuesta y fuera de la lista del Dueño',async()=>{
+      const created=await actions.miCalendario(null,fd({operation:'create',days:30}));token=created.token;assert.ok(token,created.error);
+      assert.match((await actions.miCalendario(null,fd({operation:'create',days:30}))).error,/Ya tienes un enlace activo/);
+      row=await db.calendarSubscription.findFirstOrThrow({where:{scope:'USER'}});
+      assert.equal(row.createdById,ana.id);assert.equal(row.brandId,null);assert.notEqual(row.tokenHash,token);
+      assert.ok(!JSON.stringify(await db.auditLog.findMany()).includes(token));
+      assert.ok(!(await subs.listCalendarSubscriptions()).some(item=>item.id===row.id),'Ajustes no lista feeds personales');
+      assert.equal((await subs.personalCalendarSubscription(ana.id)).id,row.id);
+    });
+    await t.test('descarga: solo sus pasos pendientes, sus videos y marcas; lo ajeno y lo cancelado no salen',async()=>{
+      const {status,text}=await body(token);assert.equal(status,200);
+      assert.match(text,/SUMMARY:Editar · Marca A: EDITAR_A/);assert.match(text,/SUMMARY:Editar · Marca B: EDITAR_B/);
+      assert.match(text,/Grabar · Marca A: EDITAR_A/,'la grabación hecha es de Luis: queda la fecha del video');
+      assert.doesNotMatch(text,/AJENO_LUIS|CANCELADO_A|PRIVADO_B|Autorizado A|AGENDA_GENERAL|DESCRIPTION:|LOCATION:/);
+      await db.userBrandAccess.delete({where:{userId_brandId:{userId:ana.id,brandId:'B'}}});
+      const without=await body(token);assert.doesNotMatch(without.text,/EDITAR_B/,'perder la marca quita sus fechas en la siguiente descarga');assert.match(without.text,/EDITAR_A/);
+      current=await session(ana,{profiles:['EDITOR'],brandIds:['A']});
+    });
+    await t.test('nadie más gestiona el enlace: ni otra persona ni el Dueño desde Ajustes',async()=>{
+      const revision=row.updatedAt.toISOString();
+      current=await session(luis,{profiles:['CAMERA'],brandIds:['A']});
+      assert.match((await actions.miCalendario(null,fd({operation:'revoke',id:row.id,expectedUpdatedAt:revision}))).error,/no es tuyo/);
+      current=owner;
+      assert.match((await actions.gestionarSuscripcion(null,fd({operation:'rotate',id:row.id,expectedUpdatedAt:revision,days:30}))).error,/personal/);
+      assert.equal((await db.calendarSubscription.findUniqueOrThrow({where:{id:row.id}})).createdById,ana.id);
+      current=await session(ana,{profiles:['EDITOR'],brandIds:['A']});
+    });
+    await t.test('renovar invalida el anterior; revocar, apagar el interruptor o desactivar la cuenta cortan la descarga',async()=>{
+      const rotated=await actions.miCalendario(null,fd({operation:'rotate',id:row.id,expectedUpdatedAt:row.updatedAt.toISOString(),days:90}));assert.ok(rotated.token,rotated.error);
+      assert.equal((await get(token)).status,401);token=rotated.token;assert.equal((await get(token)).status,200);
+      row=await db.calendarSubscription.findUniqueOrThrow({where:{id:row.id}});
+      assert.ok((await actions.miCalendario(null,fd({operation:'revoke',id:row.id,expectedUpdatedAt:row.updatedAt.toISOString()}))).ok);
+      assert.equal((await get(token)).status,401);assert.equal(await subs.personalCalendarSubscription(ana.id),null);
+      const again=await actions.miCalendario(null,fd({operation:'create',days:30}));assert.ok(again.token,again.error);
+      process.env.CALENDAR_FEED_PERSONAL='false';
+      assert.equal((await get(again.token)).status,401,'apagado, ningún feed personal responde');
+      assert.match((await actions.miCalendario(null,fd({operation:'create',days:30}))).error,/no está activado/);
+      process.env.CALENDAR_FEED_PERSONAL='true';assert.equal((await get(again.token)).status,200);
+      // El Dueño lo ve aparte en Ajustes y puede revocarlo (no renovarlo): no pasa a su nombre.
+      current=owner;
+      const listed=(await subs.listPersonalCalendarSubscriptions()).find(item=>item.person==='Ana Editora');assert.ok(listed,'Ajustes lista los calendarios personales aparte');
+      assert.ok(!JSON.stringify(listed).includes(again.token));
+      const againRow=await db.calendarSubscription.findUniqueOrThrow({where:{id:listed.id}});
+      assert.ok((await actions.gestionarSuscripcion(null,fd({operation:'revoke',id:againRow.id,expectedUpdatedAt:againRow.updatedAt.toISOString()}))).ok);
+      assert.equal((await get(again.token)).status,401);
+      assert.equal((await db.calendarSubscription.findUniqueOrThrow({where:{id:againRow.id}})).createdById,ana.id,'revocar no lo pasa al Dueño');
+      // Desactivar la cuenta revoca su enlace: al reactivarla, un token filtrado no vuelve a funcionar.
+      current=await session(ana,{profiles:['EDITOR'],brandIds:['A']});
+      const third=await actions.miCalendario(null,fd({operation:'create',days:30}));assert.ok(third.token,third.error);
+      current=owner;
+      const team=load('src/app/actions/team.ts',personal);
+      assert.equal((await team.desactivarUsuario(null,fd({id:ana.id,active:'0'}))).ok,'Cuenta desactivada y sesiones revocadas.');
+      assert.equal((await get(third.token)).status,401);
+      await db.user.update({where:{id:ana.id},data:{active:true}});
+      assert.equal((await get(third.token)).status,401,'reactivada, el enlace revocado no vuelve');
+      assert.ok(await db.auditLog.count({where:{entity:'CalendarSubscription',summary:{contains:'Revocó el calendario personal de Ana Editora'}}}));
+    });
+  } finally {
+    for(const [key,value] of Object.entries(before)){if(value===undefined)delete process.env[key];else process.env[key]=value;}
+    await db.$disconnect();
+  }
+});

@@ -408,8 +408,15 @@ export const BRAND_TEAM_ROLES: (Option & { profile: string })[] = [
 ];
 export const BRAND_TEAM_ROLE_MAP = byValue(BRAND_TEAM_ROLES);
 
-/** Pasos de producción con plazo (ProductionStep.step). */
+/** Pasos de producción con plazo (ProductionStep.step). GUION solo existe con la cadena de entregas. */
 export const PRODUCTION_STEPS: Option[] = [
+  {
+    value: "GUION",
+    label: "Guion",
+    chip: "bg-fuchsia-500/12 text-fuchsia-600 dark:text-fuchsia-300 ring-fuchsia-500/25",
+    hex: "#d946ef",
+    description: "Hasta el final del segundo día hábil desde que nace la idea.",
+  },
   {
     value: "GRABACION",
     label: "Grabación",
@@ -460,8 +467,84 @@ export const PRODUCTION_STEP_STATUSES: Option[] = [
     chip: "bg-slate-500/12 text-slate-600 dark:text-slate-300 ring-slate-500/25",
     hex: "#64748b",
   },
+  {
+    value: "DEVUELTO",
+    label: "Devuelto",
+    chip: "bg-rose-500/12 text-rose-600 dark:text-rose-300 ring-rose-500/25",
+    hex: "#f43f5e",
+    description: "Se devolvió al paso anterior con un motivo; ese paso vuelve a estar pendiente.",
+  },
 ];
 export const PRODUCTION_STEP_STATUS_MAP = byValue(PRODUCTION_STEP_STATUSES);
+
+/**
+ * Cadena de entregas por video (PRODUCTION_CHAIN_ENABLED), en orden. Diseño corre en
+ * paralelo y no cuenta para «un paso abierto por video». Sin revisiones intermedias por
+ * decisión del Dueño (29-30/09/2026): el Listo del guionista pasa directo al filmmaker y el
+ * del editor directo al community.
+ */
+export const CHAIN_ORDER = ["GUION", "GRABACION", "EDICION", "PUBLICACION"] as const;
+export type ChainStep = (typeof CHAIN_ORDER)[number];
+
+export type ChainStepRule = {
+  /** Función del equipo de la marca (BrandTeamMember.role) que recibe el paso. */
+  team: "GUIONISTA" | "FILMMAKER" | "EDITOR" | "COMMUNITY" | "DISENADOR";
+  /** Función en el video (Assignment.role) que manda sobre la persona de la marca. */
+  assignment: "GUIONISTA" | "CAMARA" | "EDITOR" | "COMMUNITY" | "DISENO";
+  /** Verbo de la tarea y del calendario («Grabar: título»). */
+  task: string;
+  /** Texto del botón «Listo». */
+  listo: string;
+  /** Capacidad que debe tener la persona asignada para pulsar «Listo». */
+  capability: "scripts.write" | "content.shoot" | "content.editing" | "content.publish" | "content.design";
+  /** Paso al que se devuelve con «Devolver» (null: no se devuelve; solo «Avisar a coordinación»). */
+  returnsTo: ChainStep | null;
+  /** Texto del botón «Devolver», si aplica. */
+  returnLabel: string | null;
+  /** Enlace que exige el «Listo». */
+  link: "materialUrl" | "publishedUrl" | null;
+  /** Etiqueta de ese enlace en formularios y errores. */
+  linkLabel: string | null;
+  /** Rol legible de quien lo recibe. */
+  role: string;
+};
+
+export const CHAIN_STEP_RULES: Record<ChainStep | "DISENO", ChainStepRule> = {
+  GUION: { team: "GUIONISTA", assignment: "GUIONISTA", task: "Escribir guion", listo: "Listo, enviar al filmmaker", capability: "scripts.write", returnsTo: null, returnLabel: null, link: null, linkLabel: null, role: "Guionista" },
+  GRABACION: { team: "FILMMAKER", assignment: "CAMARA", task: "Grabar", listo: "Listo, pasar a edición", capability: "content.shoot", returnsTo: null, returnLabel: null, link: "materialUrl", linkLabel: "Material grabado", role: "Filmmaker" },
+  EDICION: { team: "EDITOR", assignment: "EDITOR", task: "Editar", listo: "Listo, enviar al community", capability: "content.editing", returnsTo: "GRABACION", returnLabel: "Devolver al filmmaker", link: "materialUrl", linkLabel: "Máster (video editado)", role: "Editor" },
+  PUBLICACION: { team: "COMMUNITY", assignment: "COMMUNITY", task: "Publicar", listo: "Publicado", capability: "content.publish", returnsTo: "EDICION", returnLabel: "Devolver por correcciones", link: "publishedUrl", linkLabel: "Enlace público", role: "Community" },
+  DISENO: { team: "DISENADOR", assignment: "DISENO", task: "Diseño", listo: "Entregar diseño", capability: "content.design", returnsTo: null, returnLabel: null, link: "materialUrl", linkLabel: "Entrega del diseño", role: "Diseñador" },
+};
+
+/**
+ * Coordinación (content.assign) pulsa por la persona asignada, pero sin firmar lo que su perfil
+ * no firma: el Listo del editor firma la revisión final (content.approve), el «Publicado»
+ * publica (content.publish) y devolver una publicación retira la revisión final
+ * (content.approve). El Listo del guion aprueba el guion: exige scripts.approve o scripts.write
+ * sobre ese guion (production-chain.ts lo comprueba con el alcance del guion). La comparten el
+ * dominio y los botones (step-copy.ts).
+ */
+export const CHAIN_COORD_CAPABILITY: Partial<Record<ChainStep | "DISENO", { complete?: "content.approve" | "content.publish"; return?: "content.approve" }>> = {
+  EDICION: { complete: "content.approve" },
+  PUBLICACION: { complete: "content.publish", return: "content.approve" },
+};
+
+/**
+ * Checks obligatorios pendientes que el «Listo» de cada paso marca a nombre de quien pulsa («Se
+ * marcarán a tu nombre: …»). Pura y segura para el cliente: la comparten «Mi trabajo»
+ * (production-scope.ts) y los botones (step-copy.ts). Misma regla que production-chain.ts.
+ */
+export function chainChecksToMark(step: string, checks: readonly { label: string; stage: string }[]): string[] {
+  const written = /guion escrito/i, design = /miniatura|portada|diseño/i;
+  const pick = (stages: string[], test: (label: string) => boolean = () => true) => checks.filter((c) => stages.includes(c.stage) && test(c.label)).map((c) => c.label);
+  if (step === "GUION") return pick(["PREPRODUCCION"], (label) => written.test(label));
+  if (step === "GRABACION") return pick(["PREPRODUCCION", "GRABACION"]);
+  if (step === "EDICION") return [...pick(["POSTPRODUCCION"], (label) => !design.test(label)), ...pick(["GENERAL"])];
+  if (step === "PUBLICACION") return pick(["PUBLICACION"]);
+  if (step === "DISENO") return pick(["POSTPRODUCCION"], (label) => design.test(label));
+  return [];
+}
 
 /** Días en que se puede grabar: lunes (1) a sábado (6). El domingo no se trabaja. */
 export const RECORDING_WEEKDAYS: { value: number; label: string; long: string }[] = [

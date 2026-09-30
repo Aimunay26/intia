@@ -28,19 +28,37 @@ import { BrandingLectura, BrandingForm } from "@/app/(app)/arquetipos/[id]/brand
 import { ArchetypeCreateButton } from "@/app/(app)/arquetipos/archetype-form";
 import { NuevoEventoBoton, EditarEventoBoton } from "@/app/(app)/calendario/event-form";
 import { MemberCalendarMensual } from "@/app/(app)/calendario/member-calendar";
+import { productionChainActiveFor, productionChainConfigured, productionChainEnabled } from "@/lib/production-chain-flag";
 import { calendarioMensualActivo } from "@/lib/calendar-view";
 import type { MemberPageProps } from "@/components/member-workspace";
 import { Details, Input, TextArea, HiddenId, Search, Paged, MemberAssets } from "./shared";
 
+/**
+ * Tareas del miembro. Con la cadena de entregas en sus marcas (PRODUCTION_CHAIN_ENABLED y el
+ * canario): de la más urgente a la más lejana (sin fecha al final); la tarea de un paso enlaza a
+ * la ficha de su video, y vencida se calcula en el día de Lima y nunca en la última columna
+ * («Listo»). Sin la cadena, la lista de siempre (por actualización) y sin leer ProductionStep.
+ */
 export async function MemberTasks({ user, query = {} }: MemberPageProps) {
   const ctx = await getPageBrandContext(), manage = allows(user, "tasks.manage");
+  const chainView = productionChainActiveFor(user, ctx.activeId);
   const where: Prisma.TaskWhereInput = { AND: [taskScope(user), ctx.activeId ? { brandId: ctx.activeId } : {}, query.q ? { title: { contains: query.q.slice(0,200), mode: "insensitive" } } : {},
     query.etapa ? { columnId: query.etapa.slice(0,200) } : {}, TASK_KINDS.some(k => k.value === query.tipo) ? { kind: query.tipo } : {}, TASK_PRIORITIES.some(p => p.value === query.prioridad) ? { priority: query.prioridad } : {}, query.responsable ? { assigneeId: query.responsable.slice(0,200) } : {}] };
   const [page, columns, people] = await Promise.all([
-    loadPage(query.pagina, 50, () => prisma.task.count({ where }), range => prisma.task.findMany({ where, ...range, include: { column: { select: { name: true } }, assignee: { select: { name: true } }, brand: { select: { name: true } } }, orderBy: [{ updatedAt: "desc" }, { id: "asc" }] })),
-    prisma.taskColumn.findMany({ where: { OR: [{ brandId: null }, { brandId: { in: user.brandIds ?? [] } }] }, select: { id: true, name: true, brandId: true }, orderBy: { order: "asc" } }),
+    loadPage(query.pagina, 50, () => prisma.task.count({ where }), range => prisma.task.findMany({ where, ...range, include: { column: { select: { name: true } }, assignee: { select: { name: true } }, brand: { select: { name: true } } }, orderBy: chainView ? [{ dueDate: { sort: "asc", nulls: "last" } }, { updatedAt: "desc" }, { id: "asc" }] : [{ updatedAt: "desc" }, { id: "asc" }] })),
+    prisma.taskColumn.findMany({ where: { OR: [{ brandId: null }, { brandId: { in: user.brandIds ?? [] } }] }, select: { id: true, name: true, brandId: true, order: true }, orderBy: { order: "asc" } }),
     manage ? prisma.user.findMany({ where: { active: true, OR: [{ role: "OWNER" }, { brandAccess: { some: { brandId: { in: user.brandIds ?? [] } } } }] }, select: { id: true, name: true }, orderBy: { name: "asc" } }) : [],
   ]);
+  // Solo las tareas de marcas con la cadena usan sus reglas (enlace, «Listo», vencida); sin cadena no se lee ProductionStep.
+  const chainTask = (brandId: string | null) => Boolean(brandId) && productionChainEnabled(brandId);
+  const chainTasks = productionChainConfigured() ? page.items.filter(t => chainTask(t.brandId)) : [];
+  const steps = chainTasks.length
+    ? new Map((await prisma.productionStep.findMany({ where: { taskId: { in: chainTasks.map(t => t.id) } }, select: { taskId: true, contentItemId: true } })).map(s => [s.taskId, s.contentItemId]))
+    : new Map<string | null, string>();
+  // Última columna por orden entre las que admite la marca de la tarea: la de «Listo».
+  const byOrderDesc = [...columns].sort((a, b) => b.order - a.order || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
+  const lastColumn = (brandId: string | null) => byOrderDesc.find(c => !c.brandId || c.brandId === brandId)?.id;
+  const todayKey = dateKey(new Date());
   const selections = (task?: typeof page.items[number]) => <>
     <Field label="Etapa"><select className="input" name="columnId" defaultValue={task?.columnId} required>{columns.filter(c => !c.brandId || !task || c.brandId === task.brandId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>
     {manage ? <><Input name="title" label="Título" value={task?.title} required /><Field label="Marca"><select className="input" name="brandId" defaultValue={task?.brandId ?? ctx.activeId ?? ""}><option value="">Personal (sin marca)</option>{ctx.brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></Field><Field label="Responsable"><select className="input" name="assigneeId" defaultValue={task?.assigneeId ?? user.id}><option value="">Sin asignar</option>{people.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></Field><Field label="Tipo"><select className="input" name="kind" defaultValue={task?.kind ?? "ACCION"}>{TASK_KINDS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}</select></Field><Field label="Prioridad"><select className="input" name="priority" defaultValue={task?.priority ?? "NORMAL"}>{TASK_PRIORITIES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}</select></Field><Input name="dueDate" label="Fecha límite" type="date" value={dateKey(task?.dueDate)} /></> : task ? <>{Object.entries({ title: task.title, brandId: task.brandId ?? "", assigneeId: task.assigneeId ?? "", kind: task.kind, priority: task.priority, dueDate: dateKey(task.dueDate) }).map(([key,value]) => <HiddenId key={key} name={key} id={value} />)}</> : null}
@@ -48,7 +66,7 @@ export async function MemberTasks({ user, query = {} }: MemberPageProps) {
   </>;
   return <div className="space-y-4"><PageHeader title="Tareas" subtitle="Actualiza el avance de tus tareas. Coordinación y producción pueden planificar y asignar." /><form className="card flex flex-wrap items-end gap-3 p-3"><Input name="q" label="Buscar tarea" value={query.q} /><Field label="Etapa"><select className="input" name="etapa" defaultValue={query.etapa ?? ""}><option value="">Todas</option>{columns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field><Field label="Tipo"><select className="input" name="tipo" defaultValue={query.tipo ?? ""}><option value="">Todos</option>{TASK_KINDS.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}</select></Field><Field label="Prioridad"><select className="input" name="prioridad" defaultValue={query.prioridad ?? ""}><option value="">Todas</option>{TASK_PRIORITIES.map(k => <option key={k.value} value={k.value}>{k.label}</option>)}</select></Field><Field label="Responsable"><select className="input" name="responsable" defaultValue={query.responsable ?? ""}><option value="">Todos los autorizados</option>{(manage ? people : [user]).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></Field><button className="btn">Filtrar tareas</button></form>{manage && columns.length ? <Details title="Nueva tarea"><EditForm action={crearTarea} className="space-y-3">{selections()}<button className="btn btn-primary">Crear tarea</button></EditForm><p className="text-sm text-inkmuted">El responsable debe tener acceso a la marca. Las tareas sin marca son personales.</p></Details> : null}
     {!page.total ? <Card className="p-4">No hay tareas autorizadas en esta vista.</Card> : null}
-    {page.items.map(t => <Card key={t.id} className="space-y-3 p-4"><h2 className="font-semibold">{t.title}</h2><p>{t.column.name} · {t.brand?.name ?? "Personal"} · {t.assignee?.name ?? "Sin asignar"}</p><p>Fecha límite: {formatDate(t.dueDate)}</p><p className="whitespace-pre-wrap">{t.description}</p><Details title={manage ? "Editar tarea" : "Actualizar avance"}><EditForm action={actualizarTarea} className="space-y-3"><HiddenId id={t.id} /><RevisionField value={t.updatedAt} />{selections(t)}<button className="btn">Guardar</button></EditForm></Details></Card>)}<Paged data={page} href="/tareas" query={query} /></div>;
+    {page.items.map(t => { const inChain = chainTask(t.brandId); const videoId = inChain ? steps.get(t.id) : undefined; const overdue = inChain && Boolean(t.dueDate) && t.columnId !== lastColumn(t.brandId) && dateKey(t.dueDate) < todayKey; return <Card key={t.id} className="space-y-3 p-4"><h2 className="font-semibold">{t.title}</h2><p>{t.column.name} · {t.brand?.name ?? "Personal"} · {t.assignee?.name ?? "Sin asignar"}</p>{inChain ? <p className={overdue ? "text-danger font-semibold" : undefined}>Fecha límite: {formatDate(t.dueDate)}{overdue ? " · Vencida" : ""}</p> : <p>Fecha límite: {formatDate(t.dueDate)}</p>}{videoId ? <p className="text-sm"><Link className="text-brand font-semibold" href={`/contenido/${videoId}`}>Ver la ficha del video</Link><span className="text-inkmuted"> · Al terminar, pulsa «Listo» en tu Inicio o en la ficha.</span></p> : null}<p className="whitespace-pre-wrap">{t.description}</p><Details title={manage ? "Editar tarea" : "Actualizar avance"}><EditForm action={actualizarTarea} className="space-y-3"><HiddenId id={t.id} /><RevisionField value={t.updatedAt} />{selections(t)}<button className="btn">Guardar</button></EditForm></Details></Card>; })}<Paged data={page} href="/tareas" query={query} /></div>;
 }
 
 export async function MemberCalendar({ user, query = {} }: MemberPageProps) {

@@ -23,16 +23,21 @@ import { brandWhere } from "@/lib/brand-context";
 import {
 	calendarioMensualActivo,
 	currentMonth,
+	dedupeVideoEntries,
 	eventOverlapWhere,
 	eventTouches,
 	itemsOfDay,
+	mineParam,
 	monthOfDay,
 	monthWindow,
 	parseDayKey,
+	resolveMine,
 	resolveMonth,
 	videoDateWhere,
 	videoEntries,
 } from "@/lib/calendar-view";
+import { calendarStepsEnabled } from "@/lib/production-chain-flag";
+import { stepCalendarEntries } from "@/lib/production-scope";
 import {
 	ACTIVE_STATUSES,
 	CONTENT_STATUSES,
@@ -52,9 +57,10 @@ import {
 	startOfMonth,
 } from "@/lib/utils";
 import { NuevoVideoBoton } from "../contenido/content-form";
-import { AgendaDelMes, DayPanel, MonthNav } from "./calendar-day";
-import { CalendarGrid, type CalendarAgendaItem } from "./calendar-grid";
+import { AgendaDelMes, DayPanel, MineToggle, MonthNav } from "./calendar-day";
+import { CalendarGrid, type CalendarAgendaItem, type CalendarItem } from "./calendar-grid";
 import { NuevoEventoBoton } from "./event-form";
+import { TOPE_PASOS, completarPasos } from "./member-calendar";
 
 type SearchParams = {
   anio?: string;
@@ -64,6 +70,8 @@ type SearchParams = {
   estado?: string;
   plataforma?: string;
   persona?: string;
+  /** Con la cadena y CALENDARIO_PASOS: «Solo lo mío» (1) o todo (0). */
+  mio?: string;
 };
 
 const FILTROS = ["estado", "plataforma", "persona"] as const;
@@ -87,12 +95,20 @@ export default async function CalendarioPage({
   const dia = mensual ? parseDayKey(sp.dia) : null;
   const { year, month } = dia ? monthOfDay(dia) : resolveMonth(sp.anio, sp.mes, hoy);
 
+  // Cadena de entregas + CALENDARIO_PASOS (solo en la vista mensual): pasos con responsable,
+  // «Solo lo mío» (?mio=1) y, para el Dueño, los pasos de una persona con ?persona=.
+  const pasos = mensual && calendarStepsEnabled();
+  // ?persona= (elegida a mano) manda sobre «Solo lo mío»; sin persona, «Solo lo mío» filtra al Dueño.
+  const mio = pasos && !sp.persona && resolveMine(sp.mio, user);
+  const quien = sp.persona || (mio ? user.id : null);
+
   /* -------------------------------------------------------------- enlaces -- */
 
   const base: Record<string, string | undefined> = {
     estado: sp.estado,
     plataforma: sp.plataforma,
     persona: sp.persona,
+    mio: pasos ? mineParam(mio, user) : undefined,
   };
 
   const href = (extra: Record<string, string | undefined>) => {
@@ -114,11 +130,19 @@ export default async function CalendarioPage({
   Object.assign(where, brandWhere(brandCtx.activeId));
   if (sp.estado) where.status = sp.estado;
   if (sp.plataforma) where.platformLinks = platformFilter(sp.plataforma);
-  if (sp.persona) where.assignments = { some: { userId: sp.persona } };
+  if (quien) where.assignments = { some: { userId: quien } };
+  // Estado y plataforma también filtran los pasos (por su video).
+  const filtroDeVideo: Prisma.ContentItemWhereInput | null =
+    sp.estado || sp.plataforma
+      ? {
+          ...(sp.estado ? { status: sp.estado } : {}),
+          ...(sp.plataforma ? { platformLinks: platformFilter(sp.plataforma) } : {}),
+        }
+      : null;
 
   const { desde, hasta } = monthWindow(year, month);
 
-  const [filas, brands, people, eventosBase, structures] = await Promise.all([
+  const [filas, brands, people, eventosBase, structures, calPasos] = await Promise.all([
     prisma.contentItem.findMany({
       // Con la vista mensual, un video entra por su grabación o por su publicación.
       where: { AND: [where, videoDateWhere(desde, hasta, mensual)] },
@@ -164,8 +188,13 @@ export default async function CalendarioPage({
     }),
     // Estructuras activas para los formatos previstos del alta de video.
     getStructureChoices(false),
+    pasos
+      ? stepCalendarEntries(user, desde, hasta, { mine: mio, personId: sp.persona || null, brandId: brandCtx.activeId, now: hoy })
+      : Promise.resolve(null),
   ]);
 
+  // Los totales del mes se cuentan con las fechas del video, como siempre; la rejilla
+  // cambia los chips Grabar/Publicar cubiertos por un paso por el paso.
   const videos = videoEntries(
     filas.map((f) => ({
       id: f.id,
@@ -179,6 +208,12 @@ export default async function CalendarioPage({
     })),
     { grabacion: mensual, desde, hasta }
   );
+  const capa = await completarPasos(user, calPasos, {
+    videoIds: filas.map((f) => f.id),
+    assigneeId: quien,
+    videoFilter: filtroDeVideo,
+  });
+  const enRejilla: CalendarItem[] = pasos ? [...dedupeVideoEntries(videos, capa.covered), ...capa.steps] : videos;
 
   /* -------------------------------------------------------------- resumen -- */
 
@@ -235,7 +270,7 @@ export default async function CalendarioPage({
   const agendaDelMes = eventosBase.filter((e) =>
     mensual ? eventTouches(e, inicioMes, finMes) : e.startAt >= inicioMes && e.startAt <= finMes
   );
-  const delDia = dia ? itemsOfDay(dia, videos, agenda) : null;
+  const delDia = dia ? itemsOfDay(dia, enRejilla, agenda) : null;
 
   const brandOptions = brands.map((b) => ({ id: b.id, name: b.name }));
 
@@ -257,7 +292,11 @@ export default async function CalendarioPage({
     <>
       <PageHeader
         title="Calendario"
-        subtitle="Todo lo que se graba y se publica este mes, marca por marca."
+        subtitle={
+          pasos
+            ? "Todo lo que se escribe, graba, edita y publica este mes, con quién lo tiene."
+            : "Todo lo que se graba y se publica este mes, marca por marca."
+        }
         icon={<CalendarDays size={19} />}
         actions={
           <>
@@ -314,10 +353,24 @@ export default async function CalendarioPage({
           width={180}
           responsive
         />
+        {pasos ? (
+          <MineToggle
+            mine={mio}
+            todoHref={href({ anio: String(year), mes: String(month), dia: dia ?? undefined, mio: mineParam(false, user) })}
+            mioHref={href({ anio: String(year), mes: String(month), dia: dia ?? undefined, persona: undefined, mio: mineParam(true, user) })}
+          />
+        ) : null}
         <div className="ml-auto">
           <ActiveFilters labels={etiquetas} />
         </div>
       </FilterBar>
+
+      {capa.truncated ? (
+        <p className="text-inkmuted mb-3 px-1 text-[12.5px]">
+          Este mes tiene más de {TOPE_PASOS} pasos de producción: se muestran los primeros. Entra en una marca o filtra por
+          persona para ver el resto.
+        </p>
+      ) : null}
 
       {delDia ? (
         <DayPanel
@@ -331,7 +384,7 @@ export default async function CalendarioPage({
       <CalendarGrid
         year={year}
         month={month}
-        videos={videos}
+        videos={enRejilla}
         eventos={agenda}
         hrefDia={
           mensual
@@ -340,6 +393,7 @@ export default async function CalendarioPage({
         }
         mensual={mensual}
         diaSeleccionado={dia}
+        pasos={pasos}
       />
 
       {porMarca.length > 1 ? (
@@ -372,7 +426,7 @@ export default async function CalendarioPage({
         puedeBorrar={puedeBorrar}
       />
 
-      {videos.length === 0 ? (
+      {enRejilla.length === 0 ? (
         <Card className="mt-4">
           <EmptyState
             icon={<CalendarDays size={19} />}

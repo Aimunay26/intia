@@ -4,7 +4,7 @@ import { load } from "./load-module.mjs";
 const policy=load('src/lib/permissions.ts');
 const user=profiles=>({id:'me',role:'MEMBER',profiles,brandIds:['A']});
 const expected={
-  STRATEGY:['panel','manual','calendar','content','tasks','brands','scripts','structures','archetypes','metrics','profile','help'],
+  STRATEGY:['panel','manual','calendar','content','tasks','chain','brands','scripts','structures','archetypes','metrics','profile','help'],
   WRITER:['panel','manual','calendar','content','tasks','brands','generator','scripts','structures','archetypes','profile','help'],
   PRODUCTION:['panel','manual','calendar','content','tasks','scripts','profile','help'],
   CAMERA:['panel','manual','calendar','content','tasks','scripts','profile','help'],
@@ -55,4 +55,34 @@ test('publicación requiere aprobación final incluso combinada con cámara',()=
   assert.equal(policy.allowsContentRecord(actor,'content.shoot',video),false);
   assert.equal(policy.checklistCapability('POSTPRODUCCION','Revisión final aprobada','FINAL_APPROVAL'),'content.approve');
   assert.equal(policy.checklistCapability('POSTPRODUCCION','Miniatura lista'),'content.design');
+});
+test('cadena de entregas: solo ENCARGADO (STRATEGY) y Dueño; el diseñador ve su calendario asignado solo con la cadena',()=>{
+  for(const profile of Object.keys(expected))assert.equal(policy.canAccessSection(user([profile]),'chain'),profile==='STRATEGY',profile);
+  assert.equal(policy.canAccessSection(user(['PRODUCTION','EDITOR','CAMERA','PUBLISHER','WRITER','DESIGNER','TALENT','ANALYST']),'chain'),false);
+  assert.equal(policy.canAccessPath(user(['STRATEGY']),'/cadena?paso=GRABACION&vencidos=1'),true);
+  assert.equal(policy.canAccessPath(user(['PRODUCTION']),'/cadena'),false);
+  assert.equal(policy.canAccessPath({id:'owner',role:'OWNER'},'/cadena'),true);
+  assert.equal(policy.canAccessPath(user(['STRATEGY']),'/cadenas'),false);
+  assert.equal(policy.sectionForPath('/cadena'),'chain');
+  const designer=user(['DESIGNER']);
+  // Sin la cadena (entorno de las pruebas): el diseñador sigue sin calendario, como siempre.
+  assert.equal(policy.permissionFlags().designerCalendar,false);
+  assert.equal(policy.allows(designer,'calendar.view'),false);
+  assert.equal(policy.canAccessPath(designer,'/calendario'),false);
+  // Con la cadena y CALENDARIO_PASOS (interruptor resuelto en el servidor y pasado al menú).
+  const on={designerCalendar:true};
+  assert.equal(policy.allows(designer,'calendar.view',on),true);
+  assert.equal(policy.canAccessPath(designer,'/calendario',on),true);
+  assert.equal(policy.capabilityScope(designer,'calendar.view',on),'assigned');
+  assert.deepEqual(policy.profileGrants(designer,'calendar.view',on),[{id:'DESIGNER',scope:'assigned'}]);
+  assert.equal(policy.allows(designer,'calendar.edit',on),false);
+  const keys=['PRODUCTION_FLOW_ENABLED','PRODUCTION_CHAIN_ENABLED','CALENDARIO_PASOS'];const old=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
+  try{
+    Object.assign(process.env,{PRODUCTION_FLOW_ENABLED:'true',PRODUCTION_CHAIN_ENABLED:'true'});delete process.env.CALENDARIO_PASOS;
+    assert.equal(policy.allows(designer,'calendar.view'),true,'el servidor lee el interruptor en cada llamada');
+    assert.equal(policy.allowsContentRecord(designer,'calendar.view',{brandId:'A',assignments:[]}),false);
+    assert.equal(policy.allowsContentRecord(designer,'calendar.view',{brandId:'A',assignments:[{userId:'me'}]}),true);
+    process.env.CALENDARIO_PASOS='false';
+    assert.equal(policy.allows(designer,'calendar.view'),false,'CALENDARIO_PASOS=false lo apaga');
+  }finally{for(const k of keys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}}
 });

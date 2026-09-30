@@ -26,6 +26,7 @@ import { cache, Suspense } from "react";
 
 import { FunnelBars } from "@/components/charts";
 import { ManualCard } from "@/components/manual/manual-card";
+import { MyWorkSection } from "@/components/work/my-work";
 import {
 	Avatar,
 	AvatarStack,
@@ -51,6 +52,7 @@ import {
 	platformLabels
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
+import { productionChainActiveFor } from "@/lib/production-chain-flag";
 import {
 	addDays,
 	compactNumber,
@@ -138,8 +140,11 @@ export default async function PanelGeneral() {
   const fechaTitulo = fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1);
   // Permite comparar un solo límite de carga con el streaming de cada sección.
   // Las consultas siguen siendo paralelas; no se agrega caché de datos ni permisos.
+  // Cadena de entregas: «Mi trabajo» va primero, encima del Manual (decisión del Dueño, 30/09/2026).
+  // Apagada no se monta ni consulta nada.
+  const chain = productionChainActiveFor(user, brandCtx.activeId);
   const sections = process.env.PANEL_RENDER_MODE !== "streaming"
-    ? await Promise.all([PanelStats(), PanelPending(), PanelObjectives(), PanelFunnel(), PanelActivity(), PanelBrands()])
+    ? await Promise.all([PanelStats(), PanelPending(), PanelObjectives(), PanelFunnel(), PanelActivity(), PanelBrands(), chain ? MyWorkSection({ user, brandId: brandCtx.activeId, className: "mb-5" }) : null])
     : null;
   return <>
     <PageHeader
@@ -157,6 +162,7 @@ export default async function PanelGeneral() {
           </>
         }
       />
+    {chain ? (sections ? sections[6] : <Suspense key={scope + "mywork"} fallback={<div className="mb-5"><SectionLoading label="tu trabajo" /></div>}><MyWorkSection user={user} brandId={brandCtx.activeId} className="mb-5" /></Suspense>) : null}
     <ManualCard user={user} variant="banner" className="mb-5" />
     {sections ? sections[0] : <Suspense key={scope + "stats"} fallback={<SectionLoading label="indicadores" />}><PanelStats /></Suspense>}
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">

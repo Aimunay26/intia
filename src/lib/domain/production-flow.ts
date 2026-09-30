@@ -3,6 +3,7 @@ import type { SessionUser } from "@/lib/auth";
 import type { AppTransaction } from "@/lib/prisma";
 import { auditInTransaction } from "@/lib/audit";
 import { ASSIGNMENT_ROLE_MAP, PRODUCTION_STEP_MAP } from "@/lib/constants";
+import { productionChainConfigured, productionChainEnabled } from "@/lib/production-chain-flag";
 import { productionFlowEnabled } from "@/lib/production-flow-flag";
 import { DEFAULT_TASK_COLUMNS } from "@/lib/tasks-constants";
 import { dateKey, formatDateLong, formatDateTime, fromDateKey } from "@/lib/utils";
@@ -36,16 +37,23 @@ import {
  *    que une su guion no los tiene), pero la persona asignada siempre debe estar activa y
  *    autorizada para la marca, como en assertAssignee.
  *  - Todo queda en la auditoría, firmado por quien disparó o por «Sistema» (mantenimiento).
+ *
+ * Cadena de entregas (PRODUCTION_CHAIN_ENABLED, src/lib/domain/production-chain.ts): con la
+ * cadena encendida para la marca del video, cada gancho de abajo delega en la cadena (import
+ * perezoso, sin ciclo estático) y no programa nada por su cuenta. Con la cadena apagada, los
+ * ganchos no hacen ninguna consulta extra y se comportan exactamente como antes.
  */
 
 export type ProductionActor = SessionUser | null;
-export type StepKind = "GRABACION" | "EDICION" | "PUBLICACION" | "DISENO";
+export type StepKind = "GUION" | "GRABACION" | "EDICION" | "PUBLICACION" | "DISENO";
 export type TeamRole = "ENCARGADO" | "GUIONISTA" | "FILMMAKER" | "EDITOR" | "COMMUNITY" | "DISENADOR";
 export type SkipReason = "flag_off" | "video_missing" | "video_status" | "exists" | "auto_off" | "no_team" | "no_assignee" | "recording_open" | "error";
 export type FlowResult = { done: true; stepId: string } | { done: false; reason: SkipReason };
 
 /** Función de la marca que se asigna en cada paso, función en el video y verbo de la tarea. */
 export const STEP_ROLES: Record<StepKind, { team: TeamRole; assignment: string; task: string }> = {
+  // Solo con la cadena de entregas: el guionista del equipo recibe además la asignación GUIONISTA.
+  GUION: { team: "GUIONISTA", assignment: "GUIONISTA", task: "Escribir guion" },
   GRABACION: { team: "FILMMAKER", assignment: "CAMARA", task: "Grabar" },
   EDICION: { team: "EDITOR", assignment: "EDITOR", task: "Editar" },
   PUBLICACION: { team: "COMMUNITY", assignment: "COMMUNITY", task: "Publicar" },
@@ -54,6 +62,7 @@ export const STEP_ROLES: Record<StepKind, { team: TeamRole; assignment: string; 
 
 /** Estados en los que cada paso automático todavía tiene sentido. */
 const OPEN_FOR: Record<Exclude<StepKind, "DISENO">, readonly string[]> = {
+  GUION: ["IDEA", "GUION"],
   GRABACION: ["IDEA", "GUION", "APROBADO"],
   EDICION: ["APROBADO", "GRABACION", "EDICION"],
   PUBLICACION: ["EDICION", "PROGRAMADO"],
@@ -97,9 +106,9 @@ async function guarded(tx: AppTransaction, operation: string, work: () => Promis
 
 /* ------------------------------------------------------------- LECTURAS -- */
 
-type Video = { id: string; title: string; brandId: string; status: string; shootDate: Date | null; scheduledDate: Date };
-type Person = { id: string; name: string };
-type Flow = { autoAssign: boolean; weekdays: number[]; team: Map<string, string> };
+export type Video = { id: string; title: string; brandId: string; status: string; shootDate: Date | null; scheduledDate: Date };
+export type Person = { id: string; name: string };
+export type Flow = { autoAssign: boolean; weekdays: number[]; team: Map<string, string> };
 
 function readVideo(tx: AppTransaction, id: string): Promise<Video | null> {
   return tx.contentItem.findUnique({ where: { id }, select: { id: true, title: true, brandId: true, status: true, shootDate: true, scheduledDate: true } });
@@ -129,7 +138,7 @@ export function eligiblePerson(tx: AppTransaction, userId: string, brandId: stri
  * y, si no hay nadie apto, la persona por defecto de la marca. Una marca sin equipo
  * definido no usa el flujo: no se automatiza nada aunque el video tenga asignaciones.
  */
-async function resolveAssignee(tx: AppTransaction, video: Video, step: StepKind, flow: Flow): Promise<{ person: Person; assigned: boolean } | SkipReason> {
+export async function resolveAssignee(tx: AppTransaction, video: Pick<Video, "id" | "brandId">, step: StepKind, flow: Flow): Promise<{ person: Person; assigned: boolean } | SkipReason> {
   if (!flow.team.size) return "no_team";
   const { assignment, team } = STEP_ROLES[step];
   const current = await tx.assignment.findMany({
@@ -148,7 +157,7 @@ async function resolveAssignee(tx: AppTransaction, video: Video, step: StepKind,
 
 /* ------------------------------------------------------------ ESCRITURAS -- */
 
-async function ensureAssignment(tx: AppTransaction, actor: ProductionActor, video: Video, role: string, person: Person) {
+export async function ensureAssignment(tx: AppTransaction, actor: ProductionActor, video: Pick<Video, "id" | "title" | "brandId">, role: string, person: Person) {
   const existing = await tx.assignment.findUnique({
     where: { contentItemId_userId_role: { contentItemId: video.id, userId: person.id, role } },
     select: { id: true },
@@ -170,7 +179,7 @@ async function ensureAssignment(tx: AppTransaction, actor: ProductionActor, vide
  * Sin tablero, siembra las columnas iniciales (mismos ids que «asegurarColumnasIniciales»);
  * si solo hay columnas de otras marcas, crea «Producción» para esta.
  */
-async function taskColumnFor(tx: AppTransaction, actor: ProductionActor, brandId: string): Promise<string> {
+export async function taskColumnFor(tx: AppTransaction, actor: ProductionActor, brandId: string): Promise<string> {
   const where = { OR: [{ brandId: null }, { brandId }] };
   const first = await tx.taskColumn.findFirst({ where, orderBy: [{ order: "asc" }, { id: "asc" }], select: { id: true } });
   if (first) return first.id;
@@ -192,10 +201,11 @@ async function taskColumnFor(tx: AppTransaction, actor: ProductionActor, brandId
   return column.id;
 }
 
-type NewStep = {
-  video: Video;
+export type NewStep = {
+  video: Pick<Video, "id" | "title" | "brandId">;
   step: StepKind;
-  person: Person;
+  /** null: «Sin asignar» (solo la cadena de entregas crea pasos sin responsable). */
+  person: Person | null;
   dueAt: Date;
   key: string;
   summary: string;
@@ -206,7 +216,7 @@ type NewStep = {
 };
 
 /** Paso + su tarea en el tablero (responsable y fecha límite), auditados. */
-async function createStep(tx: AppTransaction, actor: ProductionActor, input: NewStep) {
+export async function createStep(tx: AppTransaction, actor: ProductionActor, input: NewStep) {
   const { video, step, person, dueAt } = input;
   const columnId = await taskColumnFor(tx, actor, video.brandId);
   const last = await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } });
@@ -219,19 +229,19 @@ async function createStep(tx: AppTransaction, actor: ProductionActor, input: New
       priority: "ALTA",
       dueDate: fromDateKey(dateKey(dueAt)),
       columnId,
-      assigneeId: person.id,
+      assigneeId: person?.id ?? null,
       brandId: video.brandId,
       order: (last?.order ?? -1) + 1,
     },
     select: { id: true, title: true },
   });
-  await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "Task", entityId: task.id, brandId: video.brandId, summary: `Creó la tarea "${task.title}" para ${person.name} (flujo de producción)` });
+  await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "Task", entityId: task.id, brandId: video.brandId, summary: `Creó la tarea "${task.title}" ${person ? `para ${person.name}` : "sin responsable"} (flujo de producción)` });
   const created = await tx.productionStep.create({
     data: {
       contentItemId: video.id,
       brandId: video.brandId,
       step,
-      assigneeId: person.id,
+      assigneeId: person?.id ?? null,
       dueAt,
       source: input.source ?? "AUTO",
       taskId: task.id,
@@ -250,7 +260,7 @@ async function createStep(tx: AppTransaction, actor: ProductionActor, input: New
     brandId: video.brandId,
     summary: input.summary,
     changes: {
-      assigneeId: { etiqueta: "Responsable", antes: null, despues: person.id, verDespues: person.name },
+      assigneeId: { etiqueta: "Responsable", antes: null, despues: person?.id ?? null, verDespues: person?.name ?? "Sin asignar" },
       dueAt: { etiqueta: "Vence", antes: null, despues: dueAt.toISOString(), verDespues: formatDateTime(dueAt) },
     },
   });
@@ -489,22 +499,56 @@ export async function ensureStepAssignment(tx: AppTransaction, actor: SessionUse
 
 /* ---------------------------------------------------------------- GANCHOS -- */
 
-/** Guion unido a un video (vincularGuionAVideo): se programa la grabación. */
+type ChainModule = typeof import("@/lib/domain/production-chain");
+
+/** Import perezoso: la cadena importa este módulo, así que aquí no puede ser estático. */
+function chain(): Promise<ChainModule> {
+  return import("@/lib/domain/production-chain");
+}
+
+/**
+ * ¿El video va por la cadena de entregas? Sin cadena configurada no consulta nada (así las
+ * pruebas y el comportamiento con la cadena apagada no cambian). Con canario, lee la marca.
+ */
+async function chainOwns(tx: AppTransaction, videoId: string): Promise<boolean> {
+  if (!productionChainConfigured()) return false;
+  const video = await tx.contentItem.findUnique({ where: { id: videoId }, select: { brandId: true } });
+  return Boolean(video && productionChainEnabled(video.brandId));
+}
+
+/** Guion unido a un video (vincularGuionAVideo): se programa la grabación. Con la cadena: paso del guion. */
 export async function onScriptLinked(tx: AppTransaction, actor: ProductionActor, videoId: string) {
   if (!productionFlowEnabled()) return;
+  if (await chainOwns(tx, videoId)) {
+    await (await chain()).chainEvent(tx, actor, { type: "SCRIPT_LINKED", videoId });
+    return;
+  }
   await scheduleRecording(tx, actor, videoId);
 }
 
-/** Guion aprobado (transitionScript): cada video que lo usa recibe su grabación. */
+/** Guion aprobado (transitionScript): cada video que lo usa recibe su grabación. Con la cadena, lo decide onScriptStatusChanged. */
 export async function onScriptApproved(tx: AppTransaction, actor: ProductionActor, scriptId: string) {
   if (!productionFlowEnabled()) return;
-  const videos = await tx.contentItem.findMany({ where: { scriptId }, select: { id: true }, orderBy: { id: "asc" } });
-  for (const video of videos) await scheduleRecording(tx, actor, video.id);
+  const videos = await tx.contentItem.findMany({ where: { scriptId }, select: { id: true, brandId: true }, orderBy: { id: "asc" } });
+  for (const video of videos) {
+    if (productionChainConfigured() && productionChainEnabled(video.brandId)) continue;
+    await scheduleRecording(tx, actor, video.id);
+  }
+}
+
+/** Cadena de entregas: cualquier cambio de estado de un guion (transitionScript). Sin cadena no consulta nada. */
+export async function onScriptStatusChanged(tx: AppTransaction, actor: ProductionActor, scriptId: string, from: string, to: string) {
+  if (!productionFlowEnabled() || !productionChainConfigured()) return;
+  await (await chain()).chainEvent(tx, actor, { type: "SCRIPT_STATUS", scriptId, from, to });
 }
 
 /** Cambio de estado del video (transitionVideo). */
-export async function onVideoStatusChanged(tx: AppTransaction, actor: ProductionActor, videoId: string, status: string) {
+export async function onVideoStatusChanged(tx: AppTransaction, actor: ProductionActor, videoId: string, status: string, from?: string) {
   if (!productionFlowEnabled()) return;
+  if (await chainOwns(tx, videoId)) {
+    await (await chain()).chainEvent(tx, actor, { type: "VIDEO_STATUS", videoId, from: from ?? "", to: status });
+    return;
+  }
   if (status === "APROBADO") await scheduleRecording(tx, actor, videoId);
   else if (status === "EDICION") await assignEditing(tx, actor, videoId, { recordedNow: true });
   else if (status === "PROGRAMADO") await assignPublishing(tx, actor, videoId);
@@ -514,6 +558,10 @@ export async function onVideoStatusChanged(tx: AppTransaction, actor: Production
 /** Check completado (alternarCheck): grabación terminada o revisión final aprobada. */
 export async function onChecklistCompleted(tx: AppTransaction, actor: ProductionActor, check: { contentItemId: string; stage: string; kind: string }) {
   if (!productionFlowEnabled()) return;
+  if (await chainOwns(tx, check.contentItemId)) {
+    await (await chain()).chainEvent(tx, actor, { type: "CHECK_DONE", videoId: check.contentItemId, stage: check.stage, kind: check.kind });
+    return;
+  }
   if (check.kind === "FINAL_APPROVAL") await assignPublishing(tx, actor, check.contentItemId, { moveCalendar: true });
   else if (check.stage === "GRABACION") await assignEditing(tx, actor, check.contentItemId, { recordedNow: true, requireRecordingChecks: true });
 }
@@ -521,11 +569,27 @@ export async function onChecklistCompleted(tx: AppTransaction, actor: Production
 /** Fecha de grabación editada a mano (actualizarVideo, actualizarGrabacion). */
 export async function onShootDateChanged(tx: AppTransaction, actor: ProductionActor, videoId: string) {
   if (!productionFlowEnabled()) return;
+  if (await chainOwns(tx, videoId)) {
+    await (await chain()).chainEvent(tx, actor, { type: "DATE_CHANGED", videoId, field: "shootDate" });
+    return;
+  }
   await syncRecordingDate(tx, actor, videoId);
+}
+
+/** Fecha prevista cambiada (recordPublication, actualizarVideo). Solo la cadena la sigue; apagada no consulta nada. */
+export async function onScheduledDateChanged(tx: AppTransaction, actor: ProductionActor, videoId: string) {
+  if (!productionFlowEnabled() || !productionChainConfigured()) return;
+  if (await chainOwns(tx, videoId)) await (await chain()).chainEvent(tx, actor, { type: "DATE_CHANGED", videoId, field: "scheduledDate" });
 }
 
 /** Paso de grabación marcado hecho por el filmmaker o coordinación: la edición arranca ya. */
 export async function onStepCompleted(tx: AppTransaction, actor: ProductionActor, step: { contentItemId: string; step: string }) {
   if (!productionFlowEnabled()) return;
+  if (await chainOwns(tx, step.contentItemId)) {
+    // Camino viejo («Marcar hecho» sin completeStep): la cadena solo abre el paso siguiente para
+    // no dejar el video sin paso abierto. Con la cadena, las acciones deben usar completeStep.
+    await (await chain()).chainEvent(tx, actor, { type: "STEP_MARKED", videoId: step.contentItemId, step: step.step });
+    return;
+  }
   if (step.step === "GRABACION") await assignEditing(tx, actor, step.contentItemId, { recordedNow: true, markedByPerson: true });
 }

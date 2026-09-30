@@ -2,11 +2,16 @@
 import { createContext, useContext, useEffect, useRef, useState, useTransition } from "react";
 const SavedRevision = createContext(0);
 
-/** Conserva el borrador si el servidor rechaza una edición o hay un conflicto. */
+/**
+ * Conserva el borrador si el servidor rechaza una edición o hay un conflicto. Si la acción
+ * responde { message } con éxito (p. ej. «el calendario sigue con la fecha anterior»), lo
+ * muestra como estado, sin cerrar nada.
+ */
 export function EditForm({ action, children, onSuccess, ...props }: Omit<React.FormHTMLAttributes<HTMLFormElement>, "action" | "onSubmit"> & {
   action: (data: FormData) => Promise<unknown>; onSuccess?: () => void;
 }) {
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [ready, setReady] = useState(false);
   useEffect(() => { setReady(true); }, []);
@@ -16,7 +21,7 @@ export function EditForm({ action, children, onSuccess, ...props }: Omit<React.F
     event.preventDefault();
     if (busy.current || pending || !ready) return;
     const data = new FormData(event.currentTarget, (event.nativeEvent as SubmitEvent).submitter);
-    busy.current = true; setError(null);
+    busy.current = true; setError(null); setMessage(null);
     // Mantiene el formulario bloqueado hasta incorporar también la respuesta de servidor a la UI.
     startTransition(async () => {
       try {
@@ -24,8 +29,10 @@ export function EditForm({ action, children, onSuccess, ...props }: Omit<React.F
         if (result && typeof result === "object" && "error" in result && typeof result.error === "string") {
           setError(result.error); return;
         }
+        const note = result && typeof result === "object" && "message" in result && typeof result.message === "string" && result.message ? result.message : null;
         startTransition(() => {
           setSaved(version => version + 1);
+          setMessage(note);
           onSuccess?.();
         });
       } catch { startTransition(() => setError("No se pudo guardar. Conservamos lo que escribiste; recarga la página para comprobar si hubo cambios de otra persona antes de reintentar.")); }
@@ -34,6 +41,7 @@ export function EditForm({ action, children, onSuccess, ...props }: Omit<React.F
   }} aria-busy={pending || !ready}>
     <SavedRevision.Provider value={saved}><fieldset disabled={pending || !ready} className="contents">{children}</fieldset></SavedRevision.Provider>
     {error ? <p role="alert" className="text-danger text-sm mt-2">{error}</p> : null}
+    {message ? <p role="status" className="text-inksoft text-sm font-semibold mt-2">{message}</p> : null}
   </form>;
 }
 

@@ -1,5 +1,8 @@
 import type { Prisma } from "@prisma/client";
 
+import { CHAIN_STEP_RULES, PRODUCTION_STEP_MAP } from "@/lib/constants";
+import { profileGrants, type AccessUser } from "@/lib/permissions";
+import type { StepCalendarEntry } from "@/lib/production-scope";
 import { DIAS_CORTOS, addDays, dateKey, endOfDay, fromDateKey, monthGrid, startOfDay } from "@/lib/utils";
 import { validDay } from "@/lib/validation";
 
@@ -9,6 +12,12 @@ import { validDay } from "@/lib/validation";
  * Cada video puede ocupar dos días: el de grabación (shootDate) y el de
  * publicación (scheduledDate). Aquí viven el interruptor y las funciones puras
  * que reparten videos y agenda por día; las páginas solo consultan y pintan.
+ *
+ * Con la cadena de entregas encendida (PRODUCTION_CHAIN_ENABLED) y CALENDARIO_PASOS, el
+ * calendario suma los pasos de producción (Guion, Grabar, Editar, Publicar, Diseño) en su
+ * plazo (`dueAt`), con responsable y estado. Un paso Grabar o Publicar reemplaza al chip
+ * que se derivaba de la fecha del video: una sola fecha por cosa. Módulo puro a propósito
+ * (sin Prisma ni sesión): las páginas consultan y aquí solo se decide qué se pinta.
  */
 
 /* ----------------------------------------------------------- INTERRUPTOR -- */
@@ -24,11 +33,26 @@ export function calendarioMensualActivo(env: Record<string, string | undefined> 
 
 /* ----------------------------------------------------------------- TIPOS -- */
 
-export type CalendarEntryKind = "GRABACION" | "PUBLICACION";
+/** Chips que salen de las fechas del video (shootDate y scheduledDate). */
+export type VideoEntryKind = "GRABACION" | "PUBLICACION";
+/** PASO: un paso de producción con plazo (solo con la cadena y CALENDARIO_PASOS). */
+export type CalendarEntryKind = VideoEntryKind | "PASO";
 
 export const ENTRY_KIND_LABEL: Record<CalendarEntryKind, string> = {
   GRABACION: "Grabar",
   PUBLICACION: "Publicar",
+  PASO: "Paso",
+};
+
+/** Pasos que se pintan en el calendario, con el verbo corto del chip. */
+export type StepChipKind = "GUION" | "GRABACION" | "EDICION" | "PUBLICACION" | "DISENO";
+export const STEP_CHIP_KINDS: readonly StepChipKind[] = ["GUION", "GRABACION", "EDICION", "PUBLICACION", "DISENO"];
+export const STEP_CHIP_LABEL: Record<StepChipKind, string> = {
+  GUION: "Guion",
+  GRABACION: "Grabar",
+  EDICION: "Editar",
+  PUBLICACION: "Publicar",
+  DISENO: "Diseño",
 };
 
 /** Tope de cordura para eventos con un fin absurdo. */
@@ -120,7 +144,7 @@ export function eventTouches(e: { startAt: Date; endAt: Date | null }, desde: Da
 /* -------------------------------------------------------------- REPARTO -- */
 
 export type VideoDates = { title: string; scheduledDate: Date; shootDate?: Date | null };
-export type CalendarEntry<T> = T & { kind: CalendarEntryKind; date: Date };
+export type CalendarEntry<T> = T & { kind: VideoEntryKind; date: Date };
 
 /**
  * Una entrada por fecha del video: grabación (si la tiene y se pide) y
@@ -139,12 +163,19 @@ export function videoEntries<T extends VideoDates>(
   return out;
 }
 
-const ORDEN_KIND: Record<CalendarEntryKind, number> = { GRABACION: 0, PUBLICACION: 1 };
+/** Orden de la cadena dentro del día: Guion, Grabar, Editar, Publicar y Diseño al final. */
+const ORDEN_PASO: Record<StepChipKind, number> = { GUION: 0, GRABACION: 1, EDICION: 2, PUBLICACION: 3, DISENO: 4 };
+const ORDEN_KIND: Record<VideoEntryKind, number> = { GRABACION: ORDEN_PASO.GRABACION, PUBLICACION: ORDEN_PASO.PUBLICACION };
 
-/** Entradas por día de Lima; dentro de cada día, primero lo que se graba. */
-export function groupEntriesByDay<T extends { kind: CalendarEntryKind; date: Date; title: string }>(
-  entries: T[],
-): Map<string, T[]> {
+type Ordenable = { kind: CalendarEntryKind; date: Date; title: string; step?: string };
+
+function ordenDe(e: Ordenable): number {
+  if (e.kind === "PASO") return ORDEN_PASO[e.step as StepChipKind] ?? 9;
+  return ORDEN_KIND[e.kind];
+}
+
+/** Entradas por día de Lima; dentro de cada día, el orden de la cadena (primero lo que se graba). */
+export function groupEntriesByDay<T extends Ordenable>(entries: T[]): Map<string, T[]> {
   const porDia = new Map<string, T[]>();
   for (const e of entries) {
     const key = dateKey(e.date);
@@ -153,7 +184,7 @@ export function groupEntriesByDay<T extends { kind: CalendarEntryKind; date: Dat
     else porDia.set(key, [e]);
   }
   for (const lista of porDia.values()) {
-    lista.sort((a, b) => ORDEN_KIND[a.kind] - ORDEN_KIND[b.kind] || a.title.localeCompare(b.title, "es"));
+    lista.sort((a, b) => ordenDe(a) - ordenDe(b) || a.title.localeCompare(b.title, "es"));
   }
   return porDia;
 }
@@ -192,7 +223,7 @@ export function groupEventsByDay<T extends { startAt: Date; endAt: Date | null }
  * la misma marca activa, así el detalle nunca enseña más que la rejilla.
  */
 export function itemsOfDay<
-  V extends { kind: CalendarEntryKind; date: Date; title: string },
+  V extends Ordenable,
   E extends { startAt: Date; endAt: Date | null },
 >(key: string, videos: V[], eventos: E[]): { key: string; videos: V[]; eventos: E[] } {
   return {
@@ -211,6 +242,134 @@ export function daySlots(videos: number, eventos: number, max: number = MAX_POR_
   const cupoVideos = Math.max(1, max - agenda);
   const visibles = Math.min(videos, cupoVideos);
   return { agenda, videos: visibles, resto: videos - visibles + (eventos - agenda) };
+}
+
+/* ------------------------------------------------------------------ PASOS -- */
+
+/** Un paso de producción pintado en el calendario, en el día de su plazo. */
+export type CalendarStepEntry = {
+  kind: "PASO";
+  /** Id del paso (ProductionStep). */
+  id: string;
+  videoId: string;
+  step: StepChipKind;
+  /** Verbo corto del chip: Guion, Grabar, Editar, Publicar o Diseño. */
+  label: string;
+  title: string;
+  date: Date;
+  /** Hora del plazo solo en Diseño (24 h); el resto vence al final del día. */
+  time: string | null;
+  brandName: string;
+  /** Color del tipo de paso (PRODUCTION_STEP_MAP). */
+  color: string;
+  /** null: «Sin asignar». */
+  assigneeName: string | null;
+  status: "PENDIENTE" | "HECHO";
+  overdue: boolean;
+  /** Volvió con «Devolver»: el paso siguiente de la cadena quedó DEVUELTO. */
+  returned: boolean;
+  unassigned: boolean;
+  /** Es de quien mira: en «Solo lo mío» el nombre del responsable sobra. */
+  mine: boolean;
+};
+
+/**
+ * Pasos que vuelven a estar pendientes por una devolución: si el paso T de un video quedó
+ * DEVUELTO, el paso al que devuelve (CHAIN_STEP_RULES[T].returnsTo) está «Devuelto».
+ * Claves `${videoId}:${paso}`.
+ */
+export function returnedStepKeys(rows: { contentItemId: string; step: string; status: string }[]): Set<string> {
+  const out = new Set<string>();
+  for (const row of rows) {
+    if (row.status !== "DEVUELTO") continue;
+    const back = CHAIN_STEP_RULES[row.step as keyof typeof CHAIN_STEP_RULES]?.returnsTo;
+    if (back) out.add(`${row.contentItemId}:${back}`);
+  }
+  return out;
+}
+
+/** Filas de pasos del calendario (stepCalendarEntries) → chips con estado. */
+export function toCalendarSteps(
+  entries: StepCalendarEntry[],
+  { returned = new Set<string>(), userId }: { returned?: ReadonlySet<string>; userId: string },
+): CalendarStepEntry[] {
+  return entries.map((e) => {
+    const step = (STEP_CHIP_KINDS.includes(e.step) ? e.step : "DISENO") as StepChipKind;
+    const pendiente = e.status === "PENDIENTE";
+    return {
+      kind: "PASO" as const,
+      id: e.id,
+      videoId: e.videoId,
+      step,
+      label: STEP_CHIP_LABEL[step],
+      title: e.title,
+      date: e.date,
+      time: step === "DISENO" ? e.time : null,
+      brandName: e.brandName,
+      color: e.color || PRODUCTION_STEP_MAP[step]?.hex || "#64748b",
+      assigneeName: e.assigneeName,
+      status: e.status,
+      overdue: pendiente && e.overdue,
+      returned: pendiente && returned.has(`${e.videoId}:${e.step}`),
+      unassigned: pendiente && !e.assigneeId,
+      mine: Boolean(e.assigneeId) && e.assigneeId === userId,
+    };
+  });
+}
+
+/** Estados del chip, del más urgente al menos. Hecho excluye a los demás. */
+export function stepFlags(s: Pick<CalendarStepEntry, "status" | "overdue" | "returned" | "unassigned">): string[] {
+  if (s.status === "HECHO") return ["Hecho"];
+  const flags: string[] = [];
+  if (s.overdue) flags.push("Vencido");
+  if (s.returned) flags.push("Devuelto");
+  if (s.unassigned) flags.push("Sin asignar");
+  return flags.length ? flags : ["Pendiente"];
+}
+
+/** Texto completo del chip (title y aria-label): tipo, marca, video, hora, responsable y estado. */
+export function stepDescription(s: CalendarStepEntry): string {
+  return [s.label, s.brandName, s.title, s.time ? `vence a las ${s.time}` : null, s.assigneeName ?? "Sin asignar", ...stepFlags(s)]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * Una sola fecha por cosa: los chips Grabar/Publicar derivados de la fecha del video se
+ * quitan cuando un paso visible los cubre (`${videoId}:GRABACION|PUBLICACION`).
+ */
+export function dedupeVideoEntries<T extends { id: string; kind: VideoEntryKind }>(entries: T[], covered: Iterable<string>): T[] {
+  const cubiertas = covered instanceof Set ? (covered as Set<string>) : new Set(covered);
+  if (!cubiertas.size) return entries;
+  return entries.filter((e) => !cubiertas.has(`${e.id}:${e.kind}`));
+}
+
+/**
+ * «Solo lo mío» por defecto: activo para quien ve el calendario por asignación (filmmaker,
+ * editor, talento, diseñador) y para el community; apagado para el Dueño y para quien tiene
+ * un perfil de marca completo (estrategia, guion, producción).
+ */
+export function mineByDefault(user: AccessUser): boolean {
+  if (user.role === "OWNER") return false;
+  return profileGrants(user, "calendar.view").every((g) => g.scope === "assigned" || g.id === "PUBLISHER");
+}
+
+/** ?mio=1 lo enciende, ?mio=0 lo apaga; sin valor, el de su perfil. */
+export function resolveMine(value: unknown, user: AccessUser): boolean {
+  if (value === "1") return true;
+  if (value === "0") return false;
+  return mineByDefault(user);
+}
+
+/** Valor de ?mio= que conserva la elección en los enlaces (undefined si es la de su perfil). */
+export function mineParam(mine: boolean, user: AccessUser): string | undefined {
+  return mine === mineByDefault(user) ? undefined : mine ? "1" : "0";
+}
+
+/** Título de un paso en el feed ICS: «Editar · Marca: título». */
+export function feedStepTitle(step: string, brandName: string, title: string): string {
+  const rule = CHAIN_STEP_RULES[step as keyof typeof CHAIN_STEP_RULES];
+  return `${rule?.task ?? PRODUCTION_STEP_MAP[step]?.label ?? step} · ${brandName}: ${title}`;
 }
 
 /* ------------------------------------------------------------ LISTA MÓVIL -- */

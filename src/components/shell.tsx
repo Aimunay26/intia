@@ -22,6 +22,7 @@ import {
 	TrendingUp,
 	Users,
 	UserSquare2,
+	Workflow,
 	X,
 } from "lucide-react";
 import Link from "next/link";
@@ -37,7 +38,7 @@ import { NavigationPending } from "@/components/navigation-pending";
 import { Avatar } from "@/components/ui";
 import type { BrandChoice } from "@/lib/brand-shared";
 import { USER_ROLE_MAP } from "@/lib/constants";
-import { allows, canAccessPath } from "@/lib/permissions";
+import { allows, canAccessPath, type PermissionFlags } from "@/lib/permissions";
 
 const NAV_GUIA_MAP: Record<string, string> = {
   "/marcas": GUIA_TARGETS.NAV_MARCAS,
@@ -61,6 +62,7 @@ const NAV: NavGroup[] = [
       { href: "/calendario", label: "Calendario", icon: CalendarDays },
       { href: "/contenido", label: "Videos", icon: Film },
       { href: "/tareas", label: "Tareas", icon: CheckSquare },
+      { href: "/cadena", label: "Cadena", icon: Workflow },
       { href: "/marcas", label: "Marcas", icon: Tags },
     ],
   },
@@ -114,6 +116,8 @@ export function Shell({
   release = "local",
   environment = "unknown",
   manualEnabled = true,
+  chainEnabled = false,
+  permissionFlags = { designerCalendar: false },
   children,
 }: {
   user: ShellUser;
@@ -125,6 +129,10 @@ export function Shell({
   environment?: string;
   /** Kill-switch MANUAL_PROCEDIMIENTOS_ENABLED, resuelto en el servidor (layout). */
   manualEnabled?: boolean;
+  /** Cadena de entregas (PRODUCTION_CHAIN_ENABLED + PRODUCTION_FLOW_ENABLED y el canario), resuelta en el layout. Apagada, sin menú «Cadena». */
+  chainEnabled?: boolean;
+  /** Permisos que dependen de interruptores (el navegador no lee el entorno): resueltos en el layout. */
+  permissionFlags?: PermissionFlags;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -219,7 +227,7 @@ export function Shell({
       <nav aria-label="Navegación principal" className="flex-1 overflow-y-auto px-3.5 pb-4">
         {NAV.map((group, gi) => {
           const items = group.items.filter(
-            (i) => canAccessPath(user, i.href) && (manualEnabled || i.href !== "/manual")
+            (i) => canAccessPath(user, i.href, permissionFlags) && (manualEnabled || i.href !== "/manual") && (chainEnabled || i.href !== "/cadena")
           );
           if (!items.length) return null;
           return (

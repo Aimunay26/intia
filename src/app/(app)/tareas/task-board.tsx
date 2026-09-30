@@ -22,7 +22,7 @@ import {
 	crearTarea,
 	eliminarColumna,
 	eliminarTarea,
-	moverTarea,
+	moverTareaConMotivo,
 	revisarEliminacionColumna,
 } from "@/app/actions/tasks";
 import { EditForm, RevisionField } from "@/components/edit-form";
@@ -30,7 +30,9 @@ import { FilterDisclosure, FilterSelect, SearchInput } from "@/components/filter
 import { Modal, MODAL_FOOTER_STICKY, SubmitButton } from "@/components/forms";
 import { Field } from "@/components/ui";
 import { TASK_PRIORITIES } from "@/lib/tasks-constants";
-import { cn } from "@/lib/utils";
+import { APP_TIMEZONE, cn, dateKey } from "@/lib/utils";
+
+const MOVE_ERROR = "No se movió la tarea. Recarga para comprobar cambios de otra persona.";
 
 /* ------------------------------------------------------------------ TIPOS -- */
 
@@ -88,6 +90,16 @@ const COLOR_PRESETS = [
   { name: "Gris", hex: "#64748b" },
 ];
 
+/** Última columna por orden entre las que admite la marca (global o propia): la de «Listo». */
+function lastColumnFor(columns: readonly BoardColumn[], brandId: string | null): string | undefined {
+  let last: BoardColumn | undefined;
+  for (const column of columns) {
+    if (column.brandId && column.brandId !== brandId) continue;
+    if (!last || column.order > last.order || (column.order === last.order && column.id > last.id)) last = column;
+  }
+  return last?.id;
+}
+
 /* --------------------------------------------------------------- COMPONENTE -- */
 
 export function TaskBoard({
@@ -97,6 +109,7 @@ export function TaskBoard({
   activeBrandId,
   filters,
   canDelete,
+  chain = null,
 }: {
   initialColumns: BoardColumn[];
   users: BoardUser[];
@@ -104,12 +117,19 @@ export function TaskBoard({
   activeBrandId?: string | null;
   filters: TaskFilters;
   canDelete: boolean;
+  /**
+   * Cadena de entregas (resuelta en el servidor): null = apagada; brands null = todas las marcas.
+   * Solo en sus marcas la tarea vence en el día de Lima y nunca en «Listo»; fuera, como siempre.
+   */
+  chain?: { brands: string[] | null } | null;
 }) {
   const [columns, setColumns] = useState<BoardColumn[]>(initialColumns);
   const [isPending, startTransition] = useTransition();
   const [deletion, setDeletion] = useState<{ kind: "task" | "column"; id: string; name: string; tasks: number } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [moveError, setMoveError] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [boardNotice, setBoardNotice] = useState<string | null>(null);
+  const chainFor = (brandId: string | null) => Boolean(chain && brandId && (!chain.brands || chain.brands.includes(brandId)));
 
   const generation = useRef(0);
   const loading = useRef(new Set<string>());
@@ -181,7 +201,7 @@ export function TaskBoard({
     const previous = columns;
     const task = columns.flatMap(column => column.tasks).find(task => task.id === taskId);
     if (!task) return;
-    setMoveError(false);
+    setMoveError(null);
     setColumns((prev) => {
       let movedTask: BoardTask | null = null;
       const next = prev.map((col) => {
@@ -207,9 +227,12 @@ export function TaskBoard({
 
     startTransition(async () => {
       try {
-        await moverTarea(taskId, targetColId, undefined, new Date(task.updatedAt).toISOString());
+        // Con la cadena de entregas, soltar en la última columna es el «Listo» del paso: si su
+        // validación falla («Falta el enlace del material grabado»…), la tarea vuelve a su sitio con el motivo.
+        const result = await moverTareaConMotivo(taskId, targetColId, undefined, new Date(task.updatedAt).toISOString());
+        if (result && "error" in result) { setColumns(previous); setMoveError(result.error); }
       } catch {
-        setColumns(previous); setMoveError(true);
+        setColumns(previous); setMoveError(MOVE_ERROR);
       }
     });
   };
@@ -224,7 +247,8 @@ export function TaskBoard({
 
   return (
     <div className="space-y-4">
-      {moveError ? <p role="alert" className="text-danger text-sm">No se movió la tarea. Recarga para comprobar cambios de otra persona.</p> : null}
+      {moveError ? <p role="alert" className="text-danger text-sm">{moveError}</p> : null}
+      {boardNotice ? <p role="status" className="text-inksoft text-sm font-semibold">{boardNotice}</p> : null}
       {/* ------------------------------------------------ FILTROS SUPERIORES -- */}
       <div className="card-flat flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
         <div className="flex flex-wrap items-center gap-2.5 min-w-0 flex-1 max-md:basis-full">
@@ -313,9 +337,15 @@ export function TaskBoard({
                 column.tasks.map((task) => {
                   const esIdea = task.kind === "IDEA";
                   const priorityDef = TASK_PRIORITIES.find((p) => p.value === task.priority);
-                  const isOverdue =
-                    task.dueDate &&
-                    new Date(task.dueDate) < new Date(new Date().setHours(0, 0, 0, 0));
+                  // Con la cadena en su marca: vencida en el día de negocio de Lima (no a la
+                  // medianoche del navegador) y nunca en la última columna que admite su marca
+                  // («Listo»). Sin la cadena, la regla de siempre.
+                  const chainTask = chainFor(task.brandId);
+                  const isOverdue = chainTask
+                    ? Boolean(task.dueDate) &&
+                      column.id !== lastColumnFor(columns, task.brandId) &&
+                      dateKey(task.dueDate) < dateKey(new Date())
+                    : Boolean(task.dueDate) && new Date(task.dueDate!) < new Date(new Date().setHours(0, 0, 0, 0));
 
                   return (
                     <div
@@ -380,6 +410,7 @@ export function TaskBoard({
                               {new Date(task.dueDate).toLocaleDateString("es-ES", {
                                 day: "numeric",
                                 month: "short",
+                                ...(chainTask ? { timeZone: APP_TIMEZONE } : {}),
                               })}
                             </span>
                           )}
@@ -618,8 +649,13 @@ export function TaskBoard({
         >
           <EditForm
             action={async (formData) => {
-              await actualizarTarea(formData);
+              // Un rechazo de la cadena de entregas vuelve como { ok: false, error }: EditForm lo
+              // muestra y conserva el borrador en vez de cerrar el modal.
+              const result = await actualizarTarea(formData);
+              if (!result.ok) return { error: result.error };
               setEditingTask(null);
+              // Aviso de la cadena (p. ej. el calendario siguió con la fecha anterior): queda a la vista.
+              setBoardNotice("message" in result && result.message ? result.message : null);
             }}
             className="space-y-3.5"
           >

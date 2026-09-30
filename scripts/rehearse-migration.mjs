@@ -199,6 +199,50 @@ try {
   assert.equal(await db.brandTeamMember.count(),0,'La función de la marca cae con la cuenta');
   assert.equal((await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'}})).assigneeId,null,'El paso conserva su historial sin responsable');
   sql(source,`DELETE FROM "Brand" WHERE id='flow-other'`);
+  // Cadena de entregas: solo amplía los CHECK de ProductionStep (+GUION, +DEVUELTO) y añade un índice.
+  const chainMigration=fs.readFileSync('prisma/migrations/20260930090000_production_chain/migration.sql');
+  const chainStepInsert=(id,step,key)=>`INSERT INTO "ProductionStep" (id,"contentItemId","brandId",step,"dueAt","automationKey","updatedAt") VALUES ('${id}','upgrade-video','upgrade-brand','${step}',now(),'${key}',now())`;
+  assert.throws(()=>sql(source,chainStepInsert('chain-early','GUION','upgrade-video:GUION')),/ProductionStep_step_check/,'Antes de migrar el código viejo nunca podría escribir GUION');
+  const [chainStepBefore]=await db.$queryRaw`SELECT * FROM "ProductionStep" WHERE id='flow-step'`;
+  const [chainVideoBefore]=await db.$queryRaw`SELECT * FROM "ContentItem" WHERE id='upgrade-video'`;
+  const [chainColumns]=await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public'`;
+  const [chainTables]=await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public'`;
+  sql(source,chainMigration);
+  await db.$disconnect();
+  assert.deepEqual((await db.$queryRaw`SELECT * FROM "ProductionStep" WHERE id='flow-step'`)[0],chainStepBefore,'Los pasos existentes no cambian');
+  assert.deepEqual((await db.$queryRaw`SELECT * FROM "ContentItem" WHERE id='upgrade-video'`)[0],chainVideoBefore);
+  assert.deepEqual((await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public'`)[0],chainColumns,'Sin columnas nuevas');
+  assert.deepEqual((await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public'`)[0],chainTables,'Sin tablas nuevas');
+  assert.equal((await db.$queryRaw`SELECT count(*)::int AS n FROM pg_indexes WHERE schemaname='public' AND indexname='ProductionStep_brandId_status_dueAt_idx'`)[0].n,1);
+  sql(source,`${chainStepInsert('chain-guion','GUION','upgrade-video:GUION')}; UPDATE "ProductionStep" SET status='DEVUELTO' WHERE id='chain-guion';`);
+  assert.equal((await db.productionStep.findUniqueOrThrow({where:{id:'chain-guion'}})).status,'DEVUELTO');
+  assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET status='DEVUELTO', "doneAt"=now() WHERE id='chain-guion'`),/ProductionStep_done_check/,'DEVUELTO no lleva doneAt');
+  assert.throws(()=>sql(source,chainStepInsert('chain-review','REVISION_GUION','upgrade-video:REVISION_GUION')),/ProductionStep_step_check/,'Sin revisiones intermedias (decisión del Dueño)');
+  assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET status='ARCHIVADO' WHERE id='chain-guion'`),/ProductionStep_status_check/);
+  assert.throws(()=>sql(source,chainStepInsert('chain-twice','GUION','upgrade-video:GUION')),/ProductionStep_automationKey_key/,'Un paso GUION por video');
+  sql(source,`DELETE FROM "ProductionStep" WHERE id='chain-guion'`);
+  // Feed personal del calendario (constructor B4): si su migración ya está en la rama, también se ensaya.
+  const feedPath='prisma/migrations/20260930091000_calendar_feed_user/migration.sql';
+  const feedRehearsed=fs.existsSync(feedPath);
+  if(feedRehearsed){
+    const feedInsert=(id,brand)=>`INSERT INTO "CalendarSubscription" (id,label,"tokenHash",scope,"brandId","createdById","expiresAt","updatedAt") VALUES ('${id}','Mi calendario','${id.padEnd(64,'0').replace(/[^0-9a-f]/g,'0')}','USER',${brand},'upgrade-owner',now()+interval '30 days',now())`;
+    assert.throws(()=>sql(source,feedInsert('feed-early','NULL')),/CalendarSubscription_scope_check/);
+    // Los enlaces del Dueño que ya existen (ALL y BRAND) no cambian, y no aparecen columnas ni tablas.
+    const ownerInsert=(id,scope,brand)=>`INSERT INTO "CalendarSubscription" (id,label,"tokenHash",scope,"brandId","createdById","expiresAt","updatedAt") VALUES ('${id}','Enlace del Dueño','${id.padEnd(64,'0').replace(/[^0-9a-f]/g,'0')}','${scope}',${brand},'upgrade-owner',now()+interval '30 days',now())`;
+    sql(source,`${ownerInsert('feed-all','ALL','NULL')}; ${ownerInsert('feed-bb','BRAND',"'upgrade-brand'")};`);
+    const feedBefore=await db.$queryRaw`SELECT * FROM "CalendarSubscription" ORDER BY id`;
+    const [feedColumns]=await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public'`;
+    sql(source,fs.readFileSync(feedPath));
+    await db.$disconnect();
+    assert.deepEqual(await db.$queryRaw`SELECT * FROM "CalendarSubscription" ORDER BY id`,feedBefore,'Los enlaces existentes no cambian');
+    assert.deepEqual((await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.columns WHERE table_schema='public'`)[0],feedColumns,'Sin columnas nuevas');
+    sql(source,feedInsert('feed-user','NULL'));
+    assert.throws(()=>sql(source,feedInsert('feed-brand',"'upgrade-brand'")),/CalendarSubscription_scope_check/,'USER nunca lleva marca');
+    assert.throws(()=>sql(source,ownerInsert('feed-ab','ALL',"'upgrade-brand'")),/CalendarSubscription_scope_check/,'ALL sigue sin marca');
+    assert.throws(()=>sql(source,ownerInsert('feed-bn','BRAND','NULL')),/CalendarSubscription_scope_check/,'BRAND sigue exigiendo marca');
+    assert.throws(()=>sql(source,ownerInsert('feed-0ther','OTRO','NULL')),/CalendarSubscription_scope_check/);
+    sql(source,`DELETE FROM "CalendarSubscription" WHERE id IN ('feed-user','feed-all','feed-bb')`);
+  }
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);
@@ -206,7 +250,7 @@ try {
   const schemaDiff=sourceDefinitions.flatMap(row=>{const other=targetDefinitions.find(item=>item.key===row.key);return other?.value===row.value?[]:[{key:row.key,source:row.value,restored:other?.value}];});
   fs.writeFileSync('.audit/migration-schema-diff.json',JSON.stringify(schemaDiff,null,2));
   assert.deepEqual(await snapshot(restored),original);assert.deepEqual(await restored.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8')),originalSchema);
-  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,workflowPreflightRolledBack:true,legacyApprovalsPreservedWithoutInventedVersion:true,completionManualObjectivesPreserved:true,completionLegacyMatchingPreservedReadOnly:true,completionDefaultsSafe:true,completionIndexDriftRolledBack:true,legacyGlobalCalendarRevoked:true,secretMigrationRollbackOnMissingKey:true,secretsMigratedEncrypted:true,masterKeyRotationVerified:true,catalogExistingRowsPreserved:true,catalogSameBrandEnforced:true,productionFlowExistingRowsPreserved:true,productionFlowNoNewColumnsOnExistingTables:true,productionFlowSameBrandEnforced:true,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
+  const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,workflowPreflightRolledBack:true,legacyApprovalsPreservedWithoutInventedVersion:true,completionManualObjectivesPreserved:true,completionLegacyMatchingPreservedReadOnly:true,completionDefaultsSafe:true,completionIndexDriftRolledBack:true,legacyGlobalCalendarRevoked:true,secretMigrationRollbackOnMissingKey:true,secretsMigratedEncrypted:true,masterKeyRotationVerified:true,catalogExistingRowsPreserved:true,catalogSameBrandEnforced:true,productionFlowExistingRowsPreserved:true,productionFlowNoNewColumnsOnExistingTables:true,productionFlowSameBrandEnforced:true,productionChainChecksWidenedOnly:true,productionChainExistingRowsPreserved:true,calendarFeedUserRehearsed:feedRehearsed,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
   fs.writeFileSync('.audit/migration-rehearsal.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 } finally {
   for(const db of clients)await db.$disconnect();

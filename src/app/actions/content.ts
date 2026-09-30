@@ -1,6 +1,8 @@
 "use server";
 import { transitionVideo } from "@/lib/domain/lifecycle";
-import { onChecklistCompleted, onShootDateChanged } from "@/lib/domain/production-flow";
+import { ProductionFlowError, onChecklistCompleted, onScheduledDateChanged, onShootDateChanged } from "@/lib/domain/production-flow";
+import { assertAssignmentRemovable, assertFinalApprovalAllowed, chainEvent } from "@/lib/domain/production-chain";
+import { productionChainConfigured, productionChainEnabled } from "@/lib/production-chain-flag";
 import { approveVersion, assertChecklistApproved, assertRequiredChecks, assertScriptApproved, reopenContentApprovals, reopeningReason, revokeVersion } from "@/lib/approvals";
 import { WorkflowError } from "@/lib/workflow-policy";
 import { requirePermission } from "@/lib/auth";
@@ -52,6 +54,21 @@ import { saveWeeklyMetric } from "@/lib/weekly-metric-mutations";
 function revalidar(id?: string | null) {
   invalidateDomain("content");
   if (id) revalidatePath(`/contenido/${id}`);
+  // Cadena de entregas: el paso, su tarea y la vista Cadena cambian con el video.
+  if (productionChainConfigured()) {
+    revalidatePath("/tareas");
+    revalidatePath("/cadena");
+  }
+}
+
+/** Una regla de la cadena (ChainError) viaja como regla del flujo, legible en el formulario. */
+async function reglaDeCadena(work: () => Promise<void>) {
+  try {
+    await work();
+  } catch (error) {
+    if (error instanceof ProductionFlowError) throw new WorkflowError(error.message);
+    throw error;
+  }
 }
 
 function roleLabel(value: string) {
@@ -168,6 +185,8 @@ export async function crearVideo(formData: FormData) {
       brandId,
       summary: `Creó el video "${created.title}" de ${created.brand.name}`,
     });
+    // Cadena de entregas: si la marca tiene equipo, el video nace con su paso de guion (SAVEPOINT).
+    await chainEvent(tx, user, { type: "VIDEO_CREATED", videoId: created.id });
 
     afterCommit(() => revalidar(created.id));
     afterCommit(() => redirect(`/contenido/${created.id}`));
@@ -215,6 +234,8 @@ export async function actualizarVideo(formData: FormData) {
     });
     // Nueva fecha de grabación: la grabación automática pendiente la sigue (PRODUCTION_FLOW_ENABLED).
     if (dateKey(before.shootDate) !== dateKey(data.shootDate)) await onShootDateChanged(tx, user, id);
+    // Cadena de entregas: la fecha prevista manda sobre el plazo de la publicación pendiente.
+    if (before.scheduledDate.getTime() !== data.scheduledDate.getTime()) await onScheduledDateChanged(tx, user, id);
 
     afterCommit(() => revalidar(id));
   });
@@ -296,7 +317,9 @@ export async function duplicarVideo(formData: FormData) {
         platforms: origen.platforms,
         priority: origen.priority,
         scheduledDate: origen.scheduledDate,
-        shootDate: origen.shootDate,
+        // Cadena de entregas: la copia no hereda la fecha de grabación (la del original era
+        // suya); la cadena la programa con el «Listo» del guion. Sin cadena, como siempre.
+        shootDate: productionChainEnabled(origen.brandId) ? null : origen.shootDate,
         structureId: origen.structureId,
         scriptId: origen.scriptId,
         // Los formatos previstos viajan con la copia: son parte de la idea.
@@ -334,6 +357,8 @@ export async function duplicarVideo(formData: FormData) {
       brandId: copia.brandId,
       summary: `Duplicó el video "${origen.title}"`,
     });
+    // Cadena de entregas: la copia nace como idea con su paso de guion (SAVEPOINT).
+    await chainEvent(tx, user, { type: "VIDEO_CREATED", videoId: copia.id });
 
     afterCommit(() => revalidar(copia.id));
     afterCommit(() => redirect(`/contenido/${copia.id}`));
@@ -372,6 +397,8 @@ export async function alternarCheck(formData: FormData) {
       if (approvalKind === "FINAL_APPROVAL") {
         await assertChecklistApproved(tx, video.id, "SCRIPT_APPROVAL");
         await assertRequiredChecks(tx, video.id, ["PREPRODUCCION", "GRABACION", "POSTPRODUCCION", "GENERAL"]);
+        // Cadena de entregas: la revisión final exige el enlace del máster en el paso de edición.
+        await reglaDeCadena(() => assertFinalApprovalAllowed(tx, video.id));
       }
       approvalId = (await approveVersion(tx, user, approvalKind, video.id, field(formData, "expectedApproval"))).id;
     }
@@ -399,6 +426,8 @@ export async function alternarCheck(formData: FormData) {
 
     // Grabación terminada → edición; revisión final aprobada → publicación (PRODUCTION_FLOW_ENABLED).
     if (done) await onChecklistCompleted(tx, user, { contentItemId: check.contentItemId, stage: current.stage, kind: current.kind });
+    // Cadena de entregas: retirar la revisión final devuelve la edición y cancela la publicación (SAVEPOINT).
+    else await chainEvent(tx, user, { type: "CHECK_REOPENED", videoId: check.contentItemId, stage: current.stage, kind: current.kind });
 
     afterCommit(() => revalidar(check.contentItem.id));
   });
@@ -523,14 +552,20 @@ export async function asignarPersona(formData: FormData) {
       brandId: item.brandId,
       summary: `Asignó a ${persona.name} como ${roleLabel(role)} en "${item.title}"`,
     });
+    // Cadena de entregas: el paso pendiente de esa función pasa a esta persona si no tenía a nadie apto (SAVEPOINT).
+    await chainEvent(tx, user, { type: "ASSIGNMENT_CHANGED", videoId: contentItemId, role, userId });
 
     afterCommit(() => revalidar(contentItemId));
   });
 }
 
+/**
+ * Quita una función del video. Con la cadena, si esa persona tiene el paso pendiente de esa
+ * función, se rechaza con el motivo legible («Reasigna primero el paso…») como { error }.
+ */
 export async function quitarAsignacion(formData: FormData) {
   const user = await requirePermission("content.assign");
-  return withMutation(user, false, async (tx, afterCommit) => {
+  return withWorkflowMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
 
     const asignacion = await tx.assignment.findUnique({
@@ -542,6 +577,8 @@ export async function quitarAsignacion(formData: FormData) {
     });
     if (!asignacion) return;
     await assertContentAccess(tx, user, asignacion.contentItemId, "content.assign");
+    // Cadena de entregas: quien tiene el paso pendiente de esa función no se quita sin reasignarlo antes.
+    await reglaDeCadena(() => assertAssignmentRemovable(tx, asignacion.contentItemId, asignacion.userId, asignacion.role));
 
     await tx.assignment.delete({ where: { id } });
 

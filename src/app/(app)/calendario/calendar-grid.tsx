@@ -1,20 +1,24 @@
-import { ChevronDown } from "lucide-react";
+import { AlertTriangle, ChevronDown, Undo2, UserX } from "lucide-react";
 import Link from "next/link";
 
 import {
   ENTRY_KIND_LABEL,
+  STEP_CHIP_KINDS,
+  STEP_CHIP_LABEL,
   daySlots,
   groupEntriesByDay,
   groupEventsByDay,
   mobileList,
   monthDayKeys,
   shortDay,
-  type CalendarEntryKind,
+  stepDescription,
+  type CalendarStepEntry,
   type ListSegment,
+  type VideoEntryKind,
 } from "@/lib/calendar-view";
-import { CONTENT_STATUS_MAP, EVENT_KIND_MAP, platformLabels } from "@/lib/constants";
+import { CONTENT_STATUS_MAP, EVENT_KIND_MAP, PRODUCTION_STEP_MAP, platformLabels } from "@/lib/constants";
 import { cn, dateKey, DIAS_CORTOS, formatDateLong, fromDateKey, monthGrid, timeKey, withAlpha } from "@/lib/utils";
-import { DayItems, KindIcon, capitalizar } from "./calendar-day";
+import { DayItems, KindIcon, StepIcon, capitalizar } from "./calendar-day";
 
 /**
  * Rejilla mensual del calendario de contenido.
@@ -33,10 +37,15 @@ export type CalendarVideo = {
   brandName: string;
   brandColor: string;
   /** Qué fecha representa esta ficha: la de grabación o la de publicación. */
-  kind: CalendarEntryKind;
+  kind: VideoEntryKind;
   /** Día en el que se pinta la ficha. */
   date: Date;
 };
+
+/** Lo que va en la rejilla por día: fechas del video y, con la cadena, pasos de producción. */
+export type CalendarItem = CalendarVideo | CalendarStepEntry;
+
+const itemKey = (v: CalendarItem) => (v.kind === "PASO" ? `paso-${v.id}` : `${v.kind}-${v.id}`);
 
 /** Reuniones, pendientes, días de grabación: todo lo que no es un video. */
 export type CalendarAgendaItem = {
@@ -62,16 +71,19 @@ export function CalendarGrid({
   hrefDia,
   mensual = false,
   diaSeleccionado = null,
+  pasos = false,
 }: {
   year: number;
   month: number;
-  videos: CalendarVideo[];
+  videos: CalendarItem[];
   eventos?: CalendarAgendaItem[];
   /** Enlace al detalle de ese día, para el número y el "+N más". */
   hrefDia: (key: string) => string;
   /** Vista nueva: número de día enlazado, leyenda y lista en móvil. */
   mensual?: boolean;
   diaSeleccionado?: string | null;
+  /** Cadena y CALENDARIO_PASOS encendidos: la leyenda explica los pasos. */
+  pasos?: boolean;
 }) {
   const grid = monthGrid(year, month);
   const porDia = groupEntriesByDay(videos);
@@ -148,9 +160,9 @@ export function CalendarGrid({
                 {agenda.map((e) => (
                   <EventChip key={e.id} e={e} />
                 ))}
-                {visibles.map((v) => (
-                  <VideoChip key={`${v.kind}-${v.id}`} v={v} />
-                ))}
+                {visibles.map((v) =>
+                  v.kind === "PASO" ? <StepChip key={itemKey(v)} s={v} /> : <VideoChip key={itemKey(v)} v={v} />
+                )}
               </div>
             </div>
           );
@@ -179,7 +191,7 @@ export function CalendarGrid({
 
   return (
     <>
-      <Legend />
+      <Legend pasos={pasos} />
       <div className="space-y-2 sm:hidden">
         {lista.hoy ? diaMovil(lista.hoy, true) : null}
         {tramos(lista.siguientes)}
@@ -196,7 +208,9 @@ export function CalendarGrid({
           </details>
         ) : null}
         {!conDatos.size ? (
-          <p className="text-inkmuted px-1 text-[13px]">No hay grabaciones, publicaciones ni agenda este mes.</p>
+          <p className="text-inkmuted px-1 text-[13px]">
+            {pasos ? "No hay pasos, grabaciones, publicaciones ni agenda este mes." : "No hay grabaciones, publicaciones ni agenda este mes."}
+          </p>
         ) : null}
       </div>
       {rejilla}
@@ -241,6 +255,52 @@ function VideoChip({ v }: { v: CalendarVideo }) {
   );
 }
 
+/** Nombre de pila del responsable: en la celda no cabe más. */
+function nombreCorto(nombre: string) {
+  return nombre.trim().split(/\s+/)[0] ?? nombre;
+}
+
+/**
+ * Paso de producción en su día de plazo: color e ícono del tipo de paso, tachado si está
+ * hecho, borde y alerta en rojo si venció, ↩ si volvió por una devolución y el responsable
+ * (o «sin asignar») al final. El texto completo va en title y aria-label.
+ */
+function StepChip({ s }: { s: CalendarStepEntry }) {
+  const hecho = s.status === "HECHO";
+  const descripcion = stepDescription(s);
+  return (
+    <Link
+      href={`/contenido/${s.videoId}`}
+      title={descripcion}
+      aria-label={descripcion}
+      className={cn(
+        "text-ink flex min-w-0 items-center gap-1 rounded-[5px] border-l-[3px] px-1 py-px text-[10.5px] leading-[14px] font-semibold transition-opacity hover:opacity-75",
+        hecho && "opacity-60"
+      )}
+      style={{
+        background: withAlpha(s.color, hecho ? 0.06 : 0.13),
+        borderLeftColor: s.overdue ? "var(--danger)" : s.color,
+        boxShadow: s.overdue ? "inset 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent)" : undefined,
+      }}
+    >
+      <span className="shrink-0" style={{ color: s.color }}>
+        <StepIcon step={s.step} size={10} />
+      </span>
+      <span className={cn("min-w-0 flex-1 truncate", hecho && "line-through")}>
+        {s.time ? <span className="tabular-nums opacity-70">{s.time} </span> : null}
+        {s.title}
+      </span>
+      {s.overdue ? <AlertTriangle size={10} aria-hidden className="shrink-0 text-[var(--danger)]" /> : null}
+      {s.returned ? <Undo2 size={10} aria-hidden className="shrink-0 text-rose-600 dark:text-rose-300" /> : null}
+      {s.unassigned ? (
+        <UserX size={10} aria-hidden className="shrink-0 text-[var(--warn)]" />
+      ) : !s.mine && s.assigneeName ? (
+        <span className="text-inkmuted max-w-[42%] shrink-0 truncate text-[9.5px] font-medium">{nombreCorto(s.assigneeName)}</span>
+      ) : null}
+    </Link>
+  );
+}
+
 function EventChip({ e }: { e: CalendarAgendaItem }) {
   const tipo = EVENT_KIND_MAP[e.kind];
   const color = tipo?.hex ?? "#64748b";
@@ -262,7 +322,34 @@ function EventChip({ e }: { e: CalendarAgendaItem }) {
   );
 }
 
-function Legend() {
+function Legend({ pasos = false }: { pasos?: boolean }) {
+  if (pasos) {
+    return (
+      <div className="text-inkmuted mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11.5px]">
+        {STEP_CHIP_KINDS.map((k) => (
+          <span key={k} className="inline-flex items-center gap-1.5">
+            <span style={{ color: PRODUCTION_STEP_MAP[k]?.hex }}>
+              <StepIcon step={k} size={12} />
+            </span>
+            {STEP_CHIP_LABEL[k]}
+          </span>
+        ))}
+        <span className="inline-flex items-center gap-1.5">
+          <AlertTriangle size={12} aria-hidden className="text-[var(--danger)]" />
+          Vencido
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <Undo2 size={12} aria-hidden className="text-rose-600 dark:text-rose-300" />
+          Devuelto
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <UserX size={12} aria-hidden className="text-[var(--warn)]" />
+          Sin asignar
+        </span>
+        <span>Tachado: hecho. Al final va quien lo tiene; el color de marca es la fecha del video.</span>
+      </div>
+    );
+  }
   return (
     <div className="text-inkmuted mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11.5px]">
       <span className="inline-flex items-center gap-1.5">
@@ -293,7 +380,7 @@ function MobileDay({
 }: {
   dia: string;
   hoy: boolean;
-  videos: CalendarVideo[];
+  videos: CalendarItem[];
   eventos: CalendarAgendaItem[];
   href: string;
 }) {

@@ -1,5 +1,7 @@
 "use server";
 import { transitionScript } from "@/lib/domain/lifecycle";
+import { chainEvent } from "@/lib/domain/production-chain";
+import { productionChainConfigured } from "@/lib/production-chain-flag";
 
 import { requirePermission } from "@/lib/auth";
 import { assertBrandPermission } from "@/lib/permissions";
@@ -423,6 +425,8 @@ export async function cambiarEstadoGuion(formData: FormData) {
 
     await transitionScript(tx, user, { id, status, expectedUpdatedAt: field(formData, "expectedUpdatedAt"), override: formData.get("override") === "1", reason: field(formData, "reason") });
     afterCommit(() => refrescar(id));
+    // Cadena de entregas: enviar o devolver el guion mueve los pasos y sus tareas.
+    if (productionChainConfigured()) afterCommit(() => { revalidatePath("/tareas"); revalidatePath("/cadena"); });
   });
 }
 
@@ -440,8 +444,15 @@ export async function eliminarGuion(formData: FormData) {
     });
     if (!script) return;
 
+    // Cadena de entregas: los videos que pierden el guion vuelven al paso Guion (como al desvincular).
+    const linked = productionChainConfigured()
+      ? await tx.contentItem.findMany({ where: { scriptId: id }, select: { id: true }, orderBy: { id: "asc" } })
+      : [];
     await tx.contentItem.updateMany({ where: { scriptId: id }, data: { scriptId: null, structureId: null } });
     await tx.script.delete({ where: { id } });
+    // Cada evento en su SAVEPOINT: uno que falle no deshace la eliminación ni a los demás.
+    for (const video of linked) await chainEvent(tx, user, { type: "SCRIPT_UNLINKED", videoId: video.id });
+    if (linked.length) afterCommit(() => { revalidatePath("/tareas"); revalidatePath("/cadena"); });
 
     await auditInTransaction(tx, {
       user,
@@ -818,6 +829,9 @@ export async function desvincularGuionDeVideo(formData: FormData) {
       brandId: video.brandId,
       summary: `Quitó el guion "${video.script?.title ?? ""}" del video "${video.title}"`,
     });
+    // Cadena de entregas: el paso del guion vuelve a abrirse y la grabación pendiente se cancela (SAVEPOINT).
+    await chainEvent(tx, user, { type: "SCRIPT_UNLINKED", videoId: contentItemId });
+    if (productionChainConfigured()) afterCommit(() => { revalidatePath("/tareas"); revalidatePath("/cadena"); });
 
     afterCommit(() => revalidatePath("/contenido"));
     afterCommit(() => revalidatePath(`/contenido/${contentItemId}`));

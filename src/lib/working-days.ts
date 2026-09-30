@@ -35,6 +35,29 @@ export function nextWorkingDayKey(key: string): string {
   return next;
 }
 
+/** El n-ésimo día hábil estrictamente posterior (n ≥ 1): lunes + 2 → miércoles; sábado + 2 → martes. */
+export function addWorkingDaysKey(key: string, n: number): string {
+  let day = key;
+  for (let i = 0; i < Math.max(1, Math.trunc(n)); i++) day = nextWorkingDayKey(day);
+  return day;
+}
+
+/**
+ * Plazo del guion en la cadena de entregas: fin del segundo día hábil desde que nace el paso
+ * (lunes → miércoles, viernes → lunes, sábado o domingo → martes).
+ */
+export function scriptDueKey(bornKey: string): string {
+  return addWorkingDaysKey(bornKey, 2);
+}
+
+/**
+ * Primer día en que se puede publicar sin adelantarse a la grabación: el día hábil siguiente
+ * al plazo de edición (grabación → edición al día hábil siguiente → publicación al otro).
+ */
+export function earliestPublicationKey(shootKey: string): string {
+  return nextWorkingDayKey(nextWorkingDayKey(shootKey));
+}
+
 /** Solo días 1 (lunes) a 6 (sábado), sin repetir y en orden. Tolera JSON viejo o dañado. */
 export function normalizeWeekdays(values: readonly unknown[]): number[] {
   return [...new Set(values.filter((v): v is number => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 6))].sort((a, b) => a - b);

@@ -1064,11 +1064,14 @@ model ProductionStep {
   /// FK compuesta: el paso siempre pertenece a la marca de su video.
   contentItem   ContentItem @relation(fields: [contentItemId, brandId], references: [id, brandId], onDelete: Cascade)
 
-  step        String    // GRABACION | EDICION | PUBLICACION | DISENO
+  /// GUION (solo con la cadena de entregas, PRODUCTION_CHAIN_ENABLED) | GRABACION | EDICION | PUBLICACION | DISENO
+  step        String
   assigneeId  String?
   assignee    User?     @relation("ProductionStepAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   dueAt       DateTime
-  status      String    @default("PENDIENTE") // PENDIENTE | HECHO | CANCELADO
+  /// PENDIENTE | HECHO | CANCELADO | DEVUELTO (cadena: se devolvió al paso anterior con motivo; doneAt nulo).
+  /// Con la cadena, un solo paso de cadena PENDIENTE por video (DISENO no cuenta): invariante Q4.
+  status      String    @default("PENDIENTE")
   source      String    @default("AUTO") // AUTO | MANUAL
   taskId      String?   @unique
   task        Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
@@ -1078,6 +1081,7 @@ model ProductionStep {
   requestedBy   User?   @relation("ProductionStepRequester", fields: [requestedById], references: [id], onDelete: SetNull)
   notes       String?
   doneAt      DateTime?
+  /// <video>:GUION|GRABACION|EDICION|PUBLICACION (uno por paso: se reactiva, no se duplica) o <video>:DISENO:<uuid>.
   automationKey String  @unique
 
   createdAt DateTime @default(now())
@@ -1086,6 +1090,8 @@ model ProductionStep {
   @@index([contentItemId])
   @@index([brandId, dueAt])
   @@index([assigneeId, status])
+  /// Vista «Cadena» y «Sin asignar» (migración 20260930090000_production_chain).
+  @@index([brandId, status, dueAt])
 }
 
 model AppSecret {
@@ -1102,6 +1108,7 @@ model CalendarSubscription {
   id String @id @default(cuid())
   label String
   tokenHash String @unique
+  /// ALL | BRAND (del Dueño) | USER (feed personal con CALENDAR_FEED_PERSONAL; brandId nulo, migración 20260930091000_calendar_feed_user).
   scope String
   brandId String?
   brand Brand? @relation(fields: [brandId], references: [id], onDelete: Cascade)

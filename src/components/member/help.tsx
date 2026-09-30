@@ -13,6 +13,7 @@ import {
   TrendingUp,
   UserRound,
   Users,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -21,7 +22,8 @@ import { Callout, Card, CardHeader, PageHeader, SectionTitle } from "@/component
 import type { SessionUser } from "@/lib/auth";
 import { CONTENT_STATUS_MAP } from "@/lib/constants";
 import { manualEnabled, manualRoles, manualRolesForProfile, splitHead } from "@/lib/manual";
-import { SECTIONS, WORK_PROFILES, canAccessSection, type Section } from "@/lib/permissions";
+import { SECTIONS, WORK_PROFILES, canAccessSection, type Section, type WorkProfile } from "@/lib/permissions";
+import { productionChainActiveFor } from "@/lib/production-chain-flag";
 import { cn, truncate } from "@/lib/utils";
 
 /* ----------------------------------------------------- ACCESOS POR SECCIÓN -- */
@@ -32,6 +34,7 @@ const SECTION_INFO: Partial<Record<Section, { icon: typeof BookOpen; description
   calendar: { icon: CalendarDays, description: "Fechas de publicación y grabación" },
   content: { icon: Film, description: "Tus videos, su checklist y su equipo" },
   tasks: { icon: ListChecks, description: "Lo que tienes asignado" },
+  chain: { icon: Workflow, description: "Quién tiene cada video y qué está trabado" },
   brands: { icon: Tags, description: "Identidad, tono y prohibiciones" },
   generator: { icon: Sparkles, description: "Donde nace el guion" },
   scripts: { icon: Clapperboard, description: "Los guiones, escena por escena" },
@@ -41,16 +44,20 @@ const SECTION_INFO: Partial<Record<Section, { icon: typeof BookOpen; description
   profile: { icon: UserRound, description: "Tus datos y documentos" },
   help: { icon: GraduationCap, description: "Tus perfiles y tu flujo" },
 };
-const LINK_ORDER: Section[] = ["manual", "panel", "calendar", "content", "tasks", "brands", "generator", "scripts", "structures", "archetypes", "metrics", "profile", "help"];
+const LINK_ORDER: Section[] = ["manual", "panel", "calendar", "content", "tasks", "chain", "brands", "generator", "scripts", "structures", "archetypes", "metrics", "profile", "help"];
 
-/** Secciones a las que puede entrar esta cuenta; el Manual primero y respetando su interruptor. */
+/**
+ * Secciones a las que puede entrar esta cuenta; el Manual primero y respetando sus interruptores
+ * (MANUAL_PROCEDIMIENTOS_ENABLED y, para «Cadena», la cadena de entregas).
+ */
 export function memberSectionLinks(user: SessionUser, exclude: readonly Section[] = []) {
-  return LINK_ORDER.filter(key => !exclude.includes(key) && canAccessSection(user, key) && (key !== "manual" || manualEnabled())).map(key => ({
+  const chain = productionChainActiveFor(user, null);
+  return LINK_ORDER.filter(key => !exclude.includes(key) && canAccessSection(user, key) && (key !== "manual" || manualEnabled()) && (key !== "chain" || chain)).map(key => ({
     key,
     href: SECTIONS[key].href,
     label: SECTIONS[key].label,
     icon: SECTION_INFO[key]?.icon ?? ArrowRight,
-    description: SECTION_INFO[key]?.description ?? "",
+    description: key === "panel" && chain ? "Mi trabajo: lo que te toca y su botón «Listo»" : SECTION_INFO[key]?.description ?? "",
   }));
 }
 
@@ -79,7 +86,7 @@ const FALLBACK_STEPS: Record<string, readonly string[]> = {
   PRODUCTION: [
     "Confirma locación, props, vestuario y talento de cada video APROBADO.",
     "Marca «Actor asignado y confirmado» y «Props / vestuario conseguidos».",
-    "Agenda el día de grabación en el calendario.",
+    "Ajusta la fecha de grabación en la ficha del video: el calendario la toma de ahí.",
     "Acompaña el set y deja al día los checks de grabación.",
   ],
   DESIGNER: [
@@ -92,6 +99,26 @@ const FALLBACK_STEPS: Record<string, readonly string[]> = {
     "Carga vistas, retención y ventas en Métricas, de lunes a domingo.",
     "Comparte qué formato rindió mejor antes de la reunión semanal.",
   ],
+};
+
+/** Con la cadena, el diseñador entrega con su botón en vez de avisar en comentarios. */
+const CHAIN_FALLBACK: Partial<Record<string, readonly string[]>> = {
+  DESIGNER: [
+    "Abre en Mi trabajo los diseños que te pidieron, con sus indicaciones y su plazo de 24 horas.",
+    "Prepara miniatura, portada y textos en pantalla con los colores de la marca.",
+    "Pulsa «Entregar diseño» con el enlace de la entrega: quien lo pidió lo ve al instante.",
+  ],
+};
+
+/** «Cuando termines»: qué botón pulsar y a quién pasa el video (cadena de entregas). */
+const CHAIN_HANDOFF: Partial<Record<WorkProfile, string>> = {
+  STRATEGY: "Supervisas en «Cadena». A tu Mi trabajo llegan los pasos sin asignar, los avisos y los bloqueos de tus marcas: asígnalos o destrábalos desde la ficha del video.",
+  WRITER: "Con el guion listo (al menos una escena y el CTA), pulsa «Listo, enviar al filmmaker» en Mi trabajo. Se aprueba solo (regla del dueño) y pasa al filmmaker.",
+  PRODUCTION: "Ajusta la fecha de grabación en la ficha del video: el plazo del filmmaker la sigue.",
+  CAMERA: "Después de grabar, pulsa «Listo, pasar a edición» en Mi trabajo con el enlace del material. Pasa al editor. Si algo te bloquea, «Avisar a coordinación».",
+  EDITOR: "Con el corte terminado, pulsa «Listo, enviar al community» con el enlace del máster. La revisión final se firma sola (regla del dueño) y pasa al community. Si falta material, «Devolver al filmmaker».",
+  DESIGNER: "Pulsa «Entregar diseño» en Mi trabajo con el enlace de la entrega. Tienes 24 horas; el domingo no cuenta.",
+  PUBLISHER: "Publica y pulsa «Publicado» con la URL pública: la cadena termina. Si hay que corregir, «Devolver por correcciones» al editor; si algo te bloquea, «Avisar a coordinación».",
 };
 
 function FlowStrip({ active }: { active: readonly string[] }) {
@@ -115,10 +142,11 @@ function FlowStrip({ active }: { active: readonly string[] }) {
   );
 }
 
-function ProfileCard({ profile }: { profile: (typeof WORK_PROFILES)[number] }) {
+function ProfileCard({ profile, chain }: { profile: (typeof WORK_PROFILES)[number]; chain: boolean }) {
   const manualId = manualRolesForProfile(profile.id)[0];
   const manual = manualId ? manualRoles().find(role => role.id === manualId) : undefined;
-  const steps = manual ? manual.sopPreview.slice(0, 4) : FALLBACK_STEPS[profile.id] ?? [];
+  const steps = manual ? manual.sopPreview.slice(0, 4) : (chain ? CHAIN_FALLBACK[profile.id] : undefined) ?? FALLBACK_STEPS[profile.id] ?? [];
+  const handoff = chain ? CHAIN_HANDOFF[profile.id] : undefined;
   return (
     <Card className="flex h-full flex-col">
       <CardHeader title={profile.label} subtitle={profile.description} />
@@ -140,11 +168,53 @@ function ProfileCard({ profile }: { profile: (typeof WORK_PROFILES)[number] }) {
             </ol>
           </div>
         ) : null}
+        {handoff ? (
+          <div className="border-brand/40 bg-brandsoft/40 rounded-lg border-l-[3px] px-3 py-2">
+            <h3 className="text-brandtext text-[11px] font-bold tracking-wider uppercase">Cuando termines</h3>
+            <p className="text-inksoft mt-0.5 text-[12.5px] leading-snug">{handoff}</p>
+          </div>
+        ) : null}
         {manual && manualEnabled() ? (
           <Link href={`/manual/${manual.slug}#procedimiento`} className="text-brand mt-auto inline-flex items-center gap-1 text-[12.5px] font-semibold">
             Procedimiento completo de {manual.name} <ArrowRight size={13} />
           </Link>
         ) : null}
+      </div>
+    </Card>
+  );
+}
+
+/** La cadena de entregas explicada para todos: el botón «Listo», plazos, devolver y avisar. */
+function ChainHelp() {
+  const steps = [
+    { label: "Guion", role: "guionista" },
+    { label: "Grabación", role: "filmmaker" },
+    { label: "Edición", role: "editor" },
+    { label: "Publicación", role: "community" },
+  ];
+  return (
+    <Card>
+      <CardHeader title="La cadena de entregas y el botón «Listo»" subtitle="Cada video pasa de mano en mano: nadie tiene que buscar qué le toca." icon={<Workflow size={15} />} />
+      <div className="text-inksoft space-y-3 p-4 text-[13px] leading-relaxed">
+        <ol className="flex flex-wrap items-center gap-1" aria-label="Pasos de la cadena">
+          {steps.map((step, index) => (
+            <li key={step.label} className="flex items-center gap-1">
+              <span className="bg-surface3 text-ink rounded-md px-2 py-0.5 text-[12px] font-semibold">
+                {step.label} <span className="text-inkmuted font-normal">({step.role})</span>
+              </span>
+              {index < steps.length - 1 ? <span className="text-inkmuted text-[11px]" aria-hidden="true">→</span> : null}
+            </li>
+          ))}
+        </ol>
+        <ul className="list-disc space-y-1.5 pl-5">
+          <li><strong className="text-ink">Tu Inicio empieza por «Mi trabajo»:</strong> lo vencido, lo que te devolvieron, lo de hoy y lo próximo, cada paso con su plazo en hora de Lima.</li>
+          <li><strong className="text-ink">«Listo» pasa el video a la siguiente persona:</strong> marca tus checks, avanza el estado y le abre su paso con su plazo. Si falta algo (enlace, escenas, CTA), te dice qué.</li>
+          <li><strong className="text-ink">Sin revisiones intermedias (regla del dueño):</strong> el guion pasa directo al filmmaker y la edición directo al community; esas aprobaciones quedan firmadas como «Sistema» en el historial.</li>
+          <li><strong className="text-ink">Plazos:</strong> guion, fin del segundo día hábil; grabación, el próximo día de grabación de la marca; edición y publicación, el día hábil siguiente. Diseño, 24 horas. El domingo no se trabaja.</li>
+          <li><strong className="text-ink">Devolver:</strong> el editor puede devolver al filmmaker y el community al editor, siempre con el motivo; queda como comentario en la ficha.</li>
+          <li><strong className="text-ink">Avisar a coordinación:</strong> si algo te bloquea, el encargado de la marca (o el Dueño, si no hay encargado) lo recibe en su Mi trabajo.</li>
+          <li><strong className="text-ink">Mover la tarea a «Listo» en Tareas</strong> es lo mismo que pulsar «Listo», con las mismas validaciones.</li>
+        </ul>
       </div>
     </Card>
   );
@@ -156,6 +226,7 @@ function ProfileCard({ profile }: { profile: (typeof WORK_PROFILES)[number] }) {
 export function MemberHelp({ user }: { user: SessionUser }) {
   const profiles = WORK_PROFILES.filter(profile => user.profiles?.includes(profile.id));
   const links = memberSectionLinks(user, ["help"]);
+  const chain = productionChainActiveFor(user, null);
   return (
     <div className="space-y-5">
       <PageHeader
@@ -169,7 +240,7 @@ export function MemberHelp({ user }: { user: SessionUser }) {
         <SectionTitle>Tus perfiles</SectionTitle>
         {profiles.length ? (
           <div className="grid gap-4 lg:grid-cols-2">
-            {profiles.map(profile => <ProfileCard key={profile.id} profile={profile} />)}
+            {profiles.map(profile => <ProfileCard key={profile.id} profile={profile} chain={chain} />)}
           </div>
         ) : (
           <Callout tone="info" title="Todavía no tienes perfiles">
@@ -179,11 +250,14 @@ export function MemberHelp({ user }: { user: SessionUser }) {
         )}
       </section>
 
+      {chain ? <ChainHelp /> : null}
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <Card>
           <CardHeader title="Reglas que valen para todos" />
           <ul className="text-inksoft list-disc space-y-2 p-4 pl-9 text-[13px] leading-relaxed">
             <li><strong className="text-ink">La ficha del video es el canal oficial.</strong> Cada entrega queda como check, cambio de estado o comentario.</li>
+            {chain ? <li><strong className="text-ink">Cuando termines tu parte, pulsa «Listo» en Mi trabajo.</strong> La siguiente persona la recibe al instante con su plazo.</li> : null}
             <li><strong className="text-ink">Una entrega está hecha cuando quien recibe la acepta,</strong> no cuando la envías.</li>
             <li>Cámara, talento, edición y diseño ven sus videos y tareas asignados. La aprobación corresponde a coordinación; publicación trabaja sobre videos aprobados.</li>
             <li>Los resultados se cargan por semana. Solo el Dueño elimina; todo movimiento queda registrado.</li>

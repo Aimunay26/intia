@@ -8,6 +8,7 @@ import { CheckSquare } from "lucide-react";
 
 import { PageHeader } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
+import { productionChainBrands, productionChainConfigured } from "@/lib/production-chain-flag";
 import { normalizeTaskFilters, type TaskFilters } from "@/lib/task-list";
 import { EmptyBoard } from "./empty-board";
 import { TaskBoard } from "./task-board";
@@ -50,6 +51,7 @@ export default async function TareasPage({ searchParams }: { searchParams: Promi
         users={users}
         brands={brands}
         activeBrandId={activeBrandId}
+        chain={productionChainConfigured() ? { brands: productionChainBrands() } : null}
       /> : <EmptyBoard />}
     </>
   );

@@ -1,11 +1,29 @@
-import { CalendarClock, CalendarDays, Camera, ChevronLeft, ChevronRight, Send, X } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarDays,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Palette,
+  PenLine,
+  Scissors,
+  Send,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Badge, Card, CardHeader } from "@/components/ui";
-import { ENTRY_KIND_LABEL, type CalendarEntryKind } from "@/lib/calendar-view";
-import { CONTENT_STATUS_MAP, EVENT_KIND_MAP } from "@/lib/constants";
-import { dateKey, formatDate, formatDateLong, fromDateKey, timeKey } from "@/lib/utils";
-import type { CalendarAgendaItem, CalendarVideo } from "./calendar-grid";
+import {
+  ENTRY_KIND_LABEL,
+  stepDescription,
+  stepFlags,
+  type CalendarStepEntry,
+  type StepChipKind,
+  type VideoEntryKind,
+} from "@/lib/calendar-view";
+import { CONTENT_STATUS_MAP, EVENT_KIND_MAP, type Option } from "@/lib/constants";
+import { cn, dateKey, formatDate, formatDateLong, fromDateKey, timeKey } from "@/lib/utils";
+import type { CalendarAgendaItem, CalendarItem } from "./calendar-grid";
 import { EditarEventoBoton, type EventFormBrand } from "./event-form";
 
 /**
@@ -35,14 +53,95 @@ export function MonthNav({ prevHref, todayHref, nextHref }: { prevHref: string; 
   );
 }
 
+/**
+ * «Solo lo mío» / «Todo»: dos enlaces (sin JS) que cambian ?mio= conservando el mes o el día.
+ * Solo aparece con la cadena y CALENDARIO_PASOS.
+ */
+export function MineToggle({ mine, todoHref, mioHref }: { mine: boolean; todoHref: string; mioHref: string }) {
+  const opcion = (activo: boolean) =>
+    cn(
+      "inline-flex h-[30px] items-center rounded-[7px] px-2.5 text-[12.5px] font-semibold transition-colors max-md:h-11 max-md:px-3.5",
+      activo ? "bg-surface text-ink shadow-sm" : "text-inkmuted hover:text-ink"
+    );
+  return (
+    <nav aria-label="Qué pasos ver" className="bg-surface2 border-line inline-flex rounded-[9px] border p-0.5">
+      <Link href={mioHref} className={opcion(mine)} aria-current={mine ? "page" : undefined}>
+        Solo lo mío
+      </Link>
+      <Link href={todoHref} className={opcion(!mine)} aria-current={!mine ? "page" : undefined}>
+        Todo
+      </Link>
+    </nav>
+  );
+}
+
 /* ------------------------------------------------------------ FILAS DE DÍA -- */
 
-export function KindIcon({ kind, size = 12 }: { kind: CalendarEntryKind; size?: number }) {
+export function KindIcon({ kind, size = 12 }: { kind: VideoEntryKind; size?: number }) {
   return kind === "GRABACION" ? <Camera size={size} aria-hidden /> : <Send size={size} aria-hidden />;
 }
 
-/** Todo lo de un día, en filas legibles: agenda primero, luego grabar y publicar. */
-export function DayItems({ videos, eventos }: { videos: CalendarVideo[]; eventos: CalendarAgendaItem[] }) {
+/** Ícono de cada paso de la cadena (el color lo pone quien lo usa). */
+export function StepIcon({ step, size = 12 }: { step: StepChipKind; size?: number }) {
+  if (step === "GUION") return <PenLine size={size} aria-hidden />;
+  if (step === "GRABACION") return <Camera size={size} aria-hidden />;
+  if (step === "EDICION") return <Scissors size={size} aria-hidden />;
+  if (step === "PUBLICACION") return <Send size={size} aria-hidden />;
+  return <Palette size={size} aria-hidden />;
+}
+
+/** Estados de un paso como chips (mismas clases que el resto de estados, en claro y oscuro). */
+const FLAG_OPTION: Record<string, Option> = {
+  Vencido: { value: "VENCIDO", label: "Vencido", chip: "bg-red-500/12 text-red-600 dark:text-red-300 ring-red-500/25", hex: "#dc2626" },
+  Devuelto: { value: "DEVUELTO", label: "Devuelto", chip: "bg-rose-500/12 text-rose-600 dark:text-rose-300 ring-rose-500/25", hex: "#f43f5e" },
+  "Sin asignar": { value: "SIN_ASIGNAR", label: "Sin asignar", chip: "bg-amber-500/12 text-amber-600 dark:text-amber-300 ring-amber-500/25", hex: "#f59e0b" },
+  Hecho: { value: "HECHO", label: "Hecho", chip: "bg-emerald-500/12 text-emerald-600 dark:text-emerald-300 ring-emerald-500/25", hex: "#10b981" },
+};
+
+export function StepFlag({ flag }: { flag: string }) {
+  return <Badge option={FLAG_OPTION[flag]} fallback={flag} />;
+}
+
+function StepRow({ s }: { s: CalendarStepEntry }) {
+  const hecho = s.status === "HECHO";
+  return (
+    <li className="flex items-start gap-2.5 px-4 py-2.5">
+      <span className="text-inksoft inline-flex w-[76px] shrink-0 items-center gap-1.5 pt-px text-[12px] font-semibold">
+        <span style={{ color: s.color }}>
+          <StepIcon step={s.step} />
+        </span>
+        {s.label}
+      </span>
+      <div className="min-w-0 flex-1 sm:flex sm:items-center sm:gap-3">
+        <Link
+          href={`/contenido/${s.videoId}`}
+          aria-label={stepDescription(s)}
+          className={cn(
+            "text-ink hover:text-brand block text-[13px] font-medium break-words transition-colors sm:min-w-0 sm:flex-1",
+            hecho && "text-inkmuted line-through"
+          )}
+        >
+          {s.title}
+        </Link>
+        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] sm:mt-0">
+          <span className="text-inkmuted">{s.brandName}</span>
+          {s.time ? <span className="text-inkmuted tabular-nums">vence {s.time}</span> : null}
+          <span className={cn("font-semibold", s.assigneeName ? "text-inksoft" : "text-[var(--warn)]")}>
+            {s.assigneeName ?? "Sin asignar"}
+          </span>
+          {stepFlags(s)
+            .filter((f) => f !== "Sin asignar" && f !== "Pendiente")
+            .map((f) => (
+              <StepFlag key={f} flag={f} />
+            ))}
+        </span>
+      </div>
+    </li>
+  );
+}
+
+/** Todo lo de un día, en filas legibles: agenda primero, luego la cadena (grabar, editar, publicar…). */
+export function DayItems({ videos, eventos }: { videos: CalendarItem[]; eventos: CalendarAgendaItem[] }) {
   const agenda = [...eventos].sort(
     (a, b) => Number(b.allDay) - Number(a.allDay) || a.startAt.getTime() - b.startAt.getTime()
   );
@@ -67,6 +166,7 @@ export function DayItems({ videos, eventos }: { videos: CalendarVideo[]; eventos
         );
       })}
       {videos.map((v) => {
+        if (v.kind === "PASO") return <StepRow key={`paso-${v.id}`} s={v} />;
         const estado = CONTENT_STATUS_MAP[v.status];
         return (
           <li key={`${v.kind}-${v.id}`} className="flex items-start gap-2.5 px-4 py-2.5">
@@ -107,7 +207,7 @@ export function DayPanel({
   cerrarHref,
 }: {
   dia: string;
-  videos: CalendarVideo[];
+  videos: CalendarItem[];
   eventos: CalendarAgendaItem[];
   cerrarHref: string;
 }) {

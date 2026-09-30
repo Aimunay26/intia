@@ -5,8 +5,9 @@ import { measurePagePhase } from "@/lib/performance-page";
 import { Database, Lock, Settings, ShieldAlert } from "lucide-react";
 import { headers } from "next/headers";
 
-import { CalendarSubscriptions } from "@/components/calendar-subscriptions";
-import { listCalendarSubscriptions } from "@/lib/calendar-subscriptions";
+import { CalendarSubscriptions, PersonalCalendarSubscriptions } from "@/components/calendar-subscriptions";
+import { listCalendarSubscriptions, listPersonalCalendarSubscriptions } from "@/lib/calendar-subscriptions";
+import { calendarFeedPersonalEnabled } from "@/lib/production-chain-flag";
 import { prisma } from "@/lib/prisma";
 import { Callout, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
 import { authSecretIsWeak, can, LEVEL } from "@/lib/auth";
@@ -71,11 +72,14 @@ export default async function AjustesPage() {
     );
   }
 
-  const [snapshot, subscriptions, brands, headerList] = await Promise.all([
+  // Calendarios personales: con su interruptor encendido (y su migración aplicada). Apagado no se consultan.
+  const personalFeeds = calendarFeedPersonalEnabled();
+  const [snapshot, subscriptions, brands, headerList, personalSubscriptions] = await Promise.all([
     getSettingsSnapshot([...Object.values(SETTING_KEYS), ...Object.values(GOOGLE_SETTING_KEYS)]),
     listCalendarSubscriptions(),
     prisma.brand.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
     headers(),
+    personalFeeds ? listPersonalCalendarSubscriptions() : Promise.resolve(null),
   ]);
 
   const settings = snapshot.values;
@@ -145,6 +149,7 @@ export default async function AjustesPage() {
 
         <div className="space-y-4">
           <CalendarSubscriptions rows={subscriptions} brands={brands} />
+          {personalSubscriptions ? <PersonalCalendarSubscriptions rows={personalSubscriptions} /> : null}
 
           <Card>
             <CardHeader

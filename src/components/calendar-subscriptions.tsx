@@ -2,7 +2,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { gestionarSuscripcion, type CalendarSubscriptionState } from "@/app/actions/calendar-feed";
 import { CopyButton, SubmitButton } from "@/components/forms";
-import type { listCalendarSubscriptions } from "@/lib/calendar-subscriptions";
+import type { listCalendarSubscriptions, listPersonalCalendarSubscriptions } from "@/lib/calendar-subscriptions";
 
 function Result({ state }: { state: CalendarSubscriptionState }) {
   const [origin, setOrigin] = useState("");
@@ -46,5 +46,34 @@ export function CalendarSubscriptions({ rows, brands }: { rows: Awaited<ReturnTy
     <ul>{rows.map(row => <Subscription key={row.id} row={row} />)}</ul>
     {!rows.length && <p>Aún no hay suscripciones.</p>}
     {rows.length === 100 && <p>Se muestran hasta 100 suscripciones, con las activas primero.</p>}
+  </section>;
+}
+
+type PersonalRow = Awaited<ReturnType<typeof listPersonalCalendarSubscriptions>>[number];
+
+/** Un calendario personal: el Dueño solo puede revocarlo (renovarlo lo pasaría a su nombre). */
+function PersonalSubscription({ row }: { row: PersonalRow }) {
+  const [state, action, pending] = useActionState(gestionarSuscripcion, null);
+  return <li className="space-y-2 border-t border-line py-3">
+    <strong>{row.person}</strong><p>{row.personActive ? "Cuenta activa" : "Cuenta desactivada"} · {row.expired ? "Vencido" : `Vence ${row.expiresAt.slice(0, 10)}`}</p>
+    <form action={action}>
+      <input type="hidden" name="operation" value="revoke" /><input type="hidden" name="id" value={row.id} /><input type="hidden" name="expectedUpdatedAt" value={row.updatedAt} />
+      <SubmitButton disabled={pending} className="btn btn-sm">Revocar su enlace</SubmitButton>
+    </form><Result state={state} />
+  </li>;
+}
+
+/**
+ * Calendarios personales (CALENDAR_FEED_PERSONAL) vigentes del equipo: el corte por persona si
+ * un enlace se filtró. Desactivar la cuenta, cambiar su contraseña o cerrar sus sesiones ya los
+ * revoca solos.
+ */
+export function PersonalCalendarSubscriptions({ rows }: { rows: PersonalRow[] }) {
+  return <section aria-labelledby="personal-calendar-title" className="card space-y-3 p-4 text-sm">
+    <h2 id="personal-calendar-title" className="font-semibold">Calendarios personales del equipo</h2>
+    <p>Cada persona crea y renueva el suyo desde Mi perfil. Aquí puedes revocar el de alguien si el enlace se filtró; desactivar su cuenta o cambiar su contraseña también lo revoca.</p>
+    <ul>{rows.map(row => <PersonalSubscription key={row.id} row={row} />)}</ul>
+    {!rows.length && <p>No hay calendarios personales activos.</p>}
+    {rows.length === 200 && <p>Se muestran hasta 200 calendarios personales.</p>}
   </section>;
 }

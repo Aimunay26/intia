@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Plus, UserPlus, X } from "lucide-react";
 
 import { asignarPersona, quitarAsignacion } from "@/app/actions/content";
@@ -24,6 +24,53 @@ export type AssignmentRow = {
 };
 
 export type PersonOption = { id: string; name: string; roleLabel: string };
+
+/**
+ * Una persona en una función, con «Quitar». Si el servidor rechaza (p. ej. la cadena de
+ * entregas: «Reasigna primero el paso…»), el motivo se muestra bajo la fila en vez de romper la
+ * página.
+ */
+function AssignmentLine({ assignment: a, roleLabel, canManage }: { assignment: AssignmentRow; roleLabel: string; canManage: boolean }) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const quitar = () => {
+    setError(null);
+    const data = new FormData();
+    data.set("id", a.id);
+    startTransition(async () => {
+      try {
+        const result = await quitarAsignacion(data);
+        if (result && typeof result === "object" && "error" in result && typeof result.error === "string") setError(result.error);
+      } catch {
+        setError("No se pudo quitar. Recarga la página y vuelve a intentarlo.");
+      }
+    });
+  };
+  return (
+    <div>
+      <div className="group flex items-center gap-2">
+        <Avatar name={a.userName} color={a.userColor} size={20} />
+        <span className="text-inksoft min-w-0 flex-1 truncate text-[12.5px] font-medium">
+          {a.userName}
+        </span>
+        {canManage ? (
+          <button
+            type="button"
+            onClick={quitar}
+            disabled={pending}
+            aria-busy={pending}
+            className="btn btn-ghost btn-icon h-5 w-5 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+            title={`Quitar a ${a.userName}`}
+            aria-label={`Quitar a ${a.userName} como ${roleLabel}`}
+          >
+            <X size={11} />
+          </button>
+        ) : null}
+      </div>
+      {error ? <p role="alert" className="text-danger mt-1 text-[11.5px] leading-snug">{error}</p> : null}
+    </div>
+  );
+}
 
 export function TeamPanel({
   contentItemId,
@@ -79,28 +126,7 @@ export function TeamPanel({
               {suyos.length ? (
                 <div className="mt-1.5 space-y-1">
                   {suyos.map((a) => (
-                    <div key={a.id} className="group flex items-center gap-2">
-                      <Avatar name={a.userName} color={a.userColor} size={20} />
-                      <span className="text-inksoft min-w-0 flex-1 truncate text-[12.5px] font-medium">
-                        {a.userName}
-                      </span>
-                      {canManage ? (
-                        <form
-                          action={quitarAsignacion}
-                          className="opacity-0 transition-opacity group-hover:opacity-100"
-                        >
-                          <input type="hidden" name="id" value={a.id} />
-                          <button
-                            type="submit"
-                            className="btn btn-ghost btn-icon h-5 w-5"
-                            title={`Quitar a ${a.userName}`}
-                            aria-label={`Quitar a ${a.userName} como ${rol.label}`}
-                          >
-                            <X size={11} />
-                          </button>
-                        </form>
-                      ) : null}
-                    </div>
+                    <AssignmentLine key={a.id} assignment={a} roleLabel={rol.label} canManage={canManage} />
                   ))}
                 </div>
               ) : (

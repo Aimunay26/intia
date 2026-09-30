@@ -1,4 +1,6 @@
 /** Política compartida por servidor y UI. Los perfiles nunca conceden administración. */
+import { calendarStepsEnabled } from "@/lib/production-chain-flag";
+
 export const WORK_PROFILES = [
   { id: "STRATEGY", label: "Estrategia y coordinación", description: "Planifica, asigna y aprueba el trabajo de las marcas autorizadas." },
   { id: "WRITER", label: "Guionista / creativo", description: "Escribe guiones y utiliza el generador de IA." },
@@ -19,6 +21,8 @@ export const SECTIONS = {
   calendar: { href: "/calendario", label: "Calendario", capability: "calendar.view" },
   content: { href: "/contenido", label: "Videos", capability: "content.view" },
   tasks: { href: "/tareas", label: "Tareas", capability: "tasks.view" },
+  // Cadena de entregas: el ENCARGADO (STRATEGY) y el Dueño. PRODUCTION_CHAIN_ENABLED apagado la oculta del menú.
+  chain: { href: "/cadena", label: "Cadena", capability: "chain.view" },
   brands: { href: "/marcas", label: "Marcas", capability: "brands.view" },
   generator: { href: "/generador", label: "Generador IA", capability: "scripts.generate" },
   scripts: { href: "/guiones", label: "Guiones", capability: "scripts.view" },
@@ -36,37 +40,55 @@ export type Capability = typeof SECTIONS[Section]["capability"] | "brands.edit" 
 type Scope = "brand" | "assigned";
 const common = ["calendar.view", "content.view", "tasks.view", "scripts.view", "content.comment", "tasks.work"] as const;
 const profiles: Record<WorkProfile, { scope: Scope; grants: readonly Capability[] }> = {
-  STRATEGY: { scope: "brand", grants: [...common, "brands.view", "brands.edit", "content.plan", "content.assign", "content.approve", "scripts.approve", "structures.view", "structures.edit", "archetypes.view", "archetypes.edit", "calendar.edit", "tasks.manage", "metrics.view", "assets.write"] },
+  STRATEGY: { scope: "brand", grants: [...common, "brands.view", "brands.edit", "content.plan", "content.assign", "content.approve", "scripts.approve", "structures.view", "structures.edit", "archetypes.view", "archetypes.edit", "calendar.edit", "tasks.manage", "metrics.view", "assets.write", "chain.view"] },
   WRITER: { scope: "brand", grants: [...common, "brands.view", "scripts.generate", "scripts.write", "structures.view", "archetypes.view", "assets.write"] },
   PRODUCTION: { scope: "brand", grants: [...common, "content.scheduleShoot", "content.assign", "content.shoot", "calendar.edit", "tasks.manage", "assets.write"] },
   CAMERA: { scope: "assigned", grants: [...common, "content.shoot", "assets.write"] },
   TALENT: { scope: "assigned", grants: [...common, "archetypes.view"] },
   EDITOR: { scope: "assigned", grants: [...common, "content.editing", "assets.write"] },
+  // calendar.view solo con la cadena y CALENDARIO_PASOS (flaggedGrants): sus videos asignados y sus plazos de diseño.
   DESIGNER: { scope: "assigned", grants: ["content.view", "tasks.view", "tasks.work", "content.comment", "brands.view", "structures.view", "content.design", "assets.write"] },
   PUBLISHER: { scope: "brand", grants: ["calendar.view", "content.view", "tasks.view", "tasks.work", "brands.view", "content.comment", "content.publish", "assets.write"] },
   ANALYST: { scope: "brand", grants: ["content.view", "tasks.view", "tasks.work", "brands.view", "metrics.view", "metrics.write"] },
 };
 const base = new Set<Capability>(["home.view", "profile.self", "help.view"]);
+
+/**
+ * Permisos que dependen de un interruptor (plan de reversa): con él apagado, el perfil es el de
+ * siempre. El servidor los lee del entorno en cada llamada; el navegador no ve esas variables,
+ * así que el layout le pasa el valor resuelto (Shell) y los componentes lo reenvían.
+ *  - designerCalendar: DESIGNER recibe calendar.view (alcance «assigned») solo con la cadena de
+ *    entregas y CALENDARIO_PASOS encendidos.
+ */
+export type PermissionFlags = { designerCalendar: boolean };
+export function permissionFlags(): PermissionFlags {
+  return { designerCalendar: calendarStepsEnabled() };
+}
+function grantsOf(profile: WorkProfile, flags: PermissionFlags): readonly Capability[] {
+  const grants = profiles[profile].grants;
+  return profile === "DESIGNER" && flags.designerCalendar ? [...grants, "calendar.view"] : grants;
+}
+
 export function validProfiles(values: readonly string[]): WorkProfile[] {
   return WORK_PROFILES.filter(p => values.includes(p.id)).map(p => p.id);
 }
-export function allows(user: AccessUser, capability: Capability): boolean {
+export function allows(user: AccessUser, capability: Capability, flags: PermissionFlags = permissionFlags()): boolean {
   if (user.role === "OWNER") return true;
   if (user.role !== "MEMBER") return false;
-  return base.has(capability) || validProfiles(user.profiles ?? []).some(p => profiles[p].grants.includes(capability));
+  return base.has(capability) || validProfiles(user.profiles ?? []).some(p => grantsOf(p, flags).includes(capability));
 }
-export function capabilityScope(user: AccessUser, capability: Capability): Scope {
-  return user.role === "OWNER" || validProfiles(user.profiles ?? []).some(p => profiles[p].scope === "brand" && profiles[p].grants.includes(capability)) ? "brand" : "assigned";
+export function capabilityScope(user: AccessUser, capability: Capability, flags: PermissionFlags = permissionFlags()): Scope {
+  return user.role === "OWNER" || validProfiles(user.profiles ?? []).some(p => profiles[p].scope === "brand" && grantsOf(p, flags).includes(capability)) ? "brand" : "assigned";
 }
-export function profileGrants(user: AccessUser, capability: Capability) {
-  return validProfiles(user.profiles ?? []).filter(p => profiles[p].grants.includes(capability)).map(id => ({ id, scope: profiles[id].scope }));
+export function profileGrants(user: AccessUser, capability: Capability, flags: PermissionFlags = permissionFlags()) {
+  return validProfiles(user.profiles ?? []).filter(p => grantsOf(p, flags).includes(capability)).map(id => ({ id, scope: profiles[id].scope }));
 }
-export function canAccessSection(user: AccessUser, section: Section) { return allows(user, SECTIONS[section].capability); }
+export function canAccessSection(user: AccessUser, section: Section, flags?: PermissionFlags) { return allows(user, SECTIONS[section].capability, flags); }
 export function sectionForPath(path: string): Section | undefined {
   const pathname = path.split(/[?#]/, 1)[0];
   return (Object.keys(SECTIONS) as Section[]).find(key => pathname === SECTIONS[key].href || (SECTIONS[key].href !== "/" && pathname.startsWith(SECTIONS[key].href + "/")));
 }
-export function canAccessPath(user: AccessUser, path: string) { const section = sectionForPath(path); return section !== undefined && canAccessSection(user, section); }
+export function canAccessPath(user: AccessUser, path: string, flags?: PermissionFlags) { const section = sectionForPath(path); return section !== undefined && canAccessSection(user, section, flags); }
 export function assertPermission(user: AccessUser, capability: Capability) {
   if (!allows(user, capability)) throw new Error("Tu perfil no tiene permiso para realizar esta acción.");
 }

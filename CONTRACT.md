@@ -27,8 +27,9 @@ Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pi
 | `/manual/[rol]` | Misión, procedimiento, traspasos e indicadores del rol; formación por nivel (`?nivel=`) |
 | `/manual/[rol]/[modulo]` | Lecciones (`?leccion=`), videos de YouTube y escenas 3D del módulo |
 | `/tutorial` | «Cómo se usa»: recorrido del Dueño; perfiles, flujo y ubicación para el Equipo |
-| `/calendario` | Calendario mensual: grabación y publicación de cada video, agenda y detalle del día (`?dia=`) |
-| `/contenido` · `/contenido/[id]` | Lista y ficha de cada video |
+| `/calendario` | Calendario mensual: grabación y publicación de cada video, agenda y detalle del día (`?dia=`); con la cadena de entregas, los pasos con plazo y «Solo lo mío» (`?mio=`) |
+| `/contenido` · `/contenido/[id]` | Lista y ficha de cada video (panel «Producción» con el «Listo» de cada rol, ancla `#produccion`) |
+| `/cadena` | Cadena de entregas: pasos abiertos por video, vencidos, sin asignar, avisos y atascos (`?paso=`, `?persona=`, `?vencidos=`). ENCARGADO (STRATEGY) y Dueño; solo con `PRODUCTION_CHAIN_ENABLED` |
 | `/marcas` · `/marcas/[id]` | Marcas, identidad, brief, objetivos; `?vista=productos` y `?vista=equipo` solo con su interruptor |
 | `/generador` | Generador de guiones con IA |
 | `/generador/trabajos` · `/generador/trabajos/[id]` | Historial, progreso y recuperación de generaciones |
@@ -37,7 +38,7 @@ Documento de referencia obligatorio. Todo el código nuevo debe respetarlo al pi
 | `/arquetipos` · `/arquetipos/[id]` | Personas frente a cámara: perfil, marca personal y compatibilidad |
 | `/metricas` | Visualizador de métricas |
 | `/equipo` | Personas |
-| `/mi-perfil` | Datos y documentos de la cuenta propia |
+| `/mi-perfil` | Datos y documentos de la cuenta propia; «Mi calendario en Google» con `CALENDAR_FEED_PERSONAL` |
 | `/sin-acceso` | Explicación del acceso denegado |
 | `/actividad` | Log de auditoría |
 | `/ajustes` | Claves de IA, entrada con Google y calendario |
@@ -47,7 +48,7 @@ Rutas de API (las únicas que existen, y cada una por un motivo):
 | Ruta | Por qué no es una Server Action |
 |---|---|
 | `/api/auth/google` · `/api/auth/google/callback` | Google necesita redirigir a una URL |
-| `/api/calendario.ics` | Google Calendar la pide desde sus servidores, sin sesión |
+| `/api/calendario.ics` | Google Calendar la pide desde sus servidores, sin sesión (enlaces del Dueño y, con `CALENDAR_FEED_PERSONAL`, el de cada persona) |
 | `/api/assets/[id]` | Devuelve los bytes de un archivo |
 | `/api/modelos-3d/[archivo]` | Devuelve los bytes de los personajes 3D del manual solo con sesión (uso interno) |
 | `/api/logout` | Borra la cookie y redirige |
@@ -134,6 +135,19 @@ Equipo, Actividad y Ajustes requieren Dueño. Cambiar UserWorkProfile o UserBran
 Las funciones de video en Assignment no sustituyen los perfiles de acceso. Los perfiles combinados suman capacidades sin ampliar el alcance de una capacidad distinta. Generar/escribir no concede aprobar o publicar. Publicación requiere la revisión final aprobada de postproducción; APROBADO sigue siendo una etapa previa a grabación.
 
 El equipo no edita escenas, metadatos, vínculos ni adjuntos de un video con revisión final aprobada o en PROGRAMADO/PUBLICADO. Un guion compartido queda protegido si cualquiera de sus videos está cerrado. Las guardas y la aprobación serializan cambios con locks del guion y del video. Retirar la aprobación exige un motivo (5–1000 caracteres), capacidad de aprobación y auditoría; además hay que salir de PROGRAMADO/PUBLICADO para editar. El Dueño conserva su excepción administrativa auditada. La aprobación todavía depende del checklist; una versión inmutable y transiciones tipadas corresponden a B09.
+
+**Excepción del Dueño a «las aprobaciones las firma una persona» (29-30/09/2026).** Solo con la
+cadena de entregas encendida para la marca (`PRODUCTION_CHAIN_ENABLED` y el canario), y solo en
+dos momentos: el «Listo» del guionista firma la aprobación del guion (versión en `Approval` y
+`SCRIPT_APPROVAL`) y el «Listo» del editor firma la revisión final (`FINAL_APPROVAL`). Las firma el
+actor «Sistema», nunca la persona: `Approval.approvedByName` empieza por «Sistema (Listo de
+la persona)», `approvedById` guarda a la persona cuyo «Listo» la originó, `ChecklistItem.doneById`
+queda nulo y la auditoría dice «(Sistema, por el Listo de la persona [en nombre de la persona asignada];
+regla del dueño: sin revisión de guion | sin revisión final)». El «Devolver por correcciones» del
+community retira la revisión final también como «Sistema», con su motivo (5-1000), aunque su
+perfil no tenga `content.approve`. Con la cadena apagada la regla de siempre sigue intacta: las
+aprobaciones las firma una persona con `content.approve` o `scripts.approve`. Detalle en «Cadena
+de entregas por video».
 
 Esta autorización no incorpora organizaciones ni RLS y no debe anunciarse como multitenancy. El cambio de política exige retirar/proteger builds anteriores y ejecutar la activación de compatibilidad antes de reabrir producción.
 
@@ -686,6 +700,10 @@ interruptor: nunca `git revert` ni `DROP`.
 | `PANEL_RENDER_MODE` | `together` | `"streaming"` | Panel del Dueño por secciones en vez de carga conjunta | — |
 | `PRODUCT_CATALOG_ENABLED` | apagado | exactamente `"true"` lo enciende | Catálogo de productos por marca, selector del paso 2 y línea `Tipo:` | Migración `20260928120000_brand_catalog` |
 | `PRODUCTION_FLOW_ENABLED` | apagado | exactamente `"true"` lo enciende | Equipo por marca, pasos con plazo, panel «Producción» y barrido diario | Migración `20260928180000_production_flow` |
+| `PRODUCTION_CHAIN_ENABLED` | apagado | exactamente `"true"` lo enciende (y exige `PRODUCTION_FLOW_ENABLED="true"`) | Cadena de entregas: un paso abierto por video con «Listo», «Devolver» y «Avisar a coordinación», firmas automáticas del Dueño, «Mi trabajo», `/cadena`, sincronía tarea↔paso y barrido sin cierre de grabaciones | Migración `20260930090000_production_chain` |
+| `PRODUCTION_CHAIN_BRANDS` | vacío (todas) | IDs de marca separados por coma | Canario de la cadena: solo esas marcas la usan; el resto sigue con el flujo anterior | — |
+| `CALENDARIO_PASOS` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Pasos de la cadena en el calendario y «Solo lo mío». Solo actúa con la cadena encendida | — |
+| `CALENDAR_FEED_PERSONAL` | apagado | exactamente `"true"` lo enciende | Calendario `.ics` por persona («Mi calendario en Google» en Mi perfil) | Migración `20260930091000_calendar_feed_user` |
 | `MANUAL_PROCEDIMIENTOS_ENABLED` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Manual de procedimientos: menú, tarjetas y `/manual/*` | — |
 | `MANUAL_3D_PERSONAJES` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Personajes 3D (camarógrafo y dos actrices) en las escenas del manual; apagado, el visor usa los maniquíes y `/api/modelos-3d/*` responde 404 | Archivos en `src/content/modelos-3d/` |
 | `CALENDARIO_MENSUAL` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Vista mensual del calendario para Dueño y Equipo | — |
@@ -757,6 +775,10 @@ Interruptor `PRODUCTION_FLOW_ENABLED`. Dominio: `src/lib/domain/production-flow.
 hábiles: `src/lib/working-days.ts`; barrido: `src/lib/production-sweep.ts`; acciones:
 `src/app/actions/brand-team.ts` y `src/app/actions/production.ts`. Mini-spec:
 `reports/release-operacion-equipos-2026-09-28.md`.
+
+Lo que sigue describe el flujo con la cadena de entregas **apagada** (o la marca fuera del
+canario). Con `PRODUCTION_CHAIN_ENABLED` encendido para la marca, la tabla de disparos y la regla
+«lo manual siempre gana» de las fechas las reemplaza la sección «Cadena de entregas por video».
 
 ### Modelo
 
@@ -839,6 +861,210 @@ el video. Cada paso crea su tarea en el tablero («Grabar: …», «Editar: …�
   únicamente a `.audit/equipo-demo.txt` (ignorado por Git) y nunca se imprimen. En producción,
   las cuentas reales las crea el Dueño en Equipo.
 
+## Cadena de entregas por video
+
+Interruptores `PRODUCTION_CHAIN_ENABLED` (exige `PRODUCTION_FLOW_ENABLED`) y
+`PRODUCTION_CHAIN_BRANDS` (canario). Dominio y contrato: la cabecera de
+`src/lib/domain/production-chain.ts`; interruptores: `src/lib/production-chain-flag.ts`; lecturas
+para pantallas: `src/lib/production-scope.ts`; pasos y reglas: `CHAIN_ORDER` y `CHAIN_STEP_RULES`
+en `src/lib/constants.ts`; acciones: `src/app/actions/production.ts`. Mini-spec final con las
+decisiones del Dueño, reversa y criterio de hecho: `reports/cadena-entregas-2026-09-30.md`.
+
+### Modelo
+
+- **Sin tablas ni columnas nuevas.** `20260930090000_production_chain` solo amplía los CHECK de
+  `ProductionStep` (paso `GUION`, estado `DEVUELTO`, que tiene `doneAt` nulo) y añade el índice
+  `("brandId","status","dueAt")`. Devoluciones y avisos son `Comment` más auditoría (claves
+  `devolucion` y `aviso` en `AuditLog.changes`).
+- **El paso manda.** `ProductionStep` es la única verdad de quién tiene el video, para cuándo y si
+  está listo. El estado del video, los checks, las aprobaciones y la tarea del tablero son
+  reflejos que la cadena escribe **en la misma transacción** (`completeStep`, `returnStep`,
+  `chainEvent`).
+- **Un solo paso de cadena abierto por video.** Abrir un paso cierra los demás: los anteriores
+  quedan `HECHO` y los posteriores `CANCELADO`, firmados como «Sistema». Diseño corre en paralelo y
+  no cuenta.
+- `automationKey` = `<video>:GUION|GRABACION|EDICION|PUBLICACION` (diseño: `<video>:DISENO:<uuid>`).
+  Un paso no se duplica, se reactiva: `CANCELADO` o `DEVUELTO` vuelven a `PENDIENTE` con plazo
+  nuevo; conservan a su persona si era `MANUAL` o volvió por una devolución y sigue apta; si no, se
+  vuelve a buscar. Un paso `HECHO` solo se reabre devolviendo desde el paso que lo sigue.
+
+### Flujo
+
+```
+GUION (guionista) ─Listo─► GRABACION (filmmaker) ─Listo─► EDICION (editor) ─Listo─► PUBLICACION (community) ─Publicado─► fin
+                                ▲                            │  ▲                           │
+                                └──── Devolver al filmmaker ─┘  └── Devolver por correcciones ┘
+DISENO en paralelo: «Pedir diseño» → «Entregar diseño» (quien lo pidió o coordinación: «Pedir cambios»)
+```
+
+Por decisión del Dueño (29-30/09/2026) **no hay revisión de guion ni revisión final**: no existen
+los pasos `REVISION_GUION` ni `REVISION_FINAL`. Plazos en días de negocio de Lima, de lunes a
+sábado; un plazo de día vence a las 23:59:59.999.
+
+| Paso | Quién lo recibe | Nace | Plazo | El «Listo» exige | El «Listo» escribe |
+|---|---|---|---|---|---|
+| Guion | Función Guionista del video o `GUIONISTA` del equipo, que recibe la asignación `GUIONISTA` (así puede editar un guion generado por otra persona) | Al crear o duplicar el video en una marca con equipo, al unir el guion o con «Crear paso» | Fin del 2.º día hábil desde que nace | Guion vinculado y no archivado, con al menos una escena y CTA (del guion o del video). La persona asignada necesita `scripts.write` sobre ese guion | Guion BORRADOR→REVISION→APROBADO con su versión (`approveVersion`), check «Guion escrito y revisado» a su nombre, `SCRIPT_APPROVAL` y video →GUION→APROBADO, como «Sistema». Abre Grabación |
+| Grabación | Función Cámara o `FILMMAKER` | Listo del guion, o el video llega a Aprobado por otro camino | Próximo día de grabación de la marca **posterior al Listo** (sin días elegidos, el día hábil siguiente). Se escribe en `shootDate`: una fecha automática se recalcula, una puesta a mano manda. Si `scheduledDate` quedaba antes, se corre al día hábil siguiente a la edición | Enlace del material (http o https), guion aprobado y los checks obligatorios de Preproducción y Grabación que su perfil (o su paso) puede marcar | El enlace en el paso, esos checks a su nombre y video →GRABACION→EDICION como «Sistema». Abre Edición sin copiar el material |
+| Edición | Función Edición o `EDITOR` | Listo de la grabación | Día hábil siguiente a la grabación (sábado → lunes) | Enlace del máster, distinto del material grabado; checks obligatorios de Postproducción y General. Un check de diseño pendiente da «Esperando diseño» sea quien sea quien pulse (también el Dueño): el diseño lo entrega el diseñador o se marca en el checklist, nunca este Listo | El máster en el paso, esos checks a su nombre y `FINAL_APPROVAL` como «Sistema». Abre Publicación |
+| Publicación | Función Community o `COMMUNITY` | Listo de la edición | Día hábil siguiente, o la fecha prevista si es posterior (una anterior se corre) | URL pública http(s), `assertPublishable` y los checks de Publicación | `publishedUrl`, esos checks y video →PROGRAMADO→PUBLICADO (`publishedAt`). Fin de la cadena |
+| Diseño | Persona elegida o `DISENADOR` | «Pedir diseño» | 24 h; si cae en domingo, el lunes a la misma hora | Enlace de la entrega | Checks de diseño de Postproducción (si su perfil puede). Quien lo pidió lo ve 7 días en «Mi trabajo» |
+
+Un hueco en el equipo no detiene la cadena: sin persona apta para la función, el paso nace **«Sin
+asignar»** (también con la asignación automática apagada) y la fecha de grabación se escribe
+igual. Una marca sin nadie en su equipo sigue fuera de la cadena.
+
+### Devoluciones, avisos y coordinación
+
+- **«Devolver al filmmaker»** (editor, desde Edición): motivo de 5 a 1000 caracteres. Edición
+  queda `DEVUELTO`, Grabación vuelve a `PENDIENTE` para el próximo día de grabación (mueve
+  `shootDate`) y el video se queda en Edición.
+- **«Devolver por correcciones»** (community, desde Publicación): motivo de 5 a 1000. Se revoca
+  `FINAL_APPROVAL` como «Sistema» con ese motivo, Programado vuelve a Edición, Publicación queda
+  `DEVUELTO` y cerrada, y Edición vuelve a `PENDIENTE` para el día hábil siguiente. El siguiente
+  «Listo» del editor vuelve a firmar y reactiva la misma Publicación.
+- Toda devolución guarda el motivo como `Comment` del video y reabre exactamente un paso, que
+  aparece en «Mi trabajo» como «Devuelto a mí» con el motivo y quién lo devolvió.
+- **«Avisar a coordinación»** (botón del filmmaker y del community asignados): motivo de 5 a 1000,
+  guardado como `Comment` y como aviso en la auditoría. Se da por atendido con «Aviso atendido» o
+  con cualquier asignación, reapertura o «Listo» posterior del paso.
+- **Coordinación = ENCARGADO.** Supervisa en `/cadena` y recibe en «Mi trabajo» los pasos «Sin
+  asignar», los avisos y los bloqueos (responsable inactivo, sin acceso a la marca o cuyo perfil no
+  puede hacer el paso) de sus marcas. **ENCARGADO apto** = activo, con la marca y con
+  `content.assign` en su perfil (puede asignar y dar avisos por atendidos). **Si la marca no tiene
+  ENCARGADO apto, todo eso le llega al Dueño** (usuarios `OWNER`), y `/cadena` muestra el atasco
+  «Encargado sin permisos» (p. ej. un equipo guardado antes de encender la cadena).
+- **Quién pulsa un paso:** la persona asignada (con acceso al video y la capacidad del paso:
+  `scripts.write`, `content.shoot`, `content.editing`, `content.publish` o `content.design`),
+  coordinación con `content.assign` sobre el video, o el Dueño. Si coordinación pulsa por otra
+  persona, la auditoría dice «en nombre de» la persona asignada. **Coordinación no firma lo que su
+  perfil no firma** (`CHAIN_COORD_CAPABILITY`): el Listo del guion exige `scripts.approve` o
+  `scripts.write` sobre ese guion; el de la edición, `content.approve`; el «Publicado»,
+  `content.publish`; devolver una publicación (retira la revisión final), `content.approve`. Los
+  botones siguen la misma regla (`stepPermissions`).
+- **Primero quién, después qué:** cada acción sobre un paso comprueba antes de bloquear nada y de
+  mirar su estado que quien pulsa lo puede ver (Dueño, responsable con la marca o video en su
+  alcance). Un paso ajeno responde lo mismo que uno inexistente: «No tienes acceso a este paso o
+  ya no existe.»
+- «Crear paso» (`content.assign`) asegura el paso que le toca al video por su estado; «Tomar
+  paso» deja que alguien apto (capacidad del paso, la marca **y el video en su alcance**) se asigne
+  uno sin responsable; «Reasignar» mueve persona y plazo y, si quien reasigna puede planificar,
+  también `shootDate` o `scheduledDate` (si no, el formulario lo avisa: `EditForm` muestra el
+  `message` de la acción y el tablero, el de `actualizarTarea`). **Responsable elegido a mano**
+  («Reasignar», «Crear paso» con persona, la tarea del tablero): activo, con la marca y con la
+  capacidad del paso; si no, «X no puede grabar: su perfil no lo permite». `asignarPersona` solo
+  pasa el paso a quien puede hacerlo.
+- `guardarEquipoDeMarca` exige que el perfil conceda la capacidad de la función (ENCARGADO
+  `content.approve` y `scripts.approve`, GUIONISTA `scripts.write`, FILMMAKER `content.shoot`,
+  EDITOR `content.editing`, COMMUNITY `content.publish`, DISENADOR `content.design`), pasa los pasos
+  automáticos pendientes a la persona nueva y, al encender la asignación automática, reparte los
+  «Sin asignar».
+
+### Tarea y paso
+
+- Un paso, una tarea: «Escribir guion: …», «Grabar: …», «Editar: …», «Publicar: …», «Diseño: …».
+  Paso cerrado (`HECHO`, `CANCELADO` o `DEVUELTO`) → su tarea va a la última columna por orden que
+  admite la marca («Listo»; si solo existe una columna, se crea «Listo»). Paso reabierto → la tarea
+  sale de «Listo». Responsable y fecha límite siguen al paso.
+- «Listo» se identifica por posición, así que la posición se protege: con la cadena, una columna
+  nueva (`crearColumna`, global o de una marca) **entra antes de «Listo»** reordenando las demás, y
+  la columna «Listo» de una marca no se puede eliminar (se renombra).
+- Soltar la tarea en la última columna (`moverTarea`, o cambiar la etapa en `actualizarTarea`) es
+  el «Listo» del paso con las mismas validaciones: si falla, la tarea no se mueve y el tablero
+  muestra el motivo (`moverTareaConMotivo`; el modal recibe `{ ok: false, error }`). Sacar de
+  «Listo» la tarea de un paso cerrado se rechaza. Cambiar responsable o fecha en la tarea reasigna
+  el paso; una tarea de paso no cambia de marca.
+
+### Mismas reglas por cualquier camino
+
+Los caminos de siempre convergen en `chainEvent` y corren en un `SAVEPOINT` (un fallo se deshace
+solo, se registra con un código cerrado y la acción principal sigue):
+
+- Crear o duplicar un video abre el Guion (la copia **no hereda** la fecha de grabación del
+  original). **Unir el guion ya no programa la grabación**; desvincularlo o **eliminar el guion**
+  vuelve a abrir el Guion de cada video que lo usaba.
+- Fecha de grabación al abrir la Grabación: automática (auditada «Programó la grabación») se
+  recalcula; puesta a mano manda; **sin origen auditado en ese video y ya pasada o de hoy** (heredada
+  o anterior a la cadena) se recalcula, para que el paso no nazca vencido.
+- Pasar el guion a Revisión o Aprobado desde Guiones equivale al «Listo» del guion (Revisión exige
+  escenas y CTA); volverlo a Borrador reabre el Guion.
+- Cambiar el estado del video abre el paso de su etapa. Cancelado o pausado cancela los pasos
+  pendientes (y sus tareas van a «Listo»); Publicado cierra todo; reabrir hacia atrás cancela los
+  posteriores. Pasar a Edición exige el enlace del material si existe la Grabación.
+- Checks: completar los de Grabación con el enlace ya guardado es el «Listo» de la grabación;
+  firmar `FINAL_APPROVAL` a mano exige el máster en Edición; retirarla (o retirar la aprobación del
+  guion, que la arrastra) devuelve la edición al editor y cancela la publicación, también con el
+  video en Programado: Sistema lo devuelve a Edición, como «Devolver por correcciones».
+- Cambiar `shootDate` o `scheduledDate` mueve el plazo de la Grabación o de la Publicación, también
+  si el paso es `MANUAL`: «manual» protege a la persona, no la fecha.
+- `asignarPersona` pasa el paso pendiente de esa función a la persona (si su perfil puede
+  hacerlo); `quitarAsignacion` se bloquea con «Reasigna primero el paso» si esa persona lo tiene
+  pendiente, y el motivo vuelve como `{ error }` a la ficha.
+- «Marcar hecho» y «Reabrir» del panel viejo delegan en el «Listo» y en «Devolver» (con motivo).
+  «Guardar y marcar publicado» (`publicado=1` en la publicación de la ficha) es el «Publicado».
+- **Barrido diario:** con la cadena encendida no asigna la edición ni cierra grabaciones que no se
+  hicieron; el atraso queda a la vista como vencido. Con canario, solo excluye esas marcas.
+
+### Atomicidad, concurrencia e invariantes
+
+- Las entradas explícitas («Listo», «Devolver», «Avisar», «Crear», «Tomar» y «Reasignar paso»,
+  tarea movida) **no usan SAVEPOINT**: si algo falla no se escribe nada y el motivo (`ChainError`,
+  en español) llega a la persona. Un conflicto de concurrencia llega como `EDIT_CONFLICT`.
+- Bloqueos en el orden de `alternarCheck`: guion → video (`lockVideoLifecycle`) → paso
+  (`lockRevision` con la revisión del formulario, o `FOR UPDATE`) → tarea. Dos «Listo» a la vez:
+  uno gana y el otro recibe `EDIT_CONFLICT`. Repetir un «Listo» ya hecho no escribe nada.
+- Invariantes que deben dar 0 (SQL en la mini-spec): **Q1** tarea desfasada de su paso; **Q2**
+  video activo de una marca con equipo, creado tras encender, sin paso abierto; **Q3** publicación
+  pendiente en un video publicado; **Q4** más de un paso de cadena pendiente por video; **Q5**
+  responsable inactivo o sin acceso a la marca.
+- **Apagada** (o la marca fuera del canario), nada de esto consulta la base: `chainEvent` vuelve
+  `chain_off` antes de la primera consulta y todo funciona como el flujo anterior; los pasos Guion
+  pendientes se ocultan en el panel. Lo ya firmado sigue siendo válido.
+- Logs: `{"event":"production_chain","operation":…,"reason":…}` sin datos personales.
+  Instrumentación temporal: `complete_step` con milisegundos; **retirar el 2026-10-20** o cuando
+  Q1-Q5 lleven 7 días en 0.
+
+### Pantallas y permisos
+
+- **Canario por persona** (`productionChainActiveFor`): la interfaz de la cadena («Mi trabajo»,
+  contadores, textos de Ayuda, menú «Cadena», «Solo lo mío» del calendario) aparece si la marca
+  activa usa la cadena o, sin marca activa, si alguna marca de la persona la usa (el Dueño, con
+  cualquiera). En Tareas, las reglas de la cadena (orden por fecha límite, enlace a la ficha,
+  «pulsa Listo», vencida en el día de Lima y nunca en «Listo») se aplican por tarea, solo en marcas
+  de la cadena; el resto se ve como antes, y con la cadena apagada no se lee `ProductionStep`.
+- **«Mi trabajo»** (`src/components/work/my-work.tsx`) va **primero**, encima del Manual, en el
+  Inicio del equipo y en el Panel del Dueño: Vencido, Devuelto a mí, Hoy, Próximos 7 días y Más
+  adelante (plegado); el bloque de coordinación (Sin asignar, Avisos, Bloqueados; `h3` con sus
+  grupos en `h4`) solo al ENCARGADO apto o al Dueño; «Diseños entregados para ti» durante 7 días.
+  Un Guion sin guion enlaza a «Generar guion» (`/generador?video=<id>`) para quien puede generar.
+  Con la cadena, los contadores del Inicio excluyen videos cancelados o pausados y tareas en
+  «Listo».
+- **Avisos de éxito** (`src/components/work/announcer.tsx`): tras un «Listo», «Devolver», «Tomar
+  paso», «Aviso atendido» o «Crear paso» la tarjeta se va con el refresco, así que el mensaje del
+  servidor («Ahora le toca a…») se muestra en una región `aria-live` de la sección (Mi trabajo, el
+  panel Producción, la Cadena) y el foco vuelve a su encabezado.
+- **Botones** compartidos por «Mi trabajo», la ficha y `/cadena`
+  (`src/components/work/step-actions.tsx`, textos en `step-copy.ts`): «Listo, enviar al
+  filmmaker», «Listo, pasar a edición», «Listo, enviar al community», «Publicado» y «Entregar
+  diseño»; «Devolver al filmmaker», «Devolver por correcciones» y «Avisar a coordinación»;
+  «Crear paso», «Tomar este paso», «Aviso atendido» y «Pedir cambios». Cada uno pide su enlace o
+  su motivo y se confirma con un segundo toque.
+- **`/cadena`**: sección `chain` con la capacidad `chain.view` (perfil STRATEGY) o el Dueño.
+  Cabecera con abiertos, vencidos, sin asignar y publicados en la semana (no dependen de los
+  filtros; «Sin asignar» enlaza a `?persona=sin-asignar`); columnas por paso y fila de diseños;
+  atascos con su acción (vencidos, sin asignar, responsable que no puede hacer el paso, avisos con
+  «Aviso atendido» ahí mismo, videos sin paso con «Crear paso», estado desfasado, encargado sin
+  permisos y marcas sin equipo). La lista de personas del filtro sale de todos los pasos abiertos
+  de las marcas, no de los ya filtrados.
+- **Panel «Producción»** de la ficha (ancla `#produccion`): los mismos botones, estado Devuelto,
+  «Sin responsable» con «Asignar», el último aviso a coordinación con «Aviso atendido» y, al
+  reasignar, solo las personas cuyo perfil puede hacer el paso (el resto aparece deshabilitado).
+- **Acciones** (`src/app/actions/production.ts`), todas con `{ error }` o `{ ok: true, message }`:
+  `marcarListo`, `devolverPaso`, `avisarCoordinacion`, `crearPasoManual` (alias `crearPaso`),
+  `tomarPaso`, `atenderAviso` y `pedirCambiosDiseno`. Con la cadena apagada responden «La cadena de
+  entregas no está activa.» sin leer sesión ni base.
+- **Previa de guiones:** «grabado» es el paso Grabación en `HECHO` (`grabadoDeVideo`,
+  `chainStateForScripts`); sin cadena, el check «Grabado (todas las tomas)».
+
 ## Calendario mensual
 
 Interruptor `CALENDARIO_MENSUAL`. Funciones puras en `src/lib/calendar-view.ts` (probadas en
@@ -864,6 +1090,55 @@ Interruptor `CALENDARIO_MENSUAL`. Funciones puras en `src/lib/calendar-view.ts` 
 - Apagado: el Equipo vuelve a la lista de 31 días con «Ver agenda» y el Dueño a la rejilla
   anterior (solo publicación, sin detalle por día ni lista en celular; el día enlaza a
   `/contenido?desde=&hasta=`).
+- El diseñador (perfil `DESIGNER`) tiene `calendar.view` con alcance de sus videos asignados
+  **solo con la cadena y `CALENDARIO_PASOS` encendidos** (`permissionFlags` en
+  `src/lib/permissions.ts`; el layout pasa el valor al menú, que no lee el entorno). Apagados, el
+  diseñador sigue sin calendario, como antes.
+
+### Pasos de la cadena en el calendario (`CALENDARIO_PASOS`)
+
+Encendido por defecto, pero solo actúa con la cadena de entregas encendida; apagado (o sin
+cadena), el calendario es el de siempre, con las mismas consultas y enlaces. Solo en la vista
+mensual. Lecturas en `src/lib/production-scope.ts` (`stepCalendarEntries`, `productionStepScope`,
+`coveredVideoDates`); chips puros en `src/lib/calendar-view.ts`.
+
+- **Chips por paso** en el día de su plazo (`dueAt`): Guion, Grabar, Editar, Publicar y Diseño,
+  con el color y el ícono del paso y el nombre de pila del responsable (se oculta si el paso es
+  tuyo). Vencido: borde rojo y ⚠; devuelto: ↩; sin asignar: persona tachada; hecho: tachado;
+  Diseño lleva la hora. El detalle del día y la lista del celular lo dicen en texto.
+- **Sin duplicados:** el chip «Grabar» o «Publicar» que sale de `shootDate` o `scheduledDate`
+  desaparece si el video tiene un paso visible de ese tipo (pendiente o hecho, con el mismo filtro
+  de persona), aunque el plazo caiga en otro mes: la fecha del paso manda.
+- **«Solo lo mío»** (`?mio=1` / `?mio=0`): solo tus pasos y las fechas de los videos donde tienes
+  una función; la agenda no se filtra. Activo por defecto en los perfiles por asignación (cámara,
+  edición, talento, diseño) y en el community; apagado para el Dueño, que además tiene
+  `?persona=<id>` (manda sobre «Solo lo mío»).
+- En la vista del equipo desaparecen los videos cancelados y pausados, como en el `.ics`. Los
+  totales del Dueño se siguen contando con las fechas del video. Estado y plataforma también
+  filtran los pasos.
+- Todo se lee de la base al pedir la página: «Listo», reasignar o mover una fecha cambian la fila
+  del paso y las acciones revalidan `/calendario`.
+
+### Calendario `.ics` por persona (`CALENDAR_FEED_PERSONAL`)
+
+Apagado por defecto. Requiere `20260930091000_calendar_feed_user` **aplicada antes de
+encenderlo** (solo amplía `CalendarSubscription_scope_check` con `scope='USER'` y `brandId` nulo;
+`createdById` es la persona dueña del feed).
+
+- «Mi calendario en Google» en Mi perfil (`miCalendario` en `src/app/actions/calendar-feed.ts`):
+  crear, renovar o revocar, con `profile.self`; un solo enlace vigente por persona; plazo de 30, 90
+  o 365 días. El token se muestra una sola vez; solo se guarda su hash y nunca va a la auditoría.
+- Cada descarga vuelve a leer a la persona, sus perfiles y sus marcas: si pierde una marca, sus
+  fechas desaparecen en la siguiente lectura. Persona inactiva o interruptor apagado → 401.
+- Incluye sus pasos pendientes (todo el día; Diseño con hora), las fechas de los videos donde
+  tiene una función salvo las que ya cubren sus pasos, y la agenda que ve en la app. Sin
+  descripciones, ubicaciones ni otras personas.
+- Corte por persona: con el interruptor encendido, Ajustes lista **aparte** los feeds personales
+  vigentes y el Dueño puede **revocar** uno (no renovarlo: lo pasaría a su nombre). Desactivar la
+  cuenta, cambiar su contraseña o cambiar su correo o rol (lo que cierra sus sesiones) revoca
+  también su feed personal, así que al reactivar la cuenta un token filtrado no vuelve.
+- Los enlaces del Dueño (`ALL` y `BRAND`) no cambian y no llevan pasos ni nombres. Su lista no
+  mezcla los feeds personales y el tope de 50 cuenta solo los del Dueño.
 
 ## Manual de procedimientos
 

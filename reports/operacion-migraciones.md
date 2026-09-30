@@ -277,3 +277,38 @@ migrar también es seguro. Lo que nunca se hace es encender un interruptor antes
   persistido.
 - El código anterior a esta entrega funciona sobre el esquema nuevo, porque solo hay tablas
   adicionales. Sus filas quedan sin uso hasta volver a desplegar esta versión.
+
+## Entrega 30/09/2026: cadena de entregas y calendario personal
+
+Rama `feature/cadena-entregas`. Mini-spec y despliegue: [cadena-entregas-2026-09-30](cadena-entregas-2026-09-30.md).
+Dos migraciones, que Prisma aplica en este orden:
+
+1. `prisma/migrations/20260930090000_production_chain/migration.sql`: amplía
+   `ProductionStep_step_check` con `'GUION'` y `ProductionStep_status_check` con `'DEVUELTO'`, y
+   crea el índice `ProductionStep_brandId_status_dueAt_idx`.
+2. `prisma/migrations/20260930091000_calendar_feed_user/migration.sql`: amplía
+   `CalendarSubscription_scope_check` con `(scope = 'USER' AND "brandId" IS NULL)`.
+
+Qué hay que saber:
+
+- **Solo amplían restricciones.** No crean tablas ni columnas, y el código anterior nunca escribe
+  los valores nuevos: se pueden aplicar antes o después de desplegar. Como no hay tablas nuevas,
+  no hace falta volver a instalar `prisma/operations/deployment-gate.sql`.
+- Transaccionales, con `lock_timeout = 5s`. `DROP/ADD CONSTRAINT` y el índice toman un bloqueo
+  breve sobre `ProductionStep` y `CalendarSubscription`; si vence, se revierten enteras.
+- Encender `PRODUCTION_CHAIN_ENABLED` exige la primera; `CALENDAR_FEED_PERSONAL`, la segunda.
+- `npm run db:ensayo` las aplica sobre la base de prueba y comprueba que solo se amplían los CHECK,
+  que las filas existentes quedan intactas y que `USER` exige `brandId` nulo. Resultado del
+  30/09/2026: correcto, con 42 tablas.
+
+Comprobación después de migrar:
+
+```sql
+SELECT conname, pg_get_constraintdef(oid) FROM pg_constraint
+WHERE conname IN ('ProductionStep_step_check','ProductionStep_status_check','CalendarSubscription_scope_check');
+SELECT indexname FROM pg_indexes WHERE indexname = 'ProductionStep_brandId_status_dueAt_idx';
+```
+
+Reversa: apagar el interruptor y redesplegar. No revertir las migraciones; para estrecharlas antes
+deben dar 0 `SELECT count(*) FROM "ProductionStep" WHERE step = 'GUION' OR status = 'DEVUELTO'` y
+`SELECT count(*) FROM "CalendarSubscription" WHERE scope = 'USER'`.

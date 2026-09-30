@@ -1,5 +1,5 @@
 /**
- * Pruebas de humo de Marketing OS.
+ * Pruebas de humo de ALSOS.
  *
  *   npm run test:humo          contra http://localhost:3000
  *   BASE=https://tu-dominio npm run test:humo

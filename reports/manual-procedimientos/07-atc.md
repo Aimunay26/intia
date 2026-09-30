@@ -1,6 +1,6 @@
 # Manual de procedimientos — ATC: Atención al Cliente y Ventas por Chat
 
-Perfil en Intia: nuevo (ATC) · Borrador v1 (2026-09-28) para revisión del dueño.
+Perfil en ALSOS: nuevo (ATC) · Borrador v1 (2026-09-28) para revisión del dueño.
 
 ## Misión
 
@@ -21,13 +21,13 @@ Convertir cada mensaje que generan los videos en una venta bien hecha. El ATC re
 - Gestionar quejas y reclamos: ofrecer sin condiciones el Libro de Reclamaciones virtual y asegurar la respuesta formal dentro de 15 días hábiles.
 - Escalar a coordinación lo que no puede decidir: descuentos fuera de la ficha, reembolsos, pedidos corporativos, amenazas legales, prensa, influencers y crisis.
 - Registrar a diario los leads y ventas por canal y por video de origen, y entregar un reporte semanal ATC.
-- Entregar cada semana a guionistas y community las preguntas y objeciones textuales más frecuentes, registrar ideas como síntoma en Intia y avisar el mismo día de cualquier crisis.
+- Entregar cada semana a guionistas y community las preguntas y objeciones textuales más frecuentes, registrar ideas como síntoma en ALSOS y avisar el mismo día de cualquier crisis.
 - Proteger los datos personales de los clientes (Ley 29733 y su reglamento, DS 016-2024-JUS), la cuenta de ventas (verificación en dos pasos) y prevenir fraudes (yapeos falsos, robo de cuenta, suplantación de la marca).
 
 ## Procedimiento (SOP)
 
-1. IDEA (continuo): cuando una pregunta u objeción se repite en los chats, registrarla en Intia como IDEA escrita como síntoma (qué duele y dónde se nota), con su frecuencia y un ejemplo textual sin datos personales.
-2. GUION → APROBADO: leer en Intia el guion aprobado y su CTA. Recibir de coordinación la ficha de oferta del video (precio total, bonus, garantía, escasez real con duración y stock mínimo, fecha de corte, palabra clave). Si algo no se puede cumplir (stock, capacidad del taller, plazos a provincia), avisarlo a coordinación antes de grabar.
+1. IDEA (continuo): cuando una pregunta u objeción se repite en los chats, registrarla en ALSOS como IDEA escrita como síntoma (qué duele y dónde se nota), con su frecuencia y un ejemplo textual sin datos personales.
+2. GUION → APROBADO: leer en ALSOS el guion aprobado y su CTA. Recibir de coordinación la ficha de oferta del video (precio total, bonus, garantía, escasez real con duración y stock mínimo, fecha de corte, palabra clave). Si algo no se puede cumplir (stock, capacidad del taller, plazos a provincia), avisarlo a coordinación antes de grabar.
 3. GRABACION (cuando falte material): pedir al filmmaker, vía coordinación, 2 o 3 tomas verticales del producto real para el kit de confianza del chat.
 4. EDICION (antes de la «Revisión final aprobada»): revisar en la vista previa que el precio, el bonus, la fecha de corte y la palabra clave que aparecen en pantalla coincidan con la ficha de oferta. Enviar OK o correcciones a coordinación y al jefe de editores en 2 horas como máximo.
 5. PROGRAMADO (día previo a publicar): crear o actualizar las respuestas rápidas del video, acordar con el community la palabra clave y la automatización de comentario a DM, y agendar la guardia de respuesta para la hora de publicación.
@@ -54,7 +54,7 @@ Convertir cada mensaje que generan los videos en una venta bien hecha. El ATC re
 - PUBLISHER (community manager): calendario de publicaciones, comentarios y DM derivados, palabra clave del CTA y alertas de comentarios.
 - PRODUCTION / taller: stock por talla y color, capacidad diaria, tiempos de producción, fechas de despacho y recibido de cada orden.
 - DESIGNER: mockups de personalización para que el cliente los apruebe.
-- ANALYST: vistas y métricas por video en Intia, para cruzarlas con las ventas del chat.
+- ANALYST: vistas y métricas por video en ALSOS, para cruzarlas con las ventas del chat.
 - OWNER (dueño): precios, precios por volumen, política de cambios y devoluciones, garantías autorizadas, lista de diseños no permitidos, régimen tributario (boleta o factura) y aprobación de respuestas a reclamos.
 - Clientes: leads por DM de Instagram, TikTok y Facebook y por WhatsApp Business, que llegan desde los videos.
 
@@ -65,7 +65,7 @@ Convertir cada mensaje que generan los videos en una venta bien hecha. El ATC re
 - Logística / courier: datos de envío (nombre y DNI de quien recoge, ciudad, agencia o dirección con referencia).
 - JEFE DE EDITORES y STRATEGY: OK o correcciones de precio, oferta o palabra clave en pantalla antes de la «Revisión final aprobada».
 - CAMERA (vía coordinación): pedido de tomas del producto real para el kit de confianza.
-- WRITER (guionista): las 5 preguntas y 3 objeciones más frecuentes de la semana, en palabras del cliente, e ideas registradas como síntoma en Intia.
+- WRITER (guionista): las 5 preguntas y 3 objeciones más frecuentes de la semana, en palabras del cliente, e ideas registradas como síntoma en ALSOS.
 - PUBLISHER (community manager): testimonios y fotos de clientes con permiso, alertas de crisis y respuestas unificadas.
 - ANALYST: registro diario de leads y ventas por canal y por video de origen.
 - STRATEGY (coordinación) y OWNER: reporte semanal ATC, casos escalados con propuesta, estado de reclamos con fechas límite y propuestas de mejora de ofertas.
@@ -98,7 +98,7 @@ Convertir cada mensaje que generan los videos en una venta bien hecha. El ATC re
 - Sistema de facturación electrónica (SUNAT o proveedor) y Consulta RUC de SUNAT.
 - Portales de courier: Olva Courier y Shalom, para guías y seguimiento.
 - Libro de Reclamaciones virtual (por ejemplo «Tu Libro de Reclamaciones» de Indecopi) y un control de reclamos con calculadora de días hábiles y feriados.
-- Intia: guiones aprobados, CTA, videos programados y publicados, métricas semanales y registro de ideas.
+- ALSOS: guiones aprobados, CTA, videos programados y publicados, métricas semanales y registro de ideas.
 - Kit de confianza en el celular: videos reales del producto, testimonios con permiso, capturas de envíos sin datos personales.
 - Asistente de IA solo para borradores de texto, sin datos personales y con revisión humana.
 
@@ -481,8 +481,8 @@ Cómo contestar el primer mensaje rápido y con el tono de la marca, identifican
 
 1. Si el mensaje responde a un Reel o historia, o trae la palabra clave del CTA (ej. «TAZA»), el origen está claro: anótalo.
 2. Si no está claro, pregunta de forma natural después de ayudar: «Por cierto, ¿en qué video nos viste? Así te paso la misma promo 😉».
-3. Anota en la ficha el canal (IG, TikTok, FB o WA), el video (título o código del contenido en Intia) y la fecha.
-4. Si el cliente no recuerda, pídele que describa el video («el de la cámara escondida con la mamá») y búscalo en la lista de publicados de Intia.
+3. Anota en la ficha el canal (IG, TikTok, FB o WA), el video (título o código del contenido en ALSOS) y la fecha.
+4. Si el cliente no recuerda, pídele que describa el video («el de la cámara escondida con la mamá») y búscalo en la lista de publicados de ALSOS.
 5. Si no hay forma de saberlo, anota «Sin identificar». Nunca lo inventes.
 
 **Errores comunes:**
@@ -1217,7 +1217,7 @@ La rutina fija para abrir y cerrar cada turno y la regla de qué se escala, para
 
 **Pasos:**
 
-1. Lee la ficha de oferta vigente y revisa en Intia qué videos están PROGRAMADOS para hoy y a qué hora (CTA, precio, palabra clave).
+1. Lee la ficha de oferta vigente y revisa en ALSOS qué videos están PROGRAMADOS para hoy y a qué hora (CTA, precio, palabra clave).
 2. Confirma que el mensaje de ausencia se desactivó y que las respuestas rápidas están al día.
 3. Lee la nota de relevo del turno anterior.
 4. Responde los mensajes que llegaron fuera de horario en este orden: pagos con captura, reclamos, nuevos leads y seguimientos.
@@ -1780,7 +1780,7 @@ Pedir la venta con claridad y usar la oferta del video (bonus, garantía, escase
 
 **Pasos:**
 
-1. Lee en Intia el CTA del guion aprobado y la ficha de oferta del video.
+1. Lee en ALSOS el CTA del guion aprobado y la ficha de oferta del video.
 2. Estructura: resultado para el cliente + qué recibe + bonus + garantía + límite real + pregunta de cierre.
 3. Con Amor (ejemplo): «Tu mamá recibe su polera afranelada con la foto de ustedes 💝 y, si pides hasta el viernes, la taza con su nombre de regalo. Si el nombre llega mal escrito por un error nuestro, lo rehacemos gratis. ¿Te la separo?».
 4. Toda garantía que ofreces por chat obliga a la marca: ofrece solo la que está en la ficha y con las mismas palabras que el video.
@@ -2483,7 +2483,7 @@ Medir el chat como un embudo y reportar las ventas por video para que el equipo 
 
 1. Parte del registro diario, con el campo de video de origen.
 2. Suma por video: leads, ventas, monto y conversión.
-3. Cruza esos datos con las vistas de cada video que el analista tiene en Intia.
+3. Cruza esos datos con las vistas de cada video que el analista tiene en ALSOS.
 4. Calcula las ventas por cada 1 000 vistas.
 5. CASO (cifras de ejemplo): un video de Cámara Escondida trajo 120 DM y 9 ventas (7,5 %); un Tutorial «Cómo se usa» trajo 40 DM y 8 ventas (20 %). Lectura: el primero genera alcance y curiosidad; el segundo trae compradores listos.
 6. Lleva una conclusión y un pedido concreto a la reunión semanal.
@@ -2598,14 +2598,14 @@ Convertir la voz del cliente en el chat en insumos para guiones, testimonios y a
 
 #### Objeción convertida en video · _Caso práctico_
 
-**Objetivo:** Transformar la objeción más frecuente en una IDEA para el flujo de Intia, escrita como síntoma.
+**Objetivo:** Transformar la objeción más frecuente en una IDEA para el flujo de ALSOS, escrita como síntoma.
 
 **Pasos:**
 
 1. Toma la objeción más repetida de la semana (ej. «no confío en pagar por adelantado desde Puno»).
 2. Escríbela como síntoma, diciendo qué duele y dónde se nota: «30 % de los leads de provincia no pagan después de recibir los datos de pago».
 3. Sugiere un formato: Testimonio de una clienta de Puno, UGC recibiendo el paquete o Cómo se usa (tutorial de recojo en agencia).
-4. Registra la IDEA en Intia para que la evalúe coordinación.
+4. Registra la IDEA en ALSOS para que la evalúe coordinación.
 5. Cuando el video se publique, mide si la objeción baja en los chats.
 
 **Errores comunes:**
@@ -3344,7 +3344,7 @@ Convertir cada venta de ocasión en la siguiente venta: calendario del cliente, 
 ## Notas de investigación y revisión
 
 CRÍTICA Y CORRECCIONES PRINCIPALES
-1) SOP alineado al flujo real de Intia. Estados del schema: IDEA, GUION, APROBADO, GRABACION, EDICION, PROGRAMADO, PUBLICADO, PAUSADO y CANCELADO. El SOP original empezaba en PROGRAMADO y no tenía traspasos en GRABACION ni en EDICION. Agregué:
+1) SOP alineado al flujo real de ALSOS. Estados del schema: IDEA, GUION, APROBADO, GRABACION, EDICION, PROGRAMADO, PUBLICADO, PAUSADO y CANCELADO. El SOP original empezaba en PROGRAMADO y no tenía traspasos en GRABACION ni en EDICION. Agregué:
    - IDEA: el ATC la registra como síntoma a partir del chat.
    - APROBADO: alerta si la oferta no se puede cumplir (stock, capacidad, plazos a provincia).
    - GRABACION: pedido de tomas del producto real para el kit de confianza.

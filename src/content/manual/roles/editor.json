@@ -7,23 +7,23 @@
  "responsibilities": [
   "Recibir el material del filmmaker, respaldarlo con la regla 3-2-1 y organizar el proyecto con la estructura de carpetas y la nomenclatura estándar del equipo.",
   "Detectar en la ingesta los problemas típicos del material de celular (fps variable, video HDR, perfil Log) y resolverlos antes de editar; devolver al filmmaker lo que no se puede salvar.",
-  "Leer el guion aprobado en Intia y convertirlo en un mapa de edición: gancho, desarrollo, prueba y CTA, con su duración objetivo.",
+  "Leer el guion aprobado en ALSOS y convertirlo en un mapa de edición: gancho, desarrollo, prueba y CTA, con su duración objetivo.",
   "Seleccionar las mejores tomas con un criterio claro: emoción, historia, ritmo y, al final, lo técnico.",
   "Montar el video con gancho visual en 0-3 s, un cambio visual o sonoro cada 1-3 s y un CTA claro, según el formato (Cámara Escondida, Sketch, Vlog, Antes y Después, Camaleón, Tutorial, UGC, Testimonio, PAS).",
   "Poner subtítulos y textos en pantalla sin faltas, con precios totales en S/ y promociones con su vigencia y stock, siempre dentro de la zona segura de TikTok, Reels y Shorts.",
   "Hacer el diseño sonoro: voz limpia, música con licencia válida para cada plataforma, SFX con propósito y mezcla alrededor de -14 LUFS con picos de -1 dBTP como máximo.",
   "Corregir color y exposición, estabilizar y reencuadrar a 9:16, cuidando que la piel se vea natural y que el producto conserve su color real.",
   "Exportar las versiones por plataforma (TikTok, Reels, Shorts, WhatsApp) con las especificaciones correctas, en SDR y sin marcas de agua.",
-  "Gestionar las rondas de revisión con comentarios por timecode (máximo 2 rondas) y marcar los checks de postproducción en Intia ('Editado', 'Subtítulos y textos en pantalla', 'Música y efectos de sonido'); nunca marcar 'Revisión final aprobada'.",
+  "Gestionar las rondas de revisión con comentarios por timecode (máximo 2 rondas) y marcar los checks de postproducción en ALSOS ('Editado', 'Subtítulos y textos en pantalla', 'Música y efectos de sonido'); nunca marcar 'Revisión final aprobada'.",
   "Entregar al community manager el paquete completo (video por plataforma, portada y nota de entrega) y a ATC el corte para WhatsApp.",
   "Confirmar con coordinación, antes de entregar, las autorizaciones de imagen (Cámara Escondida, clientes reales, menores), la identificación de publicidad y la etiqueta de IA cuando correspondan.",
   "Archivar el proyecto, liberar espacio y avisar al filmmaker qué tomas faltaron o sobraron.",
   "Mantener plantillas, presets y bibliotecas (SFX, música con licencia, gráficos de marca) y aplicar los aprendizajes que salen de las métricas."
  ],
  "sop": [
-  "INICIO DEL DÍA (15 min): en el tablero de Intia, filtra los videos en EDICION y los de GRABACION que ya tengan marcado 'Grabado (todas las tomas)'. Ordénalos por fecha programada de publicación y confirma prioridades con el Jefe de Editores. Los videos en PAUSADO o CANCELADO no se tocan.",
+  "INICIO DEL DÍA (15 min): en el tablero de ALSOS, filtra los videos en EDICION y los de GRABACION que ya tengan marcado 'Grabado (todas las tomas)'. Ordénalos por fecha programada de publicación y confirma prioridades con el Jefe de Editores. Los videos en PAUSADO o CANCELADO no se tocan.",
   "RECEPCIÓN (por video): verifica en la ficha que estén marcados 'Guion aprobado por la marca' (preproducción), 'Grabado (todas las tomas)' y 'Audio revisado' (grabación), y mira si está 'B-roll / tomas de apoyo'. Si falta material o el guion no está aprobado, avisa ese mismo día al filmmaker y a coordinación. No se edita sin guion aprobado. Si el video tiene Cámara Escondida, clientes reales o menores, pregunta a coordinación si ya están las autorizaciones de imagen firmadas.",
-  "INGESTA: copia el material a MARCA_AAAAMMDD_FORMATO_TEMA/01_BRUTO, compara la cantidad de archivos y el peso, prueba 3 clips y completa el respaldo 3-2-1. Solo después autorizas al filmmaker a formatear la tarjeta. Revisa con MediaInfo si hay fps variable, HDR o Log y conviértelo si hace falta. Pega la ruta en la ficha de Intia.",
+  "INGESTA: copia el material a MARCA_AAAAMMDD_FORMATO_TEMA/01_BRUTO, compara la cantidad de archivos y el peso, prueba 3 clips y completa el respaldo 3-2-1. Solo después autorizas al filmmaker a formatear la tarjeta. Revisa con MediaInfo si hay fps variable, HDR o Log y conviértelo si hace falta. Pega la ruta en la ficha de ALSOS.",
   "PREPARACIÓN: abre la plantilla de proyecto (1080x1920 a 30 fps, pistas nombradas y overlay de zona segura) e importa la música con licencia, los SFX y los gráficos de la marca.",
   "SELECCIÓN: ve todo el material una vez, marca las tomas por color (verde, amarillo, rojo) y arma la secuencia SELECTS, relacionando cada toma con su bloque del guion.",
   "ARMADO (rough cut, máximo 30 min): pon los selects en el orden del guion (GANCHO, DESARROLLO, PRUEBA, CTA), mide la duración y guarda la secuencia V0_ARMADO.",
@@ -31,7 +31,7 @@
   "TEXTOS: corrige los subtítulos al 100%, copia los textos del guion (precio total en S/, promoción con vigencia y stock, CTA) y revísalos con el overlay de zona segura. Marca el check 'Subtítulos y textos en pantalla'.",
   "SONIDO: limpia la voz, pon la música con licencia de cada plataforma, suma SFX, haz ducking y aplica el preset de master del equipo (-14 LUFS / -1 dBTP). Marca el check 'Música y efectos de sonido' y anota la pista y su licencia.",
   "IMAGEN: conversión de Log/HDR si aplica, exposición y balance con scopes, tono de piel, igualación entre planos, color fiel del producto, estabilización y reencuadre.",
-  "AUTORREVISIÓN Y V1: exporta con el preset INTIA_9x16_1080_30 y velo en el celular dos veces, con y sin sonido. Marca 'Editado', sube el link de la V1 a la ficha y pide revisión al Jefe de Editores o a coordinación.",
+  "AUTORREVISIÓN Y V1: exporta con el preset ALSOS_9x16_1080_30 y velo en el celular dos veces, con y sin sonido. Marca 'Editado', sube el link de la V1 a la ficha y pide revisión al Jefe de Editores o a coordinación.",
   "CORRECCIONES: junta los comentarios por timecode, conviértelos en una lista de tareas, resuélvelos todos y sube la V2 como nueva versión. Máximo 2 rondas: la primera para estructura y la segunda para pulido. El revisor marca 'Revisión final aprobada'; el editor nunca la marca.",
   "ENTREGA: con 'Revisión final aprobada' marcada, exporta las versiones por plataforma (_TT, _IG, _YT, _WA), la portada (_COVER) y, si se pide, la versión 4:5. Déjalas en 07_ENTREGA y escribe la nota para el community (pista y licencia, si el audio va dentro de la app, textos clave, identificación de publicidad o etiqueta de IA). Avísale con el link de la ficha. El community marca los checks de publicación y mueve el video a PROGRAMADO o PUBLICADO; el editor no cambia ese estado.",
   "TRASPASO A ATC: manda a ATC el corte _WA con el precio y la vigencia de la promoción, para que responda por WhatsApp con el mismo mensaje del video.",
@@ -50,7 +50,7 @@
   "ATC: preguntas y objeciones frecuentes de los clientes (insumo para ganchos y textos) y reclamos relacionados con lo que muestra un video."
  ],
  "deliversTo": [
-  "Jefe de Editores y coordinación (STRATEGY): versiones V1/V2 para revisión, con el link en la ficha de Intia.",
+  "Jefe de Editores y coordinación (STRATEGY): versiones V1/V2 para revisión, con el link en la ficha de ALSOS.",
   "Community manager (PUBLISHER): archivo final por plataforma, portada, versión 4:5 si se pide y nota de entrega (pista y licencia, textos clave, identificación de publicidad o etiqueta de IA).",
   "ATC: cortes cortos y livianos para Estados de WhatsApp, con el precio y la vigencia de la promoción.",
   "Analista (ANALYST): lista de variantes (HOOK-A/B/C, _15/_30, TEST) con la descripción de qué cambia en cada una.",
@@ -61,7 +61,7 @@
   "Aprobación en primera revisión: ≥ 60% en nivel intermedio y ≥ 75% en nivel avanzado.",
   "Rondas de corrección promedio: ≤ 1,5 por video.",
   "Errores técnicos después de publicar: 0 (faltas ortográficas, texto tapado por la interfaz, audio saturado o desfasado, marca de agua, precio incorrecto, saltos de brillo por HDR sin convertir).",
-  "Checks de postproducción en Intia coherentes con el estado real del video: 100%.",
+  "Checks de postproducción en ALSOS coherentes con el estado real del video: 100%.",
   "Retención a 3 s igual o mayor que el promedio del perfil (medida con el analista); en anuncios, hook rate de referencia ≥ 25-30%.",
   "Loudness de entrega dentro de -14 LUFS ±1 y pico ≤ -1 dBTP en el 100% de los videos.",
   "Reclamos o silenciamientos por copyright: 0.",
@@ -69,7 +69,7 @@
   "Tiempo medio de edición de un Reel estándar de 30-45 s: ≤ 3 h en nivel principiante y ≤ 2 h en nivel avanzado."
  ],
  "tools": [
-  "Intia: tablero, fichas de video, checks de postproducción y links de versiones",
+  "ALSOS: tablero, fichas de video, checks de postproducción y links de versiones",
   "CapCut (escritorio y móvil): subtítulos automáticos, beat, curvas de velocidad, seguimiento, LUT y plantillas (algunas funciones requieren plan Pro)",
   "Adobe Premiere Pro: Transcripción y edición basada en texto, Sonido esencial (Mejorar voz, Ducking), Lumetri, Warp Stabilizer, Reencuadre automático, plantillas .mogrt",
   "DaVinci Resolve gratuito: páginas Cut/Edit, Color (scopes, Shot Match, Color Space Transform), Fairlight (medidor de loudness)",
@@ -88,7 +88,7 @@
  "levels": [
   {
    "level": "PRINCIPIANTE",
-   "goal": "En 4 semanas, entregar sin ayuda un Reel o TikTok de 20-45 s con proyecto ordenado y respaldado, material de celular revisado (fps constante, SDR), tomas bien elegidas, subtítulos sin faltas dentro de la zona segura, voz clara con música con licencia, master con el preset del equipo y export 1080x1920 correcto, marcando a tiempo los checks de postproducción en Intia y entregando el paquete completo al community.",
+   "goal": "En 4 semanas, entregar sin ayuda un Reel o TikTok de 20-45 s con proyecto ordenado y respaldado, material de celular revisado (fps constante, SDR), tomas bien elegidas, subtítulos sin faltas dentro de la zona segura, voz clara con música con licencia, master con el preset del equipo y export 1080x1920 correcto, marcando a tiempo los checks de postproducción en ALSOS y entregando el paquete completo al community.",
    "modules": [
     {
      "id": "ed-p1",
@@ -128,7 +128,7 @@
         "Copia dentro la plantilla de subcarpetas del equipo: 01_BRUTO (una subcarpeta por cámara o celular), 02_AUDIO, 03_MUSICA_SFX, 04_GRAFICOS, 05_PROYECTO, 06_EXPORTS y 07_ENTREGA.",
         "Nombra los exports como MARCA_AAAAMMDD_FORMATO_TEMA_V1_9x16.mp4 y sube el número de versión en cada cambio (V2, V3...). Nunca uses 'final' ni 'final2'.",
         "Guarda el proyecto de CapCut, Premiere o Resolve dentro de 05_PROYECTO, nunca en el escritorio.",
-        "Pega la ruta de la carpeta o el link de Drive en la ficha del video en Intia."
+        "Pega la ruta de la carpeta o el link de Drive en la ficha del video en ALSOS."
        ],
        "commonMistakes": [
         "Nombrar un archivo 'final_final_ahora_si.mp4' y después no saber cuál fue el aprobado.",
@@ -140,7 +140,7 @@
         "La carpeta raíz tiene el nombre estándar.",
         "Están las 7 subcarpetas numeradas.",
         "Cada export tiene su versión en el nombre.",
-        "La ruta está pegada en la ficha de Intia."
+        "La ruta está pegada en la ficha de ALSOS."
        ],
        "practice": "Arma la estructura completa para tres videos de prueba: una Cámara Escondida de Con Amor (polera), un Tutorial de un servicio (limpieza de muebles a domicilio) y un Antes y Después de una cevichería.",
        "passCriteria": "Otro editor encuentra el bruto, la música y el último export de tus tres carpetas en menos de 30 s cada uno, sin preguntarte.",
@@ -156,7 +156,7 @@
         "Abre 3 clips al azar (uno del inicio, uno del medio y uno del final) para confirmar que se reproducen.",
         "Aplica la regla 3-2-1: una copia en el disco de trabajo, otra en un disco externo y una tercera en la nube del equipo.",
         "Solo cuando existan las 3 copias, avisa al filmmaker que ya puede formatear su tarjeta o borrar el celular.",
-        "Anota en la ficha de Intia la cantidad de clips y el peso total."
+        "Anota en la ficha de ALSOS la cantidad de clips y el peso total."
        ],
        "commonMistakes": [
         "Formatear la tarjeta cuando solo existe una copia.",
@@ -257,9 +257,9 @@
       {
        "id": "ed-p1-l4",
        "title": "Leer el guion",
-       "objective": "Convertir el guion aprobado de Intia en un mapa de edición antes de tocar la línea de tiempo.",
+       "objective": "Convertir el guion aprobado de ALSOS en un mapa de edición antes de tocar la línea de tiempo.",
        "procedure": [
-        "Abre la ficha del video en Intia y confirma que esté marcado 'Guion aprobado por la marca'. Sin ese check, no se edita.",
+        "Abre la ficha del video en ALSOS y confirma que esté marcado 'Guion aprobado por la marca'. Sin ese check, no se edita.",
         "Ubica en el guion el gancho (0-3 s), el desarrollo o las escenas, la prueba (demostración o testimonio) y el cierre con CTA (estilo Hormozi o de comunidad).",
         "Subraya los textos en pantalla obligatorios (precio en S/, vigencia y stock de la promoción, nombre del producto) y los momentos en que el producto sale en cámara.",
         "Anota la duración objetivo de cada bloque. Ejemplo para 30 s: gancho 3 s, desarrollo 17 s, prueba 5 s y CTA 5 s.",
@@ -655,7 +655,7 @@
        "title": "Textos del guion",
        "objective": "Poner en pantalla los textos que pide el guion (gancho, precio, promoción, CTA) sin errores y respetando las reglas peruanas de publicidad y promociones.",
        "procedure": [
-        "Copia los textos exactos del guion aprobado en Intia; no los reescribas de memoria.",
+        "Copia los textos exactos del guion aprobado en ALSOS; no los reescribas de memoria.",
         "Pon el gancho escrito entre 0 y 3 s, dentro de la zona segura y en 7 palabras o menos.",
         "Escribe el precio total en soles (con IGV incluido), con el formato de la marca: 'S/ 69' o 'S/ 69.90'.",
         "Si hay promoción, pon su vigencia y el stock mínimo disponible, como exige el Código de Protección al Consumidor (Ley 29571), con los datos que te pasa coordinación (ej. 'Solo hasta el 12/05 · 50 unidades').",
@@ -797,7 +797,7 @@
      "id": "ed-p6",
      "slug": "ed-p6",
      "title": "Exportar y entregar",
-     "summary": "Exportar con las especificaciones correctas, revisar en el celular, dejar la trazabilidad en Intia y entregar el paquete completo al community y a ATC.",
+     "summary": "Exportar con las especificaciones correctas, revisar en el celular, dejar la trazabilidad en ALSOS y entregar el paquete completo al community y a ATC.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=gZCvEwazqeI",
@@ -831,7 +831,7 @@
         "Códec H.264 en MP4, perfil High, con bitrate VBR de unos 10-16 Mbps para 1080p30. YouTube recomienda como mínimo 8 Mbps a 30 fps y 12 Mbps a 60 fps.",
         "Audio AAC a 48 kHz, 320 kbps, estéreo.",
         "Espacio de color Rec.709 (SDR). No exportes en HDR ni en 4K para Reels, porque la app lo baja a 1080 de todas formas.",
-        "En CapCut, quita la marca de agua y la escena final de CapCut. Guarda el preset como 'INTIA_9x16_1080_30'."
+        "En CapCut, quita la marca de agua y la escena final de CapCut. Guarda el preset como 'ALSOS_9x16_1080_30'."
        ],
        "commonMistakes": [
         "Exportar en 720p o con bitrate bajo, lo que deja la imagen borrosa.",
@@ -879,8 +879,8 @@
       },
       {
        "id": "ed-p6-l3",
-       "title": "Checklist en Intia",
-       "objective": "Dejar registrado en Intia cada paso de la postproducción, para que coordinación y el community sepan en qué va cada video.",
+       "title": "Checklist en ALSOS",
+       "objective": "Dejar registrado en ALSOS cada paso de la postproducción, para que coordinación y el community sepan en qué va cada video.",
        "procedure": [
         "Al terminar el corte, marca 'Editado' y sube a la ficha el link de la V1.",
         "Al terminar los textos, marca 'Subtítulos y textos en pantalla'.",
@@ -1055,7 +1055,7 @@
         "Duplica la secuencia final aprobada.",
         "Cambia solo los primeros 3 s (otro plano, otro texto u otra frase). El cuerpo y el CTA quedan iguales.",
         "Usa tres tipos de gancho distintos: una pregunta, el resultado y una cifra o dato concreto.",
-        "Nombra las versiones _HOOK-A, _HOOK-B y _HOOK-C y describe cada gancho en la ficha de Intia.",
+        "Nombra las versiones _HOOK-A, _HOOK-B y _HOOK-C y describe cada gancho en la ficha de ALSOS.",
         "Entrégalas al community y al analista; ellos deciden cómo se prueban (días distintos, anuncios o Trial Reels) y te devuelven la retención a 3 s de cada una."
        ],
        "commonMistakes": [
@@ -2466,7 +2466,7 @@
        "title": "Revisión con timecode",
        "objective": "Manejar las rondas de revisión con comentarios anclados al segundo exacto.",
        "procedure": [
-        "Sube la versión al sistema de revisión del equipo (Frame.io o Drive con comentarios) y pega el link en la ficha de Intia.",
+        "Sube la versión al sistema de revisión del equipo (Frame.io o Drive con comentarios) y pega el link en la ficha de ALSOS.",
         "Pide que los comentarios lleven timecode y, cuando ayude, un dibujo sobre el cuadro.",
         "Ronda 1: estructura, ritmo y contenido. Ronda 2: pulido (color, textos, sonido). Máximo 2 rondas.",
         "Convierte los comentarios en una lista de tareas y marca cada una al resolverla.",
@@ -2608,7 +2608,7 @@
        "objective": "Reducir el tiempo por video con un sistema de plantillas de proyecto, presets y bibliotecas.",
        "procedure": [
         "Arma un proyecto plantilla por programa, con las pistas, el overlay y las secuencias 9:16 y 4:5.",
-        "Crea los presets: export (INTIA_9x16_1080_30), subtítulos por marca, cadena de audio del master y corrección base o LUT por marca.",
+        "Crea los presets: export (ALSOS_9x16_1080_30), subtítulos por marca, cadena de audio del master y corrección base o LUT por marca.",
         "Arma las bibliotecas: SFX clasificados, música con licencia por mood y gráficos por marca.",
         "Guarda todo en la carpeta maestra compartida, con versión y fecha.",
         "Revisa y limpia el sistema cada mes con el Jefe de Editores."
@@ -2711,7 +2711,7 @@
        "title": "Archivo y cierre",
        "objective": "Cerrar cada video con todo archivado y recuperable, y con el disco liberado.",
        "procedure": [
-        "Cuando el video esté PUBLICADO en Intia, consolida el proyecto: el bruto usado, el proyecto, los exports finales, las autorizaciones y la música y los SFX con licencia.",
+        "Cuando el video esté PUBLICADO en ALSOS, consolida el proyecto: el bruto usado, el proyecto, los exports finales, las autorizaciones y la música y los SFX con licencia.",
         "Verifica el 3-2-1 del paquete final.",
         "Borra la caché, los proxies y los renders temporales.",
         "Actualiza la ficha con la ruta del archivo y la pista y licencia usadas.",

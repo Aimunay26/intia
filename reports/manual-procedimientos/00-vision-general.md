@@ -8,10 +8,10 @@
 
 ## Lo esencial
 
-- En Intia aparece un espacio nuevo, **Formación**, que ven todas las cuentas. Su primera tarjeta es **Manual de procedimientos**. Adentro hay una tarjeta por rol, ordenadas según el flujo del video. La de tu rol sale primero.
+- En ALSOS aparece un espacio nuevo, **Formación**, que ven todas las cuentas. Su primera tarjeta es **Manual de procedimientos**. Adentro hay una tarjeta por rol, ordenadas según el flujo del video. La de tu rol sale primero.
 - Cada rol tiene su misión, su procedimiento, sus traspasos (qué recibe y qué entrega) y una ruta de formación: **3 niveles, 139 módulos y 640 lecciones** en total. Las lecciones son botones cortos, y el botón «!» abre el detalle.
 - Cada módulo tiene espacio para videos de YouTube definidos de antemano. **Filmmaker** y **actor** tienen además escenas 3D con maniquíes, cámara y luces. **Editor** tiene sobre todo videos de referencia marcados al segundo exacto.
-- Al cruzar los 8 manuales con las reglas actuales de Intia salen **9 bloqueos reales**. El más grave: nadie marca «Guion escrito y revisado», y sin ese check ningún video puede pasar a GRABACION. También salen **11 tareas duplicadas**, **5 entregas sin receptor** y **4 roles de los que dependen muchas entregas pero que no tienen manual**: coordinación, producción, diseño y analista. Todo esto se detalla en la sección 3.
+- Al cruzar los 8 manuales con las reglas actuales de ALSOS salen **9 bloqueos reales**. El más grave: nadie marca «Guion escrito y revisado», y sin ese check ningún video puede pasar a GRABACION. También salen **11 tareas duplicadas**, **5 entregas sin receptor** y **4 roles de los que dependen muchas entregas pero que no tienen manual**: coordinación, producción, diseño y analista. Todo esto se detalla en la sección 3.
 
 ---
 
@@ -19,11 +19,11 @@
 
 ### 1.1 Para qué sirve
 
-1. **Que cada persona sepa qué le toca, cuándo, a quién se lo entrega y cómo se ve en Intia.** Cada procedimiento va atado a los estados y checks reales de la app.
+1. **Que cada persona sepa qué le toca, cuándo, a quién se lo entrega y cómo se ve en ALSOS.** Cada procedimiento va atado a los estados y checks reales de la app.
 2. **Formar a la gente por niveles**, de principiante a avanzado, con lecciones cortas que se pueden practicar.
 3. **Cuidar los traspasos entre roles.** El tutorial actual lo dice así: «lo que importa no es quién hace algo, sino a quién se lo entrega». Casi todos los atascos pasan en ese punto.
 
-El manual no reemplaza a «Cómo se usa» (`/tutorial`) ni a la guía interactiva. Esos enseñan a **usar Intia**; el manual enseña a **hacer el trabajo**. Las lecciones que dependen de una pantalla de Intia enlazan al módulo de la guía que corresponde. Por ejemplo: Guionista, «Generador IA de Intia» → guía, módulo 5 «Generar guiones con IA por etapas». Dueño, «Marca e identidad» → módulo 1. Dueño, «Equipo y accesos» → módulo 7.
+El manual no reemplaza a «Cómo se usa» (`/tutorial`) ni a la guía interactiva. Esos enseñan a **usar ALSOS**; el manual enseña a **hacer el trabajo**. Las lecciones que dependen de una pantalla de ALSOS enlazan al módulo de la guía que corresponde. Por ejemplo: Guionista, «Generador IA de ALSOS» → guía, módulo 5 «Generar guiones con IA por etapas». Dueño, «Marca e identidad» → módulo 1. Dueño, «Equipo y accesos» → módulo 7.
 
 ### 1.2 Quién lo ve y dónde está
 
@@ -31,7 +31,7 @@ El manual no reemplaza a «Cómo se usa» (`/tutorial`) ni a la guía interactiv
 - **Todos pueden leer todos los manuales.** Leer el manual de quien te entrega o de quien recibe tu trabajo ayuda a que los traspasos salgan bien. Solo cambia el orden: la tarjeta de tu rol va primero, con la marca «Tu rol».
 - Ubicación propuesta (hay que confirmarla, ver la pregunta 1 de la sección 5):
   - **Menú lateral:** el grupo «Ayuda» pasa a llamarse **«Formación»**, con «Manual de procedimientos» en primer lugar y «Cómo se usa» debajo.
-  - **Espacio Formación:** la primera tarjeta es «Manual de procedimientos». Después van «Cómo se usa Intia» (enlace al tutorial y a la guía) y «Mi avance».
+  - **Espacio Formación:** la primera tarjeta es «Manual de procedimientos». Después van «Cómo se usa ALSOS» (enlace al tutorial y a la guía) y «Mi avance».
   - **Panel de cada miembro:** la tarjeta «Manual de procedimientos» es la primera de la grilla de accesos.
 
 ### 1.3 Cómo está organizado
@@ -43,7 +43,7 @@ Formación
     └── Tarjeta por rol (en orden de flujo; la tuya primero)
         ├── Misión        · qué logras y qué NO es tuyo
         ├── Procedimiento · por video / diario / semanal / mensual
-        ├── Traspasos     · recibes de… / entregas a… (con el check de Intia)
+        ├── Traspasos     · recibes de… / entregas a… (con el check de ALSOS)
         └── Formación
             ├── Principiante ─┐
             ├── Intermedio   ─┼── Módulos (con videos de YouTube anclados)
@@ -59,8 +59,8 @@ Formación
 | Parte | Contenido |
 |---|---|
 | Botón (título) | De 2 a 5 palabras, estilo botón. Ejemplos: «Luz de ventana», «Mirada al lente», «Precio total en S/». |
-| Tipo (ícono) | Texto · Video · Escena 3D · Práctica · En Intia |
-| «!» Detalle | **Para qué** (1 frase) · **Pasos** (de 3 a 7) · **Error común** · **En Intia** (estado o check, si aplica) · **Medio** (video con segundo de inicio y fin, escena 3D o imagen) · **Práctica** (entregable breve) · **Duración** en minutos |
+| Tipo (ícono) | Texto · Video · Escena 3D · Práctica · En ALSOS |
+| «!» Detalle | **Para qué** (1 frase) · **Pasos** (de 3 a 7) · **Error común** · **En ALSOS** (estado o check, si aplica) · **Medio** (video con segundo de inicio y fin, escena 3D o imagen) · **Práctica** (entregable breve) · **Duración** en minutos |
 
 Tocar la tarjeta abre la lección en el área principal (video, escena 3D y pasos). El botón «!» abre la ficha rápida sin salir del módulo.
 
@@ -105,7 +105,7 @@ Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de 
 
 ### 1.6 Inventario de contenidos
 
-| Rol (orden en pantalla) | Perfil en Intia | Módulos P / I / A | Lecciones | Medio principal |
+| Rol (orden en pantalla) | Perfil en ALSOS | Módulos P / I / A | Lecciones | Medio principal |
 |---|---|---|---|---|
 | Guionista | WRITER | 6 / 7 / 6 = 19 | 87 | Ejemplos de guion, análisis de ganchos y práctica en el Generador IA |
 | Filmmaker | CAMERA | 8 / 7 / 6 = 21 | 100 | Escenas 3D (plano, ángulo, luz, movimiento), guías ilustradas por equipo (iPhone, Samsung, Sony ZV-E10) y videos |
@@ -123,14 +123,14 @@ Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de 
 2. **Una entrega no está hecha cuando la envías, sino cuando el que recibe la acepta.** Ejemplo: el material del filmmaker queda entregado cuando el editor lo acepta y pasa el video a EDICION.
 3. **Cada tarea tiene un solo responsable de que salga (la A de la matriz RACI).** Si dos manuales dicen que hacen lo mismo, manda la sección 3.
 4. **Solo se promete lo cumplible.** Precio total en S/, vigencia, stock, plazos y garantía salen de una sola **ficha de oferta** aprobada por el dueño.
-5. **Los archivos pesados no van a Intia.** Masters, material crudo y audios van a la carpeta compartida con la nomenclatura estándar. En la ficha solo va el enlace (Intia acepta hasta 4 MB por subida).
+5. **Los archivos pesados no van a ALSOS.** Masters, material crudo y audios van a la carpeta compartida con la nomenclatura estándar. En la ficha solo va el enlace (ALSOS acepta hasta 4 MB por subida).
 6. **Idioma:** español neutro con tildes. Tuteo en todos los manuales.
 
 ---
 
 ## 2. Mapa de traspasos entre roles
 
-### 2.1 El flujo y sus puertas en Intia (lo que la app exige hoy)
+### 2.1 El flujo y sus puertas en ALSOS (lo que la app exige hoy)
 
 `IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO` → ventas por chat → métricas semanales. Se avanza **una etapa a la vez** («Avanza una etapa a la vez; completa sus requisitos antes de continuar»).
 
@@ -162,7 +162,7 @@ Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de 
 **Letras:** R = lo hace · A = responde por el resultado (una sola por fila) · C = se le consulta antes · I = se le informa · «·» = no participa.
 **Roles:** DU Dueño · CO Coordinación (STRATEGY) · GU Guionista · PR Producción · FM Filmmaker · AC Actor/talento · ED Editor · JE Jefe de editores · DI Diseñador · CM Community manager · ATC · AN Analista.
 
-| # | Actividad | DU | CO | GU | PR | FM | AC | ED | JE | DI | CM | ATC | AN | En Intia |
+| # | Actividad | DU | CO | GU | PR | FM | AC | ED | JE | DI | CM | ATC | AN | En ALSOS |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | | **IDEA** | | | | | | | | | | | | | |
 | 1 | Aportar insumos (tendencias, preguntas y objeciones reales) | I | A | C | · | · | · | · | · | · | R | R | C | Plantilla de idea al canal de coordinación |
@@ -200,18 +200,18 @@ Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de 
 | | **PROGRAMADO / PUBLICADO** | | | | | | | | | | | | | |
 | 29 | Revisar el master en la vista previa de cada app | · | I | · | · | · | · | · | · | · | A/R | · | · | Si hay error: comentario, y CO reabre con motivo |
 | 30 | Copy, divulgación, portada final y programación | · | I | C | · | · | · | · | · | C | A/R | I | · | «Copy y hashtags escritos»; fecha → PROGRAMADO |
-| 31 | Respuestas rápidas, palabra clave y guardia | · | I | · | · | · | · | · | · | · | C | A/R | · | Fuera de Intia |
+| 31 | Respuestas rápidas, palabra clave y guardia | · | I | · | · | · | · | · | · | · | C | A/R | · | Fuera de ALSOS |
 | 32 | Publicar, verificar y guardar el enlace | · | I | · | · | · | · | · | · | · | A/R | I | · | «Subido a la plataforma», «Link guardado en la ficha» → PUBLICADO |
-| 33 | Comentarios, moderación y leads a ATC (≤ 15 min) | · | · | · | · | · | · | · | · | · | A/R | I | · | Fuera de Intia |
+| 33 | Comentarios, moderación y leads a ATC (≤ 15 min) | · | · | · | · | · | · | · | · | · | A/R | I | · | Fuera de ALSOS |
 | 34 | Crisis: pausar lo programado y los anuncios | A | R | · | · | · | · | · | · | · | R | I | · | PAUSADO con motivo |
 | | **VENTAS POR CHAT** | | | | | | | | | | | | | |
-| 35 | Atender, cotizar, cerrar y cobrar (≤ 5 min en las primeras 48 h) | I | · | · | · | · | · | · | · | · | C | A/R | · | Fuera de Intia |
-| 36 | Orden al taller, mockup y despacho | I | · | · | · | · | · | · | · | R | · | A/R | · | Fuera de Intia (taller) |
-| 37 | Reclamos y Libro de Reclamaciones | A | C | · | · | · | · | · | · | · | I | R | · | Fuera de Intia |
+| 35 | Atender, cotizar, cerrar y cobrar (≤ 5 min en las primeras 48 h) | I | · | · | · | · | · | · | · | · | C | A/R | · | Fuera de ALSOS |
+| 36 | Orden al taller, mockup y despacho | I | · | · | · | · | · | · | · | R | · | A/R | · | Fuera de ALSOS (taller) |
+| 37 | Reclamos y Libro de Reclamaciones | A | C | · | · | · | · | · | · | · | I | R | · | Fuera de ALSOS |
 | 38 | Registrar el origen de cada lead y venta por video | I | · | · | · | · | · | · | · | · | · | R | A | Métricas: leads, pedidos, ingresos |
 | | **MÉTRICAS** | | | | | | | | | | | | | |
-| 39 | Hoja de métricas a 24 h y a 7 días | · | · | I | · | I | · | I | I | · | R | · | A | Hoja de la marca (fuera de Intia) |
-| 40 | Carga semanal en Intia | I | I | · | · | · | · | · | · | · | C | C | A/R | Métricas semanales |
+| 39 | Hoja de métricas a 24 h y a 7 días | · | · | I | · | I | · | I | I | · | R | · | A | Hoja de la marca (fuera de ALSOS) |
+| 40 | Carga semanal en ALSOS | I | I | · | · | · | · | · | · | · | C | C | A/R | Métricas semanales |
 | 41 | Ritual semanal y decisiones (pautar, cortar, repetir) | A | R | C | · | · | · | · | C | · | C | C | C | Objetivos, Panel |
 | 42 | Aprendizajes: banco de ganchos, plantillas y checklists | I | A | R | · | C | C | C | R | · | C | C | C | — |
 
@@ -255,18 +255,18 @@ Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de 
 
 ## 3. Inconsistencias entre manuales y cómo resolverlas
 
-### 3.1 Bloqueos con Intia tal como funciona hoy
+### 3.1 Bloqueos con ALSOS tal como funciona hoy
 
-| # | Qué dice el manual | Qué hace Intia hoy | Resolución propuesta |
+| # | Qué dice el manual | Qué hace ALSOS hoy | Resolución propuesta |
 |---|---|---|---|
 | B1 | Ningún manual dice quién marca «Guion escrito y revisado» | Es obligatorio para pasar a GRABACION y solo lo pueden marcar el guionista o el Dueño | **El guionista lo marca al enviar a aprobación.** Se agrega a su procedimiento. Sin esto, el filmmaker no puede pasar el video a GRABACION. |
 | B2 | Filmmaker: «pasar el video a EDICION» | Pasar a EDICION exige `content.editing`, que el perfil CAMERA no tiene | **El editor pasa el video a EDICION cuando acepta el material.** Coincide con la regla del tutorial: la entrega del filmmaker es que «el editor aceptó el material». |
 | B3 | Guionista: «carga de las IDEAS en el tablero» y «pasar la tarjeta a GUION» | WRITER no tiene `content.plan` | Coordinación registra las ideas. El guionista **une el guion** a la tarjeta, y la tarjeta pasa sola a GUION. |
-| B4 | Guionista: lee las métricas semanales en Intia | WRITER no tiene `metrics.view` | Opción A: el analista le comparte el resumen, como ya se hace con el actor. Opción B: dar lectura de Métricas al guionista (cambio de política; lo decide el dueño). |
-| B5 | ATC: registra IDEAS, lee el guion aprobado y revisa la vista previa en Intia | ATC no existe como perfil | Por ahora: manda sus ideas con la plantilla a coordinación, CO le comparte el guion y la ficha de oferta, y JE le comparte la vista previa. Definitivo: perfil ATC de solo lectura (idea aparte). |
-| B6 | Jefe de editores: ve toda la cola, asigna editores, deja la cobertura en APROBADO y «registra la Revisión final si Intia le dio el permiso» | EDITOR solo ve lo que tiene asignado. Asignar exige `content.assign` y aprobar exige `content.approve`. | Temporal: CO asigna al jefe como «Editor» en cada video. No se recomienda darle STRATEGY, porque también aprobaría guiones y editaría marcas. Definitivo: perfil propio (idea aparte, ver 4.7). |
+| B4 | Guionista: lee las métricas semanales en ALSOS | WRITER no tiene `metrics.view` | Opción A: el analista le comparte el resumen, como ya se hace con el actor. Opción B: dar lectura de Métricas al guionista (cambio de política; lo decide el dueño). |
+| B5 | ATC: registra IDEAS, lee el guion aprobado y revisa la vista previa en ALSOS | ATC no existe como perfil | Por ahora: manda sus ideas con la plantilla a coordinación, CO le comparte el guion y la ficha de oferta, y JE le comparte la vista previa. Definitivo: perfil ATC de solo lectura (idea aparte). |
+| B6 | Jefe de editores: ve toda la cola, asigna editores, deja la cobertura en APROBADO y «registra la Revisión final si ALSOS le dio el permiso» | EDITOR solo ve lo que tiene asignado. Asignar exige `content.assign` y aprobar exige `content.approve`. | Temporal: CO asigna al jefe como «Editor» en cada video. No se recomienda darle STRATEGY, porque también aprobaría guiones y editaría marcas. Definitivo: perfil propio (idea aparte, ver 4.7). |
 | B7 | Community: «descarga el master desde los adjuntos». Actor: audios «a Archivos del video». | Cada subida acepta como máximo 4 MB; un master de 30 a 60 s pesa decenas de MB | Masters, material crudo y audios van a la **carpeta compartida**, y en la ficha se pega el enlace. Los adjuntos quedan para archivos livianos: portada, notas, PDF. |
-| B8 | Métricas a 24 h y 7 días; retención a 3 s **por variante de gancho** | Intia guarda **semanas de lunes a domingo** por video y plataforma, y `retention3s` no distingue variantes | Las métricas a 24 h y 7 días viven en la hoja de la marca. Cada variante que se publique debe tener su propia ficha para poder medirla. No se inventan datos por variante. |
+| B8 | Métricas a 24 h y 7 días; retención a 3 s **por variante de gancho** | ALSOS guarda **semanas de lunes a domingo** por video y plataforma, y `retention3s` no distingue variantes | Las métricas a 24 h y 7 días viven en la hoja de la marca. Cada variante que se publique debe tener su propia ficha para poder medirla. No se inventan datos por variante. |
 | B9 | Dueño: autorizaciones de terceros «se archivan antes de pasar a EDICIÓN» | Ningún check lo exige | Agregar el check obligatorio de grabación **«Autorizaciones de imagen firmadas»**. Solo afecta a videos nuevos. Lo decide el dueño. |
 
 ### 3.2 Tareas duplicadas (dos o más roles asumen lo mismo)
@@ -300,7 +300,7 @@ Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de 
 
 ### 3.4 Choques de calendario: cadencia semanal única propuesta
 
-**El problema:** el ritual del dueño es el lunes a las 9:00 y pide los titulares de ATC, community y jefe. Pero el reporte del community llega a las 12:00, el guionista lee datos a las 9:00, el analista carga «antes del lunes a las 9:00», y el editor, el actor y el ATC tienen sus propias reuniones con el analista ese mismo lunes. Además, Intia registra semanas de lunes a domingo (hora de Lima), así que el domingo recién se puede cargar el lunes temprano.
+**El problema:** el ritual del dueño es el lunes a las 9:00 y pide los titulares de ATC, community y jefe. Pero el reporte del community llega a las 12:00, el guionista lee datos a las 9:00, el analista carga «antes del lunes a las 9:00», y el editor, el actor y el ATC tienen sus propias reuniones con el analista ese mismo lunes. Además, ALSOS registra semanas de lunes a domingo (hora de Lima), así que el domingo recién se puede cargar el lunes temprano.
 
 | Día | Hora | Qué | Quién |
 |---|---|---|---|
@@ -316,9 +316,9 @@ Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de 
 
 | Término | Problema | Propuesta |
 |---|---|---|
-| «Personas» | El manual del dueño dice «cargar 2-3 Personas a partir de chats reales», pero en Intia **Personas** (`/arquetipos`) son quienes salen frente a cámara | El avatar de cliente va en **Marca > Público**, y en el guion como «avatar». |
+| «Personas» | El manual del dueño dice «cargar 2-3 Personas a partir de chats reales», pero en ALSOS **Personas** (`/arquetipos`) son quienes salen frente a cámara | El avatar de cliente va en **Marca > Público**, y en el guion como «avatar». |
 | «Talla» | El jefe la usa para el tamaño de la pieza (S/M/L); ATC la usa para la talla de las poleras | En el jefe se cambia a **«tamaño de pieza S/M/L»**. |
-| «PRODUCTION / taller» | El manual de ATC mezcla producción audiovisual con el taller que fabrica | «Taller» es un área fuera de Intia; PRODUCTION es solo producción audiovisual. |
+| «PRODUCTION / taller» | El manual de ATC mezcla producción audiovisual con el taller que fabrica | «Taller» es un área fuera de ALSOS; PRODUCTION es solo producción audiovisual. |
 | Versiones | El editor usa V0_ARMADO, V1 y V2; el jefe usa v01, v02, v03 y FINAL | Se unifica en **V0 (armado interno), V1, V2, FINAL**. |
 | «QC aprobado» y «Revisión final aprobada» | Se confunden | «QC aprobado» es el comentario del jefe; «Revisión final aprobada» es el check de coordinación que habilita publicar. |
 
@@ -341,7 +341,7 @@ Desde el 2026-09-29 las escenas pueden declarar un **preset** (escena armada de 
 
 | Ruta | Qué es | Quién |
 |---|---|---|
-| `/formacion` | Espacio Formación. Primera tarjeta: Manual de procedimientos; después Cómo se usa Intia y Mi avance | Todas las cuentas |
+| `/formacion` | Espacio Formación. Primera tarjeta: Manual de procedimientos; después Cómo se usa ALSOS y Mi avance | Todas las cuentas |
 | `/formacion/manual` | Visión general (flujo, RACI resumida, reglas comunes) + 8 tarjetas de rol, con «Tu rol» primero | Todas |
 | `/formacion/manual/[rol]?vista=mision\|procedimiento\|traspasos\|formacion&nivel=…` | Tarjeta de rol con sus 4 vistas | Todas |
 | `/formacion/manual/[rol]/[modulo]?leccion=<id>` | Módulo con sus videos y lecciones; el detalle se abre con el parámetro | Todas |
@@ -497,7 +497,7 @@ Si algo sale mal, se apaga con la variable. No se depende de `git revert`.
 
 1. **¿Qué significa «de primero»?** La propuesta cubre tres lugares: primera tarjeta del espacio Formación, primera tarjeta del Panel de cada miembro, y primer ítem del grupo «Formación» en el menú, debajo de los accesos de trabajo diario. ¿O prefieres que Formación vaya arriba de todo el menú?
 2. **¿Todos ven todos los manuales,** con el suyo primero, o cada uno ve solo el suyo?
-3. **¿Creamos ya los perfiles ATC y Jefe de editores en Intia** (entrega E5, cambio en el núcleo de permisos) o trabajan fuera de la app al inicio? ¿El jefe puede marcar «Revisión final aprobada» o eso sigue siendo solo de coordinación y tuyo?
+3. **¿Creamos ya los perfiles ATC y Jefe de editores en ALSOS** (entrega E5, cambio en el núcleo de permisos) o trabajan fuera de la app al inicio? ¿El jefe puede marcar «Revisión final aprobada» o eso sigue siendo solo de coordinación y tuyo?
 4. **¿Hacemos manuales para Coordinación, Producción, Diseñador y Analista?** Muchas entregas dependen de ellos (sección 3.3). ¿Quién cumple hoy esas funciones?
 5. **¿El guionista puede ver Métricas en solo lectura** (B4), o se las comparte el analista?
 6. **¿Agregamos al checklist el check «Autorizaciones de imagen firmadas»,** obligatorio antes de EDICION? ¿Y «Ficha de oferta aprobada»?

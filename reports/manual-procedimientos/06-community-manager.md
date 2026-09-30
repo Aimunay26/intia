@@ -1,6 +1,6 @@
 # Manual de procedimientos — Community Manager (perfil PUBLISHER)
 
-Perfil en Intia: PUBLISHER · Borrador v1 (2026-09-28) para revisión del dueño.
+Perfil en ALSOS: PUBLISHER · Borrador v1 (2026-09-28) para revisión del dueño.
 
 ## Misión
 
@@ -8,7 +8,7 @@ Convertir cada video aprobado en alcance, comunidad y conversaciones de venta. P
 
 ## Responsabilidades
 
-- Proponer con coordinación la parrilla semanal por marca y plataforma. En Intia solo ves los videos con “Revisión final aprobada”: en ellos confirmas la Fecha prevista, programas y mueves la ficha a PROGRAMADO.
+- Proponer con coordinación la parrilla semanal por marca y plataforma. En ALSOS solo ves los videos con “Revisión final aprobada”: en ellos confirmas la Fecha prevista, programas y mueves la ficha a PROGRAMADO.
 - Revisar el master antes de programar: 9:16, sin marcas de agua, textos fuera de la zona tapada, precios y datos vigentes, música con fuente registrada. No editas el contenido: los errores se comentan en la ficha y se avisan a coordinación.
 - Verificar antes de publicar que existan las autorizaciones de imagen de las personas reales (Cámara Escondida, clientes, UGC, menores) y aplicar la etiqueta de contenido con IA cuando corresponda.
 - Escribir el copy de cada red: palabra clave, CTA alineado con el cierre (Hormozi o comunidad), hashtags dentro de los límites (Instagram ≤5), portada y primer comentario fijado. Al terminar marca “Copy y hashtags escritos”.
@@ -17,24 +17,24 @@ Convertir cada video aprobado en alcance, comunidad y conversaciones de venta. P
 - Moderar la comunidad: ocultar o reportar spam, estafas, suplantaciones y abuso, sin borrar críticas legítimas. Configura y revisa los filtros de palabras.
 - Responder las reseñas de Google y Facebook de restaurantes y servicios, sin pedir ni premiar reseñas.
 - Detectar crisis a tiempo, pausar en las plataformas lo programado y los anuncios, escalar a coordinación (que pasa las fichas a PAUSADO) y al dueño, y ejecutar el protocolo de respuesta.
-- Monitorear tendencias y audios en Perú, filtrarlos y proponerlos a coordinación con la plantilla de idea. Coordinación los registra como IDEA en Intia (el perfil PUBLISHER no crea videos).
+- Monitorear tendencias y audios en Perú, filtrarlos y proponerlos a coordinación con la plantilla de idea. Coordinación los registra como IDEA en ALSOS (el perfil PUBLISHER no crea videos).
 - Coordinar colaboraciones con creadores (publicaciones en colaboración, contenido de marca, permisos de UGC) cumpliendo la Guía de Publicidad para Influencers de Indecopi.
-- Medir cada video a las 24 horas y a los 7 días en la hoja de la marca (el analista carga los resultados en Intia) y dejar feedback accionable como comentario en la ficha.
+- Medir cada video a las 24 horas y a los 7 días en la hoja de la marca (el analista carga los resultados en ALSOS) y dejar feedback accionable como comentario en la ficha.
 - Entregar el reporte semanal con recomendaciones y responsables a coordinación y al dueño.
 - Impulsar con pauta solo videos ganadores y solo con presupuesto aprobado por escrito por el dueño, midiendo el costo por conversación.
 - Proteger los datos personales de los clientes (Ley 29733) y los accesos de las cuentas de la marca (roles y verificación en dos pasos).
 
 ## Procedimiento (SOP)
 
-1. POR VIDEO · IDEA: aporta tendencias, preguntas y objeciones reales de la comunidad. Envíalas a coordinación con la plantilla de idea (tendencia, formato, hook, producto, cierre, audio con licencia y fecha límite). Coordinación las registra como IDEA en Intia y las asigna al guionista.
+1. POR VIDEO · IDEA: aporta tendencias, preguntas y objeciones reales de la comunidad. Envíalas a coordinación con la plantilla de idea (tendencia, formato, hook, producto, cierre, audio con licencia y fecha límite). Coordinación las registra como IDEA en ALSOS y las asigna al guionista.
 2. POR VIDEO · GUION: tu perfil no abre Guiones. En la reunión de parrilla o por el canal de coordinación, valida la palabra clave del CTA, que la oferta, el stock y el plazo sean reales y que el audio previsto sea de uso comercial.
 3. POR VIDEO · GRABACIÓN: pide a producción material de detrás de cámaras para historias y confirma que se firmen las autorizaciones de imagen de las personas reales (Cámara Escondida, clientes, menores con su padre, madre o tutor).
 4. POR VIDEO · EDICIÓN: cuando la ficha aparece en tu lista ya tiene “Revisión final aprobada”. Lee el brief, el Hook, el CTA y las notas. Descarga el master desde los adjuntos (nunca de WhatsApp) y revísalo en la vista previa de cada app. Si hay un error de texto, precio, logo o zona tapada, comenta en la ficha y avisa a coordinación: solo coordinación reabre la aprobación.
 5. POR VIDEO · PROGRAMADO: escribe el copy por red y marca “Copy y hashtags escritos”. Programa en Meta Business Suite, TikTok Studio y YouTube Studio en hora de Perú (UTC-5). Confirma la Fecha prevista en “Programación y enlace publicado”, anota la hora en un comentario y mueve la ficha a PROGRAMADO. Avisa a ATC la palabra clave y la oferta.
 6. POR VIDEO · PUBLICADO: verifica en modo incógnito que el video salió y fija el primer comentario. Marca “Subido a la plataforma”, guarda el enlace público de la red principal (los demás van en un comentario), marca “Link guardado en la ficha” y mueve a PUBLICADO. Anota la hora real y cualquier incidencia.
-7. POR VIDEO · MÉTRICAS: a las 24 h y a los 7 días registra los datos en la hoja de la marca (el analista los carga en Intia) y deja el feedback de retención como comentario en la ficha para el guionista, el editor y el filmmaker.
+7. POR VIDEO · MÉTRICAS: a las 24 h y a los 7 días registra los datos en la hoja de la marca (el analista los carga en ALSOS) y deja el feedback de retención como comentario en la ficha para el guionista, el editor y el filmmaker.
 8. 08:30-09:00 · APERTURA: revisa notificaciones y bandejas (Meta Business Suite, TikTok, YouTube Studio, reseñas de Google). Responde lo pendiente de la noche, deriva a ATC cada lead con su ficha de pase y etiqueta todas las conversaciones (Lead nuevo, Derivado a ATC, Reclamo, Colaboración, Spam).
-9. 09:00-11:00 · PREPARAR: filtra tu marca en Intia > Videos y trabaja los videos aprobados de la parrilla del día siguiendo los pasos de EDICIÓN y PROGRAMADO (revisión del master, permisos, copy, portada, primer comentario, música y divulgación).
+9. 09:00-11:00 · PREPARAR: filtra tu marca en ALSOS > Videos y trabaja los videos aprobados de la parrilla del día siguiendo los pasos de EDICIÓN y PROGRAMADO (revisión del master, permisos, copy, portada, primer comentario, música y divulgación).
 10. HORA DE PUBLICACIÓN: ejecuta el paso PUBLICADO y comparte el video en historias.
 11. PRIMERA HORA TRAS PUBLICAR: responde el 100% de los comentarios, lleva la intención de compra a DM y a ATC, y vigila patrones de queja (5 o más sobre el mismo tema en una hora = alerta a coordinación).
 12. BLOQUES DE COMUNIDAD (13:00, 17:00, 21:00): atiende comentarios, DMs y reseñas, modera (ocultar o reportar spam, estafas y abuso; las críticas legítimas se responden), pasa leads a ATC en ≤15 min y deja cero conversaciones sin etiqueta.
@@ -87,7 +87,7 @@ Convertir cada video aprobado en alcance, comunidad y conversaciones de venta. P
 
 ## Herramientas
 
-- Intia: lista de videos aprobados, ficha (brief, Hook, CTA, notas, adjuntos, comentarios), sección “Programación y enlace publicado” y checks de Publicación (“Copy y hashtags escritos”, “Subido a la plataforma”, “Link guardado en la ficha”)
+- ALSOS: lista de videos aprobados, ficha (brief, Hook, CTA, notas, adjuntos, comentarios), sección “Programación y enlace publicado” y checks de Publicación (“Copy y hashtags escritos”, “Subido a la plataforma”, “Link guardado en la ficha”)
 - Meta Business Suite: planificador de Reels para Instagram y Facebook, bandeja unificada, respuestas guardadas, preguntas frecuentes, mensajes de ausencia y Colección de sonidos de Meta
 - TikTok Studio (web) y app de TikTok con cuenta de empresa
 - TikTok Creative Center: tendencias por región Perú y Biblioteca de Música Comercial
@@ -104,11 +104,11 @@ Convertir cada video aprobado en alcance, comunidad y conversaciones de venta. P
 
 ## Nivel Principiante
 
-Publicar un video aprobado en TikTok, Instagram, Facebook y YouTube Shorts sin errores (formato, copy, música, divulgación, permisos) y cerrar la ficha en Intia. Además, atender comentarios, DMs y reseñas con la voz de la marca y derivar cada intención de compra a ATC.
+Publicar un video aprobado en TikTok, Instagram, Facebook y YouTube Shorts sin errores (formato, copy, música, divulgación, permisos) y cerrar la ficha en ALSOS. Además, atender comentarios, DMs y reseñas con la voz de la marca y derivar cada intención de compra a ATC.
 
 ### Tu rol en el flujo `COMMUNITY-P1`
 
-Qué ves y qué puedes hacer en Intia con el perfil PUBLISHER, cuentas listas para publicar, voz de cada marca y formatos por plataforma antes de publicar nada.
+Qué ves y qué puedes hacer en ALSOS con el perfil PUBLISHER, cuentas listas para publicar, voz de cada marca y formatos por plataforma antes de publicar nada.
 
 **Videos del módulo:**
 
@@ -116,13 +116,13 @@ Qué ves y qué puedes hacer en Intia con el perfil PUBLISHER, cuentas listas pa
 - [Voz y Tono de Marca: Descubre Tu Brand Voice [12 EJEMPLOS]](https://www.youtube.com/watch?v=orKs7Jbedwc) — Ivo Fiz Escuela de Copywriting y Contenidos (es). Diferencia voz y tono con 12 ejemplos de marcas reales. Ayuda a fijar la voz de cada marca (Con Amor, restaurantes, servicios) antes de publicar.
 - [📱ZONAS de seguridad para que tus INSTAGRAM REELS se vean correctamente | TUTORIAL | Plantilla GRATIS](https://www.youtube.com/watch?v=AmfG6BW0Nds) — Ligia Alvear (es). Explica las zonas seguras del formato vertical e incluye una plantilla. Sirve para revisar que textos y CTA no queden tapados por la interfaz antes de publicar.
 
-#### Flujo del video en Intia · _Checklist_
+#### Flujo del video en ALSOS · _Checklist_
 
 **Objetivo:** Saber en qué estado recibes un video, qué ves en la ficha, qué checks te tocan y qué no puedes modificar.
 
 **Pasos:**
 
-1. Abre Intia > Videos y filtra tu marca. Los estados son IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO, más PAUSADO y CANCELADO, que maneja coordinación.
+1. Abre ALSOS > Videos y filtra tu marca. Los estados son IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO, más PAUSADO y CANCELADO, que maneja coordinación.
 2. Tu lista solo muestra videos con “Revisión final aprobada”: tu perfil no ve ideas, guiones ni videos en proceso. Si esperas un video que no aparece, pregunta a coordinación.
 3. En la ficha lee el brief, el Hook, el CTA y las notas. Si no está claro el tipo de cierre (Hormozi o comunidad) o la palabra clave, pregúntalo en un comentario.
 4. Descarga el master final desde los adjuntos de la ficha. Tras la aprobación final la ficha queda bloqueada para adjuntos: permisos y capturas van en Drive, con el enlace en un comentario.
@@ -132,7 +132,7 @@ Qué ves y qué puedes hacer en Intia con el perfil PUBLISHER, cuentas listas pa
 
 **Errores comunes:**
 
-- Publicar un video que te mandaron por WhatsApp y que no aparece en tu lista de Intia (no tiene aprobación final).
+- Publicar un video que te mandaron por WhatsApp y que no aparece en tu lista de ALSOS (no tiene aprobación final).
 - Descargar un borrador (sin subtítulos o con música temporal) en vez del master final adjunto.
 - Marcar los checks de Publicación antes de que el video esté realmente en línea.
 - Corregir por tu cuenta textos o precios del video.
@@ -199,7 +199,7 @@ Qué ves y qué puedes hacer en Intia con el perfil PUBLISHER, cuentas listas pa
 
 **Pasos:**
 
-1. Lee la ficha de la marca en Intia > Marcas (público, promesa, productos, zonas de envío) y su guía de voz.
+1. Lee la ficha de la marca en ALSOS > Marcas (público, promesa, productos, zonas de envío) y su guía de voz.
 2. Ubica en la guía: 3 adjetivos, trato (tú o usted), emojis permitidos, palabras prohibidas y cómo se firma.
 3. Ten a mano las 5 frases modelo de la marca: saludo, agradecimiento, respuesta a “¿precio?”, respuesta a una queja y despedida.
 4. Adapta por tipo de negocio. Con Amor: cálida y familiar, español claro para la sierra y Lima, sin jergas de un solo lugar. Servicio (ej. estudio contable): confiable y sencillo, trato de usted, sin tecnicismos. Restaurante: apetitoso y rápido, con horario y distrito siempre a mano.
@@ -440,7 +440,7 @@ Caption, palabras clave, hashtags y llamado a la acción escritos para cada red,
 
 ### Publicar sin errores `COMMUNITY-P3`
 
-Portada, programación y publicación en Meta, TikTok y YouTube con la divulgación correcta, cerrando la ficha en Intia con enlace, hora y checks.
+Portada, programación y publicación en Meta, TikTok y YouTube con la divulgación correcta, cerrando la ficha en ALSOS con enlace, hora y checks.
 
 **Videos del módulo:**
 
@@ -496,7 +496,7 @@ Portada, programación y publicación en Meta, TikTok y YouTube con la divulgaci
 2. Sube el master y pega el caption de Instagram. Si también sale en Facebook, adapta el texto: más conversacional, con una pregunta.
 3. Elige portada y ubicación. Las publicaciones en colaboración con creadores se hacen desde la app de Instagram (lección de colaboraciones), no desde aquí.
 4. Pulsa Programar, elige fecha y hora de Perú (UTC-5) y revisa la zona horaria configurada.
-5. En Intia confirma la Fecha prevista en “Programación y enlace publicado”, anota la hora en un comentario y mueve la ficha a PROGRAMADO.
+5. En ALSOS confirma la Fecha prevista en “Programación y enlace publicado”, anota la hora en un comentario y mueve la ficha a PROGRAMADO.
 6. Al final del día revisa el planificador: nada duplicado ni en la cuenta equivocada.
 
 **Errores comunes:**
@@ -537,7 +537,7 @@ Portada, programación y publicación en Meta, TikTok y YouTube con la divulgaci
 3. Sonido: la cuenta de empresa solo debe usar la Biblioteca de Música Comercial. Si el master trae música del editor, confirma su fuente en la ficha.
 4. Divulgación de contenido: en la cuenta de la marca activa “Tu marca” cuando el video promociona productos u ofertas. “Contenido de marca” lo activa un creador que publica en su propia cuenta a cambio de pago o canje. Actívalo antes de publicar; si se olvidó, edita la publicación y agrégalo de inmediato.
 5. Elige la portada con texto y define los permisos (comentarios activados; dúos y stitch según la estrategia).
-6. Programa o publica y luego guarda el enlace en la ficha de Intia.
+6. Programa o publica y luego guarda el enlace en la ficha de ALSOS.
 
 **Errores comunes:**
 
@@ -579,7 +579,7 @@ Portada, programación y publicación en Meta, TikTok y YouTube con la divulgaci
 3. Audiencia: declara si es o no contenido para niños (es obligatorio).
 4. Música: usa solo la biblioteca de audio de YouTube o música con licencia. Desde el 24/09/2026 los Shorts nuevos de 1 a 3 min con reclamo de Content ID ya no se bloquean automáticamente, pero el reclamo sigue: el titular puede quedarse con los ingresos o restringir el video.
 5. Opcional: vincula el Short a un video largo relacionado del canal.
-6. Programa en Visibilidad > Programar y guarda el enlace en Intia.
+6. Programa en Visibilidad > Programar y guarda el enlace en ALSOS.
 
 **Errores comunes:**
 
@@ -610,7 +610,7 @@ Portada, programación y publicación en Meta, TikTok y YouTube con la divulgaci
 
 #### Cerrar la ficha · _Checklist_
 
-**Objetivo:** Dejar trazabilidad total: cada video publicado con enlace, hora real y checks en Intia.
+**Objetivo:** Dejar trazabilidad total: cada video publicado con enlace, hora real y checks en ALSOS.
 
 **Pasos:**
 
@@ -1036,7 +1036,7 @@ Lo mínimo legal y de plataformas para no perder alcance ni videos y no recibir 
 **Pasos:**
 
 1. Pregunta al editor en la ficha si el video usa IA realista: voz clonada de otra persona, persona que no existe, escenario o hecho real alterado.
-2. No requiere etiqueta: guion escrito con IA (como los del generador de Intia), subtítulos, filtros de color o belleza, limpieza de ruido o mejora de imagen. YouTube tampoco la pide si alguien clona su propia voz para su locución.
+2. No requiere etiqueta: guion escrito con IA (como los del generador de ALSOS), subtítulos, filtros de color o belleza, limpieza de ruido o mejora de imagen. YouTube tampoco la pide si alguien clona su propia voz para su locución.
 3. Sí requiere etiqueta si parece real. YouTube Studio: “Contenido alterado o sintético” = Sí. TikTok: activa la etiqueta de contenido generado por IA al publicar. Instagram y Facebook: usa la opción de etiqueta de IA al publicar (Meta muestra “Información de IA”).
 4. Nunca uses IA para fabricar testimonios, clientes o resultados del producto: es publicidad engañosa aunque lleve la etiqueta.
 5. Anota en un comentario de la ficha qué etiqueta aplicaste en cada red.
@@ -1054,7 +1054,7 @@ Lo mínimo legal y de plataformas para no perder alcance ni videos y no recibir 
 - [ ] Sin testimonios ni resultados fabricados
 - [ ] Etiqueta anotada en la ficha
 
-**Práctica:** Decide qué hacer en 5 casos: guion hecho con el generador de Intia, subtítulos automáticos, fondo realista de Machu Picchu generado con IA, voz de un famoso imitada con IA y un “cliente” creado con IA.
+**Práctica:** Decide qué hacer en 5 casos: guion hecho con el generador de ALSOS, subtítulos automáticos, fondo realista de Machu Picchu generado con IA, voz de un famoso imitada con IA y un “cliente” creado con IA.
 
 **Se aprueba cuando:** 5 de 5 correctos; la voz del famoso y el cliente creado con IA se rechazan en vez de etiquetarse.
 
@@ -1086,7 +1086,7 @@ Planifica con coordinación la semana por marca y plataforma, con horarios propi
 
 **Pasos:**
 
-1. Viernes, en la reunión con coordinación: revisa los videos aprobados que ya ves en Intia y pide a coordinación el estado de los que vienen en camino (tu perfil no ve ideas ni videos en proceso).
+1. Viernes, en la reunión con coordinación: revisa los videos aprobados que ya ves en ALSOS y pide a coordinación el estado de los que vienen en camino (tu perfil no ve ideas ni videos en proceso).
 2. Llena la plantilla en la hoja: día | marca | ficha del video | formato | redes | hora | keyword | CTA y tipo de cierre | objetivo (alcance, confianza, venta).
 3. Frecuencia base sugerida: 3-5 videos por semana y marca en TikTok y Reels, reutilizando el mismo master en Shorts y Facebook Reels.
 4. Deja 1 espacio flexible por semana para una tendencia.
@@ -1421,7 +1421,7 @@ Lee cada video a las 24 horas y a los 7 días (gancho, retención, compartidos, 
 
 1. A las 24 h: vistas, % visto completo o tiempo medio, visto vs. deslizado (Shorts), comentarios, compartidos, guardados y DMs recibidos.
 2. A los 7 días: lo mismo, más seguidores ganados y conversaciones de venta atribuidas (dato de ATC).
-3. Registra todo en la hoja de métricas de la marca con el título de la ficha de Intia. El analista la usa para cargar los resultados en Intia (tu perfil no tiene la sección Métricas).
+3. Registra todo en la hoja de métricas de la marca con el título de la ficha de ALSOS. El analista la usa para cargar los resultados en ALSOS (tu perfil no tiene la sección Métricas).
 4. Etiqueta cada video: formato, tipo de hook, cierre (Hormozi o comunidad), horario, red y si tuvo pauta.
 5. Marca con color si quedó arriba o abajo del promedio de la marca.
 
@@ -1457,7 +1457,7 @@ Detecta tendencias en Perú a tiempo, filtra las que encajan con la marca, convi
 **Videos del módulo:**
 
 - [TikTok Creative Center - La Herramienta de TikTok que Cambiará tu Estrategia de Contenido](https://www.youtube.com/watch?v=hVWWbeE_ESg) — Ligia Alvear (es). Tutorial de TikTok Creative Center para detectar hashtags, canciones y creadores en tendencia filtrando por país (Perú) y por industria.
-- [Cómo subirte a una tendencia (sin parecer oportunista) 🫣 |#ConvierteMás](https://www.youtube.com/watch?v=I_5nVsdert8) — Convierte Más | La Casa del Marketing en Español (es). Criterios para decidir si una tendencia encaja con la marca y cómo adaptarla sin parecer oportunista. Es el filtro antes de convertirla en idea en Intia.
+- [Cómo subirte a una tendencia (sin parecer oportunista) 🫣 |#ConvierteMás](https://www.youtube.com/watch?v=I_5nVsdert8) — Convierte Más | La Casa del Marketing en Español (es). Criterios para decidir si una tendencia encaja con la marca y cómo adaptarla sin parecer oportunista. Es el filtro antes de convertirla en idea en ALSOS.
 - [🎵🎶 Cómo utilizar el SONIDO ORIGINAL EN REELS de Instagram](https://www.youtube.com/watch?v=r64u8nwGhyA) — Comunicazen (es). Explica cómo usar y aprovechar el audio original en Reels, clave para crear audios propios de la marca que otros puedan reutilizar.
 
 #### Detectar tendencias · _Video de referencia_
@@ -1541,7 +1541,7 @@ Detecta tendencias en Perú a tiempo, filtra las que encajan con la marca, convi
 
 1. Llena la plantilla de idea: tendencia (enlace) | marca | formato (Sketch, Camaleón, etc.) | hook adaptado | producto | cierre (Hormozi o comunidad) | audio y licencia | fecha límite de publicación | prioridad.
 2. Adjunta 1-2 referencias.
-3. Envíala a coordinación por el canal acordado (tarea de tendencias o mensaje). Tu perfil no crea videos en Intia: coordinación la registra como IDEA y la asigna al guionista.
+3. Envíala a coordinación por el canal acordado (tarea de tendencias o mensaje). Tu perfil no crea videos en ALSOS: coordinación la registra como IDEA y la asigna al guionista.
 4. Si es urgente (ventana de 48 h), avisa además por mensaje directo a coordinación.
 5. Ejemplo: tendencia “POV” → Con Amor: “POV: tu mamá ve la taza con la foto de su perrito”. Restaurante: “POV: pediste ceviche para uno y llegó para tres”.
 6. El viernes revisa qué propuestas pasaron a IDEA y por qué se descartaron las otras.
@@ -1729,7 +1729,7 @@ Ordena la bandeja, automatiza lo repetitivo, filtra el abuso y usa palabras clav
 3. Guion de 15-25 s: lee la pregunta, responde en una frase, muestra la prueba (paquete, textura, lavado) y cierra con CTA. Confirma plazos y datos con ATC.
 4. Graba en vertical con el celular a la altura de los ojos, zoom 2x a 1,1-1,2 m (plano medio), luz de ventana frontal-lateral y fondo ordenado del taller o local.
 5. Pide aprobación a coordinación antes de publicar. Si la marca exige subtítulos, coordinación lo pasa al editor.
-6. Pide a coordinación registrar la pieza en Intia para mantener la trazabilidad (tu perfil no crea fichas).
+6. Pide a coordinación registrar la pieza en ALSOS para mantener la trazabilidad (tu perfil no crea fichas).
 
 **Errores comunes:**
 
@@ -1904,7 +1904,7 @@ Historias diarias, stickers de interacción y destacadas que convierten el perfi
 
 **Práctica:** Lanza 3 stickers en una semana y convierte las respuestas en 2 propuestas de idea.
 
-**Se aprueba cuando:** Coordinación registra como IDEA en Intia al menos 2 propuestas basadas en respuestas reales.
+**Se aprueba cuando:** Coordinación registra como IDEA en ALSOS al menos 2 propuestas basadas en respuestas reales.
 
 #### Destacadas que venden · _Checklist_
 
@@ -2024,7 +2024,7 @@ Prueba hipótesis con una sola variable, usa los Reels de prueba, recicla ganado
 2. Propón a coordinación nuevas versiones: otro hook, otra portada, otro cierre o un talento distinto, con el mismo concepto.
 3. Llévalos a redes donde no se publicaron o donde rindieron menos.
 4. No vuelvas a subir el archivo idéntico en la misma cuenta. Cambia algo significativo.
-5. Coordinación registra cada versión como nueva ficha en Intia, con referencia a la original en las notas.
+5. Coordinación registra cada versión como nueva ficha en ALSOS, con referencia a la original en las notas.
 
 **Errores comunes:**
 
@@ -2077,7 +2077,7 @@ Prueba hipótesis con una sola variable, usa los Reels de prueba, recicla ganado
 
 **Práctica:** Diseña una serie para un restaurante y otra para Con Amor.
 
-**Se aprueba cuando:** Serie aprobada por coordinación, con 4 episodios planificados en Intia por coordinación.
+**Se aprueba cuando:** Serie aprobada por coordinación, con 4 episodios planificados en ALSOS por coordinación.
 
 #### Impulsar un ganador · _Caso práctico_
 
@@ -2169,7 +2169,7 @@ Distingue un problema de una crisis, activa el protocolo con tiempos realistas, 
 **Pasos:**
 
 1. Roles: líder de comunicación (coordinación), aprobador (dueño), soporte de hechos (ATC, producción o logística) y asesoría legal si aplica.
-2. Pausa de inmediato en Meta Business Suite, TikTok Studio y YouTube Studio los videos programados y los anuncios. Pide a coordinación pasar esas fichas a PAUSADO en Intia (tu perfil no puede).
+2. Pausa de inmediato en Meta Business Suite, TikTok Studio y YouTube Studio los videos programados y los anuncios. Pide a coordinación pasar esas fichas a PAUSADO en ALSOS (tu perfil no puede).
 3. Tiempos objetivo: reconocimiento público con el comunicado de espera preaprobado en ≤30 min desde la detección; actualización con hechos confirmados dentro del plazo que prometiste; seguimiento al menos diario hasta cerrar.
 4. Publica en el canal donde nació la crisis y fija la respuesta. Lleva los casos individuales a privado.
 5. Monitorea menciones y comentarios. Actualiza al equipo cada hora mientras dure el nivel 3.
@@ -2403,7 +2403,7 @@ Elige creadores, escribe briefs, publica en colaboración con la divulgación co
 2. Si hay pago o canje, el creador activa la etiqueta de “Colaboración pagada” con la marca antes de publicar y la marca la aprueba en su configuración de contenido de marca. Si luego se hará pauta, el creador debe dar permiso a la marca para promocionarlo.
 3. TikTok: el creador activa Divulgación de contenido > Contenido de marca antes de publicar; si lo olvidó, debe agregarlo editando la publicación de inmediato.
 4. Añade la mención clara de “Publicidad” según Indecopi.
-5. Registra en la ficha de Intia (comentario) el enlace de ambas cuentas y el acuerdo.
+5. Registra en la ficha de ALSOS (comentario) el enlace de ambas cuentas y el acuerdo.
 
 **Errores comunes:**
 
@@ -2438,7 +2438,7 @@ Elige creadores, escribe briefs, publica en colaboración con la divulgación co
 
 1. Antes de volver a publicar, pide permiso por escrito (DM o correo): “¿Nos autorizas a compartir tu video en nuestras redes [y en anuncios] durante [plazo], dándote crédito?”
 2. Especifica el alcance: orgánico o anuncios, plazo, redes y crédito.
-3. Guarda la captura del permiso en Drive y enlázala en un comentario de la ficha de Intia.
+3. Guarda la captura del permiso en Drive y enlázala en un comentario de la ficha de ALSOS.
 4. Da crédito con la mención del autor.
 5. Si el cliente retira el permiso, retira el contenido.
 
@@ -2637,7 +2637,7 @@ Opera varias marcas sin errores, documenta el manual de cada una, protege acceso
 
 **Pasos:**
 
-1. Separa por marca: perfiles de navegador, carpetas de masters y filtros en Intia y en Meta Business Suite.
+1. Separa por marca: perfiles de navegador, carpetas de masters y filtros en ALSOS y en Meta Business Suite.
 2. Antes de publicar o responder, confirma en voz alta la marca activa (foto y nombre de la cuenta).
 3. Usa colores o prefijos por marca en la parrilla y en las etiquetas.
 4. Evita alternar cuentas personales y de marca en el mismo teléfono al responder.
@@ -2667,7 +2667,7 @@ Opera varias marcas sin errores, documenta el manual de cada una, protege acceso
 **Pasos:**
 
 1. Secciones: público y ciudades, voz y tono (3 adjetivos, trato, emojis, palabras prohibidas, 5 frases modelo), productos y precios vigentes (enlace a la fuente de ATC), keywords y hashtags, horarios ganadores, formatos que funcionan, palabras clave de campañas, lista de palabras ocultas, comunicado de espera preaprobado, protocolo de crisis y contactos.
-2. Guárdalo en Drive y pide a coordinación enlazarlo en la ficha de marca de Intia (tu perfil no edita marcas).
+2. Guárdalo en Drive y pide a coordinación enlazarlo en la ficha de marca de ALSOS (tu perfil no edita marcas).
 3. Actualízalo cada mes y después de cada campaña o crisis.
 4. Valídalo con coordinación y con el dueño.
 
@@ -2751,7 +2751,7 @@ Opera varias marcas sin errores, documenta el manual de cada una, protege acceso
 
 CRÍTICA Y CORRECCIONES PRINCIPALES (revisión senior de community en short-form LatAm)
 
-1) El curriculum no encajaba con los permisos reales de Intia. Se verificó en el código: src/lib/permissions.ts, src/lib/access-scope.ts, src/components/member/content.tsx y src/lib/domain/lifecycle.ts. Lo que se comprobó:
+1) El curriculum no encajaba con los permisos reales de ALSOS. Se verificó en el código: src/lib/permissions.ts, src/lib/access-scope.ts, src/components/member/content.tsx y src/lib/domain/lifecycle.ts. Lo que se comprobó:
 - El perfil PUBLISHER solo ve videos que ya tienen “Revisión final aprobada”.
 - No tiene acceso a Guiones (scripts.view) ni a Métricas.
 - No puede crear videos ni IDEAS (content.plan), editar marcas ni pasar fichas a PAUSADO.
@@ -2762,7 +2762,7 @@ Por eso se corrigieron el SOP, las responsabilidades y las lecciones P1-L1, P2-L
 - “Registra como IDEA” ahora es “propón a coordinación con la plantilla”.
 - “Lee el guion” ahora es “lee brief, Hook, CTA y notas”.
 - Capturas y permisos se guardan en Drive, con el enlace en un comentario.
-- El analista carga las métricas en Intia.
+- El analista carga las métricas en ALSOS.
 - La hora de publicación se anota en un comentario.
 - La keyword para la voz y la pantalla se entrega antes del guion.
 Sugerencia de producto para el dueño (no implementada): dar al PUBLISHER lectura de guiones y una forma de proponer IDEAS dentro de la app.

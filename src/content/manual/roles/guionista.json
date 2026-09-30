@@ -7,7 +7,7 @@
  "responsibilities": [
   "Investigar producto, audiencia y objeciones reales con lo que aportan el dueño, ATC, community y el analista. Mantener al día las fichas de producto, el avatar y el glosario del cliente por marca y región.",
   "Proponer y priorizar ideas en el tablero (etapa IDEA) según los objetivos del mes, los pilares, el nivel de conciencia del público y el calendario estacional peruano.",
-  "Escribir guiones con el Generador IA de Intia (marca, producto, contexto, actor, idea, estructura, ángulo, variante, cierre, duración), auditarlos y llevarlos de GUION a APROBADO con coordinación.",
+  "Escribir guiones con el Generador IA de ALSOS (marca, producto, contexto, actor, idea, estructura, ángulo, variante, cierre, duración), auditarlos y llevarlos de GUION a APROBADO con coordinación.",
   "Escribir el gancho A y al menos un gancho B por cada guion de venta, y dejar registrados el ángulo, el formato y la hipótesis.",
   "Escribir para lo que se ve y lo que se oye: acciones filmables, planos sugeridos con su propósito, emoción por escena, utilería, locación, texto en pantalla dentro de las zonas seguras y audio con licencia de uso comercial.",
   "Entregar briefs al filmmaker y a producción, al talento, al jefe de editores y al editor, al community manager y a ATC para que todos ejecuten y vendan lo mismo que promete el guion.",
@@ -16,7 +16,7 @@
   "Mantener el banco de ganchos ganadores y perdedores, las fichas de producto, la lista de frases prohibidas de la IA y el manual de voz de cada marca."
  ],
  "sop": [
-  "LUNES 9:00 · Lectura de datos: revisar en Intia las métricas semanales de los videos PUBLICADOS (vistas, retención 3 s, guardados, compartidos, clics, leads, pedidos, ingresos). Recibir de ATC el top 5 de preguntas y objeciones de DM/WhatsApp, y de community los comentarios destacados, los pedidos de «parte 2» y los audios en tendencia que sí están disponibles para cuentas de empresa.",
+  "LUNES 9:00 · Lectura de datos: revisar en ALSOS las métricas semanales de los videos PUBLICADOS (vistas, retención 3 s, guardados, compartidos, clics, leads, pedidos, ingresos). Recibir de ATC el top 5 de preguntas y objeciones de DM/WhatsApp, y de community los comentarios destacados, los pedidos de «parte 2» y los audios en tendencia que sí están disponibles para cuentas de empresa.",
   "LUNES · Sesión de ideas (45 min) con coordinación: ganadores y perdedores, fechas del calendario estacional de las próximas 4 semanas, matriz ángulo × gancho × formato, priorización por impacto y facilidad de producción, y carga de las IDEAS en el tablero con avatar, objetivo (venta o comunidad), formato, nivel de conciencia y responsable.",
   "IDEA → GUION: por cada idea asignada, validar con el dueño o coordinación los datos de la ficha (precio final en S/, tallas, tiempos de entrega por zona, stock, vigencia de la oferta) y completar el Generador IA: video al que se unirá, marca, producto, «Qué debe saber la IA sobre el producto», quién actúa frente a cámara, idea en 3 frases, estructura, ángulo, variante, objetivo del cierre, gatillo de venta o cierre de comunidad y duración objetivo (20-45 s para venta; 30-60 s por defecto; hasta 90 s para vlog o storytime).",
   "Autorrevisión antes de enviar (15 min): cabecera coherente (título, avatar, enfoque, gancho, CTA), tiempos continuos, acciones filmables, planos posibles con el equipo real, lectura del diálogo en voz alta con cronómetro, búsqueda de datos inventados, revisión legal (afirmaciones, promociones, divulgación, rubro regulado), audio con licencia y redacción del gancho B.",
@@ -63,9 +63,9 @@
   "Cero reclamos en ATC por diferencias entre lo que prometió el video y la oferta real"
  ],
  "tools": [
-  "Intia: Generador IA de guiones (video, marca, producto, contexto, quién actúa, idea, estructura, ángulo, variante, cierre de venta o de comunidad, duración, proveedor y modelo, historial y «Ver reintento»)",
-  "Intia: Estructuras (PAS, Antes y Después, Tutorial, UGC, Testimonio, Sketch, Cámara Escondida, Camaleón, Vlog, POV, etc.) y los 12 Ángulos creativos",
-  "Intia: tablero de contenido (IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO) y métricas semanales por video",
+  "ALSOS: Generador IA de guiones (video, marca, producto, contexto, quién actúa, idea, estructura, ángulo, variante, cierre de venta o de comunidad, duración, proveedor y modelo, historial y «Ver reintento»)",
+  "ALSOS: Estructuras (PAS, Antes y Después, Tutorial, UGC, Testimonio, Sketch, Cámara Escondida, Camaleón, Vlog, POV, etc.) y los 12 Ángulos creativos",
+  "ALSOS: tablero de contenido (IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO) y métricas semanales por video",
   "Plantilla de guion a dos columnas (VIDEO | AUDIO), plantilla 9:16 con zonas seguras y cronómetro para la lectura en voz alta",
   "TikTok Creative Center (Top Ads, tendencias) y Biblioteca de anuncios de Meta, para investigar referencias",
   "YouTube Studio (Shorts: «Visto vs. deslizado», curva de retención), Instagram Insights (reels de prueba, tasa de omisión si está disponible) y TikTok Studio (curva de retención)",
@@ -78,7 +78,7 @@
  "levels": [
   {
    "level": "PRINCIPIANTE",
-   "goal": "En 4-6 semanas, escribir guiones de 20-45 s que coordinación aprueba a la primera: una sola idea, gancho en los primeros 3 s, escenas filmables, texto y sonido bien planteados y un solo CTA. Usar bien el Generador IA de Intia y cumplir desde el primer guion las reglas básicas de publicidad y promociones del Perú.",
+   "goal": "En 4-6 semanas, escribir guiones de 20-45 s que coordinación aprueba a la primera: una sola idea, gancho en los primeros 3 s, escenas filmables, texto y sonido bien planteados y un solo CTA. Usar bien el Generador IA de ALSOS y cumplir desde el primer guion las reglas básicas de publicidad y promociones del Perú.",
    "modules": [
     {
      "id": "GUI-P1",
@@ -105,7 +105,7 @@
        "title": "Video ensayo 4. El guion a dos columnas V 2023",
        "channel": "FRANCISCO UTRAY (UC3M)",
        "language": "es",
-       "why": "Clase breve universitaria (UC3M) que explica el formato a dos columnas audio/video, el mismo que usa el guion de Intia."
+       "why": "Clase breve universitaria (UC3M) que explica el formato a dos columnas audio/video, el mismo que usa el guion de ALSOS."
       }
      ],
      "lessons": [
@@ -197,7 +197,7 @@
         "Columna VIDEO: plano sugerido, acción física, texto en pantalla y utilería.",
         "Columna AUDIO: diálogo palabra por palabra, voz en off (V.O.), música y efectos (SFX).",
         "Si el beat cambia de plano, abre una fila nueva.",
-        "Comprueba que coincida con los campos de escena de Intia: beat, plano, acción, diálogo, sonido y texto en pantalla."
+        "Comprueba que coincida con los campos de escena de ALSOS: beat, plano, acción, diálogo, sonido y texto en pantalla."
        ],
        "commonMistakes": [
         "Poner indicaciones de actuación dentro del diálogo",
@@ -533,7 +533,7 @@
        "title": "Como hacer un DESGLOSE DE GUION - como escribir hojas de desglose, y realizar el marcaje de guion",
        "channel": "OriginalScript",
        "language": "es",
-       "why": "Enseña a desglosar un guion en utilería, locación y personajes: lo que el guion de Intia debe dejar listo para filmmaker y talento."
+       "why": "Enseña a desglosar un guion en utilería, locación y personajes: lo que el guion de ALSOS debe dejar listo para filmmaker y talento."
       }
      ],
      "lessons": [
@@ -714,7 +714,7 @@
     {
      "id": "GUI-P5",
      "slug": "gui-p5",
-     "title": "Generador IA de Intia",
+     "title": "Generador IA de ALSOS",
      "summary": "Cómo llenar el pedido, darle buen contexto a la IA, elegir estructura y variante, auditar lo que devuelve y enviarlo a aprobación.",
      "videos": [
       {
@@ -909,7 +909,7 @@
        "title": "Venta o comunidad",
        "objective": "Elegir el tipo de cierre según el objetivo del video.",
        "procedure": [
-        "Objetivo de alcance o comunidad: cierre de comunidad del catálogo de Intia (Seguir · Parte 2, Guardar, Mándaselo, Etiquetar, Pregunta, Encuesta, Próximo tema, Tu duda en video, Muéstranos, Notificaciones, Hasta el final o Sin pedido), sin precios ni enlaces.",
+        "Objetivo de alcance o comunidad: cierre de comunidad del catálogo de ALSOS (Seguir · Parte 2, Guardar, Mándaselo, Etiquetar, Pregunta, Encuesta, Próximo tema, Tu duda en video, Muéstranos, Notificaciones, Hasta el final o Sin pedido), sin precios ni enlaces.",
         "Objetivo de venta: gatillo de venta (Escasez, Urgencia, Motivo / Razón, Incentivo / Regalo, Impacto Visual o Directo).",
         "Marca el objetivo del cierre en el generador.",
         "Haz que el motivo del cierre salga del contenido del video.",
@@ -1042,7 +1042,7 @@
   },
   {
    "level": "INTERMEDIO",
-   "goal": "Dominar los formatos ganadores de la agencia (PAS, Antes y Después, Tutorial, Testimonio, UGC, Sketch, Cámara Escondida, Camaleón, Vlog, Storytime y POV), sostener la retención después del gancho, trabajar con los 12 ángulos de Intia, escribir diálogos naturales y entregar paquetes completos (guion + gancho B + briefs) que se graban sin reescrituras, con criterio ético, legal y de políticas de plataforma.",
+   "goal": "Dominar los formatos ganadores de la agencia (PAS, Antes y Después, Tutorial, Testimonio, UGC, Sketch, Cámara Escondida, Camaleón, Vlog, Storytime y POV), sostener la retención después del gancho, trabajar con los 12 ángulos de ALSOS, escribir diálogos naturales y entregar paquetes completos (guion + gancho B + briefs) que se graban sin reescrituras, con criterio ético, legal y de políticas de plataforma.",
    "modules": [
     {
      "id": "GUI-I1",
@@ -1535,7 +1535,7 @@
      "id": "GUI-I3",
      "slug": "gui-i3",
      "title": "Ángulos creativos",
-     "summary": "Separar ángulo, gancho y formato, dominar los 12 ángulos de Intia, construir matrices de conceptos y usar ángulos de contraste y de contradicción sin engañar.",
+     "summary": "Separar ángulo, gancho y formato, dominar los 12 ángulos de ALSOS, construir matrices de conceptos y usar ángulos de contraste y de contradicción sin engañar.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=Lri2-Nnpw5Q",
@@ -1563,9 +1563,9 @@
       {
        "id": "GUI-I3-01",
        "title": "Ángulo, gancho, formato",
-       "objective": "Distinguir el ángulo (por qué le importa al espectador), el gancho (cómo abre) y el formato (cómo se cuenta), y conocer los 12 ángulos de Intia.",
+       "objective": "Distinguir el ángulo (por qué le importa al espectador), el gancho (cómo abre) y el formato (cómo se cuenta), y conocer los 12 ángulos de ALSOS.",
        "procedure": [
-        "Ángulo: el argumento de fondo. En Intia hay 12: Camaleón, Ellos vs Nosotros, Impacto Visual, POV Real, Anti-Consejo, Experimento, Storytime, Parodia / Humor, Frente al Hater, Hack Oculto, ASMR / Unboxing y Detrás de Cámaras.",
+        "Ángulo: el argumento de fondo. En ALSOS hay 12: Camaleón, Ellos vs Nosotros, Impacto Visual, POV Real, Anti-Consejo, Experimento, Storytime, Parodia / Humor, Frente al Hater, Hack Oculto, ASMR / Unboxing y Detrás de Cámaras.",
         "Gancho: los primeros 3 s, que expresan ese ángulo.",
         "Formato: la estructura (PAS, sketch, tutorial…).",
         "Escribe primero el ángulo, luego 3 ganchos y al final elige el formato.",
@@ -2201,7 +2201,7 @@
        "procedure": [
         "Pauta en Meta: hook rate = reproducciones de 3 s ÷ impresiones.",
         "Orgánico: en YouTube Shorts, «Visto vs. deslizado»; en Instagram, la tasa de omisión de los Reels si la cuenta ya la muestra; en TikTok, el punto de la curva de retención en el segundo 3.",
-        "Registra la retención 3 s en la métrica semanal del video en Intia.",
+        "Registra la retención 3 s en la métrica semanal del video en ALSOS.",
         "Compárala con la mediana propia de la cuenta por formato y por red (últimos 30 días), no con benchmarks genéricos ni entre redes distintas.",
         "Si está por debajo, reescribe solo el gancho y anota su tipo en el banco de ganchos."
        ],
@@ -2737,7 +2737,7 @@
      "id": "GUI-A5",
      "slug": "gui-a5",
      "title": "IA avanzada",
-     "summary": "Sacar lo mejor del Generador de Intia: ejemplos ganadores, variantes controladas, control de calidad y qué hacer cuando la generación falla.",
+     "summary": "Sacar lo mejor del Generador de ALSOS: ejemplos ganadores, variantes controladas, control de calidad y qué hacer cuando la generación falla.",
      "videos": [
       {
        "url": "https://www.youtube.com/watch?v=5wQw3T9tb3c",

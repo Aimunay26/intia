@@ -1,6 +1,6 @@
 # Manual de procedimientos — Jefe de editores
 
-Perfil en Intia: EDITOR (líder) · Borrador v1 (2026-09-28) para revisión del dueño.
+Perfil en ALSOS: EDITOR (líder) · Borrador v1 (2026-09-28) para revisión del dueño.
 
 ## Misión
 
@@ -14,7 +14,7 @@ Garantizar que cada video que entra a EDICION salga hacia PROGRAMADO a tiempo, f
 - Recibir el material de GRABACION y verificar que esté completo y sea técnicamente usable (tomas, audio, B-roll, plano del hook, fps, parpadeo, HDR y frame rate variable); devolver los faltantes al filmmaker el mismo día.
 - Asignar los videos en EDICION según fecha de publicación, talla (S/M/L), nivel del editor y límite de trabajo en curso (WIP).
 - Revisar cada versión por capas con la rúbrica común y dar feedback con timecode, priorizado (OBLIGATORIO / SUGERIDO) y reunido en una sola lista.
-- Hacer el QC final en celular (fidelidad al guion, técnica, marca y legal) y dejar en la ficha el visto bueno «QC aprobado». Hoy «Revisión final aprobada» la registra coordinación, que tiene el permiso de aprobar en Intia, o el jefe de editores si se le asigna ese permiso.
+- Hacer el QC final en celular (fidelidad al guion, técnica, marca y legal) y dejar en la ficha el visto bueno «QC aprobado». Hoy «Revisión final aprobada» la registra coordinación, que tiene el permiso de aprobar en ALSOS, o el jefe de editores si se le asigna ese permiso.
 - Controlar los riesgos legales de cada pieza: licencia de la música para cada plataforma, autorización de imagen y voz (con cuidado especial en menores), rótulo de publicidad, precio y promociones con vigencia y stock, advertencia en bebidas alcohólicas, etiqueta del contenido hecho con IA y datos personales ocultos.
 - Gestionar versiones, nombres de archivo, ingesta técnica, respaldos 3-2-1 y el archivo final de cada proyecto, incluidas licencias y autorizaciones.
 - Analizar cada semana la retención (curva, skip rate, visto vs. deslizado, tiempo medio) y convertir los hallazgos en cambios concretos de edición y en pruebas de hooks.
@@ -24,14 +24,14 @@ Garantizar que cada video que entra a EDICION salga hacia PROGRAMADO a tiempo, f
 
 ## Procedimiento (SOP)
 
-1. DIARIO 09:00 — Tablero de Intia: revisar EDICION, lo que llega de GRABACION y las fechas de PROGRAMADO de los próximos 5 días. Marcar en rojo lo que vence en menos de 48 h.
+1. DIARIO 09:00 — Tablero de ALSOS: revisar EDICION, lo que llega de GRABACION y las fechas de PROGRAMADO de los próximos 5 días. Marcar en rojo lo que vence en menos de 48 h.
 2. DIARIO 09:15 — Pre-edición (estado APROBADO): leer cada guion recién aprobado (máximo 10 minutos por guion) y dejar en la ficha la lista de cobertura para filmmaker y producción: plano del hook con 2 s de colchón, B-roll de marca, planos limpios para placas, reacciones y 30 s de sonido ambiente. Si algo no se puede editar tal como está escrito (duración o textos largos), avisar a coordinación y al guionista antes de grabar.
 3. DIARIO 09:30 — Recepción de material (entra a EDICION): verificar los checks «Grabado (todas las tomas)», «Audio revisado» y «B-roll / tomas de apoyo», la carpeta estándar, la doble copia, las especificaciones (fps, parpadeo, HDR y frame rate variable) y la lista de tomas buenas. Si falta algo, comentar al filmmaker en la ficha con una lista y un plazo; si hay que volver a grabar, avisar a coordinación.
 4. DIARIO 09:45 — Asignación: completar el brief de edición en la ficha (formato, duración, talla, si va a pauta, hook, textos obligatorios, oferta con vigencia y stock, música permitida, referencias con el segundo exacto y fechas de la v01 y del FINAL) y asignar respetando el límite de 2 videos en edición + 1 en correcciones por editor.
 5. DIARIO 10:00 — Reunión de pie de 10 minutos con los editores: qué entregan hoy y qué los bloquea (material, música, aprobación). Todo bloqueo que no se resuelva en 2 horas se escala a coordinación con una propuesta.
 6. DIARIO 10:15-13:00 — Revisión por capas: v01 = hook, historia, estructura y fidelidad al guion; v02 = ritmo, textos y marca; v03 = técnica y legal. En talla S, las capas 1 y 2 se revisan juntas en la v01. Cada nota lleva timecode, qué se ve, qué hacer, por qué y prioridad. Cada entrega se responde en máximo 4 horas hábiles.
-7. DIARIO 15:00-17:00 — QC final de las piezas listas: rúbrica, cotejo con el guion aprobado, QC técnico de 10 minutos, revisión en celular (sin sonido, con parlante y con audífonos) y check legal. Si la marca es de un cliente, antes se presenta la versión con QC según las rondas acordadas. Si pasa, el editor exporta los FINAL por plataforma, tú verificas las especificaciones y dejas «QC aprobado + enlace» en la ficha. Coordinación registra «Revisión final aprobada», o la registras tú si Intia te dio el permiso de aprobar.
-8. DIARIO 17:00 — Paquete de entrega a community: FINAL por plataforma, portada o fotograma sugerido, texto de subtítulos, nota de música (incrustada o para agregar desde la app), rótulo de publicidad y etiqueta de IA si aplican, y fecha. Community completa «Copy y hashtags escritos», «Subido a la plataforma» y «Link guardado en la ficha». Si aparece un error después de aprobar, coordinación retira la aprobación en Intia indicando el motivo (la ficha queda bloqueada tras aprobar), se corrige y se vuelve a aprobar.
+7. DIARIO 15:00-17:00 — QC final de las piezas listas: rúbrica, cotejo con el guion aprobado, QC técnico de 10 minutos, revisión en celular (sin sonido, con parlante y con audífonos) y check legal. Si la marca es de un cliente, antes se presenta la versión con QC según las rondas acordadas. Si pasa, el editor exporta los FINAL por plataforma, tú verificas las especificaciones y dejas «QC aprobado + enlace» en la ficha. Coordinación registra «Revisión final aprobada», o la registras tú si ALSOS te dio el permiso de aprobar.
+8. DIARIO 17:00 — Paquete de entrega a community: FINAL por plataforma, portada o fotograma sugerido, texto de subtítulos, nota de música (incrustada o para agregar desde la app), rótulo de publicidad y etiqueta de IA si aplican, y fecha. Community completa «Copy y hashtags escritos», «Subido a la plataforma» y «Link guardado en la ficha». Si aparece un error después de aprobar, coordinación retira la aprobación en ALSOS indicando el motivo (la ficha queda bloqueada tras aprobar), se corrige y se vuelve a aprobar.
 9. DIARIO 18:00 — Cierre: respaldo 3-2-1 del día verificado, tablero actualizado y bloqueos pendientes reportados a coordinación.
 10. SEMANAL LUNES — Planificación de carga con coordinación: tallas S/M/L de la semana, capacidad por editor, riesgos de fechas y prioridades de venta (campañas de Con Amor como Día de la Madre, Fiestas Patrias o Navidad).
 11. SEMANAL MIÉRCOLES — Pedir a ATC las 5 preguntas y objeciones más repetidas por DM/WhatsApp y decidir cuáles se aclaran en pantalla. Enviar a ATC el resumen de las ofertas que se publicarán (precio, vigencia, stock y tiempos de entrega).
@@ -43,7 +43,7 @@ Garantizar que cada video que entra a EDICION salga hacia PROGRAMADO a tiempo, f
 
 **Recibe de:**
 
-- Coordinación (STRATEGY): guion aprobado (estado APROBADO), prioridades comerciales, fechas de publicación, aprobaciones de la marca o el cliente y el registro de «Revisión final aprobada» en Intia.
+- Coordinación (STRATEGY): guion aprobado (estado APROBADO), prioridades comerciales, fechas de publicación, aprobaciones de la marca o el cliente y el registro de «Revisión final aprobada» en ALSOS.
 - Guionista (WRITER): guion con hook, texto en pantalla, estructura, afirmaciones y CTA de cierre.
 - Filmmaker (CAMERA) y Producción (PRODUCTION): material bruto, audio, lista de tomas buenas, B-roll, notas de rodaje y autorizaciones de imagen y voz firmadas en el set (incluidas las del talento).
 - Diseñador (DESIGNER): logos, gráficos, placas de precio y portadas.
@@ -78,7 +78,7 @@ Garantizar que cada video que entra a EDICION salga hacia PROGRAMADO a tiempo, f
 
 ## Herramientas
 
-- Intia (tablero, estados IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO, ficha del video, checks de GRABACION y POSTPRODUCCION, comentarios e historial de aprobaciones)
+- ALSOS (tablero, estados IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO, ficha del video, checks de GRABACION y POSTPRODUCCION, comentarios e historial de aprobaciones)
 - Adobe Premiere Pro (Productions, Essential Graphics, medidor de sonoridad, Lumetri con vectorscopio, administración de color con asignación de tonos para HDR, Mejorar voz, edición basada en texto, Ingest con proxies y Project Manager)
 - Plantillas de gráficos animados .mogrt y Creative Cloud Libraries
 - CapCut (Teamspace, Brand Kit y plantillas de marca) para los editores que trabajan en CapCut
@@ -95,11 +95,11 @@ Garantizar que cada video que entra a EDICION salga hacia PROGRAMADO a tiempo, f
 
 ## Nivel Principiante
 
-En 3 a 4 semanas, operar la cola de EDICION sin que lleguen errores a publicación: entender el flujo de Intia, preparar y recibir el material, aplicar la guía de estilo de cada marca, ordenar y respaldar, hacer el QC técnico y legal básico y dar el «QC aprobado» con criterio.
+En 3 a 4 semanas, operar la cola de EDICION sin que lleguen errores a publicación: entender el flujo de ALSOS, preparar y recibir el material, aplicar la guía de estilo de cada marca, ordenar y respaldar, hacer el QC técnico y legal básico y dar el «QC aprobado» con criterio.
 
-### Rol y flujo en Intia `JE-P1`
+### Rol y flujo en ALSOS `JE-P1`
 
-Qué hace y qué no hace el jefe de editores, cómo avanza un video por Intia (IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO) y cómo se prepara, se recibe y se encarga el material para editar.
+Qué hace y qué no hace el jefe de editores, cómo avanza un video por ALSOS (IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO) y cómo se prepara, se recibe y se encarga el material para editar.
 
 **Videos del módulo:**
 
@@ -115,7 +115,7 @@ Qué hace y qué no hace el jefe de editores, cómo avanza un video por Intia (I
 
 1. Lee la misión del rol: nada sale de EDICION sin cumplir el estándar, todo sale a tiempo y el equipo mejora cada semana.
 2. Arma una tabla de 3 columnas: «Yo decido» (asignación, rúbrica, QC, plantillas, respaldo), «Yo reviso» (cortes de los editores, material del filmmaker, riesgo legal, si el guion se puede editar) y «No es mío» (escribir el guion, copy y hashtags, horario de publicación, respuesta de DMs).
-3. Acuerda con coordinación el reparto de aprobaciones. Coordinación aprueba el guion y hoy registra «Revisión final aprobada» en Intia, porque tiene el permiso de aprobar. Tú das el «QC aprobado» de la calidad de edición; si el dueño te asigna ese permiso, registras tú la aprobación.
+3. Acuerda con coordinación el reparto de aprobaciones. Coordinación aprueba el guion y hoy registra «Revisión final aprobada» en ALSOS, porque tiene el permiso de aprobar. Tú das el «QC aprobado» de la calidad de edición; si el dueño te asigna ese permiso, registras tú la aprobación.
 4. Ubica en la ficha los checks de POSTPRODUCCION: «Editado», «Subtítulos y textos en pantalla» y «Música y efectos de sonido» (opcional) los marca el editor asignado; «Revisión final aprobada» la marca quien tenga permiso de aprobar.
 5. Designa por escrito a un reemplazo (editor senior) que haga el QC cuando no estés y compártelo con coordinación.
 
@@ -146,11 +146,11 @@ Qué hace y qué no hace el jefe de editores, cómo avanza un video por Intia (I
 
 #### Flujo de un video · _Caso práctico_
 
-**Objetivo:** Seguir un video real desde el guion hasta PUBLICADO en Intia y saber qué debe estar listo en cada paso.
+**Objetivo:** Seguir un video real desde el guion hasta PUBLICADO en ALSOS y saber qué debe estar listo en cada paso.
 
 **Pasos:**
 
-1. En el tablero, ubica un video en cada estado: IDEA, GUION, APROBADO, GRABACION, EDICION, PROGRAMADO y PUBLICADO. Intia avanza una etapa a la vez y exige completar los requisitos de cada una.
+1. En el tablero, ubica un video en cada estado: IDEA, GUION, APROBADO, GRABACION, EDICION, PROGRAMADO y PUBLICADO. ALSOS avanza una etapa a la vez y exige completar los requisitos de cada una.
 2. Abre la ficha de un video de Con Amor (por ejemplo, «Antes y Después: polera afranelada con foto») y lee el guion aprobado, el formato, el CTA y la fecha de publicación.
 3. Verifica los checks de GRABACION: «Grabado (todas las tomas)» y «Audio revisado» son obligatorios. «B-roll / tomas de apoyo» es opcional en la app, pero tú lo exiges en Antes y Después, Tutorial y restaurantes.
 4. En EDICION: confirma el editor asignado, la versión actual (v01, v02…) y la fecha límite interna, que es la fecha de publicación menos 1 día hábil.
@@ -161,7 +161,7 @@ Qué hace y qué no hace el jefe de editores, cómo avanza un video por Intia (I
 
 - Aceptar en EDICION videos sin el check «Audio revisado».
 - No fijar una fecha límite interna y enterarte del atraso el mismo día de la publicación.
-- Pedir cambios de último minuto por WhatsApp sobre una versión ya aprobada, sin retirar la aprobación en Intia.
+- Pedir cambios de último minuto por WhatsApp sobre una versión ya aprobada, sin retirar la aprobación en ALSOS.
 - No avisar a community cuando el FINAL está listo.
 
 **Checklist:**
@@ -323,7 +323,7 @@ Cómo se arma y se usa la guía de edición de cada marca, con ejemplos de Con A
 3. Define los subtítulos (fuente, color, palabra resaltada), el ritmo (duración media de plano), la música (géneros y fuentes permitidas), los efectos de sonido y las transiciones permitidas o prohibidas.
 4. Define el cierre (placa de precio, CTA y tiempo en pantalla) y la lista de prohibidos (por ejemplo, prometer entregas que ATC no puede cumplir).
 5. Añade 3 capturas de «así sí» y 3 de «así no».
-6. Valídala con coordinación y el dueño, ponle fecha y versión (Guia_ConAmor_v01_AAAAMMDD) y enlázala en Intia.
+6. Valídala con coordinación y el dueño, ponle fecha y versión (Guia_ConAmor_v01_AAAAMMDD) y enlázala en ALSOS.
 
 **Errores comunes:**
 
@@ -713,7 +713,7 @@ Estructura de carpetas, nombres y versiones, respaldo 3-2-1, ingesta técnica de
 2. Antes de recortar, copia a una carpeta de la marca las tomas alternativas del hook y el B-roll reutilizable.
 3. Borra proxies, conversiones temporales y caché de render.
 4. Conserva según la política acordada con el dueño: los brutos seleccionados, por el tiempo definido; los FINAL, las licencias de música y las autorizaciones de imagen, mientras el video siga publicado o en pauta y como mínimo el plazo que indique la política.
-5. Mueve el proyecto al almacenamiento de archivo, anota la ruta en la hoja y comenta en la ficha de Intia «Proyecto archivado».
+5. Mueve el proyecto al almacenamiento de archivo, anota la ruta en la hoja y comenta en la ficha de ALSOS «Proyecto archivado».
 
 **Errores comunes:**
 
@@ -755,7 +755,7 @@ El QC que debe pasar toda pieza antes del visto bueno: fidelidad al guion, revis
 
 **Pasos:**
 
-1. Abre el guion aprobado en Intia al lado del video.
+1. Abre el guion aprobado en ALSOS al lado del video.
 2. Recorre escena por escena: el hook, el orden de la historia y el CTA deben coincidir con lo aprobado.
 3. Compara palabra por palabra los textos obligatorios: precio, condiciones, vigencia, tiempo de entrega y nombre del producto.
 4. Marca toda afirmación que no esté en el guion (por ejemplo, una frase improvisada del talento como «te llega en 24 horas» o «100 % algodón») y pide su prueba o elimínala.
@@ -975,7 +975,7 @@ El QC que debe pasar toda pieza antes del visto bueno: fidelidad al guion, revis
 
 #### Visto bueno final · _Checklist_
 
-**Objetivo:** Saber exactamente cuándo dar el «QC aprobado», cómo se registra la «Revisión final aprobada» en Intia y qué hacer después.
+**Objetivo:** Saber exactamente cuándo dar el «QC aprobado», cómo se registra la «Revisión final aprobada» en ALSOS y qué hacer después.
 
 **Pasos:**
 
@@ -984,7 +984,7 @@ El QC que debe pasar toda pieza antes del visto bueno: fidelidad al guion, revis
 3. Verifica que el editor marcó «Editado», «Subtítulos y textos en pantalla» y, si aplica, «Música y efectos de sonido».
 4. Verifica los nombres FINAL por plataforma, el respaldo y que las licencias y autorizaciones estén en su carpeta.
 5. Si es una marca cliente, confirma que la versión presentada fue aprobada por el cliente y que la ronda quedó registrada.
-6. Comenta en la ficha «QC aprobado – FINAL: enlace» y avisa a coordinación para que registre «Revisión final aprobada», o márcala tú si Intia te dio el permiso de aprobar.
+6. Comenta en la ficha «QC aprobado – FINAL: enlace» y avisa a coordinación para que registre «Revisión final aprobada», o márcala tú si ALSOS te dio el permiso de aprobar.
 7. Después de aprobar, la ficha queda bloqueada: prepara el paquete de entrega para community.
 
 **Errores comunes:**
@@ -1309,7 +1309,7 @@ Estimar el tamaño de cada video, limitar el trabajo en curso, asignar por fecha
 1. Define las tallas. S: 1 cámara, menos de 30 s, subtítulos y música (2-3 h). M: 2 cámaras, o de 30 a 60 s con gráficos y B-roll (4-6 h). L: Cámara Escondida con varias reacciones, Antes y Después con transformación, sketch con varios personajes o animación (1-2 días).
 2. Registra durante 4 semanas el tiempo real de cada video, incluidas las correcciones.
 3. Ajusta las horas de cada talla con el promedio real.
-4. Pon la talla en la ficha de Intia cuando el video pase a EDICION.
+4. Pon la talla en la ficha de ALSOS cuando el video pase a EDICION.
 5. Suma las horas de la semana y compáralas con la capacidad del equipo.
 
 **Errores comunes:**
@@ -2899,7 +2899,7 @@ Rondas de versión hasta la marca o el cliente, visita al set para asegurar la c
 3. Texto de subtítulos o transcripción para la descripción y la accesibilidad.
 4. Nota de música: incrustada con licencia, o para agregar en la app (la pista exacta de la biblioteca permitida).
 5. Rótulo de publicidad, etiqueta de contenido de marca y etiqueta de IA, si aplican; condiciones de la promoción para la descripción.
-6. Fecha y hora sugeridas por coordinación y enlace en la ficha de Intia. Recuerda a community que active la subida en alta calidad y que complete «Link guardado en la ficha».
+6. Fecha y hora sugeridas por coordinación y enlace en la ficha de ALSOS. Recuerda a community que active la subida en alta calidad y que complete «Link guardado en la ficha».
 
 **Errores comunes:**
 
@@ -3092,7 +3092,7 @@ Blindar y hacer crecer la operación: auditoría de afirmaciones, contingencias,
 
 1. Editor ausente: reemplazo definido por marca y proyectos siempre en la carpeta compartida.
 2. Disco dañado: recuperar desde la segunda copia del 3-2-1 en menos de 2 horas y volver a vincular los medios.
-3. Error visto después de aprobar o publicar (precio, tilde grave): coordinación retira la aprobación en Intia indicando el motivo, se corrige, se vuelve a aprobar y coordinación decide con community si se vuelve a subir.
+3. Error visto después de aprobar o publicar (precio, tilde grave): coordinación retira la aprobación en ALSOS indicando el motivo, se corrige, se vuelve a aprobar y coordinación decide con community si se vuelve a subir.
 4. Música silenciada o reclamo después de publicar: reemplazar el audio por música de la biblioteca comercial, volver a subir y registrar la causa.
 5. Reclamo de una persona que aparece en el video: bajarlo o difuminarla, revisar su autorización y registrar el caso.
 6. Revisa el plan cada trimestre y haz un simulacro.
@@ -3272,4 +3272,4 @@ Blindar y hacer crecer la operación: auditoría de afirmaciones, contingencias,
 
 ## Notas de investigación y revisión
 
-CRÍTICA Y CORRECCIONES PRINCIPALES (versión final revisada por el rol de jefe de editores senior). (1) Encaje con Intia, verificado en el código: los estados reales son IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO (src/lib/constants.ts); el borrador omitía APROBADO. El check «Revisión final aprobada» (kind FINAL_APPROVAL) exige el permiso content.approve, que hoy solo tienen STRATEGY y OWNER (src/lib/permissions.ts); el mensaje del sistema dice que coordinación la completa. Tras aprobar, la ficha queda bloqueada y cualquier cambio exige retirar la aprobación con motivo y volver a aprobar (src/components/member/content.tsx, src/lib/approvals.ts). Por eso el borrador se equivocaba al decir que «solo el jefe marca la revisión final». Ahora el jefe da el «QC aprobado» y coordinación registra la aprobación, salvo que se cree el perfil JEFE_EDITORES con content.approve; queda pendiente de programar. Se agregaron el check «Link guardado en la ficha» y el protocolo de retirar la aprobación. (2) SOP y traspasos: se agregó la pre-edición en APROBADO, con la lección «Guion editable» y la lista de cobertura al filmmaker antes de GRABACION. También se agregó el puente semanal con ATC (preguntas frecuentes y resumen de ofertas vigentes), con la nueva lección «Puente con ATC» y ATC en deliversTo. El editor exporta y el jefe verifica (antes el jefe exportaba). El archivo de proyectos pasa de 7 a 30 días, porque consolidar a los 7 días borraba las tomas del hook que necesitan las pruebas de hooks. (3) Contradicciones resueltas: la «Revisión por capas» (v03 = técnica interna) chocaba con «Rondas de versión» (v03 = cliente). Ahora v01-v03 son internas, C1/C2 son las presentaciones al cliente y la ronda se define como cada versión posterior a la v01. En talla S, las capas 1 y 2 van juntas para cumplir el ciclo de 1 día. (4) Lecciones que mezclaban temas se separaron: «Piel y color real» pasó a «Tono de piel» y «Color del producto» (este último con carta de grises); «Servicio y restaurante» pasó a dos guías; «Testimonio y UGC» y «Cierre con CTA» (venta y comunidad) se dividieron; «Feedback a set y guion» pasó a «Retro al filmmaker» y «Retro al guionista». (5) Huecos cubiertos: ingesta técnica de celular (frame rate variable que desfasa el audio, HDR/HLG del iPhone que se ve lavado en Rec.709, HEVC y proxies; MediaInfo y Shutter Encoder/HandBrake); parpadeo (en Perú la red es de 60 Hz, así que 30/60 fps es lo seguro); cotejo con el guion aprobado en el QC; formatos que faltaban (Tutorial, Sketch, Camaleón, PAS y Vlog, en el nuevo módulo JE-I6); incorporación de editores con prueba pagada; IA en el flujo. (6) Normativa peruana agregada: el precio final en S/ con IGV y las promociones con vigencia y stock mínimo (Código de Protección y Defensa del Consumidor, Ley 29571, que se entiende es el art. 14 sobre publicidad de promociones y debe validarlo un abogado); la advertencia «TOMAR BEBIDAS ALCOHÓLICAS EN EXCESO ES DAÑINO» (Ley 28681) para cevicherías y restaurantes que muestran cerveza o pisco (tamaño y duración exactos, a confirmar con el reglamento); la autorización del padre, la madre o el tutor para menores; y el reglamento vigente de datos personales, D. S. 016-2024-JUS. Etiquetado de IA por plataforma, verificado: YouTube exige declarar el contenido realista alterado o sintético en YouTube Studio (support.google.com/youtube/answer/14328491), Meta usa la etiqueta «AI info» e TikTok exige etiquetar el contenido realista generado con IA. (7) Datos técnicos precisados: preset H.264 VBR de 2 pasadas a 16-20 Mbps con AAC de 48 kHz; música entre 10 y 20 dB por debajo de la voz; zona segura de anuncios de Meta cercana a 14 % arriba, 35 % abajo y 6 % a los lados (referencia a validar con la guía vigente; no se pudo abrir la página de Meta); el requisito de 60 s y 100 vistas para los momentos clave de YouTube quedó verificado en su ayuda oficial. IDS: se conservaron todos los ids de módulo (JE-P1 a JE-P5, JE-I1 a JE-I5, JE-A1 a JE-A4) y sus videos verificados siguen siendo pertinentes. Se agregó el módulo JE-I6 «Más formatos ganadores», que no tiene videos verificados: hay que buscarlos con sus youtubeQueries. Dentro de algunos módulos se renumeraron los ids de lección por lecciones insertadas o divididas (JE-P1, P2, P3, P4, P5, I5, A3 y A4). LÍMITES: se agotó el cupo de búsquedas web de la sesión, así que los artículos exactos de las leyes 29571 y 28681 no se pudieron leer (los PDF del Congreso no se procesaron). Las fuentes de las lecciones nuevas son páginas oficiales de las herramientas o de las leyes, o se reutilizaron fuentes del borrador. Las cifras de skip rate y hook rate de blogs se mantienen solo como orientación. El contenido legal es orientativo: la plantilla de autorización, las reglas de promociones y la advertencia sobre alcohol deben validarse con un abogado. Solo hay 1 ESCENA_3D («Visita de set»), porque para edición el dueño pidió sobre todo videos de referencia. Esa escena se precisó para poder animarla: medidas del set, figuras diferenciadas, lente y dolly, esquema de luces con distancias y un reloj acelerado para los 30 s de sonido ambiente.
+CRÍTICA Y CORRECCIONES PRINCIPALES (versión final revisada por el rol de jefe de editores senior). (1) Encaje con ALSOS, verificado en el código: los estados reales son IDEA → GUION → APROBADO → GRABACION → EDICION → PROGRAMADO → PUBLICADO (src/lib/constants.ts); el borrador omitía APROBADO. El check «Revisión final aprobada» (kind FINAL_APPROVAL) exige el permiso content.approve, que hoy solo tienen STRATEGY y OWNER (src/lib/permissions.ts); el mensaje del sistema dice que coordinación la completa. Tras aprobar, la ficha queda bloqueada y cualquier cambio exige retirar la aprobación con motivo y volver a aprobar (src/components/member/content.tsx, src/lib/approvals.ts). Por eso el borrador se equivocaba al decir que «solo el jefe marca la revisión final». Ahora el jefe da el «QC aprobado» y coordinación registra la aprobación, salvo que se cree el perfil JEFE_EDITORES con content.approve; queda pendiente de programar. Se agregaron el check «Link guardado en la ficha» y el protocolo de retirar la aprobación. (2) SOP y traspasos: se agregó la pre-edición en APROBADO, con la lección «Guion editable» y la lista de cobertura al filmmaker antes de GRABACION. También se agregó el puente semanal con ATC (preguntas frecuentes y resumen de ofertas vigentes), con la nueva lección «Puente con ATC» y ATC en deliversTo. El editor exporta y el jefe verifica (antes el jefe exportaba). El archivo de proyectos pasa de 7 a 30 días, porque consolidar a los 7 días borraba las tomas del hook que necesitan las pruebas de hooks. (3) Contradicciones resueltas: la «Revisión por capas» (v03 = técnica interna) chocaba con «Rondas de versión» (v03 = cliente). Ahora v01-v03 son internas, C1/C2 son las presentaciones al cliente y la ronda se define como cada versión posterior a la v01. En talla S, las capas 1 y 2 van juntas para cumplir el ciclo de 1 día. (4) Lecciones que mezclaban temas se separaron: «Piel y color real» pasó a «Tono de piel» y «Color del producto» (este último con carta de grises); «Servicio y restaurante» pasó a dos guías; «Testimonio y UGC» y «Cierre con CTA» (venta y comunidad) se dividieron; «Feedback a set y guion» pasó a «Retro al filmmaker» y «Retro al guionista». (5) Huecos cubiertos: ingesta técnica de celular (frame rate variable que desfasa el audio, HDR/HLG del iPhone que se ve lavado en Rec.709, HEVC y proxies; MediaInfo y Shutter Encoder/HandBrake); parpadeo (en Perú la red es de 60 Hz, así que 30/60 fps es lo seguro); cotejo con el guion aprobado en el QC; formatos que faltaban (Tutorial, Sketch, Camaleón, PAS y Vlog, en el nuevo módulo JE-I6); incorporación de editores con prueba pagada; IA en el flujo. (6) Normativa peruana agregada: el precio final en S/ con IGV y las promociones con vigencia y stock mínimo (Código de Protección y Defensa del Consumidor, Ley 29571, que se entiende es el art. 14 sobre publicidad de promociones y debe validarlo un abogado); la advertencia «TOMAR BEBIDAS ALCOHÓLICAS EN EXCESO ES DAÑINO» (Ley 28681) para cevicherías y restaurantes que muestran cerveza o pisco (tamaño y duración exactos, a confirmar con el reglamento); la autorización del padre, la madre o el tutor para menores; y el reglamento vigente de datos personales, D. S. 016-2024-JUS. Etiquetado de IA por plataforma, verificado: YouTube exige declarar el contenido realista alterado o sintético en YouTube Studio (support.google.com/youtube/answer/14328491), Meta usa la etiqueta «AI info» e TikTok exige etiquetar el contenido realista generado con IA. (7) Datos técnicos precisados: preset H.264 VBR de 2 pasadas a 16-20 Mbps con AAC de 48 kHz; música entre 10 y 20 dB por debajo de la voz; zona segura de anuncios de Meta cercana a 14 % arriba, 35 % abajo y 6 % a los lados (referencia a validar con la guía vigente; no se pudo abrir la página de Meta); el requisito de 60 s y 100 vistas para los momentos clave de YouTube quedó verificado en su ayuda oficial. IDS: se conservaron todos los ids de módulo (JE-P1 a JE-P5, JE-I1 a JE-I5, JE-A1 a JE-A4) y sus videos verificados siguen siendo pertinentes. Se agregó el módulo JE-I6 «Más formatos ganadores», que no tiene videos verificados: hay que buscarlos con sus youtubeQueries. Dentro de algunos módulos se renumeraron los ids de lección por lecciones insertadas o divididas (JE-P1, P2, P3, P4, P5, I5, A3 y A4). LÍMITES: se agotó el cupo de búsquedas web de la sesión, así que los artículos exactos de las leyes 29571 y 28681 no se pudieron leer (los PDF del Congreso no se procesaron). Las fuentes de las lecciones nuevas son páginas oficiales de las herramientas o de las leyes, o se reutilizaron fuentes del borrador. Las cifras de skip rate y hook rate de blogs se mantienen solo como orientación. El contenido legal es orientativo: la plantilla de autorización, las reglas de promociones y la advertencia sobre alcohol deben validarse con un abogado. Solo hay 1 ESCENA_3D («Visita de set»), porque para edición el dueño pidió sobre todo videos de referencia. Esa escena se precisó para poder animarla: medidas del set, figuras diferenciadas, lente y dolly, esquema de luces con distancias y un reloj acelerado para los 30 s de sonido ambiente.

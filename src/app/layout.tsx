@@ -2,7 +2,11 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Intia · Ideas que se publican", template: "%s · Intia" },
+  title: { default: "ALSOS · Ideas que se publican", template: "%s · ALSOS" },
+  applicationName: "ALSOS",
+  // Solo el nombre en la pantalla de inicio de iOS: sin «capable», que Next activa por defecto
+  // y abriría la app en modo independiente (fuera del navegador, con la entrada de Google aparte).
+  appleWebApp: { title: "ALSOS", capable: false },
   description:
     "Calendario de contenido, guiones con IA y métricas para múltiples marcas.",
 };

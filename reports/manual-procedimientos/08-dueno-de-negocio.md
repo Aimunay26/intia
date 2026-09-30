@@ -1,6 +1,6 @@
 # Manual de procedimientos — Dueño de negocio (OWNER)
 
-Perfil en Intia: OWNER · Borrador v1 (2026-09-28) para revisión del dueño.
+Perfil en ALSOS: OWNER · Borrador v1 (2026-09-28) para revisión del dueño.
 
 ## Misión
 
@@ -9,13 +9,13 @@ Dirigir el sistema de contenido de cada marca para que los videos generen ventas
 ## Responsabilidades
 
 - Definir un objetivo de negocio medible por marca (pedidos, reservas, citas) y los KPIs que lo siguen, y cargarlos en Marcas > Objetivos.
-- Cargar y mantener la identidad de cada marca en Intia: descripción, identidad, brief operativo, tono de voz, público, propuestas de valor, lista de no hacer, palabras clave, colores, logo, enlaces y Personas.
+- Cargar y mantener la identidad de cada marca en ALSOS: descripción, identidad, brief operativo, tono de voz, público, propuestas de valor, lista de no hacer, palabras clave, colores, logo, enlaces y Personas.
 - Aprobar precios, ofertas y garantías (con bonus, escasez y urgencia reales) y entregar a ATC y al guionista las fichas de producto y las ofertas vigentes antes de publicar.
 - Aprobar el presupuesto mensual de producción y de pauta, y vigilar la rentabilidad: costo por video, margen de contribución, ROAS de equilibrio y costo por pedido.
 - Aprobar o devolver la estrategia mensual que propone coordinación (mix de formatos, cantidad de videos, fechas comerciales, ofertas y capacidad del equipo).
 - Organizar el equipo con una matriz RACI y una tabla de decisiones con límites en S/, dar perfiles y marcas con acceso mínimo en Equipo, y retirar accesos el mismo día en que alguien sale.
 - Contratar con pruebas pagadas, hacer la inducción con el manual del puesto, evaluar cada mes con tarjetas de KPIs por rol y corregir o reemplazar cuando no se cumple el estándar.
-- Dirigir el ritual semanal de 45 minutos: tablero de números, prioridades, problemas resueltos de raíz y tareas con responsable en Intia.
+- Dirigir el ritual semanal de 45 minutos: tablero de números, prioridades, problemas resueltos de raíz y tareas con responsable en ALSOS.
 - Leer el panel de Métricas cada semana y decidir qué se replica, qué se pauta y qué se deja de hacer.
 - Asegurar el cumplimiento legal: autorizaciones de imagen y voz, publicidad veraz e identificada, promociones y sorteos con condiciones claras, Libro de Reclamaciones virtual, consentimiento para enviar promociones y contratos con cesión de derechos.
 - Proteger la marca: registro en Indecopi, cuentas a nombre de la empresa con 2FA y acceso de socio, vigilancia de cuentas falsas, plan de crisis y auditoría trimestral de accesos.
@@ -26,25 +26,25 @@ Dirigir el sistema de contenido de cada marca para que los videos generen ventas
 
 1. ARRANQUE DE MARCA (una vez y cada vez que algo cambie): en Marcas completar descripción, identidad, brief operativo (tiempos de producción, envíos por zona, formas de pago y garantía), tono, público, propuestas de valor, no hacer, palabras clave, colores, logo y enlaces. Cargar de 2 a 3 Personas a partir de chats reales y entregar a ATC y al guionista las fichas de producto con precios finales en S/. Verificar que las cuentas de Meta, TikTok y WhatsApp Business estén a nombre de la empresa, con 2FA y al menos 2 administradores.
 2. CIERRE MENSUAL (primer día hábil, de 2 a 3 h): revisar en Métricas y en Objetivos el resultado del mes (logrado, en curso, en riesgo). Fijar el objetivo del mes por marca, aprobar el presupuesto de producción y pauta, aprobar las ofertas del mes y aprobar o devolver con un máximo de 3 cambios la estrategia de coordinación. Hacer las evaluaciones de 20 minutos con la tarjeta de KPIs de cada rol y enviar el informe a cada cliente dentro de los 5 primeros días hábiles.
-3. LUNES 9:00 · RITUAL SEMANAL (45 min): buenas noticias, tablero de 5 a 7 números (en camino o fuera de camino), prioridades del trimestre, titulares de ATC, community y jefe de editores, revisión de tareas, los 3 problemas principales resueltos de raíz y cierre con tareas en Intia.
+3. LUNES 9:00 · RITUAL SEMANAL (45 min): buenas noticias, tablero de 5 a 7 números (en camino o fuera de camino), prioridades del trimestre, titulares de ATC, community y jefe de editores, revisión de tareas, los 3 problemas principales resueltos de raíz y cierre con tareas en ALSOS.
 4. DIARIO (15 min, misma hora): Panel y Tareas. Resolver solo los bloqueos escalados, los videos detenidos más de 48 h en un mismo estado y las alertas de crisis de nivel 3. No microgestionar.
 5. ETAPA IDEA: validar solo los pilares del mes y los temas sensibles (lanzamientos, precios, sorteos, temas delicados). Las ideas normales las decide coordinación.
 6. ETAPA GUION → APROBADO: coordinación marca 'Guion aprobado por la marca'. El dueño revisa por muestreo 1 de cada 5 guiones y el 100% de los que traen una oferta, precio, garantía, sorteo o promesa nueva, y verifica que sean veraces y cumplibles. En las marcas de clientes, aprueba el cliente según su contrato.
 7. ETAPA GRABACIÓN: asegurar que la autorización de imagen del talento esté firmada antes de grabar, y que haya producto correcto y stock suficiente. Las autorizaciones de terceros (Cámara Escondida, vía pública) se firman al terminar y se archivan antes de pasar a EDICIÓN. El dueño no dirige en el set.
-8. ETAPA EDICIÓN: el jefe de editores revisa la calidad y coordinación marca 'Revisión final aprobada' (hoy solo Coordinación o el dueño pueden marcarla en Intia). El dueño revisa personalmente solo las piezas que irán a pauta y las que llevan oferta.
-9. PROGRAMADO/PUBLICADO: confirmar que la promo tiene vigencia, stock y condiciones visibles y es cumplible, que las colaboraciones con creadores llevan #Publicidad y que ATC recibió la oferta y la ficha antes de publicar. Intia solo deja publicar al community los videos con Revisión final aprobada.
+8. ETAPA EDICIÓN: el jefe de editores revisa la calidad y coordinación marca 'Revisión final aprobada' (hoy solo Coordinación o el dueño pueden marcarla en ALSOS). El dueño revisa personalmente solo las piezas que irán a pauta y las que llevan oferta.
+9. PROGRAMADO/PUBLICADO: confirmar que la promo tiene vigencia, stock y condiciones visibles y es cumplible, que las colaboraciones con creadores llevan #Publicidad y que ATC recibió la oferta y la ficha antes de publicar. ALSOS solo deja publicar al community los videos con Revisión final aprobada.
 10. POST-PUBLICACIÓN: ATC registra el origen de cada venta por DM o WhatsApp (cerradas y perdidas) y el analista carga las métricas semanales (vistas, compartidos, guardados, leads, pedidos, ingresos, inversión) antes del lunes a las 9:00. El dueño decide qué ganadores pautar y qué perdedores cortar.
 11. JUEVES (30 min): leer una muestra de 10 chats de ATC para escuchar objeciones reales y alimentar guiones y ofertas.
 12. VIERNES (30 min): revisar el tablero preliminar y armar la lista de problemas para el lunes.
 13. SALIDA DE UN INTEGRANTE (el mismo día): quitar perfiles y marcas en Equipo, retirar accesos en Meta, TikTok y carpetas, cambiar las contraseñas compartidas, pedir los archivos fuente y revisar Actividad.
-14. TRIMESTRAL: definir de 3 a 5 prioridades del trimestre, calcular la rentabilidad por marca o cliente, auditar accesos (Equipo y Actividad en Intia, Meta, TikTok y carpetas), revisar contratos, licencias y autorizaciones por vencer, buscar cuentas falsas de la marca y actualizar los manuales por puesto.
+14. TRIMESTRAL: definir de 3 a 5 prioridades del trimestre, calcular la rentabilidad por marca o cliente, auditar accesos (Equipo y Actividad en ALSOS, Meta, TikTok y carpetas), revisar contratos, licencias y autorizaciones por vencer, buscar cuentas falsas de la marca y actualizar los manuales por puesto.
 
 ## Traspasos
 
 **Recibe de:**
 
 - Coordinación (STRATEGY): propuesta de estrategia mensual, plan de videos, capacidad del equipo y reporte de avance semanal.
-- Analista (ANALYST): métricas semanales cargadas en Intia y tablero de números antes del lunes a las 9:00.
+- Analista (ANALYST): métricas semanales cargadas en ALSOS y tablero de números antes del lunes a las 9:00.
 - ATC: ventas con su origen por video (cerradas y perdidas), tasa de cierre, objeciones frecuentes, reclamos del Libro de Reclamaciones y registro de consentimientos.
 - Jefe de editores: tiempos de entrega, % de videos aprobados sin segunda corrección y matriz de variaciones de los videos ganadores.
 - Community manager (PUBLISHER): calendario publicado, comentarios relevantes, alertas de crisis y cuentas falsas detectadas.
@@ -81,7 +81,7 @@ Dirigir el sistema de contenido de cada marca para que los videos generen ventas
 
 ## Herramientas
 
-- Intia: Panel, Marcas (identidad y Objetivos), Videos, Calendario, Tareas, Métricas, Equipo, Actividad, Ajustes (solo el dueño), Generador IA, Generaciones, Guiones, Estructuras, Personas y Cómo se usa
+- ALSOS: Panel, Marcas (identidad y Objetivos), Videos, Calendario, Tareas, Métricas, Equipo, Actividad, Ajustes (solo el dueño), Generador IA, Generaciones, Guiones, Estructuras, Personas y Cómo se usa
 - Meta Business Suite y Administrador de anuncios (portafolio comercial, acceso de socio, 2FA, anuncios a WhatsApp, anuncios de colaboración)
 - Biblioteca de anuncios de Meta (referencias y detección de cuentas falsas)
 - Panel profesional de Instagram (estadísticas de Reels y etiqueta de colaboración pagada)
@@ -97,19 +97,19 @@ Dirigir el sistema de contenido de cada marca para que los videos generen ventas
 
 ## Nivel Principiante
 
-Montar la base: marca cargada en Intia, objetivo claro por marca, equipo con roles, permisos y cuentas seguras, ritual semanal funcionando y el mínimo legal cubierto.
+Montar la base: marca cargada en ALSOS, objetivo claro por marca, equipo con roles, permisos y cuentas seguras, ritual semanal funcionando y el mínimo legal cubierto.
 
 ### Tu rol de dueño `dueno-p1`
 
-Conocer Intia y el flujo de un video, y saber qué decisiones son del dueño, para no convertirse en el cuello de botella.
+Conocer ALSOS y el flujo de un video, y saber qué decisiones son del dueño, para no convertirse en el cuello de botella.
 
 **Videos del módulo:**
 
 - [Cómo crear contenido para marcas y vivir de esto (RÓBATE MI PROCESO y conoce cómo lo hago)](https://www.youtube.com/watch?v=YS4UksBueo0) — Ana de Agencia Rosa (es). Muestra el proceso completo de una agencia que produce contenido para marcas, de la idea a la entrega. Sirve para que el dueño vea el flujo IDEA-GUION-GRABACIÓN-EDICIÓN-PUBLICACIÓN y en qué pasos le toca decidir.
 - [4 pasos para DELEGAR sin perder el control en tu empresa](https://www.youtube.com/watch?v=oJfqgfcTJ_k) — Alejandro Izquierdo Acelerador de Negocios (es). Método práctico para delegar sin dejar de supervisar. Apoya la lección de no ser el cuello de botella en aprobaciones.
-- [📆 Como ORGANIZAR tu TIEMPO y tener MEJORES RESULTADOS ⏰ TIME BLOCKING ✅ el METODO que usa ELON MUSK](https://www.youtube.com/watch?v=wjjvMhUE3m4) — Misecretariacom (es). Explica el time blocking para ordenar la semana por bloques. Sirve para reservar horarios fijos de revisión y aprobación en Intia.
+- [📆 Como ORGANIZAR tu TIEMPO y tener MEJORES RESULTADOS ⏰ TIME BLOCKING ✅ el METODO que usa ELON MUSK](https://www.youtube.com/watch?v=wjjvMhUE3m4) — Misecretariacom (es). Explica el time blocking para ordenar la semana por bloques. Sirve para reservar horarios fijos de revisión y aprobación en ALSOS.
 
-#### Recorrido por Intia · _Checklist_
+#### Recorrido por ALSOS · _Checklist_
 
 **Objetivo:** Conocer las pantallas que usa el dueño y para qué sirve cada una.
 
@@ -144,7 +144,7 @@ Conocer Intia y el flujo de un video, y saber qué decisiones son del dueño, pa
 
 #### Mapa del flujo · _Checklist_
 
-**Objetivo:** Recorrer el camino completo de un video en Intia y ubicar quién es responsable en cada estado.
+**Objetivo:** Recorrer el camino completo de un video en ALSOS y ubicar quién es responsable en cada estado.
 
 **Pasos:**
 
@@ -159,7 +159,7 @@ Conocer Intia y el flujo de un video, y saber qué decisiones son del dueño, pa
 
 - Aprobar personalmente cada guion y cada edición.
 - Permitir que un video salte estados.
-- Creer que el community puede publicar sin la Revisión final: Intia no lo permite.
+- Creer que el community puede publicar sin la Revisión final: ALSOS no lo permite.
 - Creer que el video termina al publicarse, cuando faltan las ventas y las métricas.
 - No saber quién es responsable de un video atascado.
 
@@ -261,17 +261,17 @@ Conocer Intia y el flujo de un video, y saber qué decisiones son del dueño, pa
 
 ### Marca e identidad `dueno-p2`
 
-Cargar en Intia lo que el equipo y la IA necesitan para hablar como la marca, pensar en el cliente real y vender el producto correcto con datos exactos.
+Cargar en ALSOS lo que el equipo y la IA necesitan para hablar como la marca, pensar en el cliente real y vender el producto correcto con datos exactos.
 
 **Videos del módulo:**
 
-- [Como hacer un Manual de Marca - Yo si muestro ejemplos](https://www.youtube.com/watch?v=lqpsojxVudo) — Zeta Viez (es). Qué lleva un manual de marca, con ejemplos reales. Sirve de base para llenar la ficha de marca en Intia: logo, colores, tipografías y usos.
+- [Como hacer un Manual de Marca - Yo si muestro ejemplos](https://www.youtube.com/watch?v=lqpsojxVudo) — Zeta Viez (es). Qué lleva un manual de marca, con ejemplos reales. Sirve de base para llenar la ficha de marca en ALSOS: logo, colores, tipografías y usos.
 - [Voz y Tono de Marca: Descubre Tu Brand Voice [12 EJEMPLOS]](https://www.youtube.com/watch?v=orKs7Jbedwc) — Ivo Fiz Eꜱᴄᴜᴇʟᴀ ᴅᴇ Cᴏᴘʏᴡʀɪᴛɪɴɢ ʏ Cᴏɴᴛᴇɴɪᴅᴏꜱ (es). Cómo definir la voz y el tono de marca, con 12 ejemplos. Es justo lo que la IA y el guionista necesitan para hablar como la marca.
 - [El curso de BRANDING más corto del mundo](https://www.youtube.com/watch?v=Fq7kE3mRx5c) — Eze Cichello (es). Introducción al branding en menos de 5 minutos. Sirve para que el dueño entienda qué es la identidad de marca antes de cargarla.
 
 #### Cargar la marca · _Plantilla_
 
-**Objetivo:** Completar la ficha de la marca en Intia para que los guiones de IA y el equipo usen la misma información.
+**Objetivo:** Completar la ficha de la marca en ALSOS para que los guiones de IA y el equipo usen la misma información.
 
 **Pasos:**
 
@@ -327,7 +327,7 @@ Cargar en Intia lo que el equipo y la IA necesitan para hablar como la marca, pe
 - Inventar el público sin leer chats.
 - Definir el público como todos de 18 a 65 años.
 - Olvidar que en un regalo quien paga no es quien lo recibe.
-- Copiar datos personales de clientes en Intia o en la IA.
+- Copiar datos personales de clientes en ALSOS o en la IA.
 
 **Checklist:**
 
@@ -335,7 +335,7 @@ Cargar en Intia lo que el equipo y la IA necesitan para hablar como la marca, pe
 - [ ] 2 a 3 personas con frases literales.
 - [ ] Objeciones listadas.
 - [ ] Sin datos personales de clientes.
-- [ ] Personas cargadas en Intia.
+- [ ] Personas cargadas en ALSOS.
 
 **Práctica:** Con los chats de una semana de Con Amor, arma 2 personas y pide a la IA un guion para cada una.
 
@@ -464,7 +464,7 @@ Cargar en Intia lo que el equipo y la IA necesitan para hablar como la marca, pe
 
 ### Objetivos y KPIs `dueno-p3`
 
-Fijar un objetivo de negocio por marca, cargarlo en Intia y elegir los pocos números que dicen si vas bien.
+Fijar un objetivo de negocio por marca, cargarlo en ALSOS y elegir los pocos números que dicen si vas bien.
 
 **Videos del módulo:**
 
@@ -513,7 +513,7 @@ Fijar un objetivo de negocio por marca, cargarlo en Intia y elegir los pocos nú
 
 #### Cargar objetivos · _Caso práctico_
 
-**Objetivo:** Registrar los objetivos en Intia con el modo de cálculo correcto para seguir su avance.
+**Objetivo:** Registrar los objetivos en ALSOS con el modo de cálculo correcto para seguir su avance.
 
 **Pasos:**
 
@@ -626,12 +626,12 @@ Fijar un objetivo de negocio por marca, cargarlo en Intia y elegir los pocos nú
 
 ### Equipo y accesos `dueno-p4`
 
-Definir qué entrega cada integrante, quién decide cada cosa, qué acceso tiene cada persona en Intia y cómo se protegen las cuentas de la marca.
+Definir qué entrega cada integrante, quién decide cada cosa, qué acceso tiene cada persona en ALSOS y cómo se protegen las cuentas de la marca.
 
 **Videos del módulo:**
 
 - [¿Qué es una matriz RACI? Organiza tus proyectos 💪](https://www.youtube.com/watch?v=9ZU90s5rIuY) — Semrush en español (es). Explica la matriz RACI (responsable, aprobador, consultado, informado). Sirve para dejar claro quién decide cada paso del flujo del video.
-- [Roles en un equipo de marketing digital | Serie Marketing ep. 02](https://www.youtube.com/watch?v=E4QXniT14vU) — Coderhouse (es). Repasa los roles de un equipo de marketing digital y qué entrega cada uno. Sirve para mapearlos a los perfiles de Intia.
+- [Roles en un equipo de marketing digital | Serie Marketing ep. 02](https://www.youtube.com/watch?v=E4QXniT14vU) — Coderhouse (es). Repasa los roles de un equipo de marketing digital y qué entrega cada uno. Sirve para mapearlos a los perfiles de ALSOS.
 - [Dar accesos en Meta Business Suite a empleado o administrador](https://www.youtube.com/watch?v=h1pkrDdQYwQ) — Inteligente Digital (es). Tutorial para dar accesos por nivel (empleado o administrador) en Meta. Aplica el mínimo privilegio a cada colaborador.
 
 #### Mapa de roles · _Checklist_
@@ -680,7 +680,7 @@ Definir qué entrega cada integrante, quién decide cada cosa, qué acceso tiene
 2. En las columnas pon los roles.
 3. Marca R (lo hace), A (responde por el resultado), C (se le consulta) e I (se le informa).
 4. Regla de oro: un solo A por fila.
-5. Ejemplos: guion, R guionista, A coordinación, C dueño solo si hay oferta nueva, I filmmaker y talento. Calidad de edición, R editor, A jefe de editores. Revisión final en Intia, R jefe de editores (revisa), A coordinación (marca el check). Presupuesto de pauta, R coordinación, A dueño.
+5. Ejemplos: guion, R guionista, A coordinación, C dueño solo si hay oferta nueva, I filmmaker y talento. Calidad de edición, R editor, A jefe de editores. Revisión final en ALSOS, R jefe de editores (revisa), A coordinación (marca el check). Presupuesto de pauta, R coordinación, A dueño.
 6. Revísala 30 minutos con el equipo y publícala.
 
 **Errores comunes:**
@@ -709,7 +709,7 @@ Definir qué entrega cada integrante, quién decide cada cosa, qué acceso tiene
 
 #### Invitar y dar permisos · _Caso práctico_
 
-**Objetivo:** Dar a cada persona solo los perfiles y las marcas que necesita en Intia.
+**Objetivo:** Dar a cada persona solo los perfiles y las marcas que necesita en ALSOS.
 
 **Pasos:**
 
@@ -751,7 +751,7 @@ Definir qué entrega cada integrante, quién decide cada cosa, qué acceso tiene
 
 **Pasos:**
 
-1. Las cuentas de Meta, TikTok, WhatsApp Business e Intia están a nombre de la empresa y el dueño es el administrador principal.
+1. Las cuentas de Meta, TikTok, WhatsApp Business y ALSOS están a nombre de la empresa y el dueño es el administrador principal.
 2. Mantén al menos 2 administradores de confianza en el portafolio comercial de Meta y en el Business Center de TikTok para no quedar bloqueado.
 3. Activa la verificación en dos pasos (2FA) obligatoria para todo el portafolio, de preferencia con una app de autenticación y no por SMS.
 4. En WhatsApp Business activa la verificación en dos pasos con PIN y nunca compartas el código de 6 dígitos que llega por SMS: pedirlo por error es la estafa más común para robar cuentas.
@@ -791,7 +791,7 @@ Definir qué entrega cada integrante, quién decide cada cosa, qué acceso tiene
 
 **Pasos:**
 
-1. El trabajo de los videos se comenta dentro de Intia (comentarios y tareas).
+1. El trabajo de los videos se comenta dentro de ALSOS (comentarios y tareas).
 2. El grupo de WhatsApp del equipo es solo para bloqueos del día.
 3. Las decisiones se registran en la tarea o en el video, no en audios sueltos.
 4. Tiempos de respuesta: bloqueo en grabación, 2 h; revisión de guion, 24 h; revisión final, 24 h; reclamo de cliente, según su prioridad.
@@ -815,7 +815,7 @@ Definir qué entrega cada integrante, quién decide cada cosa, qué acceso tiene
 
 **Práctica:** Escribe el acuerdo en 1 página y léelo en el ritual.
 
-**Se aprueba cuando:** En 2 semanas, el 90% de las aprobaciones queda registrado en Intia.
+**Se aprueba cuando:** En 2 semanas, el 90% de las aprobaciones queda registrado en ALSOS.
 
 <details><summary>Fuentes</summary>
 
@@ -881,7 +881,7 @@ Una reunión fija de 45 minutos con un tablero de números que convierte datos e
 1. Elige de 5 a 7 números semanales y asigna un responsable a cada uno.
 2. Ejemplo para Con Amor: videos publicados frente al plan (community); vistas totales y retención a 3 s promedio (analista); compartidos más guardados (analista); conversaciones por WhatsApp y DM (ATC); pedidos y ventas en S/ (ATC); inversión en pauta y costo por pedido (coordinación).
 3. Pon una meta semanal a cada número.
-4. Anota la fuente de cada uno: Métricas de Intia, reporte de ATC o Ads Manager.
+4. Anota la fuente de cada uno: Métricas de ALSOS, reporte de ATC o Ads Manager.
 5. El analista lo llena antes del lunes a las 9:00.
 6. Un número bajo su meta es rojo y pasa a la lista de problemas.
 
@@ -949,7 +949,7 @@ Una reunión fija de 45 minutos con un tablero de números que convierte datos e
 
 #### Tareas con dueño · _Checklist_
 
-**Objetivo:** Convertir cada decisión del ritual en una tarea visible en Intia.
+**Objetivo:** Convertir cada decisión del ritual en una tarea visible en ALSOS.
 
 **Pasos:**
 
@@ -975,9 +975,9 @@ Una reunión fija de 45 minutos con un tablero de números que convierte datos e
 - [ ] Vinculada a la marca o al video.
 - [ ] Revisada al lunes siguiente.
 
-**Práctica:** Registra en Intia, durante la reunión, todas las tareas del ritual.
+**Práctica:** Registra en ALSOS, durante la reunión, todas las tareas del ritual.
 
-**Se aprueba cuando:** El 100% de los acuerdos del ritual tiene su tarea en Intia antes de terminar la reunión.
+**Se aprueba cuando:** El 100% de los acuerdos del ritual tiene su tarea en ALSOS antes de terminar la reunión.
 
 <details><summary>Fuentes</summary>
 
@@ -1357,7 +1357,7 @@ Costo por video, margen por producto, ROAS de equilibrio, atribución de ventas 
 
 1. ATC pregunta en cada chat por qué video encontró la marca, o se usa un código por video (por ejemplo, AMOR-TAZA12).
 2. ATC anota en una planilla: fecha, canal, video o código, producto, monto en S/, estado (cerrada o perdida) y motivo si se perdió.
-3. ATC y el analista usan el mismo código o título del video que figura en Intia.
+3. ATC y el analista usan el mismo código o título del video que figura en ALSOS.
 4. En los anuncios a WhatsApp, toma las conversaciones iniciadas de Ads Manager y crúzalas con los cierres.
 5. Cada semana, el analista carga en Métricas los leads, pedidos e ingresos de cada video.
 6. Calcula la tasa de cierre: pedidos ÷ conversaciones.
@@ -1367,13 +1367,13 @@ Costo por video, margen por producto, ROAS de equilibrio, atribución de ventas 
 - Contar las conversaciones como ventas.
 - Que ATC no pregunte el origen.
 - Registrar solo las ventas cerradas y no las perdidas.
-- Usar nombres distintos del video en la planilla y en Intia.
+- Usar nombres distintos del video en la planilla y en ALSOS.
 
 **Checklist:**
 
 - [ ] Pregunta o código de origen en cada chat.
 - [ ] Planilla con ventas cerradas y perdidas.
-- [ ] Mismo código que en Intia.
+- [ ] Mismo código que en ALSOS.
 - [ ] Carga semanal en Métricas.
 - [ ] Tasa de cierre calculada.
 
@@ -1951,7 +1951,7 @@ Perfiles de puesto por resultados, pruebas pagadas, casting de talento, inducci�
 **Pasos:**
 
 1. Arma una tarjeta por rol con 3 a 5 KPIs. Editor: videos entregados, % aprobados sin segunda corrección y tiempo promedio. ATC: tasa de cierre, tiempo de respuesta y reclamos.
-2. Toma los datos de Intia (Tareas, Videos, Métricas y Actividad) y de los reportes.
+2. Toma los datos de ALSOS (Tareas, Videos, Métricas y Actividad) y de los reportes.
 3. Reunión de 20 minutos: qué salió bien, qué mejorar y un compromiso.
 4. Registra la evaluación y compárala mes a mes.
 5. Si alguien está 2 meses seguidos bajo el estándar, acuerden un plan de mejora con fecha. Si no mejora, se cambia a la persona.
@@ -1965,7 +1965,7 @@ Perfiles de puesto por resultados, pruebas pagadas, casting de talento, inducci�
 **Checklist:**
 
 - [ ] Tarjeta por rol.
-- [ ] Datos de Intia.
+- [ ] Datos de ALSOS.
 - [ ] Conversación de 20 minutos.
 - [ ] Compromiso registrado.
 
@@ -2505,8 +2505,8 @@ Registro en Indecopi, plan de crisis, cuentas falsas y auditoría trimestral de 
 
 **Pasos:**
 
-1. En Intia, Equipo: revisa que cada persona tenga los perfiles y las marcas correctos y desactiva a quienes ya no trabajan contigo.
-2. En Intia, Actividad: revisa los cambios inusuales (borrados o cambios de estado masivos).
+1. En ALSOS, Equipo: revisa que cada persona tenga los perfiles y las marcas correctos y desactiva a quienes ya no trabajan contigo.
+2. En ALSOS, Actividad: revisa los cambios inusuales (borrados o cambios de estado masivos).
 3. En Meta y TikTok: revisa usuarios, socios, administradores (mínimo 2) y métodos de pago.
 4. Revisa quién tiene acceso a las carpetas de contratos y datos de clientes.
 5. Cambia las contraseñas compartidas que existan, aunque no debería haberlas.
@@ -2786,8 +2786,8 @@ Decidir qué delegar según lo que vale la hora del dueño y pasar lo que sabe a
 
 1. Trata cada puesto como si fuera a replicarse en otra sede: sin depender del talento individual.
 2. Estructura del manual: propósito del puesto, entradas (qué recibe y de quién), pasos por etapa del video, estándar de calidad, KPIs, herramientas y errores comunes.
-3. Usa esta misma sección de manuales de Intia (Cómo se usa) como base para cada rol.
-4. Agrega los checklists de cada etapa, los mismos pasos de la lista de control que ya existen en Intia.
+3. Usa esta misma sección de manuales de ALSOS (Cómo se usa) como base para cada rol.
+4. Agrega los checklists de cada etapa, los mismos pasos de la lista de control que ya existen en ALSOS.
 5. Pide a una persona nueva que siga el manual y anota dónde se traba.
 
 **Errores comunes:**
@@ -2853,7 +2853,7 @@ Decidir qué delegar según lo que vale la hora del dueño y pasar lo que sabe a
 
 ### Dirección y portafolio `dueno-a5`
 
-Prioridades trimestrales, rentabilidad y precio por marca o cliente, informes a clientes y control de la IA en Intia.
+Prioridades trimestrales, rentabilidad y precio por marca o cliente, informes a clientes y control de la IA en ALSOS.
 
 **Videos del módulo:**
 
@@ -2944,7 +2944,7 @@ Prioridades trimestrales, rentabilidad y precio por marca o cliente, informes a 
 **Pasos:**
 
 1. Estructura de 1 página: objetivo del mes y avance, videos publicados, top 3 videos y por qué funcionaron, conversaciones y ventas o reservas, inversión y costo por resultado, aprendizajes y plan del mes siguiente.
-2. Toma los datos de Métricas y de Objetivos en Intia.
+2. Toma los datos de Métricas y de Objetivos en ALSOS.
 3. Explica con lenguaje de negocio, no de redes.
 4. Envíalo en los 5 primeros días hábiles del mes.
 5. Agenda 20 minutos para comentarlo con el cliente.
@@ -2976,7 +2976,7 @@ Prioridades trimestrales, rentabilidad y precio por marca o cliente, informes a 
 
 #### IA bajo control · _Checklist_
 
-**Objetivo:** Controlar quién usa la IA de Intia, cuánto cuesta y con qué calidad.
+**Objetivo:** Controlar quién usa la IA de ALSOS, cuánto cuesta y con qué calidad.
 
 **Pasos:**
 
@@ -3015,7 +3015,7 @@ Prioridades trimestrales, rentabilidad y precio por marca o cliente, informes a 
 
 CRÍTICA Y CORRECCIONES PRINCIPALES (versión final)
 
-1) Datos de la app (verificados en el código de Intia, no en supuestos)
+1) Datos de la app (verificados en el código de ALSOS, no en supuestos)
 - Faltaba el estado APROBADO. El flujo real es IDEA → GUION → APROBADO → GRABACIÓN → EDICIÓN → PROGRAMADO → PUBLICADO, con PAUSADO y CANCELADO como salidas (src/lib/constants.ts).
 - Las 2 aprobaciones obligatorias ('Guion aprobado por la marca' y 'Revisión final aprobada') requieren content.approve, que solo tienen STRATEGY y OWNER (src/lib/permissions.ts). El currículo decía que el jefe de editores aprobaba la edición final, y eso no es posible con el perfil Editor. Se corrigió en el SOP, en la RACI, en Qué decide el dueño y en Invitar y dar permisos, con opciones explícitas para el jefe de editores y ATC mientras no tengan perfil propio.
 - PUBLISHER solo puede publicar si existe FINAL_APPROVAL (confirmado): el criterio de aprobación de esa lección ahora es verificable.
@@ -3044,7 +3044,7 @@ CRÍTICA Y CORRECCIONES PRINCIPALES (versión final)
 - Se agregaron la advertencia de alcohol (Ley 28681) para restaurantes, la Commercial Music Library también en orgánico, el art. 58 del Código de Consumo sobre el consentimiento para publicidad por WhatsApp, la escalada de crisis en 1 h desde el nivel Principiante y las fechas de la sierra (Carnavales, Inti Raymi, fiestas patronales), el Día del Niño Peruano, la Canción Criolla y el Cyber Wow.
 
 4) Progresión y SOP
-- Se reordenó para ir de lo básico a lo aplicado: Recorrido por Intia antes de Mapa del flujo, Público antes de Tono, Cargar objetivos justo después de Objetivo del mes y Tarifa por hora antes de Método cámara. Los ids de lección se conservaron; el orden del arreglo es el orden de visualización.
+- Se reordenó para ir de lo básico a lo aplicado: Recorrido por ALSOS antes de Mapa del flujo, Público antes de Tono, Cargar objetivos justo después de Objetivo del mes y Tarifa por hora antes de Método cámara. Los ids de lección se conservaron; el orden del arreglo es el orden de visualización.
 - SOP: la evaluación del equipo pasó de trimestral a mensual, para que coincida con las responsabilidades. El cierre mensual ahora incluye ofertas, evaluaciones e informe a clientes. Se agregó el paso de salida de un integrante el mismo día. Las autorizaciones de terceros se exigen antes de EDICIÓN, y la etapa EDICIÓN refleja quién marca la Revisión final.
 - Se conservaron los 16 ids de módulo (dueno-p1…p6, i1…i5, a1…a5) para no perder los videos verificados. El título de p4 cambió a 'Equipo y accesos'. Los videos de a2 (2FA) siguen siendo pertinentes para la auditoría. Los de p4 (accesos en Meta) sirven para la lección 2FA movida.
 

@@ -1,6 +1,6 @@
 # Manual de procedimientos — Actor / Talento / Voz (perfil TALENT)
 
-Perfil en Intia: TALENT · Borrador v1 (2026-09-28) para revisión del dueño.
+Perfil en ALSOS: TALENT · Borrador v1 (2026-09-28) para revisión del dueño.
 
 ## Misión
 
@@ -8,7 +8,7 @@ Dar vida al guion aprobado frente a cámara y al micrófono con naturalidad, ene
 
 ## Responsabilidades
 
-- Pedir a coordinación que mantenga al día tu perfil en Intia > Personas: lo que te sale natural, lo que evitas, tus palabras de tono y tu energía (1-5). El generador de guiones usa ese perfil para escribir con tu voz.
+- Pedir a coordinación que mantenga al día tu perfil en ALSOS > Personas: lo que te sale natural, lo que evitas, tus palabras de tono y tu energía (1-5). El generador de guiones usa ese perfil para escribir con tu voz.
 - Estudiar el guion aprobado por escenas antes de grabar: gancho, beats, datos obligatorios (precio, plazo, garantía, duración y stock de la promoción) y CTA. Marcar respiraciones, pausas y énfasis, y memorizar lo que va textual.
 - Confirmar asistencia y vestuario a tiempo para que producción cierre los checks 'Actor asignado y confirmado' y 'Props / vestuario conseguidos'.
 - Firmar la autorización de uso de imagen y voz antes de la primera grabación y apoyar a producción con las autorizaciones de las personas reales.
@@ -27,7 +27,7 @@ Dar vida al guion aprobado frente a cámara y al micrófono con naturalidad, ene
 
 ## Procedimiento (SOP)
 
-1. 1. PERFIL (al ingresar y cada trimestre): en Intia > Personas revisa tu perfil. Solo tienes acceso de lectura, así que pide a coordinación que actualice lo que te sale natural, lo que evitas, tus palabras de tono y tu energía (1-5). Así los guiones generados con IA suenan a ti y llegan menos frases que no te salen.
+1. 1. PERFIL (al ingresar y cada trimestre): en ALSOS > Personas revisa tu perfil. Solo tienes acceso de lectura, así que pide a coordinación que actualice lo que te sale natural, lo que evitas, tus palabras de tono y tu energía (1-5). Así los guiones generados con IA suenan a ti y llegan menos frases que no te salen.
 2. 2. IDEA / GUION (48-72 h antes): en Videos y Calendario revisa los videos que te asignaron y su fecha de grabación. Si el guion sigue en estado GUION, deja en comentarios las frases que no suenan naturales en tu boca y cualquier límite o riesgo (contacto físico, calle con tráfico, alergias con la comida). No cambies datos comerciales.
 3. 3. APROBADO (24-48 h antes): lee el guion aprobado completo en voz alta y divídelo por escenas. Marca gancho, palabra clave por bloque, respiraciones (⊥), pausas (/ //), precio y CTA, y anota la energía (1-10) de cada escena. Memoriza con el método del manual: textual el gancho, los claims, el precio, la duración y el stock de la promoción, y el CTA.
 4. 4. PREPRODUCCIÓN (24 h antes): confirma tu asistencia a producción para que marque 'Actor asignado y confirmado'. Envía una foto de tus 2 cambios de vestuario (colores lisos medios, sin logos ajenos, sin rayas finas, sin telas ruidosas) para 'Props / vestuario conseguidos'. Si eres talento nuevo o tu autorización venció, fírmala antes de grabar. Si hay tendencia, confirma con el community que el audio está permitido.
@@ -56,7 +56,7 @@ Dar vida al guion aprobado frente a cámara y al micrófono con naturalidad, ene
 **Entrega a:**
 
 - Filmmaker / CAMERA: interpretación completa por escena con variantes de gancho identificadas, marcas cumplidas, aire al inicio y al final, fotos de continuidad y audios (VO, wild lines) para que los suba a Archivos del video.
-- Editor / Jefe de editores: tomas limpias, wild lines, voz en off con room tone y frases dobladas (archivos nombrados VO_marca_video_fecha, entregados vía filmmaker o producción), más un comentario de texto en Intia con mejores tomas y notas de continuidad.
+- Editor / Jefe de editores: tomas limpias, wild lines, voz en off con room tone y frases dobladas (archivos nombrados VO_marca_video_fecha, entregados vía filmmaker o producción), más un comentario de texto en ALSOS con mejores tomas y notas de continuidad.
 - Producción / PRODUCTION: asistencia confirmada, foto de vestuario validada, autorización de uso de imagen y voz firmada antes de grabar y devolución de props.
 - Coordinación / STRATEGY y Guionista: comentarios sobre frases poco naturales, límites o riesgos detectados en el guion, propuestas de variantes de gancho o cierre y datos para actualizar tu perfil en Personas.
 - Community manager / PUBLISHER: CTA de comunidad grabados en varias versiones, comentarios ofensivos recibidos en tus redes y disponibilidad para colaboraciones autorizadas.
@@ -79,7 +79,7 @@ Dar vida al guion aprobado frente a cámara y al micrófono con naturalidad, ene
 
 ## Herramientas
 
-- Intia, perfil TALENT: Videos y Calendario (solo los asignados), Guiones, Tareas, comentarios de texto en cada video y la sección Personas en modo lectura. No permite subir archivos ni ver Métricas.
+- ALSOS, perfil TALENT: Videos y Calendario (solo los asignados), Guiones, Tareas, comentarios de texto en cada video y la sección Personas en modo lectura. No permite subir archivos ni ver Métricas.
 - Guion impreso o en PDF y lápiz para marcar (⊥ respiración, / pausa, subrayado para énfasis).
 - App de teleprompter para ensayo y talking heads (por ejemplo BIGVU, PromptSmart o una gratuita) y la cámara del celular para grabarte.
 - Trípode de celular, aro de luz o panel LED y micrófono corbatero (lavalier) o inalámbrico con protector de viento.
@@ -826,7 +826,7 @@ Cómo arrancar para que no deslicen: empezar en acción, con una primera frase p
 - [ ] Variantes identificadas con dedos o voz.
 - [ ] 2 s de aire antes y después.
 
-**Práctica:** En tu próxima grabación real entrega las variantes A, B y C del gancho y anota en el comentario del video en Intia cuál prefieres y por qué.
+**Práctica:** En tu próxima grabación real entrega las variantes A, B y C del gancho y anota en el comentario del video en ALSOS cuál prefieres y por qué.
 
 **Se aprueba cuando:** En 3 grabaciones seguidas el editor recibe al menos 3 variantes identificadas del gancho sin que nadie las pida.
 
@@ -1153,7 +1153,7 @@ Calentar, respirar, memorizar y decir el precio y la llamada a la acción de for
 - [ ] Trabalenguas.
 - [ ] Gancho y CTA en voz alta.
 
-**Práctica:** Durante una semana haz la rutina antes de cada grabación y anota en el comentario de tu tarea en Intia cuántas tomas repetiste por trabas de dicción.
+**Práctica:** Durante una semana haz la rutina antes de cada grabación y anota en el comentario de tu tarea en ALSOS cuántas tomas repetiste por trabas de dicción.
 
 **Se aprueba cuando:** Las tomas repetidas por trabas bajan a 1 o menos por escena durante 3 grabaciones seguidas.
 
@@ -1170,7 +1170,7 @@ Calentar, respirar, memorizar y decir el precio y la llamada a la acción de for
 
 **Pasos:**
 
-1. Abre el guion aprobado en Intia (o impreso) y léelo completo en voz alta una vez.
+1. Abre el guion aprobado en ALSOS (o impreso) y léelo completo en voz alta una vez.
 2. Divídelo en bloques de 8-12 palabras (una respiración) y marca cada respiración con '⊥' (T invertida).
 3. Subraya una sola palabra clave por bloque (beneficio, precio, lugar o plazo).
 4. Marca las pausas cortas con '/' (0,3 s) y las largas con '//' (0,8 s) antes de lo importante: lo que sigue a una pausa se percibe como más importante.
@@ -1340,7 +1340,7 @@ Cómo vestirte, cómo llegar, cómo cuidar el micrófono, cómo comportarte entr
 
 **Pasos:**
 
-1. 24 h antes revisa en Intia la grabación (fecha, locación y guion aprobado) y confirma tu asistencia para que producción marque 'Actor asignado y confirmado'.
+1. 24 h antes revisa en ALSOS la grabación (fecha, locación y guion aprobado) y confirma tu asistencia para que producción marque 'Actor asignado y confirmado'.
 2. Si eres talento nuevo o tu autorización venció, fírmala antes del día de grabación (ver 'Firmar tu imagen').
 3. Arreglo personal: cabello y uñas limpios, polvo matificante contra el brillo y quitapelusas para las poleras de algodón.
 4. Kit: agua al tiempo, guion marcado, cargador, lápiz, pañitos y un snack sin migas.
@@ -1356,7 +1356,7 @@ Cómo vestirte, cómo llegar, cómo cuidar el micrófono, cómo comportarte entr
 
 **Checklist:**
 
-- [ ] Asistencia confirmada en Intia.
+- [ ] Asistencia confirmada en ALSOS.
 - [ ] Autorización vigente.
 - [ ] Kit completo.
 - [ ] Llegada 30 min antes.
@@ -1949,7 +1949,7 @@ Escuchar de verdad, reaccionar con la cara correcta y regular la energía según
 **Pasos:**
 
 1. Define tu 5 (conversación normal con un amigo) grabándote 20 s.
-2. Relaciónalo con tu perfil en Intia > Personas, que mide la energía de 1 a 5. Tu nivel del perfil multiplicado por 2 es tu punto de partida natural en esta escala (un 3 en el perfil equivale a 6 aquí).
+2. Relaciónalo con tu perfil en ALSOS > Personas, que mide la energía de 1 a 5. Tu nivel del perfil multiplicado por 2 es tu punto de partida natural en esta escala (un 3 en el perfil equivale a 6 aquí).
 3. Referencias por formato: Testimonio 4-5. UGC y Vlog 6. Tutorial 5-6. Sketch 7-8. Cómplice de Cámara Escondida 4-5. Cierre con oferta 7.
 4. Ajusta según el plano: en primer plano reduce 1-2 puntos el tamaño del gesto, pero mantén la intención; en plano entero súbelo 1.
 5. La energía está en la intención y el ritmo, no en gritar: sube la velocidad de pensamiento, la articulación y la mirada.
@@ -2148,7 +2148,7 @@ Que las tomas empaten en el montaje: mismas manos, mismos props, mismo estado em
 
 1. Al terminar cada escena, pide (o toma tú) una foto de cuerpo entero de frente, de perfil y de espalda.
 2. Toma fotos de detalle de las manos (anillos, qué prop va en qué mano), el peinado y las mangas.
-3. Pásale las fotos al filmmaker o a producción para que las suban a Archivos del video en Intia (el perfil TALENT no sube archivos).
+3. Pásale las fotos al filmmaker o a producción para que las suban a Archivos del video en ALSOS (el perfil TALENT no sube archivos).
 4. Deja en el comentario del video una nota de texto con el vestuario, los props, el nivel del líquido y la mano que usaste.
 5. Guarda el vestuario de la escena en una bolsa rotulada con el nombre del video hasta que el editor confirme que no hay pick-ups.
 6. Si hay pick-up, usa las fotos para reproducir todo antes de grabar.
@@ -2866,7 +2866,7 @@ Sostener personajes recurrentes, cierres de venta legales y escenas complejas en
 
 ### Personaje y marca `ACT-A1`
 
-Crear personajes recurrentes que el público reconozca, alinearlos con tu perfil en Intia y publicar desde tu cuenta sin chocar con la marca ni con la ley.
+Crear personajes recurrentes que el público reconozca, alinearlos con tu perfil en ALSOS y publicar desde tu cuenta sin chocar con la marca ni con la ley.
 
 **Videos del módulo:**
 
@@ -2886,7 +2886,7 @@ Crear personajes recurrentes que el público reconozca, alinearlos con tu perfil
 4. Voz: ritmo, una sola muletilla y las expresiones regionales permitidas.
 5. Relación con la marca: cómo aparece el producto en su vida sin que sea un anuncio.
 6. Límites: lo que el personaje nunca hace (burlarse de clientes, estereotipos ofensivos).
-7. Dónde se guarda. Si eres tú mismo con tu estilo, coordinación actualiza tu perfil en Intia > Personas (lo que te sale natural, lo que evitas, palabras de tono, energía) para que el generador escriba en tu voz. Si es un personaje ficticio, coordinación sube la ficha como archivo de la marca para que la usen el guionista y el generador.
+7. Dónde se guarda. Si eres tú mismo con tu estilo, coordinación actualiza tu perfil en ALSOS > Personas (lo que te sale natural, lo que evitas, palabras de tono, energía) para que el generador escriba en tu voz. Si es un personaje ficticio, coordinación sube la ficha como archivo de la marca para que la usen el guionista y el generador.
 
 **Errores comunes:**
 
@@ -2904,7 +2904,7 @@ Crear personajes recurrentes que el público reconozca, alinearlos con tu perfil
 - [ ] Voz y muletilla.
 - [ ] Relación con la marca.
 - [ ] Límites escritos.
-- [ ] Ficha registrada en Intia vía coordinación.
+- [ ] Ficha registrada en ALSOS vía coordinación.
 
 **Práctica:** Crea la ficha de un personaje para Con Amor y otra para el restaurante, y grábate 20 s como cada uno.
 
@@ -3740,7 +3740,7 @@ Contratos de imagen, salud física, límites personales, lectura de tus métrica
 
 REVISIÓN CRÍTICA (28-09-2026) Y CORRECCIONES APLICADAS
 
-1. Permisos reales de Intia (verificados en src/lib/permissions.ts y prisma/schema.prisma). El perfil TALENT solo ve sus videos, guiones, calendario y tareas asignados; puede comentar en texto y ver Personas. No puede subir archivos (no tiene assets.write), no edita Personas, no marca checks y no ve Métricas, y las tareas no admiten adjuntos. Corregí todos los pasos que decían 'sube a Intia' (fotos de continuidad, voz en off, guion marcado, ganchos, ADR): ahora el talento entrega el material al filmmaker o a producción, que lo suben a Archivos del video, y deja un comentario de texto. Las métricas se las comparte el analista.
+1. Permisos reales de ALSOS (verificados en src/lib/permissions.ts y prisma/schema.prisma). El perfil TALENT solo ve sus videos, guiones, calendario y tareas asignados; puede comentar en texto y ver Personas. No puede subir archivos (no tiene assets.write), no edita Personas, no marca checks y no ve Métricas, y las tareas no admiten adjuntos. Corregí todos los pasos que decían 'sube a ALSOS' (fotos de continuidad, voz en off, guion marcado, ganchos, ADR): ahora el talento entrega el material al filmmaker o a producción, que lo suben a Archivos del video, y deja un comentario de texto. Las métricas se las comparte el analista.
 
 2. Integré la sección Personas (/arquetipos). El generador de guiones usa de cada persona lo que le sale natural, lo que evita, sus palabras de tono y su energía (1-5). El SOP empieza por mantener ese perfil al día a través de coordinación, y relacioné la escala de energía 1-10 del manual con la escala 1-5 de la app (multiplicar por 2). La ficha de personaje distingue entre una persona real (su perfil en Personas) y un personaje ficticio (archivo de la marca).
 

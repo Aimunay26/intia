@@ -41,7 +41,7 @@ async function downloadCalendar(request: Request) {
     if (inWindow(video.shootDate)) items.push({ uid: uid("shoot", video.id), title: `Grabar · ${video.brand.name}: ${video.title}`, start: video.shootDate, allDay: true, updatedAt: video.updatedAt });
   }
   for (const event of events) items.push({ uid: uid("event", event.id), title: event.title, start: event.startAt, end: event.endAt, allDay: event.allDay, updatedAt: event.updatedAt });
-  return new NextResponse(buildIcs(subscription.brand ? `Intia · ${subscription.brand.name}` : "Intia · Agenda completa", items), {
-    headers: { ...CALENDAR_CACHE_HEADERS, "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": 'inline; filename="intia.ics"' },
+  return new NextResponse(buildIcs(subscription.brand ? `ALSOS · ${subscription.brand.name}` : "ALSOS · Agenda completa", items), {
+    headers: { ...CALENDAR_CACHE_HEADERS, "Content-Type": "text/calendar; charset=utf-8", "Content-Disposition": 'inline; filename="alsos.ics"' },
   });
 }

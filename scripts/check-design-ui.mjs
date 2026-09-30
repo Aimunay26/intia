@@ -83,7 +83,7 @@ export async function checkDesignUi(page, base, db) {
         assert.ok(dimensions.scroll<=dimensions.client+1,`${route} ${width} ${theme}: desborde ${dimensions.scroll}`);
         assert.ok(dimensions.font.includes('Manrope'));
         checks.viewports.push({width,theme,route});
-        if(route==='/'&&(width===1440||width===360))await page.screenshot({path:`.audit/intia-${theme}-${width}.png`,animations:'disabled'});
+        if(route==='/'&&(width===1440||width===360))await page.screenshot({path:`.audit/alsos-${theme}-${width}.png`,animations:'disabled'});
       }
       if(width<1024){
         await page.getByRole('button',{name:'Abrir menú',exact:true}).click();

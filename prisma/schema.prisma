@@ -1,5 +1,5 @@
 // ============================================================================
-//  MARKETING OS - Esquema de base de datos
+//  ALSOS - Esquema de base de datos
 //  PostgreSQL en desarrollo y produccion (consultas analiticas especificas).
 //  Se conserva el modelo existente sin enums ni listas escalares.
 //  Los campos que guardan estructuras se almacenan como String con JSON.

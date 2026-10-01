@@ -27,6 +27,7 @@ import {
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getTeamParticipation } from "@/lib/team-participation";
+import { profileCardsEnabled } from "@/lib/team-profile-cards";
 import { cn, formatDate } from "@/lib/utils";
 import {
 	EditUserButton,
@@ -49,6 +50,7 @@ export default async function EquipoPage({
 }) {
   return measurePagePhase("page:/equipo", async () => {
   const user = await requirePageSection("team");
+  const tarjetas = profileCardsEnabled();
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="team" query={await searchParams} />;
   const sp = singleQueryValues(await searchParams);
   const canManage = can(user.role, LEVEL.OWNER);
@@ -101,7 +103,7 @@ export default async function EquipoPage({
             {yo ? (
               <EditUserButton
                 member={conArchivadas(yo)}
-                archetypes={opcionesArquetipo} brands={brands}
+                archetypes={opcionesArquetipo} brands={brands} cards={tarjetas}
                 canManage={canManage}
                 isSelf
                 puedeDesactivar={false}
@@ -110,7 +112,7 @@ export default async function EquipoPage({
                 label="Mi perfil y contraseña"
               />
             ) : null}
-            {canManage ? <InviteUserButton archetypes={opcionesArquetipo} brands={brands} /> : null}
+            {canManage ? <InviteUserButton archetypes={opcionesArquetipo} brands={brands} cards={tarjetas} /> : null}
           </>
         }
       />
@@ -297,7 +299,7 @@ export default async function EquipoPage({
                         {canManage || isSelf ? (
                           <EditUserButton
                             member={conArchivadas(p)}
-                            archetypes={opcionesArquetipo} brands={brands}
+                            archetypes={opcionesArquetipo} brands={brands} cards={tarjetas}
                             canManage={canManage}
                             isSelf={isSelf}
                             puedeDesactivar={canManage && !isSelf}

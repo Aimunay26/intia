@@ -85,7 +85,9 @@ export function Modal({
       <div className="fixed inset-0 bg-black/45 backdrop-blur-[2px]" onClick={onClose} />
       <div
         ref={dialogRef}
-        className="card fade-in relative w-full shadow-[var(--shadow-3)] max-sm:mt-auto max-sm:rounded-b-none! max-sm:border-b-0! sm:my-auto"
+        // text-left/whitespace-normal: el Modal se pinta en línea (sin portal) y a veces vive dentro
+        // de una celda alineada a la derecha (Equipo → «Editar»); no debe heredar esa alineación.
+        className="card fade-in relative w-full text-left whitespace-normal shadow-[var(--shadow-3)] max-sm:mt-auto max-sm:rounded-b-none! max-sm:border-b-0! sm:my-auto"
         style={{ maxWidth: width }}
         role="dialog"
         aria-modal="true"

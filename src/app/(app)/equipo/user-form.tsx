@@ -4,12 +4,23 @@ import { EditForm, RevisionField } from "@/components/edit-form";
 import { useActionState, useEffect, useState } from "react";
 import {
   AlertCircle,
+  BarChart3,
+  Check,
   CheckCircle2,
+  ClipboardList,
+  Compass,
   KeyRound,
+  Megaphone,
+  Mic,
+  Palette,
   Pencil,
+  PenLine,
   Power,
+  Scissors,
   Trash2,
   UserPlus,
+  Video,
+  type LucideIcon,
 } from "lucide-react";
 
 import {
@@ -20,7 +31,7 @@ import {
   eliminarUsuario,
   type TeamState,
 } from "@/app/actions/team";
-import { WORK_PROFILES } from "@/lib/permissions";
+import { WORK_PROFILES, type WorkProfile } from "@/lib/permissions";
 import { PALETTE, USER_ROLES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Divider, Field, SectionTitle } from "@/components/ui";
@@ -105,6 +116,79 @@ function ColorPicker({ name, defaultValue }: { name: string; defaultValue: strin
   );
 }
 
+/* --------------------------------------------- PERFILES Y MARCAS EN TARJETAS -- */
+
+const PROFILE_ICONS: Record<WorkProfile, LucideIcon> = {
+  STRATEGY: Compass,
+  WRITER: PenLine,
+  PRODUCTION: ClipboardList,
+  CAMERA: Video,
+  TALENT: Mic,
+  EDITOR: Scissors,
+  DESIGNER: Palette,
+  PUBLISHER: Megaphone,
+  ANALYST: BarChart3,
+};
+
+// La casilla real (name="profiles" / "brandIds") queda oculta pero accesible: el teclado la
+// marca con espacio y el aro de foco se dibuja en la tarjeta. El servidor recibe lo mismo de siempre.
+const SELECTABLE =
+  "group border-line bg-surface hover:border-linestrong hover:bg-surface2 has-[:checked]:border-brand has-[:checked]:bg-brandsoft has-[:focus-visible]:ring-brand/40 flex cursor-pointer border text-left transition-colors has-[:focus-visible]:ring-2";
+
+function CheckMark() {
+  return (
+    <span
+      aria-hidden
+      className="border-linestrong bg-surface text-brand-ink group-has-[:checked]:border-brand group-has-[:checked]:bg-brand grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors"
+    >
+      <Check size={13} strokeWidth={3} className="opacity-0 transition-opacity group-has-[:checked]:opacity-100" />
+    </span>
+  );
+}
+
+function ProfileCards({ selected }: { selected?: readonly string[] }) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {WORK_PROFILES.map((p) => {
+        const Icon = PROFILE_ICONS[p.id];
+        return (
+          <label key={p.id} className={cn(SELECTABLE, "items-start gap-3 rounded-xl p-3")}>
+            <input type="checkbox" name="profiles" value={p.id} defaultChecked={selected?.includes(p.id)} className="sr-only" />
+            <span
+              aria-hidden
+              className="bg-surface2 text-inksoft group-has-[:checked]:bg-brand group-has-[:checked]:text-brand-ink grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors"
+            >
+              <Icon size={17} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="text-ink block text-[13px] leading-tight font-semibold">{p.label}</span>
+              <span className="text-inkmuted mt-1 block text-[11.5px] leading-snug">{p.description}</span>
+            </span>
+            <CheckMark />
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+function BrandChips({ brands, selected }: { brands: ArchetypeOption[]; selected?: readonly string[] }) {
+  if (!brands.length) return <p className="text-inkmuted text-[12.5px]">Todavía no hay marcas activas. Créalas en Marcas y vuelve aquí.</p>;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {brands.map((b) => (
+        <label key={b.id} className={cn(SELECTABLE, "text-ink items-center gap-2 rounded-full py-1.5 pr-3.5 pl-1.5 text-[12.5px] font-medium")}>
+          <input type="checkbox" name="brandIds" value={b.id} defaultChecked={selected?.includes(b.id)} className="sr-only" />
+          <CheckMark />
+          {b.name}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+const GROUP_TITLE = "text-inkmuted text-[11px] font-semibold tracking-wide uppercase";
+
 /* -------------------------------------------------------- CAMPOS COMUNES -- */
 
 function CamposPersona({
@@ -112,11 +196,14 @@ function CamposPersona({
   archetypes,
   canManage,
   brands = [],
+  cards = false,
 }: {
   member?: TeamMember;
   archetypes: ArchetypeOption[];
   canManage: boolean;
   brands?: ArchetypeOption[];
+  /** Kill-switch EQUIPO_PERFILES_TARJETAS (resuelto en el servidor). */
+  cards?: boolean;
 }) {
   return (
     <>
@@ -200,9 +287,16 @@ function CamposPersona({
         <legend className="px-1 font-semibold">Perfiles y marcas autorizadas</legend>
         <input type="hidden" name="accessConfigured" value="1" />
         <p className="text-sm text-inkmuted">Puedes combinar perfiles. El Dueño conserva acceso completo. Equipo sin perfiles solo accede a su inicio, ayuda y perfil personal.</p>
-        {WORK_PROFILES.map(p => <label key={p.id} className="flex gap-2 text-sm"><input type="checkbox" name="profiles" value={p.id} defaultChecked={member?.profiles?.includes(p.id)} /><span><strong>{p.label}</strong><br />{p.description}</span></label>)}
-        <p className="font-semibold">Marcas</p>
-        {brands.map(b => <label key={b.id} className="flex gap-2 text-sm"><input type="checkbox" name="brandIds" value={b.id} defaultChecked={member?.brandIds?.includes(b.id)} />{b.name}</label>)}
+        {cards ? <>
+          <p className={GROUP_TITLE}>Cargos</p>
+          <ProfileCards selected={member?.profiles} />
+          <p className={cn(GROUP_TITLE, "pt-1")}>Marcas</p>
+          <BrandChips brands={brands} selected={member?.brandIds} />
+        </> : <>
+          {WORK_PROFILES.map(p => <label key={p.id} className="flex gap-2 text-sm"><input type="checkbox" name="profiles" value={p.id} defaultChecked={member?.profiles?.includes(p.id)} /><span><strong>{p.label}</strong><br />{p.description}</span></label>)}
+          <p className="font-semibold">Marcas</p>
+          {brands.map(b => <label key={b.id} className="flex gap-2 text-sm"><input type="checkbox" name="brandIds" value={b.id} defaultChecked={member?.brandIds?.includes(b.id)} />{b.name}</label>)}
+        </>}
         {member?.keptBrandIds?.map(id => <input key={id} type="hidden" name="brandIds" value={id} />)}
         {member?.keptBrandIds?.length ? <p className="text-sm text-inkmuted">{member.keptBrandIds.length === 1 ? "Conserva además el acceso a 1 marca archivada." : `Conserva además el acceso a ${member.keptBrandIds.length} marcas archivadas.`}</p> : null}
         <p className="text-sm text-inkmuted">Cámara, talento, edición y diseño requieren además una asignación al video o tarea. Cambiar accesos cierra las sesiones anteriores.</p>
@@ -222,7 +316,7 @@ function CamposPersona({
 
 /* ------------------------------------------------------------- INVITAR -- */
 
-export function InviteUserButton({ archetypes, brands = [] }: { archetypes: ArchetypeOption[]; brands?: ArchetypeOption[] }) {
+export function InviteUserButton({ archetypes, brands = [], cards = false }: { archetypes: ArchetypeOption[]; brands?: ArchetypeOption[]; cards?: boolean }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState<TeamState, FormData>(
     crearUsuario,
@@ -256,7 +350,7 @@ export function InviteUserButton({ archetypes, brands = [] }: { archetypes: Arch
         width={620}
       >
         <form action={formAction} className="space-y-3.5">
-          <CamposPersona archetypes={archetypes} brands={brands} canManage />
+          <CamposPersona archetypes={archetypes} brands={brands} canManage cards={cards} />
 
           <Divider label="Acceso" />
 
@@ -304,6 +398,7 @@ export function EditUserButton({
   puedeEliminar,
   className = "btn btn-sm",
   label = "Editar",
+  cards = false,
 }: {
   member: TeamMember;
   archetypes: ArchetypeOption[];
@@ -314,6 +409,8 @@ export function EditUserButton({
   puedeEliminar: boolean;
   className?: string;
   label?: string;
+  /** Kill-switch EQUIPO_PERFILES_TARJETAS (resuelto en el servidor). */
+  cards?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -351,7 +448,7 @@ export function EditUserButton({
       >
         <EditForm action={datosAction} className="space-y-3.5"><RevisionField value={member.updatedAt} />
           <input type="hidden" name="id" value={member.id} />
-          <input type="hidden" name="selfProfile" value={canManage ? "0" : "1"} /><CamposPersona member={member} archetypes={archetypes} brands={brands} canManage={canManage} />
+          <input type="hidden" name="selfProfile" value={canManage ? "0" : "1"} /><CamposPersona member={member} archetypes={archetypes} brands={brands} canManage={canManage} cards={cards} />
           <Aviso state={datos} />
           <div className={cn("flex justify-end", MODAL_FOOTER_STICKY)}>
             <button type="submit" className="btn btn-primary">

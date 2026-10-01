@@ -3,6 +3,8 @@
 Actualizado: 09/09/2026. Aplicable a PostgreSQL; no usar SQLite ni `db push` para actualizar producción.
 Añadido el 28/09/2026: [migraciones del catálogo y del flujo de producción](#entrega-28092026-catálogo-y-flujo-de-producción),
 aplicadas en producción el 29/09/2026.
+Añadido el 01/10/2026: [archivo total (M0)](#operación-30092026-archivo-total-m0), ejecutado en
+producción el 30/09/2026, y la [entrega sin migraciones del 01/10](#entrega-01102026-tarjetas-de-equipo-y-paneles-por-rol).
 Lo anterior se conserva como registro de la entrega del 09/09.
 
 > Desde el 30/09/2026 el producto se llama ALSOS (antes Marketing OS e Intia). Los nombres
@@ -325,3 +327,20 @@ SELECT indexname FROM pg_indexes WHERE indexname = 'ProductionStep_brandId_statu
 Reversa: apagar el interruptor y redesplegar. No revertir las migraciones; para estrecharlas antes
 deben dar 0 `SELECT count(*) FROM "ProductionStep" WHERE step = 'GUION' OR status = 'DEVUELTO'` y
 `SELECT count(*) FROM "CalendarSubscription" WHERE scope = 'USER'`.
+
+## Operación 30/09/2026: archivo total (M0)
+
+No es una migración de Prisma. `prisma/operations/archive-registry.sql` instala el registro
+`intia_ops` (`archive_batch`, `archive_entry`, `archive_owner_grant`) con la conexión de
+mantenimiento (`application_name=intia-migrator-20260909`). Es idempotente y sus triggers impiden
+borrar o reescribir el registro. El lote lo aplica `npm run datos:archivo`.
+
+**Ejecutado en producción el 30/09/2026:** lote `m0-prod-20260930`, 8 marcas archivadas y
+`ARCHIVO_TOTAL_DESDE=2026-09-30T22:29:13.000Z` en Vercel Production. El procedimiento, la
+verificación y la reversa en 3 niveles están en [archivo-total-2026-09-30](archivo-total-2026-09-30.md).
+
+## Entrega 01/10/2026: tarjetas de Equipo y paneles por rol
+
+Sin migraciones. `EQUIPO_PERFILES_TARJETAS` y `ORDEN_POR_ROL` solo cambian la presentación,
+vienen encendidos y se apagan con `"false"` y un redespliegue. Ver
+[paneles-por-rol-2026-10-01](paneles-por-rol-2026-10-01.md).

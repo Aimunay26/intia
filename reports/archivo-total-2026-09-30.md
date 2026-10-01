@@ -5,6 +5,16 @@ independientes» (mini-spec §3.1). Interruptor `ARCHIVO_TOTAL_DESDE`, **vacío 
 la app se comporta como hoy. Contrato técnico: sección «Archivo total: ocultamiento por archivado»
 de `CONTRACT.md`. Script de operador: `scripts/archivo-total.ts` (`npm run datos:archivo`).
 
+> **Estado: ejecutado en producción el 30/09/2026**, con autorización explícita del Dueño y el
+> código de `main` (`c61f483`). Lote `m0-prod-20260930`: 8 marcas archivadas.
+> `ARCHIVO_TOTAL_DESDE=2026-09-30T22:29:13.000Z` quedó fijada solo en Vercel Production y se
+> redesplegó. `--verificar` dio correcto y vigente (A6 = 0), y la puerta se reabrió. Las cuentas se
+> conservaron. Antes del apply se tomó un respaldo completo de la base (punto de restauración de
+> Neon de las 22:28:29 UTC). Para revertir se sigue la [reversa en 3 niveles](#reversa-en-3-niveles)
+> con `--lote=m0-prod-20260930`: (1) vaciar `ARCHIVO_TOTAL_DESDE` y redesplegar; (2) cerrar la
+> puerta, `--restore --lote=m0-prod-20260930` con la conexión de mantenimiento y vaciar la
+> variable; (3) restaurar el respaldo o el punto de restauración de Neon.
+
 ## Qué hace y qué no hace
 
 - **Escribe solo esto:** `Brand.archived=true` y `Brand.active=false` en las marcas creadas antes

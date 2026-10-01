@@ -23,7 +23,8 @@ el antiguo modo SQLite ya no es compatible.
 
 **Índice**
 
-- [Novedades 30/09/2026](#novedades-30092026): nombre ALSOS, catálogo y producción por equipos en producción, personajes 3D y guías de cámara
+- [Novedades 01/10/2026](#novedades-01102026): paneles por rol, cargos y marcas como tarjetas, cuentas de producción
+- [Novedades 30/09/2026](#novedades-30092026): nombre ALSOS, archivo total en producción, cadena de entregas, catálogo y producción por equipos, personajes 3D y guías de cámara
 - [Novedades 28/09/2026](#novedades-28092026): manual, calendario mensual, guiones a una pantalla, catálogo y producción por equipos
 - [Arrancarlo](#arrancarlo) · [Primer ingreso](#primer-ingreso)
 - [Cómo se trabaja](#cómo-se-trabaja): las tres fases de un video
@@ -35,7 +36,39 @@ el antiguo modo SQLite ya no es compatible.
 
 ---
 
+## Novedades 01/10/2026
+
+- **Todo ordenado por paneles de rol** (rama `feature/paneles-por-rol`, pendiente de verificar en
+  producción). El orden del flujo es uno solo en toda la app: Dueño → Estrategia → Guiones →
+  Preparador → Filmmaker → Talento → Editor → Diseñador → Community → Analista.
+  - El **menú lateral** se agrupa en paneles de rol que se pliegan; cada uno muestra solo los
+    paneles de sus perfiles. Lo que se pliega se recuerda en ese navegador.
+  - El **inicio del Dueño** abre con 10 tarjetas numeradas, una por rol, con su conteo y sus
+    botones, y después los bloques «Panel del Dueño» y «Panel de estrategia».
+  - El **inicio del equipo** muestra «Tus paneles», una tarjeta por cada perfil propio.
+  - Cargos de **Equipo**, funciones del video, equipo de la marca, **Manual** y **Cómo se usa**
+    siguen el mismo orden.
+  - No cambian las rutas ni los datos. Viene encendido; `ORDEN_POR_ROL="false"` vuelve
+    exactamente a lo de antes. Detalle en [el informe](reports/paneles-por-rol-2026-10-01.md).
+- **Cargos y marcas como tarjetas en Equipo.** Al invitar o editar a una persona, cada cargo es
+  una tarjeta con ícono, descripción y check, y las marcas son chips seleccionables. El servidor
+  recibe los mismos campos. Viene encendido; `EQUIPO_PERFILES_TARJETAS="false"` vuelve a la lista
+  de casillas. También se corrigió el formulario de «Editar», que salía alineado a la derecha.
+- **Cuentas en producción (decisión del 30/09/2026).** Ver
+  [Quién es quién en producción](#quién-es-quién-en-producción).
+
 ## Novedades 30/09/2026
+
+- **Archivo total (M0), ejecutado en producción.** Para empezar de cero con marcas
+  independientes, el 30/09/2026 se archivaron las 8 marcas creadas antes de esa fecha con el lote
+  `m0-prod-20260930` y se fijó `ARCHIVO_TOTAL_DESDE=2026-09-30T22:29:13.000Z` en Vercel. No se
+  borró nada: lo archivado queda oculto y se puede restaurar. Las cuentas se conservan. El
+  procedimiento y la reversa en 3 niveles están en
+  [el informe del archivo total](reports/archivo-total-2026-09-30.md).
+- **Cadena de entregas por video.** Guionista → filmmaker → editor → community, con «Listo»,
+  «Devolver» y «Avisar a coordinación», «Mi trabajo» y la vista `/cadena`. En el código viene
+  **apagada** (`PRODUCTION_CHAIN_ENABLED`, con canario por marca en
+  `PRODUCTION_CHAIN_BRANDS`). Detalle en [la mini-spec](reports/cadena-entregas-2026-09-30.md).
 
 - **El producto se llama ALSOS.** Cambian el logotipo (`alsos.`), el favicon, el ícono de la
   pantalla de inicio (iPhone y Android), el título de las pestañas («ALSOS · Ideas que se
@@ -222,7 +255,8 @@ como «Sistema».
 
 ### El manual de procedimientos
 
-En **Formación → Manual de procedimientos** está cómo se hace el trabajo de cada rol: misión,
+En **Manual de procedimientos** (en el menú, dentro de **Formación**; con los paneles por rol,
+en el bloque general de arriba) está cómo se hace el trabajo de cada rol: misión,
 procedimiento, a quién le recibe y a quién le entrega, y una formación de principiante a
 avanzado con lecciones cortas, videos de YouTube, guías de cámara y escenas 3D. *Cómo se usa*
 enseña a usar ALSOS; el manual enseña a hacer el trabajo. Hoy son 139 módulos, 640 lecciones,
@@ -503,7 +537,8 @@ tuya.
 Los motores deciden **quién actúa**. Quién graba, edita, publica y diseña es otra cosa: se
 asigna en la ficha del video y, con la [producción por equipos](#producción-por-equipos)
 encendida, sale del equipo de la marca. Si el video ya tiene a alguien en esa función, manda esa
-persona. Para prepararse, el actor y el filmmaker tienen su manual en **Formación**, con escenas
+persona. Para prepararse, el actor y el filmmaker tienen su manual en el **Manual de
+procedimientos**, con escenas
 3D de plano, luz, mirada y marcas.
 
 ---
@@ -672,6 +707,27 @@ Cada escritura queda registrada en **Actividad** con quién la hizo, qué cambi�
 y valor después), sobre qué marca y a qué hora. Esa pantalla también muestra quién **no** ha
 movido nada en el periodo.
 
+### Quién es quién en producción
+
+Decisión del Dueño del 30/09/2026. Hasta que existan los roles por marca (M1), las únicas
+posiciones siguen siendo Dueño y Equipo:
+
+| Cuenta | Posición | Qué es |
+|---|---|---|
+| **Ai Munay** (Gerencia) | Dueño | La única dueña de la plataforma ALSOS y su super admin |
+| **«Con Amor»** | Equipo (Miembro) | El dueño de negocio de la primera empresa piloto. Conserva su cuenta |
+| **Edward** | Equipo | Será el encargado de Con Amor |
+
+La marca Con Amor empieza **de cero**: se crea una marca nueva y no se recupera la archivada.
+Con M1, la cuenta «Con Amor» pasará a ser dueña de esa marca.
+
+**Pendiente, a mano en la app como Ai Munay:**
+1. En **Equipo**, pasar a Kevin de Dueño a Miembro. No es dueño ni super admin.
+2. En **Marcas**, crear la marca Con Amor nueva.
+3. En **Equipo**, dar a la cuenta «Con Amor» acceso a esa marca.
+4. En **Equipo**, crear la cuenta de Edward con acceso a la marca. Después, en la pestaña
+   **Equipo** de la marca, ponerlo como encargado.
+
 ### Entrar con Gmail
 
 El equipo puede entrar con su cuenta de Google en vez de recordar otra contraseña. Se activa
@@ -727,6 +783,8 @@ Dos cosas que conviene saber:
 | `npm run db:integridad` | Consulta referencias inválidas y archivos huérfanos |
 | `npm run db:seed` | Carga la demo únicamente en PostgreSQL local explícito |
 | `npm run db:equipo-demo` | Crea o actualiza seis cuentas de prueba y el equipo de la marca `con-amor`, solo en PostgreSQL local; contraseñas únicamente en `.audit/equipo-demo.txt` |
+| `npm run datos:archivo` | Archivo total (M0): ensayo de solo lectura por defecto; `--apply`, `--restore` y `--verificar` según [el procedimiento](reports/archivo-total-2026-09-30.md) |
+| `npm run test:perfiles` | QA de perfiles en navegador contra la compilación local y un PostgreSQL efímero, con usuarios ficticios: menú, paneles por rol y permisos (con `ORDEN_POR_ROL="false"` comprueba el modo anterior) |
 | `npm run db:reset` | **Borra todo en la DB local indicada** y aplica migraciones; no carga demo |
 | `npm run db:ensayo` | Ensaya migración y restauración en bases locales efímeras |
 | `npm run lint` / `npm run typecheck` | Verifica estilo y tipos |
@@ -739,7 +797,7 @@ Dos cosas que conviene saber:
 | `npm run ver:prompt -- eru` | Imprime el prompt exacto que se le manda a la IA por esa persona |
 | `npm run test:motores` | Calibra el motor de match contra la matriz de compatibilidad |
 | `npm run test:humo` | 37 comprobaciones: permisos, calendario, datos y archivos |
-| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos, CTA de comunidad, catálogo de productos, producto en el generador, calendario mensual, flujo de producción, visor de guiones, personajes 3D del manual, cierres por tipo, Manual y guías de cámara) |
+| `npm run test:unidad` | Todas las pruebas unitarias sin base de datos (navegación, rendimiento, seguridad, claves de IA, parser de PDF, formatos previstos, CTA de comunidad, catálogo de productos, producto en el generador, calendario mensual, flujo de producción, visor de guiones, personajes 3D del manual, cierres por tipo, Manual y guías de cámara, archivo total, tarjetas de Equipo y paneles por rol) |
 | `npm run test:cta` | Vigila que los CTA de comunidad no lleven presión ni oferta (`tsx --test`) |
 | `npm run test:presets` | Cierres, fórmulas y ángulos por tipo de producto: sin tipo, todo como antes; un producto o un restaurante nunca reciben cupos ni asesorías |
 | `npm run test:manual` | Manual de procedimientos: interruptor, orden por rol, contenido generado, enlaces de YouTube, traducción de las 106 escenas 3D, poses de los personajes y small rig con sus luces |
@@ -775,6 +833,9 @@ src/
   components/
     alsos-wordmark.tsx   Logotipo «alsos.» con punto cobre
     brand-switcher.tsx   Selector de marca activa (barra lateral)
+    role-sidebar-nav.tsx Menú lateral por paneles de rol plegables (ORDEN_POR_ROL)
+    role-panel-cards.tsx Tarjetas de paneles por rol del inicio (Dueño y equipo)
+    nav-icons.ts         Nombres de íconos del menú → íconos de lucide
     assets.tsx           Gestor de PDF de referencia
     charts.tsx           Gráficos en SVG, sin librerías
     ui.tsx               Tarjetas, chips, avatares, estados vacíos
@@ -801,6 +862,11 @@ src/
     manual-rig.ts        Small rig de quien graba y soportes de luz del visor 3D
     google.ts            OAuth de Google
     ical.ts              Generación del archivo .ics
+    role-panels.ts       Orden canónico de los 10 paneles de rol (fuente única)
+    role-nav.ts          Menú lateral por paneles: qué enlace va en qué panel
+    role-counts.ts       Conteos y botones de las tarjetas de paneles por rol
+    role-order-flag.ts   Interruptor ORDEN_POR_ROL (solo servidor)
+    archive-epoch.ts · archive-scope.ts  Archivo total: época y filtros de lo archivado
     constants.ts         Catálogos de estados, roles, redes y prioridades
     utils.ts             Formato, fechas, zona horaria y utilidades
 public/

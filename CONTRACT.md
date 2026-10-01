@@ -56,7 +56,7 @@ identificadores técnicos».
 
 | Ruta | Qué es |
 |---|---|
-| `/` | Panel general del Dueño; inicio de trabajo del Equipo |
+| `/` | Panel general del Dueño; inicio de trabajo del Equipo. Con `ORDEN_POR_ROL`: 10 tarjetas de paneles por rol, «Panel del Dueño» y «Panel de estrategia» (Dueño) y «Tus paneles» (Equipo); ver «Paneles por rol» |
 | `/manual` | Manual de procedimientos: una tarjeta por rol, en orden de flujo (ver «Manual de procedimientos») |
 | `/manual/[rol]` | Misión, procedimiento, traspasos e indicadores del rol; formación por nivel (`?nivel=`) |
 | `/manual/[rol]/[modulo]` | Lecciones (`?leccion=`), videos de YouTube y escenas 3D del módulo |
@@ -647,6 +647,10 @@ De `@/components/assets` (cliente): `<AssetManager ownerType ownerId assets canE
 De `@/components/charts`: `<BarChart>`, `<LineChart>`, `<Sparkline>`, `<DonutChart>`.
 De `@/components/forms` (cliente): `<SubmitButton>`, `<DeleteButton>`, `<InlineForm>`, `<Modal>`, `<CopyButton>`.
 
+`<Modal>` se pinta en línea, sin portal: puede vivir dentro de una celda alineada a la derecha
+(Equipo → «Editar»). Por eso su caja fija `text-left` y `whitespace-normal`; no quitarlos, o el
+formulario hereda la alineación de la celda.
+
 ## Clases CSS del sistema
 
 Definidas en `globals.css`. Usarlas en vez de reinventar estilos:
@@ -746,11 +750,18 @@ interruptor: nunca `git revert` ni `DROP`.
 | `ORDEN_POR_ROL` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Todo ordenado por paneles de rol en el orden del flujo (Dueño → Estrategia → Guiones → Preparador → Filmmaker → Talento → Editor → Diseñador → Community → Analista): menú lateral por paneles plegables (`src/lib/role-nav.ts`; el plegado vive solo en `localStorage["alsos-nav-paneles-cerrados-v1"]`), inicio por paneles y listas de roles (fuente única `src/lib/role-panels.ts`). Se lee solo en el servidor; `Shell` lo recibe como `roleOrder`. Apagado, el `NAV` de siempre, el inicio y las listas en el orden de las constantes. Las rutas, los hrefs base y los ids guardados no cambian | — |
 | `GEMINI_ESQUEMA_SIMPLE` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Esquema de Gemini sin límites de tamaño/rango; apagado envía el anterior con límites. La validación local no cambia | — |
 | `ARCHIVO_TOTAL_DESDE` | vacío (apagado) | una fecha ISO válida lo enciende (la del lote aplicado); inválida = apagado con aviso en el log | Archivo total: nadie, tampoco el Dueño en las pantallas operativas, ve marcas archivadas ni lo sin marca anterior a esa fecha; un MEMBER sin marcas vivas queda con `base`. Ver «Archivo total: ocultamiento por archivado» | Registro `prisma/operations/archive-registry.sql` y un lote aplicado con `npm run datos:archivo` (sin él solo oculta las marcas ya archivadas a mano) |
+| `ARCHIVO_TOTAL_AUDIT_DIR` | `.audit` | una ruta de carpeta | Solo el script `npm run datos:archivo`: carpeta de la copia secundaria del registro (solo ids). La app no la lee | — |
+| `ARCHIVO_TOTAL_DEBUG` | apagado | exactamente `"1"` lo enciende | Solo el script `npm run datos:archivo`: agrega a la salida JSON el mensaje del error (hasta 500 caracteres). Solo para diagnosticar; la app no la lee | — |
 
 **Estado en producción:** las migraciones `20260928120000_brand_catalog` y
 `20260928180000_production_flow` se aplicaron en Neon el 29/09/2026, y `PRODUCT_CATALOG_ENABLED`
 y `PRODUCTION_FLOW_ENABLED` están encendidos en Vercel desde ese día. El valor por defecto del
 código sigue siendo apagado; la reversa sigue siendo apagar el interruptor y redesplegar.
+El 30/09/2026 se aplicó el lote de archivo total `m0-prod-20260930` y se fijó
+`ARCHIVO_TOTAL_DESDE=2026-09-30T22:29:13.000Z` en Vercel (solo Production); ver «Archivo total:
+ocultamiento por archivado». `EQUIPO_PERFILES_TARJETAS` está en `main`; `ORDEN_POR_ROL` está en
+la rama `feature/paneles-por-rol`, pendiente de su verificación en producción
+(`reports/paneles-por-rol-2026-10-01.md`).
 
 - Los interruptores de funciones con **tablas nuevas vienen apagados**. Apagados, ninguna
   pantalla, acción, gancho ni tarea programada consulta esas tablas: el código se puede
@@ -767,6 +778,11 @@ código sigue siendo apagado; la reversa sigue siendo apagar el interruptor y re
 M0 del GO «ALSOS marcas independientes» (30/09/2026). Interruptor `ARCHIVO_TOTAL_DESDE`
 (época, fecha ISO). Script de operador `scripts/archivo-total.ts` (`npm run datos:archivo`).
 Procedimiento de producción y reversa: `reports/archivo-total-2026-09-30.md`.
+
+**Estado: ejecutado en producción el 30/09/2026.** Lote `m0-prod-20260930`, 8 marcas archivadas,
+`ARCHIVO_TOTAL_DESDE=2026-09-30T22:29:13.000Z` fijada en Vercel (solo Production) y redesplegada;
+`--verificar` correcto y puerta reabierta. Las cuentas se conservaron. La reversa es la de 3
+niveles descrita al final de esta sección, con `--lote=m0-prod-20260930`.
 
 **Qué escribe el archivo total (y nada más).** `Brand.archived=true` y `Brand.active=false` en
 las marcas creadas antes de la época, guardando antes su estado exacto en
@@ -1298,7 +1314,10 @@ Interruptor `MANUAL_PROCEDIMIENTOS_ENABLED`: apagado, oculta el menú y las tarj
 - 8 roles en orden de flujo: Guionista → Filmmaker → Actor → Editor → Jefe de editores →
   Community manager → ATC → Dueño de negocio. Tres niveles (Principiante, Intermedio,
   Avanzado), 139 módulos, 640 lecciones, 417 videos de referencia y 106 escenas 3D (61 de
-  filmmaker y 35 de actor).
+  filmmaker y 35 de actor). Con `ORDEN_POR_ROL` encendido, `/manual` usa `manualFlow()`
+  (`MANUAL_FLOW_BY_ROLE`): Dueño de negocio primero, con la etiqueta «Dirección», y después
+  Guionista → Filmmaker → Actor → Editor → Jefe de editores → Community manager → ATC, con «Paso
+  N» sin contar al Dueño. El índice generado no cambia.
 - **Acceso: todas las cuentas activas** (sección `manual`, capacidad base `help.view`), también
   un miembro sin perfiles. Todos leen todos los manuales; los de su perfil van primero con «Tu
   rol»: `WRITER` → Guionista, `CAMERA` → Filmmaker, `TALENT` → Actor, `EDITOR` → Editor y Jefe
@@ -1306,7 +1325,9 @@ Interruptor `MANUAL_PROCEDIMIENTOS_ENABLED`: apagado, oculta el menú y las tarj
   todavía no tienen perfil propio.
 - **Menú «Formación»** (antes «Ayuda»): «Manual de procedimientos» primero y «Cómo se usa»
   debajo. La tarjeta del manual es la primera del inicio del Equipo y de «Cómo se usa», y un
-  aviso compacto en el panel del Dueño.
+  aviso compacto en el panel del Dueño. Con `ORDEN_POR_ROL` encendido, «Manual de
+  procedimientos» va en el bloque general del menú (sin cabecera), cada miembro ve el manual de
+  su rol dentro de su panel y «Cómo se usa» queda en el bloque «Ayuda»; ver «Paneles por rol».
 - **Inicio y ayuda del Equipo son pantallas distintas.** `/` muestra el trabajo (manual,
   videos pendientes, tareas visibles y accesos); `/tutorial`, sus perfiles, su lugar en el
   flujo, las reglas comunes y dónde está cada cosa.
@@ -1371,3 +1392,44 @@ Interruptor `MANUAL_PROCEDIMIENTOS_ENABLED`: apagado, oculta el menú y las tarj
 - **Videos de YouTube:** fachada con miniatura. El `iframe` (`youtube-nocookie.com`) se crea al
   pulsar, así la página no pide nada a YouTube hasta entonces. Solo se aceptan IDs de YouTube
   válidos.
+
+## Paneles por rol
+
+Interruptor `ORDEN_POR_ROL` (encendido por defecto; `"false"` lo apaga). Commit `c25cb2f`.
+Mini-spec y evidencia: `reports/paneles-por-rol-2026-10-01.md`.
+
+- **Orden canónico, una sola fuente.** `src/lib/role-panels.ts` (puro: sin React, Prisma ni
+  `process.env`) define `ROLE_PANELS` y `ROLE_ORDER`: Dueño → Estrategia → Guiones → Preparador →
+  Filmmaker → Talento → Editor → Diseñador → Community → Analista (`OWNER` y los 9 perfiles de
+  `WORK_PROFILES`, que ya están en ese orden). Toda lista de roles en pantalla se ordena con sus
+  ayudantes (`rolePanelsFor`, `sortByRole`, `orderedAssignmentRoles`, `orderedBrandTeamRoles`,
+  `profileLabelFor`). Nunca recorrer `user.profiles` directamente: llega en orden alfabético.
+- **El interruptor se lee solo en el servidor** (`src/lib/role-order-flag.ts`,
+  `roleOrderEnabled()`). Los componentes de cliente lo reciben como prop con `false` por defecto:
+  `Shell` (`roleOrder`), `ProfileCards` (`ordered`), `TeamPanel` y `BrandTeamPanel` (`roleOrder`).
+- **Menú lateral** (`src/lib/role-nav.ts`, `buildRoleNav`; pintado en
+  `src/components/role-sidebar-nav.tsx`): bloque general sin cabecera (Inicio, Cadena, Calendario,
+  Videos, Tareas, Manual de procedimientos), un panel plegable por rol de quien mira y «Ayuda»
+  («Cómo se usa»). Cada href aparece una sola vez, en el primer panel de su lista de prioridad que
+  la persona tenga; un panel sin enlaces no se pinta. Los íconos viajan como nombres y
+  `src/components/nav-icons.ts` los traduce. El plegado se guarda solo en el navegador
+  (`localStorage["alsos-nav-paneles-cerrados-v1"]`); por defecto todo está abierto, y el panel del
+  enlace activo y todos mientras corre la guía se fuerzan abiertos.
+- **Inicio del Dueño:** después de «Mi trabajo» (con la cadena), «Paneles por rol» con 10 tarjetas
+  numeradas en `ROLE_ORDER` (conteo que enlaza a su lista y de 1 a 3 botones; `src/lib/role-counts.ts`
+  y `src/components/role-panel-cards.tsx`), luego «Panel del Dueño» y «Panel de estrategia», y la
+  tarjeta del manual al final. Con la cadena encendida, los conteos son pasos abiertos con la misma
+  regla que `/cadena?paso=X`.
+- **Inicio del miembro:** «Tus paneles», una tarjeta por perfil propio en `ROLE_ORDER`, después de
+  «Mi trabajo». Los accesos siguen el orden de su menú; «Mi perfil» va al final.
+- **Listas de roles en orden de flujo:** cargos de Equipo (tarjetas numeradas 1-9 por columnas),
+  funciones del video, equipo de marca, Manual y «Cómo se usa». Las constantes (`ASSIGNMENT_ROLES`,
+  `BRAND_TEAM_ROLES`, `SECTIONS`, `MANUAL_FLOW`) no se mutan: solo cambia el orden en que se
+  muestran. El orden de los pasos (`CHAIN_ORDER`, calendario) y los selectores de personas
+  (alfabéticos) no cambian.
+- **Sin cambios de datos ni de rutas.** Los hrefs base, los ids guardados (`PRODUCTION`,
+  `PRODUCCION`, `ENCARGADO`…) y la base de datos son los mismos con el interruptor encendido o
+  apagado. «Preparador» es copy nuevo; «Producción» sigue en otros textos hasta que el Dueño
+  confirme el renombre.
+- **Apagado** (`ORDEN_POR_ROL="false"` y redesplegar): el `NAV` de siempre, el inicio del Dueño y
+  del miembro con sus bloques y consultas de antes, y las listas en el orden de las constantes.

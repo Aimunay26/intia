@@ -58,6 +58,7 @@ import {
 } from "@/lib/utils";
 import { VideoDatosForm } from "../content-form";
 import { TeamPanel, type AssignmentRow } from "./assignments";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
 import { Checklist, type CheckRow } from "./checklist";
 import { MetricsPanel, type MetricRow } from "./metrics-form";
 
@@ -534,6 +535,7 @@ export default async function VideoPage({ params, searchParams }: { params: Prom
             contentItemId={item.id}
             assignments={asignaciones}
             canManage={canManage}
+            roleOrder={roleOrderEnabled()}
             people={people.map((p) => ({
               id: p.id,
               name: p.name,

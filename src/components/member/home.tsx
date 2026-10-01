@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { ManualCard } from "@/components/manual/manual-card";
 import { memberSectionLinks } from "@/components/member/help";
+import { RolePanelCards } from "@/components/role-panel-cards";
 import { Callout, PageHeader, SectionTitle, Stat } from "@/components/ui";
 import { MyWorkSection } from "@/components/work/my-work";
 import { contentScope, taskScope } from "@/lib/access-scope";
@@ -11,10 +12,14 @@ import { archiveEpoch } from "@/lib/archive-scope";
 import type { SessionUser } from "@/lib/auth";
 import type { BrandContext } from "@/lib/brand-context";
 import { DEAD_STATUSES } from "@/lib/constants";
-import { allows, type Section } from "@/lib/permissions";
+import { manualEnabled } from "@/lib/manual";
+import { allows, permissionFlags, type Section } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { productionChainActiveFor } from "@/lib/production-chain-flag";
 import { getPageBrandContext } from "@/lib/render-context";
+import { countsFromRows, memberRoleCards, memberVideoTotal } from "@/lib/role-counts";
+import { buildRoleNav } from "@/lib/role-nav";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
 import { formatDateLong, formatNumber } from "@/lib/utils";
 
 /**
@@ -95,6 +100,10 @@ function AccessLinks({ links }: { links: ReturnType<typeof memberSectionLinks> }
  * activa, con el canario), «Mi trabajo» va primero (decisión del Dueño, 30/09/2026) y los
  * contadores cuentan solo lo abierto; si no, el Manual primero, luego su trabajo y los accesos,
  * como antes. Sin consultas del panel del Dueño.
+ *
+ * ORDEN_POR_ROL: después de «Mi trabajo» van «Tus paneles» (una tarjeta por perfil propio, en
+ * orden de flujo) y el conteo de videos sale de un único groupBy por estado (mismas idas a la
+ * base; el total usa el mismo predicado de siempre). Apagado, los bloques y consultas de siempre.
  */
 export async function MemberHome({ user }: { user: SessionUser }) {
   const context = await getPageBrandContext();
@@ -108,9 +117,12 @@ export async function MemberHome({ user }: { user: SessionUser }) {
   const hasProfiles = Boolean(user.profiles?.length);
   const canVideos = hasProfiles && allows(user, "content.view");
   const canTasks = hasProfiles && allows(user, "tasks.view");
-  const [videos, tasks] = await Promise.all([
+  const roleOrder = roleOrderEnabled();
+  const [videoCounts, tasks] = await Promise.all([
     canVideos
-      ? prisma.contentItem.count({ where: { AND: [contentScope(user), brand, chain ? { status: { notIn: ["PUBLICADO", ...DEAD_STATUSES] } } : { status: { not: "PUBLICADO" } }] } })
+      ? roleOrder
+        ? prisma.contentItem.groupBy({ by: ["status"], _count: { _all: true }, where: { AND: [contentScope(user), brand] } }).then((rows) => countsFromRows(rows, "status"))
+        : prisma.contentItem.count({ where: { AND: [contentScope(user), brand, chain ? { status: { notIn: ["PUBLICADO", ...DEAD_STATUSES] } } : { status: { not: "PUBLICADO" } }] } })
       : 0,
     canTasks
       ? chain
@@ -118,13 +130,29 @@ export async function MemberHome({ user }: { user: SessionUser }) {
         : prisma.task.count({ where: { AND: [taskScope(user), brand] } })
       : 0,
   ]);
+  const videos = typeof videoCounts === "number" ? videoCounts : memberVideoTotal(videoCounts, chain);
   const scope = context.activeId ? "En la marca activa" : "En tus marcas autorizadas";
   const links = memberSectionLinks(user, ["panel"]);
+  // «Tus paneles»: los botones salen del menú de esta persona (mismas banderas que el layout).
+  const panelCards = roleOrder && hasProfiles
+    ? memberRoleCards(
+        user,
+        buildRoleNav(user, { chainEnabled: productionChainActiveFor(user, null), manualEnabled: manualEnabled(), permissionFlags: permissionFlags() }),
+        typeof videoCounts === "number" ? null : videoCounts,
+        scope.toLowerCase(),
+      )
+    : [];
 
   return (
     <div className="space-y-6">
       {header}
       {chain ? <MyWorkSection user={user} brandId={context.activeId} /> : null}
+      {panelCards.length ? (
+        <section aria-labelledby="tus-paneles-title">
+          <h2 id="tus-paneles-title" className="text-inkmuted mb-2.5 text-[11px] font-bold tracking-[0.09em] uppercase">Tus paneles</h2>
+          <RolePanelCards variant="member" cards={panelCards} />
+        </section>
+      ) : null}
       <ManualCard user={user} />
 
       <section>

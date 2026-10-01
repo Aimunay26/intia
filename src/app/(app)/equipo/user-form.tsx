@@ -32,6 +32,7 @@ import {
   type TeamState,
 } from "@/app/actions/team";
 import { WORK_PROFILES, type WorkProfile } from "@/lib/permissions";
+import { profileLabelFor } from "@/lib/role-panels";
 import { PALETTE, USER_ROLES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Divider, Field, SectionTitle } from "@/components/ui";
@@ -146,14 +147,28 @@ function CheckMark() {
   );
 }
 
-function ProfileCards({ selected }: { selected?: readonly string[] }) {
+/**
+ * Tarjetas de Cargos. Con `ordered` (ORDEN_POR_ROL, resuelto en el servidor) se leen en el orden del
+ * flujo: en sm+ van por columnas (1–5 a la izquierda, 6–9 a la derecha), con un chip de número y la
+ * etiqueta de profileLabelFor. El DOM y el tabulador siguen el orden de WORK_PROFILES.
+ */
+export function ProfileCards({ selected, ordered = false }: { selected?: readonly string[]; ordered?: boolean }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      {WORK_PROFILES.map((p) => {
+    <div className={ordered ? "grid gap-2 sm:grid-flow-col sm:grid-rows-5" : "grid gap-2 sm:grid-cols-2"}>
+      {WORK_PROFILES.map((p, index) => {
         const Icon = PROFILE_ICONS[p.id];
         return (
           <label key={p.id} className={cn(SELECTABLE, "items-start gap-3 rounded-xl p-3")}>
             <input type="checkbox" name="profiles" value={p.id} defaultChecked={selected?.includes(p.id)} className="sr-only" />
+            {ordered ? (
+              <span
+                aria-hidden
+                data-paso={index + 1}
+                className="bg-surface2 text-inkmuted group-has-[:checked]:bg-brandsoft group-has-[:checked]:text-ink grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1 text-[10.5px] font-semibold tabular-nums"
+              >
+                {index + 1}
+              </span>
+            ) : null}
             <span
               aria-hidden
               className="bg-surface2 text-inksoft group-has-[:checked]:bg-brand group-has-[:checked]:text-brand-ink grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors"
@@ -161,7 +176,7 @@ function ProfileCards({ selected }: { selected?: readonly string[] }) {
               <Icon size={17} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="text-ink block text-[13px] leading-tight font-semibold">{p.label}</span>
+              <span className="text-ink block text-[13px] leading-tight font-semibold">{ordered ? profileLabelFor(p.id, true) : p.label}</span>
               <span className="text-inkmuted mt-1 block text-[11.5px] leading-snug">{p.description}</span>
             </span>
             <CheckMark />
@@ -197,6 +212,7 @@ function CamposPersona({
   canManage,
   brands = [],
   cards = false,
+  ordered = false,
 }: {
   member?: TeamMember;
   archetypes: ArchetypeOption[];
@@ -204,6 +220,8 @@ function CamposPersona({
   brands?: ArchetypeOption[];
   /** Kill-switch EQUIPO_PERFILES_TARJETAS (resuelto en el servidor). */
   cards?: boolean;
+  /** Kill-switch ORDEN_POR_ROL (resuelto en el servidor): Cargos en el orden del flujo. */
+  ordered?: boolean;
 }) {
   return (
     <>
@@ -289,7 +307,7 @@ function CamposPersona({
         <p className="text-sm text-inkmuted">Puedes combinar perfiles. El Dueño conserva acceso completo. Equipo sin perfiles solo accede a su inicio, ayuda y perfil personal.</p>
         {cards ? <>
           <p className={GROUP_TITLE}>Cargos</p>
-          <ProfileCards selected={member?.profiles} />
+          <ProfileCards selected={member?.profiles} ordered={ordered} />
           <p className={cn(GROUP_TITLE, "pt-1")}>Marcas</p>
           <BrandChips brands={brands} selected={member?.brandIds} />
         </> : <>
@@ -316,7 +334,7 @@ function CamposPersona({
 
 /* ------------------------------------------------------------- INVITAR -- */
 
-export function InviteUserButton({ archetypes, brands = [], cards = false }: { archetypes: ArchetypeOption[]; brands?: ArchetypeOption[]; cards?: boolean }) {
+export function InviteUserButton({ archetypes, brands = [], cards = false, ordered = false }: { archetypes: ArchetypeOption[]; brands?: ArchetypeOption[]; cards?: boolean; ordered?: boolean }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState<TeamState, FormData>(
     crearUsuario,
@@ -350,7 +368,7 @@ export function InviteUserButton({ archetypes, brands = [], cards = false }: { a
         width={620}
       >
         <form action={formAction} className="space-y-3.5">
-          <CamposPersona archetypes={archetypes} brands={brands} canManage cards={cards} />
+          <CamposPersona archetypes={archetypes} brands={brands} canManage cards={cards} ordered={ordered} />
 
           <Divider label="Acceso" />
 
@@ -399,6 +417,7 @@ export function EditUserButton({
   className = "btn btn-sm",
   label = "Editar",
   cards = false,
+  ordered = false,
 }: {
   member: TeamMember;
   archetypes: ArchetypeOption[];
@@ -411,6 +430,8 @@ export function EditUserButton({
   label?: string;
   /** Kill-switch EQUIPO_PERFILES_TARJETAS (resuelto en el servidor). */
   cards?: boolean;
+  /** Kill-switch ORDEN_POR_ROL (resuelto en el servidor): Cargos en el orden del flujo. */
+  ordered?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -448,7 +469,7 @@ export function EditUserButton({
       >
         <EditForm action={datosAction} className="space-y-3.5"><RevisionField value={member.updatedAt} />
           <input type="hidden" name="id" value={member.id} />
-          <input type="hidden" name="selfProfile" value={canManage ? "0" : "1"} /><CamposPersona member={member} archetypes={archetypes} brands={brands} canManage={canManage} cards={cards} />
+          <input type="hidden" name="selfProfile" value={canManage ? "0" : "1"} /><CamposPersona member={member} archetypes={archetypes} brands={brands} canManage={canManage} cards={cards} ordered={ordered} />
           <Aviso state={datos} />
           <div className={cn("flex justify-end", MODAL_FOOTER_STICKY)}>
             <button type="submit" className="btn btn-primary">

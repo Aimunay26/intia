@@ -22,10 +22,11 @@ import {
 	Target,
 } from "lucide-react";
 import Link from "next/link";
-import { cache, Suspense } from "react";
+import { cache, Suspense, type ReactNode } from "react";
 
 import { FunnelBars } from "@/components/charts";
 import { ManualCard } from "@/components/manual/manual-card";
+import { RolePanelCards } from "@/components/role-panel-cards";
 import { MyWorkSection } from "@/components/work/my-work";
 import {
 	Avatar,
@@ -54,6 +55,8 @@ import {
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { productionChainActiveFor } from "@/lib/production-chain-flag";
+import { countsFromRows, openStepCounts, ownerRoleCards } from "@/lib/role-counts";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
 import {
 	addDays,
 	compactNumber,
@@ -149,9 +152,74 @@ export default async function PanelGeneral() {
   // Cadena de entregas: «Mi trabajo» va primero, encima del Manual (decisión del Dueño, 30/09/2026).
   // Apagada no se monta ni consulta nada.
   const chain = productionChainActiveFor(user, brandCtx.activeId);
-  const sections = process.env.PANEL_RENDER_MODE !== "streaming"
-    ? await Promise.all([PanelStats(), PanelPending(), PanelObjectives(), PanelFunnel(), PanelActivity(), PanelBrands(), chain ? MyWorkSection({ user, brandId: brandCtx.activeId, className: "mb-5" }) : null])
+  // ORDEN_POR_ROL: inicio por paneles de rol. Apagado, el JSX, el orden y las consultas de siempre
+  // (PanelRoles no se monta).
+  const roleOrder = roleOrderEnabled();
+  // Bloques por nombre (no por posición): los dos modos de PANEL_RENDER_MODE y los dos estados del
+  // interruptor piden cada bloque por su clave, así que reordenar uno no pinta otro en su lugar.
+  const sections: PanelSections | null = process.env.PANEL_RENDER_MODE !== "streaming"
+    ? await Promise.all([
+        PanelStats({ ordered: roleOrder }),
+        PanelPending(),
+        PanelObjectives(),
+        PanelFunnel(),
+        PanelActivity(),
+        PanelBrands(),
+        chain ? MyWorkSection({ user, brandId: brandCtx.activeId, className: "mb-5" }) : null,
+        roleOrder ? PanelRoles({ chain }) : null,
+      ]).then(([stats, pending, objectives, funnel, activity, brands, mywork, roles]) => ({ stats, pending, objectives, funnel, activity, brands, mywork, roles }))
     : null;
+  const streamed: Record<PanelSectionKey, { label: string; node: ReactNode; wrap?: boolean }> = {
+    stats: { label: "indicadores", node: <PanelStats ordered={roleOrder} /> },
+    pending: { label: "pendientes", node: <PanelPending /> },
+    objectives: { label: "objetivos", node: <PanelObjectives /> },
+    funnel: { label: "producción", node: <PanelFunnel /> },
+    activity: { label: "actividad", node: <PanelActivity /> },
+    brands: { label: "marcas", node: <PanelBrands /> },
+    mywork: { label: "tu trabajo", node: <MyWorkSection user={user} brandId={brandCtx.activeId} className="mb-5" />, wrap: true },
+    roles: { label: "paneles por rol", node: <PanelRoles chain={chain} />, wrap: true },
+  };
+  /** Un bloque por su nombre: ya resuelto (modo de siempre) o en su propio Suspense (streaming). */
+  const block = (key: PanelSectionKey) => {
+    if (sections) return sections[key];
+    const { label, node, wrap } = streamed[key];
+    const loading = <SectionLoading label={label} />;
+    return <Suspense key={scope + key} fallback={wrap ? <div className="mb-5">{loading}</div> : loading}>{node}</Suspense>;
+  };
+
+  if (!roleOrder) {
+    // ORDEN_POR_ROL=false: el inicio de siempre (cabecera, Mi trabajo, Manual, indicadores,
+    // [pendientes y objetivos | embudo y actividad], marcas).
+    return <>
+      <PageHeader
+          title={`Hola, ${nombreCorto}`}
+          subtitle={fechaTitulo}
+          icon={<Sparkles size={19} />}
+          actions={
+            <>
+              <Link href="/generador" className="btn">
+                <Sparkles size={14} /> Generar guion
+              </Link>
+              <Link href="/contenido" className="btn btn-primary">
+                <Plus size={14} /> Nuevo video
+              </Link>
+            </>
+          }
+        />
+      {chain ? block("mywork") : null}
+      <ManualCard user={user} variant="banner" className="mb-5" />
+      {block("stats")}
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-5">{block("pending")}{block("objectives")}</div>
+        <div className="min-w-0 space-y-5">{block("funnel")}{block("activity")}</div>
+      </div>
+      {block("brands")}
+    </>;
+  }
+
+  // ORDEN_POR_ROL: Mi trabajo (con la cadena) → paneles por rol → Panel del Dueño → Panel de
+  // estrategia → Manual. «Mi trabajo» sigue primero por la decisión del 30/09; si el Dueño pide
+  // «panel de dueño de primero», basta con mover esa línea.
   return <>
     <PageHeader
         title={`Hola, ${nombreCorto}`}
@@ -159,29 +227,72 @@ export default async function PanelGeneral() {
         icon={<Sparkles size={19} />}
         actions={
           <>
-            <Link href="/generador" className="btn">
-              <Sparkles size={14} /> Generar guion
-            </Link>
             <Link href="/contenido" className="btn btn-primary">
               <Plus size={14} /> Nuevo video
+            </Link>
+            <Link href="/generador" className="btn">
+              <Sparkles size={14} /> Generar guion
             </Link>
           </>
         }
       />
-    {chain ? (sections ? sections[6] : <Suspense key={scope + "mywork"} fallback={<div className="mb-5"><SectionLoading label="tu trabajo" /></div>}><MyWorkSection user={user} brandId={brandCtx.activeId} className="mb-5" /></Suspense>) : null}
-    <ManualCard user={user} variant="banner" className="mb-5" />
-    {sections ? sections[0] : <Suspense key={scope + "stats"} fallback={<SectionLoading label="indicadores" />}><PanelStats /></Suspense>}
-    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="min-w-0 space-y-5">{sections ? <>{sections[1]}{sections[2]}</> : <><Suspense key={scope + "pending"} fallback={<SectionLoading label="pendientes" />}><PanelPending /></Suspense><Suspense key={scope + "objectives"} fallback={<SectionLoading label="objetivos" />}><PanelObjectives /></Suspense></>}</div>
-      <div className="min-w-0 space-y-5">{sections ? <>{sections[3]}{sections[4]}</> : <><Suspense key={scope + "funnel"} fallback={<SectionLoading label="producción" />}><PanelFunnel /></Suspense><Suspense key={scope + "activity"} fallback={<SectionLoading label="actividad" />}><PanelActivity /></Suspense></>}</div>
-    </div>
-    {sections ? sections[5] : <Suspense key={scope + "brands"} fallback={<SectionLoading label="marcas" />}><PanelBrands /></Suspense>}
+    {chain ? block("mywork") : null}
+    {block("roles")}
+    <section aria-labelledby="panel-dueno-title" className="mb-6">
+      <h2 id="panel-dueno-title" className="text-inkmuted mb-2.5 text-[11px] font-bold tracking-[0.09em] uppercase">Panel del Dueño</h2>
+      {block("stats")}
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0">{block("objectives")}</div>
+        <div className="min-w-0">{block("activity")}</div>
+      </div>
+      {block("brands")}
+    </section>
+    <section aria-labelledby="panel-estrategia-title" className="mb-5">
+      <h2 id="panel-estrategia-title" className="text-inkmuted mb-2.5 text-[11px] font-bold tracking-[0.09em] uppercase">Panel de estrategia</h2>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0">{block("pending")}</div>
+        <div className="min-w-0">{block("funnel")}</div>
+      </div>
+    </section>
+    <ManualCard user={user} variant="banner" />
   </>;
 
   });
 }
 
-async function PanelStats() {
+type PanelSectionKey = "stats" | "pending" | "objectives" | "funnel" | "activity" | "brands" | "mywork" | "roles";
+type PanelSections = Record<PanelSectionKey, ReactNode>;
+
+/**
+ * Conteo de videos por estado (el groupBy del embudo), una sola vez por petición: lo comparten
+ * PanelFunnel y PanelRoles, así que con la cadena apagada las tarjetas de rol no consultan nada.
+ */
+const getStatusCounts = cache(async (): Promise<Record<string, number>> => {
+  const { videos } = await getPanelContext();
+  const [porEstado] = await measurePhase("panel.funnel", () => Promise.all([
+    prisma.contentItem.groupBy({ by: ["status"], _count: { _all: true }, where: videos })
+  ]));
+  return countsFromRows(porEstado, "status");
+});
+
+/**
+ * «Paneles por rol» (ORDEN_POR_ROL): las 10 tarjetas en ROLE_ORDER. Con la cadena encendida suma
+ * una consulta (pasos abiertos por paso, misma regla que /cadena); apagada, solo reusa el embudo.
+ */
+async function PanelRoles({ chain }: { chain: boolean }) {
+  const { videos } = await getPanelContext();
+  const [statusCounts, stepCounts] = await measurePhase("panel.roles", () => Promise.all([
+    getStatusCounts(),
+    chain ? openStepCounts(videos) : Promise.resolve(null),
+  ]));
+  const cards = ownerRoleCards({ statusCounts, stepCounts, chain });
+  return <section data-ready-block="panel.roles" aria-labelledby="panel-roles-title" className="mb-6">
+    <h2 id="panel-roles-title" className="text-inkmuted mb-2.5 text-[11px] font-bold tracking-[0.09em] uppercase">Paneles por rol</h2>
+    <RolePanelCards variant="owner" cards={cards} />
+  </section>;
+}
+
+async function PanelStats({ ordered = false }: { ordered?: boolean } = {}) {
   const { brandCtx, epoch, videos, inicioMes, finMes, semanasMes, publicadoEsteMes, atrasadosWhere } = await getPanelContext();
   const [publicados, enProduccion, atrasados, vistasMes] = await measurePhase("panel.stats", () => Promise.all([
     prisma.contentItem.count({ where: publicadoEsteMes }),
@@ -197,39 +308,50 @@ async function PanelStats() {
     })
   ]));
   const vistas = vistasMes._sum.views ?? 0;
+  // ORDEN_POR_ROL: mosaicos en orden de flujo (En producción, Atrasados, Publicados este mes,
+  // Vistas semanales). Apagado, el orden de siempre.
+  const publicadosTile = (
+    <Stat
+      label="Publicados este mes"
+      value={formatNumber(publicados)}
+      sub="Videos que ya salieron"
+      icon={<CheckCircle2 size={16} />}
+      accent="#10b981"
+      href={`/contenido?estado=PUBLICADO&desde=${dateKey(inicioMes)}&hasta=${dateKey(finMes)}`}
+    />
+  );
+  const produccionTile = (
+    <Stat
+      label="En producción"
+      value={formatNumber(enProduccion)}
+      sub="De la idea al programado"
+      icon={<Film size={16} />}
+      accent="#6366f1"
+      href="/contenido?vista=produccion"
+    />
+  );
+  const atrasadosTile = (
+    <Stat
+      label="Atrasados"
+      value={formatNumber(atrasados)}
+      sub={atrasados > 0 ? "Se pasaron de fecha" : "Nada fuera de plazo"}
+      icon={<AlertTriangle size={16} />}
+      accent={atrasados > 0 ? "#f43f5e" : "#64748b"}
+      href="/contenido?vista=atrasados"
+    />
+  );
+  const vistasTile = (
+    <Stat
+      label="Vistas semanales"
+      value={compactNumber(vistas)}
+      sub="Semanas que abarcan este mes"
+      icon={<Eye size={16} />}
+      accent="#0ea5e9"
+      href={`/metricas?desde=${dateKey(inicioMes)}&hasta=${dateKey(finMes)}`}
+    />
+  );
   return <section data-ready-block="panel.stats"><div className="mb-5 grid grid-cols-2 gap-3 sm:gap-3.5 xl:grid-cols-4">
-        <Stat
-          label="Publicados este mes"
-          value={formatNumber(publicados)}
-          sub="Videos que ya salieron"
-          icon={<CheckCircle2 size={16} />}
-          accent="#10b981"
-          href={`/contenido?estado=PUBLICADO&desde=${dateKey(inicioMes)}&hasta=${dateKey(finMes)}`}
-        />
-        <Stat
-          label="En producción"
-          value={formatNumber(enProduccion)}
-          sub="De la idea al programado"
-          icon={<Film size={16} />}
-          accent="#6366f1"
-          href="/contenido?vista=produccion"
-        />
-        <Stat
-          label="Atrasados"
-          value={formatNumber(atrasados)}
-          sub={atrasados > 0 ? "Se pasaron de fecha" : "Nada fuera de plazo"}
-          icon={<AlertTriangle size={16} />}
-          accent={atrasados > 0 ? "#f43f5e" : "#64748b"}
-          href="/contenido?vista=atrasados"
-        />
-        <Stat
-          label="Vistas semanales"
-          value={compactNumber(vistas)}
-          sub="Semanas que abarcan este mes"
-          icon={<Eye size={16} />}
-          accent="#0ea5e9"
-          href={`/metricas?desde=${dateKey(inicioMes)}&hasta=${dateKey(finMes)}`}
-        />
+        {ordered ? <>{produccionTile}{atrasadosTile}{publicadosTile}{vistasTile}</> : <>{publicadosTile}{produccionTile}{atrasadosTile}{vistasTile}</>}
       </div></section>;
 }
 
@@ -470,16 +592,10 @@ async function PanelObjectives() {
 }
 
 async function PanelFunnel() {
-  const { videos } = await getPanelContext();
-  const [porEstado] = await measurePhase("panel.funnel", () => Promise.all([
-    prisma.contentItem.groupBy({ by: ["status"], _count: { _all: true }, where: videos })
-  ]));
-  const conteoEstado = new Map<string, number>(
-    porEstado.map((r) => [r.status, r._count._all] as const)
-  );
+  const conteoEstado = await getStatusCounts();
   const embudo = CONTENT_STATUSES.map((estado) => ({
     label: estado.label,
-    value: conteoEstado.get(estado.value) ?? 0,
+    value: conteoEstado[estado.value] ?? 0,
     color: estado.hex,
   }));
 

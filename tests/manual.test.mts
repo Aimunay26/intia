@@ -9,6 +9,7 @@ import {
   getManualRole,
   levelFromParam,
   manualEnabled,
+  manualFlow,
   orderManualRoles,
   viewerManualRoles,
   youtubeId,
@@ -70,6 +71,16 @@ test("orden de tarjetas: las propias primero y, dentro de cada grupo, el orden d
   // Entrada desordenada: el resultado sigue el flujo igual.
   const shuffled = [...MANUAL_ROLE_INDEX].reverse();
   assert.deepEqual(orderManualRoles(shuffled, ["COMMUNITY", "FILMMAKER"]).map(role => role.id).slice(0, 3), ["FILMMAKER", "COMMUNITY", "GUIONISTA"]);
+});
+
+test("ORDEN_POR_ROL: con manualFlow(true) el Dueño va primero; el flow por defecto no cambia", () => {
+  const flowOn = manualFlow(true);
+  assert.deepEqual([...flowOn], ["DUENO", "GUIONISTA", "FILMMAKER", "ACTOR", "EDITOR", "JEFE_EDITORES", "COMMUNITY", "ATC"]);
+  assert.deepEqual(orderManualRoles(MANUAL_ROLE_INDEX, [], flowOn).map(role => role.id), [...flowOn]);
+  const talent = orderManualRoles(MANUAL_ROLE_INDEX, viewerManualRoles({ role: "MEMBER", profiles: ["TALENT"] }, flowOn), flowOn);
+  assert.deepEqual(talent.map(role => role.id), ["ACTOR", "DUENO", "GUIONISTA", "FILMMAKER", "EDITOR", "JEFE_EDITORES", "COMMUNITY", "ATC"]);
+  assert.deepEqual(viewerManualRoles({ role: "OWNER", profiles: ["EDITOR"] }, flowOn), ["DUENO", "EDITOR", "JEFE_EDITORES"]);
+  assert.deepEqual(orderManualRoles(MANUAL_ROLE_INDEX, [], manualFlow(false)).map(role => role.id), MANUAL_ROLE_INDEX.map(role => role.id));
 });
 
 test("niveles por parámetro: valores válidos y respaldo en principiante", () => {

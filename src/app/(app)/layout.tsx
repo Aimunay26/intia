@@ -3,6 +3,7 @@ import { ROLE_LEVEL } from "@/lib/constants";
 import { manualEnabled } from "@/lib/manual";
 import { permissionFlags } from "@/lib/permissions";
 import { productionChainActiveFor } from "@/lib/production-chain-flag";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
 import { getPageBrandContext as getBrandContext, requirePageUser as requireUser } from "@/lib/render-context";
 import { getSetting, SETTING_KEYS } from "@/lib/settings";
 
@@ -24,6 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       manualEnabled={manualEnabled()}
       chainEnabled={productionChainActiveFor(user, null)}
       permissionFlags={permissionFlags()}
+      roleOrder={roleOrderEnabled()}
       user={{
         id: user.id,
         name: user.name,

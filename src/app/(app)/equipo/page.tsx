@@ -21,13 +21,14 @@ import { archiveEpoch, liveBrand } from "@/lib/archive-scope";
 import { can, LEVEL } from "@/lib/auth";
 import {
 	ACCOUNT_STATUS_MAP,
-	ASSIGNMENT_ROLES,
 	USER_ROLE_MAP,
 	USER_ROLES,
 } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { getTeamParticipation } from "@/lib/team-participation";
 import { profileCardsEnabled } from "@/lib/team-profile-cards";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
+import { orderedAssignmentRoles } from "@/lib/role-panels";
 import { cn, formatDate } from "@/lib/utils";
 import {
 	EditUserButton,
@@ -51,6 +52,8 @@ export default async function EquipoPage({
   return measurePagePhase("page:/equipo", async () => {
   const user = await requirePageSection("team");
   const tarjetas = profileCardsEnabled();
+  // ORDEN_POR_ROL: Cargos y «En qué participó» en el orden del flujo. Apagado, como siempre.
+  const ordenRol = roleOrderEnabled();
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="team" query={await searchParams} />;
   const sp = singleQueryValues(await searchParams);
   const canManage = can(user.role, LEVEL.OWNER);
@@ -103,7 +106,7 @@ export default async function EquipoPage({
             {yo ? (
               <EditUserButton
                 member={conArchivadas(yo)}
-                archetypes={opcionesArquetipo} brands={brands} cards={tarjetas}
+                archetypes={opcionesArquetipo} brands={brands} cards={tarjetas} ordered={ordenRol}
                 canManage={canManage}
                 isSelf
                 puedeDesactivar={false}
@@ -112,7 +115,7 @@ export default async function EquipoPage({
                 label="Mi perfil y contraseña"
               />
             ) : null}
-            {canManage ? <InviteUserButton archetypes={opcionesArquetipo} brands={brands} cards={tarjetas} /> : null}
+            {canManage ? <InviteUserButton archetypes={opcionesArquetipo} brands={brands} cards={tarjetas} ordered={ordenRol} /> : null}
           </>
         }
       />
@@ -198,7 +201,7 @@ export default async function EquipoPage({
                 {lista.map((p) => {
                   const datos = participacion.get(p.id);
                   const videos = datos?.videos ?? 0;
-                  const papeles = ASSIGNMENT_ROLES.map((r) => ({
+                  const papeles = orderedAssignmentRoles(ordenRol).map((r) => ({
                     option: r,
                     count: datos?.roles.get(r.value) ?? 0,
                   })).filter((r) => r.count > 0);
@@ -299,7 +302,7 @@ export default async function EquipoPage({
                         {canManage || isSelf ? (
                           <EditUserButton
                             member={conArchivadas(p)}
-                            archetypes={opcionesArquetipo} brands={brands} cards={tarjetas}
+                            archetypes={opcionesArquetipo} brands={brands} cards={tarjetas} ordered={ordenRol}
                             canManage={canManage}
                             isSelf={isSelf}
                             puedeDesactivar={canManage && !isSelf}

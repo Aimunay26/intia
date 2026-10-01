@@ -9,6 +9,8 @@
  *   "false" (sin importar mayúsculas ni espacios) oculta el menú, las tarjetas y responde 404 en /manual/*.
  */
 import { MANUAL_ROLE_INDEX, type ManualLevel, type ManualRoleId, type ManualRoleSummary } from "@/content/manual/index";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
+import { panelOfManualRole, sortByRole } from "@/lib/role-panels";
 
 export type { ManualLevel, ManualRoleId, ManualRoleSummary };
 export type ManualMediaType = "ESCENA_3D" | "VIDEO_REFERENCIA" | "CHECKLIST" | "PLANTILLA" | "CASO_PRACTICO";
@@ -136,6 +138,28 @@ export const MEDIA_LABELS: Record<ManualMediaType, string> = {
 /** Orden del flujo del video: Guionista → Filmmaker → … → Dueño de negocio. */
 export const MANUAL_FLOW: readonly ManualRoleId[] = MANUAL_ROLE_INDEX.map(role => role.id);
 
+/**
+ * MANUAL_FLOW en el orden de los paneles de rol (ORDEN_POR_ROL): el Dueño primero y luego
+ * Guionista → Filmmaker → Actor → Editor → Jefe de editores → Community → ATC.
+ */
+export const MANUAL_FLOW_BY_ROLE: readonly ManualRoleId[] = sortByRole(MANUAL_FLOW, id => panelOfManualRole(id));
+
+/** Orden del manual para mostrar. Apagado ORDEN_POR_ROL devuelve la MISMA referencia de MANUAL_FLOW. */
+export function manualFlow(on: boolean = roleOrderEnabled()): readonly ManualRoleId[] {
+  return on ? MANUAL_FLOW_BY_ROLE : MANUAL_FLOW;
+}
+
+/**
+ * Etiqueta de la tarjeta del manual. Apagado: «Paso N del flujo» según MANUAL_FLOW, como siempre.
+ * Encendido: «Dirección» para el Dueño y «Paso N del flujo» para los demás, numerados sin contar al
+ * Dueño (Guionista sigue siendo el Paso 1).
+ */
+export function manualStepLabel(id: ManualRoleId, on: boolean): string {
+  if (!on) return `Paso ${MANUAL_FLOW.indexOf(id) + 1} del flujo`;
+  if (id === "DUENO") return "Dirección";
+  return `Paso ${MANUAL_FLOW_BY_ROLE.filter(role => role !== "DUENO").indexOf(id) + 1} del flujo`;
+}
+
 export function manualRoles(): readonly ManualRoleSummary[] {
   return MANUAL_ROLE_INDEX;
 }
@@ -158,18 +182,18 @@ export function manualRolesForProfile(profile: string): readonly ManualRoleId[] 
 }
 
 /** Manuales que corresponden a quien mira, en orden de flujo. La posición de Dueño suma su manual. */
-export function viewerManualRoles(user: { role: string; profiles?: readonly string[] }): ManualRoleId[] {
+export function viewerManualRoles(user: { role: string; profiles?: readonly string[] }, flow: readonly ManualRoleId[] = MANUAL_FLOW): ManualRoleId[] {
   const ids = new Set<ManualRoleId>();
   if (user.role === "OWNER") ids.add("DUENO");
   for (const profile of user.profiles ?? []) for (const id of manualRolesForProfile(profile)) ids.add(id);
-  return MANUAL_FLOW.filter(id => ids.has(id));
+  return flow.filter(id => ids.has(id));
 }
 
 /** Los manuales propios primero («Tu rol»); dentro de cada grupo se respeta el orden del flujo. */
-export function orderManualRoles<T extends { id: ManualRoleId }>(roles: readonly T[], mine: readonly ManualRoleId[]): (T & { mine: boolean })[] {
+export function orderManualRoles<T extends { id: ManualRoleId }>(roles: readonly T[], mine: readonly ManualRoleId[], flow: readonly ManualRoleId[] = MANUAL_FLOW): (T & { mine: boolean })[] {
   const position = (id: ManualRoleId) => {
-    const index = MANUAL_FLOW.indexOf(id);
-    return index === -1 ? MANUAL_FLOW.length : index;
+    const index = flow.indexOf(id);
+    return index === -1 ? flow.length : index;
   };
   return roles
     .map(role => ({ ...role, mine: mine.includes(role.id) }))

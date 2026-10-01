@@ -617,6 +617,71 @@ body {
   margin: 18px 0 6px;
 }
 
+/* Cabecera plegable de un panel de rol (ORDEN_POR_ROL): misma letra que .nav-section. */
+.nav-panel-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  padding: 4px 10px;
+  margin: 14px 0 4px;
+  min-height: 28px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.nav-panel-toggle:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+.nav-panel-toggle:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+.nav-panel-toggle[aria-disabled="true"] {
+  cursor: default;
+}
+.nav-panel-toggle .nav-panel-chevron {
+  transition: transform 0.15s ease;
+}
+.nav-panel-toggle[aria-expanded="false"] .nav-panel-chevron {
+  transform: rotate(-90deg);
+}
+@media (pointer: coarse) {
+  .nav-panel-toggle {
+    min-height: 40px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-panel-toggle,
+  .nav-panel-toggle .nav-panel-chevron {
+    transition: none;
+  }
+}
+
+/* Número de paso de un rol en el flujo (menú, tarjetas del inicio, Cargos, tutorial). */
+.nav-step-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: var(--brand-soft);
+  color: var(--brand-text);
+  flex-shrink: 0;
+}
+
 /* --- Varios --- */
 
 .prose-narrow {

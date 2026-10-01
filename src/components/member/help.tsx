@@ -22,8 +22,10 @@ import { Callout, Card, CardHeader, PageHeader, SectionTitle } from "@/component
 import type { SessionUser } from "@/lib/auth";
 import { CONTENT_STATUS_MAP } from "@/lib/constants";
 import { manualEnabled, manualRoles, manualRolesForProfile, splitHead } from "@/lib/manual";
-import { SECTIONS, WORK_PROFILES, canAccessSection, type Section, type WorkProfile } from "@/lib/permissions";
+import { SECTIONS, WORK_PROFILES, canAccessSection, permissionFlags, type Section, type WorkProfile } from "@/lib/permissions";
 import { productionChainActiveFor } from "@/lib/production-chain-flag";
+import { roleNavHrefOrder } from "@/lib/role-nav";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
 import { cn, truncate } from "@/lib/utils";
 
 /* ----------------------------------------------------- ACCESOS POR SECCIÓN -- */
@@ -47,18 +49,35 @@ const SECTION_INFO: Partial<Record<Section, { icon: typeof BookOpen; description
 const LINK_ORDER: Section[] = ["manual", "panel", "calendar", "content", "tasks", "chain", "brands", "generator", "scripts", "structures", "archetypes", "metrics", "profile", "help"];
 
 /**
- * Secciones a las que puede entrar esta cuenta; el Manual primero y respetando sus interruptores
- * (MANUAL_PROCEDIMIENTOS_ENABLED y, para «Cadena», la cadena de entregas).
+ * Secciones a las que puede entrar esta cuenta, respetando sus interruptores
+ * (MANUAL_PROCEDIMIENTOS_ENABLED y, para «Cadena», la cadena de entregas). Con ORDEN_POR_ROL van
+ * en el orden del menú de esta persona (roleNavHrefOrder: General y luego sus paneles en orden de
+ * flujo) y «Mi perfil», que no está en el menú, al final. Apagado, LINK_ORDER: el Manual primero.
+ * Lo usan «Accesos» del inicio, «Dónde está cada cosa» y el aviso de la renovación.
  */
 export function memberSectionLinks(user: SessionUser, exclude: readonly Section[] = []) {
   const chain = productionChainActiveFor(user, null);
-  return LINK_ORDER.filter(key => !exclude.includes(key) && canAccessSection(user, key) && (key !== "manual" || manualEnabled()) && (key !== "chain" || chain)).map(key => ({
+  const keys = LINK_ORDER.filter(key => !exclude.includes(key) && canAccessSection(user, key) && (key !== "manual" || manualEnabled()) && (key !== "chain" || chain));
+  return orderByNav(user, keys, chain).map(key => ({
     key,
     href: SECTIONS[key].href,
     label: SECTIONS[key].label,
     icon: SECTION_INFO[key]?.icon ?? ArrowRight,
     description: key === "panel" && chain ? "Mi trabajo: lo que te toca y su botón «Listo»" : SECTION_INFO[key]?.description ?? "",
   }));
+}
+
+/** ORDEN_POR_ROL: ordena las secciones como el menú de esta persona; lo que no está en él, al final. */
+function orderByNav(user: SessionUser, keys: Section[], chain: boolean): Section[] {
+  if (!roleOrderEnabled()) return keys;
+  const order = roleNavHrefOrder(user, { chainEnabled: chain, manualEnabled: manualEnabled(), permissionFlags: permissionFlags() });
+  const rank = (key: Section) => {
+    const index = order.indexOf(SECTIONS[key].href);
+    return index === -1 ? order.length : index;
+  };
+  return keys.map((key, index) => ({ key, index, rank: rank(key) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(entry => entry.key);
 }
 
 /* ------------------------------------------------------------------ FLUJO -- */

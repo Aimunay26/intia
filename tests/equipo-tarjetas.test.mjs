@@ -25,6 +25,15 @@ test("las tarjetas envían los mismos campos que la lista de casillas", () => {
   assert.equal(form.match(/name="(profiles|brandIds)"[^>]*className="sr-only"/g)?.length, 2);
 });
 
+test("ORDEN_POR_ROL: las tarjetas de Cargos reciben ordered y llevan un chip de número", () => {
+  // Un solo bloque de casilla para los dos órdenes: ordered solo cambia la rejilla, el chip y la etiqueta.
+  assert.match(form, /export function ProfileCards\(\{ selected, ordered = false \}/);
+  assert.match(form, /<ProfileCards selected=\{member\?\.profiles\} ordered=\{ordered\} \/>/);
+  assert.match(form, /ordered \? "grid gap-2 sm:grid-flow-col sm:grid-rows-5" : "grid gap-2 sm:grid-cols-2"/);
+  assert.match(form, /aria-hidden\s+data-paso=\{index \+ 1\}/);
+  assert.match(form, /profileLabelFor\(p\.id, true\)/);
+});
+
 test("el Modal no hereda la alineación de la celda que lo contiene", () => {
   assert.match(modal, /className="card fade-in relative w-full text-left whitespace-normal/);
 });

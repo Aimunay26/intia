@@ -3,7 +3,8 @@ import Link from "next/link";
 
 import { ROLE_ICONS } from "@/components/manual/manual-card";
 import { PageHeader } from "@/components/ui";
-import { MANUAL_FLOW, manualRoles, orderManualRoles, viewerManualRoles } from "@/lib/manual";
+import { manualFlow, manualRoles, manualStepLabel, orderManualRoles, viewerManualRoles } from "@/lib/manual";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
 import { measurePagePhase } from "@/lib/performance-page";
 
 import { requireManualPage } from "./access";
@@ -13,7 +14,10 @@ export const dynamic = "force-dynamic";
 export default async function ManualPage() {
   return measurePagePhase("page:/manual", async () => {
     const user = await requireManualPage();
-    const roles = orderManualRoles(manualRoles(), viewerManualRoles(user));
+    // ORDEN_POR_ROL: el Dueño primero y luego el flujo. Apagado, MANUAL_FLOW como siempre.
+    const ordenRol = roleOrderEnabled();
+    const flow = manualFlow(ordenRol);
+    const roles = orderManualRoles(manualRoles(), viewerManualRoles(user, flow), flow);
     return (
       <>
         <PageHeader
@@ -36,7 +40,7 @@ export default async function ManualPage() {
                   <div className="flex items-start gap-3">
                     <span className="bg-brandsoft text-brand grid h-10 w-10 shrink-0 place-items-center rounded-xl"><Icon size={19} /></span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-inkmuted text-[10.5px] font-bold tracking-wider uppercase">Paso {MANUAL_FLOW.indexOf(role.id) + 1} del flujo</div>
+                      <div className="text-inkmuted text-[10.5px] font-bold tracking-wider uppercase">{manualStepLabel(role.id, ordenRol)}</div>
                       <h2 className="text-ink text-[15px] leading-tight font-bold">{role.name}</h2>
                     </div>
                     {role.mine ? <span className="chip bg-brandsoft text-brandtext shrink-0">Tu rol</span> : null}

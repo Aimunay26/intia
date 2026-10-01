@@ -14,6 +14,11 @@ const name=`intia_profiles_ui_${randomBytes(4).toString('hex')}_test`,target=new
 const port=3011,base=`http://127.0.0.1:${port}`;
 const env={...process.env,DATABASE_URL:target.href,AUTH_SECRET:randomBytes(32).toString('hex'),APP_SECRETS_KEYS:JSON.stringify({fixture:randomBytes(32).toString('base64')}),APP_SECRETS_ACTIVE_KEY:'fixture',AI_JOBS_ENABLED:'false',BLOB_PRIVATE_ENABLED:'false',NODE_ENV:'production',WORKFLOW_LOCAL_RECOVER_ACTIVE_RUNS:'false'};
 const roles=['STRATEGY','WRITER','PRODUCTION','CAMERA','TALENT','EDITOR','DESIGNER','PUBLISHER','ANALYST'];
+// ORDEN_POR_ROL (encendido salvo "false", como src/lib/role-order-flag.ts): menú por paneles e inicio por paneles.
+const roleOrder=(process.env.ORDEN_POR_ROL??'').trim().toLowerCase()!=='false';
+const roleOrderIds=['OWNER',...roles];
+const asideNavHrefs=aside=>aside.getByRole('navigation',{name:'Navegación principal'}).locator('a').evaluateAll(links=>links.map(link=>link.getAttribute('href')));
+const asidePanels=aside=>aside.locator('[data-nav-panel]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-nav-panel')));
 const nav={STRATEGY:['/manual','/calendario','/contenido','/tareas','/marcas','/guiones','/estructuras','/arquetipos','/metricas'],WRITER:['/manual','/calendario','/contenido','/tareas','/marcas','/generador','/guiones','/estructuras','/arquetipos'],PRODUCTION:['/manual','/calendario','/contenido','/tareas','/guiones'],CAMERA:['/manual','/calendario','/contenido','/tareas','/guiones'],TALENT:['/manual','/calendario','/contenido','/tareas','/guiones','/arquetipos'],EDITOR:['/manual','/calendario','/contenido','/tareas','/guiones'],DESIGNER:['/manual','/contenido','/tareas','/marcas','/estructuras'],PUBLISHER:['/manual','/calendario','/contenido','/tareas','/marcas'],ANALYST:['/manual','/contenido','/tareas','/marcas','/metricas'],EMPTY:['/manual']};
 let server,db,browser;const report={environment:'local-production-build',profiles:[],errors:[],productionChanged:false};
 fs.mkdirSync('.audit',{recursive:true});fs.writeFileSync('.audit/profiles-ui-server.log','');
@@ -59,6 +64,12 @@ try{
   if(role==='OWNER'){
    phase='design-regression';report.design=await checkDesignUi(page,base,db);await page.goto(base+'/');phase='profile-navigation';
    await expect(main.getByText('37 vistas de 100 vistas',{exact:true})).toBeVisible();
+   if(roleOrder){
+    // Inicio del Dueño: 10 tarjetas de rol en ROLE_ORDER; menú con cada href una sola vez.
+    assert.deepEqual(await main.locator('[data-role-card]').evaluateAll(cards=>cards.map(card=>card.getAttribute('data-role-card'))),roleOrderIds);
+    const hrefs=await asideNavHrefs(aside);assert.equal(new Set(hrefs).size,hrefs.length,'OWNER: hrefs únicos en el menú');
+    report.roleOrderOwner=true;
+   }
    await page.goto(base+'/marcas');await expect(page.locator('main a.brand-strip[href="/marcas/A"]')).toContainText(/En riesgo\s*1/i);
    report.calculatedObjectivesConsistentAcrossPages=true;
    assert.equal((await page.goto(base+'/marcas?q=uno&q=dos')).status(),200);await expect(page.locator('main a.brand-strip[href="/marcas/A"]')).toBeVisible();
@@ -155,6 +166,11 @@ try{
   }else{
    for(const route of ['/equipo','/actividad','/ajustes'])assert.equal(await aside.locator(`a[href="${route}"]`).count(),0,`${role} no muestra ${route}`);
    for(const route of nav[role])await aside.locator(`a[href="${route}"]`).waitFor();
+   if(roleOrder){
+    // Cada perfil ve solo su panel (EMPTY ninguno) y ningún href se repite.
+    assert.deepEqual(await asidePanels(aside),role==='EMPTY'?[]:[role],`${role}: paneles del menú`);
+    const hrefs=await asideNavHrefs(aside);assert.equal(new Set(hrefs).size,hrefs.length,`${role}: hrefs únicos en el menú`);
+   }
    for(const route of [...nav[role],'/mi-perfil','/tutorial']){
     const response=await page.goto(base+route);assert.equal(response.status(),200,`${role}:${route}`);
     assert.ok(!await page.getByText('Something went wrong').count());

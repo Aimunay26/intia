@@ -5,6 +5,7 @@ import { Plus, UserPlus, X } from "lucide-react";
 
 import { asignarPersona, quitarAsignacion } from "@/app/actions/content";
 import { ASSIGNMENT_ROLES } from "@/lib/constants";
+import { orderedAssignmentRoles } from "@/lib/role-panels";
 import { cn } from "@/lib/utils";
 import { Avatar, Card, CardHeader } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
@@ -77,11 +78,14 @@ export function TeamPanel({
   assignments,
   people,
   canManage,
+  roleOrder = false,
 }: {
   contentItemId: string;
   assignments: AssignmentRow[];
   people: PersonOption[];
   canManage: boolean;
+  /** Kill-switch ORDEN_POR_ROL (resuelto en el servidor): funciones en el orden del flujo. */
+  roleOrder?: boolean;
 }) {
   const [abierto, setAbierto] = useState<string | null>(null);
   const cubiertos = new Set(assignments.map((a) => a.role)).size;
@@ -97,7 +101,7 @@ export function TeamPanel({
       />
 
       <div className="divide-line divide-y">
-        {ASSIGNMENT_ROLES.map((rol) => {
+        {orderedAssignmentRoles(roleOrder).map((rol) => {
           const suyos = assignments.filter((a) => a.role === rol.value);
           const disponibles = people.filter(
             (p) => !suyos.some((a) => a.userId === p.id)

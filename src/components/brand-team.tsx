@@ -2,6 +2,7 @@ import { BrandTeamPanel } from "@/app/(app)/marcas/[id]/team";
 import { prisma } from "@/lib/prisma";
 import { allows, type AccessUser } from "@/lib/permissions";
 import { productionFlowEnabled } from "@/lib/production-flow-flag";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
 import { parseRecordingWeekdays } from "@/lib/working-days";
 
 /**
@@ -34,6 +35,7 @@ export async function BrandTeam({ user, brandId }: { user: AccessUser; brandId: 
       team={Object.fromEntries(members.map((m) => [m.role, m.userId]))}
       weekdays={parseRecordingWeekdays(settings?.recordingWeekdays)}
       autoAssign={settings?.autoAssign ?? true}
+      roleOrder={roleOrderEnabled()}
       people={[
         ...available.map((p) => ({ id: p.id, name: p.name, owner: p.role === "OWNER", profiles: p.workProfiles.map((w) => w.profile), available: true })),
         ...missing.map((p) => ({ id: p.id, name: p.name, owner: false, profiles: [], available: false })),

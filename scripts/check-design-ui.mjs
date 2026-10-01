@@ -4,7 +4,14 @@ import { expect } from '@playwright/test';
 
 // Secciones con ruta propia en la barra lateral; /generador/trabajos también está en NAV (Generaciones).
 const sections=['/','/calendario','/contenido','/tareas','/marcas','/generador','/guiones','/estructuras','/arquetipos','/metricas','/manual','/tutorial','/equipo','/actividad','/ajustes'];
-const navLinks=[...sections,'/generador/trabajos'];
+// ORDEN_POR_ROL (encendido salvo "false", igual que src/lib/role-order-flag.ts): el Dueño suma los
+// 5 enlaces de aterrizaje de sus paneles (21 con la cadena apagada, como en el fixture; 16 apagado).
+const roleOrder=(process.env.ORDEN_POR_ROL??'').trim().toLowerCase()!=='false';
+const landingLinks=['/contenido?estado=IDEA','/contenido?estado=APROBADO','/contenido?estado=GRABACION','/contenido?estado=EDICION','/contenido?estado=PROGRAMADO'];
+const navLinks=[...sections,'/generador/trabajos',...(roleOrder?landingLinks:[])];
+// Paneles del Dueño en orden de flujo; sin la cadena, Diseñador no tiene enlaces y no se pinta.
+const ownerPanels=['OWNER','STRATEGY','WRITER','PRODUCTION','CAMERA','TALENT','EDITOR','PUBLISHER','ANALYST'];
+const panelOrder=navigation=>navigation.locator('[data-nav-panel]').evaluateAll(nodes=>nodes.map(node=>node.getAttribute('data-nav-panel')));
 
 export async function checkDesignUi(page, base, db) {
   const checks={routes:[],viewports:[],interactions:[]};
@@ -13,6 +20,10 @@ export async function checkDesignUi(page, base, db) {
   await expect(desktopNav.locator('a')).toHaveCount(navLinks.length);
   await expect(page.getByRole('button',{name:'Cerrar menú',exact:true})).toHaveCount(0);
   assert.deepEqual((await desktopNav.locator('a').evaluateAll(links=>links.map(link=>link.getAttribute('href')))).sort(),[...navLinks].sort());
+  if(roleOrder){
+    assert.deepEqual(await panelOrder(desktopNav),ownerPanels);
+    await expect(desktopNav.getByRole('link',{name:'Guiones',exact:true})).toHaveCount(1);
+  }
   for(const route of [...sections,'/generador/trabajos','/guiones/script','/contenido/assigned','/marcas/A','/estructuras/structure','/arquetipos/person','/mi-perfil','/manual/filmmaker','/manual/filmmaker/fm-p2']) {
     const response=await page.goto(base+route);
     assert.equal(response.status(),200,route);
@@ -89,6 +100,7 @@ export async function checkDesignUi(page, base, db) {
         await page.getByRole('button',{name:'Abrir menú',exact:true}).click();
         const mobileNav=page.getByRole('navigation',{name:'Navegación principal'}).filter({visible:true});
         await expect(mobileNav.locator('a')).toHaveCount(navLinks.length);
+        if(roleOrder)assert.deepEqual(await panelOrder(mobileNav),ownerPanels);
         await mobileNav.getByRole('link',{name:'Guiones',exact:true}).click();
         await expect(main.getByRole('heading',{name:'Guiones',exact:true})).toBeVisible();
         await expect(mobileNav).toHaveCount(0);
@@ -124,5 +136,22 @@ export async function checkDesignUi(page, base, db) {
   await page.getByRole('menuitem',{name:'Mi perfil',exact:true}).click();
   await page.waitForURL(base+'/mi-perfil');
   checks.interactions.push('user-profile-menu');
+
+  // Paneles plegables: plegar «Guiones» sobrevive a recargar; se deja todo desplegado al terminar
+  // (smoke-permissions, benchmark-navigation y la guía esperan los enlaces visibles).
+  if(roleOrder){
+    await page.goto(base+'/');
+    const aside=page.locator('aside').first();
+    const toggle=aside.locator('[data-nav-panel-toggle="WRITER"]'),scripts=aside.locator('a[href="/guiones"]');
+    await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(scripts).toBeVisible();
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(scripts).toBeHidden();
+    await page.reload();
+    await expect(toggle).toHaveAttribute('aria-expanded','false');await expect(scripts).toBeHidden();
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded','true');await expect(scripts).toBeVisible();
+    assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('alsos-nav-paneles-cerrados-v1')??'[]')),[]);
+    checks.interactions.push('nav-panel-collapse-persists');
+  }
   return checks;
 }

@@ -27,30 +27,24 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { BrandSwitcher } from "@/components/brand-switcher";
 import { AlsosWordmark } from "@/components/alsos-wordmark";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { GUIA_TARGETS, GuiaOverlay, GuiaProvider } from "@/components/guia";
+import { GuiaOverlay, GuiaProvider } from "@/components/guia";
 import { NavigationMeasurements } from "@/components/navigation-measurements";
 import { NavigationPending } from "@/components/navigation-pending";
+import { NAV_GUIA_MAP, RoleSidebarNav } from "@/components/role-sidebar-nav";
 import { Avatar } from "@/components/ui";
 import type { BrandChoice } from "@/lib/brand-shared";
 import { USER_ROLE_MAP } from "@/lib/constants";
 import { allows, canAccessPath, type PermissionFlags } from "@/lib/permissions";
+import { buildRoleNav } from "@/lib/role-nav";
+import { rolePanelsFor } from "@/lib/role-panels";
 
-const NAV_GUIA_MAP: Record<string, string> = {
-  "/marcas": GUIA_TARGETS.NAV_MARCAS,
-  "/contenido": GUIA_TARGETS.NAV_CONTENIDO,
-  "/generador": GUIA_TARGETS.NAV_GENERADOR,
-  "/guiones": GUIA_TARGETS.NAV_GUIONES,
-  "/estructuras": GUIA_TARGETS.NAV_ESTRUCTURAS,
-  "/arquetipos": GUIA_TARGETS.NAV_ARQUETIPOS,
-  "/ajustes": GUIA_TARGETS.NAV_AJUSTES,
-  "/equipo": GUIA_TARGETS.NAV_EQUIPO,
-  "/tutorial": GUIA_TARGETS.NAV_TUTORIAL,
-};
+/** Paneles plegados del menú por roles (ORDEN_POR_ROL). Solo vive en este navegador. */
+const CLOSED_PANELS_KEY = "alsos-nav-paneles-cerrados-v1";
 
 type NavItem = { href: string; label: string; icon: React.ElementType; minLevel?: number };
 type NavGroup = { section?: string; items: NavItem[] };
@@ -120,6 +114,7 @@ export function Shell({
   manualEnabled = true,
   chainEnabled = false,
   permissionFlags = { designerCalendar: false },
+  roleOrder = false,
   children,
 }: {
   user: ShellUser;
@@ -135,12 +130,43 @@ export function Shell({
   chainEnabled?: boolean;
   /** Permisos que dependen de interruptores (el navegador no lee el entorno): resueltos en el layout. */
   permissionFlags?: PermissionFlags;
+  /** Kill-switch ORDEN_POR_ROL, resuelto en el servidor (layout). Apagado (o sin prop), el NAV de siempre. */
+  roleOrder?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
+
+  // Menú por paneles de rol: datos puros, calculados aquí como el filtro del NAV de siempre.
+  const roleBlocks = useMemo(
+    () => roleOrder ? buildRoleNav(user, { chainEnabled, manualEnabled, permissionFlags }) : null,
+    [roleOrder, user, chainEnabled, manualEnabled, permissionFlags],
+  );
+  // Paneles plegados, compartidos por la barra y el cajón. Todo abierto en el SSR y el primer
+  // pintado; luego se lee localStorage (con el interruptor apagado no se lee). Si falla, abierto.
+  const [closedPanels, setClosedPanels] = useState<string[]>([]);
+  useEffect(() => {
+    if (!roleOrder) return;
+    try {
+      const saved: unknown = JSON.parse(localStorage.getItem(CLOSED_PANELS_KEY) ?? "[]");
+      if (Array.isArray(saved)) setClosedPanels(saved.filter((id): id is string => typeof id === "string"));
+    } catch {
+      // almacenamiento bloqueado o dañado: todo queda abierto
+    }
+  }, [roleOrder]);
+  const togglePanel = useCallback((id: string) => {
+    setClosedPanels(prev => {
+      const next = prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id];
+      try {
+        localStorage.setItem(CLOSED_PANELS_KEY, JSON.stringify(next));
+      } catch {
+        // modo privado: el plegado dura solo esta visita
+      }
+      return next;
+    });
+  }, []);
 
   // Se cierra al navegar y también al cambiar de marca: la ruta no cambia,
   // pero lo que se ve sí, y el cajón abierto lo taparía.
@@ -227,7 +253,7 @@ export function Shell({
       />
 
       <nav aria-label="Navegación principal" className="flex-1 overflow-y-auto px-3.5 pb-4">
-        {NAV.map((group, gi) => {
+        {roleBlocks ? <RoleSidebarNav blocks={roleBlocks} closedPanels={closedPanels} onTogglePanel={togglePanel} /> : NAV.map((group, gi) => {
           const items = group.items.filter(
             (i) => canAccessPath(user, i.href, permissionFlags) && (manualEnabled || i.href !== "/manual") && (chainEnabled || i.href !== "/cadena")
           );
@@ -259,7 +285,7 @@ export function Shell({
         })}
       </nav>
 
-      <UserMenu user={user} />
+      <UserMenu user={user} roleOrder={roleOrder} />
     </>
   );
 
@@ -334,9 +360,11 @@ export function Shell({
 
 /* ------------------------------------------------------------ USUARIO -- */
 
-function UserMenu({ user }: { user: ShellUser }) {
+function UserMenu({ user, roleOrder = false }: { user: ShellUser; roleOrder?: boolean }) {
   const logoutForm = useRef<HTMLFormElement>(null);
   const role = USER_ROLE_MAP[user.role];
+  // Con ORDEN_POR_ROL, un MEMBER con perfiles ve sus etiquetas cortas en orden de flujo («Guiones · Editor»).
+  const panels = roleOrder && user.role === "MEMBER" ? rolePanelsFor(user).map(p => p.label).join(" · ") : "";
 
   return (
     <div className="border-line shrink-0 border-t p-3">
@@ -355,7 +383,7 @@ function UserMenu({ user }: { user: ShellUser }) {
               {user.name}
             </div>
             <div className="text-inkmuted truncate text-[11px] leading-tight">
-              {role?.label ?? user.role}
+              {panels || (role?.label ?? user.role)}
             </div>
           </div>
           <ChevronDown

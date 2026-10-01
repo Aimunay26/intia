@@ -22,7 +22,11 @@ import { ManualCard } from "@/components/manual/manual-card";
 import { Callout, Card, CardHeader, PageHeader } from "@/components/ui";
 import { archiveEpoch, liveContent, liveScript } from "@/lib/archive-scope";
 import { manualEnabled } from "@/lib/manual";
+import { permissionFlags } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { productionChainActiveFor } from "@/lib/production-chain-flag";
+import { roleOrderEnabled } from "@/lib/role-order-flag";
+import { roleNavHrefOrder } from "@/lib/role-nav";
 
 export const dynamic = "force-dynamic";
 
@@ -98,14 +102,18 @@ function Rol({
   hace,
   entrega,
   frontera,
+  paso,
 }: {
   nombre: string;
   hace: string;
   entrega: string;
   frontera: string;
+  /** Con ORDEN_POR_ROL: posición en el flujo («Paso N»). Sin ella, la tarjeta de siempre. */
+  paso?: number;
 }) {
   return (
     <div className="border-line rounded-lg border p-3.5">
+      {paso ? <div className="text-inkmuted text-[10.5px] font-bold tracking-wider uppercase">Paso {paso}</div> : null}
       <div className="text-ink text-[13.5px] font-bold">{nombre}</div>
       <dl className="mt-2 space-y-1.5 text-[12.5px] leading-snug">
         <div>
@@ -127,12 +135,114 @@ function Rol({
   );
 }
 
+/* --------------------------------------------------------- ROLES -- */
+
+type RolTutorial = { nombre: string; hace: string; entrega: string; frontera: string };
+
+const ROL_ESTRATEGIA: RolTutorial = {
+  nombre: "Estrategia",
+  hace: "Decide qué se hace y por qué, antes de que exista el video.",
+  entrega: "El encargo de la semana: qué marca, qué formato, qué gancho.",
+  frontera: "No escribe el guion ni persigue las entregas.",
+};
+const ROL_GUIONISTA: RolTutorial = {
+  nombre: "Guionista",
+  hace: "Convierte el encargo en un guion rodable.",
+  entrega: "Guion aprobado con escenas, tiempos y desglose de producción.",
+  frontera: "No aprueba su propio guion. La retención es del editor.",
+};
+const ROL_PRODUCCION: RolTutorial = {
+  nombre: "Producción",
+  hace: "Que el día de grabación exista.",
+  entrega: "Locación con hora, props, vestuario y el actor confirmado.",
+  frontera: "No graba ni dirige el encuadre.",
+};
+const ROL_ACTOR: RolTutorial = {
+  nombre: "Actor",
+  hace: "Sale en cámara dentro de su marca personal.",
+  entrega: "Las tomas completas, incluidas las de seguridad.",
+  frontera: "No responde de las vistas. Es la trampa más tentadora.",
+};
+const ROL_FILMMAKER: RolTutorial = {
+  nombre: "Filmmaker",
+  hace: "Graba.",
+  entrega: "Archivos ordenados, audio aparte, notas de continuidad y b-roll.",
+  frontera: "Su entrega no es «grabé»: es «el editor aceptó el material».",
+};
+const ROL_EDITOR: RolTutorial = {
+  nombre: "Editor",
+  hace: "Monta, ritma, subtitula.",
+  entrega: "El corte final en vertical, con textos legibles.",
+  frontera: "Sí responde del material que aceptó a ciegas.",
+};
+const ROL_DISENO: RolTutorial = {
+  nombre: "Diseño",
+  hace: "Todo lo que se lee y no se escucha.",
+  entrega: "Miniatura, portada y textos en pantalla.",
+  frontera: "No elige colores a su gusto: salen de la ficha de la marca.",
+};
+const ROL_APROBACION: RolTutorial = {
+  nombre: "Aprobación de marca",
+  hace: "Firma el guion y el corte final.",
+  entrega: "Un sí o un no con fecha, y notas concretas.",
+  frontera: "No reescribe ni da instrucciones de montaje fuera de la puerta.",
+};
+
+/** Las tarjetas de siempre (ORDEN_POR_ROL apagado). */
+const ROLES_TUTORIAL: readonly RolTutorial[] = [
+  ROL_ESTRATEGIA, ROL_GUIONISTA, ROL_PRODUCCION, ROL_ACTOR, ROL_FILMMAKER, ROL_EDITOR, ROL_DISENO, ROL_APROBACION,
+];
+
+/** Con ORDEN_POR_ROL: el orden del flujo, del Dueño al Analista, con «Paso N». */
+const ROLES_TUTORIAL_POR_ROL: readonly RolTutorial[] = [
+  { ...ROL_APROBACION, nombre: "Aprobación de marca (Dueño)" },
+  ROL_ESTRATEGIA,
+  ROL_GUIONISTA,
+  { ...ROL_PRODUCCION, nombre: "Preparador (producción)" },
+  ROL_FILMMAKER,
+  ROL_ACTOR,
+  ROL_EDITOR,
+  ROL_DISENO,
+  {
+    nombre: "Community / publicación",
+    hace: "Publica el video aprobado en cada red, a su hora.",
+    entrega: "La URL pública de cada publicación y el video marcado como Publicado.",
+    frontera: "No cambia el corte ni el texto aprobados por su cuenta.",
+  },
+  {
+    nombre: "Analista",
+    hace: "Mide qué formato rinde de verdad.",
+    entrega: "Vistas, retención y ventas de cada semana, cargadas en Métricas.",
+    frontera: "No decide qué se graba: informa a estrategia.",
+  },
+];
+
+/**
+ * Ordena «Dónde está cada cosa» según los hrefs del menú (roleNavHrefOrder). Estable: lo que no
+ * está en el menú queda al final, en su orden de siempre.
+ */
+function ordenarPorMenu<T extends readonly unknown[]>(items: readonly T[], hrefs: readonly string[]): T[] {
+  const rank = (href: unknown) => {
+    const index = hrefs.indexOf(href as string);
+    return index === -1 ? hrefs.length : index;
+  };
+  return items.map((item, index) => ({ item, index, rank: rank(item[0]) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(entry => entry.item);
+}
+
 /* ------------------------------------------------------------ PANTALLA -- */
 
 export default async function TutorialPage() {
   return measurePagePhase("page:/tutorial", async () => {
   const user = await requirePageSection("help");
   if (user.role !== "OWNER") return <MemberWorkspace user={user} section="help" />;
+  // ORDEN_POR_ROL: tarjetas de roles y «Dónde está cada cosa» en el orden del flujo. Apagado, como siempre.
+  const ordenRol = roleOrderEnabled();
+  const rolesTutorial = ordenRol ? ROLES_TUTORIAL_POR_ROL : ROLES_TUTORIAL;
+  const ordenMenu = ordenRol
+    ? roleNavHrefOrder(user, { chainEnabled: productionChainActiveFor(user, null), manualEnabled: manualEnabled(), permissionFlags: permissionFlags() })
+    : null;
 
   // El tutorial mira la base para saber en qué paso estás de verdad.
   // Archivo total: lo de marcas archivadas (y lo sin marca anterior a la época) no cuenta como
@@ -363,54 +473,9 @@ export default async function TutorialPage() {
               </p>
 
               <div className="grid gap-2.5 sm:grid-cols-2">
-                <Rol
-                  nombre="Estrategia"
-                  hace="Decide qué se hace y por qué, antes de que exista el video."
-                  entrega="El encargo de la semana: qué marca, qué formato, qué gancho."
-                  frontera="No escribe el guion ni persigue las entregas."
-                />
-                <Rol
-                  nombre="Guionista"
-                  hace="Convierte el encargo en un guion rodable."
-                  entrega="Guion aprobado con escenas, tiempos y desglose de producción."
-                  frontera="No aprueba su propio guion. La retención es del editor."
-                />
-                <Rol
-                  nombre="Producción"
-                  hace="Que el día de grabación exista."
-                  entrega="Locación con hora, props, vestuario y el actor confirmado."
-                  frontera="No graba ni dirige el encuadre."
-                />
-                <Rol
-                  nombre="Actor"
-                  hace="Sale en cámara dentro de su marca personal."
-                  entrega="Las tomas completas, incluidas las de seguridad."
-                  frontera="No responde de las vistas. Es la trampa más tentadora."
-                />
-                <Rol
-                  nombre="Filmmaker"
-                  hace="Graba."
-                  entrega="Archivos ordenados, audio aparte, notas de continuidad y b-roll."
-                  frontera="Su entrega no es «grabé»: es «el editor aceptó el material»."
-                />
-                <Rol
-                  nombre="Editor"
-                  hace="Monta, ritma, subtitula."
-                  entrega="El corte final en vertical, con textos legibles."
-                  frontera="Sí responde del material que aceptó a ciegas."
-                />
-                <Rol
-                  nombre="Diseño"
-                  hace="Todo lo que se lee y no se escucha."
-                  entrega="Miniatura, portada y textos en pantalla."
-                  frontera="No elige colores a su gusto: salen de la ficha de la marca."
-                />
-                <Rol
-                  nombre="Aprobación de marca"
-                  hace="Firma el guion y el corte final."
-                  entrega="Un sí o un no con fecha, y notas concretas."
-                  frontera="No reescribe ni da instrucciones de montaje fuera de la puerta."
-                />
+                {rolesTutorial.map((rol, i) => (
+                  <Rol key={rol.nombre} {...rol} paso={ordenRol ? i + 1 : undefined} />
+                ))}
               </div>
 
               <Callout tone="info" title="El atasco número uno no es el que crees">
@@ -467,7 +532,7 @@ export default async function TutorialPage() {
           <Card>
             <CardHeader title="Dónde está cada cosa" />
             <ul className="divide-line divide-y text-[13px]">
-              {[
+              {((lista) => (ordenMenu ? ordenarPorMenu(lista, ordenMenu) : lista))([
                 ...(manualEnabled() ? [["/manual", "Manual de procedimientos", "Cómo se hace el trabajo de cada rol", BookOpen]] : []),
                 ["/", "Panel", "Qué se está logrando y qué está atrasado", TrendingUp],
                 ["/calendario", "Calendario", "El mes: qué se graba, qué se publica y la agenda", CalendarDays],
@@ -479,7 +544,7 @@ export default async function TutorialPage() {
                 ["/guiones", "Guiones", "La biblioteca, escena por escena", Film],
                 ["/metricas", "Métricas", "Qué formato rinde de verdad", TrendingUp],
                 ["/equipo", "Equipo", "Las cuentas y sus permisos", Users],
-              ].map(([href, nombre, que, Icono]) => {
+              ]).map(([href, nombre, que, Icono]) => {
                 const I = Icono as typeof TrendingUp;
                 return (
                   <li key={href as string}>

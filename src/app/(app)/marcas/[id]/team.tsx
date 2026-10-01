@@ -8,6 +8,7 @@ import { SubmitButton } from "@/components/forms";
 import { Callout, Card, CardHeader, Field } from "@/components/ui";
 import { BRAND_TEAM_ROLES, RECORDING_WEEKDAYS } from "@/lib/constants";
 import { WORK_PROFILES } from "@/lib/permissions";
+import { orderedBrandTeamRoles } from "@/lib/role-panels";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,6 +27,8 @@ export type BrandTeamPanelProps = {
   weekdays: number[];
   autoAssign: boolean;
   people: TeamPerson[];
+  /** Kill-switch ORDEN_POR_ROL (resuelto en el servidor): funciones en el orden del flujo. */
+  roleOrder?: boolean;
 };
 
 const profileLabel = (id: string) => WORK_PROFILES.find((p) => p.id === id)?.label ?? id;
@@ -96,7 +99,8 @@ function Rules() {
   );
 }
 
-export function BrandTeamPanel({ brandId, canEdit, revision, team, weekdays, autoAssign, people }: BrandTeamPanelProps) {
+export function BrandTeamPanel({ brandId, canEdit, revision, team, weekdays, autoAssign, people, roleOrder = false }: BrandTeamPanelProps) {
+  const roles = orderedBrandTeamRoles(roleOrder);
   const header = (
     <CardHeader
       title="Equipo de producción"
@@ -112,7 +116,7 @@ export function BrandTeamPanel({ brandId, canEdit, revision, team, weekdays, aut
         {header}
         <div className="space-y-4 p-4">
           <dl className="grid gap-3 text-[12.5px] sm:grid-cols-2 lg:grid-cols-3">
-            {BRAND_TEAM_ROLES.map((role) => (
+            {roles.map((role) => (
               <div key={role.value}>
                 <dt className="text-inkmuted">{role.label}</dt>
                 <dd className="text-ink font-semibold">{name(team[role.value])}</dd>
@@ -143,7 +147,7 @@ export function BrandTeamPanel({ brandId, canEdit, revision, team, weekdays, aut
           <Callout tone="warn">Todavía nadie del equipo tiene acceso a esta marca. Dáselo desde Equipo para poder elegirlo aquí.</Callout>
         ) : null}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {BRAND_TEAM_ROLES.map((role) => <RoleSelect key={role.value} role={role} people={people} value={team[role.value] ?? ""} />)}
+          {roles.map((role) => <RoleSelect key={role.value} role={role} people={people} value={team[role.value] ?? ""} />)}
         </div>
         <WeekdayChips initial={weekdays} />
         <label className="flex items-start gap-2.5 text-[13px]">

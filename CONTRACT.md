@@ -737,7 +737,7 @@ interruptor: nunca `git revert` ni `DROP`.
 | `PERFORMANCE_LOGS` | apagado | `"1"` lo enciende | Logs de fases sin SQL ni datos | — |
 | `PANEL_RENDER_MODE` | `together` | `"streaming"` | Panel del Dueño por secciones en vez de carga conjunta | — |
 | `PRODUCT_CATALOG_ENABLED` | apagado | exactamente `"true"` lo enciende | Catálogo de productos por marca, selector del paso 2 y línea `Tipo:` | Migración `20260928120000_brand_catalog` |
-| `PRODUCTION_FLOW_ENABLED` | apagado | exactamente `"true"` lo enciende | Equipo por marca, pasos con plazo, panel «Producción» y barrido diario | Migración `20260928180000_production_flow` |
+| `PRODUCTION_FLOW_ENABLED` | apagado | exactamente `"true"` lo enciende | Pasos con plazo, panel «Producción» y barrido diario; el equipo se puede preparar con el flag apagado | Migración `20260928180000_production_flow` |
 | `PRODUCTION_CHAIN_ENABLED` | apagado | exactamente `"true"` lo enciende (y exige `PRODUCTION_FLOW_ENABLED="true"`) | Cadena de entregas: un paso abierto por video con «Listo», «Devolver» y «Avisar a coordinación», firmas automáticas del Dueño, «Mi trabajo», `/cadena`, sincronía tarea↔paso y barrido sin cierre de grabaciones | Migración `20260930090000_production_chain` |
 | `PRODUCTION_CHAIN_BRANDS` | vacío (todas) | IDs de marca separados por coma | Canario de la cadena: solo esas marcas la usan; el resto sigue con el flujo anterior | — |
 | `CALENDARIO_PASOS` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Pasos de la cadena en el calendario y «Solo lo mío». Solo actúa con la cadena encendida | — |
@@ -979,24 +979,26 @@ vence a las 23:59:59.999 de Lima.
 | Video cancelado | — | Sus pasos pendientes pasan a Cancelado. |
 
 Responsable: primero quien ya tiene esa función en el video (Cámara, Edición, Community o Diseño)
-si está activo y autorizado; si no, la persona de la marca, que recibe además la asignación en
+si está activo, autorizado y tiene la capacidad del paso; si no, la persona apta de la marca, que recibe además la asignación en
 el video. Cada paso crea su tarea en el tablero («Grabar: …», «Editar: …», «Publicar: …»,
 «Diseño: …», prioridad alta) en la primera columna disponible para la marca.
 
 ### Invariantes
 
-- **Apagado no toca la base.** Ninguna pantalla, acción, gancho del ciclo de vida ni el
-  mantenimiento consultan las tablas nuevas: cada entrada vuelve antes de la primera consulta.
+- **Apagado no automatiza.** Los pasos, ganchos y mantenimiento vuelven antes de consultar
+  las tablas del flujo. La ficha y acción del equipo sí permiten preparar sus funciones y
+  ajustes, con permisos y perfiles validados, antes de habilitar las automatizaciones.
 - **Lo manual siempre gana.** La automatización solo completa lo vacío: la fecha de grabación
   solo se escribe si está vacía (`updateMany` condicionado); la asignación del video manda sobre
   la persona de la marca; un paso reasignado a mano queda `MANUAL` y ya no se toca; no se pisan
   asignaciones, fechas ni pasos existentes.
-- **Nunca rompe la acción principal.** Corre en la transacción de quien dispara, dentro de un
-  `SAVEPOINT`. Si falla, se deshacen solo sus escrituras, se registra un código de motivo
-  cerrado sin datos personales y la acción (unir, aprobar, cambiar estado, marcar un check) se
-  confirma igual.
-- La persona asignada siempre está activa y autorizada para la marca (Dueño o
-  `UserBrandAccess`), como en `assertAssignee`. La automatización no exige `content.assign` ni
+- **Nunca confirma a medias.** Corre en la transacción de quien dispara, dentro de un
+  `SAVEPOINT`. Si falla, registra un código cerrado sin datos personales y propaga el error
+  para revertir también la acción principal. La ausencia esperada de equipo o automatización
+  sigue siendo una omisión explícita, no un error de infraestructura.
+- La persona asignada está activa, autorizada para una marca vigente (Dueño o
+  `UserBrandAccess`) y tiene capacidad de consultar tareas y realizar el paso, validado por
+  `work-assignees.ts`. La automatización no exige `content.assign` ni
   `tasks.manage` a quien dispara: un guionista que une su guion no los tiene.
 - **Todo queda auditado** en la misma transacción (`ProductionStep`, `Task`, `Assignment`,
   `ContentItem`, `TaskColumn`, `BrandTeamMember`), firmado por quien disparó o como «Sistema»
@@ -1138,8 +1140,8 @@ igual. Una marca sin nadie en su equipo sigue fuera de la cadena.
 
 ### Mismas reglas por cualquier camino
 
-Los caminos de siempre convergen en `chainEvent` y corren en un `SAVEPOINT` (un fallo se deshace
-solo, se registra con un código cerrado y la acción principal sigue):
+Los caminos de siempre convergen en `chainEvent` y corren en un `SAVEPOINT` (un fallo se registra
+con un código cerrado y se propaga para revertir también la acción principal):
 
 - Crear o duplicar un video abre el Guion (la copia **no hereda** la fecha de grabación del
   original). **Unir el guion ya no programa la grabación**; desvincularlo o **eliminar el guion**
@@ -1433,3 +1435,20 @@ Mini-spec y evidencia: `reports/paneles-por-rol-2026-10-01.md`.
   confirme el renombre.
 - **Apagado** (`ORDEN_POR_ROL="false"` y redesplegar): el `NAV` de siempre, el inicio del Dueño y
   del miembro con sus bloques y consultas de antes, y las listas en el orden de las constantes.
+
+## Corrección del flujo — inicio 04/10/2026
+
+- `work-assignees.ts` centraliza la elegibilidad del destinatario: cuenta activa, marca vigente
+  y autorizada, `tasks.view`/`tasks.work` y capacidades de su función cuando corresponda.
+  Se aplica también a tareas personales, a candidatos automáticos y con la cadena apagada.
+  Las asignaciones no conceden perfiles ni recuperan acceso revocado.
+- Las tareas y funciones nuevas se rechazan en marcas archivadas, incluso para el Dueño.
+  Las ocho marcas históricas siguen archivadas; el arranque operativo será con marcas nuevas.
+- Preparar el equipo no requiere encender `PRODUCTION_FLOW_ENABLED`. La configuración valida
+  sus funciones antes de escribir y no dispara pasos con las automatizaciones apagadas.
+- Un error al crear o sincronizar una entrega aborta también la acción principal. La UI no
+  recibe un éxito parcial. Tarea, paso, asignación y auditoría conservan el mismo commit.
+- Decisión vigente del usuario: revisión humana del guion y del vídeo final. Su implementación
+  sigue pendiente; las reglas anteriores de aprobación automática describen el código aún
+  existente y no autorizan activar la cadena. No habilitarla antes de completar ambas revisiones.
+- Alcance y pendientes: `reports/plan-correccion-flujo-produccion-2026-10-04.md`.

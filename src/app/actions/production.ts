@@ -36,6 +36,7 @@ import { validDay } from "@/lib/validation";
 import { invalidateDomain } from "@/lib/view-invalidation";
 import { WorkflowError } from "@/lib/workflow-policy";
 import { endOfDayKey } from "@/lib/working-days";
+import { stepAssigneeCapabilities } from "@/lib/work-assignees";
 
 /**
  * Acciones del panel «Producción» de un video (PRODUCTION_FLOW_ENABLED) y de la cadena de
@@ -119,9 +120,10 @@ async function assertStepWriter(tx: AppTransaction, user: SessionUser, step: Ste
   if (user.role === "OWNER") return;
   if (allows(user, "content.assign") && await tx.contentItem.count({ where: { AND: [{ id: step.contentItemId }, contentScope(user, "content.assign")] } })) return;
   await assertContentAccess(tx, user, step.contentItemId, "content.view");
-  if (step.assigneeId === user.id) return;
+  if (step.assigneeId === user.id && stepAssigneeCapabilities(step.step).every(capability => allows(user, capability))) return;
   if (purpose === "material" && (step.step === "GRABACION" || step.step === "EDICION")
-    && await tx.productionStep.count({ where: { contentItemId: step.contentItemId, step: { in: ["GRABACION", "EDICION"] }, assigneeId: user.id } })) return;
+    && await tx.productionStep.count({ where: { contentItemId: step.contentItemId,
+      step: { in: ["GRABACION", "EDICION"].filter(kind => stepAssigneeCapabilities(kind).every(capability => allows(user, capability))) }, assigneeId: user.id } })) return;
   throw new ProductionFlowError("Solo coordinación o la persona asignada pueden actualizar este paso.");
 }
 
@@ -363,8 +365,8 @@ export async function reasignarPaso(formData: FormData): Promise<ProductionActio
     const step = await readStep(tx, id);
     if (!step) return { error: "El paso ya no existe. Recarga la página." };
     await assertContentAccess(tx, user, step.contentItemId, "content.assign");
-    const person = await eligiblePerson(tx, assigneeId, step.brandId);
-    if (!person) return { error: "La persona debe estar activa y autorizada para esta marca." };
+    const person = await eligiblePerson(tx, assigneeId, step.brandId, stepAssigneeCapabilities(step.step));
+    if (!person) return { error: "La persona debe estar activa, autorizada para esta marca y tener permiso para realizar este paso." };
     const before = await tx.productionStep.findUniqueOrThrow({ where: { id }, select: { assignee: { select: { name: true } } } });
 
     const reactivar = step.status === "CANCELADO";

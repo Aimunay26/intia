@@ -7,7 +7,8 @@ import { EditForm, RevisionTokenField } from "@/components/edit-form";
 import { SubmitButton } from "@/components/forms";
 import { Callout, Card, CardHeader, Field } from "@/components/ui";
 import { BRAND_TEAM_ROLES, RECORDING_WEEKDAYS } from "@/lib/constants";
-import { WORK_PROFILES } from "@/lib/permissions";
+import { allows, WORK_PROFILES } from "@/lib/permissions";
+import { TEAM_ROLE_CAPABILITIES, TASK_ASSIGNEE_CAPABILITIES } from "@/lib/work-assignees";
 import { orderedBrandTeamRoles } from "@/lib/role-panels";
 import { cn } from "@/lib/utils";
 
@@ -29,12 +30,13 @@ export type BrandTeamPanelProps = {
   people: TeamPerson[];
   /** Kill-switch ORDEN_POR_ROL (resuelto en el servidor): funciones en el orden del flujo. */
   roleOrder?: boolean;
+  productionEnabled?: boolean;
 };
 
 const profileLabel = (id: string) => WORK_PROFILES.find((p) => p.id === id)?.label ?? id;
 
 function RoleSelect({ role, people, value }: { role: (typeof BRAND_TEAM_ROLES)[number]; people: TeamPerson[]; value: string }) {
-  const available = people.filter((p) => p.available);
+  const available = people.filter((p) => p.available && [...TASK_ASSIGNEE_CAPABILITIES, ...TEAM_ROLE_CAPABILITIES[role.value]].every(cap => allows({ id: p.id, role: p.owner ? "OWNER" : "MEMBER", profiles: p.profiles }, cap)));
   const matching = available.filter((p) => p.profiles.includes(role.profile));
   const others = available.filter((p) => !p.profiles.includes(role.profile));
   const missing = value && !available.some((p) => p.id === value) ? people.find((p) => p.id === value) : null;
@@ -42,7 +44,7 @@ function RoleSelect({ role, people, value }: { role: (typeof BRAND_TEAM_ROLES)[n
     <Field label={role.label} hint={role.description}>
       <select name={`role-${role.value}`} className="select" defaultValue={value}>
         <option value="">Sin asignar</option>
-        {missing ? <option value={missing.id} disabled>{missing.name} (sin acceso a la marca)</option> : null}
+        {missing ? <option value={missing.id} disabled>{missing.name} (revisar acceso o perfil)</option> : null}
         {matching.length ? (
           <optgroup label={`Perfil ${profileLabel(role.profile)}`}>
             {matching.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -99,7 +101,7 @@ function Rules() {
   );
 }
 
-export function BrandTeamPanel({ brandId, canEdit, revision, team, weekdays, autoAssign, people, roleOrder = false }: BrandTeamPanelProps) {
+export function BrandTeamPanel({ brandId, canEdit, revision, team, weekdays, autoAssign, people, roleOrder = false, productionEnabled = true }: BrandTeamPanelProps) {
   const roles = orderedBrandTeamRoles(roleOrder);
   const header = (
     <CardHeader
@@ -129,7 +131,7 @@ export function BrandTeamPanel({ brandId, canEdit, revision, team, weekdays, aut
           </p>
           <p className="text-inksoft flex items-center gap-2 text-[12.5px]">
             <Zap size={14} className="text-inkmuted" />
-            Asignación automática: {autoAssign ? "activa" : "apagada"}
+            Asignación automática: {productionEnabled && autoAssign ? "activa" : "apagada"}
           </p>
           <Rules />
         </div>
@@ -141,6 +143,7 @@ export function BrandTeamPanel({ brandId, canEdit, revision, team, weekdays, aut
     <Card>
       {header}
       <EditForm action={guardarEquipoDeMarca} className="space-y-4 p-4">
+        {!productionEnabled ? <Callout tone="warn">Puedes preparar y guardar el equipo. La automatización todavía está apagada y no creará tareas hasta que se active.</Callout> : null}
         <RevisionTokenField value={revision} />
         <input type="hidden" name="brandId" value={brandId} />
         {!people.some((p) => p.available && !p.owner) ? (

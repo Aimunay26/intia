@@ -120,9 +120,9 @@ test('equipo de la marca: el perfil de cada función se valida con la cadena enc
   const full = { ENCARGADO: 'edward', GUIONISTA: 'paula', FILMMAKER: 'carlos', EDITOR: 'laudder', COMMUNITY: 'silvanna', DISENADOR: 'diego' };
   const days24 = { recordingWeekdays: [2, 4], autoAssign: '1' };
   const wrong = await as('owner', async () => team.guardarEquipoDeMarca(await teamForm('A', { ...full, EDITOR: 'carlos' }, days24)));
-  assert.match(wrong.error, /^Carlos no puede ocupar la función «Edición»: su perfil no permite editar videos\./);
+  assert.match(wrong.error, /perfil que permita consultar y realizar/);
   const noLead = await as('owner', async () => team.guardarEquipoDeMarca(await teamForm('A', { ...full, ENCARGADO: 'paula' }, days24)));
-  assert.match(noLead.error, /Paula no puede ocupar la función «Encargado de marca»: su perfil no permite aprobar videos ni aprobar guiones/);
+  assert.match(noLead.error, /perfil que permita consultar y realizar/);
   assert.equal(await prisma.brandTeamMember.count(), 0, 'el rechazo no escribe nada');
   assert.equal(await as('owner', async () => team.guardarEquipoDeMarca(await teamForm('A', full, days24))), undefined);
   assert.equal(await as('edward', async () => team.guardarEquipoDeMarca(await teamForm('B', { GUIONISTA: 'paula', EDITOR: 'laudder' }, { autoAssign: '1' }))), undefined);
@@ -460,17 +460,18 @@ test('columna nueva antes de «Listo», revisión final retirada en Programado, 
   assert.deepEqual(await invariants(), ZERO);
 });
 
-test('cadena apagada: las acciones nuevas responden sin sesión ni base y las de siempre no cambian', async () => {
+test('cadena apagada: no abre pasos nuevos, pero sí valida el perfil del equipo', async () => {
   delete process.env.PRODUCTION_CHAIN_ENABLED;
   try {
     const apagada = { error: 'La cadena de entregas no está activa.' };
     for (const action of ['marcarListo', 'devolverPaso', 'avisarCoordinacion', 'crearPasoManual', 'crearPaso', 'tomarPaso', 'atenderAviso', 'pedirCambiosDiseno']) {
       assert.deepEqual(await production[action](form({ id: 'x', contentItemId: 'x' })), apagada, action);
     }
-    // Crear un video en una marca con equipo no abre pasos; el equipo no valida perfiles.
+    // Crear un video en una marca con equipo no abre pasos; la elegibilidad siempre se valida.
     const e1 = await crearVideo('edward', 'E', 'Video viejo');
     assert.equal(await prisma.productionStep.count({ where: { contentItemId: e1 } }), 0);
-    assert.equal(await as('owner', async () => team.guardarEquipoDeMarca(await teamForm('E', { GUIONISTA: 'paula', FILMMAKER: 'carlos', EDITOR: 'carlos', COMMUNITY: 'silvanna' }, { autoAssign: '1' }))), undefined, 'sin cadena, el perfil no se valida (como antes)');
+    assert.match((await as('owner', async () => team.guardarEquipoDeMarca(await teamForm('E', { GUIONISTA: 'paula', FILMMAKER: 'carlos', EDITOR: 'carlos', COMMUNITY: 'silvanna' }, { autoAssign: '1' })))).error, /perfil/);
+    assert.equal(await as('owner', async () => team.guardarEquipoDeMarca(await teamForm('E', { GUIONISTA: 'paula', FILMMAKER: 'carlos', EDITOR: 'laudder', COMMUNITY: 'silvanna' }, { autoAssign: '1' }))), undefined);
     // El vínculo programa la grabación como antes y su tarea se mueve sin mirar el paso.
     await crearGuion('se1', 'E');
     await vincular('owner', 'se1', e1);

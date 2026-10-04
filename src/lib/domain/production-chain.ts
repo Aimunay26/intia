@@ -48,8 +48,8 @@
  *    se escribe nada y el error (ChainError, mensaje legible en español) llega a la persona.
  *    Un conflicto de concurrencia (P2034, o 40001/40P01 en un FOR UPDATE crudo) llega como
  *    Error(EDIT_CONFLICT); los requisitos del ciclo de vida (WorkflowError) llegan como ChainError.
- *    Los demás eventos vienen de otras acciones y corren en un SAVEPOINT: un fallo se deshace
- *    solo, se registra con un código cerrado y la acción principal sigue.
+ *    Los demás eventos vienen de otras acciones y corren en un SAVEPOINT: un fallo se deshace,
+ *    se registra con un código cerrado y se propaga para revertir también la acción principal.
  *  - Logs: {"event":"production_chain","operation":<código>,"reason":<código>} sin datos
  *    personales. Instrumentación temporal: complete_step con milisegundos (retirar el 2026-10-20).
  *  - Con la cadena apagada (o la marca fuera del canario) nada de esto consulta la base:
@@ -100,6 +100,7 @@ import { allows, checklistCapability, type AccessUser, type Capability } from "@
 import { productionChainConfigured, productionChainEnabled } from "@/lib/production-chain-flag";
 import { dateKey, formatDateLong, formatDateTime, fromDateKey } from "@/lib/utils";
 import { CONTENT_FLOW, WorkflowError } from "@/lib/workflow-policy";
+import { findWorkAssignee, stepAssigneeCapabilities } from "@/lib/work-assignees";
 import { dueIn24hSkippingSunday, earliestPublicationKey, endOfDayKey, nextRecordingDayKey, nextWorkingDayKey, publicationDueKey, scriptDueKey } from "@/lib/working-days";
 
 /* ------------------------------------------------------------------ TIPOS -- */
@@ -175,14 +176,7 @@ export type ChainReason =
 export type ChainEventResult = { done: boolean; reason: ChainReason; stepId?: string | null };
 
 /** Capacidad que debe conceder el perfil de quien ocupa cada función del equipo (guardarEquipoDeMarca). */
-export const TEAM_ROLE_CAPABILITIES: Record<string, Capability[]> = {
-  ENCARGADO: ["content.approve", "scripts.approve"],
-  GUIONISTA: ["scripts.write"],
-  FILMMAKER: ["content.shoot"],
-  EDITOR: ["content.editing"],
-  COMMUNITY: ["content.publish"],
-  DISENADOR: ["content.design"],
-};
+export { TEAM_ROLE_CAPABILITIES } from "@/lib/work-assignees";
 
 /* -------------------------------------------------------------- UTILIDADES -- */
 
@@ -308,13 +302,7 @@ const NO_ACCESS = "No tienes acceso a este paso o ya no existe. Recarga la pági
  * (los perfiles guardados, no los de una sesión). null si no existe o no es apta para la marca.
  */
 async function personFor(tx: AppTransaction, userId: string, brandId: string): Promise<(Person & { can: (capability: Capability) => boolean }) | null> {
-  const row = await tx.user.findFirst({
-    where: { id: userId, active: true, OR: [{ role: "OWNER" }, { brandAccess: { some: { brandId } } }] },
-    select: { id: true, name: true, role: true, workProfiles: { select: { profile: true } } },
-  });
-  if (!row) return null;
-  const access: AccessUser = { id: row.id, role: row.role, profiles: row.workProfiles.map((p) => p.profile) };
-  return { id: row.id, name: row.name, can: (capability) => allows(access, capability) };
+  return findWorkAssignee(tx, userId, brandId, ["content.view"]);
 }
 
 /** «Carlos no puede grabar: su perfil no lo permite.» */
@@ -467,7 +455,7 @@ async function onBehalf(tx: AppTransaction, actor: ProductionActor, step: StepRo
 const SAVEPOINT = "intia_production_chain";
 const LOGGED: ReadonlySet<ChainReason> = new Set(["material_missing", "not_ready", "chain_ahead", "video_status"]);
 
-/** Evento que viene de otra acción: un fallo se deshace solo y la acción principal sigue. */
+/** Un fallo del evento también aborta la acción que lo originó; nunca se confirma a medias. */
 async function guardedChain(tx: AppTransaction, operation: string, work: () => Promise<ChainEventResult>): Promise<ChainEventResult> {
   await tx.$executeRawUnsafe(`SAVEPOINT ${SAVEPOINT}`);
   try {
@@ -480,7 +468,7 @@ async function guardedChain(tx: AppTransaction, operation: string, work: () => P
     await tx.$executeRawUnsafe(`RELEASE SAVEPOINT ${SAVEPOINT}`);
     const rejected = error instanceof ProductionFlowError || error instanceof WorkflowError;
     console.warn(JSON.stringify({ event: "production_chain", operation, reason: rejected ? "rejected" : "error", ...(rejected ? {} : { code: reasonCode(error) }) }));
-    return { done: false, reason: rejected ? "rejected" : "error" };
+    throw error;
   }
 }
 
@@ -718,10 +706,9 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
   // Responsable.
   let person: Person | null = null;
   if (opts.assigneeId !== undefined) {
-    person = opts.assigneeId ? await eligiblePerson(tx, opts.assigneeId, video.brandId) : null;
-    if (opts.assigneeId && !person) throw new ChainError("La persona debe estar activa y autorizada para esta marca.");
+    person = opts.assigneeId ? await assignablePerson(tx, opts.assigneeId, video.brandId, kind) : null;
   } else {
-    const keep = existing?.assigneeId ? await eligiblePerson(tx, existing.assigneeId, video.brandId) : null;
+    const keep = existing?.assigneeId ? await eligiblePerson(tx, existing.assigneeId, video.brandId, stepAssigneeCapabilities(kind)) : null;
     if (keep && (existing?.source === "MANUAL" || existing?.status === "HECHO" || existing?.status === "DEVUELTO")) person = keep;
     else if (flow.autoAssign) {
       const resolved = await resolveAssignee(tx, video, kind, flow);
@@ -1237,7 +1224,7 @@ export async function takeStep(tx: AppTransaction, actor: SessionUser, stepId: s
     if (step.status !== "PENDIENTE" || step.assigneeId) throw new ChainError("Este paso ya tiene responsable. Recarga la página.");
     const rule = STEP_RULES[step.step as ChainStep | "DISENO"];
     if (!rule || !allows(actor, rule.capability)) throw new ChainError("Tu perfil no puede hacer este paso.");
-    const person = await eligiblePerson(tx, actor.id, video.brandId);
+    const person = await eligiblePerson(tx, actor.id, video.brandId, stepAssigneeCapabilities(step.step));
     if (!person) throw new ChainError("No tienes acceso a esta marca.");
     await tx.productionStep.update({ where: { id: step.id }, data: { assigneeId: person.id, source: "MANUAL" } });
     await auditInTransaction(tx, {
@@ -1416,7 +1403,7 @@ async function handleEvent(tx: AppTransaction, actor: ProductionActor, event: Ex
           if (step.assigneeId === person.id) continue;
           const holds = step.assigneeId
             && await tx.assignment.count({ where: { contentItemId: video.id, userId: step.assigneeId, role: event.role } })
-            && await eligiblePerson(tx, step.assigneeId, video.brandId);
+            && await eligiblePerson(tx, step.assigneeId, video.brandId, stepAssigneeCapabilities(kind));
           if (holds) continue;
           await tx.productionStep.update({ where: { id: step.id }, data: { assigneeId: person.id } });
           await auditInTransaction(tx, {
@@ -1434,7 +1421,7 @@ async function handleEvent(tx: AppTransaction, actor: ProductionActor, event: Ex
       const kind = TEAM_TO_STEP[event.role];
       if (!kind) return { done: false, reason: "no_step" };
       const flow = await readFlow(tx, event.brandId);
-      const person = event.userId ? await eligiblePerson(tx, event.userId, event.brandId) : null;
+      const person = event.userId ? await eligiblePerson(tx, event.userId, event.brandId, stepAssigneeCapabilities(kind)) : null;
       const steps = await tx.productionStep.findMany({
         where: {
           brandId: event.brandId, step: kind, status: "PENDIENTE", source: "AUTO",
@@ -1474,7 +1461,7 @@ async function handleEvent(tx: AppTransaction, actor: ProductionActor, event: Ex
       let done = 0;
       for (const { id, brandId } of videos) {
         if (!productionChainEnabled(brandId)) continue;
-        // Cada video en su propio SAVEPOINT: uno que no cumple no deshace a los demás.
+        // Cada video tiene un SAVEPOINT; cualquier error aborta el cambio del guion completo.
         const result = await guardedChain(tx, "script_status_video", async () => {
           const video = await lockVideoRow(tx, id);
           if (!video) return { done: false, reason: "video_missing" };

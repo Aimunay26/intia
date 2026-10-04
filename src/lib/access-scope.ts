@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import type { AppTransaction } from "@/lib/prisma";
 import { allows, assertPermission, capabilityScope, profileGrants, isFinalApproval, type AccessUser, type Capability } from "@/lib/permissions";
 import { liveBrand, liveContent, liveEvent, liveScript, liveTask, withLive } from "@/lib/archive-scope";
+import { assertWorkAssignee } from "@/lib/work-assignees";
 
 /*
  * Archivado total (ARCHIVO_TOTAL_DESDE, archive-scope.ts): encendido, cada alcance suma su filtro
@@ -110,5 +111,5 @@ export async function assertPublishable(db: AppTransaction, _user: AccessUser, i
 }
 
 export async function assertAssignee(db: AppTransaction, id: string, brandId: string | null) {
-  if (!await db.user.count({ where: { id, active: true, OR: [{ role: "OWNER" }, ...(brandId ? [{ brandAccess: { some: { brandId } } }] : [])] } })) throw new Error("La persona debe estar activa y autorizada para esta marca.");
+  await assertWorkAssignee(db, id, brandId);
 }

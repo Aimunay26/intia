@@ -336,7 +336,7 @@ test("Devolver y Avisar: motivo de 5 a 1000 caracteres antes de tocar la base; s
   await rejectsWithoutWrites(published, chain.returnStep(published, PEOPLE.owner, "st", { motivo: "Corrige el copy" }), /ya está publicado/, "publicado no se devuelve");
 }));
 
-test("un evento que viene de otra acción corre en su SAVEPOINT y registra un código cerrado", () => withEnv(CHAIN_ON, async () => {
+test("un evento fallido revierte su SAVEPOINT y propaga el error al llamador", () => withEnv(CHAIN_ON, async () => {
   const chain = chainModule();
   const raw = [];
   const tx = {
@@ -347,7 +347,7 @@ test("un evento que viene de otra acción corre en su SAVEPOINT y registra un c�
   const { warn } = console;
   console.warn = (line) => warnings.push(line);
   try {
-    assert.deepEqual(await chain.chainEvent(tx, PEOPLE.owner, { type: "VIDEO_CREATED", videoId: "v1" }), { done: false, reason: "error" });
+    await assert.rejects(() => chain.chainEvent(tx, PEOPLE.owner, { type: "VIDEO_CREATED", videoId: "v1" }), { code: "P1001" });
   } finally { console.warn = warn; }
   assert.deepEqual(raw, ["SAVEPOINT intia_production_chain", "ROLLBACK TO SAVEPOINT intia_production_chain", "RELEASE SAVEPOINT intia_production_chain"]);
   assert.deepEqual(JSON.parse(warnings[0]), { event: "production_chain", operation: "video_created", reason: "error", code: "P1001" }, "sin datos personales");

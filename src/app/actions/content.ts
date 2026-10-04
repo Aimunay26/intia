@@ -7,7 +7,8 @@ import { approveVersion, assertChecklistApproved, assertRequiredChecks, assertSc
 import { WorkflowError } from "@/lib/workflow-policy";
 import { requirePermission } from "@/lib/auth";
 import { assertBrandPermission, assertPermission, checklistCapability } from "@/lib/permissions";
-import { assertContentAccess, assertVideoOpen, assertAssignee, assertPublishable, lockVideoLifecycle } from "@/lib/access-scope";
+import { assertContentAccess, assertVideoOpen, assertPublishable, lockVideoLifecycle } from "@/lib/access-scope";
+import { assertWorkAssignee, ASSIGNMENT_ROLE_CAPABILITIES } from "@/lib/work-assignees";
 
 import { revalidatePath } from "next/cache";
 import { invalidateDomain } from "@/lib/view-invalidation";
@@ -521,23 +522,18 @@ export async function eliminarCheck(formData: FormData) {
 
 export async function asignarPersona(formData: FormData) {
   const user = await requirePermission("content.assign");
-  return withMutation(user, false, async (tx, afterCommit) => {
+  return withWorkflowMutation(user, false, async (tx, afterCommit) => {
     await assertContentAccess(tx, user, field(formData, "contentItemId"), "content.assign");
     const contentItemId = field(formData, "contentItemId");
     const userId = field(formData, "userId");
     const role = enumField(formData, "role", ASSIGNMENT_ROLE_MAP);
     if (!userId || !role) return;
 
-    const [item, persona] = await Promise.all([
-      tx.contentItem.findUniqueOrThrow({
-        where: { id: contentItemId },
-        select: { title: true, brandId: true },
-      }),
-      tx.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, active: true } }),
-    ]);
-
-    await assertAssignee(tx, userId, item.brandId);
-    if (!persona.active) throw new Error("No puedes asignar una cuenta desactivada.");
+    const item = await tx.contentItem.findUniqueOrThrow({
+      where: { id: contentItemId },
+      select: { title: true, brandId: true },
+    });
+    const persona = await assertWorkAssignee(tx, userId, item.brandId, ["content.view", ...ASSIGNMENT_ROLE_CAPABILITIES[role]]);
     const asignacion = await tx.assignment.upsert({
       where: { contentItemId_userId_role: { contentItemId, userId, role } },
       create: { contentItemId, userId, role, notes: fieldOrNull(formData, "notes") },

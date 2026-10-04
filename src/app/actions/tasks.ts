@@ -1,7 +1,8 @@
 "use server";
 import { requirePermission, type SessionUser } from "@/lib/auth";
 import { allows, assertBrandPermission } from "@/lib/permissions";
-import { assertTaskAccess, assertAssignee, lockVideoLifecycle } from "@/lib/access-scope";
+import { assertTaskAccess, lockVideoLifecycle } from "@/lib/access-scope";
+import { assertWorkAssignee, assertWorkBrand } from "@/lib/work-assignees";
 import { archiveEpoch, liveTask } from "@/lib/archive-scope";
 
 import { revalidatePath } from "next/cache";
@@ -34,12 +35,8 @@ function readTask(fd: FormData) {
 async function checkTaskRelations(tx: AppTransaction, columnId: string, brandId: string | null, assigneeId: string | null) {
   const column = await tx.taskColumn.findUniqueOrThrow({ where: { id: columnId }, select: { brandId: true } });
   if (column.brandId && column.brandId !== brandId) throw new Error("La tarea debe pertenecer a la marca de la columna.");
-  if (brandId) await tx.brand.findUniqueOrThrow({ where: { id: brandId }, select: { id: true } });
-  if (assigneeId) {
-    if (brandId) await assertAssignee(tx, assigneeId, brandId);
-    const person = await tx.user.findUniqueOrThrow({ where: { id: assigneeId }, select: { active: true } });
-    if (!person.active) throw new Error("No puedes asignar una cuenta desactivada.");
-  }
+  if (brandId) await assertWorkBrand(tx, brandId);
+  if (assigneeId) await assertWorkAssignee(tx, assigneeId, brandId);
 }
 
 function refrescar() {
@@ -145,18 +142,23 @@ export async function asegurarColumnasIniciales() {
 
 export async function crearTarea(formData: FormData) {
   const user = await requirePermission("tasks.manage");
-  return withMutation(user, false, async (tx, afterCommit) => {
-    const data = readTask(formData);
-    if (data.brandId) assertBrandPermission(user, data.brandId, "tasks.manage");
-    else if (user.role !== "OWNER" && data.assigneeId !== user.id) throw new Error("Las tareas sin marca solo pueden ser personales.");
-    const columnId = field(formData, "columnId");
-    await checkTaskRelations(tx, columnId, data.brandId, data.assigneeId);
-    const last = await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } });
-    const task = await tx.task.create({ data: { ...data, columnId, order: (last?.order ?? -1) + 1 } });
-    await auditInTransaction(tx, { user, action: "CREAR", entity: "Task", entityId: task.id, brandId: task.brandId, summary: `Creó la tarea "${task.title}"` });
-    afterCommit(refrescar);
-    return { ok: true, task };
-  });
+  try {
+    return await withMutation(user, false, async (tx, afterCommit) => {
+      const data = readTask(formData);
+      if (data.brandId) assertBrandPermission(user, data.brandId, "tasks.manage");
+      else if (user.role !== "OWNER" && data.assigneeId !== user.id) throw new Error("Las tareas sin marca solo pueden ser personales.");
+      const columnId = field(formData, "columnId");
+      await checkTaskRelations(tx, columnId, data.brandId, data.assigneeId);
+      const last = await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } });
+      const task = await tx.task.create({ data: { ...data, columnId, order: (last?.order ?? -1) + 1 } });
+      await auditInTransaction(tx, { user, action: "CREAR", entity: "Task", entityId: task.id, brandId: task.brandId, summary: `Creó la tarea "${task.title}"` });
+      afterCommit(refrescar);
+      return { ok: true as const, task };
+    });
+  } catch (error) {
+    if (error instanceof WorkflowError) return { ok: false as const, error: error.message };
+    throw error;
+  }
 }
 
 export async function actualizarTarea(formData: FormData) {
@@ -196,7 +198,7 @@ export async function actualizarTarea(formData: FormData) {
   } catch (error) {
     // Cadena de entregas: el motivo del rechazo («Falta el enlace del material grabado»…) vuelve
     // al formulario como { error } y no se escribe nada. Sin cadena, nada cambia.
-    if (error instanceof ProductionFlowError) return { ok: false as const, error: error.message };
+    if (error instanceof ProductionFlowError || error instanceof WorkflowError) return { ok: false as const, error: error.message };
     throw error;
   }
 }

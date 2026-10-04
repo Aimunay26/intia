@@ -81,7 +81,7 @@ test("tutorial: tarjetas de roles en el orden del flujo y «Dónde está cada co
     "ROL_FILMMAKER", "ROL_ACTOR", "ROL_EDITOR", "ROL_DISENO", "Community / publicación", "Analista",
   ]);
   // Apagado: las 8 tarjetas de siempre, en su orden.
-  assert.match(tutorial, /const ROLES_TUTORIAL: readonly RolTutorial\[\] = \[\n {2}ROL_ESTRATEGIA, ROL_GUIONISTA, ROL_PRODUCCION, ROL_ACTOR, ROL_FILMMAKER, ROL_EDITOR, ROL_DISENO, ROL_APROBACION,\n\];/);
+  assert.match(tutorial, /const ROLES_TUTORIAL: readonly RolTutorial\[\] = \[\r?\n {2}ROL_ESTRATEGIA, ROL_GUIONISTA, ROL_PRODUCCION, ROL_ACTOR, ROL_FILMMAKER, ROL_EDITOR, ROL_DISENO, ROL_APROBACION,\r?\n\];/);
   assert.match(tutorial, /paso=\{ordenRol \? i \+ 1 : undefined\}/);
   assert.match(tutorial, /roleNavHrefOrder\(user, /);
   assert.match(tutorial, /ordenMenu \? ordenarPorMenu\(lista, ordenMenu\) : lista/);

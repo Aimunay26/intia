@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Plus, UserPlus, X } from "lucide-react";
 
 import { asignarPersona, quitarAsignacion } from "@/app/actions/content";
+import { EditForm } from "@/components/edit-form";
 import { ASSIGNMENT_ROLES } from "@/lib/constants";
 import { orderedAssignmentRoles } from "@/lib/role-panels";
 import { cn } from "@/lib/utils";
@@ -138,34 +139,36 @@ export function TeamPanel({
               )}
 
               {formAbierto ? (
-                <form action={asignarPersona} className="fade-in mt-2 flex items-center gap-1.5">
-                  <input type="hidden" name="contentItemId" value={contentItemId} />
-                  <input type="hidden" name="role" value={rol.value} />
-                  <select
-                    name="userId"
-                    className="select h-[30px] text-[12px]"
-                    defaultValue=""
-                    required
-                    disabled={!disponibles.length}
-                    aria-label={`Persona para el rol ${rol.label}`}
-                  >
-                    <option value="" disabled>
-                      {disponibles.length ? "Elige a alguien…" : "Nadie disponible"}
-                    </option>
-                    {disponibles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} · {p.roleLabel}
+                <EditForm action={asignarPersona} onSuccess={() => setAbierto(null)} className="fade-in mt-2 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <input type="hidden" name="contentItemId" value={contentItemId} />
+                    <input type="hidden" name="role" value={rol.value} />
+                    <select
+                      name="userId"
+                      className="select h-[30px] text-[12px]"
+                      defaultValue=""
+                      required
+                      disabled={!disponibles.length}
+                      aria-label={`Persona para el rol ${rol.label}`}
+                    >
+                      <option value="" disabled>
+                        {disponibles.length ? "Elige a alguien…" : "Nadie disponible"}
                       </option>
-                    ))}
-                  </select>
-                  <SubmitButton
-                    className="btn btn-primary btn-sm shrink-0"
-                    disabled={!disponibles.length}
-                    pendingLabel="…"
-                  >
-                    Asignar
-                  </SubmitButton>
-                </form>
+                      {disponibles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} · {p.roleLabel}
+                        </option>
+                      ))}
+                    </select>
+                    <SubmitButton
+                      className="btn btn-primary btn-sm shrink-0"
+                      disabled={!disponibles.length}
+                      pendingLabel="…"
+                    >
+                      Asignar
+                    </SubmitButton>
+                  </div>
+                </EditForm>
               ) : null}
             </div>
           );

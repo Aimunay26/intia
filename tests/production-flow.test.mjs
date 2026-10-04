@@ -179,7 +179,7 @@ function fakeDb(overrides = {}) {
       findFirst: async ({ where }) => {
         const brandId = where.OR?.[1]?.brandAccess?.some?.brandId;
         const u = eligible(where.id, brandId);
-        return u ? { id: u.id, name: u.name } : null;
+        return u ? { id: u.id, name: u.name, role: u.role, workProfiles: u.profiles.map(profile => ({ profile })), brandAccess: u.brandIds.map(brandId => ({ brandId })) } : null;
       },
       findMany: async ({ where }) => {
         const brandId = where.OR?.[1]?.brandAccess?.some?.brandId;
@@ -282,12 +282,12 @@ test("nunca pisa datos manuales: fecha de grabación puesta y cámara asignada a
   const shoot = new Date("2026-10-02T12:00:00.000Z"); // viernes elegido a mano
   const db = fakeDb({
     video: { shootDate: shoot },
-    assignments: [{ id: "manual", contentItemId: "v1", userId: "edward", role: "CAMARA", createdAt: new Date() }],
+    assignments: [{ id: "manual", contentItemId: "v1", userId: "owner", role: "CAMARA", createdAt: new Date() }],
   });
   const result = await domain().scheduleRecording(db, PEOPLE.owner, "v1", { now: MON_10 });
   assert.equal(result.done, true);
   assert.equal(db.state.videos[0].shootDate, shoot, "no se cambia la fecha manual");
-  assert.equal(db.state.steps[0].assigneeId, "edward", "la asignación del video manda sobre la persona por defecto");
+  assert.equal(db.state.steps[0].assigneeId, "owner", "la asignación apta del video manda sobre la persona por defecto");
   assert.equal(db.state.steps[0].dueAt.toISOString(), "2026-10-03T04:59:59.999Z");
   assert.equal(db.state.assignments.length, 1, "no se añade otra cámara");
   assert.ok(!db.state.audits.some((a) => a.entity === "ContentItem"));
@@ -298,6 +298,14 @@ test("una asignación manual de alguien sin acceso o de baja no bloquea: se usa 
   await domain().scheduleRecording(db, null, "v1", { now: MON_10 });
   assert.equal(db.state.steps[0].assigneeId, "carlos");
   assert.ok(db.state.audits.every((a) => a.userName === "Sistema"), "sin actor firma Sistema");
+}));
+
+test("un guionista asignado como cámara no desplaza al filmmaker capacitado de la marca", () => withFlag("true", async () => {
+  const db = fakeDb({ assignments: [{ id: "wrong-role", contentItemId: "v1", userId: "writer2", role: "CAMARA", createdAt: new Date() }] });
+  await domain().scheduleRecording(db, PEOPLE.owner, "v1", { now: MON_10 });
+  assert.equal(db.state.steps[0].assigneeId, "carlos");
+  assert.equal(db.state.tasks[0].assigneeId, "carlos");
+  assert.ok(db.state.assignments.some(a => a.userId === "carlos" && a.role === "CAMARA"));
 }));
 
 test("sin persona para la función, con la asignación automática apagada o en otro estado: no escribe nada", () => withFlag("true", async () => {
@@ -381,15 +389,14 @@ test("una fecha prevista posterior se respeta: la publicación vence ese día y 
   assert.equal(db.state.steps[0].dueAt.toISOString(), "2026-10-10T04:59:59.999Z");
 }));
 
-test("un fallo de la automatización se deshace en su SAVEPOINT y no rompe la acción principal", () => withFlag("true", async () => {
+test("un fallo de la automatización revierte su SAVEPOINT y aborta también la acción principal", () => withFlag("true", async () => {
   const db = fakeDb();
   db.task.create = async () => { throw Object.assign(new Error("fallo de red"), { code: "P1001" }); };
   const warnings = [];
   const { warn } = console;
   console.warn = (line) => warnings.push(line);
   try {
-    const result = await domain().scheduleRecording(db, PEOPLE.edward, "v1", { now: MON_10 });
-    assert.deepEqual(result, { done: false, reason: "error" });
+    await assert.rejects(() => domain().scheduleRecording(db, PEOPLE.edward, "v1", { now: MON_10 }), { code: "P1001" });
   } finally { console.warn = warn; }
   assert.ok(db.state.raw.includes("ROLLBACK TO SAVEPOINT intia_production_flow"));
   assert.deepEqual(JSON.parse(warnings[0]), { event: "production_flow", operation: "schedule_recording", reason: "error", code: "P1001" }, "motivo cerrado, sin datos personales");
@@ -516,13 +523,12 @@ function actions(db, current, extra = {}) {
 }
 
 test("acciones con el flag apagado: responden sin sesión ni base", () => withFlag(undefined, async () => {
-  const { production, team } = actions(untouchable(), { user: null });
+  const { production } = actions(untouchable(), { user: null });
   const apagado = { error: "El flujo de producción no está activo." };
   assert.deepEqual(await production.pedirDiseno(form([["contentItemId", "v1"]])), apagado);
   assert.deepEqual(await production.marcarPaso(form([["id", "x"]])), apagado);
   assert.deepEqual(await production.guardarMaterialPaso(form([["id", "x"]])), apagado);
   assert.deepEqual(await production.reasignarPaso(form([["id", "x"]])), apagado);
-  assert.deepEqual(await team.guardarEquipoDeMarca(form([["brandId", "b1"]])), apagado);
 }));
 
 test("pedir diseño: guionista con acceso sí, diseñador o analista no; vence en 24 h sin domingo y da acceso al diseñador", () => withFlag("true", async () => {
@@ -552,7 +558,7 @@ test("pedir diseño: guionista con acceso sí, diseñador o analista no; vence e
 
   // Persona sin acceso a la marca: error legible y nada escrito.
   const res = await production.pedirDiseno(form([["contentItemId", "v1"], ["designerId", "ajeno"]]));
-  assert.deepEqual(res, { error: "La persona debe estar activa y autorizada para esta marca." });
+  assert.match(res.error, /activa.*autorizada.*permiso para diseñar/);
   assert.equal(db.state.steps.length, 2);
 
   // Guionista de otra marca: sin acceso al video.
@@ -613,7 +619,7 @@ test("reasignar es de coordinación: exige content.assign, persona autorizada y 
   await assert.rejects(production.reasignarPaso(request("edward")), /permiso/);
 
   current.user = PEOPLE.edward; // STRATEGY: content.assign en su marca
-  assert.deepEqual(await production.reasignarPaso(request("ajeno")), { error: "La persona debe estar activa y autorizada para esta marca." });
+  assert.match((await production.reasignarPaso(request("ajeno"))).error, /activa.*autorizada.*permiso para realizar/);
   assert.equal(await production.reasignarPaso(request("owner")), undefined);
   const step = db.state.steps[0];
   assert.equal(step.assigneeId, "owner");
@@ -636,7 +642,7 @@ test("equipo de marca: brands.edit sobre la marca, personas autorizadas, días d
 
   current.user = PEOPLE.edward;
   assert.match((await team.guardarEquipoDeMarca(form([["brandId", "b1"], ["expectedUpdatedAt", "new"], ["recordingWeekdays", "0"]]))).error, /domingo/);
-  assert.match((await team.guardarEquipoDeMarca(payload([["role-EDITOR", "ajeno"]]))).error, /autorizada/);
+  assert.match((await team.guardarEquipoDeMarca(payload([["role-EDITOR", "ajeno"]]))).error, /acceso a la marca/);
   assert.equal(db.state.team.length, 0);
 
   assert.equal(await team.guardarEquipoDeMarca(payload()), undefined);
@@ -652,4 +658,16 @@ test("equipo de marca: brands.edit sobre la marca, personas autorizadas, días d
   // Revisión vieja: conflicto y nada cambia.
   assert.deepEqual(await team.guardarEquipoDeMarca(payload([["role-EDITOR", "laudder"]])), { error: "conflicto" });
   assert.equal(db.state.team.length, 2);
+}));
+
+test("se prepara el equipo con la automatización apagada y se rechaza un perfil incompatible", () => withFlag(undefined, async () => {
+  const db = fakeDb({ settings: null, team: [] });
+  const { team } = actions(db, { user: PEOPLE.owner });
+  const payload = id => form([["brandId", "b1"], ["expectedUpdatedAt", "new"], ["role-FILMMAKER", id]]);
+  assert.match((await team.guardarEquipoDeMarca(payload("writer2"))).error, /perfil/);
+  assert.equal(db.state.team.length, 0);
+  assert.equal(await team.guardarEquipoDeMarca(payload("carlos")), undefined);
+  assert.equal(db.state.team[0].userId, "carlos");
+  assert.equal(db.state.steps.length, 0);
+  assert.equal(db.state.tasks.length, 0);
 }));

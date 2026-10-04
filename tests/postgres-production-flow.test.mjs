@@ -64,19 +64,18 @@ test('flujo de producción con PostgreSQL: equipo, grabación, edición, diseño
     assert.equal(await prisma.assignment.count({ where: { contentItemId: 'v1', userId: 'carlos', role: 'CAMARA' } }), 1);
     assert.equal((await prisma.$transaction(tx => flow.scheduleRecording(tx, null, 'v1', { now: MON_10 }))).reason, 'exists');
 
-    // Un fallo dentro de la automatización se deshace en su SAVEPOINT y la escritura principal se confirma.
+    // Un fallo al crear la entrega revierte también las escrituras previas de la acción principal.
     await prisma.$executeRawUnsafe(`CREATE FUNCTION flow_test_fail() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.title LIKE '%FALLA%' THEN RAISE EXCEPTION 'falla de prueba'; END IF; RETURN NEW; END $$`);
     await prisma.$executeRawUnsafe(`CREATE TRIGGER flow_test_fail BEFORE INSERT ON "Task" FOR EACH ROW EXECUTE FUNCTION flow_test_fail()`);
-    const failed = await quietly(() => prisma.$transaction(async tx => {
+    await assert.rejects(quietly(() => prisma.$transaction(async tx => {
       await tx.contentItem.update({ where: { id: 'v2' }, data: { notes: 'escritura principal' } });
       const result = await flow.scheduleRecording(tx, null, 'v2', { now: MON_10 });
       await tx.contentItem.update({ where: { id: 'v2' }, data: { hook: 'sigue viva' } });
       return result;
-    }, { isolationLevel: 'Serializable' }));
-    assert.deepEqual(failed, { done: false, reason: 'error' });
+    }, { isolationLevel: 'Serializable' })), /falla de prueba/);
     const v2 = await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v2' } });
-    assert.equal(v2.notes, 'escritura principal');
-    assert.equal(v2.hook, 'sigue viva');
+    assert.equal(v2.notes, null);
+    assert.equal(v2.hook, null);
     assert.equal(v2.shootDate, null, 'la fecha escrita por la automatización se deshizo con su savepoint');
     assert.equal(await prisma.assignment.count({ where: { contentItemId: 'v2' } }), 0);
     assert.equal(await prisma.productionStep.count({ where: { contentItemId: 'v2' } }), 0);

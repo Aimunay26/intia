@@ -1,0 +1,274 @@
+{
+  "checkedAt": "2026-10-04T17:50:39.253Z",
+  "projectId": "prj_2OXKwRip5N7jgv9YkXfW5K58BZQM",
+  "deployment": {
+    "id": "dpl_9X3uPp7Ywb2Dc2MTxk2MNooZhWkN",
+    "sha": "107785ae5f967ea3dc428bb5c0d4ececa8b2ac7f",
+    "branch": "main",
+    "state": "READY",
+    "target": "production",
+    "url": "intia-lf7sg4o29-conamors-projects.vercel.app",
+    "createdAt": 1790970324304,
+    "ready": 1790970437567,
+    "aliases": [
+      "intia-lovat.vercel.app",
+      "intia-conamors-projects.vercel.app",
+      "intia-git-main-conamors-projects.vercel.app"
+    ]
+  },
+  "method": {
+    "database": "PostgreSQL production configured in Vercel",
+    "readOnlyTransactions": true,
+    "productionWrites": 0,
+    "aiCalls": 0,
+    "authenticatedBrowserVerified": false,
+    "scopeEvaluation": "Actual application scope functions and approval validators evaluated against production DB; no impersonated HTTP sessions"
+  },
+  "decisions": {
+    "newBrandsOnly": true,
+    "scriptApproval": "HUMAN",
+    "finalApproval": "HUMAN"
+  },
+  "flags": [
+    {
+      "key": "PRODUCTION_FLOW_ENABLED",
+      "present": true,
+      "projectProductionValue": "",
+      "unchangedSinceBeforeDeployment": true,
+      "createdAt": 1790719644528,
+      "updatedAt": 1790719644528
+    },
+    {
+      "key": "PRODUCTION_CHAIN_ENABLED",
+      "present": false
+    },
+    {
+      "key": "PRODUCTION_CHAIN_BRANDS",
+      "present": false
+    },
+    {
+      "key": "CALENDARIO_PASOS",
+      "present": false
+    },
+    {
+      "key": "ARCHIVO_TOTAL_DESDE",
+      "present": true,
+      "projectProductionValue": "",
+      "unchangedSinceBeforeDeployment": true,
+      "createdAt": 1790807618591,
+      "updatedAt": 1790807618591
+    },
+    {
+      "key": "APP_TIMEZONE",
+      "present": false
+    }
+  ],
+  "counts": {
+    "Brand": 8,
+    "User": 9,
+    "UserWorkProfile": 18,
+    "UserBrandAccess": 8,
+    "BrandTeamMember": 0,
+    "BrandProductionSettings": 0,
+    "ContentItem": 16,
+    "Script": 9,
+    "ScriptScene": 39,
+    "Task": 1,
+    "TaskColumn": 5,
+    "Assignment": 61,
+    "ProductionStep": 0,
+    "ChecklistItem": 240,
+    "Approval": 0,
+    "Archetype": 11,
+    "ArchetypeFit": 148,
+    "CalendarEvent": 4,
+    "GenerationJob": 21,
+    "GenerationItem": 27,
+    "AuditLog": 122
+  },
+  "migrations": [
+    {
+      "name": "00000000000000_baseline",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260909190000_weekly_consistency",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260909220000_jobs_private_storage_decimal",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260910010000_team_work_profiles",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260910120000_content_structure_ids",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260916180000_backend_priorities",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260917180000_workflow_consistency",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260924180000_backend_completion",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260925010000_secrets_calendar",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260928120000_brand_catalog",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260928180000_production_flow",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260930090000_production_chain",
+      "applied": true,
+      "checksumMatches": true
+    },
+    {
+      "name": "20260930091000_calendar_feed_user",
+      "applied": true,
+      "checksumMatches": true
+    }
+  ],
+  "nonValidatedConstraints": [],
+  "data": {
+    "archivedBrands": 8,
+    "activeNonArchivedBrands": 0,
+    "membersWithoutProfilesOrBrands": 6,
+    "inaccessibleAssignments": 58,
+    "inaccessibleAssignmentUsers": [
+      {
+        "userId": "cmtlzdn4n004psoy4l49yuys5",
+        "assignments": 15,
+        "distinctVideos": 15
+      },
+      {
+        "userId": "cmtlzdnbz004rsoy42dedo4qo",
+        "assignments": 29,
+        "distinctVideos": 15
+      },
+      {
+        "userId": "cmtlzdnjr004tsoy4xltgcw4y",
+        "assignments": 13,
+        "distinctVideos": 13
+      },
+      {
+        "userId": "cmtlzdnr2004vsoy4u6fbazrr",
+        "assignments": 1,
+        "distinctVideos": 1
+      }
+    ],
+    "assignedTasksInvisible": 0,
+    "videoStatuses": {
+      "PUBLICADO": 6,
+      "EDICION": 2,
+      "GRABACION": 1,
+      "APROBADO": 1,
+      "GUION": 3,
+      "IDEA": 3
+    },
+    "scriptStatuses": {
+      "APROBADO": 4,
+      "BORRADOR": 5
+    },
+    "completedGenerationItems": 5,
+    "completedGenerationItemsWithScript": 5,
+    "activeGenerationItems": 0,
+    "archetypedScriptsWithoutLinkedUser": [
+      "cmu448tre0006falwdckgfwal",
+      "cmund1gol0001jl04eizgocoa"
+    ],
+    "archetypeFitsBySource": [
+      {
+        "source": "SEED",
+        "count": 148
+      }
+    ],
+    "scriptApprovalsRejected": 4,
+    "checkedApprovalsRejected": 17,
+    "provenanceRegistryRows": 0
+  },
+  "persistenceRecheck": [
+    {
+      "table": "Task",
+      "count": 1,
+      "sameRecordsAndFieldsAsEarlierSnapshot": true
+    },
+    {
+      "table": "ContentItem",
+      "count": 16,
+      "sameRecordsAndFieldsAsEarlierSnapshot": true
+    },
+    {
+      "table": "Script",
+      "count": 9,
+      "sameRecordsAndFieldsAsEarlierSnapshot": true
+    },
+    {
+      "table": "CalendarEvent",
+      "count": 4,
+      "sameRecordsAndFieldsAsEarlierSnapshot": true
+    }
+  ],
+  "http": [
+    {
+      "path": "/login",
+      "status": 200,
+      "location": null
+    },
+    {
+      "path": "/",
+      "status": 307,
+      "location": "/login"
+    },
+    {
+      "path": "/contenido",
+      "status": 307,
+      "location": "/login"
+    },
+    {
+      "path": "/tareas",
+      "status": 307,
+      "location": "/login"
+    },
+    {
+      "path": "/calendario",
+      "status": 307,
+      "location": "/login"
+    },
+    {
+      "path": "/cadena",
+      "status": 307,
+      "location": "/login"
+    }
+  ],
+  "limits": [
+    "No creation or status mutation was tested through production UI.",
+    "Zero ProductionStep rows and both automation flags off: no live sample of the chain.",
+    "Historical data cannot be classified as demo because DemoSeedRecord has no entries.",
+    "Current flags were read from project production config; deployment names and settings timestamps were cross-checked."
+  ]
+}

@@ -6,6 +6,8 @@ import { ASSIGNMENT_ROLE_MAP, PRODUCTION_STEP_MAP } from "@/lib/constants";
 import { productionChainConfigured, productionChainEnabled } from "@/lib/production-chain-flag";
 import { productionFlowEnabled } from "@/lib/production-flow-flag";
 import { DEFAULT_TASK_COLUMNS } from "@/lib/tasks-constants";
+import { findWorkAssignee, stepAssigneeCapabilities } from "@/lib/work-assignees";
+import type { Capability } from "@/lib/permissions";
 import { dateKey, formatDateLong, formatDateTime, fromDateKey } from "@/lib/utils";
 import {
   dueIn24hSkippingSunday,
@@ -31,11 +33,11 @@ import {
  *    asignación del video para esa función manda sobre la persona por defecto de la marca;
  *    solo se crea una asignación si la función no tiene a nadie apto.
  *  - Corre dentro de la transacción de quien dispara (mismo commit que su acción), en un
- *    SAVEPOINT: un fallo de la automatización se deshace solo y la acción principal sigue.
- *    Se registra un código de motivo cerrado, sin datos personales.
+ *    SAVEPOINT: un fallo se registra con un código cerrado y se propaga para revertir
+ *    también la acción principal. No se confirma un video con su entrega incompleta.
  *  - La automatización no exige content.assign ni tasks.manage a quien dispara (un guionista
  *    que une su guion no los tiene), pero la persona asignada siempre debe estar activa y
- *    autorizada para la marca, como en assertAssignee.
+ *    autorizada para la marca y tener las capacidades de la función.
  *  - Todo queda en la auditoría, firmado por quien disparó o por «Sistema» (mantenimiento).
  *
  * Cadena de entregas (PRODUCTION_CHAIN_ENABLED, src/lib/domain/production-chain.ts): con la
@@ -83,8 +85,8 @@ function reasonCode(error: unknown): string {
 }
 
 /**
- * Ejecuta un paso automático en un SAVEPOINT: si falla, se deshacen solo sus escrituras
- * y la transacción del llamador continúa (Postgres no admite seguir tras un error sin él).
+ * Revierte el bloque y propaga el error para abortar también la acción del llamador.
+ * Un fallo al crear la siguiente entrega nunca se convierte en un guardado exitoso.
  */
 async function guarded(tx: AppTransaction, operation: string, work: () => Promise<FlowResult>): Promise<FlowResult> {
   if (!productionFlowEnabled()) return skip("flag_off");
@@ -100,7 +102,7 @@ async function guarded(tx: AppTransaction, operation: string, work: () => Promis
     await tx.$executeRawUnsafe("ROLLBACK TO SAVEPOINT intia_production_flow");
     await tx.$executeRawUnsafe("RELEASE SAVEPOINT intia_production_flow");
     console.warn(JSON.stringify({ event: "production_flow", operation, reason: "error", code: reasonCode(error) }));
-    return skip("error");
+    throw error;
   }
 }
 
@@ -125,12 +127,9 @@ export async function readFlow(tx: AppTransaction, brandId: string): Promise<Flo
   };
 }
 
-/** Misma regla que assertAssignee, sin lanzar: activa y Dueño o con acceso a la marca. */
-export function eligiblePerson(tx: AppTransaction, userId: string, brandId: string): Promise<Person | null> {
-  return tx.user.findFirst({
-    where: { id: userId, active: true, OR: [{ role: "OWNER" }, { brandAccess: { some: { brandId } } }] },
-    select: { id: true, name: true },
-  });
+/** La misma elegibilidad que las asignaciones manuales, sin conceder permisos. */
+export function eligiblePerson(tx: AppTransaction, userId: string, brandId: string, capabilities: readonly Capability[] = []): Promise<Person | null> {
+  return findWorkAssignee(tx, userId, brandId, capabilities);
 }
 
 /**
@@ -147,11 +146,11 @@ export async function resolveAssignee(tx: AppTransaction, video: Pick<Video, "id
     select: { userId: true },
   });
   for (const row of current) {
-    const person = await eligiblePerson(tx, row.userId, video.brandId);
+    const person = await eligiblePerson(tx, row.userId, video.brandId, stepAssigneeCapabilities(step));
     if (person) return { person, assigned: true };
   }
   const fallback = flow.team.get(team);
-  const person = fallback ? await eligiblePerson(tx, fallback, video.brandId) : null;
+  const person = fallback ? await eligiblePerson(tx, fallback, video.brandId, stepAssigneeCapabilities(step)) : null;
   return person ? { person, assigned: false } : "no_assignee";
 }
 
@@ -476,8 +475,8 @@ export async function requestDesign(tx: AppTransaction, actor: SessionUser, vide
   if (["CANCELADO", "PUBLICADO"].includes(video.status)) throw new ProductionFlowError("Este video ya no admite pedidos de diseño.");
   const designerId = input.designerId || (await tx.brandTeamMember.findUnique({ where: { brandId_role: { brandId: video.brandId, role: "DISENADOR" } }, select: { userId: true } }))?.userId;
   if (!designerId) throw new ProductionFlowError("Elige quién hará el diseño o define el diseñador en el equipo de la marca.");
-  const person = await eligiblePerson(tx, designerId, video.brandId);
-  if (!person) throw new ProductionFlowError("La persona debe estar activa y autorizada para esta marca.");
+  const person = await eligiblePerson(tx, designerId, video.brandId, stepAssigneeCapabilities("DISENO"));
+  if (!person) throw new ProductionFlowError("La persona debe estar activa, autorizada para esta marca y tener permiso para diseñar.");
   const dueAt = dueIn24hSkippingSunday(now);
   // La asignación DISENO le da al diseñador (alcance «asignado») acceso al video.
   await ensureAssignment(tx, actor, video, STEP_ROLES.DISENO.assignment, person);

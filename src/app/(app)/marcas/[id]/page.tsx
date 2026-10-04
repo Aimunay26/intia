@@ -52,7 +52,6 @@ import {
 import { GUIA_TARGETS } from "@/lib/guia/catalogo";
 import { prisma } from "@/lib/prisma";
 import { brandDominantKind, productCatalogEnabled, readBrandCatalog } from "@/lib/product-catalog";
-import { productionFlowEnabled } from "@/lib/production-flow-flag";
 import { formatDate, formatNumber, fromDateKey, jsonToLines, objectiveProgress, parseList } from "@/lib/utils";
 import { BrandForm, type DocumentosMarca } from "../brand-form";
 import { ObjectivesPanel, type ObjectiveRow } from "./objectives";
@@ -63,7 +62,7 @@ type Vista = "identidad" | "productos" | "objetivos" | "contenido" | "documentos
 const VISTAS: Vista[] = ["identidad", "objetivos", "contenido", "documentos"];
 /** "productos" solo existe con PRODUCT_CATALOG_ENABLED: apagado, la pestaña no se ve y el catálogo no se consulta. */
 const VISTAS_CON_CATALOGO: Vista[] = ["identidad", "productos", "objetivos", "contenido", "documentos"];
-/** "equipo" solo existe con PRODUCTION_FLOW_ENABLED: apagado, la pestaña no se ve y sus tablas no se consultan. */
+/** El equipo se prepara antes de encender las automatizaciones de producción. */
 const VISTA_EQUIPO: Vista = "equipo";
 
 /** Convierte un usuario o una URL suelta en un enlace usable. */
@@ -87,8 +86,7 @@ export default async function MarcaPage({
   const sp = singleQueryValues(await searchParams);
 
   const catalogoActivo = productCatalogEnabled();
-  const produccionActiva = productionFlowEnabled();
-  const vistas = [...(catalogoActivo ? VISTAS_CON_CATALOGO : VISTAS), ...(produccionActiva ? [VISTA_EQUIPO] : [])];
+  const vistas = [...(catalogoActivo ? VISTAS_CON_CATALOGO : VISTAS), VISTA_EQUIPO];
   const vista: Vista = vistas.includes(sp.vista as Vista)
     ? (sp.vista as Vista)
     : "identidad";
@@ -322,7 +320,7 @@ export default async function MarcaPage({
             { value: "objetivos", label: "Objetivos", icon: <Target size={13} /> },
             { value: "contenido", label: "Contenido", icon: <Film size={13} /> },
             { value: "documentos", label: "Documentos", icon: <FileText size={13} /> },
-            ...(produccionActiva ? [{ value: "equipo", label: "Equipo", icon: <Users size={13} /> }] : []),
+            { value: "equipo", label: "Equipo", icon: <Users size={13} /> },
           ]}
         />
       </div>

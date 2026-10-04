@@ -7,9 +7,7 @@ import { formatDateLong, formatDateTime } from "@/lib/utils";
  * compartidos por «Mi trabajo», el panel «Producción» de la ficha y la vista «Cadena».
  * Sin React ni Prisma: lo importan componentes de cliente, de servidor y las pruebas.
  *
- * Decisiones del Dueño (29-30/09/2026): el Listo del guionista pasa directo al filmmaker y el
- * del editor directo al community (sin revisiones intermedias); el community puede devolver
- * por correcciones, el editor al filmmaker, y filmmaker y community pueden avisar a coordinación.
+ * Entregar guion o edición crea una revisión humana; aprobar habilita el siguiente paso.
  * Las validaciones de verdad viven en el dominio (production-chain.ts): aquí solo se decide qué
  * botón ver y qué texto mostrar.
  */
@@ -39,12 +37,22 @@ export const MOTIVO_MAX = 1000;
 export const LINK_MAX = 2000;
 
 export const STEP_COPY: Record<StepKind, StepCopy> = {
+  REVISION_GUION: {
+    listo: "Aprobar guion", pending: "Aprobando…", link: null,
+    next: "Confirma que revisaste el guion enlazado. Tu aprobación queda registrada para esta versión y habilita la grabación.",
+    done: "Guion aprobado: grabación habilitada.", returnLabel: "Pedir correcciones al guionista", returnHint: "El guionista recibe el motivo y debe entregar otra vez antes de continuar.", notify: false,
+  },
+  REVISION_FINAL: {
+    listo: "Aprobar vídeo final", pending: "Aprobando…", link: null,
+    next: "Confirma que revisaste el máster enlazado. Tu aprobación queda registrada para esta entrega y habilita la publicación.",
+    done: "Vídeo aprobado: publicación habilitada.", returnLabel: "Pedir correcciones al editor", returnHint: "El editor recibe el motivo y debe volver a entregar el máster para revisión.", notify: false,
+  },
   GUION: {
-    listo: "Listo, enviar al filmmaker",
-    pending: "Enviando al filmmaker…",
+    listo: "Enviar a revisión",
+    pending: "Enviando a revisión…",
     link: null,
-    next: "El guion queda aprobado (regla del dueño: sin revisión de guion) y la grabación pasa al filmmaker en el próximo día de grabación de la marca.",
-    done: "Enviado: la grabación ya está en manos del filmmaker.",
+    next: "Coordinación recibe una tarea de revisión. La grabación se habilita cuando apruebe el guion.",
+    done: "Guion entregado: pendiente de revisión humana.",
     returnLabel: null,
     returnHint: null,
     notify: false,
@@ -60,11 +68,11 @@ export const STEP_COPY: Record<StepKind, StepCopy> = {
     notify: true,
   },
   EDICION: {
-    listo: "Listo, enviar al community",
-    pending: "Enviando al community…",
+    listo: "Enviar a revisión final",
+    pending: "Enviando a revisión…",
     link: { field: "materialUrl", label: "Enlace del máster (video editado)", hint: "Debe ser distinto del material grabado. Empieza con https://.", missing: "Falta el enlace del máster (video editado)." },
-    next: "Se firma la revisión final (regla del dueño: sin revisión final) y la publicación pasa al community con plazo al día hábil siguiente.",
-    done: "Enviado: la publicación ya está en manos del community.",
+    next: "Coordinación recibe el máster para revisarlo antes de habilitar la publicación. Entrega un archivo o enlace de versión que no se sobrescriba.",
+    done: "Máster entregado: pendiente de revisión humana.",
     returnLabel: "Devolver al filmmaker",
     returnHint: "El filmmaker recibe de vuelta la grabación con tu motivo, para el próximo día de grabación.",
     notify: false,
@@ -115,6 +123,7 @@ const NONE: StepPermissions = { canComplete: false, canReturn: false, canNotify:
  */
 export function coordinationCan(viewer: AccessUser, step: StepKind, action: "complete" | "return"): boolean {
   if (viewer.role === "OWNER") return true;
+  if (step === "REVISION_GUION") return allows(viewer, "scripts.approve") && allows(viewer, "content.approve");
   if (step === "GUION" && action === "complete") return allows(viewer, "scripts.approve") || allows(viewer, "scripts.write");
   const needed = CHAIN_COORD_CAPABILITY[step]?.[action];
   return !needed || allows(viewer, needed);
@@ -139,7 +148,7 @@ export function stepPermissions(
   const coordinator = !owner && opts.coordinator;
   const mine = Boolean(step.assigneeId) && step.assigneeId === viewer.id;
   if (!owner && !coordinator && !mine) return NONE;
-  const capable = mine && allows(viewer, CHAIN_STEP_RULES[kind].capability);
+  const capable = mine && allows(viewer, CHAIN_STEP_RULES[kind].capability) && (kind !== "REVISION_GUION" || allows(viewer, "content.approve"));
   const can = (action: "complete" | "return") => owner || capable || (coordinator && coordinationCan(viewer, kind, action));
   const canComplete = can("complete");
   const canReturn = copy.returnLabel !== null && can("return");

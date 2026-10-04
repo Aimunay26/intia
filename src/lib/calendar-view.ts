@@ -45,10 +45,12 @@ export const ENTRY_KIND_LABEL: Record<CalendarEntryKind, string> = {
 };
 
 /** Pasos que se pintan en el calendario, con el verbo corto del chip. */
-export type StepChipKind = "GUION" | "GRABACION" | "EDICION" | "PUBLICACION" | "DISENO";
-export const STEP_CHIP_KINDS: readonly StepChipKind[] = ["GUION", "GRABACION", "EDICION", "PUBLICACION", "DISENO"];
+export type StepChipKind = "GUION" | "REVISION_GUION" | "GRABACION" | "EDICION" | "REVISION_FINAL" | "PUBLICACION" | "DISENO";
+export const STEP_CHIP_KINDS: readonly StepChipKind[] = ["GUION", "REVISION_GUION", "GRABACION", "EDICION", "REVISION_FINAL", "PUBLICACION", "DISENO"];
 export const STEP_CHIP_LABEL: Record<StepChipKind, string> = {
   GUION: "Guion",
+  REVISION_GUION: "Revisión de guion",
+  REVISION_FINAL: "Revisión final",
   GRABACION: "Grabar",
   EDICION: "Editar",
   PUBLICACION: "Publicar",
@@ -164,7 +166,7 @@ export function videoEntries<T extends VideoDates>(
 }
 
 /** Orden de la cadena dentro del día: Guion, Grabar, Editar, Publicar y Diseño al final. */
-const ORDEN_PASO: Record<StepChipKind, number> = { GUION: 0, GRABACION: 1, EDICION: 2, PUBLICACION: 3, DISENO: 4 };
+const ORDEN_PASO: Record<StepChipKind, number> = { GUION: 0, REVISION_GUION: 1, GRABACION: 2, EDICION: 3, REVISION_FINAL: 4, PUBLICACION: 5, DISENO: 6 };
 const ORDEN_KIND: Record<VideoEntryKind, number> = { GRABACION: ORDEN_PASO.GRABACION, PUBLICACION: ORDEN_PASO.PUBLICACION };
 
 type Ordenable = { kind: CalendarEntryKind; date: Date; title: string; step?: string };

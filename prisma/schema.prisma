@@ -1031,6 +1031,9 @@ model Task {
   priority    String    @default("NORMAL") // BAJA | NORMAL | ALTA | URGENTE
   dueDate     DateTime?
   order       Int       @default(0)
+  status      String    @default("PENDIENTE") // PENDIENTE | HECHO | CANCELADO, independiente de la columna
+  completedAt DateTime?
+  completedById String? // Identidad histórica de quien cerró la tarea
 
   columnId    String
   column      TaskColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
@@ -1055,7 +1058,7 @@ model Task {
   @@index([columnId, brandId, order, id])
 }
 
-/// Paso operativo de un video: grabación, edición, publicación o diseño, con responsable y plazo.
+/// Paso operativo de un video, incluidas las revisiones humanas, con responsable y plazo.
 /// automationKey hace idempotente la automatización (`<video>:EDICION`; diseño: `<video>:DISENO:<uuid>`).
 model ProductionStep {
   id            String  @id @default(cuid())
@@ -1064,7 +1067,7 @@ model ProductionStep {
   /// FK compuesta: el paso siempre pertenece a la marca de su video.
   contentItem   ContentItem @relation(fields: [contentItemId, brandId], references: [id, brandId], onDelete: Cascade)
 
-  /// GUION (solo con la cadena de entregas, PRODUCTION_CHAIN_ENABLED) | GRABACION | EDICION | PUBLICACION | DISENO
+  /// GUION | REVISION_GUION | GRABACION | EDICION | REVISION_FINAL | PUBLICACION | DISENO.
   step        String
   assigneeId  String?
   assignee    User?     @relation("ProductionStepAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
@@ -1075,13 +1078,15 @@ model ProductionStep {
   source      String    @default("AUTO") // AUTO | MANUAL
   taskId      String?   @unique
   task        Task?     @relation(fields: [taskId], references: [id], onDelete: SetNull)
-  /// Enlace a la nube: material grabado o entrega del diseño (http/https).
+  /// Enlace a la nube: material grabado, máster de edición o entrega del diseño (http/https).
   materialUrl String?
+  materialVersion Int @default(0)
+  reviewToken String? // Huella de la entrega que debe revisar una persona
   requestedById String?
   requestedBy   User?   @relation("ProductionStepRequester", fields: [requestedById], references: [id], onDelete: SetNull)
   notes       String?
   doneAt      DateTime?
-  /// <video>:GUION|GRABACION|EDICION|PUBLICACION (uno por paso: se reactiva, no se duplica) o <video>:DISENO:<uuid>.
+  /// <video>:<paso> (uno por paso secuencial: se reactiva, no se duplica) o <video>:DISENO:<uuid>.
   automationKey String  @unique
 
   createdAt DateTime @default(now())

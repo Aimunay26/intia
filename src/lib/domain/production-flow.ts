@@ -47,13 +47,15 @@ import {
  */
 
 export type ProductionActor = SessionUser | null;
-export type StepKind = "GUION" | "GRABACION" | "EDICION" | "PUBLICACION" | "DISENO";
+export type StepKind = "GUION" | "REVISION_GUION" | "GRABACION" | "EDICION" | "REVISION_FINAL" | "PUBLICACION" | "DISENO";
 export type TeamRole = "ENCARGADO" | "GUIONISTA" | "FILMMAKER" | "EDITOR" | "COMMUNITY" | "DISENADOR";
 export type SkipReason = "flag_off" | "video_missing" | "video_status" | "exists" | "auto_off" | "no_team" | "no_assignee" | "recording_open" | "error";
 export type FlowResult = { done: true; stepId: string } | { done: false; reason: SkipReason };
 
 /** Función de la marca que se asigna en cada paso, función en el video y verbo de la tarea. */
-export const STEP_ROLES: Record<StepKind, { team: TeamRole; assignment: string; task: string }> = {
+export const STEP_ROLES: Record<StepKind, { team: TeamRole; assignment: string | null; task: string }> = {
+  REVISION_GUION: { team: "ENCARGADO", assignment: null, task: "Revisar guion" },
+  REVISION_FINAL: { team: "ENCARGADO", assignment: null, task: "Revisar vídeo final" },
   // Solo con la cadena de entregas: el guionista del equipo recibe además la asignación GUIONISTA.
   GUION: { team: "GUIONISTA", assignment: "GUIONISTA", task: "Escribir guion" },
   GRABACION: { team: "FILMMAKER", assignment: "CAMARA", task: "Grabar" },
@@ -64,6 +66,8 @@ export const STEP_ROLES: Record<StepKind, { team: TeamRole; assignment: string; 
 
 /** Estados en los que cada paso automático todavía tiene sentido. */
 const OPEN_FOR: Record<Exclude<StepKind, "DISENO">, readonly string[]> = {
+  REVISION_GUION: ["GUION"],
+  REVISION_FINAL: ["EDICION"],
   GUION: ["IDEA", "GUION"],
   GRABACION: ["IDEA", "GUION", "APROBADO"],
   EDICION: ["APROBADO", "GRABACION", "EDICION"],
@@ -140,23 +144,32 @@ export function eligiblePerson(tx: AppTransaction, userId: string, brandId: stri
 export async function resolveAssignee(tx: AppTransaction, video: Pick<Video, "id" | "brandId">, step: StepKind, flow: Flow): Promise<{ person: Person; assigned: boolean } | SkipReason> {
   if (!flow.team.size) return "no_team";
   const { assignment, team } = STEP_ROLES[step];
-  const current = await tx.assignment.findMany({
+  const current = assignment ? await tx.assignment.findMany({
     where: { contentItemId: video.id, role: assignment },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     select: { userId: true },
-  });
+  }) : [];
   for (const row of current) {
     const person = await eligiblePerson(tx, row.userId, video.brandId, stepAssigneeCapabilities(step));
     if (person) return { person, assigned: true };
   }
   const fallback = flow.team.get(team);
   const person = fallback ? await eligiblePerson(tx, fallback, video.brandId, stepAssigneeCapabilities(step)) : null;
-  return person ? { person, assigned: false } : "no_assignee";
+  if (person) return { person, assigned: false };
+  if (!assignment) {
+    const owners = await tx.user.findMany({ where: { role: "OWNER", active: true }, orderBy: { id: "asc" }, select: { id: true } });
+    for (const owner of owners) {
+      const candidate = await eligiblePerson(tx, owner.id, video.brandId, stepAssigneeCapabilities(step));
+      if (candidate) return { person: candidate, assigned: false };
+    }
+  }
+  return "no_assignee";
 }
 
 /* ------------------------------------------------------------ ESCRITURAS -- */
 
-export async function ensureAssignment(tx: AppTransaction, actor: ProductionActor, video: Pick<Video, "id" | "title" | "brandId">, role: string, person: Person) {
+export async function ensureAssignment(tx: AppTransaction, actor: ProductionActor, video: Pick<Video, "id" | "title" | "brandId">, role: string | null, person: Person) {
+  if (!role) return; // Una revisión asigna trabajo, no una función de producción en el vídeo.
   const existing = await tx.assignment.findUnique({
     where: { contentItemId_userId_role: { contentItemId: video.id, userId: person.id, role } },
     select: { id: true },
@@ -271,6 +284,7 @@ async function closePrevious(tx: AppTransaction, actor: ProductionActor, video: 
   const previous = await tx.productionStep.findUnique({ where: { automationKey: automationKey(video.id, step) }, select: { id: true, status: true } });
   if (!previous || previous.status !== "PENDIENTE") return;
   await tx.productionStep.update({ where: { id: previous.id }, data: { status: "HECHO", doneAt: now } });
+  await tx.task.updateMany({ where: { productionStep: { id: previous.id } }, data: { status: "HECHO", completedAt: now, completedById: actor?.id ?? null } });
   await auditInTransaction(tx, {
     user: actor,
     action: "COMPLETAR",
@@ -449,6 +463,7 @@ export function cancelOpenSteps(tx: AppTransaction, actor: ProductionActor, vide
     const video = await readVideo(tx, videoId);
     if (!video) return skip("video_missing");
     const { count } = await tx.productionStep.updateMany({ where: { contentItemId: video.id, status: "PENDIENTE" }, data: { status: "CANCELADO" } });
+    await tx.task.updateMany({ where: { productionStep: { contentItemId: video.id, status: "CANCELADO" } }, data: { status: "CANCELADO", completedAt: null, completedById: null } });
     if (!count) return skip("exists");
     await auditInTransaction(tx, {
       user: actor,

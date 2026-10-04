@@ -160,7 +160,7 @@ function motivoDe(formData: FormData): string {
 }
 
 function listoInput(formData: FormData, revision: string | undefined): CompleteStepInput {
-  return { expectedUpdatedAt: revision, materialUrl: field(formData, "materialUrl") || null, publishedUrl: field(formData, "publishedUrl") || null };
+  return { expectedUpdatedAt: revision, expectedReviewToken: field(formData, "expectedReviewToken"), materialUrl: field(formData, "materialUrl") || null, publishedUrl: field(formData, "publishedUrl") || null };
 }
 
 async function videoOfStep(tx: AppTransaction, id: string): Promise<string> {
@@ -243,7 +243,9 @@ export async function marcarPaso(formData: FormData): Promise<ProductionActionRe
     if (step.status === "CANCELADO") return { error: "El paso está cancelado. Reasígnalo para reactivarlo." };
     if ((step.status === "HECHO") === done) return;
 
-    await tx.productionStep.update({ where: { id }, data: done ? { status: "HECHO", doneAt: new Date() } : { status: "PENDIENTE", doneAt: null } });
+    const completedAt = done ? new Date() : null;
+    await tx.productionStep.update({ where: { id }, data: { status: done ? "HECHO" : "PENDIENTE", doneAt: completedAt } });
+    await tx.task.updateMany({ where: { productionStep: { id } }, data: { status: done ? "HECHO" : "PENDIENTE", completedAt, completedById: done ? user.id : null } });
     await auditInTransaction(tx, {
       user,
       action: done ? "COMPLETAR" : "REABRIR",
@@ -319,6 +321,7 @@ export async function guardarMaterialPaso(formData: FormData): Promise<Productio
     const step = await readStep(tx, id);
     if (!step) return { error: "El paso ya no existe. Recarga la página." };
     await assertStepWriter(tx, user, step, chain ? "done" : "material");
+    if (chain && (step.status !== "PENDIENTE" || step.step.startsWith("REVISION_"))) return { error: "Para cambiar una entrega cerrada, devuélvela y entrega una nueva versión desde su paso de trabajo." };
     if (step.materialUrl === read.url) return;
 
     await tx.productionStep.update({ where: { id }, data: { materialUrl: read.url } });
@@ -371,6 +374,7 @@ export async function reasignarPaso(formData: FormData): Promise<ProductionActio
 
     const reactivar = step.status === "CANCELADO";
     await tx.productionStep.update({ where: { id }, data: { assigneeId: person.id, dueAt, source: "MANUAL", ...(reactivar ? { status: "PENDIENTE" } : {}) } });
+    if (reactivar) await tx.task.updateMany({ where: { productionStep: { id } }, data: { status: "PENDIENTE", completedAt: null, completedById: null } });
     const changes: Record<string, Cambio> = {};
     if (step.assigneeId !== person.id) changes.assigneeId = { etiqueta: "Responsable", antes: step.assigneeId, despues: person.id, verAntes: before.assignee?.name ?? "", verDespues: person.name };
     if (step.dueAt.getTime() !== dueAt.getTime()) changes.dueAt = { etiqueta: "Vence", antes: step.dueAt.toISOString(), despues: dueAt.toISOString(), verAntes: formatDateTime(step.dueAt), verDespues: formatDateTime(dueAt) };

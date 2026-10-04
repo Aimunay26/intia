@@ -18,7 +18,7 @@ test('consistencia con PostgreSQL real: auditoría, revisiones, métricas y rela
     await t.test('edición vieja no sobrescribe; timestamp avanza incluso con reloj repetido',async()=>{
       await tasks.actualizarTarea(form(editTask));
       const current=await prisma.task.findUniqueOrThrow({where:{id:task.id}});assert.ok(current.updatedAt>task.updatedAt);
-      await assert.rejects(tasks.actualizarTarea(form({...editTask,title:'Perdida'})),/Otra persona/);
+      assert.match((await tasks.actualizarTarea(form({...editTask,title:'Perdida'}))).error,/Este registro cambió/);
       assert.equal((await prisma.task.findUniqueOrThrow({where:{id:task.id}})).title,'Edición 1');
       await prisma.task.update({where:{id:task.id},data:{updatedAt:current.updatedAt}});
       assert.ok((await prisma.task.findUniqueOrThrow({where:{id:task.id}})).updatedAt>current.updatedAt);
@@ -33,7 +33,8 @@ test('consistencia con PostgreSQL real: auditoría, revisiones, métricas y rela
     await t.test('dos ediciones con la misma revisión admiten una y auditan una',async()=>{
       const before=await prisma.task.findUniqueOrThrow({where:{id:task.id}}), count=await prisma.auditLog.count({where:{entityId:task.id}});
       const results=await Promise.allSettled(['A','B'].map(title=>tasks.actualizarTarea(form({...editTask,title,expectedUpdatedAt:before.updatedAt.toISOString()}))));
-      assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal(await prisma.auditLog.count({where:{entityId:task.id}}),count+1);
+      assert.equal(results.filter(r=>r.status==='fulfilled' && !r.value?.error).length,1);assert.equal(await prisma.auditLog.count({where:{entityId:task.id}}),count+1);
+      assert.ok(results.some(r=>r.status==='fulfilled' && /Este registro cambió/.test(r.value?.error)));
     });
     await t.test('agenda rechaza título, fecha e intervalo inválidos sin cerrar una edición como exitosa',async()=>{
       const events=load('src/app/actions/events.ts',mocks);
@@ -60,7 +61,7 @@ test('consistencia con PostgreSQL real: auditoría, revisiones, métricas y rela
     });
     await t.test('CSV semanal parcial no borra columnas y no duplica entre plataformas; porcentaje decimal no es fracción',async()=>{
       const result=await metric.importarMetricasCsv(null,form({csv:`video,semana,plataforma,vistas,likes,retencion\n${video.id},2026-09-07,TIKTOK,150,,0.5\n${video.id},2026-09-07,INSTAGRAM,250,0,0\n${video.id},2026-09-08,TIKTOK,600,5,2`}));
-      assert.equal(result.updated,2);assert.equal(result.ignored.length,1);
+      assert.equal(result.updated,2,JSON.stringify(result));assert.equal(result.ignored.length,1);
       const row=await prisma.metric.findFirstOrThrow({where:{contentItemId:video.id,platform:'TIKTOK',period:'WEEKLY',date:new Date('2026-09-07T12:00Z')}});assert.equal(row.retention3s,0.5);assert.equal(row.views,150);
       const count=await prisma.auditLog.count({where:{entityId:row.id}});assert.equal(count,2);
       assert.ok((await metric.importarMetricasCsv(null,form({csv:`video,fecha,vistas\n${video.id},2026-09-07,999`}))).error);

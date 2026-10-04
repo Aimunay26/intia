@@ -196,7 +196,7 @@ export async function crearVideo(formData: FormData) {
 
 export async function actualizarVideo(formData: FormData) {
   const user = await requirePermission("content.plan");
-  return withMutation(user, false, async (tx, afterCommit) => {
+  return withWorkflowMutation(user, false, async (tx, afterCommit) => {
     await assertVideoOpen(tx, user, field(formData, "id"));
     await assertContentAccess(tx, user, field(formData, "id"), "content.plan");
     const id = field(formData, "id");
@@ -245,7 +245,7 @@ export async function actualizarVideo(formData: FormData) {
 /** Producción puede ajustar logística sin recibir edición del brief ni publicación. */
 export async function actualizarGrabacion(formData: FormData) {
   const user = await requirePermission("content.scheduleShoot");
-  return withMutation(user, false, async (tx, afterCommit) => {
+  return withWorkflowMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     await assertContentAccess(tx, user, id, "content.scheduleShoot");
     await assertVideoOpen(tx, user, id);
@@ -391,6 +391,7 @@ export async function alternarCheck(formData: FormData) {
 
     let approvalId: string | null = null;
     if (approvalKind && done) {
+      if (productionChainEnabled(check.contentItem.brandId)) throw new WorkflowError("Aprueba la entrega desde su paso de revisión en Producción o Mi trabajo.");
       const video = await tx.contentItem.findUniqueOrThrow({ where: { id: check.contentItemId } });
       if (approvalKind === "FINAL_APPROVAL" && video.status !== "EDICION") throw new WorkflowError("La aprobación final se completa en la etapa Edición.");
       if (approvalKind === "SCRIPT_APPROVAL" && video.status !== "GUION") throw new WorkflowError("La aprobación del guion se completa en la etapa Guion.");

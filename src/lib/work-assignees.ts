@@ -19,7 +19,7 @@ export const ASSIGNMENT_ROLE_CAPABILITIES: Record<string, readonly Capability[]>
 export function stepAssigneeCapabilities(step: string): readonly Capability[] {
   const rule = CHAIN_STEP_RULES[step as ChainStep | "DISENO"];
   if (!rule) throw new WorkflowError("El tipo de paso no admite asignaciones.");
-  return ["content.view", rule.capability];
+  return step === "REVISION_GUION" ? ["content.view", "scripts.approve", "content.approve"] : ["content.view", rule.capability];
 }
 
 export type WorkAssignee = { id: string; name: string; can: (capability: Capability) => boolean };

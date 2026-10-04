@@ -32,7 +32,7 @@ test('B11–B20: permisos, lotes durables, consultas acotadas, semántica y rete
       actor=production;let v=await prisma.contentItem.findUniqueOrThrow({where:{id:'videoA'}});
       await content.actualizarGrabacion(fd({id:v.id,expectedUpdatedAt:v.updatedAt.toISOString(),shootDate:'2026-09-28',title:'Inyección',status:'PUBLICADO'}));
       const after=await prisma.contentItem.findUniqueOrThrow({where:{id:v.id}});assert.equal(after.title,v.title);assert.equal(after.status,'IDEA');assert.ok(after.shootDate);
-      await assert.rejects(content.actualizarGrabacion(fd({id:v.id,expectedUpdatedAt:v.updatedAt.toISOString(),shootDate:'2026-09-29'})),/Otra persona/);
+      assert.match((await content.actualizarGrabacion(fd({id:v.id,expectedUpdatedAt:v.updatedAt.toISOString(),shootDate:'2026-09-29'}))).error,/Este registro cambió/);
       const other=await prisma.contentItem.findUniqueOrThrow({where:{id:'videoB'}});await assert.rejects(content.actualizarGrabacion(fd({id:other.id,expectedUpdatedAt:other.updatedAt.toISOString(),shootDate:'2026-09-29'})),/acceso/);
       actor=analyst;await assert.rejects(content.actualizarGrabacion(fd({id:after.id,expectedUpdatedAt:after.updatedAt.toISOString(),shootDate:'2026-09-29'})),/permiso/);actor=owner;
     });

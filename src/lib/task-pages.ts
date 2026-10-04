@@ -39,7 +39,7 @@ export async function getTaskColumnPage(columnId: string, brandId: string | null
     where: { AND: [{ columnId }, taskListOptions(brandId, filters).where, after, access, ...live] },
     take: TASK_PAGE_SIZE + 1,
     orderBy: [{ order: "asc" }, { id: "asc" }],
-    include: { assignee: { select: { id: true, name: true, color: true, avatarUrl: true } }, brand: { select: { id: true, name: true, colorPrimary: true } } },
+    include: { assignee: { select: { id: true, name: true, color: true, avatarUrl: true } }, brand: { select: { id: true, name: true, colorPrimary: true } }, productionStep: { select: { contentItemId: true } } },
   });
   const items = tasks.slice(0, TASK_PAGE_SIZE);
   const last = items.at(-1);

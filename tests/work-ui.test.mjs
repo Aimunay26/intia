@@ -27,9 +27,9 @@ const owner = { id: "dueno", name: "Dueño", email: "d@x.pe", role: "OWNER", col
 /* ------------------------------------------------------------- STEP-COPY -- */
 
 test("cada rol tiene su botón principal y sus acciones secundarias", () => {
-  assert.equal(copy.STEP_COPY.GUION.listo, "Listo, enviar al filmmaker");
+  assert.equal(copy.STEP_COPY.GUION.listo, "Enviar a revisión");
   assert.equal(copy.STEP_COPY.GRABACION.listo, "Listo, pasar a edición");
-  assert.equal(copy.STEP_COPY.EDICION.listo, "Listo, enviar al community");
+  assert.equal(copy.STEP_COPY.EDICION.listo, "Enviar a revisión final");
   assert.equal(copy.STEP_COPY.PUBLICACION.listo, "Publicado");
   assert.equal(copy.STEP_COPY.DISENO.listo, "Entregar diseño");
   assert.equal(copy.STEP_COPY.GUION.link, null);
@@ -39,9 +39,9 @@ test("cada rol tiene su botón principal y sus acciones secundarias", () => {
   assert.equal(copy.STEP_COPY.EDICION.returnLabel, "Devolver al filmmaker");
   assert.equal(copy.STEP_COPY.PUBLICACION.returnLabel, "Devolver por correcciones");
   assert.deepEqual(Object.entries(copy.STEP_COPY).filter(([, c]) => c.notify).map(([step]) => step).sort(), ["GRABACION", "PUBLICACION"]);
-  assert.deepEqual(Object.entries(copy.STEP_COPY).filter(([, c]) => c.returnLabel).map(([step]) => step).sort(), ["EDICION", "PUBLICACION"]);
-  assert.equal(copy.isStepKind("REVISION_GUION"), false, "sin revisiones intermedias (decisión del Dueño)");
-  assert.equal(copy.isStepKind("REVISION_FINAL"), false);
+  assert.deepEqual(Object.entries(copy.STEP_COPY).filter(([, c]) => c.returnLabel).map(([step]) => step).sort(), ["EDICION", "PUBLICACION", "REVISION_FINAL", "REVISION_GUION"]);
+  assert.equal(copy.isStepKind("REVISION_GUION"), true, "revisión humana");
+  assert.equal(copy.isStepKind("REVISION_FINAL"), true);
 });
 
 test("permisos de los botones: asignado con capacidad, coordinación y Dueño", () => {
@@ -65,7 +65,7 @@ test("permisos de los botones: asignado con capacidad, coordinación y Dueño", 
   assert.deepEqual(copy.stepPermissions(member(["STRATEGY"]), pending("PUBLICACION", null), { coordinator: true }), { canComplete: false, canReturn: true, canNotify: false, blockedReason: null }, "STRATEGY no publica (content.publish), sí devuelve");
   const produccion = member(["PRODUCTION"]);
   assert.deepEqual(copy.stepPermissions(produccion, pending("GRABACION", null), { coordinator: true }), { canComplete: true, canReturn: false, canNotify: false, blockedReason: null }, "producción completa la grabación");
-  assert.deepEqual(copy.stepPermissions(produccion, pending("EDICION", null), { coordinator: true }), { canComplete: false, canReturn: true, canNotify: false, blockedReason: null }, "sin content.approve no firma la revisión final");
+  assert.deepEqual(copy.stepPermissions(produccion, pending("EDICION", null), { coordinator: true }), { canComplete: true, canReturn: true, canNotify: false, blockedReason: null }, "entregar edición no firma la revisión final");
   const guion = copy.stepPermissions(produccion, pending("GUION", null), { coordinator: true });
   assert.equal(guion.canComplete, false, "sin scripts.approve ni scripts.write no aprueba el guion");
   assert.match(guion.blockedReason, /no firma este paso/);
@@ -74,7 +74,8 @@ test("permisos de los botones: asignado con capacidad, coordinación y Dueño", 
   assert.equal(copy.stepPermissions(owner, pending("EDICION", "otro"), { coordinator: false }).canComplete, true);
   // Solo pasos pendientes y de tipos conocidos.
   for (const status of ["HECHO", "CANCELADO", "DEVUELTO"]) assert.equal(copy.stepPermissions(owner, { step: "EDICION", status, assigneeId: "dueno" }, { coordinator: true }).canComplete, false);
-  assert.equal(copy.stepPermissions(owner, pending("REVISION_FINAL"), { coordinator: true }).canComplete, false);
+  assert.equal(copy.stepPermissions(owner, pending("REVISION_FINAL"), { coordinator: true }).canComplete, true);
+  assert.equal(copy.stepPermissions(editor, pending("REVISION_FINAL"), { coordinator: false }).canComplete, false);
 });
 
 test("checks que marca el Listo de cada paso: misma regla que el dominio", () => {
@@ -140,6 +141,33 @@ function card(step, extra = {}) {
 const emptyWork = () => ({ enabled: true, groups: { overdue: [], today: [], next7: [], later: [] }, returned: [], counts: { pending: 0, overdue: 0, today: 0 }, coordination: null, designsDelivered: [] });
 const render = (user, work) => renderToStaticMarkup(createElement(MyWorkView, { user, work }));
 
+test("coordinación ve ambas revisiones con enlaces; el editor no recibe botones de aprobación", () => {
+  const work = emptyWork();
+  work.groups.today = [
+    card("REVISION_GUION", { label: "Revisión de guion", reviewToken: "script-token", links: [{ label: "Guion", href: "/guiones/s1" }] }),
+    card("REVISION_FINAL", { label: "Revisión final", reviewToken: "master-token", links: [{ label: "Máster", href: "https://files.test/master-v1" }] }),
+  ];
+  work.counts.pending = 2;
+  const html = render(member(["STRATEGY"]), work);
+  for (const text of ["Aprobar guion", "Aprobar vídeo final", "Pedir correcciones al guionista", "Pedir correcciones al editor", "/guiones/s1", "https://files.test/master-v1"]) assert.ok(html.includes(text), text);
+  const editor = render(member(["EDITOR"]), work);
+  assert.doesNotMatch(editor, /Aprobar guion|Aprobar vídeo final/);
+});
+
+test("las tareas muestran cierre explícito y llevan al paso cuando están vinculadas", () => {
+  const { TaskCompletion } = load("src/components/task-completion.tsx", {
+    "@/app/actions/tasks": actions,
+    "next/navigation": { useRouter: () => ({ refresh() {} }) },
+  });
+  const task = { id: "t1", status: "PENDIENTE", updatedAt: new Date("2026-10-04T12:00:00Z") };
+  const pending = renderToStaticMarkup(createElement(TaskCompletion, { task }));
+  assert.match(pending, /Marcar como terminada/);
+  const done = renderToStaticMarkup(createElement(TaskCompletion, { task: { ...task, status: "HECHO" } }));
+  assert.match(done, /Terminada/); assert.match(done, /Reabrir tarea/);
+  const linked = renderToStaticMarkup(createElement(TaskCompletion, { task: { ...task, productionStep: { contentItemId: "v1" } } }));
+  assert.match(linked, /href="\/contenido\/v1"/); assert.doesNotMatch(linked, /Marcar como terminada/);
+});
+
 test("Mi trabajo vacío: mensaje claro y sin «Sin asignar» para quien no coordina", () => {
   const html = render(member(["EDITOR"]), emptyWork());
   assert.match(html, /Mi trabajo/);
@@ -165,7 +193,7 @@ test("Mi trabajo agrupa por plazo, con el botón del rol, enlaces y la devoluci�
   assert.ok(order.every((index) => index > 0), "los cinco grupos aparecen");
   assert.deepEqual([...order].sort((a, b) => a - b), order, "Vencido, Devuelto a mí, Hoy, Próximos, Más adelante");
   assert.match(html, /5 pendientes · 1 vencido · 1 para hoy/);
-  for (const label of ["Listo, pasar a edición", "Listo, enviar al community", "Publicado", "Listo, enviar al filmmaker", "Entregar diseño", "Devolver al filmmaker", "Devolver por correcciones", "Avisar a coordinación"]) {
+  for (const label of ["Listo, pasar a edición", "Enviar a revisión final", "Publicado", "Enviar a revisión", "Entregar diseño", "Devolver al filmmaker", "Devolver por correcciones", "Avisar a coordinación"]) {
     assert.ok(html.includes(`>${label}</button>`), `botón «${label}»`);
   }
   assert.match(html, /Te lo devolvió Rosa/);

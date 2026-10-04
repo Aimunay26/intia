@@ -11,7 +11,7 @@ export async function withWorkflowMutation<T>(actor: SessionUser, owner: boolean
   catch (error) { if (error instanceof WorkflowError) return { error: error.message }; throw error; }
 }
 
-export const EDIT_CONFLICT = "Otra persona cambió este registro. Recarga la página y revisa los cambios antes de guardar de nuevo.";
+export const EDIT_CONFLICT = "Este registro cambió desde que abriste el formulario. Recarga la página y revisa los cambios antes de guardar de nuevo.";
 
 /** Solo DB dentro del callback; efectos de Next se ejecutan después de confirmar. No reintenta escrituras. */
 export async function withMutation<T>(actor: SessionUser, owner: boolean,
@@ -24,7 +24,8 @@ export async function withMutation<T>(actor: SessionUser, owner: boolean,
       return work(tx, effect => effects.push(effect));
     }, { isolationLevel: "Serializable", maxWait: 5000, timeout: 15000 });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") throw new Error(EDIT_CONFLICT);
+    if (error instanceof Prisma.PrismaClientKnownRequestError && (error.code === "P2034" ||
+      (error.code === "P2010" && ["40001", "40P01"].includes(String(error.meta?.code))))) throw new WorkflowError(EDIT_CONFLICT);
     throw error;
   }
   for (const effect of effects) effect();
@@ -40,8 +41,8 @@ const TABLES = { Metric: '"Metric"', Brand: '"Brand"', BrandObjective: '"BrandOb
 export async function lockRevision(tx: AppTransaction, model: keyof typeof TABLES, id: string, expected: FormData | string) {
   const value = typeof expected === "string" ? expected : expected.get("expectedUpdatedAt");
   if (typeof value !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value)) {
-    throw new Error("La revisión del formulario no es válida. Recarga la página antes de guardar.");
+    throw new WorkflowError("La revisión del formulario no es válida. Recarga la página antes de guardar.");
   }
   const [row] = await tx.$queryRaw<{ updatedAt: Date }[]>(Prisma.sql`SELECT "updatedAt" FROM ${Prisma.raw(TABLES[model])} WHERE "id" = ${id} FOR UPDATE`);
-  if (!row || row.updatedAt.toISOString() !== value) throw new Error(EDIT_CONFLICT);
+  if (!row || row.updatedAt.toISOString() !== value) throw new WorkflowError(EDIT_CONFLICT);
 }

@@ -49,6 +49,7 @@ export type StepCard = {
   source: string;
   /** Revisión del paso para lockRevision (expectedUpdatedAt del formulario). */
   revision: string;
+  reviewToken: string | null;
   dueAt: Date;
   dueKey: string;
   dueLabel: string;
@@ -210,7 +211,7 @@ function leadProblem(person: ProfileRow, brandId: string): string {
 /* ------------------------------------------------------------------ TARJETAS -- */
 
 const CARD_SELECT = {
-  id: true, step: true, status: true, source: true, dueAt: true, doneAt: true, updatedAt: true, materialUrl: true, notes: true,
+  id: true, step: true, status: true, source: true, dueAt: true, doneAt: true, updatedAt: true, materialUrl: true, notes: true, reviewToken: true,
   assigneeId: true, brandId: true, contentItemId: true,
   assignee: { select: { id: true, name: true, active: true, role: true, brandAccess: { select: { brandId: true } }, workProfiles: { select: { profile: true } } } },
   requestedBy: { select: { name: true } },
@@ -235,11 +236,11 @@ function toCard(row: CardRow, now: Date, extras: Extras = {}): StepCard {
   const pending = row.status === "PENDIENTE";
   const found = extras.links?.get(row.contentItemId);
   const links: StepLink[] = [];
-  if (video.scriptId && (step === "GUION" || step === "GRABACION")) links.push({ label: "Guion", href: `/guiones/${video.scriptId}` });
+  if (video.scriptId && (step === "GUION" || step === "REVISION_GUION" || step === "GRABACION")) links.push({ label: "Guion", href: `/guiones/${video.scriptId}` });
   // Video sin guion todavía (lo normal al crearlo): el camino para escribirlo.
   if (!video.scriptId && step === "GUION" && pending && extras.generator) links.push({ label: "Generar guion", href: `/generador?video=${encodeURIComponent(video.id)}` });
   if (step === "EDICION" && found?.material) links.push({ label: "Material grabado", href: found.material });
-  if (step === "PUBLICACION" && found?.master) links.push({ label: "Máster", href: found.master });
+  if ((step === "PUBLICACION" || step === "REVISION_FINAL") && found?.master) links.push({ label: "Máster entregado para revisión", href: found.master });
   if (step === "PUBLICACION" && video.publishedUrl) links.push({ label: "Enlace público", href: video.publishedUrl });
   if (row.materialUrl && step !== "PUBLICACION") links.push({ label: rule.linkLabel ?? "Enlace", href: row.materialUrl });
   const assignee = row.assignee
@@ -258,6 +259,7 @@ function toCard(row: CardRow, now: Date, extras: Extras = {}): StepCard {
     status: row.status,
     source: row.source,
     revision: row.updatedAt.toISOString(),
+    reviewToken: row.reviewToken,
     dueAt: row.dueAt,
     dueKey,
     dueLabel: dueLabel(row.dueAt, now),
@@ -448,7 +450,7 @@ export async function readMyWork(user: AccessUser, now: Date = new Date(), opts:
 function emptyBoard(enabled: boolean, allowed: boolean): ChainBoard {
   return {
     enabled, allowed,
-    columns: { GUION: [], GRABACION: [], EDICION: [], PUBLICACION: [] },
+    columns: { GUION: [], REVISION_GUION: [], GRABACION: [], EDICION: [], REVISION_FINAL: [], PUBLICACION: [] },
     designs: [],
     stuck: { overdue: [], unassigned: [], ineligible: [], notices: [], withoutStep: [], outOfSync: [], leadsWithoutPermission: [] },
     brandsWithoutTeam: [],
@@ -537,7 +539,7 @@ export async function readChain(user: AccessUser, opts: { brandId?: string | nul
   board.stuck.ineligible = cards.filter(isBlocked);
   board.stuck.notices = cards.filter((c) => c.notice);
   board.stuck.outOfSync = chainCards
-    .map((card) => ({ card, expected: expectedFor(card.video.status, finalApproved.has(card.video.id)) }))
+    .map((card) => ({ card, expected: (card.step === "REVISION_GUION" && card.video.status === "GUION") || (card.step === "REVISION_FINAL" && card.video.status === "EDICION" && !finalApproved.has(card.video.id)) ? card.step : expectedFor(card.video.status, finalApproved.has(card.video.id)) }))
     .filter(({ card, expected }) => expected !== card.step);
 
   const withTeam = new Set(teams.map((t) => t.brandId));
@@ -575,7 +577,7 @@ export async function readChain(user: AccessUser, opts: { brandId?: string | nul
 
 /* -------------------------------------------------------------- CALENDARIO -- */
 
-const ORDER: Record<string, number> = { GUION: 0, GRABACION: 1, EDICION: 2, PUBLICACION: 3, DISENO: 4 };
+const ORDER: Record<string, number> = { GUION: 0, REVISION_GUION: 1, GRABACION: 2, EDICION: 3, REVISION_FINAL: 4, PUBLICACION: 5, DISENO: 6 };
 
 type EntryRow = {
   id: string; step: string; status: string; dueAt: Date; contentItemId: string; brandId: string; assigneeId: string | null;

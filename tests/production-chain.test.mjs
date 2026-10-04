@@ -60,16 +60,16 @@ test("plazos: guion al 2º día hábil, publicación nunca antes de grabar y edi
 /* ------------------------------------------------------------------- REGLAS -- */
 
 test("reglas por paso: orden, devoluciones y capacidades que concede el perfil de cada función", () => {
-  assert.deepEqual([...constants.CHAIN_ORDER], ["GUION", "GRABACION", "EDICION", "PUBLICACION"], "sin REVISION_GUION ni REVISION_FINAL (decisión del Dueño)");
+  assert.deepEqual([...constants.CHAIN_ORDER], ["GUION", "REVISION_GUION", "GRABACION", "EDICION", "REVISION_FINAL", "PUBLICACION"], "las entregas pasan por revisión humana");
   for (const step of [...constants.CHAIN_ORDER, "DISENO"]) assert.ok(constants.PRODUCTION_STEP_MAP[step], step);
   assert.ok(constants.PRODUCTION_STEP_STATUS_MAP.DEVUELTO);
   const rules = constants.CHAIN_STEP_RULES;
-  assert.deepEqual(Object.fromEntries(Object.entries(rules).map(([k, r]) => [k, r.returnsTo])), { GUION: null, GRABACION: null, EDICION: "GRABACION", PUBLICACION: "EDICION", DISENO: null });
+  assert.deepEqual(Object.fromEntries(Object.entries(rules).map(([k, r]) => [k, r.returnsTo])), { GUION: null, REVISION_GUION: "GUION", GRABACION: null, EDICION: "GRABACION", REVISION_FINAL: "EDICION", PUBLICACION: "EDICION", DISENO: null });
   const profileOf = Object.fromEntries(constants.BRAND_TEAM_ROLES.map((r) => [r.value, r.profile]));
   for (const [step, rule] of Object.entries(rules)) {
     const member = { id: "x", role: "MEMBER", profiles: [profileOf[rule.team]], brandIds: ["b1"] };
     assert.ok(permissions.allows(member, rule.capability), `${step}: el perfil ${profileOf[rule.team]} concede ${rule.capability}`);
-    assert.ok(constants.ASSIGNMENT_ROLE_MAP[rule.assignment], `${step}: la función ${rule.assignment} existe en el video`);
+    if (rule.assignment) assert.ok(constants.ASSIGNMENT_ROLE_MAP[rule.assignment], `${step}: la función ${rule.assignment} existe en el video`);
   }
   const chain = chainModule();
   for (const [role, capabilities] of Object.entries(chain.TEAM_ROLE_CAPABILITIES)) {
@@ -280,10 +280,10 @@ test("Listo: quién puede pulsar, estados del paso, video vivo y canario", () =>
 
 test("coordinación no firma lo que su perfil no firma: guion, revisión final, publicar y retirar la revisión final", () => withEnv(CHAIN_ON, async () => {
   const chain = chainModule();
-  let tx = fakeTx({ steps: [row({ step: "EDICION", automationKey: "v1:EDICION", assigneeId: "laudder" })], video: { ...VIDEO, status: "EDICION" } });
-  await rejectsWithoutWrites(tx, chain.completeStep(tx, PEOPLE.produccion, "st", { materialUrl: "https://drive.test/master" }), /no puede firmar la revisión final/, "PRODUCTION sin content.approve");
+  let tx = fakeTx({ steps: [row({ step: "REVISION_FINAL", automationKey: "v1:REVISION_FINAL", assigneeId: "edward" })], video: { ...VIDEO, status: "EDICION" } });
+  await rejectsWithoutWrites(tx, chain.completeStep(tx, PEOPLE.produccion, "st"), /permisos de revisión/, "PRODUCTION sin content.approve");
   tx = fakeTx({ steps: [row({ step: "GUION", assigneeId: "paula" })], video: VIDEO, script: SCRIPT });
-  await rejectsWithoutWrites(tx, chain.completeStep(tx, PEOPLE.produccion, "st"), /no puede aprobar este guion/, "PRODUCTION sin scripts.approve ni scripts.write");
+  await rejectsWithoutWrites(tx, chain.completeStep(tx, PEOPLE.produccion, "st"), /no puede entregar este guion/, "PRODUCTION sin scripts.approve ni scripts.write");
   tx = fakeTx({ steps: [row({ step: "PUBLICACION", automationKey: "v1:PUBLICACION", assigneeId: "silvanna" })], video: { ...VIDEO, status: "EDICION" } });
   await rejectsWithoutWrites(tx, chain.completeStep(tx, PEOPLE.edward, "st", { publishedUrl: "https://tiktok.test/v" }), /no puede publicar/, "STRATEGY sin content.publish");
   tx = fakeTx({ steps: [row({ step: "PUBLICACION", automationKey: "v1:PUBLICACION", assigneeId: "silvanna" })], video: { ...VIDEO, status: "EDICION" } });

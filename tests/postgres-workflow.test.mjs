@@ -81,7 +81,7 @@ test('B07–B10 con acciones reales, sin proveedores externos',async t=>{
   row=await prisma.archetypeFit.findUniqueOrThrow({where:{id:row.id}});
   assert.equal(row.source,'MANO');assert.equal(row.sourceScriptId,null);assert.equal(row.updatedById,'owner');assert.equal(row.revision,2);
   assert.match((await prisma.auditLog.findFirstOrThrow({where:{entityId:row.id}})).changes,/historical/);
-  await assert.rejects(as('owner',()=>fits.guardarCompatibilidad(fd({...values,score:0}))),/Otra persona/);
+  await assert.rejects(as('owner',()=>fits.guardarCompatibilidad(fd({...values,score:0}))),/Este registro cambió/);
   assert.equal((await prisma.archetypeFit.findUniqueOrThrow({where:{id:row.id}})).score,3);
  });
  await t.test('B10: dos altas simultáneas de compatibilidad solo aceptan una',async()=>{
@@ -105,7 +105,7 @@ test('B07–B10 con acciones reales, sin proveedores externos',async t=>{
   const values=fd({sobrescribir:'on',expectedUpdatedAt:await revision('archetype','person')});values.set('branding',new File([document],'fixture.txt'));
   await prisma.archetype.update({where:{id:'person'},data:{voiceTone:'Edición más reciente'}});
   const assetsBefore=await prisma.asset.count();
-  const outcome=await as('owner',()=>fits.guardarInformeEnPersona('person',values));assert.match(outcome.error,/Otra persona/);
+  const outcome=await as('owner',()=>fits.guardarInformeEnPersona('person',values));assert.match(outcome.error,/Este registro cambió/);
   assert.equal((await prisma.archetype.findUniqueOrThrow({where:{id:'person'}})).voiceTone,'Edición más reciente');
   assert.equal(await prisma.asset.count(),assetsBefore);
   values.set('expectedUpdatedAt',await revision('archetype','person'));
@@ -119,7 +119,7 @@ test('B07–B10 con acciones reales, sin proveedores externos',async t=>{
   assert.equal((await prisma.user.findUniqueOrThrow({where:{id:'member'}})).name,'Nombre guardado');
   const asset=await prisma.asset.create({data:{id:'a',ownerType:'archetype',ownerId:'person',filename:'fixture.txt',data:Buffer.from('x'),size:1,extractedText:'Original'}});
   await as('owner',()=>assets.updateAssetText(fd({id:'a',extractedText:'Actual',expectedUpdatedAt:asset.updatedAt.toISOString()})));
-  await assert.rejects(as('owner',()=>assets.toggleAssetAi(fd({id:'a',useForAi:'',expectedUpdatedAt:asset.updatedAt.toISOString()}))),/Otra persona/);
+  await assert.rejects(as('owner',()=>assets.toggleAssetAi(fd({id:'a',useForAi:'',expectedUpdatedAt:asset.updatedAt.toISOString()}))),/Este registro cambió/);
   assert.equal((await prisma.asset.findUniqueOrThrow({where:{id:'a'}})).extractedText,'Actual');
  });
  await t.test('B10: ajustes protegen incluso creación de claves antes ausentes y no filtran secretos',async()=>{
@@ -127,7 +127,7 @@ test('B07–B10 con acciones reales, sin proveedores externos',async t=>{
   const snap=await lib.getSettingsSnapshot([...Object.values(lib.SETTING_KEYS),...Object.values(google.GOOGLE_SETTING_KEYS)]);
   const values={orgName:'Organización fixture',defaultProvider:'google',googleKey:'fixture-do-not-log',expectedUpdatedAt:snap.revision};
   assert.ok((await as('owner',()=>settings.guardarAjustes(null,fd(values)))).ok);
-  await assert.rejects(as('owner',()=>settings.guardarAjustes(null,fd({...values,orgName:'Obsoleto'}))),/Otra persona/);
+  await assert.rejects(as('owner',()=>settings.guardarAjustes(null,fd({...values,orgName:'Obsoleto'}))),/Este registro cambió/);
   assert.equal((await prisma.appSetting.findUniqueOrThrow({where:{key:'org.name'}})).value,'Organización fixture');
   assert.ok(!JSON.stringify(await prisma.auditLog.findMany()).includes('fixture-do-not-log'));
  });
@@ -148,7 +148,8 @@ test('B07–B10 con acciones reales, sin proveedores externos',async t=>{
   assert.match((await change('rules','PUBLICADO',{expectedUpdatedAt:await revision('contentItem','rules')})).error,/etapa/);
   assert.match((await change('rules','GUION',{expectedUpdatedAt:await revision('contentItem','rules')})).error,/guion con escenas/);
   assert.match((await change('rules','PUBLICADO',{override:'1',expectedUpdatedAt:await revision('contentItem','rules')})).error,/motivo/);
-  await status('rules','PUBLICADO',{override:'1',reason:'Carga histórica autorizada'});
+  assert.match((await change('rules','PUBLICADO',{override:'1',reason:'Carga histórica autorizada',expectedUpdatedAt:await revision('contentItem','rules')})).error,/guion aprobado/);
+  await status('rules','CANCELADO',{override:'1',reason:'Carga histórica autorizada'});
   assert.match((await prisma.auditLog.findFirstOrThrow({where:{entityId:'rules'},orderBy:{createdAt:'desc'}})).summary,/Excepción del Dueño.*Carga histórica/);
   await prisma.checklistItem.create({data:{contentItemId:'rules',label:'Revisión final aprobada',stage:'POSTPRODUCCION',done:true,kind:'TASK'}});
   await assert.rejects(approvals.assertChecklistApproved(prisma,'rules','FINAL_APPROVAL'),/revisión final/);

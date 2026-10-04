@@ -29,6 +29,7 @@ export type StepActionModel = {
   step: StepKind;
   /** Revisión del paso (updatedAt ISO): otra revisión en el servidor → conflicto legible. */
   revision: string;
+  reviewToken?: string | null;
   videoTitle: string;
   /** Enlace ya guardado (material, máster, entrega o URL pública): viene precargado. */
   linkValue: string | null;
@@ -282,6 +283,7 @@ function PanelButtons({ pending, submitLabel, pendingLabel, icon, onCancel, conf
 }
 
 function ListoPanel({ id, model, onCancel, onDone }: { id: string; model: StepActionModel; onCancel: () => void; onDone: (message: string | null) => void }) {
+  const [opened] = useState(() => ({ revision: model.revision, reviewToken: model.reviewToken }));
   const copy = STEP_COPY[model.step];
   const { pending, error, setError, run } = useServerAction();
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -312,7 +314,8 @@ function ListoPanel({ id, model, onCancel, onDone }: { id: string; model: StepAc
   return (
     <PanelFrame id={id} label={`${copy.listo}: ${model.videoTitle}`} pending={pending} onSubmit={submit} onCancel={onCancel}>
       <input type="hidden" name="id" value={model.id} />
-      <input type="hidden" name="expectedUpdatedAt" value={model.revision} />
+      <input type="hidden" name="expectedUpdatedAt" value={opened.revision} />
+      <input type="hidden" name="expectedReviewToken" value={opened.reviewToken ?? ""} />
       {copy.link ? (
         <div>
           <label htmlFor={fieldId} className="label">

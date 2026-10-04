@@ -22,24 +22,9 @@ import { buildRoleNav } from "@/lib/role-nav";
 import { roleOrderEnabled } from "@/lib/role-order-flag";
 import { formatDateLong, formatNumber } from "@/lib/utils";
 
-/**
- * Tareas sin terminar: fuera de la última columna (por orden) que admite su marca, que es la de
- * «Listo». Misma regla que la cadena (syncStepTask) y que el invariante Q1.
- */
-async function openTasksWhere(user: SessionUser): Promise<Prisma.TaskWhereInput> {
-  const brandIds = [...user.brandIds ?? []];
-  const columns = await prisma.taskColumn.findMany({
-    where: { OR: [{ brandId: null }, { brandId: { in: brandIds } }] },
-    orderBy: [{ order: "desc" }, { id: "desc" }],
-    select: { id: true, brandId: true },
-  });
-  const lastFor = (brandId: string | null) => columns.find((column) => !column.brandId || column.brandId === brandId)?.id;
-  return {
-    OR: [null, ...brandIds].map((brandId) => {
-      const last = lastFor(brandId);
-      return last ? { brandId, columnId: { not: last } } : { brandId };
-    }),
-  };
+/** El estado persistido determina las tareas abiertas, independientemente de la columna. */
+async function openTasksWhere(_user: SessionUser): Promise<Prisma.TaskWhereInput> {
+  return { status: "PENDIENTE" };
 }
 
 /* ------------------------------------------------- ARCHIVO TOTAL (M0) -- */
@@ -169,7 +154,7 @@ export async function MemberHome({ user }: { user: SessionUser }) {
               />
             ) : null}
             {canTasks ? (
-              <Stat label={chain ? "Tareas abiertas" : "Tareas visibles"} value={formatNumber(tasks)} sub={chain ? `Fuera de «Listo» · ${scope.toLowerCase()}` : scope} icon={<ListChecks size={16} />} href="/tareas" />
+              <Stat label={chain ? "Tareas abiertas" : "Tareas visibles"} value={formatNumber(tasks)} sub={chain ? `Pendientes · ${scope.toLowerCase()}` : scope} icon={<ListChecks size={16} />} href="/tareas" />
             ) : null}
           </div>
         ) : (

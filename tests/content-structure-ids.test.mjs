@@ -56,14 +56,16 @@ function fakePrisma(overrides = {}) {
  * revisión del formulario la cubre tests/postgres-permissions.test.mjs.
  */
 function mutationsFalsas(prisma) {
+  const run = async (_user, _owner, work) => {
+    const effects = [];
+    const result = await work(prisma, (effect) => effects.push(effect));
+    for (const effect of effects) effect();
+    return result;
+  };
   return {
     EDIT_CONFLICT: "conflicto",
-    withMutation: async (_user, _owner, work) => {
-      const effects = [];
-      const result = await work(prisma, (effect) => effects.push(effect));
-      for (const effect of effects) effect();
-      return result;
-    },
+    withMutation: run,
+    withWorkflowMutation: run,
     lockRevision: async () => {},
   };
 }

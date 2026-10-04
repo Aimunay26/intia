@@ -26,6 +26,7 @@ import {
 	revisarEliminacionColumna,
 } from "@/app/actions/tasks";
 import { EditForm, RevisionField } from "@/components/edit-form";
+import { TaskCompletion } from "@/components/task-completion";
 import { FilterDisclosure, FilterSelect, SearchInput } from "@/components/filters";
 import { Modal, MODAL_FOOTER_STICKY, SubmitButton } from "@/components/forms";
 import { Field } from "@/components/ui";
@@ -64,6 +65,9 @@ export type BoardTask = {
   brand?: BoardBrand | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+  status: string;
+  completedAt?: Date | string | null;
+  productionStep?: { contentItemId: string } | null;
 };
 
 export type BoardColumn = {
@@ -89,18 +93,6 @@ const COLOR_PRESETS = [
   { name: "Rosa", hex: "#ec4899" },
   { name: "Gris", hex: "#64748b" },
 ];
-
-/** Última columna por orden entre las que admite la marca (global o propia): la de «Listo». */
-function lastColumnFor(columns: readonly BoardColumn[], brandId: string | null): string | undefined {
-  let last: BoardColumn | undefined;
-  for (const column of columns) {
-    if (column.brandId && column.brandId !== brandId) continue;
-    if (!last || column.order > last.order || (column.order === last.order && column.id > last.id)) last = column;
-  }
-  return last?.id;
-}
-
-/* --------------------------------------------------------------- COMPONENTE -- */
 
 export function TaskBoard({
   initialColumns,
@@ -344,7 +336,7 @@ export function TaskBoard({
                   const chainTask = chainFor(task.brandId);
                   const isOverdue = chainTask
                     ? Boolean(task.dueDate) &&
-                      column.id !== lastColumnFor(columns, task.brandId) &&
+                      task.status === "PENDIENTE" &&
                       dateKey(task.dueDate) < dateKey(new Date())
                     : Boolean(task.dueDate) && new Date(task.dueDate!) < new Date(new Date().setHours(0, 0, 0, 0));
 
@@ -386,6 +378,7 @@ export function TaskBoard({
                       {/* Título */}
                       <h4 className="font-semibold text-[13.5px] text-ink leading-snug mb-1">
                         {task.title}
+                        {task.status === "HECHO" ? <span className="chip ml-2">Terminada</span> : task.status === "CANCELADO" ? <span className="chip ml-2">Cancelada</span> : null}
                       </h4>
 
                       {/* Descripción resumida */}
@@ -810,6 +803,7 @@ export function TaskBoard({
               </div>
             </div>
           </EditForm>
+          <TaskCompletion task={editingTask} onSuccess={() => { setEditingTask(null); }} />
         </Modal>
       )}
 

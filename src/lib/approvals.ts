@@ -24,7 +24,8 @@ export async function approvalSnapshot(db: AppTransaction, type: ApprovalType, i
   if (type === "SCRIPT_APPROVAL") return { videoId: video.id, script };
   const assets = await db.asset.findMany({ where: { ownerType: "content", ownerId: id }, orderBy: { id: "asc" }, select: { id: true, filename: true, label: true, mimeType: true, size: true, blobId: true, updatedAt: true } });
   const checks = await db.checklistItem.findMany({ where: { contentItemId: id, kind: "TASK", stage: { not: "PUBLICACION" }, required: true }, orderBy: { id: "asc" }, select: { id: true, label: true, stage: true, done: true } });
-  return { video, script, assets, checks };
+  const master = await db.productionStep.findUnique({ where: { automationKey: `${id}:EDICION` }, select: { materialUrl: true, materialVersion: true } });
+  return master ? { video, script, assets, checks, master } : { video, script, assets, checks };
 }
 
 export async function approvalToken(db: AppTransaction, type: ApprovalType, id: string) {
@@ -32,6 +33,7 @@ export async function approvalToken(db: AppTransaction, type: ApprovalType, id: 
 }
 
 export async function approveVersion(db: AppTransaction, user: AccessUser & { name: string }, type: ApprovalType, id: string, expectedToken?: string) {
+  if (user.role === "SYSTEM") throw new WorkflowError("La aprobación requiere una revisión humana.");
   const snapshot = JSON.parse(JSON.stringify(await approvalSnapshot(db, type, id))) as Prisma.InputJsonValue;
   if (expectedToken !== undefined && expectedToken !== fingerprint(snapshot)) throw new WorkflowError("El contenido cambió desde que abriste la revisión. Recarga y comprueba la versión actual antes de aprobar.");
   const latest = await db.approval.findFirst({ where: { entityType: type, entityId: id }, orderBy: { version: "desc" }, select: { version: true } });
@@ -41,6 +43,7 @@ export async function approveVersion(db: AppTransaction, user: AccessUser & { na
 export async function assertApprovedVersion(db: AppTransaction, type: ApprovalType, id: string, approvalId: string | null) {
   const approval = approvalId ? await db.approval.findUnique({ where: { id: approvalId } }) : null;
   if (!approval || approval.entityType !== type || approval.entityId !== id || approval.revokedAt) throw new WorkflowError("Falta aprobar una versión verificable. Reabre y aprueba de nuevo si se trata de una aprobación anterior.");
+  if (approval.approvedByName.startsWith("Sistema (")) throw new WorkflowError("Esta versión requiere una revisión humana antes de continuar.");
   if (approval.fingerprint !== fingerprint(await approvalSnapshot(db, type, id))) throw new WorkflowError("El contenido cambió desde la aprobación. Reabre y aprueba la versión actual antes de continuar.");
 }
 

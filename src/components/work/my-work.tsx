@@ -209,6 +209,7 @@ function actionModel(card: StepCard, user: SessionUser, coordinator: boolean): S
     id: card.id,
     step: card.step,
     revision: card.revision,
+    reviewToken: card.reviewToken,
     videoTitle: card.video.title,
     linkValue: card.linkField === "publishedUrl" ? card.video.publishedUrl : card.materialUrl,
     checksToMark: card.checksToMark,

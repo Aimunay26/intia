@@ -48,7 +48,7 @@ test('flujo de producción con PostgreSQL: equipo, grabación, edición, diseño
     assert.equal(await as('owner', () => team.guardarEquipoDeMarca(form(payload))), undefined);
     assert.equal(await prisma.brandTeamMember.count({ where: { brandId: 'A' } }), 6);
     assert.equal((await prisma.brandProductionSettings.findUniqueOrThrow({ where: { brandId: 'A' } })).recordingWeekdays, '[2,4]');
-    assert.match((await as('owner', () => team.guardarEquipoDeMarca(form(payload)))).error, /Otra persona/);
+    assert.match((await as('owner', () => team.guardarEquipoDeMarca(form(payload)))).error, /Este registro cambió/);
     await assert.rejects(as('carlos', () => team.guardarEquipoDeMarca(form(payload))), /permiso/);
 
     // Grabación: próximo martes, filmmaker, tarea y paso en una transacción serializable real.
@@ -94,7 +94,7 @@ test('flujo de producción con PostgreSQL: equipo, grabación, edición, diseño
     // Filmmaker marca la grabación con la revisión que vio: la edición queda asignada al editor.
     await prisma.contentItem.update({ where: { id: 'v1' }, data: { status: 'GRABACION' } });
     const stale = form({ id: recording.id, done: '1', expectedUpdatedAt: new Date(recording.updatedAt.getTime() - 1).toISOString() });
-    assert.match((await as('carlos', () => production.marcarPaso(stale))).error, /Otra persona/);
+    assert.match((await as('carlos', () => production.marcarPaso(stale))).error, /Este registro cambió/);
     assert.deepEqual(await as('laudder', () => production.marcarPaso(form({ id: recording.id, done: '1', expectedUpdatedAt: recording.updatedAt.toISOString() }))), { error: 'No tienes acceso a este video.' });
     assert.equal(await as('carlos', () => production.marcarPaso(form({ id: recording.id, done: '1', expectedUpdatedAt: recording.updatedAt.toISOString() }))), undefined);
     assert.equal((await prisma.productionStep.findUniqueOrThrow({ where: { id: recording.id } })).status, 'HECHO');

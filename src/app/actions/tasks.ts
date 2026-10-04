@@ -17,7 +17,7 @@ import { DEFAULT_TASK_COLUMNS, TASK_KINDS, TASK_PRIORITIES } from "@/lib/tasks-c
 
 import { ChainError, chainEvent, reassignStep } from "@/lib/domain/production-chain";
 import { ProductionFlowError } from "@/lib/domain/production-flow";
-import { EDIT_CONFLICT, lockRevision, withMutation } from "@/lib/mutations";
+import { EDIT_CONFLICT, lockRevision, withMutation, withWorkflowMutation } from "@/lib/mutations";
 import { productionChainConfigured, productionChainEnabled } from "@/lib/production-chain-flag";
 import { boundedNumber, choice } from "@/lib/validation";
 import { invalidateDomain } from "@/lib/view-invalidation";
@@ -41,6 +41,8 @@ async function checkTaskRelations(tx: AppTransaction, columnId: string, brandId:
 
 function refrescar() {
   revalidatePath("/tareas");
+  revalidatePath("/");
+  revalidatePath("/actividad");
 }
 
 /* ------------------------------------------------ CADENA DE ENTREGAS -- */
@@ -139,6 +141,27 @@ export async function asegurarColumnasIniciales() {
 }
 
 /* ---------------------------------------------------- ACCIONES DE TAREAS -- */
+
+/** Cierre explícito: la columna conserva su función organizativa. */
+export async function cambiarEstadoTarea(formData: FormData) {
+  const user = await requirePermission("tasks.work");
+  return withWorkflowMutation(user, false, async (tx, afterCommit) => {
+    const id = field(formData, "id");
+    await assertTaskAccess(tx, user, id, "tasks.work");
+    // También con la automatización apagada: una tarea vinculada se gobierna por su paso.
+    if (await tx.productionStep.findUnique({ where: { taskId: id }, select: { id: true } })) throw new WorkflowError("Completa o devuelve esta tarea desde su paso en la ficha del vídeo o Mi trabajo.");
+    await lockRevision(tx, "Task", id, formData);
+    const before = await tx.task.findUniqueOrThrow({ where: { id } });
+    const status = field(formData, "status");
+    if (!["PENDIENTE", "HECHO"].includes(status)) throw new WorkflowError("Elige Pendiente o Terminada.");
+    if (before.status === status) return { ok: true as const };
+    await tx.task.update({ where: { id }, data: { status, completedAt: status === "HECHO" ? new Date() : null, completedById: status === "HECHO" ? user.id : null } });
+    await auditInTransaction(tx, { user, action: status === "HECHO" ? "COMPLETAR" : "REABRIR", entity: "Task", entityId: id, brandId: before.brandId,
+      summary: `${status === "HECHO" ? "Terminó" : "Reabrió"} la tarea "${before.title}"`, changes: { status: { etiqueta: "Estado", antes: before.status, despues: status } } });
+    afterCommit(refrescar);
+    return { ok: true as const };
+  });
+}
 
 export async function crearTarea(formData: FormData) {
   const user = await requirePermission("tasks.manage");

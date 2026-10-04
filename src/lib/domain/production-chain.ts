@@ -1,83 +1,7 @@
-/**
- * CADENA DE ENTREGAS POR VIDEO (PRODUCTION_CHAIN_ENABLED) — contrato estable del constructor B1.
- *
- *   GUION (guionista) ─Listo─► GRABACION (filmmaker) ─Listo─► EDICION (editor) ─Listo─► PUBLICACION (community) ─Publicado─► fin
- *                                   ▲                              │  ▲                        │
- *                                   └──── Devolver al filmmaker ───┘  └─ Devolver por correcciones ┘
- *   DISENO corre en paralelo (Pedir diseño → Entregar diseño) y no cuenta para el invariante.
- *
- * Decisiones del Dueño (29-30/09/2026) que mandan sobre la mini-spec:
- *   1. Guion → filmmaker directo, SIN aprobación del encargado. El «Listo» del guionista firma
- *      como «Sistema» (por el Listo de <guionista>; regla del dueño: sin revisión de guion):
- *      guion BORRADOR→REVISION→APROBADO con su versión (approveVersion), check «Guion escrito y
- *      revisado», SCRIPT_APPROVAL, video →GUION→APROBADO, y abre GRABACION con la fecha de
- *      grabación = próximo día de grabación de la marca posterior al Listo (recalcula la fecha
- *      automática; respeta la manual).
- *   2. Editor → community directo. El «Listo» del editor (con el enlace del máster) marca los
- *      checks de edición, firma FINAL_APPROVAL como «Sistema» (regla del dueño: sin revisión
- *      final) y abre PUBLICACION al día hábil siguiente. El community puede «Devolver por
- *      correcciones» (motivo 5-1000): se revoca la aprobación final como Sistema, PUBLICACION
- *      queda DEVUELTO y EDICION vuelve a PENDIENTE. El editor puede devolver al filmmaker y
- *      cualquiera con un paso abierto puede «Avisar a coordinación».
- *   3. El ENCARGADO supervisa y recibe «Sin asignar», avisos y bloqueos (production-scope.ts);
- *      si la marca no tiene ENCARGADO, le llegan al Dueño.
- *   5. Excepción a «las aprobaciones las firma una persona» (CONTRACT.md): cada firma automática
- *      se audita con usuario «Sistema» y la causa «por el Listo de <persona> [en nombre de …]».
- *      Approval.approvedById guarda a la persona cuyo Listo la originó y approvedByName empieza
- *      por «Sistema (…)». doneById de los checks de aprobación queda nulo.
- *
- * Reglas:
- *  - El paso manda: ProductionStep es la única verdad. Estado del video, checks y tarea son
- *    reflejos que se escriben en la MISMA transacción (completeStep, returnStep, chainEvent).
- *  - Exactamente un paso de cadena PENDIENTE por video (DISENO no cuenta). Abrir un paso cierra
- *    los demás: los anteriores quedan HECHO y los posteriores CANCELADO (Sistema).
- *  - Idempotente por automationKey (<video>:GUION|GRABACION|EDICION|PUBLICACION): un paso no se
- *    duplica, se reactiva.
- *  - Bloqueos en el orden de alternarCheck: guion → video (lockVideoLifecycle) → paso (FOR
- *    UPDATE o lockRevision con la revisión del formulario). Dos «Listo» a la vez: uno gana y el
- *    otro recibe EDIT_CONFLICT. Antes de bloquear nada, quien pulsa debe ver el paso (Dueño,
- *    responsable o video en su alcance): si no, el mismo mensaje que si no existiera, sin
- *    revelar su estado ni su marca.
- *  - Coordinación (content.assign) pulsa por la persona asignada sin firmar lo que su perfil no
- *    firma (CHAIN_COORD_CAPABILITY): revisión final, publicar, retirar la revisión final o
- *    aprobar el guion exigen su capacidad.
- *  - Responsable de un paso: activo, con la marca y con la capacidad del paso en su perfil
- *    (reasignar, «Crear paso» con persona, asignaciones del video).
- *  - Las entradas explícitas (completeStep, returnStep, notifyCoordination, reassignStep,
- *    takeStep, ensureChainForVideo y el evento TASK_MOVED) NO usan SAVEPOINT: si algo falla no
- *    se escribe nada y el error (ChainError, mensaje legible en español) llega a la persona.
- *    Un conflicto de concurrencia (P2034, o 40001/40P01 en un FOR UPDATE crudo) llega como
- *    Error(EDIT_CONFLICT); los requisitos del ciclo de vida (WorkflowError) llegan como ChainError.
- *    Los demás eventos vienen de otras acciones y corren en un SAVEPOINT: un fallo se deshace,
- *    se registra con un código cerrado y se propaga para revertir también la acción principal.
- *  - Logs: {"event":"production_chain","operation":<código>,"reason":<código>} sin datos
- *    personales. Instrumentación temporal: complete_step con milisegundos (retirar el 2026-10-20).
- *  - Con la cadena apagada (o la marca fuera del canario) nada de esto consulta la base:
- *    chainEvent vuelve con reason "chain_off" antes de la primera consulta cuando no está
- *    configurada, y los ganchos de production-flow.ts siguen su camino de siempre.
- *
- * CONTRATO (firmas estables; los tipos para UI están en src/lib/production-scope.ts y las
- * constantes de pasos en src/lib/constants.ts: CHAIN_ORDER, CHAIN_STEP_RULES):
- *
- *   completeStep(tx, actor, stepId, input?: CompleteStepInput): Promise<CompleteStepResult>
- *   returnStep(tx, actor, stepId, { motivo, expectedUpdatedAt?, now? }): Promise<ReturnStepResult>
- *   notifyCoordination(tx, actor, stepId, { motivo, now? }): Promise<NotifyResult>
- *   chainEvent(tx, actor, event: ChainEvent, { now? }?): Promise<ChainEventResult>
- *   ensureChainForVideo(tx, videoId, opts?: EnsureChainOptions): Promise<EnsureChainResult>
- *   reassignStep(tx, actor, stepId, { assigneeId, dueAt, expectedUpdatedAt? }): Promise<ReassignStepResult>
- *   takeStep(tx, actor, stepId, { expectedUpdatedAt?, now? }): Promise<ReassignStepResult>
- *   resolveNotice(tx, actor, stepId): Promise<void>
- *   requestDesignChanges(tx, actor, stepId, { motivo, expectedUpdatedAt?, now? }): Promise<ReassignStepResult>
- *   syncStepTask(tx, actor, stepId, "open" | "closed"): Promise<void>
- *   assertFinalApprovalAllowed(tx, videoId): Promise<void>              // alternarCheck (FINAL_APPROVAL)
- *   assertAssignmentRemovable(tx, videoId, userId, role): Promise<void> // quitarAsignacion
- *   expectedChainStep(videoStatus, finalApproved): ChainStep | null      // pura
- *   TEAM_ROLE_CAPABILITIES                                              // guardarEquipoDeMarca
- */
 import type { SessionUser } from "@/lib/auth";
 import type { AppTransaction } from "@/lib/prisma";
 import { assertContentAccess, assertPublishable, contentScope, lockVideoLifecycle, scriptScope } from "@/lib/access-scope";
-import { approveVersion, assertApprovedVersion, assertChecklistApproved, assertRequiredChecks, assertScriptApproved, revokeVersion, type ApprovalType } from "@/lib/approvals";
+import { approvalToken, approveVersion, assertApprovedVersion, assertChecklistApproved, assertRequiredChecks, assertScriptApproved, reopenContentApprovals, revokeVersion, type ApprovalType } from "@/lib/approvals";
 import { auditInTransaction, type Cambio } from "@/lib/audit";
 import { CHAIN_COORD_CAPABILITY, CHAIN_ORDER, CHAIN_STEP_RULES, CONTENT_STATUS_MAP, DEAD_STATUSES, PRODUCTION_STEP_MAP, SCRIPT_STATUS_MAP, type ChainStep } from "@/lib/constants";
 import { advanceVideoAsSystem, reopenVideoAsSystem } from "@/lib/domain/lifecycle";
@@ -96,7 +20,7 @@ import {
   type StepKind,
 } from "@/lib/domain/production-flow";
 import { EDIT_CONFLICT, lockRevision } from "@/lib/mutations";
-import { allows, checklistCapability, type AccessUser, type Capability } from "@/lib/permissions";
+import { allows, checklistCapability, type Capability } from "@/lib/permissions";
 import { productionChainConfigured, productionChainEnabled } from "@/lib/production-chain-flag";
 import { dateKey, formatDateLong, formatDateTime, fromDateKey } from "@/lib/utils";
 import { CONTENT_FLOW, WorkflowError } from "@/lib/workflow-policy";
@@ -119,6 +43,7 @@ export type CompleteStepInput = {
   publishedUrl?: string | null;
   /** Revisión del paso que vio el formulario (lockRevision): otra revisión → EDIT_CONFLICT. */
   expectedUpdatedAt?: string;
+  expectedReviewToken?: string;
   now?: Date;
 };
 export type CompleteStepResult = {
@@ -187,12 +112,18 @@ const stepLabel = (step: string) => PRODUCTION_STEP_MAP[step]?.label ?? step;
 const lower = (step: string) => stepLabel(step).toLowerCase();
 
 /** Paso que le toca al video según su estado (pura; la usan la Cadena y «Crear paso»). */
-export function expectedChainStep(status: string, finalApproved: boolean): ChainStep | null {
-  if (status === "IDEA" || status === "GUION") return "GUION";
+export function expectedChainStep(status: string, finalApproved: boolean, delivered: { script?: boolean; master?: boolean } = {}): ChainStep | null {
+  if (status === "IDEA" || status === "GUION") return delivered.script ? "REVISION_GUION" : "GUION";
   if (status === "APROBADO" || status === "GRABACION") return "GRABACION";
-  if (status === "EDICION") return finalApproved ? "PUBLICACION" : "EDICION";
+  if (status === "EDICION") return finalApproved ? "PUBLICACION" : delivered.master ? "REVISION_FINAL" : "EDICION";
   if (status === "PROGRAMADO") return "PUBLICACION";
   return null;
+}
+
+async function expectedVideoStep(tx: AppTransaction, video: VideoRow): Promise<ChainStep | null> {
+  const deliveries = await tx.productionStep.findMany({ where: { contentItemId: video.id, step: { in: ["GUION", "EDICION"] }, status: "HECHO" }, select: { step: true } });
+  const script = video.scriptId ? await tx.script.findUnique({ where: { id: video.scriptId }, select: { status: true } }) : null;
+  return expectedChainStep(video.status, await finalApproved(tx, video.id), { script: script?.status === "REVISION" && deliveries.some(s => s.step === "GUION"), master: deliveries.some(s => s.step === "EDICION") });
 }
 
 /** Quien marca cada check, para el error «Falta X: lo marca …». */
@@ -213,6 +144,7 @@ const WRITTEN_LABEL = /guion escrito/i;
 const STEP_SELECT = {
   id: true, contentItemId: true, brandId: true, step: true, status: true, assigneeId: true, dueAt: true, source: true,
   taskId: true, materialUrl: true, notes: true, requestedById: true, automationKey: true, updatedAt: true, doneAt: true,
+  reviewToken: true, materialVersion: true,
 } as const;
 const VIDEO_SELECT = {
   id: true, title: true, brandId: true, status: true, scriptId: true, shootDate: true, scheduledDate: true,
@@ -223,6 +155,7 @@ type StepRow = {
   id: string; contentItemId: string; brandId: string; step: string; status: string; assigneeId: string | null; dueAt: Date;
   source: string; taskId: string | null; materialUrl: string | null; notes: string | null; requestedById: string | null;
   automationKey: string; updatedAt: Date; doneAt: Date | null;
+  reviewToken: string | null; materialVersion: number;
 };
 type VideoRow = {
   id: string; title: string; brandId: string; status: string; scriptId: string | null; shootDate: Date | null;
@@ -257,7 +190,7 @@ async function conflicts<T>(work: () => Promise<T>): Promise<T> {
   try {
     return await work();
   } catch (error) {
-    if (isConflict(error)) throw new Error(EDIT_CONFLICT);
+    if (isConflict(error)) throw new WorkflowError(EDIT_CONFLICT);
     throw error;
   }
 }
@@ -289,11 +222,6 @@ function readMotivo(value: string | null | undefined, what: string): string {
   return motivo;
 }
 
-/** Quien «firma» lo automático: la persona cuyo Listo lo originó, con nombre «Sistema (…)». */
-function signer(actor: ProductionActor, label: string): AccessUser & { name: string } {
-  return { id: actor?.id ?? "sistema", role: "SYSTEM", name: `Sistema (${label})`.slice(0, 200) };
-}
-
 /** Mismo mensaje para un paso que no existe y para uno que no se puede ver. */
 const NO_ACCESS = "No tienes acceso a este paso o ya no existe. Recarga la página.";
 
@@ -319,7 +247,7 @@ async function assignablePerson(tx: AppTransaction, userId: string, brandId: str
   const person = await personFor(tx, userId, brandId);
   if (!person) throw new ChainError("La persona debe estar activa y autorizada para esta marca.");
   const rule = STEP_RULES[step as ChainStep | "DISENO"];
-  if (rule && !person.can(rule.capability)) throw new ChainError(cannotDo(person.name, step));
+  if (rule && !stepAssigneeCapabilities(step).every(person.can)) throw new ChainError(cannotDo(person.name, step));
   return { id: person.id, name: person.name };
 }
 
@@ -413,7 +341,7 @@ async function assertCoordinationCan(tx: AppTransaction, actor: SessionUser, ste
   if (step.step === "GUION" && action === "complete") {
     if (allows(actor, "scripts.approve")) return;
     if (video.scriptId && allows(actor, "scripts.write") && await tx.script.count({ where: { AND: [{ id: video.scriptId }, scriptScope(actor, "scripts.write")] } })) return;
-    throw new ChainError("Tu perfil no puede aprobar este guion: el «Listo» lo pulsa el guionista o quien pueda aprobar guiones.");
+    throw new ChainError("Tu perfil no puede entregar este guion: lo entrega el guionista o quien tenga acceso para escribirlo o revisarlo.");
   }
   const needed = CHAIN_COORD_CAPABILITY[step.step as ChainStep]?.[action];
   if (!needed || allows(actor, needed)) return;
@@ -428,6 +356,9 @@ async function assertCoordinationCan(tx: AppTransaction, actor: SessionUser, ste
  * solo si su perfil firma lo que el paso firma (assertCoordinationCan).
  */
 async function actorRole(tx: AppTransaction, actor: SessionUser, step: StepRow, video: VideoRow, action: RoleAction): Promise<ActorRole> {
+  if (step.step.startsWith("REVISION_") && action !== "notify" && !stepAssigneeCapabilities(step.step).every(cap => allows(actor, cap))) {
+    throw new ChainError("Solo una persona con permisos de revisión puede aprobar o devolver esta entrega.");
+  }
   if (actor.role === "OWNER") return "owner";
   const rule = STEP_RULES[step.step as ChainStep | "DISENO"];
   const mine = Boolean(step.assigneeId) && step.assigneeId === actor.id;
@@ -495,7 +426,7 @@ async function lastColumnFor(tx: AppTransaction, actor: ProductionActor, brandId
  * abierto perdió su tarea, se crea otra.
  */
 export async function syncStepTask(tx: AppTransaction, actor: ProductionActor, stepId: string, state: "open" | "closed"): Promise<void> {
-  const step = await tx.productionStep.findUnique({ where: { id: stepId }, select: { id: true, taskId: true, brandId: true, assigneeId: true, dueAt: true, step: true, contentItemId: true } });
+  const step = await tx.productionStep.findUnique({ where: { id: stepId }, select: { id: true, taskId: true, brandId: true, assigneeId: true, dueAt: true, step: true, contentItemId: true, status: true, doneAt: true } });
   if (!step) return;
   const dueDate = fromDateKey(dateKey(step.dueAt));
   if (!step.taskId) {
@@ -516,13 +447,15 @@ export async function syncStepTask(tx: AppTransaction, actor: ProductionActor, s
     await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "Task", entityId: task.id, brandId: step.brandId, summary: `Creó la tarea "${task.title}" (cadena de entregas)` });
     return;
   }
-  const task = await tx.task.findUnique({ where: { id: step.taskId }, select: { id: true, title: true, columnId: true, assigneeId: true, dueDate: true } });
+  const task = await tx.task.findUnique({ where: { id: step.taskId }, select: { id: true, title: true, columnId: true, assigneeId: true, dueDate: true, status: true } });
   if (!task) return;
   const listo = await lastColumnFor(tx, actor, step.brandId);
   let columnId = task.columnId;
   if (state === "closed" && task.columnId !== listo.id) columnId = listo.id;
   if (state === "open" && task.columnId === listo.id) columnId = await taskColumnFor(tx, actor, step.brandId);
   const changes: Record<string, Cambio> = {};
+  const status = step.status === "HECHO" ? "HECHO" : state === "closed" ? "CANCELADO" : "PENDIENTE";
+  if (task.status !== status) changes.status = { etiqueta: "Estado", antes: task.status, despues: status };
   if (columnId !== task.columnId) changes.columnId = { etiqueta: "Etapa", antes: task.columnId, despues: columnId, verDespues: state === "closed" ? listo.name : "Pendiente" };
   if (task.assigneeId !== step.assigneeId) changes.assigneeId = { etiqueta: "Responsable", antes: task.assigneeId, despues: step.assigneeId };
   if (state === "open" && task.dueDate?.getTime() !== dueDate.getTime()) changes.dueDate = { etiqueta: "Fecha límite", antes: task.dueDate?.toISOString() ?? null, despues: dueDate.toISOString() };
@@ -530,7 +463,7 @@ export async function syncStepTask(tx: AppTransaction, actor: ProductionActor, s
   const order = columnId !== task.columnId ? ((await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } }))?.order ?? -1) + 1 : undefined;
   await tx.task.update({
     where: { id: task.id },
-    data: { columnId, assigneeId: step.assigneeId, ...(state === "open" ? { dueDate } : {}), ...(order !== undefined ? { order } : {}) },
+    data: { columnId, assigneeId: step.assigneeId, ...(changes.status ? { status, completedAt: status === "HECHO" ? step.doneAt : null, completedById: status === "HECHO" ? actor?.id ?? null : null } : {}), ...(state === "open" ? { dueDate } : {}), ...(order !== undefined ? { order } : {}) },
   });
   await auditInTransaction(tx, {
     user: actor,
@@ -696,7 +629,7 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
     if (kind === "PUBLICACION") await writeScheduledDate(tx, video, dueKey, "sigue el plazo de la publicación", opts.cause);
   } else if (kind === "GUION") dueKey = scriptDueKey(todayKey);
   else if (kind === "GRABACION") dueKey = await planRecording(tx, video, flow, opts.now, opts.cause);
-  else if (kind === "EDICION") dueKey = nextWorkingDayKey(todayKey);
+  else if (kind === "EDICION" || kind.startsWith("REVISION_")) dueKey = nextWorkingDayKey(todayKey);
   else {
     dueKey = publicationDueKey(todayKey, dateKey(video.scheduledDate));
     if (dateKey(video.scheduledDate) < dueKey) await writeScheduledDate(tx, video, dueKey, "se publica al día hábil siguiente", opts.cause);
@@ -750,7 +683,12 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
     created = true;
   }
   // La asignación en el video da acceso a los perfiles de alcance «asignado» (y al guionista, escribir el guion).
-  if (person) await ensureAssignment(tx, actor, video, STEP_RULES[kind].assignment, person);
+  const assignment = STEP_RULES[kind].assignment;
+  if (person && assignment) await ensureAssignment(tx, actor, video, assignment, person);
+  if (kind.startsWith("REVISION_")) {
+    const reviewToken = await approvalToken(tx, kind === "REVISION_GUION" ? "SCRIPT_APPROVAL" : "FINAL_APPROVAL", video.id);
+    await tx.productionStep.update({ where: { id: stepId }, data: { reviewToken } });
+  }
   if (!person) log("open_step", "unassigned", { step: kind });
   await closeOtherOpen(tx, video, kind, opts.now, opts.cause);
   return { stepId, assigneeId: person?.id ?? null, created, reopened };
@@ -770,7 +708,7 @@ async function converge(tx: AppTransaction, actor: ProductionActor, video: Video
   }
   const flow = await readFlow(tx, video.brandId);
   if (!flow.team.size) return { done: false, reason: "no_team" };
-  const expected = expectedChainStep(video.status, await finalApproved(tx, video.id));
+  const expected = opts.backward ? expectedChainStep(video.status, await finalApproved(tx, video.id)) : await expectedVideoStep(tx, video);
   if (!expected) {
     await closeOtherOpen(tx, video, null, opts.now, opts.cause);
     return { done: true, reason: "ok" };
@@ -829,8 +767,8 @@ async function markChecks(tx: AppTransaction, actor: ProductionActor, video: Vid
   }
 }
 
-/** Firma (o vuelve a firmar) SCRIPT_APPROVAL o FINAL_APPROVAL del video como «Sistema». */
-async function signVideoApproval(tx: AppTransaction, actor: ProductionActor, video: VideoRow, kind: "SCRIPT_APPROVAL" | "FINAL_APPROVAL", now: Date, cause: string, label: string) {
+/** Firma humana de la versión entregada. */
+async function signVideoApproval(tx: AppTransaction, actor: SessionUser, video: VideoRow, kind: "SCRIPT_APPROVAL" | "FINAL_APPROVAL", now: Date, cause: string, expectedToken: string) {
   let check = await tx.checklistItem.findFirst({ where: { contentItemId: video.id, kind }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }], select: { id: true, label: true, done: true, approvalId: true } });
   if (!check) {
     const last = await tx.checklistItem.findFirst({ where: { contentItemId: video.id }, orderBy: { sortOrder: "desc" }, select: { sortOrder: true } });
@@ -842,20 +780,20 @@ async function signVideoApproval(tx: AppTransaction, actor: ProductionActor, vid
       },
       select: { id: true, label: true, done: true, approvalId: true },
     });
-    await auditInTransaction(tx, { user: null, action: "CREAR", entity: "ChecklistItem", entityId: check.id, brandId: video.brandId, summary: `Añadió la aprobación "${check.label}" al video "${video.title}" (Sistema, ${cause})` });
+    await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "ChecklistItem", entityId: check.id, brandId: video.brandId, summary: `Añadió la aprobación "${check.label}" al video "${video.title}" (${cause})` });
   }
   if (check.done && check.approvalId && await validApproval(tx, kind, video.id, check.approvalId)) return;
-  const sign = signer(actor, label);
-  if (check.approvalId) await revokeVersion(tx, check.approvalId, sign, "Sustituida por la aprobación automática de la cadena de entregas.");
-  const approval = await approveVersion(tx, sign, kind, video.id);
-  await tx.checklistItem.update({ where: { id: check.id }, data: { done: true, doneById: null, doneAt: now, approvalId: approval.id } });
+  const sign = actor;
+  if (check.approvalId) await revokeVersion(tx, check.approvalId, sign, "Sustituida por una nueva revisión humana.");
+  const approval = await approveVersion(tx, sign, kind, video.id, expectedToken);
+  await tx.checklistItem.update({ where: { id: check.id }, data: { done: true, doneById: actor.id, doneAt: now, approvalId: approval.id } });
   await auditInTransaction(tx, {
-    user: null,
+    user: actor,
     action: "COMPLETAR",
     entity: "ChecklistItem",
     entityId: check.id,
     brandId: video.brandId,
-    summary: `Firmó "${check.label}" del video "${video.title}", versión ${approval.version} (Sistema, ${cause})`,
+    summary: `Firmó "${check.label}" del video "${video.title}", versión ${approval.version} (${cause})`,
   });
 }
 
@@ -875,7 +813,7 @@ async function saveStepLink(ctx: ListoContext, link: string, label: string) {
   step.materialUrl = link;
 }
 
-/** GUION: guion listo → aprobado como Sistema (regla del dueño), video a Aprobado. */
+/** GUION: entrega a coordinación, sin aprobación automática. */
 async function listoGuion(ctx: ListoContext) {
   const { tx, actor, video, now, cause } = ctx;
   const noScript = `Vincula un guion al video antes de marcarlo listo: genéralo en el Generador (/generador?video=${video.id}) o únelo desde Guiones.`;
@@ -889,24 +827,11 @@ async function listoGuion(ctx: ListoContext) {
     && !await tx.script.count({ where: { AND: [{ id: script.id }, scriptScope(actor, "scripts.write")] } })) {
     throw new ChainError("No puedes editar este guion. Pide a coordinación que te asigne como guionista del video.");
   }
-  const sign = signer(actor, `Listo de ${actor.name}`);
-  const scriptAudit = (to: string, extra = "") => auditInTransaction(tx, {
-    user: null, action: "EDITAR", entity: "Script", entityId: script.id, brandId: script.brandId,
-    summary: `Cambió el guion "${script.title}" a ${SCRIPT_STATUS_MAP[to]?.label ?? to}${extra} (Sistema, ${cause})`,
-    changes: { status: { etiqueta: "Estado", antes: script.status, despues: to } },
-  });
-  if (script.status === "BORRADOR") {
-    await tx.script.update({ where: { id: script.id }, data: { status: "REVISION" } });
-    await scriptAudit("REVISION");
-    script.status = "REVISION";
-  }
-  if (script.status === "REVISION" || !await validApproval(tx, "SCRIPT", script.id, script.approvalId)) {
-    if (script.approvalId) await revokeVersion(tx, script.approvalId, sign, "Sustituida por la aprobación automática de la cadena de entregas.");
-    const approval = await approveVersion(tx, sign, "SCRIPT", script.id);
-    const status = script.status === "GRABADO" ? "GRABADO" : "APROBADO";
-    await tx.script.update({ where: { id: script.id }, data: { status, approvalId: approval.id } });
-    await scriptAudit(status, `, versión ${approval.version}`);
-  }
+  if (script.approvalId) await revokeVersion(tx, script.approvalId, actor, "Nueva entrega pendiente de revisión humana.");
+  await reopenContentApprovals(tx, video.id, actor, "Nueva entrega pendiente de revisión humana.", true);
+  await tx.script.update({ where: { id: script.id }, data: { status: "REVISION", approvalId: null } });
+  await auditInTransaction(tx, { user: actor, action: "EDITAR", entity: "Script", entityId: script.id, brandId: script.brandId,
+    summary: `Entregó el guion "${script.title}" para revisión humana`, changes: { status: { etiqueta: "Estado", antes: script.status, despues: "REVISION" } } });
   const written = (await tx.checklistItem.findMany({
     where: { contentItemId: video.id, kind: "TASK", stage: "PREPRODUCCION", done: false },
     orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
@@ -914,8 +839,7 @@ async function listoGuion(ctx: ListoContext) {
   })).filter((check) => WRITTEN_LABEL.test(check.label));
   await markChecks(tx, actor, video, written, now, cause);
   await business(() => advanceVideoAsSystem(tx, video.id, "GUION", cause, now));
-  await signVideoApproval(tx, actor, video, "SCRIPT_APPROVAL", now, cause, `Listo de ${actor.name}`);
-  await business(() => advanceVideoAsSystem(tx, video.id, "APROBADO", cause, now));
+
 }
 
 /** GRABACION: material grabado, checks de preproducción y grabación, video a Edición. */
@@ -931,7 +855,7 @@ async function listoGrabacion(ctx: ListoContext) {
   await business(() => advanceVideoAsSystem(tx, video.id, "EDICION", cause, now));
 }
 
-/** EDICION: máster, checks de edición y aprobación final firmada por Sistema (regla del dueño). */
+/** EDICION: entrega una nueva versión del máster para revisión humana. */
 async function listoEdicion(ctx: ListoContext) {
   const { tx, actor, role, step, video, now, cause, input } = ctx;
   const link = readLink(input.materialUrl, "Máster (video editado)") ?? step.materialUrl;
@@ -953,7 +877,8 @@ async function listoEdicion(ctx: ListoContext) {
     await assertChecklistApproved(tx, video.id, "SCRIPT_APPROVAL");
     await assertRequiredChecks(tx, video.id, ["PREPRODUCCION", "GRABACION", "POSTPRODUCCION", "GENERAL"]);
   });
-  await signVideoApproval(tx, actor, video, "FINAL_APPROVAL", now, cause, `Listo de ${actor.name}`);
+  await reopenContentApprovals(tx, video.id, actor, "Nuevo máster pendiente de revisión humana.", false);
+  await tx.productionStep.update({ where: { id: step.id }, data: { materialVersion: { increment: 1 } } });
 }
 
 /** PUBLICACION: enlace público, checks de publicación y video a Programado → Publicado. */
@@ -985,12 +910,40 @@ async function listoDiseno(ctx: ListoContext) {
   if (role !== "assignee" || allows(actor, "content.design")) await markChecks(tx, actor, video, design, now, cause);
 }
 
-const NEXT: Record<StepKind, ChainStep | null> = { GUION: "GRABACION", GRABACION: "EDICION", EDICION: "PUBLICACION", PUBLICACION: null, DISENO: null };
+/** Revisa exactamente la entrega que se abrió en pantalla; nunca una versión posterior. */
+async function aprobarEntrega(ctx: ListoContext) {
+  const { tx, actor, step, video, input, now, cause } = ctx;
+  const type = step.step === "REVISION_GUION" ? "SCRIPT_APPROVAL" : "FINAL_APPROVAL";
+  if (!step.reviewToken || input.expectedReviewToken !== step.reviewToken) throw new ChainError("Abre la revisión y comprueba la entrega antes de aprobarla.");
+  if (await approvalToken(tx, type, video.id) !== step.reviewToken) throw new ChainError("La entrega cambió después de enviarse a revisión. Devuélvela para que se entregue y revise la nueva versión.");
+  if (type === "SCRIPT_APPROVAL") {
+    if (!video.scriptId) throw new ChainError("Vincula un guion antes de revisarlo.");
+    const script = await tx.script.findUniqueOrThrow({ where: { id: video.scriptId }, select: { status: true, approvalId: true, title: true } });
+    if (script.status !== "REVISION" && script.status !== "APROBADO") throw new ChainError("El guion debe estar entregado para revisión.");
+    if (script.approvalId) await revokeVersion(tx, script.approvalId, actor, "Nueva revisión humana de esta entrega.");
+    const approved = await approveVersion(tx, actor, "SCRIPT", video.scriptId);
+    await tx.script.update({ where: { id: video.scriptId }, data: { status: "APROBADO", approvalId: approved.id } });
+    await auditInTransaction(tx, { user: actor, action: "EDITAR", entity: "Script", entityId: video.scriptId, brandId: video.brandId,
+      summary: `Aprobó el guion "${script.title}", versión ${approved.version}` });
+    await signVideoApproval(tx, actor, video, type, now, cause, step.reviewToken);
+    await business(() => advanceVideoAsSystem(tx, video.id, "APROBADO", cause, now));
+  } else {
+    const master = await tx.productionStep.findUnique({ where: { automationKey: automationKey(video.id, "EDICION") }, select: { materialUrl: true, status: true } });
+    if (!master?.materialUrl || master.status !== "HECHO") throw new ChainError("Falta entregar el máster antes de revisarlo.");
+    await business(async () => {
+      await assertScriptApproved(tx, video.scriptId);
+      await assertChecklistApproved(tx, video.id, "SCRIPT_APPROVAL");
+      await assertRequiredChecks(tx, video.id, ["PREPRODUCCION", "GRABACION", "POSTPRODUCCION", "GENERAL"]);
+      await signVideoApproval(tx, actor, video, type, now, cause, step.reviewToken!);
+    });
+  }
+}
+
+const NEXT: Record<StepKind, ChainStep | null> = { GUION: "REVISION_GUION", REVISION_GUION: "GRABACION", GRABACION: "EDICION", EDICION: "REVISION_FINAL", REVISION_FINAL: "PUBLICACION", PUBLICACION: null, DISENO: null };
 
 function listoCause(kind: string, actor: SessionUser, behalf: string): string {
   const base = `por el Listo de ${actor.name}${behalf}`;
-  if (kind === "GUION") return `${base} (regla del dueño: sin revisión de guion)`;
-  if (kind === "EDICION") return `${base}; regla del dueño: sin revisión final`;
+  if (kind.startsWith("REVISION_")) return `por la revisión humana de ${actor.name}`;
   return base;
 }
 
@@ -1000,7 +953,8 @@ async function runListo(tx: AppTransaction, actor: SessionUser, role: ActorRole,
   const behalf = await onBehalf(tx, actor, step);
   const cause = causeOverride ?? listoCause(step.step, actor, behalf);
   const ctx: ListoContext = { tx, actor, role, step, video, now, cause, input };
-  if (step.step === "GUION") await listoGuion(ctx);
+  if (step.step.startsWith("REVISION_")) await aprobarEntrega(ctx);
+  else if (step.step === "GUION") await listoGuion(ctx);
   else if (step.step === "GRABACION") await listoGrabacion(ctx);
   else if (step.step === "EDICION") await listoEdicion(ctx);
   else if (step.step === "PUBLICACION") await listoPublicacion(ctx);
@@ -1046,7 +1000,7 @@ export async function completeStep(tx: AppTransaction, actor: SessionUser, stepI
  * «Devolver»: EDICION → GRABACION (editor al filmmaker) y PUBLICACION → EDICION (community al
  * editor, «Devolver por correcciones»). Motivo obligatorio (5-1000). El paso actual queda
  * DEVUELTO, el anterior vuelve a PENDIENTE con plazo nuevo y el motivo se guarda como
- * comentario del video. Desde PUBLICACION revoca la aprobación final como Sistema.
+ * comentario del video. Las revisiones devuelven al autor; Publicación revoca la firma final.
  */
 export async function returnStep(tx: AppTransaction, actor: SessionUser, stepId: string, input: ReturnStepInput): Promise<ReturnStepResult> {
   return conflicts(async () => {
@@ -1060,15 +1014,22 @@ export async function returnStep(tx: AppTransaction, actor: SessionUser, stepId:
     if (DEAD_STATUSES.includes(video.status)) throw new ChainError("El video está cancelado o pausado.");
     const cause = `por la devolución de ${actor.name}: ${motivo}`;
   
-    if (step.step === "PUBLICACION") {
+    if (step.step === "REVISION_GUION" && video.scriptId) {
+      const script = await tx.script.findUniqueOrThrow({ where: { id: video.scriptId }, select: { approvalId: true } });
+      await revokeVersion(tx, script.approvalId, actor, motivo);
+      await tx.script.update({ where: { id: video.scriptId }, data: { status: "BORRADOR", approvalId: null } });
+      await reopenContentApprovals(tx, video.id, actor, motivo, true);
+      await tx.checklistItem.updateMany({ where: { contentItemId: video.id, kind: "TASK", stage: "PREPRODUCCION", label: { contains: "Guion escrito", mode: "insensitive" } }, data: { done: false, doneById: null, doneAt: null } });
+    }
+    if (step.step === "PUBLICACION" || step.step === "REVISION_FINAL") {
       if (video.status === "PUBLICADO") throw new ChainError("El video ya está publicado; no se puede devolver.");
       const finals = await tx.checklistItem.findMany({ where: { contentItemId: video.id, kind: "FINAL_APPROVAL", done: true }, select: { id: true, label: true, approvalId: true } });
       for (const check of finals) {
-        await revokeVersion(tx, check.approvalId, signer(actor, `devolución de ${actor.name}`), motivo);
+        await revokeVersion(tx, check.approvalId, actor, motivo);
         await tx.checklistItem.update({ where: { id: check.id }, data: { done: false, doneById: null, doneAt: null, approvalId: null } });
         await auditInTransaction(tx, {
-          user: null, action: "REABRIR", entity: "ChecklistItem", entityId: check.id, brandId: video.brandId,
-          summary: `Retiró "${check.label}" del video "${video.title}" (Sistema, ${cause})`,
+          user: actor, action: "REABRIR", entity: "ChecklistItem", entityId: check.id, brandId: video.brandId,
+          summary: `Retiró "${check.label}" del video "${video.title}" (${cause})`,
         });
       }
       if (video.status === "PROGRAMADO") await reopenVideoAsSystem(tx, video.id, "EDICION", cause);
@@ -1198,7 +1159,7 @@ export async function reassignStep(tx: AppTransaction, actor: SessionUser, stepI
       changes: Object.keys(changes).length ? changes : null,
     });
     await syncStepTask(tx, actor, step.id, step.status === "PENDIENTE" || reactivate ? "open" : "closed");
-    if (person) await ensureAssignment(tx, actor, video, STEP_RULES[step.step as ChainStep | "DISENO"]?.assignment ?? step.step, person);
+    if (person) await ensureAssignment(tx, actor, video, STEP_RULES[step.step as ChainStep | "DISENO"].assignment, person);
   
     let calendarMoved = false, calendarNotice: string | null = null;
     const dueKey = dateKey(input.dueAt);
@@ -1255,7 +1216,7 @@ export async function ensureChainForVideo(tx: AppTransaction, videoId: string, o
     await lockVideoLifecycle(tx, videoId);
     const video = await reloadVideo(tx, videoId);
     if (!(await readFlow(tx, video.brandId)).team.size) throw new ChainError("La marca no tiene equipo: define el equipo antes de crear pasos.");
-    const expected = expectedChainStep(video.status, await finalApproved(tx, video.id));
+    const expected = await expectedVideoStep(tx, video);
     if (!expected) throw new ChainError(`El video está ${(CONTENT_STATUS_MAP[video.status]?.label ?? video.status).toLowerCase()}: ya no admite pasos.`);
     if (opts.step && opts.step !== expected) throw new ChainError(`El video está en «${CONTENT_STATUS_MAP[video.status]?.label ?? video.status}»: le corresponde el paso «${stepLabel(expected)}».`);
     const open = await openChainSteps(tx, video.id);
@@ -1418,13 +1379,13 @@ async function handleEvent(tx: AppTransaction, actor: ProductionActor, event: Ex
       });
     case "TEAM_CHANGED": {
       if (!productionChainEnabled(event.brandId)) return { done: false, reason: "chain_off" };
-      const kind = TEAM_TO_STEP[event.role];
+      const kind = event.role === "ENCARGADO" ? "REVISION_GUION" : TEAM_TO_STEP[event.role];
       if (!kind) return { done: false, reason: "no_step" };
       const flow = await readFlow(tx, event.brandId);
       const person = event.userId ? await eligiblePerson(tx, event.userId, event.brandId, stepAssigneeCapabilities(kind)) : null;
       const steps = await tx.productionStep.findMany({
         where: {
-          brandId: event.brandId, step: kind, status: "PENDIENTE", source: "AUTO",
+          brandId: event.brandId, step: event.role === "ENCARGADO" ? { in: ["REVISION_GUION", "REVISION_FINAL"] } : kind, status: "PENDIENTE", source: "AUTO",
           OR: [...(event.previousUserId ? [{ assigneeId: event.previousUserId }] : []), ...(person && flow.autoAssign ? [{ assigneeId: null }] : [])],
         },
         orderBy: [{ dueAt: "asc" }, { id: "asc" }],
@@ -1466,10 +1427,10 @@ async function handleEvent(tx: AppTransaction, actor: ProductionActor, event: Ex
           const video = await lockVideoRow(tx, id);
           if (!video) return { done: false, reason: "video_missing" };
           const guion = await tx.productionStep.findUnique({ where: { automationKey: automationKey(id, "GUION") }, select: STEP_SELECT });
-          if (event.to === "REVISION" || event.to === "APROBADO") {
+          if (event.to === "REVISION") {
             if (!guion || guion.status !== "PENDIENTE" || !actor) return { done: false, reason: "no_step" };
             const label = SCRIPT_STATUS_MAP[event.to]?.label ?? event.to;
-            const result = await runListo(tx, actor, "event", guion, video, {}, now, `por el cambio del guion a «${label}» de ${actor.name} (regla del dueño: sin revisión de guion)`);
+            const result = await runListo(tx, actor, "event", guion, video, {}, now, `por el cambio del guion a «${label}» de ${actor.name}`);
             return { done: true, reason: "ok", stepId: result.nextStepId };
           }
           if (event.to === "BORRADOR" && ["IDEA", "GUION", "APROBADO"].includes(video.status)) {

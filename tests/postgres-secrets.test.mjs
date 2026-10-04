@@ -25,7 +25,7 @@ test('B22: secretos cifrados y calendario con alcance persistido',async t=>{
       const encrypted=await db.appSecret.findUniqueOrThrow({where:{key:'ai.google.apiKey'}});assert.ok(!encrypted.value.includes(secret));
       assert.equal(await secrets.readSecret('ai.google.apiKey'),secret);assert.equal(await db.appSetting.count({where:{key:'ai.google.apiKey'}}),0);
       const snap=await settings.getSettingsSnapshot(Object.values(settings.SETTING_KEYS));assert.deepEqual(snap.secretKeys,['ai.google.apiKey']);assert.ok(!JSON.stringify(snap).includes(secret));assert.ok(!JSON.stringify(await db.auditLog.findMany()).includes(secret));
-      await assert.rejects(actions.guardarAjustes(null,stale),/Otra persona/);
+      await assert.rejects(actions.guardarAjustes(null,stale),/Este registro cambió/);
       assert.equal(await secrets.readSecret('ai.google.apiKey'),secret);
       delete process.env.APP_SECRETS_ACTIVE_KEY;
       const blocked=await actions.guardarAjustes(null,await form({googleKey:'new-key',orgName:'Must roll back'}));assert.match(blocked.error,/almacén cifrado/);assert.equal((await db.appSetting.findUniqueOrThrow({where:{key:'org.name'}})).value,'Fixture');
@@ -50,7 +50,7 @@ test('B22: secretos cifrados y calendario con alcance persistido',async t=>{
     });
     await t.test('rotación/revocación vencimiento y revocación de acceso del creador se aplican inmediatamente',async()=>{
       const rotated=await calendar.gestionarSuscripcion(null,fd({operation:'rotate',id,expectedUpdatedAt:revision,days:30}));assert.ok(rotated.token);assert.equal((await get(token)).status,401);token=rotated.token;
-      const stale=await calendar.gestionarSuscripcion(null,fd({operation:'revoke',id,expectedUpdatedAt:revision}));assert.match(stale.error,/Otra persona/);
+      const stale=await calendar.gestionarSuscripcion(null,fd({operation:'revoke',id,expectedUpdatedAt:revision}));assert.match(stale.error,/Este registro cambió/);
       await db.user.update({where:{id:owner.id},data:{active:false}});assert.equal((await get(token)).status,401);await db.user.update({where:{id:owner.id},data:{active:true}});actor=await db.user.findUniqueOrThrow({where:{id:owner.id}});
       await db.brand.update({where:{id:'A'},data:{active:false}});assert.equal((await get(token)).status,401);await db.brand.update({where:{id:'A'},data:{active:true}});
       await db.calendarSubscription.update({where:{id},data:{createdAt:new Date(Date.now()-86400000),expiresAt:new Date(Date.now()-1000)}});assert.equal((await get(token)).status,401);

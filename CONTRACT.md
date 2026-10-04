@@ -170,18 +170,13 @@ Las funciones de video en Assignment no sustituyen los perfiles de acceso. Los p
 
 El equipo no edita escenas, metadatos, vínculos ni adjuntos de un video con revisión final aprobada o en PROGRAMADO/PUBLICADO. Un guion compartido queda protegido si cualquiera de sus videos está cerrado. Las guardas y la aprobación serializan cambios con locks del guion y del video. Retirar la aprobación exige un motivo (5–1000 caracteres), capacidad de aprobación y auditoría; además hay que salir de PROGRAMADO/PUBLICADO para editar. El Dueño conserva su excepción administrativa auditada. La aprobación todavía depende del checklist; una versión inmutable y transiciones tipadas corresponden a B09.
 
-**Excepción del Dueño a «las aprobaciones las firma una persona» (29-30/09/2026).** Solo con la
-cadena de entregas encendida para la marca (`PRODUCTION_CHAIN_ENABLED` y el canario), y solo en
-dos momentos: el «Listo» del guionista firma la aprobación del guion (versión en `Approval` y
-`SCRIPT_APPROVAL`) y el «Listo» del editor firma la revisión final (`FINAL_APPROVAL`). Las firma el
-actor «Sistema», nunca la persona: `Approval.approvedByName` empieza por «Sistema (Listo de
-la persona)», `approvedById` guarda a la persona cuyo «Listo» la originó, `ChecklistItem.doneById`
-queda nulo y la auditoría dice «(Sistema, por el Listo de la persona [en nombre de la persona asignada];
-regla del dueño: sin revisión de guion | sin revisión final)». El «Devolver por correcciones» del
-community retira la revisión final también como «Sistema», con su motivo (5-1000), aunque su
-perfil no tenga `content.approve`. Con la cadena apagada la regla de siempre sigue intacta: las
-aprobaciones las firma una persona con `content.approve` o `scripts.approve`. Detalle en «Cadena
-de entregas por video».
+**Revisión humana obligatoria (04/10/2026).** Sustituye la regla del 29-30/09.
+Entregar guion o edición no aprueba. Con la cadena activa, coordinación recibe una tarea
+persistida REVISION_GUION o REVISION_FINAL y debe aprobar la entrega o devolverla con motivo.
+Las firmas guardan el id y nombre de la persona que revisó y doneById en el checklist.
+No se crean aprobaciones SYSTEM ni se reutilizan firmas históricas «Sistema (Listo...)».
+La revisión compara la huella entregada, la abierta en pantalla y la actual; el máster incluye
+enlace y número de entrega. Las excepciones del Dueño no eluden estos requisitos.
 
 Esta autorización no incorpora organizaciones ni RLS y no debe anunciarse como multitenancy. El cambio de política exige retirar/proteger builds anteriores y ejecutar la activación de compatibilidad antes de reabrir producción.
 
@@ -738,7 +733,7 @@ interruptor: nunca `git revert` ni `DROP`.
 | `PANEL_RENDER_MODE` | `together` | `"streaming"` | Panel del Dueño por secciones en vez de carga conjunta | — |
 | `PRODUCT_CATALOG_ENABLED` | apagado | exactamente `"true"` lo enciende | Catálogo de productos por marca, selector del paso 2 y línea `Tipo:` | Migración `20260928120000_brand_catalog` |
 | `PRODUCTION_FLOW_ENABLED` | apagado | exactamente `"true"` lo enciende | Pasos con plazo, panel «Producción» y barrido diario; el equipo se puede preparar con el flag apagado | Migración `20260928180000_production_flow` |
-| `PRODUCTION_CHAIN_ENABLED` | apagado | exactamente `"true"` lo enciende (y exige `PRODUCTION_FLOW_ENABLED="true"`) | Cadena de entregas: un paso abierto por video con «Listo», «Devolver» y «Avisar a coordinación», firmas automáticas del Dueño, «Mi trabajo», `/cadena`, sincronía tarea↔paso y barrido sin cierre de grabaciones | Migración `20260930090000_production_chain` |
+| `PRODUCTION_CHAIN_ENABLED` | apagado | exactamente `"true"` lo enciende (y exige `PRODUCTION_FLOW_ENABLED="true"`) | Cadena de entregas: un paso abierto por video con «Listo», «Devolver» y «Avisar a coordinación», revisiones humanas por versión, «Mi trabajo», `/cadena`, sincronía tarea↔paso y barrido sin cierre de grabaciones | Migración `20260930090000_production_chain` |
 | `PRODUCTION_CHAIN_BRANDS` | vacío (todas) | IDs de marca separados por coma | Canario de la cadena: solo esas marcas la usan; el resto sigue con el flujo anterior | — |
 | `CALENDARIO_PASOS` | encendido | `"false"` lo apaga (sin distinguir mayúsculas ni espacios) | Pasos de la cadena en el calendario y «Solo lo mío». Solo actúa con la cadena encendida | — |
 | `CALENDAR_FEED_PERSONAL` | apagado | exactamente `"true"` lo enciende | Calendario `.ics` por persona («Mi calendario en Google» en Mi perfil) | Migración `20260930091000_calendar_feed_user` |
@@ -1047,31 +1042,30 @@ decisiones del Dueño, reversa y criterio de hecho: `reports/cadena-entregas-202
 - **Un solo paso de cadena abierto por video.** Abrir un paso cierra los demás: los anteriores
   quedan `HECHO` y los posteriores `CANCELADO`, firmados como «Sistema». Diseño corre en paralelo y
   no cuenta.
-- `automationKey` = `<video>:GUION|GRABACION|EDICION|PUBLICACION` (diseño: `<video>:DISENO:<uuid>`).
+- `automationKey` = `<video>:GUION|REVISION_GUION|GRABACION|EDICION|REVISION_FINAL|PUBLICACION` (diseño: `<video>:DISENO:<uuid>`).
   Un paso no se duplica, se reactiva: `CANCELADO` o `DEVUELTO` vuelven a `PENDIENTE` con plazo
   nuevo; conservan a su persona si era `MANUAL` o volvió por una devolución y sigue apta; si no, se
   vuelve a buscar. Un paso `HECHO` solo se reabre devolviendo desde el paso que lo sigue.
 
 ### Flujo
 
-```
-GUION (guionista) ─Listo─► GRABACION (filmmaker) ─Listo─► EDICION (editor) ─Listo─► PUBLICACION (community) ─Publicado─► fin
-                                ▲                            │  ▲                           │
-                                └──── Devolver al filmmaker ─┘  └── Devolver por correcciones ┘
-DISENO en paralelo: «Pedir diseño» → «Entregar diseño» (quien lo pidió o coordinación: «Pedir cambios»)
-```
+GUION → REVISION_GUION → GRABACION → EDICION → REVISION_FINAL → PUBLICACION.
+DISENO corre en paralelo. Cada paso tiene su tarea, responsable y plazo persistidos.
 
-Por decisión del Dueño (29-30/09/2026) **no hay revisión de guion ni revisión final**: no existen
-los pasos `REVISION_GUION` ni `REVISION_FINAL`. Plazos en días de negocio de Lima, de lunes a
-sábado; un plazo de día vence a las 23:59:59.999.
+| Paso | Quién lo recibe | Entrega y efecto |
+|---|---|---|
+| Guion | Guionista del vídeo o equipo | Escenas y CTA; marca lo escrito, pasa a REVISION y abre Revisión de guion. No aprueba ni programa grabación. |
+| Revisión de guion | ENCARGADO apto, o Dueño activo como respaldo | scripts.approve y content.approve; firma SCRIPT y SCRIPT_APPROVAL para la huella entregada y habilita Grabación. Devolver reabre Guion con motivo. |
+| Grabación | Cámara del vídeo o FILMMAKER | Material grabado y requisitos; pasa a Edición. Se conserva la planificación de fecha de grabación existente. |
+| Edición | Editor del vídeo o equipo | Máster distinto del material grabado y requisitos; incrementa materialVersion y abre Revisión final. No aprueba ni abre Publicación. |
+| Revisión final | ENCARGADO apto, o Dueño activo como respaldo | content.approve; revisa enlace y versión del máster, firma FINAL_APPROVAL y habilita Publicación. Devolver reabre Edición con motivo. |
+| Publicación | Community del vídeo o equipo | URL pública y todas las aprobaciones vigentes; registra publicado y cierra la cadena. |
+| Diseño | Persona elegida o DISENADOR | Entrega el diseño y marca sus checks; plazo de 24 horas sin domingo. |
 
-| Paso | Quién lo recibe | Nace | Plazo | El «Listo» exige | El «Listo» escribe |
-|---|---|---|---|---|---|
-| Guion | Función Guionista del video o `GUIONISTA` del equipo, que recibe la asignación `GUIONISTA` (así puede editar un guion generado por otra persona) | Al crear o duplicar el video en una marca con equipo, al unir el guion o con «Crear paso» | Fin del 2.º día hábil desde que nace | Guion vinculado y no archivado, con al menos una escena y CTA (del guion o del video). La persona asignada necesita `scripts.write` sobre ese guion | Guion BORRADOR→REVISION→APROBADO con su versión (`approveVersion`), check «Guion escrito y revisado» a su nombre, `SCRIPT_APPROVAL` y video →GUION→APROBADO, como «Sistema». Abre Grabación |
-| Grabación | Función Cámara o `FILMMAKER` | Listo del guion, o el video llega a Aprobado por otro camino | Próximo día de grabación de la marca **posterior al Listo** (sin días elegidos, el día hábil siguiente). Se escribe en `shootDate`: una fecha automática se recalcula, una puesta a mano manda. Si `scheduledDate` quedaba antes, se corre al día hábil siguiente a la edición | Enlace del material (http o https), guion aprobado y los checks obligatorios de Preproducción y Grabación que su perfil (o su paso) puede marcar | El enlace en el paso, esos checks a su nombre y video →GRABACION→EDICION como «Sistema». Abre Edición sin copiar el material |
-| Edición | Función Edición o `EDITOR` | Listo de la grabación | Día hábil siguiente a la grabación (sábado → lunes) | Enlace del máster, distinto del material grabado; checks obligatorios de Postproducción y General. Un check de diseño pendiente da «Esperando diseño» sea quien sea quien pulse (también el Dueño): el diseño lo entrega el diseñador o se marca en el checklist, nunca este Listo | El máster en el paso, esos checks a su nombre y `FINAL_APPROVAL` como «Sistema». Abre Publicación |
-| Publicación | Función Community o `COMMUNITY` | Listo de la edición | Día hábil siguiente, o la fecha prevista si es posterior (una anterior se corre) | URL pública http(s), `assertPublishable` y los checks de Publicación | `publishedUrl`, esos checks y video →PROGRAMADO→PUBLICADO (`publishedAt`). Fin de la cadena |
-| Diseño | Persona elegida o `DISENADOR` | «Pedir diseño» | 24 h; si cae en domingo, el lunes a la misma hora | Enlace de la entrega | Checks de diseño de Postproducción (si su perfil puede). Quien lo pidió lo ve 7 días en «Mi trabajo» |
+Plazos de revisión: siguiente día hábil; no modifican fechas de grabación/publicación.
+Guion conserva su plazo de dos días hábiles. Edición y publicación mantienen sus reglas
+de días hábiles de Lima (lunes a sábado). Al aprobar guion se planifica la grabación;
+al aprobar el máster se planifica publicación, conservando las fechas manuales aplicables.
 
 Un hueco en el equipo no detiene la cadena: sin persona apta para la función, el paso nace **«Sin
 asignar»** (también con la asignación automática apagada) y la fecha de grabación se escribe
@@ -1083,9 +1077,9 @@ igual. Una marca sin nadie en su equipo sigue fuera de la cadena.
   queda `DEVUELTO`, Grabación vuelve a `PENDIENTE` para el próximo día de grabación (mueve
   `shootDate`) y el video se queda en Edición.
 - **«Devolver por correcciones»** (community, desde Publicación): motivo de 5 a 1000. Se revoca
-  `FINAL_APPROVAL` como «Sistema» con ese motivo, Programado vuelve a Edición, Publicación queda
+  `FINAL_APPROVAL` con la identidad de quien devuelve y ese motivo, Programado vuelve a Edición, Publicación queda
   `DEVUELTO` y cerrada, y Edición vuelve a `PENDIENTE` para el día hábil siguiente. El siguiente
-  «Listo» del editor vuelve a firmar y reactiva la misma Publicación.
+  «Listo» del editor abre Revisión final; una nueva firma humana reactiva Publicación.
 - Toda devolución guarda el motivo como `Comment` del video y reabre exactamente un paso, que
   aparece en «Mi trabajo» como «Devuelto a mí» con el motivo y quién lo devolvió.
 - **«Avisar a coordinación»** (botón del filmmaker y del community asignados): motivo de 5 a 1000,
@@ -1125,7 +1119,8 @@ igual. Una marca sin nadie en su equipo sigue fuera de la cadena.
 
 ### Tarea y paso
 
-- Un paso, una tarea: «Escribir guion: …», «Grabar: …», «Editar: …», «Publicar: …», «Diseño: …».
+- Un paso, una tarea: «Escribir guion: …», «Revisar guion: …», «Grabar: …», «Editar: …»,
+  «Revisar vídeo final: …», «Publicar: …», «Diseño: …».
   Paso cerrado (`HECHO`, `CANCELADO` o `DEVUELTO`) → su tarea va a la última columna por orden que
   admite la marca («Listo»; si solo existe una columna, se crea «Listo»). Paso reabierto → la tarea
   sale de «Listo». Responsable y fecha límite siguen al paso.
@@ -1137,6 +1132,9 @@ igual. Una marca sin nadie en su equipo sigue fuera de la cadena.
   muestra el motivo (`moverTareaConMotivo`; el modal recibe `{ ok: false, error }`). Sacar de
   «Listo» la tarea de un paso cerrado se rechaza. Cambiar responsable o fecha en la tarea reasigna
   el paso; una tarea de paso no cambia de marca.
+- Las revisiones requieren el botón de aprobación y la huella de la entrega revisada: arrastrar
+  su tarjeta a «Listo» no las aprueba. Las tareas sueltas se terminan o reabren explícitamente;
+  su estado persistido no depende de la columna.
 
 ### Mismas reglas por cualquier camino
 
@@ -1149,14 +1147,15 @@ con un código cerrado y se propaga para revertir también la acción principal)
 - Fecha de grabación al abrir la Grabación: automática (auditada «Programó la grabación») se
   recalcula; puesta a mano manda; **sin origen auditado en ese video y ya pasada o de hoy** (heredada
   o anterior a la cadena) se recalcula, para que el paso no nazca vencido.
-- Pasar el guion a Revisión o Aprobado desde Guiones equivale al «Listo» del guion (Revisión exige
-  escenas y CTA); volverlo a Borrador reabre el Guion.
+- Pasar el guion a Revisión desde Guiones entrega el guion (exige escenas y CTA) y abre su
+  revisión humana. Aprobarlo desde Guiones se rechaza si está vinculado a la cadena: debe
+  revisarse desde el paso Revisión de guion. Volverlo a Borrador reabre el Guion.
 - Cambiar el estado del video abre el paso de su etapa. Cancelado o pausado cancela los pasos
   pendientes (y sus tareas van a «Listo»); Publicado cierra todo; reabrir hacia atrás cancela los
   posteriores. Pasar a Edición exige el enlace del material si existe la Grabación.
 - Checks: completar los de Grabación con el enlace ya guardado es el «Listo» de la grabación;
-  firmar `FINAL_APPROVAL` a mano exige el máster en Edición; retirarla (o retirar la aprobación del
-  guion, que la arrastra) devuelve la edición al editor y cancela la publicación, también con el
+  las aprobaciones se firman desde sus pasos de revisión, no desde el checkbox. Retirar la
+  revisión final (o retirar la aprobación del guion, que la arrastra) devuelve la edición al editor y cancela la publicación, también con el
   video en Programado: Sistema lo devuelve a Edición, como «Devolver por correcciones».
 - Cambiar `shootDate` o `scheduledDate` mueve el plazo de la Grabación o de la Publicación, también
   si el paso es `MANUAL`: «manual» protege a la persona, no la fecha.
@@ -1448,7 +1447,16 @@ Mini-spec y evidencia: `reports/paneles-por-rol-2026-10-01.md`.
   sus funciones antes de escribir y no dispara pasos con las automatizaciones apagadas.
 - Un error al crear o sincronizar una entrega aborta también la acción principal. La UI no
   recibe un éxito parcial. Tarea, paso, asignación y auditoría conservan el mismo commit.
-- Decisión vigente del usuario: revisión humana del guion y del vídeo final. Su implementación
-  sigue pendiente; las reglas anteriores de aprobación automática describen el código aún
-  existente y no autorizan activar la cadena. No habilitarla antes de completar ambas revisiones.
+- Revisión humana del guion y del vídeo final implementada localmente. Migración aditiva
+  20261004090000_human_reviews_task_completion. Mantener FLOW y CHAIN apagadas hasta aplicar
+  la migración, desplegar, validar y decidir expresamente la activación para marcas nuevas.
+- Task.status (PENDIENTE, HECHO, CANCELADO), completedAt y completedById determinan el cierre.
+  Las tareas sueltas se terminan/reabren mediante cambiarEstadoTarea con permiso, revisión y
+  auditoría; mover columnas no cambia ese estado. Las tareas vinculadas siguen su paso.
+  El historial sin paso no se clasifica por posición de columna: requiere revisión humana.
+- lockRevision y los conflictos serializables devuelven WorkflowError legible. La revisión
+  capturada en cada formulario se conserva para impedir sobrescrituras de datos posteriores.
+- Las entregas externas se identifican por enlace y número de entrega; no se descargan ni
+  versionan los bytes de Drive/Dropbox. Usar enlaces de versión y volver a entregar si cambia
+  el archivo. Sobrescribir un archivo externo sin notificar a ALSOS no es detectable.
 - Alcance y pendientes: `reports/plan-correccion-flujo-produccion-2026-10-04.md`.

@@ -192,12 +192,13 @@ try {
   assert.throws(()=>sql(source,`INSERT INTO "ProductionStep" (id,"contentItemId","brandId",step,"dueAt","automationKey","updatedAt") VALUES ('flow-step-kind','upgrade-video','upgrade-brand','MONTAJE',now(),'upgrade-video:MONTAJE',now())`),/ProductionStep_step_check/);
   assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET status='HECHO' WHERE id='flow-step'`),/ProductionStep_done_check/);
   assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET "materialUrl"='javascript:alert(1)' WHERE id='flow-step'`),/ProductionStep_materialUrl_check/);
-  const flowStepBefore=await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'}});
-  await db.productionStep.update({where:{id:'flow-step'},data:{status:'HECHO',doneAt:new Date(),materialUrl:'https://drive.example.test/material'}});
-  assert.ok((await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'}})).updatedAt>flowStepBefore.updatedAt,'Los pasos usan la revisión monótona');
+  // Todavía estamos en el esquema anterior: seleccionar solo las columnas ya migradas.
+  const flowStepBefore=await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'},select:{updatedAt:true}});
+  await db.productionStep.update({where:{id:'flow-step'},data:{status:'HECHO',doneAt:new Date(),materialUrl:'https://drive.example.test/material'},select:{id:true}});
+  assert.ok((await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'},select:{updatedAt:true}})).updatedAt>flowStepBefore.updatedAt,'Los pasos usan la revisión monótona');
   sql(source,`DELETE FROM "User" WHERE id='upgrade-member'`);
   assert.equal(await db.brandTeamMember.count(),0,'La función de la marca cae con la cuenta');
-  assert.equal((await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'}})).assigneeId,null,'El paso conserva su historial sin responsable');
+  assert.equal((await db.productionStep.findUniqueOrThrow({where:{id:'flow-step'},select:{assigneeId:true}})).assigneeId,null,'El paso conserva su historial sin responsable');
   sql(source,`DELETE FROM "Brand" WHERE id='flow-other'`);
   // Cadena de entregas: solo amplía los CHECK de ProductionStep (+GUION, +DEVUELTO) y añade un índice.
   const chainMigration=fs.readFileSync('prisma/migrations/20260930090000_production_chain/migration.sql');
@@ -215,9 +216,9 @@ try {
   assert.deepEqual((await db.$queryRaw`SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public'`)[0],chainTables,'Sin tablas nuevas');
   assert.equal((await db.$queryRaw`SELECT count(*)::int AS n FROM pg_indexes WHERE schemaname='public' AND indexname='ProductionStep_brandId_status_dueAt_idx'`)[0].n,1);
   sql(source,`${chainStepInsert('chain-guion','GUION','upgrade-video:GUION')}; UPDATE "ProductionStep" SET status='DEVUELTO' WHERE id='chain-guion';`);
-  assert.equal((await db.productionStep.findUniqueOrThrow({where:{id:'chain-guion'}})).status,'DEVUELTO');
+  assert.equal((await db.productionStep.findUniqueOrThrow({where:{id:'chain-guion'},select:{status:true}})).status,'DEVUELTO');
   assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET status='DEVUELTO', "doneAt"=now() WHERE id='chain-guion'`),/ProductionStep_done_check/,'DEVUELTO no lleva doneAt');
-  assert.throws(()=>sql(source,chainStepInsert('chain-review','REVISION_GUION','upgrade-video:REVISION_GUION')),/ProductionStep_step_check/,'Sin revisiones intermedias (decisión del Dueño)');
+  assert.throws(()=>sql(source,chainStepInsert('chain-review','REVISION_GUION','upgrade-video:REVISION_GUION')),/ProductionStep_step_check/,'Las revisiones requieren su migración posterior');
   assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET status='ARCHIVADO' WHERE id='chain-guion'`),/ProductionStep_status_check/);
   assert.throws(()=>sql(source,chainStepInsert('chain-twice','GUION','upgrade-video:GUION')),/ProductionStep_automationKey_key/,'Un paso GUION por video');
   sql(source,`DELETE FROM "ProductionStep" WHERE id='chain-guion'`);
@@ -243,6 +244,21 @@ try {
     assert.throws(()=>sql(source,ownerInsert('feed-0ther','OTRO','NULL')),/CalendarSubscription_scope_check/);
     sql(source,`DELETE FROM "CalendarSubscription" WHERE id IN ('feed-user','feed-all','feed-bb')`);
   }
+  // Las revisiones humanas y el estado explícito de tareas también deben poder restaurarse.
+  sql(source,`INSERT INTO "TaskColumn" (id,name,"order","updatedAt") VALUES ('review-column','Listo',999,now());
+    INSERT INTO "Task" (id,title,"columnId","updatedAt") VALUES ('review-linked','Con paso','review-column',now()),('review-loose','Sin paso','review-column',now());
+    UPDATE "ProductionStep" SET "taskId"='review-linked' WHERE id='flow-step';`);
+  const [reviewVideoBefore]=await db.$queryRaw`SELECT * FROM "ContentItem" WHERE id='upgrade-video'`;
+  sql(source,fs.readFileSync('prisma/migrations/20261004090000_human_reviews_task_completion/migration.sql'));
+  await db.$disconnect();
+  const completed=await db.task.findUniqueOrThrow({where:{id:'review-linked'}});
+  assert.equal(completed.status,'HECHO');assert.ok(completed.completedAt);assert.equal(completed.completedById,null);
+  assert.equal((await db.task.findUniqueOrThrow({where:{id:'review-loose'}})).status,'PENDIENTE','La columna no demuestra finalización');
+  assert.deepEqual((await db.$queryRaw`SELECT * FROM "ContentItem" WHERE id='upgrade-video'`)[0],reviewVideoBefore);
+  sql(source,`${chainStepInsert('review-script','REVISION_GUION','upgrade-video:REVISION_GUION')}; ${chainStepInsert('review-final','REVISION_FINAL','upgrade-video:REVISION_FINAL')};`);
+  const review=await db.productionStep.findUniqueOrThrow({where:{id:'review-final'}});
+  assert.equal(review.materialVersion,0);assert.equal(review.reviewToken,null);
+  assert.throws(()=>sql(source,`UPDATE "Task" SET status='HECHO' WHERE id='review-loose'`),/Task_completion_check/);
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);

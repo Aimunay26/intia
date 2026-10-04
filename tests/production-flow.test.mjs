@@ -202,6 +202,7 @@ function fakeDb(overrides = {}) {
       create: async ({ data }) => { const row = { id: `col-${++seq}`, ...data }; state.columns.push(row); return row; },
     },
     task: {
+      updateMany: async ({ where, data }) => { for (const task of state.tasks) if (state.steps.some(s => s.id === where.productionStep.id && s.taskId === task.id)) Object.assign(task, data); return { count: 1 }; },
       findFirst: async ({ where }) => state.tasks.filter((t) => t.columnId === where.columnId).sort((a, b) => b.order - a.order)[0] ?? null,
       create: async ({ data }) => { const row = { id: `task${++seq}`, ...data }; state.tasks.push(row); return { id: row.id, title: row.title }; },
       findUnique: async ({ where }) => state.tasks.find((t) => t.id === where.id) ?? null,

@@ -410,6 +410,8 @@ export const BRAND_TEAM_ROLE_MAP = byValue(BRAND_TEAM_ROLES);
 
 /** Pasos de producción con plazo (ProductionStep.step). GUION solo existe con la cadena de entregas. */
 export const PRODUCTION_STEPS: Option[] = [
+  { value: "REVISION_GUION", label: "Revisión de guion", chip: "bg-violet-500/12 text-violet-600", hex: "#8b5cf6", description: "Coordinación aprueba la versión entregada o pide correcciones." },
+  { value: "REVISION_FINAL", label: "Revisión final", chip: "bg-violet-500/12 text-violet-600", hex: "#8b5cf6", description: "Coordinación revisa el máster antes de autorizar su publicación." },
   {
     value: "GUION",
     label: "Guion",
@@ -479,24 +481,23 @@ export const PRODUCTION_STEP_STATUS_MAP = byValue(PRODUCTION_STEP_STATUSES);
 
 /**
  * Cadena de entregas por video (PRODUCTION_CHAIN_ENABLED), en orden. Diseño corre en
- * paralelo y no cuenta para «un paso abierto por video». Sin revisiones intermedias por
- * decisión del Dueño (29-30/09/2026): el Listo del guionista pasa directo al filmmaker y el
- * del editor directo al community.
+ * paralelo y no cuenta para «un paso abierto por video». Las entregas de guion y edición
+ * requieren una revisión humana antes de continuar (04/10/2026).
  */
-export const CHAIN_ORDER = ["GUION", "GRABACION", "EDICION", "PUBLICACION"] as const;
+export const CHAIN_ORDER = ["GUION", "REVISION_GUION", "GRABACION", "EDICION", "REVISION_FINAL", "PUBLICACION"] as const;
 export type ChainStep = (typeof CHAIN_ORDER)[number];
 
 export type ChainStepRule = {
   /** Función del equipo de la marca (BrandTeamMember.role) que recibe el paso. */
-  team: "GUIONISTA" | "FILMMAKER" | "EDITOR" | "COMMUNITY" | "DISENADOR";
+  team: "GUIONISTA" | "FILMMAKER" | "EDITOR" | "COMMUNITY" | "DISENADOR" | "ENCARGADO";
   /** Función en el video (Assignment.role) que manda sobre la persona de la marca. */
-  assignment: "GUIONISTA" | "CAMARA" | "EDITOR" | "COMMUNITY" | "DISENO";
+  assignment: "GUIONISTA" | "CAMARA" | "EDITOR" | "COMMUNITY" | "DISENO" | null;
   /** Verbo de la tarea y del calendario («Grabar: título»). */
   task: string;
   /** Texto del botón «Listo». */
   listo: string;
   /** Capacidad que debe tener la persona asignada para pulsar «Listo». */
-  capability: "scripts.write" | "content.shoot" | "content.editing" | "content.publish" | "content.design";
+  capability: "scripts.write" | "content.shoot" | "content.editing" | "content.publish" | "content.design" | "scripts.approve" | "content.approve";
   /** Paso al que se devuelve con «Devolver» (null: no se devuelve; solo «Avisar a coordinación»). */
   returnsTo: ChainStep | null;
   /** Texto del botón «Devolver», si aplica. */
@@ -510,23 +511,19 @@ export type ChainStepRule = {
 };
 
 export const CHAIN_STEP_RULES: Record<ChainStep | "DISENO", ChainStepRule> = {
-  GUION: { team: "GUIONISTA", assignment: "GUIONISTA", task: "Escribir guion", listo: "Listo, enviar al filmmaker", capability: "scripts.write", returnsTo: null, returnLabel: null, link: null, linkLabel: null, role: "Guionista" },
+  GUION: { team: "GUIONISTA", assignment: "GUIONISTA", task: "Escribir guion", listo: "Enviar a revisión", capability: "scripts.write", returnsTo: null, returnLabel: null, link: null, linkLabel: null, role: "Guionista" },
+  REVISION_GUION: { team: "ENCARGADO", assignment: null, task: "Revisar guion", listo: "Aprobar guion", capability: "scripts.approve", returnsTo: "GUION", returnLabel: "Pedir correcciones al guionista", link: null, linkLabel: null, role: "Coordinación" },
   GRABACION: { team: "FILMMAKER", assignment: "CAMARA", task: "Grabar", listo: "Listo, pasar a edición", capability: "content.shoot", returnsTo: null, returnLabel: null, link: "materialUrl", linkLabel: "Material grabado", role: "Filmmaker" },
-  EDICION: { team: "EDITOR", assignment: "EDITOR", task: "Editar", listo: "Listo, enviar al community", capability: "content.editing", returnsTo: "GRABACION", returnLabel: "Devolver al filmmaker", link: "materialUrl", linkLabel: "Máster (video editado)", role: "Editor" },
+  EDICION: { team: "EDITOR", assignment: "EDITOR", task: "Editar", listo: "Enviar a revisión final", capability: "content.editing", returnsTo: "GRABACION", returnLabel: "Devolver al filmmaker", link: "materialUrl", linkLabel: "Máster (video editado)", role: "Editor" },
+  REVISION_FINAL: { team: "ENCARGADO", assignment: null, task: "Revisar vídeo final", listo: "Aprobar vídeo final", capability: "content.approve", returnsTo: "EDICION", returnLabel: "Pedir correcciones al editor", link: null, linkLabel: null, role: "Coordinación" },
   PUBLICACION: { team: "COMMUNITY", assignment: "COMMUNITY", task: "Publicar", listo: "Publicado", capability: "content.publish", returnsTo: "EDICION", returnLabel: "Devolver por correcciones", link: "publishedUrl", linkLabel: "Enlace público", role: "Community" },
   DISENO: { team: "DISENADOR", assignment: "DISENO", task: "Diseño", listo: "Entregar diseño", capability: "content.design", returnsTo: null, returnLabel: null, link: "materialUrl", linkLabel: "Entrega del diseño", role: "Diseñador" },
 };
 
-/**
- * Coordinación (content.assign) pulsa por la persona asignada, pero sin firmar lo que su perfil
- * no firma: el Listo del editor firma la revisión final (content.approve), el «Publicado»
- * publica (content.publish) y devolver una publicación retira la revisión final
- * (content.approve). El Listo del guion aprueba el guion: exige scripts.approve o scripts.write
- * sobre ese guion (production-chain.ts lo comprueba con el alcance del guion). La comparten el
- * dominio y los botones (step-copy.ts).
- */
-export const CHAIN_COORD_CAPABILITY: Partial<Record<ChainStep | "DISENO", { complete?: "content.approve" | "content.publish"; return?: "content.approve" }>> = {
-  EDICION: { complete: "content.approve" },
+/** Capacidades adicionales de coordinación: entregar no implica aprobar. */
+export const CHAIN_COORD_CAPABILITY: Partial<Record<ChainStep | "DISENO", { complete?: "scripts.approve" | "content.approve" | "content.publish"; return?: "content.approve" }>> = {
+  REVISION_GUION: { complete: "scripts.approve", return: "content.approve" },
+  REVISION_FINAL: { complete: "content.approve", return: "content.approve" },
   PUBLICACION: { complete: "content.publish", return: "content.approve" },
 };
 

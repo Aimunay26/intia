@@ -52,7 +52,7 @@ export async function ProductionPanel({ user, videoId }: { user: SessionUser; vi
   const video = await prisma.contentItem.findFirst({
     where: { AND: [{ id: videoId }, contentScope(user)] },
     select: {
-      id: true, title: true, brandId: true, status: true, publishedUrl: true, assignments: { select: { userId: true } },
+      id: true, title: true, brandId: true, status: true, publishedUrl: true, scriptId: true, assignments: { select: { userId: true } },
       checklist: { select: { done: true, kind: true, label: true, stage: true, required: true } },
     },
   });
@@ -63,12 +63,12 @@ export async function ProductionPanel({ user, videoId }: { user: SessionUser; vi
     where: { contentItemId: video.id },
     orderBy: [{ dueAt: "asc" }, { id: "asc" }],
     select: {
-      id: true, step: true, status: true, source: true, dueAt: true, doneAt: true, materialUrl: true, notes: true, updatedAt: true, assigneeId: true, requestedById: true,
+      id: true, step: true, status: true, source: true, dueAt: true, doneAt: true, materialUrl: true, notes: true, updatedAt: true, assigneeId: true, requestedById: true, reviewToken: true,
       assignee: { select: { name: true } }, requestedBy: { select: { name: true } },
     },
   });
   // Sin cadena, un paso de cadena pendiente (Guion) no tiene quién lo cierre: no se muestra.
-  const steps = chain ? allSteps : allSteps.filter((s) => !(s.step === "GUION" && s.status === "PENDIENTE"));
+  const steps = chain ? allSteps : allSteps.filter((s) => !(["GUION", "REVISION_GUION", "REVISION_FINAL"].includes(s.step) && s.status === "PENDIENTE"));
 
   const canAssign = allowsContentRecord(user, "content.assign", video);
   const brandAllowed = user.role === "OWNER" || Boolean(user.brandIds?.includes(video.brandId));
@@ -163,6 +163,8 @@ export async function ProductionPanel({ user, videoId }: { user: SessionUser; vi
                   </div>
                 ) : null}
                 {step.notes ? <p className="text-inksoft text-[12.5px] whitespace-pre-wrap">{step.notes}</p> : null}
+                {step.step === "REVISION_GUION" && video.scriptId ? <Link className="btn btn-sm" href={`/guiones/${video.scriptId}`}>Abrir guion para revisar</Link> : null}
+                {step.step === "REVISION_FINAL" && allSteps.find(s => s.step === "EDICION")?.materialUrl ? <a className="btn btn-sm" href={allSteps.find(s => s.step === "EDICION")!.materialUrl!} target="_blank" rel="noreferrer noopener">Abrir máster para revisar</a> : null}
                 {step.materialUrl ? (
                   <a href={step.materialUrl} target="_blank" rel="noreferrer noopener" className="text-brand inline-flex items-center gap-1 text-[12.5px] font-semibold">
                     <ExternalLink size={12} /> {materialLabel}
@@ -178,6 +180,7 @@ export async function ProductionPanel({ user, videoId }: { user: SessionUser; vi
                           id: step.id,
                           step: step.step,
                           revision,
+                          reviewToken: step.reviewToken,
                           videoTitle: video.title,
                           linkValue: step.step === "PUBLICACION" ? video.publishedUrl : step.materialUrl,
                           checksToMark: checksToMarkFor(step.step, pendingChecks),

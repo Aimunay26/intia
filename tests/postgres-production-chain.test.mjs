@@ -67,7 +67,17 @@ async function createScript(id, brandId, cta = 'Escríbenos hoy') {
 }
 const created = (videoId) => tx((t) => chain.chainEvent(t, as('owner'), { type: 'VIDEO_CREATED', videoId }));
 const link = (scriptId, videoId) => tx((t) => persist.vincularGuionAVideo(t, as('owner'), scriptId, videoId));
-const listo = (who, stepId, input = {}) => run(who, (t, user) => chain.completeStep(t, user, stepId, input));
+// Atajo de preparación: entrega y después una SEGUNDA acción humana de revisión.
+// postgres-human-reviews prueba cada estado intermedio, los rechazos y los atajos prohibidos.
+const revisar = async (video, kind) => { const review=await step(video,kind); return run(review.assigneeId ?? 'owner',(t,u)=>chain.completeStep(t,u,review.id,{expectedUpdatedAt:review.updatedAt.toISOString(),expectedReviewToken:review.reviewToken})); };
+const entregarYRevisar = async (who, stepId, input = {}) => {
+  const result=await run(who,(t,u)=>chain.completeStep(t,u,stepId,input));
+  if (result.status==='done' && ['REVISION_GUION','REVISION_FINAL'].includes(result.next)) {
+    const row=await prisma.productionStep.findUniqueOrThrow({where:{id:stepId}});
+    return revisar(row.contentItemId,result.next);
+  }
+  return result;
+};
 
 /** Invariantes de la mini-spec (3.11): deben dar 0. La marca E es la del flujo viejo (cadena apagada). */
 async function invariants() {
@@ -108,7 +118,7 @@ test('preparación: equipo por marca, tablero y sesiones', async () => {
   for (const id of ['owner', ...Object.keys(members)]) people.set(id, await sessionUser(id));
 });
 
-test('recorrido completo IDEA→PUBLICADO solo con «Listo» de cada perfil; firmas de Sistema auditadas', async () => {
+test('recorrido completo IDEA→PUBLICADO solo con «Listo» de cada perfil; firmas humanas auditadas', async () => {
   await createVideo('v1', 'A');
   await createScript('s1', 'A');
   const born = await created('v1');
@@ -126,17 +136,17 @@ test('recorrido completo IDEA→PUBLICADO solo con «Listo» de cada perfil; fir
   assert.equal(await prisma.productionStep.count({ where: { contentItemId: 'v1' } }), 1);
   assert.equal((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v1' } })).shootDate, null);
 
-  // Guionista: Listo → guion aprobado por Sistema, video Aprobado, grabación el próximo martes o jueves.
-  const r1 = await listo('paula', guion.id, { expectedUpdatedAt: guion.updatedAt.toISOString() });
+  // Guionista entrega y coordinación aprueba → guion aprobado, video Aprobado, grabación el próximo martes o jueves.
+  const r1 = await entregarYRevisar('paula', guion.id, { expectedUpdatedAt: guion.updatedAt.toISOString() });
   assert.deepEqual([r1.status, r1.next, r1.nextAssigneeId, r1.videoStatus], ['done', 'GRABACION', 'carlos', 'APROBADO']);
   const script = await prisma.script.findUniqueOrThrow({ where: { id: 's1' }, include: { approval: true } });
   assert.equal(script.status, 'APROBADO');
-  assert.match(script.approval.approvedByName, /^Sistema \(Listo de Paula\)/);
+  assert.equal(script.approval.approvedByName, 'Edward');
   const checks = await prisma.checklistItem.findMany({ where: { contentItemId: 'v1' } });
   const byLabel = (label) => checks.find((c) => c.label === label);
   assert.equal(byLabel('Guion escrito y revisado').doneById, 'paula');
   assert.ok(byLabel('Guion aprobado por la marca').done && byLabel('Guion aprobado por la marca').approvalId);
-  assert.equal(byLabel('Guion aprobado por la marca').doneById, null, 'la aprobación la firma Sistema, no la persona');
+  assert.equal(byLabel('Guion aprobado por la marca').doneById, 'edward', 'firma de quien revisó');
   const v1 = await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v1' } });
   const shootKey = days.nextRecordingDayKey(today(), [2, 4]);
   assert.equal(utils.dateKey(v1.shootDate), shootKey, 'próximo día de grabación posterior al Listo');
@@ -146,31 +156,31 @@ test('recorrido completo IDEA→PUBLICADO solo con «Listo» de cada perfil; fir
   assert.equal((await step('v1', 'GUION')).task.columnId, LAST, 'Listo mueve la tarea a la última columna');
 
   // Filmmaker: sin enlace no pasa (ni por Listo ni moviendo la tarea); con enlace, video a Edición.
-  await assert.rejects(listo('carlos', grab.id), /Falta el enlace del material grabado/);
+  await assert.rejects(entregarYRevisar('carlos', grab.id), /Falta el enlace del material grabado/);
   await assert.rejects(run('carlos', (t, user) => chain.chainEvent(t, user, { type: 'TASK_MOVED', taskId: grab.taskId, toColumnId: LAST })), /Falta el enlace del material grabado/);
   assert.equal((await step('v1', 'GRABACION')).status, 'PENDIENTE', 'el rechazo no escribe nada');
-  await assert.rejects(listo('laudder', grab.id, { materialUrl: 'https://drive.example.test/crudo' }), /No tienes acceso|Solo coordinación/);
-  const r2 = await listo('carlos', grab.id, { materialUrl: 'https://drive.example.test/crudo' });
+  await assert.rejects(entregarYRevisar('laudder', grab.id, { materialUrl: 'https://drive.example.test/crudo' }), /No tienes acceso|Solo coordinación/);
+  const r2 = await entregarYRevisar('carlos', grab.id, { materialUrl: 'https://drive.example.test/crudo' });
   assert.deepEqual([r2.next, r2.nextAssigneeId, r2.videoStatus], ['EDICION', 'laudder', 'EDICION']);
   const edit = await step('v1', 'EDICION');
   assert.equal(edit.materialUrl, null, 'el material no se copia: se lee del paso de grabación');
   assert.equal(edit.dueAt.toISOString(), days.endOfDayKey(days.nextWorkingDayKey(today())).toISOString());
   assert.equal(await prisma.checklistItem.count({ where: { contentItemId: 'v1', stage: { in: ['PREPRODUCCION', 'GRABACION'] }, required: true, kind: 'TASK', done: false } }), 0);
 
-  // Editor: el máster debe ser otro enlace; su Listo firma la revisión final como Sistema y pasa al community.
-  await assert.rejects(listo('laudder', edit.id, { materialUrl: 'https://drive.example.test/crudo' }), /distinto del material grabado/);
-  const r3 = await listo('laudder', edit.id, { materialUrl: 'https://drive.example.test/master' });
+  // Editor: el máster debe ser otro enlace; su entrega pasa a revisión; coordinación habilita publicación.
+  await assert.rejects(entregarYRevisar('laudder', edit.id, { materialUrl: 'https://drive.example.test/crudo' }), /distinto del material grabado/);
+  const r3 = await entregarYRevisar('laudder', edit.id, { materialUrl: 'https://drive.example.test/master' });
   assert.deepEqual([r3.next, r3.nextAssigneeId], ['PUBLICACION', 'silvanna']);
   const final = await prisma.checklistItem.findFirstOrThrow({ where: { contentItemId: 'v1', kind: 'FINAL_APPROVAL' }, include: { approval: true } });
   assert.ok(final.done);
-  assert.match(final.approval.approvedByName, /^Sistema \(Listo de Laudder\)/);
+  assert.equal(final.approval.approvedByName, 'Edward');
   const pub = await step('v1', 'PUBLICACION');
   const scheduled = (await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v1' } })).scheduledDate;
   assert.equal(pub.dueAt.toISOString(), days.endOfDayKey(days.publicationDueKey(today(), utils.dateKey(scheduled))).toISOString());
 
   // Community: publicado con el enlace público.
-  await assert.rejects(listo('silvanna', pub.id), /Falta el enlace público/);
-  const r4 = await listo('silvanna', pub.id, { publishedUrl: 'https://tiktok.example.test/@marca/v1' });
+  await assert.rejects(entregarYRevisar('silvanna', pub.id), /Falta el enlace público/);
+  const r4 = await entregarYRevisar('silvanna', pub.id, { publishedUrl: 'https://tiktok.example.test/@marca/v1' });
   assert.deepEqual([r4.next, r4.videoStatus], [null, 'PUBLICADO']);
   const done = await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v1' } });
   assert.ok(done.publishedAt);
@@ -180,29 +190,29 @@ test('recorrido completo IDEA→PUBLICADO solo con «Listo» de cada perfil; fir
   assert.deepEqual(statusAudits.map((a) => JSON.parse(a.changes).status.despues), ['GUION', 'APROBADO', 'GRABACION', 'EDICION', 'PROGRAMADO', 'PUBLICADO']);
   assert.equal(await prisma.auditLog.count({ where: { summary: { contains: 'Excepción del Dueño' } } }), 0);
   const steps = await prisma.productionStep.findMany({ where: { contentItemId: 'v1' }, include: { task: true } });
-  assert.deepEqual(steps.map((s) => s.status).sort(), ['HECHO', 'HECHO', 'HECHO', 'HECHO']);
+  assert.deepEqual(steps.map((s) => s.status).sort(), Array(6).fill('HECHO'));
   assert.ok(steps.every((s) => s.task.columnId === LAST), 'cuatro tareas en «Listo»');
   const approvals = await prisma.approval.findMany({ where: { OR: [{ entityId: 'v1' }, { entityId: 's1' }] } });
   assert.deepEqual(approvals.map((a) => a.entityType).sort(), ['FINAL_APPROVAL', 'SCRIPT', 'SCRIPT_APPROVAL']);
-  assert.ok(approvals.every((a) => a.approvedByName.startsWith('Sistema (')));
+  assert.ok(approvals.every((a) => a.approvedByName === 'Edward'));
   const systemAudits = await prisma.auditLog.findMany({ where: { userName: 'Sistema', summary: { contains: 'regla del dueño' } } });
-  assert.ok(systemAudits.some((a) => a.summary.includes('sin revisión de guion')) && systemAudits.some((a) => a.summary.includes('sin revisión final')));
+  assert.equal(systemAudits.length, 0);
   assert.equal((await scope.grabadoDeVideo('v1')).grabado, true);
   const state = (await scope.chainStateForScripts(['s1'])).get('s1');
   assert.deepEqual([state.videos, state.grabados], [1, 1]);
   assert.deepEqual(await invariants(), ZERO);
 });
 
-test('devoluciones: editor → filmmaker y community → editor (revoca la aprobación final como Sistema)', async () => {
+test('devoluciones: editor → filmmaker y community → editor (revoca la aprobación final con identidad)', async () => {
   await createVideo('v2', 'A', { cta: 'Llama ya' });
   await createScript('s2', 'A', null);
   await created('v2');
   await link('s2', 'v2');
   // Coordinación marca en nombre de la guionista; el CTA del video basta.
-  const r = await listo('owner', (await step('v2', 'GUION')).id);
+  const r = await entregarYRevisar('owner', (await step('v2', 'GUION')).id);
   assert.equal(r.next, 'GRABACION');
   assert.ok(await prisma.auditLog.count({ where: { entityId: (await step('v2', 'GUION')).id, summary: { contains: 'en nombre de Paula' } } }));
-  await listo('carlos', (await step('v2', 'GRABACION')).id, { materialUrl: 'https://drive.example.test/v2-crudo' });
+  await entregarYRevisar('carlos', (await step('v2', 'GRABACION')).id, { materialUrl: 'https://drive.example.test/v2-crudo' });
   const edit = await step('v2', 'EDICION');
 
   await assert.rejects(run('laudder', (t, u) => chain.returnStep(t, u, edit.id, { motivo: 'no' })), /motivo/);
@@ -222,11 +232,11 @@ test('devoluciones: editor → filmmaker y community → editor (revoca la aprob
   const mine = await scope.readMyWork(as('carlos'));
   assert.equal(mine.returned.find((c) => c.video.id === 'v2')?.returned?.motivo, 'Falta la toma del producto', '«Te lo devolvieron» con el motivo');
 
-  await listo('carlos', regrab.id, {});
+  await entregarYRevisar('carlos', regrab.id, {});
   const again = await step('v2', 'EDICION');
   assert.equal(again.id, edit.id, 'se reactiva el mismo paso, no se duplica');
   assert.equal(again.status, 'PENDIENTE');
-  await listo('laudder', again.id, { materialUrl: 'https://drive.example.test/v2-master' });
+  await entregarYRevisar('laudder', again.id, { materialUrl: 'https://drive.example.test/v2-master' });
   const pub = await step('v2', 'PUBLICACION');
 
   const firstFinal = await prisma.checklistItem.findFirstOrThrow({ where: { contentItemId: 'v2', kind: 'FINAL_APPROVAL' } });
@@ -242,7 +252,7 @@ test('devoluciones: editor → filmmaker y community → editor (revoca la aprob
   assert.equal(utils.dateKey((await step('v2', 'EDICION')).dueAt), days.nextWorkingDayKey(today()));
   assert.ok(await prisma.comment.count({ where: { contentItemId: 'v2', body: { contains: 'Corrige los subtítulos' } } }));
 
-  await listo('laudder', (await step('v2', 'EDICION')).id, {});
+  await entregarYRevisar('laudder', (await step('v2', 'EDICION')).id, {});
   const resigned = await prisma.checklistItem.findFirstOrThrow({ where: { contentItemId: 'v2', kind: 'FINAL_APPROVAL' }, include: { approval: true } });
   assert.equal(resigned.approval.version, 2, 'nueva versión firmada');
   assert.equal((await step('v2', 'PUBLICACION')).status, 'PENDIENTE');
@@ -255,7 +265,7 @@ test('coordinación: «Sin asignar», avisos y bloqueos llegan al ENCARGADO o, s
   await createScript('s3', 'B');
   await created('v3');
   await link('s3', 'v3');
-  await listo('paula', (await step('v3', 'GUION')).id);
+  await entregarYRevisar('paula', (await step('v3', 'GUION')).id);
   const grab = await step('v3', 'GRABACION');
   assert.equal(grab.assigneeId, null, 'la marca B no tiene filmmaker: «Sin asignar»');
   assert.equal(grab.task.assigneeId, null);
@@ -333,7 +343,7 @@ test('desvincular, cancelar y reabrir dejan un solo paso abierto y las tareas en
   await createScript('s7', 'A');
   await created('v7');
   await link('s7', 'v7');
-  await listo('paula', (await step('v7', 'GUION')).id);
+  await entregarYRevisar('paula', (await step('v7', 'GUION')).id);
   assert.equal((await step('v7', 'GRABACION')).status, 'PENDIENTE');
 
   // Desvincular (la acción de B2 escribe el vínculo y emite el evento en la misma transacción).
@@ -345,7 +355,7 @@ test('desvincular, cancelar y reabrir dejan un solo paso abierto y las tareas en
   assert.equal((await step('v7', 'GUION')).task.columnId, FIRST, 'la tarea vuelve a la primera columna');
   assert.equal((await step('v7', 'GRABACION')).status, 'CANCELADO');
   assert.equal((await step('v7', 'GRABACION')).task.columnId, LAST);
-  await assert.rejects(listo('paula', (await step('v7', 'GUION')).id), /Vincula un guion/);
+  await assert.rejects(entregarYRevisar('paula', (await step('v7', 'GUION')).id), /Vincula un guion/);
 
   // Cancelar el video (ciclo de vida real) cancela los pasos; reabrirlo reactiva el que toca.
   const cancel = async (status, reason) => {
@@ -368,12 +378,12 @@ test('dos «Listo» a la vez: uno gana y el otro recibe EDIT_CONFLICT; la tarea 
   await createScript('s8', 'A');
   await created('v8');
   await link('s8', 'v8');
-  await listo('paula', (await step('v8', 'GUION')).id);
+  await entregarYRevisar('paula', (await step('v8', 'GUION')).id);
   const grab = await step('v8', 'GRABACION');
   const input = { materialUrl: 'https://drive.example.test/v8', expectedUpdatedAt: grab.updatedAt.toISOString() };
-  const results = await Promise.allSettled([listo('carlos', grab.id, input), listo('owner', grab.id, input)]);
+  const results = await Promise.allSettled([entregarYRevisar('carlos', grab.id, input), entregarYRevisar('owner', grab.id, input)]);
   assert.equal(results.filter((r) => r.status === 'fulfilled').length, 1);
-  assert.match(results.find((r) => r.status === 'rejected').reason.message, /Otra persona cambió este registro/);
+  assert.match(results.find((r) => r.status === 'rejected').reason.message, /Este registro cambió/);
   assert.equal(await prisma.productionStep.count({ where: { contentItemId: 'v8', step: 'EDICION' } }), 1);
 
   // Tarea↔paso: el editor deja el máster y mueve su tarea a «Listo» → publicación.
@@ -381,10 +391,11 @@ test('dos «Listo» a la vez: uno gana y el otro recibe EDIT_CONFLICT; la tarea 
   await prisma.productionStep.update({ where: { id: edit.id }, data: { materialUrl: 'https://drive.example.test/v8-master' } });
   const moved = await run('laudder', (t, u) => chain.chainEvent(t, u, { type: 'TASK_MOVED', taskId: edit.taskId, toColumnId: LAST }));
   assert.equal(moved.done, true);
+  await revisar('v8','REVISION_FINAL');
   assert.equal((await step('v8', 'PUBLICACION')).status, 'PENDIENTE');
   await assert.rejects(run('owner', (t, u) => chain.chainEvent(t, u, { type: 'TASK_MOVED', taskId: edit.taskId, toColumnId: FIRST })), /ya está listo/);
   // Repetir el Listo de un paso hecho no escribe nada.
-  assert.equal((await listo('laudder', edit.id)).status, 'already');
+  assert.equal((await entregarYRevisar('laudder', edit.id)).status, 'already');
   assert.deepEqual(await invariants(), ZERO);
 });
 
@@ -396,7 +407,8 @@ test('caminos viejos convergen: guion enviado a revisión, checks, revisión fin
   // «Enviar a revisión» desde Guiones equivale al Listo del guionista (regla del dueño).
   const s9 = await prisma.script.findUniqueOrThrow({ where: { id: 's9' } });
   await run('paula', (t, u) => lifecycle.transitionScript(t, u, { id: 's9', status: 'REVISION', expectedUpdatedAt: s9.updatedAt.toISOString(), override: false, reason: '' }));
-  assert.equal((await prisma.script.findUniqueOrThrow({ where: { id: 's9' } })).status, 'APROBADO');
+  assert.equal((await prisma.script.findUniqueOrThrow({ where: { id: 's9' } })).status, 'REVISION');
+  await revisar('v9','REVISION_GUION');
   assert.equal((await step('v9', 'GUION')).status, 'HECHO');
   assert.equal((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v9' } })).status, 'APROBADO');
   // Con la cadena, «Enviar a revisión» exige el CTA (en el guion o en sus videos).
@@ -458,7 +470,7 @@ test('caminos viejos convergen: guion enviado a revisión, checks, revisión fin
   await createScript('s12', 'A');
   await created('v12');
   await link('s12', 'v12');
-  await listo('paula', (await step('v12', 'GUION')).id);
+  await entregarYRevisar('paula', (await step('v12', 'GUION')).id);
   await prisma.checklistItem.updateMany({ where: { contentItemId: 'v12', stage: { in: ['PREPRODUCCION', 'GRABACION'] }, kind: 'TASK', required: true }, data: { done: true, doneById: 'carlos', doneAt: new Date() } });
   const v12 = async () => prisma.contentItem.findUniqueOrThrow({ where: { id: 'v12' } });
   await run('carlos', async (t, u) => lifecycle.transitionVideo(t, u, { id: 'v12', status: 'GRABACION', expectedUpdatedAt: (await v12()).updatedAt.toISOString(), override: false, reason: '' }));
@@ -479,7 +491,7 @@ test('equipo y asignaciones mueven los pasos; diseño entregado; «Tomar paso»;
   await createScript('s10', 'B');
   await created('v10');
   await link('s10', 'v10');
-  await listo('paula', (await step('v10', 'GUION')).id);
+  await entregarYRevisar('paula', (await step('v10', 'GUION')).id);
   assert.equal((await step('v10', 'GRABACION')).assigneeId, null);
   await tx(async (t) => {
     await t.brandTeamMember.create({ data: { brandId: 'B', role: 'FILMMAKER', userId: 'carlos' } });
@@ -513,12 +525,12 @@ test('equipo y asignaciones mueven los pasos; diseño entregado; «Tomar paso»;
   // Diseño en paralelo: «Entregar diseño» exige el enlace y no toca el paso abierto de la cadena.
   const flow = mod('src/lib/domain/production-flow.ts');
   const design = await tx((t) => flow.requestDesign(t, as('paula'), 'v10', { designerId: 'owner', notes: 'Miniatura con el producto' }));
-  await assert.rejects(listo('diego', design.id), /No tienes acceso|Solo coordinación/, 'diego no tiene la marca B');
+  await assert.rejects(entregarYRevisar('diego', design.id), /No tienes acceso|Solo coordinación/, 'diego no tiene la marca B');
   await prisma.productionStep.update({ where: { id: design.id }, data: { assigneeId: 'paula' } });
-  await assert.rejects(listo('paula', design.id), /Tu perfil no puede/, 've el video pero no tiene content.design');
+  await assert.rejects(entregarYRevisar('paula', design.id), /Tu perfil no puede/, 've el video pero no tiene content.design');
   await prisma.productionStep.update({ where: { id: design.id }, data: { assigneeId: 'owner' } });
-  await assert.rejects(listo('owner', design.id), /entrega del diseño/);
-  await listo('owner', design.id, { materialUrl: 'https://drive.example.test/miniatura' });
+  await assert.rejects(entregarYRevisar('owner', design.id), /entrega del diseño/);
+  await entregarYRevisar('owner', design.id, { materialUrl: 'https://drive.example.test/miniatura' });
   assert.equal((await prisma.productionStep.findUniqueOrThrow({ where: { id: design.id } })).status, 'HECHO');
   assert.equal((await step('v10', 'GRABACION')).status, 'PENDIENTE');
   assert.ok((await scope.readMyWork(as('paula'))).designsDelivered.some((c) => c.id === design.id), '«Diseños entregados para ti»');
@@ -528,7 +540,7 @@ test('equipo y asignaciones mueven los pasos; diseño entregado; «Tomar paso»;
   const redo = await prisma.productionStep.findUniqueOrThrow({ where: { id: design.id }, include: { task: true } });
   assert.deepEqual([redo.status, redo.task.columnId], ['PENDIENTE', FIRST]);
   assert.equal((await scope.readMyWork(as('owner'))).returned.find((c) => c.id === design.id)?.returned?.motivo, 'El logo debe ir más grande');
-  await listo('owner', design.id, {});
+  await entregarYRevisar('owner', design.id, {});
 
   // «Marcar hecho» viejo (sin completeStep): la cadena abre el siguiente para no dejar el video sin
   // paso, y la vista Cadena lo muestra desfasado (el estado del video quedó atrás).

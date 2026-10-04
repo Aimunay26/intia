@@ -62,6 +62,8 @@ export async function transitionVideo(tx: AppTransaction, user: SessionUser, inp
     const override = user.role === "OWNER" && input.override;
     const reason = (override || step === "reopen" || step === "stop") ? reopeningReason(input.reason) : "";
     if (!override && step === "invalid") throw new WorkflowError("Avanza una etapa a la vez; completa sus requisitos antes de continuar.");
+    // Una excepción de secuencia no sustituye una revisión humana.
+    if (override && CONTENT_FLOW.indexOf(status) > CONTENT_FLOW.indexOf(before.status)) await assertAdvanceRequirements(tx, id, before, status, user);
     if (step === "reopen" || step === "stop" || (override && CONTENT_FLOW.indexOf(status) < CONTENT_FLOW.indexOf(before.status))) {
       assertPermission(user, "content.approve");
       await reopenContentApprovals(tx, id, user, reason, ["IDEA", "GUION", "CANCELADO"].includes(status));
@@ -195,6 +197,10 @@ export async function transitionScript(tx: AppTransaction, user: SessionUser, in
       await revokeVersion(tx, approvalId, user, reason); approvalId = null;
     }
     if (status === "APROBADO") {
+      if (productionChainConfigured()) {
+        const linked = await tx.contentItem.findMany({ where: { scriptId: id }, select: { brandId: true } });
+        if (linked.some(video => productionChainEnabled(video.brandId))) throw new WorkflowError("Aprueba la entrega desde el paso Revisión de guion del vídeo o Mi trabajo.");
+      }
       if (!await tx.scriptScene.count({ where: { scriptId: id } })) throw new WorkflowError("El guion debe tener escenas antes de aprobarse.");
       if (approvalId) await revokeVersion(tx, approvalId, user, reason || "Sustituida por una nueva aprobación explícita");
       approvalId = (await approveVersion(tx, user, "SCRIPT", id)).id;

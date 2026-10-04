@@ -72,7 +72,13 @@ async function crearGuion(id, brandId, author = 'owner') {
   await prisma.script.create({ data: { id, title: `Guion ${id}`, brandId, cta: 'Escríbenos hoy', authorId: author, scenes: { create: [{ order: 0, beat: 'Gancho', voice: 'Hola', action: 'Mira a cámara' }] } } });
 }
 const vincular = (who, scriptId, contentItemId) => as(who, () => scripts.asignarGuionAVideo(form({ scriptId, contentItemId })));
-const listo = (who, row, extra = {}) => as(who, () => production.marcarListo(form({ id: row.id, expectedUpdatedAt: rev(row), ...extra })));
+// Preparación de escenarios: entregar y aprobar son dos peticiones con sesiones distintas.
+const revisar = async (video,kind) => {const row=await step(video,kind);return as(row.assigneeId??'owner',()=>production.marcarListo(form({id:row.id,expectedUpdatedAt:rev(row),expectedReviewToken:row.reviewToken})));};
+const entregarYRevisar = async (who,row,extra={}) => {
+  const result=await as(who,()=>production.marcarListo(form({id:row.id,expectedUpdatedAt:rev(row),...extra})));
+  if(!result?.error && row.status==='PENDIENTE' && ['GUION','EDICION'].includes(row.step)) return revisar(row.contentItemId,row.step==='GUION'?'REVISION_GUION':'REVISION_FINAL');
+  return result;
+};
 const settingsRev = async (brandId) => (await prisma.brandProductionSettings.findUnique({ where: { brandId } }))?.updatedAt.toISOString() ?? 'new';
 const teamForm = async (brandId, roles, extra = {}) => form({ brandId, expectedUpdatedAt: await settingsRev(brandId), ...Object.fromEntries(Object.entries(roles).map(([role, userId]) => [`role-${role}`, userId])), ...extra });
 const taskForm = (task, extra = {}) => form({
@@ -84,7 +90,7 @@ async function hastaGrabacion(videoTitle, brandId, scriptId) {
   const id = await crearVideo('edward', brandId, videoTitle);
   await crearGuion(scriptId, brandId);
   await vincular('owner', scriptId, id);
-  const res = await listo('paula', await step(id, 'GUION'));
+  const res = await entregarYRevisar('paula', await step(id, 'GUION'));
   assert.equal(res?.ok, true, res?.error);
   return id;
 }
@@ -143,12 +149,12 @@ test('recorrido con las acciones: crear, vincular, «Listo», tarea a «Listo»,
   assert.equal(await vincular('owner', 's1', v1), undefined);
   assert.equal((await prisma.productionStep.count({ where: { contentItemId: v1 } })), 1, 'vincular ya no programa la grabación');
   const off = await as('paula', () => production.marcarListo(form({ id: guion.id, expectedUpdatedAt: new Date(guion.updatedAt.getTime() - 1).toISOString() })));
-  assert.match(off.error, /Otra persona cambió este registro/, 'revisión vieja del formulario');
-  const r1 = await listo('paula', await step(v1, 'GUION'));
+  assert.match(off.error, /Este registro cambió/, 'revisión vieja del formulario');
+  const r1 = await entregarYRevisar('paula', await step(v1, 'GUION'));
   assert.equal(r1.ok, true);
   assert.match(r1.message, /^Listo\. Ahora le toca a Carlos: grabación, vence el /);
   assert.equal((await video(v1)).status, 'APROBADO');
-  assert.equal((await prisma.script.findUniqueOrThrow({ where: { id: 's1' }, include: { approval: true } })).approval.approvedByName, 'Sistema (Listo de Paula)');
+  assert.equal((await prisma.script.findUniqueOrThrow({ where: { id: 's1' }, include: { approval: true } })).approval.approvedByName, 'Edward');
 
   // Filmmaker: soltar la tarea en «Listo» sin el enlace se rechaza con el motivo y no mueve nada.
   let grab = await step(v1, 'GRABACION');
@@ -177,14 +183,14 @@ test('recorrido con las acciones: crear, vincular, «Listo», tarea a «Listo»,
   assert.equal(back.message, 'Devuelto: la grabación vuelve a Carlos con tu motivo.');
   assert.equal((await step(v1, 'EDICION')).status, 'DEVUELTO');
   assert.ok(await prisma.comment.count({ where: { contentItemId: v1, userId: 'laudder', body: { contains: 'Falta la toma del producto' } } }));
-  assert.equal((await listo('carlos', await step(v1, 'GRABACION'))).ok, true, 'el enlace guardado basta');
+  assert.equal((await entregarYRevisar('carlos', await step(v1, 'GRABACION'))).ok, true, 'el enlace guardado basta');
   assert.equal((await step(v1, 'EDICION')).id, edit.id, 'se reactiva el mismo paso');
 
-  // Editor: su Listo con el máster firma la revisión final como Sistema y pasa al community.
-  const r3 = await listo('laudder', await step(v1, 'EDICION'), { materialUrl: 'https://drive.example.test/master' });
+  // Editor entrega el máster; una revisión humana posterior habilita publicación.
+  const r3 = await entregarYRevisar('laudder', await step(v1, 'EDICION'), { materialUrl: 'https://drive.example.test/master' });
   assert.match(r3.message, /Ahora le toca a Silvanna: publicación/);
   const final = await prisma.checklistItem.findFirstOrThrow({ where: { contentItemId: v1, kind: 'FINAL_APPROVAL' }, include: { approval: true } });
-  assert.equal(final.approval.approvedByName, 'Sistema (Listo de Laudder)');
+  assert.equal(final.approval.approvedByName, 'Edward');
 
   // Community: «Devolver por correcciones» revoca la aprobación final y reabre la edición.
   const pub = await step(v1, 'PUBLICACION');
@@ -192,7 +198,7 @@ test('recorrido con las acciones: crear, vincular, «Listo», tarea a «Listo»,
   assert.equal(fix.message, 'Devuelto: la edición vuelve a Laudder con tu motivo.');
   assert.ok((await prisma.approval.findUniqueOrThrow({ where: { id: final.approvalId } })).revokedAt);
   assert.equal((await step(v1, 'PUBLICACION')).status, 'DEVUELTO');
-  assert.equal((await listo('laudder', await step(v1, 'EDICION'))).ok, true);
+  assert.equal((await entregarYRevisar('laudder', await step(v1, 'EDICION'))).ok, true);
   const pub2 = await step(v1, 'PUBLICACION');
   assert.deepEqual([pub2.id, pub2.status], [pub.id, 'PENDIENTE']);
 
@@ -257,7 +263,7 @@ test('ficha del video: asignar, quitar, fechas, revisión final a mano, retirarl
   assert.equal((await step(v2, 'GRABACION')).source, 'MANUAL');
   assert.match((await as('edward', () => production.reasignarPaso(form({ id: grab.id, assigneeId: 'carlos', dueDate: moveTo })))).error, /revisión del formulario/);
 
-  assert.equal((await listo('carlos', await step(v2, 'GRABACION'), { materialUrl: 'https://drive.example.test/v2' })).ok, true);
+  assert.equal((await entregarYRevisar('carlos', await step(v2, 'GRABACION'), { materialUrl: 'https://drive.example.test/v2' })).ok, true);
   const edit = await step(v2, 'EDICION');
   assert.equal(edit.assigneeId, 'laudder');
 
@@ -265,9 +271,9 @@ test('ficha del video: asignar, quitar, fechas, revisión final a mano, retirarl
   await prisma.checklistItem.updateMany({ where: { contentItemId: v2, stage: { in: ['POSTPRODUCCION', 'GENERAL'] }, kind: 'TASK', required: true }, data: { done: true, doneById: 'laudder', doneAt: new Date() } });
   const finalCheck = await prisma.checklistItem.findFirstOrThrow({ where: { contentItemId: v2, kind: 'FINAL_APPROVAL' } });
   const approve = async () => as('edward', async () => content.alternarCheck(form({ id: finalCheck.id, done: 'on', expectedApproval: await approvals.approvalToken(prisma, 'FINAL_APPROVAL', v2) })));
-  assert.deepEqual(await approve(), { error: 'Falta el enlace del máster en el paso de edición.' });
+  assert.match((await approve()).error, /paso de revisión/);
   assert.equal(await as('laudder', () => production.guardarMaterialPaso(form({ id: edit.id, materialUrl: 'https://drive.example.test/v2-master', expectedUpdatedAt: rev(edit) }))), undefined);
-  assert.equal(await approve(), undefined);
+  assert.equal((await entregarYRevisar('laudder', await step(v2,'EDICION'))).ok,true);
   assert.equal((await step(v2, 'EDICION')).status, 'HECHO');
   const pub = await step(v2, 'PUBLICACION');
   assert.deepEqual([pub.status, pub.assigneeId], ['PENDIENTE', null], 'la marca B no tiene community: «Sin asignar»');
@@ -278,7 +284,7 @@ test('ficha del video: asignar, quitar, fechas, revisión final a mano, retirarl
   assert.equal((await step(v2, 'PUBLICACION')).task.columnId, LAST);
 
   // La fecha prevista editada en la ficha mueve el plazo de la publicación pendiente.
-  assert.equal((await listo('laudder', await step(v2, 'EDICION'))).ok, true);
+  assert.equal((await entregarYRevisar('laudder', await step(v2, 'EDICION'))).ok, true);
   const later = days.addDaysToKey(today(), 12);
   const v2row = await video(v2);
   assert.equal(await as('owner', () => content.actualizarVideo(form({ id: v2, title: v2row.title, scheduledDate: later, shootDate: utils.dateKey(v2row.shootDate), expectedUpdatedAt: rev(v2row) }))), undefined);
@@ -293,7 +299,7 @@ test('ficha del video: asignar, quitar, fechas, revisión final a mano, retirarl
   // Una fecha pasada sin origen auditado (heredada o anterior a la cadena) se recalcula al Listo: la grabación no nace vencida.
   await prisma.contentItem.update({ where: { id: copy }, data: { shootDate: utils.fromDateKey(days.addDaysToKey(today(), -7)) } });
   assert.equal((await video(copy)).scriptId, 's2', 'la copia conserva el guion del original');
-  const copyListo = await listo('paula', await step(copy, 'GUION'));
+  const copyListo = await entregarYRevisar('paula', await step(copy, 'GUION'));
   assert.equal(copyListo.ok, true, copyListo.error);
   const copyShoot = await step(copy, 'GRABACION');
   assert.ok(utils.dateKey(copyShoot.dueAt) > today(), 'la grabación de la copia vence después del Listo');
@@ -305,7 +311,7 @@ test('ficha del video: asignar, quitar, fechas, revisión final a mano, retirarl
   const g3 = await step(v3, 'GUION');
   assert.deepEqual([g3.status, g3.task.columnId], ['PENDIENTE', FIRST]);
   assert.deepEqual([(await step(v3, 'GRABACION')).status, (await step(v3, 'GRABACION')).task.columnId], ['CANCELADO', LAST]);
-  assert.match((await listo('paula', g3)).error, /Vincula un guion/);
+  assert.match((await entregarYRevisar('paula', g3)).error, /Vincula un guion/);
   assert.deepEqual(await invariants(), ZERO);
 });
 
@@ -403,7 +409,7 @@ test('columna nueva antes de «Listo», revisión final retirada en Programado, 
   assert.equal((await as('carlos', () => tasks.moverTarea(g20.taskId, created.column.id, undefined, rev(g20.task)))).ok, true);
   assert.equal((await step(v20, 'GRABACION')).status, 'PENDIENTE', 'soltar en la columna nueva no es el Listo');
   g20 = await step(v20, 'GRABACION');
-  assert.equal((await listo('carlos', g20, { materialUrl: 'https://drive.example.test/v20' })).ok, true);
+  assert.equal((await entregarYRevisar('carlos', g20, { materialUrl: 'https://drive.example.test/v20' })).ok, true);
   assert.equal((await step(v20, 'GRABACION')).task.columnId, LAST, 'el Listo deja la tarea en «Listo», no en la columna nueva');
 
   // 2) Reasignar solo a quien puede hacer el paso (si no, quedaría trabado).
@@ -413,14 +419,14 @@ test('columna nueva antes de «Listo», revisión final retirada en Programado, 
 
   // 3) Revisión final retirada con el video ya en Programado: Sistema lo devuelve a Edición,
   //    la edición vuelve al editor y la publicación se cancela (como «Devolver por correcciones»).
-  assert.equal((await listo('laudder', await step(v20, 'EDICION'), { materialUrl: 'https://drive.example.test/v20-master' })).ok, true);
+  assert.equal((await entregarYRevisar('laudder', await step(v20, 'EDICION'), { materialUrl: 'https://drive.example.test/v20-master' })).ok, true);
   const programado = await as('silvanna', async () => content.cambiarEstado(form({ id: v20, status: 'PROGRAMADO', expectedUpdatedAt: rev(await video(v20)) })));
   assert.equal(programado, undefined, programado?.error);
   const finalCheck = await prisma.checklistItem.findFirstOrThrow({ where: { contentItemId: v20, kind: 'FINAL_APPROVAL' } });
   assert.equal(await as('edward', () => content.alternarCheck(form({ id: finalCheck.id, done: '', reason: 'El cliente pidió cambiar la música' }))), undefined);
   assert.equal((await video(v20)).status, 'EDICION', 'Sistema devuelve el video a Edición');
   assert.deepEqual([(await step(v20, 'EDICION')).status, (await step(v20, 'EDICION')).assigneeId, (await step(v20, 'PUBLICACION')).status], ['PENDIENTE', 'laudder', 'CANCELADO']);
-  assert.equal((await listo('laudder', await step(v20, 'EDICION'))).ok, true, 'el editor vuelve a firmar con el máster guardado');
+  assert.equal((await entregarYRevisar('laudder', await step(v20, 'EDICION'))).ok, true, 'el editor vuelve a firmar con el máster guardado');
   assert.equal((await step(v20, 'PUBLICACION')).status, 'PENDIENTE');
 
   // 4) Eliminar el guion: sus videos vuelven al paso Guion (como al desvincular).

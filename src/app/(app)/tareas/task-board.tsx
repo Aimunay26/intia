@@ -511,11 +511,9 @@ export function TaskBoard({
           description="Crea una idea o acción suelta para avanzar en el pipeline."
           width={540}
         >
-          <form
-            action={async (formData) => {
-              await crearTarea(formData);
-              setCreatingInColumnId(null);
-            }}
+          <EditForm
+            action={crearTarea}
+            onSuccess={() => setCreatingInColumnId(null)}
             className="space-y-3.5"
           >
             <input type="hidden" name="columnId" value={creatingInColumnId} />
@@ -635,7 +633,7 @@ export function TaskBoard({
               </button>
               <SubmitButton pendingLabel="Creando...">Crear tarea</SubmitButton>
             </div>
-          </form>
+          </EditForm>
         </Modal>
       )}
 

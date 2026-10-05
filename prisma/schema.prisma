@@ -1071,7 +1071,8 @@ model ProductionStep {
   step        String
   assigneeId  String?
   assignee    User?     @relation("ProductionStepAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  dueAt       DateTime
+  /// Null solo en grabaciones pendientes de programación.
+  dueAt       DateTime?
   /// PENDIENTE | HECHO | CANCELADO | DEVUELTO (cadena: se devolvió al paso anterior con motivo; doneAt nulo).
   /// Con la cadena, un solo paso de cadena PENDIENTE por video (DISENO no cuenta): invariante Q4.
   status      String    @default("PENDIENTE")

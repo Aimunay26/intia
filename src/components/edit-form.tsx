@@ -7,9 +7,30 @@ const SavedRevision = createContext(0);
  * responde { message } con éxito (p. ej. «el calendario sigue con la fecha anterior»), lo
  * muestra como estado, sin cerrar nada.
  */
-export function EditForm({ action, children, onSuccess, ...props }: Omit<React.FormHTMLAttributes<HTMLFormElement>, "action" | "onSubmit"> & {
-  action: (data: FormData) => Promise<unknown>; onSuccess?: () => void;
-}) {
+type EditFormProps = Omit<React.FormHTMLAttributes<HTMLFormElement>, "action" | "onSubmit"> & {
+  action: (data: FormData) => Promise<unknown>; onSuccess?: () => void; revision?: string;
+};
+
+export function EditForm({ revision, ...props }: EditFormProps) {
+  return revision === undefined ? <EditFormBody {...props} /> : <RefreshingEditForm {...props} revision={revision} />;
+}
+
+/** Incorpora cambios de otros controles solo si no hay un borrador sin guardar. */
+function RefreshingEditForm({ revision, children, onSuccess, onChangeCapture, ...props }: EditFormProps & { revision: string }) {
+  const dirty = useRef(false);
+  const [baseline, setBaseline] = useState({ revision, children });
+  if (baseline.revision !== revision && !dirty.current) setBaseline({ revision, children });
+  return <EditFormBody {...props} key={baseline.revision} onChangeCapture={event => {
+    dirty.current = true;
+    onChangeCapture?.(event);
+  }} onSuccess={() => {
+    dirty.current = false;
+    setBaseline({ revision, children });
+    onSuccess?.();
+  }}>{baseline.revision !== revision ? baseline.children : children}</EditFormBody>;
+}
+
+function EditFormBody({ action, children, onSuccess, ...props }: Omit<EditFormProps, "revision">) {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

@@ -32,7 +32,7 @@ async function setupVideo(id) {
  await prisma.script.create({data:{id:'s-'+id,title:'Guion '+id,brandId:'A',authorId:'owner',scenes:{create:{order:0,beat:'Inicio',voice:'Texto de prueba',startSec:0,endSec:10}}}});
  await scriptStatus('s-'+id,'REVISION',{expectedUpdatedAt:await revision('script','s-'+id)});
  await scriptStatus('s-'+id,'APROBADO',{expectedUpdatedAt:await revision('script','s-'+id)});
- await prisma.contentItem.create({data:{id,title:id,brandId:'A',scriptId:'s-'+id,scheduledDate:new Date('2026-09-21T12:00:00Z'),publishedUrl:'https://example.test/video',checklist:{create:[
+ await prisma.contentItem.create({data:{id,title:id,brandId:'A',scriptId:'s-'+id,shootDate:new Date('2026-09-19T12:00:00Z'),scheduledDate:new Date('2026-09-21T12:00:00Z'),publishedUrl:'https://example.test/video',checklist:{create:[
   {label:'Autorización del texto',stage:'PREPRODUCCION',kind:'SCRIPT_APPROVAL'},
   {label:'Control de entrega',stage:'POSTPRODUCCION',kind:'FINAL_APPROVAL'},
  ]}}});

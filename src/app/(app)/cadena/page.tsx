@@ -73,7 +73,7 @@ export default async function CadenaPage({ searchParams }: { searchParams: Promi
     const all = [...CHAIN_ORDER.flatMap((step) => board.columns[step]), ...board.designs];
     const rows = (paso ? (paso === "DISENO" ? board.designs : board.columns[paso]) : all)
       .slice()
-      .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime() || a.video.title.localeCompare(b.video.title, "es"));
+      .sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || a.video.title.localeCompare(b.video.title, "es"));
     const personName = persona === UNASSIGNED_FILTER ? "Sin asignar" : persona ? board.people.find((p) => p.id === persona)?.name ?? "Persona elegida" : null;
     const labels: Record<string, string> = {
       ...(paso ? { paso: `Paso: ${PRODUCTION_STEP_MAP[paso]?.label ?? paso}` } : {}),

@@ -89,7 +89,7 @@ test("checks que marca el Listo de cada paso: misma regla que el dominio", () =>
     { label: "Copy y hashtags", stage: "PUBLICACION" },
   ];
   assert.deepEqual(copy.checksToMarkFor("GUION", checks), ["Guion escrito y revisado"]);
-  assert.deepEqual(copy.checksToMarkFor("GRABACION", checks), ["Guion escrito y revisado", "Actor asignado y confirmado", "Grabado (todas las tomas)"]);
+  assert.deepEqual(copy.checksToMarkFor("GRABACION", checks), ["Grabado (todas las tomas)"]);
   assert.deepEqual(copy.checksToMarkFor("EDICION", checks), ["Corte final", "Brief revisado"]);
   assert.deepEqual(copy.checksToMarkFor("PUBLICACION", checks), ["Copy y hashtags"]);
   assert.deepEqual(copy.checksToMarkFor("DISENO", checks), ["Miniatura lista"]);
@@ -174,6 +174,37 @@ test("Mi trabajo vacío: mensaje claro y sin «Sin asignar» para quien no coord
   assert.match(html, /No tienes pasos pendientes/);
   assert.doesNotMatch(html, /Sin asignar/);
   assert.doesNotMatch(html, /Ver la cadena/, "solo ENCARGADO (STRATEGY) y Dueño ven la Cadena");
+});
+
+test("grabación sin fecha sigue visible y no permite entregar material", () => {
+  const work = emptyWork();
+  work.groups.undated = [card("GRABACION", { dueAt: null, dueKey: "", dueLabel: "Sin fecha" })];
+  work.counts.pending = 1;
+  const html = render(member(["CAMERA"]), work);
+  assert.match(html, /Sin fecha/); assert.match(html, /pendiente de programación/);
+  assert.doesNotMatch(html, />Listo, pasar a edición<|1970/);
+  assert.equal(copy.stepPermissions(member(["CAMERA"]), { step: "GRABACION", status: "PENDIENTE", assigneeId: "yo", dueAt: null }, { coordinator: false }).canComplete, false);
+});
+
+test("la ficha oculta al cámara los formularios de material de entregas cerradas", async () => {
+  const flags = [process.env.PRODUCTION_FLOW_ENABLED, process.env.PRODUCTION_CHAIN_ENABLED];
+  process.env.PRODUCTION_FLOW_ENABLED = 'true'; process.env.PRODUCTION_CHAIN_ENABLED = 'true';
+  try {
+    const rows = ['GRABACION', 'EDICION'].map((step,i)=>({id:`step${i}`,step,status:'HECHO',source:'AUTO',dueAt:new Date(),doneAt:new Date(),updatedAt:new Date(),assigneeId:i?'editor':'yo',assignee:{name:i?'Editor':'Cámara'},materialUrl:`https://files.test/${i}`,requestedById:null,requestedBy:null,notes:null,reviewToken:null}));
+    const { ProductionPanel } = load('src/components/production-panel.tsx', { ...mocks,
+      '@/lib/production-chain-flag': { ...load('src/lib/production-chain-flag.ts'), productionChainEnabled:()=>true },
+      '@/lib/production-scope': { stepNotes: async()=>new Map() },
+      '@/lib/prisma': { prisma: {
+        contentItem:{findFirst:async()=>({id:'v1',title:'Vídeo',brandId:'b1',status:'EDICION',scriptId:'s1',assignments:[{userId:'yo'}],checklist:[]})},
+        productionStep:{findMany:async()=>rows},
+      } },
+    });
+    const html = renderToStaticMarkup(await ProductionPanel({user:member(['CAMERA']),videoId:'v1'}));
+    assert.match(html, /https:\/\/files.test\/1/);
+    assert.doesNotMatch(html, /name="materialUrl"|Guardar material/);
+  } finally {
+    for(const [key,value] of [['PRODUCTION_FLOW_ENABLED',flags[0]],['PRODUCTION_CHAIN_ENABLED',flags[1]]]) { if(value===undefined)delete process.env[key]; else process.env[key]=value; }
+  }
 });
 
 test("Mi trabajo agrupa por plazo, con el botón del rol, enlaces y la devolución", () => {

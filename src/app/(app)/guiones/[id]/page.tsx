@@ -416,7 +416,7 @@ export default async function GuionPage({ params }: { params: Promise<{ id: stri
             <ColumnTitle actions={canEdit ? <div className="no-print"><ScriptSheetEditor {...sheet} /></div> : undefined}>Ficha del guion</ColumnTitle>
             {canEdit ? <div className="no-print border-line mb-4 space-y-3 border-b pb-4">
               <EditForm action={actualizarGuion} className="flex flex-wrap items-end gap-2"><RevisionField value={script.updatedAt} /><input type="hidden" name="id" value={script.id} /><Field label="Título del guion" className="min-w-0 flex-1"><input name="title" aria-label="Título del guion" defaultValue={script.title} className="input w-full" required /></Field><SubmitButton className="btn" pendingLabel="Guardando…">Guardar título</SubmitButton></EditForm>
-              <EditForm action={cambiarEstadoGuion}><RevisionField value={script.updatedAt} /><input type="hidden" name="id" value={script.id} /><WorkflowStatusFields value={script.status} owner script options={SCRIPT_STATUSES.map(o => ({ value: o.value, label: o.label }))} /></EditForm>
+              <EditForm action={cambiarEstadoGuion} revision={script.updatedAt.toISOString()}><RevisionField value={script.updatedAt} /><input type="hidden" name="id" value={script.id} /><WorkflowStatusFields value={script.status} owner script options={SCRIPT_STATUSES.map(o => ({ value: o.value, label: o.label }))} /></EditForm>
             </div> : null}
             <dl className={viewer.facts}>
               <dt>A quién le habla</dt><dd>{script.avatar || "—"}</dd>

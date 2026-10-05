@@ -143,6 +143,7 @@ function fakeDb(overrides = {}) {
     // Solo el bloqueo de los ajustes del equipo lee filas con SQL.
     $queryRaw: async (strings, ...values) => (strings.join("?").includes('"BrandProductionSettings"') ? state.settings.filter((s) => s.brandId === values[0]).map((s) => ({ ...s })) : []),
     contentItem: {
+      findUniqueOrThrow: async ({ where, select }) => pick(state.videos.find(v=>v.id===where.id),select),
       findUnique: async ({ where, select }) => pick(state.videos.find((v) => v.id === where.id), select),
       findMany: async ({ where }) => state.videos.filter((v) => v.scriptId === where.scriptId).map((v) => ({ id: v.id })),
       count: async ({ where }) => {
@@ -202,6 +203,7 @@ function fakeDb(overrides = {}) {
       create: async ({ data }) => { const row = { id: `col-${++seq}`, ...data }; state.columns.push(row); return row; },
     },
     task: {
+      findUniqueOrThrow: async ({ where }) => state.tasks.find(t=>t.id===where.id),
       updateMany: async ({ where, data }) => { for (const task of state.tasks) if (state.steps.some(s => s.id === where.productionStep.id && s.taskId === task.id)) Object.assign(task, data); return { count: 1 }; },
       findFirst: async ({ where }) => state.tasks.filter((t) => t.columnId === where.columnId).sort((a, b) => b.order - a.order)[0] ?? null,
       create: async ({ data }) => { const row = { id: `task${++seq}`, ...data }; state.tasks.push(row); return { id: row.id, title: row.title }; },
@@ -222,6 +224,9 @@ function fakeDb(overrides = {}) {
       count: async ({ where }) => state.steps.filter((s) => stepWhere(s, where)).length,
     },
     checklistItem: {
+      findFirst: async ({ where }) => state.checklist.find(c=>c.contentItemId===where.contentItemId && where.stage.in.includes(c.stage) && c.required && c.kind===where.kind && c.done===where.done) ?? null,
+      findMany: async ({ where }) => state.checklist.filter(c=>c.contentItemId===where.contentItemId && c.stage===where.stage && c.kind===where.kind && c.done===where.done),
+      update: async ({ where,data }) => Object.assign(state.checklist.find(c=>c.id===where.id),data),
       count: async ({ where }) => state.checklist.filter((c) => c.contentItemId === where.contentItemId && c.stage === where.stage && c.kind === where.kind && c.required === where.required && c.done === where.done).length,
     },
     auditLog: { create: async ({ data }) => { state.audits.push(data); return data; } },
@@ -416,7 +421,7 @@ test("sin tablero de tareas: siembra las columnas iniciales; con columnas solo d
   assert.equal(other.state.tasks[0].columnId, created.id);
 }));
 
-test("fecha de grabación cambiada a mano: la grabación automática y su tarea la siguen; la manual no se toca", () => withFlag("true", async () => {
+test("fecha de grabación cambiada a mano: la grabación y su tarea siguen el vídeo, incluso con origen manual", () => withFlag("true", async () => {
   const db = fakeDb({ video: { shootDate: new Date("2026-10-01T12:00:00.000Z") }, steps: [{ id: "g1", contentItemId: "v1", brandId: "b1", step: "GRABACION", status: "PENDIENTE", source: "AUTO", taskId: "task-g", automationKey: "v1:GRABACION", dueAt: new Date("2026-09-30T04:59:59.999Z") }] });
   db.state.tasks.push({ id: "task-g", dueDate: new Date("2026-09-29T12:00:00.000Z") });
   db.task.updateMany = async ({ where, data }) => { Object.assign(db.state.tasks.find((t) => t.id === where.id), data); return { count: 1 }; };
@@ -426,8 +431,8 @@ test("fecha de grabación cambiada a mano: la grabación automática y su tarea 
   assert.equal(db.state.tasks[0].dueDate.toISOString(), "2026-10-01T12:00:00.000Z");
   db.state.steps[0].source = "MANUAL";
   db.state.videos[0].shootDate = new Date("2026-10-03T12:00:00.000Z");
-  assert.deepEqual(await flow.syncRecordingDate(db, PEOPLE.edward, "v1"), { done: false, reason: "exists" });
-  assert.equal(db.state.steps[0].dueAt.toISOString(), "2026-10-02T04:59:59.999Z");
+  assert.equal((await flow.syncRecordingDate(db, PEOPLE.edward, "v1")).done, true);
+  assert.equal(db.state.steps[0].dueAt.toISOString(), "2026-10-04T04:59:59.999Z");
 }));
 
 test("video cancelado: los pasos pendientes se cancelan", () => withFlag("true", async () => {
@@ -449,7 +454,7 @@ test("flag apagado: ganchos, pasos y mantenimiento no consultan nada (ni las tab
   await flow.onChecklistCompleted(tx, PEOPLE.owner, { contentItemId: "v1", stage: "GRABACION", kind: "TASK" });
   await flow.onChecklistCompleted(tx, PEOPLE.owner, { contentItemId: "v1", stage: "POSTPRODUCCION", kind: "FINAL_APPROVAL" });
   await flow.onStepCompleted(tx, PEOPLE.owner, { contentItemId: "v1", step: "GRABACION" });
-  await flow.onShootDateChanged(tx, PEOPLE.owner, "v1");
+  // La sincronización explícita de fechas funciona también con la automatización apagada.
   assert.deepEqual(await flow.scheduleRecording(tx, null, "v1"), { done: false, reason: "flag_off" });
   const sweep = load("src/lib/production-sweep.ts", { "@/lib/prisma": { prisma: untouchable() } });
   assert.deepEqual(await sweep.runProductionSweep(), { enabled: false, candidates: 0, assigned: 0, skipped: 0, failed: 0 });
@@ -571,6 +576,7 @@ const stepRow = (extra = {}) => ({ id: "g1", contentItemId: "v1", brandId: "b1",
 
 test("marcar hecho: la persona asignada o coordinación; al terminar la grabación se asigna la edición", () => withFlag("true", async () => {
   const db = fakeDb({
+    video: { shootDate: new Date("2026-09-29T12:00:00.000Z") },
     video: { status: "GRABACION", shootDate: new Date("2026-09-29T12:00:00.000Z") },
     steps: [stepRow()],
     assignments: [{ id: "a-c", contentItemId: "v1", userId: "carlos", role: "CAMARA", createdAt: new Date() }, { id: "a-l", contentItemId: "v1", userId: "laudder", role: "EDITOR", createdAt: new Date() }],

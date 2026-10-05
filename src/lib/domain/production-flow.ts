@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { invalidateRecordingPreparation, syncVideoStepDate, stepTaskDescription } from "@/lib/domain/production-dates";
 import type { SessionUser } from "@/lib/auth";
 import type { AppTransaction } from "@/lib/prisma";
 import { auditInTransaction } from "@/lib/audit";
@@ -218,7 +219,7 @@ export type NewStep = {
   step: StepKind;
   /** null: «Sin asignar» (solo la cadena de entregas crea pasos sin responsable). */
   person: Person | null;
-  dueAt: Date;
+  dueAt: Date | null;
   key: string;
   summary: string;
   source?: "AUTO" | "MANUAL";
@@ -236,10 +237,10 @@ export async function createStep(tx: AppTransaction, actor: ProductionActor, inp
   const task = await tx.task.create({
     data: {
       title,
-      description: `${PRODUCTION_STEP_MAP[step]?.label ?? step} del video "${video.title}". Vence: ${formatDateTime(dueAt)}. Ficha: /contenido/${video.id}`.slice(0, 2000),
+      description: stepTaskDescription(PRODUCTION_STEP_MAP[step]?.label ?? step, video.title, video.id, dueAt),
       kind: "ACCION",
       priority: "ALTA",
-      dueDate: fromDateKey(dateKey(dueAt)),
+      dueDate: dueAt ? fromDateKey(dateKey(dueAt)) : null,
       columnId,
       assigneeId: person?.id ?? null,
       brandId: video.brandId,
@@ -273,7 +274,7 @@ export async function createStep(tx: AppTransaction, actor: ProductionActor, inp
     summary: input.summary,
     changes: {
       assigneeId: { etiqueta: "Responsable", antes: null, despues: person?.id ?? null, verDespues: person?.name ?? "Sin asignar" },
-      dueAt: { etiqueta: "Vence", antes: null, despues: dueAt.toISOString(), verDespues: formatDateTime(dueAt) },
+      dueAt: { etiqueta: "Vence", antes: null, despues: dueAt?.toISOString() ?? null, verDespues: formatDateTime(dueAt) },
     },
   });
   return created;
@@ -427,34 +428,11 @@ export function assignPublishing(tx: AppTransaction, actor: ProductionActor, vid
 }
 
 /**
- * La fecha de grabación cambiada a mano manda: la grabación automática pendiente y su
- * tarea pasan a vencer ese día. Un paso reasignado a mano (MANUAL) no se toca.
+ * Una fecha cambiada explícitamente sincroniza cualquier grabación pendiente y su tarea.
  */
-export function syncRecordingDate(tx: AppTransaction, actor: ProductionActor, videoId: string): Promise<FlowResult> {
-  return guarded(tx, "sync_recording", async () => {
-    const video = await readVideo(tx, videoId);
-    if (!video?.shootDate) return skip("video_missing");
-    const step = await tx.productionStep.findUnique({
-      where: { automationKey: automationKey(video.id, "GRABACION") },
-      select: { id: true, status: true, source: true, dueAt: true, taskId: true },
-    });
-    if (!step || step.status !== "PENDIENTE" || step.source !== "AUTO") return skip("exists");
-    const shootKey = dateKey(video.shootDate);
-    const dueAt = endOfDayKey(shootKey);
-    if (step.dueAt.getTime() === dueAt.getTime()) return skip("exists");
-    await tx.productionStep.update({ where: { id: step.id }, data: { dueAt } });
-    if (step.taskId) await tx.task.updateMany({ where: { id: step.taskId }, data: { dueDate: fromDateKey(shootKey) } });
-    await auditInTransaction(tx, {
-      user: actor,
-      action: "EDITAR",
-      entity: "ProductionStep",
-      entityId: step.id,
-      brandId: video.brandId,
-      summary: `Movió la grabación de "${video.title}" al ${formatDateLong(fromDateKey(shootKey))} con la nueva fecha de grabación`,
-      changes: { dueAt: { etiqueta: "Vence", antes: step.dueAt.toISOString(), despues: dueAt.toISOString(), verAntes: formatDateTime(step.dueAt), verDespues: formatDateTime(dueAt) } },
-    });
-    return { done: true, stepId: step.id };
-  });
+export async function syncRecordingDate(tx: AppTransaction, actor: ProductionActor, videoId: string): Promise<FlowResult> {
+  const result = await syncVideoStepDate(tx, actor, videoId, "GRABACION");
+  return result.done && result.stepId ? { done: true, stepId: result.stepId } : skip("exists");
 }
 
 /** Un video cancelado no deja pasos pendientes en el tablero de nadie. */
@@ -582,18 +560,13 @@ export async function onChecklistCompleted(tx: AppTransaction, actor: Production
 
 /** Fecha de grabación editada a mano (actualizarVideo, actualizarGrabacion). */
 export async function onShootDateChanged(tx: AppTransaction, actor: ProductionActor, videoId: string) {
-  if (!productionFlowEnabled()) return;
-  if (await chainOwns(tx, videoId)) {
-    await (await chain()).chainEvent(tx, actor, { type: "DATE_CHANGED", videoId, field: "shootDate" });
-    return;
-  }
-  await syncRecordingDate(tx, actor, videoId);
+  await invalidateRecordingPreparation(tx, actor, videoId);
+  await syncVideoStepDate(tx, actor, videoId, "GRABACION");
 }
 
-/** Fecha prevista cambiada (recordPublication, actualizarVideo). Solo la cadena la sigue; apagada no consulta nada. */
+/** Sincronización de datos existentes, también con la automatización apagada. No crea pasos. */
 export async function onScheduledDateChanged(tx: AppTransaction, actor: ProductionActor, videoId: string) {
-  if (!productionFlowEnabled() || !productionChainConfigured()) return;
-  if (await chainOwns(tx, videoId)) await (await chain()).chainEvent(tx, actor, { type: "DATE_CHANGED", videoId, field: "scheduledDate" });
+  await syncVideoStepDate(tx, actor, videoId, "PUBLICACION");
 }
 
 /** Paso de grabación marcado hecho por el filmmaker o coordinación: la edición arranca ya. */

@@ -138,7 +138,7 @@ export function coordinationCan(viewer: AccessUser, step: StepKind, action: "com
  */
 export function stepPermissions(
   viewer: AccessUser,
-  step: { step: string; status: string; assigneeId: string | null },
+  step: { step: string; status: string; assigneeId: string | null; dueAt?: Date | string | null },
   opts: { coordinator: boolean },
 ): StepPermissions {
   if (step.status !== "PENDIENTE" || !isStepKind(step.step)) return NONE;
@@ -161,10 +161,10 @@ export function stepPermissions(
     };
   }
   return {
-    canComplete,
+    canComplete: canComplete && !(kind === "GRABACION" && step.dueAt === null),
     canReturn,
     canNotify: copy.notify && mine && (capable || coordinator),
-    blockedReason: null,
+    blockedReason: kind === "GRABACION" && step.dueAt === null ? "Sin fecha: pide a producción que programe la grabación." : null,
   };
 }
 
@@ -210,7 +210,8 @@ export function sentence(text: string): string {
 /**
  * Fecha del plazo en el día de Lima. Diseño vence a una hora (24 h); el resto, al final del día.
  */
-export function dueText(step: string, dueAt: Date | string): string {
+export function dueText(step: string, dueAt: Date | string | null): string {
+  if (!dueAt) return "pendiente de programación";
   return step === "DISENO" ? `${formatDateTime(dueAt)} (hora de Lima)` : `hasta el ${formatDateLong(dueAt)}`;
 }
 

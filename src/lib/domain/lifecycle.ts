@@ -14,7 +14,7 @@ export type TransitionInput = { id: string; status: string; expectedUpdatedAt: s
 /** Quien firma lo que hace la automatización: no tiene perfiles ni marcas (assertPublishable no lo usa). */
 const SYSTEM_USER: AccessUser = { id: "sistema", role: "SYSTEM" };
 
-type AdvanceBefore = { scriptId: string | null; scheduledDate: Date | null; publishedUrl: string | null };
+type AdvanceBefore = { shootDate: Date | null; scriptId: string | null; scheduledDate: Date | null; publishedUrl: string | null };
 
 /**
  * Requisitos para avanzar una etapa (extraídos de transitionVideo sin cambiar su orden ni sus
@@ -26,6 +26,7 @@ export async function assertAdvanceRequirements(tx: AppTransaction, id: string, 
     await assertScriptApproved(tx, before.scriptId);
     await assertChecklistApproved(tx, id, "SCRIPT_APPROVAL");
   }
+  if (["GRABACION", "EDICION"].includes(status) && !before.shootDate) throw new WorkflowError("Asigna una fecha de grabación antes de continuar.");
   if (status === "GRABACION") await assertRequiredChecks(tx, id, ["PREPRODUCCION"]);
   if (status === "EDICION") await assertRequiredChecks(tx, id, ["PREPRODUCCION", "GRABACION"]);
   if (["PROGRAMADO", "PUBLICADO"].includes(status)) await assertPublishable(tx, user, id);
@@ -54,7 +55,7 @@ export async function transitionVideo(tx: AppTransaction, user: SessionUser, inp
     await lockRevision(tx, "ContentItem", id, input.expectedUpdatedAt);
     const before = await tx.contentItem.findUniqueOrThrow({
       where: { id },
-      select: { title: true, status: true, brandId: true, publishedAt: true, scriptId: true, scheduledDate: true, publishedUrl: true },
+      select: { title: true, status: true, brandId: true, publishedAt: true, scriptId: true, shootDate: true, scheduledDate: true, publishedUrl: true },
     });
     if (before.status === status) return;
     const step = transition(CONTENT_FLOW, before.status, status, "CANCELADO");
@@ -112,7 +113,7 @@ export async function transitionVideo(tx: AppTransaction, user: SessionUser, inp
 export async function advanceVideoAsSystem(tx: AppTransaction, videoId: string, target: string, cause: string, now: Date = new Date()): Promise<string[]> {
   const video = await tx.contentItem.findUniqueOrThrow({
     where: { id: videoId },
-    select: { title: true, status: true, brandId: true, publishedAt: true, scriptId: true, scheduledDate: true, publishedUrl: true },
+    select: { title: true, status: true, brandId: true, publishedAt: true, scriptId: true, shootDate: true, scheduledDate: true, publishedUrl: true },
   });
   const to = CONTENT_FLOW.indexOf(target);
   const from = CONTENT_FLOW.indexOf(video.status);

@@ -91,11 +91,11 @@ function Rules() {
   return (
     <Callout tone="info" title="Cómo se reparte el trabajo">
       <ul className="list-disc space-y-0.5 pl-4">
-        <li>Al unir o aprobar el guion, el video se graba el próximo día de grabación de la marca, con el filmmaker.</li>
+        <li>El guionista entrega el guion y coordinación lo revisa. Solo tras aprobarlo se abre la grabación con el filmmaker. Si no hay fecha elegida, se propone el próximo día de grabación de la marca.</li>
         <li>Terminada la grabación, edición tiene hasta el siguiente día hábil (lo del sábado se edita el lunes).</li>
-        <li>Con la revisión final aprobada, community lo publica al día hábil siguiente.</li>
+        <li>El editor entrega el máster a revisión humana. Solo con la aprobación final se abre la publicación para community.</li>
         <li>Un diseño pedido por el guionista se entrega en máximo 24 horas (sin contar el domingo).</li>
-        <li>Lo que se asigne o fije a mano en el video siempre manda sobre lo automático.</li>
+        <li>Las asignaciones y fechas elegidas a mano se respetan. Quitar la fecha de grabación deja el trabajo pendiente de programación y bloquea la grabación.</li>
       </ul>
     </Callout>
   );

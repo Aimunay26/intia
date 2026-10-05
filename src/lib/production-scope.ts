@@ -50,7 +50,7 @@ export type StepCard = {
   /** Revisión del paso para lockRevision (expectedUpdatedAt del formulario). */
   revision: string;
   reviewToken: string | null;
-  dueAt: Date;
+  dueAt: Date | null;
   dueKey: string;
   dueLabel: string;
   overdue: boolean;
@@ -79,7 +79,7 @@ export type StepCard = {
 
 export type MyWork = {
   enabled: boolean;
-  groups: { overdue: StepCard[]; today: StepCard[]; next7: StepCard[]; later: StepCard[] };
+  groups: { undated: StepCard[]; overdue: StepCard[]; today: StepCard[]; next7: StepCard[]; later: StepCard[] };
   /** «Te lo devolvieron» (fuera de los grupos por fecha). */
   returned: StepCard[];
   counts: { pending: number; overdue: number; today: number };
@@ -263,8 +263,8 @@ function toCard(row: CardRow, now: Date, extras: Extras = {}): StepCard {
     dueAt: row.dueAt,
     dueKey,
     dueLabel: dueLabel(row.dueAt, now),
-    overdue: pending && row.dueAt < now,
-    today: pending && row.dueAt >= now && dueKey === todayKey,
+    overdue: pending && row.dueAt !== null && row.dueAt < now,
+    today: pending && row.dueAt !== null && row.dueAt >= now && dueKey === todayKey,
     doneAt: row.doneAt,
     video: { id: video.id, title: video.title, status: video.status, statusLabel: CONTENT_STATUS_MAP[video.status]?.label ?? video.status, href: `/contenido/${video.id}`, scriptId: video.scriptId, publishedUrl: video.publishedUrl },
     brand: { id: video.brand.id, name: video.brand.name, color: video.brand.colorPrimary },
@@ -368,7 +368,7 @@ export function isBlocked(card: StepCard): boolean {
 /* ------------------------------------------------------------- MI TRABAJO -- */
 
 function emptyMyWork(enabled: boolean): MyWork {
-  return { enabled, groups: { overdue: [], today: [], next7: [], later: [] }, returned: [], counts: { pending: 0, overdue: 0, today: 0 }, coordination: null, designsDelivered: [] };
+  return { enabled, groups: { undated: [], overdue: [], today: [], next7: [], later: [] }, returned: [], counts: { pending: 0, overdue: 0, today: 0 }, coordination: null, designsDelivered: [] };
 }
 
 /**
@@ -419,6 +419,7 @@ export async function readMyWork(user: AccessUser, now: Date = new Date(), opts:
   const todayKey = dateKey(now), weekKey = addDaysToKey(todayKey, 7);
   for (const card of mine) {
     if (card.returned) work.returned.push(card);
+    else if (!card.dueAt) work.groups.undated.push(card);
     else if (card.overdue) work.groups.overdue.push(card);
     else if (card.today) work.groups.today.push(card);
     else if (card.dueKey <= weekKey) work.groups.next7.push(card);
@@ -580,7 +581,7 @@ export async function readChain(user: AccessUser, opts: { brandId?: string | nul
 const ORDER: Record<string, number> = { GUION: 0, REVISION_GUION: 1, GRABACION: 2, EDICION: 3, REVISION_FINAL: 4, PUBLICACION: 5, DISENO: 6 };
 
 type EntryRow = {
-  id: string; step: string; status: string; dueAt: Date; contentItemId: string; brandId: string; assigneeId: string | null;
+  id: string; step: string; status: string; dueAt: Date | null; contentItemId: string; brandId: string; assigneeId: string | null;
   assignee: { name: string } | null;
   contentItem: { title: string; brand: { name: string } };
 };
@@ -588,7 +589,7 @@ type EntryRow = {
 /** Pura: filas de pasos → chips del calendario (fecha dueAt, verbo, color, responsable, estado). */
 export function toStepEntries(rows: EntryRow[], now: Date): StepCalendarEntry[] {
   return rows
-    .filter((row) => row.status === "PENDIENTE" || row.status === "HECHO")
+    .filter((row): row is EntryRow & { dueAt: Date } => row.dueAt !== null && (row.status === "PENDIENTE" || row.status === "HECHO"))
     .map((row) => {
       const step = row.step as StepKind;
       const rule = CHAIN_STEP_RULES[step] ?? CHAIN_STEP_RULES.DISENO;

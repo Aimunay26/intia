@@ -259,6 +259,10 @@ try {
   const review=await db.productionStep.findUniqueOrThrow({where:{id:'review-final'}});
   assert.equal(review.materialVersion,0);assert.equal(review.reviewToken,null);
   assert.throws(()=>sql(source,`UPDATE "Task" SET status='HECHO' WHERE id='review-loose'`),/Task_completion_check/);
+  const datedBefore=await db.productionStep.findMany({orderBy:{id:'asc'}});
+  sql(source,fs.readFileSync('prisma/migrations/20261005090000_recording_without_date/migration.sql'));
+  assert.deepEqual(await db.productionStep.findMany({orderBy:{id:'asc'}}),datedBefore,'La migración conserva fechas históricas');
+  assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET "dueAt"=NULL WHERE step='REVISION_FINAL'`),/ProductionStep_due_date_required/);
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);

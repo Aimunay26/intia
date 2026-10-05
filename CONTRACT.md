@@ -983,9 +983,12 @@ el video. Cada paso crea su tarea en el tablero («Grabar: …», «Editar: …�
 - **Apagado no automatiza.** Los pasos, ganchos y mantenimiento vuelven antes de consultar
   las tablas del flujo. La ficha y acción del equipo sí permiten preparar sus funciones y
   ajustes, con permisos y perfiles validados, antes de habilitar las automatizaciones.
+  Excepción: editar explícitamente una fecha sincroniza los pasos y tareas ya existentes
+  incluso con los interruptores apagados. No crea entregas ni asignaciones nuevas.
 - **Lo manual siempre gana.** La automatización solo completa lo vacío: la fecha de grabación
   solo se escribe si está vacía (`updateMany` condicionado); la asignación del video manda sobre
-  la persona de la marca; un paso reasignado a mano queda `MANUAL` y ya no se toca; no se pisan
+  la persona de la marca; un paso reasignado a mano queda `MANUAL`; los cambios explícitos de
+  fecha en la ficha sí sincronizan ese paso pendiente y su tarea. No se pisan
   asignaciones, fechas ni pasos existentes.
 - **Nunca confirma a medias.** Corre en la transacción de quien dispara, dentro de un
   `SAVEPOINT`. Si falla, registra un código cerrado sin datos personales y propaga el error
@@ -998,6 +1001,19 @@ el video. Cada paso crea su tarea en el tablero («Grabar: …», «Editar: …�
 - **Todo queda auditado** en la misma transacción (`ProductionStep`, `Task`, `Assignment`,
   `ContentItem`, `TaskColumn`, `BrandTeamMember`), firmado por quien disparó o como «Sistema»
   cuando lo hace el mantenimiento diario.
+- **Reprogramación y «Sin fecha».** Quitar `shootDate` deja la grabación pendiente con
+  `dueAt = null` y la tarea sin fecha límite. Sigue visible en Mi trabajo, cadena y tareas,
+  pero no tiene evento de calendario. La migración `20261005090000_recording_without_date`
+  permite el plazo nulo solo en grabaciones no terminadas y conserva los registros existentes.
+  Una eliminación manual auditada se respeta al reabrir el paso. Cambiar el día vuelve a
+  abrir los checks de preparación logística (actor, props, locación), conservando el guion
+  escrito y su aprobación; si ya estaba en Grabación vuelve a Aprobado. Sin fecha o preparación
+  obligatoria no se puede empezar ni terminar la grabación. «Listo» marca solo los checks de
+  grabación. Las fechas de entregas terminadas no se editan: hay que devolver el trabajo.
+  Los cambios desde tarea/paso requieren también permiso para planificar la fecha del vídeo;
+  sin él se rechaza la transacción completa. Los plazos de grabación/publicación son fin de día de Lima.
+  Con la cadena apagada, las tareas enlazadas remiten a la ficha para cambiar planificación;
+  no permiten crear diferencias de marca, responsable o fecha mediante su formulario genérico.
 - **Barrido diario** (`runProductionSweep` dentro de `/api/maintenance`; cron `0 10 * * *` UTC,
   05:00 en Lima): videos en Aprobado o Grabación con fecha de grabación anterior a hoy y de los
   últimos 14 días, sin paso de edición. Hasta 25 por ejecución, uno por transacción con

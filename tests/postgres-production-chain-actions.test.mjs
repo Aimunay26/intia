@@ -75,6 +75,8 @@ const vincular = (who, scriptId, contentItemId) => as(who, () => scripts.asignar
 // Preparación de escenarios: entregar y aprobar son dos peticiones con sesiones distintas.
 const revisar = async (video,kind) => {const row=await step(video,kind);return as(row.assigneeId??'owner',()=>production.marcarListo(form({id:row.id,expectedUpdatedAt:rev(row),expectedReviewToken:row.reviewToken})));};
 const entregarYRevisar = async (who,row,extra={}) => {
+  // Escenario ya preparado; el bloqueo de preparación se verifica en human-reviews.
+  if(row.step==='GRABACION') await prisma.checklistItem.updateMany({where:{contentItemId:row.contentItemId,stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'owner',doneAt:new Date()}});
   const result=await as(who,()=>production.marcarListo(form({id:row.id,expectedUpdatedAt:rev(row),...extra})));
   if(!result?.error && row.status==='PENDIENTE' && ['GUION','EDICION'].includes(row.step)) return revisar(row.contentItemId,row.step==='GUION'?'REVISION_GUION':'REVISION_FINAL');
   return result;
@@ -168,6 +170,7 @@ test('recorrido con las acciones: crear, vincular, «Listo», tarea a «Listo»,
   assert.deepEqual([grab.status, grab.task.columnId], ['PENDIENTE', 'initial-task-column-2']);
   assert.equal(await as('carlos', () => production.guardarMaterialPaso(form({ id: grab.id, materialUrl: 'https://drive.example.test/crudo', expectedUpdatedAt: rev(grab) }))), undefined);
   grab = await step(v1, 'GRABACION');
+  await prisma.checklistItem.updateMany({where:{contentItemId:v1,stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'carlos',doneAt:new Date()}});
   const moved = await as('carlos', () => tasks.moverTarea(grab.taskId, LAST, undefined, rev(grab.task)));
   assert.equal(moved.task.columnId, LAST);
   grab = await step(v1, 'GRABACION');
@@ -337,6 +340,7 @@ test('tablero y pasos: editar la tarea reasigna el paso; «Crear paso», «Tomar
   grab = await step(v4, 'GRABACION');
   assert.equal(await as('owner', () => production.guardarMaterialPaso(form({ id: grab.id, materialUrl: 'https://drive.example.test/v4', expectedUpdatedAt: rev(grab) }))), undefined);
   grab = await step(v4, 'GRABACION');
+  await prisma.checklistItem.updateMany({where:{contentItemId:v4,stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'owner',doneAt:new Date()}});
   const marked = await as('owner', () => production.marcarPaso(form({ id: grab.id, done: '1', expectedUpdatedAt: rev(grab) })));
   assert.match(marked.message, /Ahora le toca a Laudder: edición/);
   grab = await step(v4, 'GRABACION');

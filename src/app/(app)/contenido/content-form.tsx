@@ -355,7 +355,7 @@ export function VideoDatosForm({
   canEdit: boolean;
 }) {
   return (
-    <EditForm action={actualizarVideo} className="space-y-3.5 p-4">
+    <EditForm action={actualizarVideo} revision={new Date(item.updatedAt).toISOString()} className="space-y-3.5 p-4">
 <RevisionField value={item.updatedAt} />
       <input type="hidden" name="id" value={item.id} />
 

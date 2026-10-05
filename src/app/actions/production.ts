@@ -1,4 +1,6 @@
 "use server";
+import { invalidateRecordingPreparation, syncVideoStepDate } from "@/lib/domain/production-dates";
+import { assertRequiredChecks } from "@/lib/approvals";
 import { revalidatePath } from "next/cache";
 
 import { assertContentAccess, contentScope, lockVideoLifecycle } from "@/lib/access-scope";
@@ -102,7 +104,7 @@ async function legible(work: () => Promise<ProductionActionResult | void>): Prom
   }
 }
 
-type StepRow = { id: string; contentItemId: string; brandId: string; step: string; status: string; assigneeId: string | null; materialUrl: string | null; taskId: string | null; dueAt: Date };
+type StepRow = { id: string; contentItemId: string; brandId: string; step: string; status: string; assigneeId: string | null; materialUrl: string | null; taskId: string | null; dueAt: Date | null };
 
 async function readStep(tx: AppTransaction, id: string): Promise<(StepRow & { video: { title: string } }) | null> {
   const step = await tx.productionStep.findUnique({
@@ -174,10 +176,10 @@ async function listoMessage(tx: AppTransaction, result: CompleteStepResult): Pro
   if (!result.next || !result.nextStepId) return "Listo: el video quedó publicado.";
   const next = await tx.productionStep.findUniqueOrThrow({ where: { id: result.nextStepId }, select: { dueAt: true, assignee: { select: { name: true } } } });
   const label = PRODUCTION_STEP_MAP[result.next]?.label ?? result.next;
-  const due = formatDateLong(fromDateKey(dateKey(next.dueAt)));
+  const deadline = next.dueAt ? `vence el ${formatDateLong(fromDateKey(dateKey(next.dueAt)))}` : "sin fecha, pendiente de programación";
   return next.assignee
-    ? `Listo. Ahora le toca a ${next.assignee.name}: ${label.toLowerCase()}, vence el ${due}.`
-    : `Listo. El paso «${label}» queda sin asignar (vence el ${due}): coordinación lo asignará.`;
+    ? `Listo. Ahora le toca a ${next.assignee.name}: ${label.toLowerCase()}, ${deadline}.`
+    : `Listo. El paso «${label}» queda sin asignar (${deadline}): coordinación lo asignará.`;
 }
 
 /**
@@ -243,6 +245,11 @@ export async function marcarPaso(formData: FormData): Promise<ProductionActionRe
     if (step.status === "CANCELADO") return { error: "El paso está cancelado. Reasígnalo para reactivarlo." };
     if ((step.status === "HECHO") === done) return;
 
+    if (done && step.step === "GRABACION") {
+      const video = await tx.contentItem.findUniqueOrThrow({ where: { id: step.contentItemId }, select: { shootDate: true } });
+      if (!step.dueAt || !video.shootDate) throw new WorkflowError("Asigna una fecha de grabación antes de continuar.");
+      await assertRequiredChecks(tx, step.contentItemId, ["PREPRODUCCION"]);
+    }
     const completedAt = done ? new Date() : null;
     await tx.productionStep.update({ where: { id }, data: { status: done ? "HECHO" : "PENDIENTE", doneAt: completedAt } });
     await tx.task.updateMany({ where: { productionStep: { id } }, data: { status: done ? "HECHO" : "PENDIENTE", completedAt, completedById: done ? user.id : null } });
@@ -351,9 +358,9 @@ export async function reasignarPaso(formData: FormData): Promise<ProductionActio
   const id = field(formData, "id");
   const assigneeId = field(formData, "assigneeId");
   if (!assigneeId || assigneeId.length > 100) return { error: "Elige a la persona responsable." };
-  const due = readDue(formData, true);
+  const due = readDue(formData, false);
   if ("error" in due) return { error: due.error };
-  const dueAt = due.dueAt!;
+  const dueAt = due.dueAt;
 
   return legible(() => withMutation(user, false, async (tx, afterCommit): Promise<ProductionActionResult> => {
     // Cadena de entregas: el paso manda; la tarea y la fecha del video (grabación o publicación) lo siguen.
@@ -372,12 +379,27 @@ export async function reasignarPaso(formData: FormData): Promise<ProductionActio
     if (!person) return { error: "La persona debe estar activa, autorizada para esta marca y tener permiso para realizar este paso." };
     const before = await tx.productionStep.findUniqueOrThrow({ where: { id }, select: { assignee: { select: { name: true } } } });
 
+    if (!dueAt && step.step !== "GRABACION") throw new WorkflowError("Este paso necesita fecha límite.");
+    if (step.status === "HECHO" && step.dueAt?.getTime() !== dueAt?.getTime()) throw new WorkflowError("La entrega ya terminó: su fecha histórica no se puede cambiar.");
     const reactivar = step.status === "CANCELADO";
+    if ((step.status === "PENDIENTE" || reactivar) && ["GRABACION", "PUBLICACION"].includes(step.step)) {
+      const video = await tx.contentItem.findUniqueOrThrow({ where: { id: step.contentItemId }, select: { shootDate: true, scheduledDate: true } });
+      const field = step.step === "GRABACION" ? "shootDate" : "scheduledDate";
+      const date = dueAt ? fromDateKey(dateKey(dueAt)) : null;
+      if (dateKey(video[field]) !== dateKey(date)) {
+        if (!allows(user, "content.plan") && !(field === "shootDate" && allows(user, "content.scheduleShoot"))) throw new WorkflowError("Necesitas permiso para planificar y cambiar este plazo.");
+        if (field === "shootDate") await invalidateRecordingPreparation(tx, user, step.contentItemId);
+        await tx.contentItem.update({ where: { id: step.contentItemId }, data: field === "shootDate" ? { shootDate: date } : { scheduledDate: date! } });
+        await auditInTransaction(tx, { user, action: "EDITAR", entity: "ContentItem", entityId: step.contentItemId, brandId: step.brandId,
+          summary: "Cambió la fecha de " + stepLabel(step.step) + " con el plazo del paso.",
+          changes: { [field]: { etiqueta: "Fecha", antes: video[field]?.toISOString() ?? null, despues: date?.toISOString() ?? null } } });
+      }
+    }
     await tx.productionStep.update({ where: { id }, data: { assigneeId: person.id, dueAt, source: "MANUAL", ...(reactivar ? { status: "PENDIENTE" } : {}) } });
     if (reactivar) await tx.task.updateMany({ where: { productionStep: { id } }, data: { status: "PENDIENTE", completedAt: null, completedById: null } });
     const changes: Record<string, Cambio> = {};
     if (step.assigneeId !== person.id) changes.assigneeId = { etiqueta: "Responsable", antes: step.assigneeId, despues: person.id, verAntes: before.assignee?.name ?? "", verDespues: person.name };
-    if (step.dueAt.getTime() !== dueAt.getTime()) changes.dueAt = { etiqueta: "Vence", antes: step.dueAt.toISOString(), despues: dueAt.toISOString(), verAntes: formatDateTime(step.dueAt), verDespues: formatDateTime(dueAt) };
+    if (step.dueAt?.getTime() !== dueAt?.getTime()) changes.dueAt = { etiqueta: "Vence", antes: step.dueAt?.toISOString() ?? null, despues: dueAt?.toISOString() ?? null, verAntes: formatDateTime(step.dueAt), verDespues: formatDateTime(dueAt) };
     if (reactivar) changes.status = { etiqueta: "Estado", antes: "CANCELADO", despues: "PENDIENTE" };
     await auditInTransaction(tx, {
       user,
@@ -392,8 +414,8 @@ export async function reasignarPaso(formData: FormData): Promise<ProductionActio
     // La tarea del tablero sigue al paso: mismo responsable y misma fecha límite.
     if (step.taskId) {
       const task = await tx.task.findUnique({ where: { id: step.taskId }, select: { id: true, title: true, assigneeId: true, dueDate: true, brandId: true } });
-      const dueDate = fromDateKey(dateKey(dueAt));
-      if (task && (task.assigneeId !== person.id || task.dueDate?.getTime() !== dueDate.getTime())) {
+      const dueDate = dueAt ? fromDateKey(dateKey(dueAt)) : null;
+      if (task && (task.assigneeId !== person.id || task.dueDate?.getTime() !== dueDate?.getTime())) {
         await tx.task.update({ where: { id: task.id }, data: { assigneeId: person.id, dueDate } });
         await auditInTransaction(tx, {
           user,
@@ -404,11 +426,12 @@ export async function reasignarPaso(formData: FormData): Promise<ProductionActio
           summary: `Reasignó la tarea "${task.title}" a ${person.name}`,
           changes: {
             assigneeId: { etiqueta: "Responsable", antes: task.assigneeId, despues: person.id, verDespues: person.name },
-            dueDate: { etiqueta: "Fecha límite", antes: task.dueDate?.toISOString() ?? null, despues: dueDate.toISOString() },
+            dueDate: { etiqueta: "Fecha límite", antes: task.dueDate?.toISOString() ?? null, despues: dueDate?.toISOString() ?? null },
           },
         });
       }
     }
+    if ((step.status === "PENDIENTE" || reactivar) && (step.step === "GRABACION" || step.step === "PUBLICACION")) await syncVideoStepDate(tx, user, step.contentItemId, step.step);
     await ensureStepAssignment(tx, user, step.contentItemId, step.step as StepKind, person);
     afterCommit(() => refrescar(step.contentItemId));
   }));

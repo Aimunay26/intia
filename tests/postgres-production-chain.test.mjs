@@ -71,6 +71,9 @@ const link = (scriptId, videoId) => tx((t) => persist.vincularGuionAVideo(t, as(
 // postgres-human-reviews prueba cada estado intermedio, los rechazos y los atajos prohibidos.
 const revisar = async (video, kind) => { const review=await step(video,kind); return run(review.assigneeId ?? 'owner',(t,u)=>chain.completeStep(t,u,review.id,{expectedUpdatedAt:review.updatedAt.toISOString(),expectedReviewToken:review.reviewToken})); };
 const entregarYRevisar = async (who, stepId, input = {}) => {
+  const pending=await prisma.productionStep.findUniqueOrThrow({where:{id:stepId}});
+  // Preparación del escenario; human-reviews prueba que no puede omitirse ni sobrevivir a una reprogramación.
+  if(pending.step==='GRABACION') await prisma.checklistItem.updateMany({where:{contentItemId:pending.contentItemId,stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'carlos',doneAt:new Date()}});
   const result=await run(who,(t,u)=>chain.completeStep(t,u,stepId,input));
   if (result.status==='done' && ['REVISION_GUION','REVISION_FINAL'].includes(result.next)) {
     const row=await prisma.productionStep.findUniqueOrThrow({where:{id:stepId}});
@@ -479,6 +482,7 @@ test('caminos viejos convergen: guion enviado a revisión, checks, revisión fin
 
   // Reabrir hacia atrás (Edición → Grabación) reactiva la grabación y cancela lo posterior.
   const v8 = async () => prisma.contentItem.findUniqueOrThrow({ where: { id: 'v8' } });
+  await prisma.checklistItem.updateMany({where:{contentItemId:'v8',stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'carlos',doneAt:new Date()}});
   await run('owner', async (t, u) => lifecycle.transitionVideo(t, u, { id: 'v8', status: 'GRABACION', expectedUpdatedAt: (await v8()).updatedAt.toISOString(), override: false, reason: 'Hay que regrabar el final' }));
   assert.deepEqual((await openSteps('v8')).map((s) => s.step), ['GRABACION']);
   assert.equal((await step('v8', 'PUBLICACION')).status, 'CANCELADO');

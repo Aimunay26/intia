@@ -121,6 +121,7 @@ async function personalItems(person: AccessUser, { desde, hasta }: Window, uid: 
     : [];
   const items: IcsEvent[] = [];
   for (const step of steps) {
+    if (!step.dueAt) continue;
     const timed = step.step === "DISENO";
     items.push({ uid: uid("step", step.id), title: feedStepTitle(step.step, step.contentItem.brand.name, step.contentItem.title), start: step.dueAt, allDay: !timed, updatedAt: step.updatedAt });
   }

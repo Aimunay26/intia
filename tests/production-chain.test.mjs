@@ -143,7 +143,7 @@ test("cadena apagada: chainEvent, ganchos nuevos, lecturas y barrido no consulta
 
   const flow = load("src/lib/domain/production-flow.ts", { "@/lib/prisma": { prisma: untouchable() }, "@/lib/auth": { clientIp: async () => "127.0.0.1" } });
   await flow.onScriptStatusChanged(tx, owner, "s1", "BORRADOR", "REVISION");
-  await flow.onScheduledDateChanged(tx, owner, "v1");
+  // La sincronización explícita de fechas no es un disparo de automatización.
 
   const scope = load("src/lib/production-scope.ts", { "@/lib/prisma": { prisma: untouchable() } });
   const member = { id: "c", name: "Carlos", role: "MEMBER", profiles: ["CAMERA"], brandIds: ["b1"] };

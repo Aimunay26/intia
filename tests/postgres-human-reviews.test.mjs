@@ -33,6 +33,12 @@ const step = kind => prisma.productionStep.findUniqueOrThrow({ where: { automati
 const listo = async (who, kind, extra={}) => { const s=await step(kind); return as(who,()=>production.marcarListo(fd({ id:s.id, expectedUpdatedAt:s.updatedAt.toISOString(), expectedReviewToken:s.reviewToken, ...extra }))); };
 const reject = async (kind,motivo) => { const s=await step(kind); return as('lead',()=>production.devolverPaso(fd({ id:s.id, expectedUpdatedAt:s.updatedAt.toISOString(), motivo }))); };
 const noError = result => assert.ok(!result?.error, result?.error);
+const video = () => prisma.contentItem.findUniqueOrThrow({where:{id:'video'}});
+const shoot = async date => as('owner',async()=>content.actualizarGrabacion(fd({id:'video',shootDate:date,expectedUpdatedAt:(await video()).updatedAt.toISOString()})));
+const preparation = async () => {
+  const checks=await prisma.checklistItem.findMany({where:{contentItemId:'video',stage:'PREPRODUCCION',kind:'TASK',done:false,label:{not:'Guion escrito y revisado'}}});
+  for(const check of checks) noError(await as('camera',()=>content.alternarCheck(fd({id:check.id,done:'1'}))));
+};
 after(()=>prisma.$disconnect());
 
 test('equipo y guion de prueba; todas las escrituras están en PostgreSQL local', async()=>{
@@ -106,8 +112,84 @@ test('rechazo, cambio de escenas y nueva entrega: se conserva la tarea y la huel
   assert.equal(await prisma.comment.count({where:{contentItemId:'video'}}),2);
 });
 
+test('un fallo al sincronizar la tarea revierte la fecha, preparación y auditoría',async()=>{
+  await preparation();
+  const before=await video(), recording=await step('GRABACION'), audits=await prisma.auditLog.count();
+  const checks=await prisma.checklistItem.findMany({where:{contentItemId:'video'},orderBy:{id:'asc'}});
+  await prisma.$executeRawUnsafe(`CREATE FUNCTION qa_reject_date() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW."dueDate" IS NULL AND OLD."dueDate" IS NOT NULL THEN RAISE EXCEPTION 'QA date unavailable'; END IF; RETURN NEW; END $$`);
+  await prisma.$executeRawUnsafe(`CREATE TRIGGER qa_reject_date BEFORE UPDATE ON "Task" FOR EACH ROW EXECUTE FUNCTION qa_reject_date()`);
+  try {
+    await assert.rejects(shoot(''),/QA date unavailable/);
+    assert.deepEqual(await video(),before); assert.deepEqual(await step('GRABACION'),recording);
+    assert.deepEqual(await prisma.checklistItem.findMany({where:{contentItemId:'video'},orderBy:{id:'asc'}}),checks);
+    assert.equal(await prisma.auditLog.count(),audits);
+  } finally { await prisma.$executeRawUnsafe('DROP TRIGGER qa_reject_date ON "Task"'); await prisma.$executeRawUnsafe('DROP FUNCTION qa_reject_date()'); }
+});
+
+test('quitar fecha conserva la tarea asignada sin plazo, sale del calendario y bloquea la grabación',async()=>{
+  await preparation();
+  const before=await step('GRABACION');
+  await prisma.task.update({where:{id:before.taskId},data:{description:before.task.description+'\n\nAvance: equipo confirmado por teléfono.'}});
+  noError(await shoot(''));
+  assert.equal((await video()).shootDate,null);
+  const cleared=await step('GRABACION');
+  assert.equal(cleared.id,before.id); assert.equal(cleared.taskId,before.taskId); assert.equal(cleared.assigneeId,'camera');
+  assert.equal(cleared.dueAt,null); assert.equal(cleared.task.dueDate,null); assert.match(cleared.task.description,/Sin fecha/);
+  assert.match(cleared.task.description,/Avance: equipo confirmado por teléfono/);
+  const work=await as('camera',async()=>scope.readMyWork(await session('camera')));
+  assert.ok(work.groups.undated.some(c=>c.id===cleared.id));
+  assert.equal(scope.toStepEntries([{...cleared,contentItem:{title:'Vídeo',brand:{name:'Pruebas'}}}],new Date()).length,0);
+  assert.match((await listo('camera','GRABACION',{materialUrl:'https://files.test/raw'})).error,/fecha de grabación/);
+  const jump=await as('owner',async()=>content.cambiarEstado(fd({id:'video',status:'GRABACION',expectedUpdatedAt:(await video()).updatedAt.toISOString()})));
+  assert.match(jump.error,/fecha de grabación/);
+  assert.equal((await prisma.checklistItem.findFirstOrThrow({where:{contentItemId:'video',kind:'SCRIPT_APPROVAL'}})).done,true);
+  assert.equal(await prisma.checklistItem.count({where:{contentItemId:'video',stage:'PREPRODUCCION',kind:'TASK',done:true,label:{not:'Guion escrito y revisado'}}}),0);
+  assert.equal((await step('GRABACION')).task.status,'PENDIENTE');
+  await assert.rejects(prisma.productionStep.update({where:{id:cleared.id},data:{status:'HECHO',doneAt:new Date()}}),/ProductionStep_due_date_required/);
+});
+
+test('reprogramar desde la tarea y el paso sincroniza el vídeo; cambiar la fecha exige reconfirmar preparación',async()=>{
+  const current=await step('GRABACION'), t=current.task;
+  noError(await as('owner',()=>tasks.actualizarTarea(fd({...t,id:t.id,dueDate:'2027-01-14',expectedUpdatedAt:t.updatedAt.toISOString()}))));
+  assert.equal((await video()).shootDate.toISOString(),'2027-01-14T12:00:00.000Z');
+  const moved=await step('GRABACION');
+  assert.equal(moved.dueAt.toISOString(),'2027-01-15T04:59:59.999Z'); assert.equal(moved.source,'MANUAL'); assert.doesNotMatch(moved.task.description,/Sin fecha/);
+  await preparation();
+  noError(await as('owner',async()=>content.cambiarEstado(fd({id:'video',status:'GRABACION',expectedUpdatedAt:(await video()).updatedAt.toISOString()}))));
+  noError(await shoot('2027-01-16'));
+  assert.equal((await video()).status,'APROBADO');
+  assert.equal((await step('GRABACION')).dueAt.toISOString(),'2027-01-17T04:59:59.999Z');
+  assert.match((await listo('camera','GRABACION',{materialUrl:'https://files.test/raw'})).error,/Completa el requisito/);
+  const pending=await step('GRABACION');
+  noError(await as('owner',()=>production.reasignarPaso(fd({id:pending.id,assigneeId:'camera',dueDate:'',expectedUpdatedAt:pending.updatedAt.toISOString()}))));
+  assert.equal((await video()).shootDate,null); assert.equal((await step('GRABACION')).task.dueDate,null);
+  const noDate=await step('GRABACION');
+  noError(await as('owner',()=>production.reasignarPaso(fd({id:noDate.id,assigneeId:'camera',dueDate:'2027-01-18',dueTime:'10:00',expectedUpdatedAt:noDate.updatedAt.toISOString()}))));
+  assert.equal((await step('GRABACION')).dueAt.toISOString(),'2027-01-19T04:59:59.999Z');
+  await preparation();
+});
+
+test('fecha manual eliminada no se inventa al abrir grabación; sincronización persiste con automatización apagada',async()=>{
+  noError(await shoot(''));
+  await run('owner',async tx=>{ await tx.productionStep.update({where:{id:(await step('GRABACION')).id},data:{status:'CANCELADO'}}); await chain.ensureChainForVideo(tx,'video',{actor:await session('owner')}); });
+  assert.equal((await step('GRABACION')).dueAt,null); assert.equal((await video()).shootDate,null);
+  process.env.PRODUCTION_FLOW_ENABLED='false';
+  try {
+    noError(await shoot('2027-01-20')); assert.equal((await step('GRABACION')).task.dueDate.toISOString(),'2027-01-20T12:00:00.000Z');
+    const t=(await step('GRABACION')).task;
+    const blocked=await as('owner',()=>tasks.actualizarTarea(fd({...t,dueDate:'2027-01-22',expectedUpdatedAt:t.updatedAt.toISOString()})));
+    assert.match(blocked.error,/desde la ficha/);
+    assert.equal((await step('GRABACION')).task.dueDate.toISOString(),'2027-01-20T12:00:00.000Z');
+  }
+  finally { process.env.PRODUCTION_FLOW_ENABLED='true'; }
+  await preparation();
+});
+
 test('entregar máster abre revisión final, accesible a coordinación, sin abrir publicación', async()=>{
   noError(await listo('camera','GRABACION',{materialUrl:'https://files.test/raw'}));
+  const recorded=await step('GRABACION');
+  assert.match((await shoot('')).error,/grabación ya terminó/);
+  assert.equal((await step('GRABACION')).dueAt.toISOString(),recorded.dueAt.toISOString());
   await prisma.checklistItem.updateMany({where:{contentItemId:'video',kind:'TASK',label:{contains:'Miniatura',mode:'insensitive'}},data:{done:true,doneAt:new Date(),doneById:'owner'}});
   noError(await listo('editor','EDICION',{materialUrl:'https://files.test/master-v1'}));
   assert.equal((await step('REVISION_FINAL')).assigneeId,'lead');

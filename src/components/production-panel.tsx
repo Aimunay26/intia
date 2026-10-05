@@ -121,13 +121,13 @@ export async function ProductionPanel({ user, videoId }: { user: SessionUser; vi
       {steps.length ? (
         <ul className="divide-line divide-y">
           {steps.map((step) => {
-            const overdue = step.status === "PENDIENTE" && step.dueAt < now && (!chain || !deadVideo);
+            const overdue = step.status === "PENDIENTE" && step.dueAt !== null && step.dueAt < now && (!chain || !deadVideo);
             const mine = step.assigneeId === user.id;
             const canWrite = canAssign || mine;
             // La publicación deja su enlace en la ficha del video (publishedUrl), no aquí.
             const canMaterial = step.step !== "PUBLICACION" && (canWrite || ((step.step === "GRABACION" || step.step === "EDICION") && recorders.has(user.id)));
             // Con la cadena, el enlace de un paso pendiente se pide en su «Listo»; aquí solo se corrige el de uno hecho.
-            const showMaterial = canMaterial && (!chain || step.status === "HECHO");
+            const showMaterial = canMaterial && !chain;
             const materialLabel = (chain ? CHAIN_MATERIAL_LABEL[step.step] : MATERIAL_LABEL[step.step]) ?? "Enlace";
             const revision = new Date(step.updatedAt).toISOString();
             const notice = step.status === "PENDIENTE" ? notes.get(step.id)?.notice ?? null : null;
@@ -246,10 +246,10 @@ export async function ProductionPanel({ user, videoId }: { user: SessionUser; vi
                         </select>
                       </Field>
                       <Field label="Vence">
-                        <input name="dueDate" type="date" className="input" defaultValue={dateKey(step.dueAt)} required />
+                        <input name="dueDate" type="date" className="input" defaultValue={dateKey(step.dueAt)} required={step.step !== "GRABACION"} />
                       </Field>
                       <Field label="Hora" hint="Vacía: al final del día.">
-                        <input name="dueTime" type="time" className="input" defaultValue={step.step === "DISENO" ? timeKey(step.dueAt) : ""} />
+                        <input name="dueTime" type="time" className="input" defaultValue={step.step === "DISENO" ? step.dueAt ? timeKey(step.dueAt) : "" : ""} />
                       </Field>
                       <SubmitButton className="btn btn-sm" pendingLabel="Guardando…">Reasignar</SubmitButton>
                     </EditForm>

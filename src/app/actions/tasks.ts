@@ -51,9 +51,9 @@ function refrescar() {
  * Tarea y paso son una sola cosa (PRODUCTION_CHAIN_ENABLED): entrar en la última columna es el
  * «Listo» del paso, con sus mismas validaciones, y sacar de ahí la tarea de un paso cerrado se
  * rechaza (para rehacerlo se devuelve desde el paso siguiente). Reasignar o cambiar la fecha de
- * la tarea reasigna el paso (y la fecha del video). Con la cadena apagada no se consulta nada.
+ * la tarea reasigna el paso (y la fecha del video). Con la cadena apagada este helper no actúa.
  */
-type TaskStep = { id: string; contentItemId: string; brandId: string; step: string; status: string; dueAt: Date };
+type TaskStep = { id: string; contentItemId: string; brandId: string; step: string; status: string; dueAt: Date | null };
 
 async function chainStepOfTask(tx: AppTransaction, taskId: string): Promise<TaskStep | null> {
   if (!productionChainConfigured()) return null;
@@ -81,17 +81,17 @@ type StepFields = { brandId: string | null; assigneeId: string | null; dueDate: 
 
 /**
  * Cambios de la tarea de un paso que no son de columna: responsable y fecha siguen al paso.
- * Devuelve el aviso del calendario si la fecha del video no pudo seguir al plazo (sin permiso).
+ * Si falta permiso para planificar el vídeo, reassignStep rechaza la transacción completa.
  */
 async function syncEditToStep(tx: AppTransaction, user: SessionUser, step: TaskStep, before: StepFields, data: StepFields): Promise<string | null> {
   if (data.brandId !== before.brandId) throw new ChainError("Esta tarea es de un paso de producción: no puede cambiar de marca.");
   const dueChanged = dateKey(data.dueDate) !== dateKey(before.dueDate);
   if (data.assigneeId === before.assigneeId && !dueChanged) return null;
   if (step.status !== "PENDIENTE") throw new ChainError("El paso de esta tarea ya está cerrado: no se reasigna ni cambia de fecha.");
-  if (!data.dueDate) throw new ChainError("La tarea de un paso de producción necesita fecha límite.");
+  if (!data.dueDate && step.step !== "GRABACION") throw new ChainError("La tarea de un paso de producción necesita fecha límite.");
   const key = dateKey(data.dueDate);
   // El diseño vence a una hora (24 h); los demás pasos, al final del día.
-  const dueAt = !dueChanged ? step.dueAt : step.step === "DISENO" ? instantInZone(key, timeKey(step.dueAt)) : endOfDayKey(key);
+  const dueAt = !dueChanged ? step.dueAt : !data.dueDate ? null : step.step === "DISENO" ? instantInZone(key, timeKey(step.dueAt!)) : endOfDayKey(key);
   return (await reassignStep(tx, user, step.id, { assigneeId: data.assigneeId, dueAt })).calendarNotice;
 }
 
@@ -190,10 +190,15 @@ export async function actualizarTarea(formData: FormData) {
     return await withMutation(user, false, async (tx, afterCommit) => {
       await assertTaskAccess(tx, user, field(formData, "id"), "tasks.work");
       const id = field(formData, "id");
+      const linked = await tx.productionStep.findUnique({ where: { taskId: id }, select: { contentItemId: true } });
+      if (linked) await lockVideoLifecycle(tx, linked.contentItemId);
       const step = await lockTaskStep(tx, id);
       await lockRevision(tx, "Task", id, formData);
       const before = await tx.task.findUniqueOrThrow({ where: { id } });
       const data = readTask(formData);
+      if (linked && !step && (data.brandId !== before.brandId || data.assigneeId !== before.assigneeId || dateKey(data.dueDate) !== dateKey(before.dueDate))) {
+        throw new WorkflowError("Esta tarea pertenece a producción. Con la cadena apagada, cambia la planificación desde la ficha del vídeo para mantener sus fechas y responsables sincronizados.");
+      }
       if (!allows(user, "tasks.manage")) {
         if (data.brandId !== before.brandId || data.assigneeId !== before.assigneeId || data.title !== before.title || data.priority !== before.priority || data.kind !== before.kind || dateKey(data.dueDate) !== dateKey(before.dueDate)) throw new Error("Solo coordinación o producción pueden reasignar y planificar tareas.");
         // El formulario conserva el día visible sin normalizar fechas históricas al guardar avance.
@@ -207,7 +212,10 @@ export async function actualizarTarea(formData: FormData) {
       if (step) {
         // Cadena de entregas: primero la persona y la fecha del paso; después la columna (= «Listo»).
         const notice = await syncEditToStep(tx, user, step, before, data);
-        // Sin permiso para mover la fecha del video, el calendario sigue en la anterior: se avisa.
+        if (dateKey(before.dueDate) !== dateKey(data.dueDate) && before.description === data.description) {
+          data.description = (await tx.task.findUniqueOrThrow({ where: { id }, select: { description: true } })).description;
+        }
+        // Los cambios de planificación se confirman junto con el paso y el vídeo.
         if (notice) message = `Tarea guardada. ${notice}`;
         if (columnId !== before.columnId) await chainEvent(tx, user, { type: "TASK_MOVED", taskId: id, toColumnId: columnId });
         afterCommit(refrescarCadena);

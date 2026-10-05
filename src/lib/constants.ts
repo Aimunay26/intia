@@ -536,7 +536,7 @@ export function chainChecksToMark(step: string, checks: readonly { label: string
   const written = /guion escrito/i, design = /miniatura|portada|diseño/i;
   const pick = (stages: string[], test: (label: string) => boolean = () => true) => checks.filter((c) => stages.includes(c.stage) && test(c.label)).map((c) => c.label);
   if (step === "GUION") return pick(["PREPRODUCCION"], (label) => written.test(label));
-  if (step === "GRABACION") return pick(["PREPRODUCCION", "GRABACION"]);
+  if (step === "GRABACION") return pick(["GRABACION"]);
   if (step === "EDICION") return [...pick(["POSTPRODUCCION"], (label) => !design.test(label)), ...pick(["GENERAL"])];
   if (step === "PUBLICACION") return pick(["PUBLICACION"]);
   if (step === "DISENO") return pick(["POSTPRODUCCION"], (label) => design.test(label));

@@ -78,6 +78,7 @@ export function MyWorkView({ user, work, className }: { user: SessionUser; work:
         <Group title="Vencido" tone="danger" icon={<AlertTriangle size={13} />} cards={work.groups.overdue} user={user} coordinator={coordinator} />
         <Group title="Devuelto a mí" tone="warn" icon={<RotateCcw size={13} />} cards={work.returned} user={user} coordinator={coordinator} />
         <Group title="Hoy" tone="brand" icon={<CalendarClock size={13} />} cards={work.groups.today} user={user} coordinator={coordinator} />
+        <Group title="Sin fecha" icon={<CalendarDays size={13} />} cards={work.groups.undated ?? []} user={user} coordinator={coordinator} />
         <Group title="Próximos 7 días" icon={<CalendarDays size={13} />} cards={work.groups.next7} user={user} coordinator={coordinator} />
         {later.length ? (
           <details data-group="later">
@@ -204,7 +205,7 @@ function CardLinks({ card }: { card: StepCard }) {
 }
 
 function actionModel(card: StepCard, user: SessionUser, coordinator: boolean): StepActionModel {
-  const permissions = stepPermissions(user, { step: card.step, status: card.status, assigneeId: card.assignee?.id ?? null }, { coordinator });
+  const permissions = stepPermissions(user, { step: card.step, status: card.status, assigneeId: card.assignee?.id ?? null, dueAt: card.dueAt }, { coordinator });
   return {
     id: card.id,
     step: card.step,

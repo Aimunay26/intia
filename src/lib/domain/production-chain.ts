@@ -1,4 +1,5 @@
 import type { SessionUser } from "@/lib/auth";
+import { invalidateRecordingPreparation, syncVideoStepDate, stepTaskDescription } from "@/lib/domain/production-dates";
 import type { AppTransaction } from "@/lib/prisma";
 import { assertContentAccess, assertPublishable, contentScope, lockVideoLifecycle, scriptScope } from "@/lib/access-scope";
 import { approvalToken, approveVersion, assertApprovedVersion, assertChecklistApproved, assertRequiredChecks, assertScriptApproved, reopenContentApprovals, revokeVersion, type ApprovalType } from "@/lib/approvals";
@@ -60,7 +61,7 @@ export type ReturnStepInput = { motivo: string; expectedUpdatedAt?: string; now?
 export type ReturnStepResult = { stepId: string; reopened: ChainStep; reopenedStepId: string; assigneeId: string | null; commentId: string };
 export type NotifyInput = { motivo: string; now?: Date };
 export type NotifyResult = { stepId: string; commentId: string; coordinatorIds: string[] };
-export type ReassignStepInput = { assigneeId: string | null; dueAt: Date; expectedUpdatedAt?: string };
+export type ReassignStepInput = { assigneeId: string | null; dueAt: Date | null; expectedUpdatedAt?: string };
 export type ReassignStepResult = {
   stepId: string;
   reactivated: boolean;
@@ -152,7 +153,7 @@ const VIDEO_SELECT = {
 } as const;
 
 type StepRow = {
-  id: string; contentItemId: string; brandId: string; step: string; status: string; assigneeId: string | null; dueAt: Date;
+  id: string; contentItemId: string; brandId: string; step: string; status: string; assigneeId: string | null; dueAt: Date | null;
   source: string; taskId: string | null; materialUrl: string | null; notes: string | null; requestedById: string | null;
   automationKey: string; updatedAt: Date; doneAt: Date | null;
   reviewToken: string | null; materialVersion: number;
@@ -428,17 +429,17 @@ async function lastColumnFor(tx: AppTransaction, actor: ProductionActor, brandId
 export async function syncStepTask(tx: AppTransaction, actor: ProductionActor, stepId: string, state: "open" | "closed"): Promise<void> {
   const step = await tx.productionStep.findUnique({ where: { id: stepId }, select: { id: true, taskId: true, brandId: true, assigneeId: true, dueAt: true, step: true, contentItemId: true, status: true, doneAt: true } });
   if (!step) return;
-  const dueDate = fromDateKey(dateKey(step.dueAt));
+  const dueDate = step.dueAt ? fromDateKey(dateKey(step.dueAt)) : null;
+  const video = await tx.contentItem.findUniqueOrThrow({ where: { id: step.contentItemId }, select: { title: true } });
   if (!step.taskId) {
     if (state === "closed") return;
-    const video = await tx.contentItem.findUniqueOrThrow({ where: { id: step.contentItemId }, select: { title: true } });
     const columnId = await taskColumnFor(tx, actor, step.brandId);
     const last = await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } });
     const rule = STEP_RULES[step.step as ChainStep | "DISENO"];
     const task = await tx.task.create({
       data: {
         title: `${rule?.task ?? stepLabel(step.step)}: ${video.title}`.slice(0, 500),
-        description: `${stepLabel(step.step)} del video "${video.title}". Vence: ${formatDateTime(step.dueAt)}. Ficha: /contenido/${step.contentItemId}`.slice(0, 2000),
+        description: stepTaskDescription(stepLabel(step.step), video.title, step.contentItemId, step.dueAt),
         kind: "ACCION", priority: "ALTA", dueDate, columnId, assigneeId: step.assigneeId, brandId: step.brandId, order: (last?.order ?? -1) + 1,
       },
       select: { id: true, title: true },
@@ -447,8 +448,9 @@ export async function syncStepTask(tx: AppTransaction, actor: ProductionActor, s
     await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "Task", entityId: task.id, brandId: step.brandId, summary: `Creó la tarea "${task.title}" (cadena de entregas)` });
     return;
   }
-  const task = await tx.task.findUnique({ where: { id: step.taskId }, select: { id: true, title: true, columnId: true, assigneeId: true, dueDate: true, status: true } });
+  const task = await tx.task.findUnique({ where: { id: step.taskId }, select: { id: true, title: true, columnId: true, assigneeId: true, dueDate: true, description: true, status: true } });
   if (!task) return;
+  const description = stepTaskDescription(stepLabel(step.step), video.title, step.contentItemId, step.dueAt, task.description);
   const listo = await lastColumnFor(tx, actor, step.brandId);
   let columnId = task.columnId;
   if (state === "closed" && task.columnId !== listo.id) columnId = listo.id;
@@ -458,12 +460,13 @@ export async function syncStepTask(tx: AppTransaction, actor: ProductionActor, s
   if (task.status !== status) changes.status = { etiqueta: "Estado", antes: task.status, despues: status };
   if (columnId !== task.columnId) changes.columnId = { etiqueta: "Etapa", antes: task.columnId, despues: columnId, verDespues: state === "closed" ? listo.name : "Pendiente" };
   if (task.assigneeId !== step.assigneeId) changes.assigneeId = { etiqueta: "Responsable", antes: task.assigneeId, despues: step.assigneeId };
-  if (state === "open" && task.dueDate?.getTime() !== dueDate.getTime()) changes.dueDate = { etiqueta: "Fecha límite", antes: task.dueDate?.toISOString() ?? null, despues: dueDate.toISOString() };
+  if (state === "open" && task.dueDate?.getTime() !== dueDate?.getTime()) changes.dueDate = { etiqueta: "Fecha límite", antes: task.dueDate?.toISOString() ?? null, despues: dueDate?.toISOString() ?? null };
+  if (state === "open" && task.description !== description) changes.description = { etiqueta: "Descripción", antes: task.description, despues: description };
   if (!Object.keys(changes).length) return;
   const order = columnId !== task.columnId ? ((await tx.task.findFirst({ where: { columnId }, orderBy: { order: "desc" }, select: { order: true } }))?.order ?? -1) + 1 : undefined;
   await tx.task.update({
     where: { id: task.id },
-    data: { columnId, assigneeId: step.assigneeId, ...(changes.status ? { status, completedAt: status === "HECHO" ? step.doneAt : null, completedById: status === "HECHO" ? actor?.id ?? null : null } : {}), ...(state === "open" ? { dueDate } : {}), ...(order !== undefined ? { order } : {}) },
+    data: { columnId, assigneeId: step.assigneeId, ...(changes.status ? { status, completedAt: status === "HECHO" ? step.doneAt : null, completedById: status === "HECHO" ? actor?.id ?? null : null } : {}), ...(state === "open" ? { dueDate, description } : {}), ...(order !== undefined ? { order } : {}) },
   });
   await auditInTransaction(tx, {
     user: actor,
@@ -531,9 +534,9 @@ async function shootDateOrigin(tx: AppTransaction, videoId: string): Promise<"au
   return last.summary.startsWith(AUTO_SHOOT) ? "auto" : "manual";
 }
 
-async function writeShootDate(tx: AppTransaction, video: VideoRow, key: string, origin: "auto" | "manual", cause: string) {
-  const shootDate = fromDateKey(key);
-  if (video.shootDate && dateKey(video.shootDate) === key) return;
+async function writeShootDate(tx: AppTransaction, video: VideoRow, key: string | null, origin: "auto" | "manual", cause: string) {
+  const shootDate = key ? fromDateKey(key) : null;
+  if (dateKey(video.shootDate) === (key ?? "")) return;
   await tx.contentItem.update({ where: { id: video.id }, data: { shootDate } });
   await auditInTransaction(tx, {
     user: null,
@@ -543,8 +546,8 @@ async function writeShootDate(tx: AppTransaction, video: VideoRow, key: string, 
     brandId: video.brandId,
     summary: origin === "auto"
       ? `${AUTO_SHOOT} de "${video.title}" para el ${formatDateLong(shootDate)}, el próximo día de grabación de la marca (Sistema, ${cause})`
-      : `Movió la grabación de "${video.title}" al ${formatDateLong(shootDate)} con el plazo del paso (Sistema, ${cause})`,
-    changes: { shootDate: { etiqueta: "Fecha de grabación", antes: video.shootDate?.toISOString() ?? null, despues: shootDate.toISOString(), verDespues: formatDateLong(shootDate) } },
+      : `Cambió la grabación de "${video.title}": ${shootDate ? formatDateLong(shootDate) : "Sin fecha"}, con el plazo del paso (Sistema, ${cause})`,
+    changes: { shootDate: { etiqueta: "Fecha de grabación", antes: video.shootDate?.toISOString() ?? null, despues: shootDate?.toISOString() ?? null, verDespues: shootDate ? formatDateLong(shootDate) : "Sin fecha" } },
   });
   video.shootDate = shootDate;
 }
@@ -572,10 +575,11 @@ async function writeScheduledDate(tx: AppTransaction, video: VideoRow, key: stri
  * que ya pasó o es de hoy también se recalcula: la grabación no nace vencida.
  * Nunca se publica antes de grabar: una fecha prevista anterior se corre.
  */
-async function planRecording(tx: AppTransaction, video: VideoRow, flow: Flow, now: Date, cause: string): Promise<string> {
+async function planRecording(tx: AppTransaction, video: VideoRow, flow: Flow, now: Date, cause: string): Promise<string | null> {
   const todayKey = dateKey(now);
   let shootKey: string;
-  const origin = video.shootDate ? await shootDateOrigin(tx, video.id) : null;
+  const origin = await shootDateOrigin(tx, video.id);
+  if (!video.shootDate && origin === "manual") return null;
   const stale = Boolean(video.shootDate && dateKey(video.shootDate) <= todayKey);
   if (!video.shootDate || origin === "auto" || (origin === null && stale)) {
     shootKey = nextRecordingDayKey(todayKey, flow.weekdays);
@@ -622,7 +626,7 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
   }
 
   // Plazo (y las fechas del video que lo reflejan).
-  let dueKey: string;
+  let dueKey: string | null;
   if (opts.dueAt) {
     dueKey = dateKey(opts.dueAt);
     if (kind === "GRABACION") await writeShootDate(tx, video, dueKey, opts.dateOrigin ?? "manual", opts.cause);
@@ -634,7 +638,7 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
     dueKey = publicationDueKey(todayKey, dateKey(video.scheduledDate));
     if (dateKey(video.scheduledDate) < dueKey) await writeScheduledDate(tx, video, dueKey, "se publica al día hábil siguiente", opts.cause);
   }
-  const dueAt = opts.dueAt ?? endOfDayKey(dueKey);
+  const dueAt = opts.dueAt ?? (dueKey ? endOfDayKey(dueKey) : null);
 
   // Responsable.
   let person: Person | null = null;
@@ -658,7 +662,7 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
     const changes: Record<string, Cambio> = { ...(opts.reopenChanges ?? {}) };
     if (existing.status !== "PENDIENTE") changes.status = { etiqueta: "Estado", antes: existing.status, despues: "PENDIENTE" };
     if (existing.assigneeId !== (person?.id ?? null)) changes.assigneeId = { etiqueta: "Responsable", antes: existing.assigneeId, despues: person?.id ?? null, verDespues: person?.name ?? "Sin asignar" };
-    if (existing.dueAt.getTime() !== dueAt.getTime()) changes.dueAt = { etiqueta: "Vence", antes: existing.dueAt.toISOString(), despues: dueAt.toISOString(), verAntes: formatDateTime(existing.dueAt), verDespues: formatDateTime(dueAt) };
+    if (existing.dueAt?.getTime() !== dueAt?.getTime()) changes.dueAt = { etiqueta: "Vence", antes: existing.dueAt?.toISOString() ?? null, despues: dueAt?.toISOString() ?? null, verAntes: formatDateTime(existing.dueAt), verDespues: formatDateTime(dueAt) };
     await tx.productionStep.update({ where: { id: existing.id }, data: { status: "PENDIENTE", doneAt: null, dueAt, assigneeId: person?.id ?? null, source } });
     reopened = existing.status !== "PENDIENTE";
     await auditInTransaction(tx, {
@@ -667,7 +671,7 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
       entity: "ProductionStep",
       entityId: existing.id,
       brandId: video.brandId,
-      summary: opts.reopenSummary ?? `${reopened ? "Reabrió" : "Actualizó"} la ${lower(kind)} de "${video.title}" para ${person?.name ?? "nadie (sin asignar)"}: vence el ${formatDateLong(fromDateKey(dueKey))} (${opts.cause})`,
+      summary: opts.reopenSummary ?? `${reopened ? "Reabrió" : "Actualizó"} la ${lower(kind)} de "${video.title}" para ${person?.name ?? "nadie (sin asignar)"}: vence el ${dueKey ? formatDateLong(fromDateKey(dueKey)) : "Sin fecha"} (${opts.cause})`,
       changes,
     });
     stepId = existing.id;
@@ -676,8 +680,8 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
     const createdStep = await createStep(tx, actor, {
       video, step: kind, person, dueAt, key: automationKey(video.id, kind), source,
       summary: person
-        ? `Asignó la ${lower(kind)} de "${video.title}" a ${person.name}: vence el ${formatDateLong(fromDateKey(dueKey))} (cadena de entregas)`
-        : `Abrió la ${lower(kind)} de "${video.title}" sin responsable: vence el ${formatDateLong(fromDateKey(dueKey))} (cadena de entregas)`,
+        ? `Asignó la ${lower(kind)} de "${video.title}" a ${person.name}: vence el ${dueKey ? formatDateLong(fromDateKey(dueKey)) : "Sin fecha"} (cadena de entregas)`
+        : `Abrió la ${lower(kind)} de "${video.title}" sin responsable: vence el ${dueKey ? formatDateLong(fromDateKey(dueKey)) : "Sin fecha"} (cadena de entregas)`,
     });
     stepId = createdStep.id;
     created = true;
@@ -849,7 +853,9 @@ async function listoGrabacion(ctx: ListoContext) {
   if (!link) throw new ChainError("Falta el enlace del material grabado.");
   await business(() => assertScriptApproved(tx, video.scriptId));
   await business(() => assertChecklistApproved(tx, video.id, "SCRIPT_APPROVAL"));
-  const checks = markable(await pendingRequired(tx, video.id, ["PREPRODUCCION", "GRABACION"]), actor, role, STEP_RULES.GRABACION.capability);
+  if (!video.shootDate || !step.dueAt) throw new ChainError("Asigna una fecha de grabación antes de entregar el material.");
+  await business(() => assertRequiredChecks(tx, video.id, ["PREPRODUCCION"]));
+  const checks = markable(await pendingRequired(tx, video.id, ["GRABACION"]), actor, role, STEP_RULES.GRABACION.capability);
   await saveStepLink(ctx, link, "Material grabado");
   await markChecks(tx, actor, video, checks, now, cause);
   await business(() => advanceVideoAsSystem(tx, video.id, "EDICION", cause, now));
@@ -1041,7 +1047,7 @@ export async function returnStep(tx: AppTransaction, actor: SessionUser, stepId:
     const opened = await openChainStep(tx, actor, await reloadVideo(tx, video.id), target, {
       now, cause, dueAt: endOfDayKey(dueKey), dateOrigin: "auto",
       reopenChanges: { devolucion },
-      reopenSummary: `Recibió de vuelta la ${lower(target)} de "${video.title}" (devuelta por ${actor.name}): vence el ${formatDateLong(fromDateKey(dueKey))}. Motivo: ${motivo}`,
+      reopenSummary: `Recibió de vuelta la ${lower(target)} de "${video.title}" (devuelta por ${actor.name}): vence el ${dueKey ? formatDateLong(fromDateKey(dueKey)) : "Sin fecha"}. Motivo: ${motivo}`,
     });
     const comment = await tx.comment.create({ data: { contentItemId: video.id, userId: actor.id, body: `Devolución a ${STEP_RULES[target].role.toLowerCase()} (${stepLabel(step.step)} → ${stepLabel(target)}): ${motivo}` }, select: { id: true } });
     await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "Comment", entityId: comment.id, brandId: video.brandId, summary: `Comentó en el video "${video.title}" (devolución)` });
@@ -1072,7 +1078,7 @@ export async function requestDesignChanges(tx: AppTransaction, actor: SessionUse
       summary: `Pidió cambios en el diseño de "${video.title}": entrega máxima el ${formatDateTime(dueAt)}. Motivo: ${motivo}`,
       changes: {
         status: { etiqueta: "Estado", antes: "HECHO", despues: "PENDIENTE" },
-        dueAt: { etiqueta: "Vence", antes: step.dueAt.toISOString(), despues: dueAt.toISOString(), verDespues: formatDateTime(dueAt) },
+        dueAt: { etiqueta: "Vence", antes: step.dueAt?.toISOString() ?? null, despues: dueAt?.toISOString() ?? null, verDespues: formatDateTime(dueAt) },
         devolucion: { etiqueta: "Motivo de la devolución", antes: null, despues: motivo },
       },
     });
@@ -1131,14 +1137,17 @@ export async function resolveNotice(tx: AppTransaction, actor: SessionUser, step
 
 /**
  * Reasignar o mover el plazo (coordinación, content.assign). La tarea sigue al paso y la fecha
- * del video también: GRABACION → fecha de grabación, PUBLICACION → fecha prevista, si quien
- * reasigna puede planificar; si no, se avisa de que el calendario siguió igual. Reactivar un
+ * del video también: GRABACION → fecha de grabación, PUBLICACION → fecha prevista. Sin permiso
+ * para planificar se rechaza el cambio completo. Reactivar un
  * paso cerrado solo se permite si el video no tiene otro paso de cadena abierto.
  */
 export async function reassignStep(tx: AppTransaction, actor: SessionUser, stepId: string, input: ReassignStepInput): Promise<ReassignStepResult> {
   return conflicts(async () => {
     const { step, video } = await lockStep(tx, actor, stepId, input.expectedUpdatedAt);
     if (actor.role !== "OWNER") await assertContentAccess(tx, actor, step.contentItemId, "content.assign");
+    if (!input.dueAt && step.step !== "GRABACION") throw new ChainError("Este paso necesita fecha límite.");
+    if (input.dueAt && ["GRABACION", "PUBLICACION"].includes(step.step)) input = { ...input, dueAt: endOfDayKey(dateKey(input.dueAt)) };
+    if (step.status === "HECHO" && step.dueAt?.getTime() !== input.dueAt?.getTime()) throw new ChainError("La entrega ya terminó: su fecha histórica no se puede cambiar.");
     // Activa, con la marca y con la capacidad del paso: si no, el paso quedaría trabado.
     const person = input.assigneeId ? await assignablePerson(tx, input.assigneeId, video.brandId, step.step) : null;
     const reactivate = step.status === "CANCELADO" || step.status === "DEVUELTO";
@@ -1149,7 +1158,7 @@ export async function reassignStep(tx: AppTransaction, actor: SessionUser, stepI
     }
     const changes: Record<string, Cambio> = {};
     if (step.assigneeId !== (person?.id ?? null)) changes.assigneeId = { etiqueta: "Responsable", antes: step.assigneeId, despues: person?.id ?? null, verAntes: (await nameOf(tx, step.assigneeId)) ?? "Sin asignar", verDespues: person?.name ?? "Sin asignar" };
-    if (step.dueAt.getTime() !== input.dueAt.getTime()) changes.dueAt = { etiqueta: "Vence", antes: step.dueAt.toISOString(), despues: input.dueAt.toISOString(), verAntes: formatDateTime(step.dueAt), verDespues: formatDateTime(input.dueAt) };
+    if (step.dueAt?.getTime() !== input.dueAt?.getTime()) changes.dueAt = { etiqueta: "Vence", antes: step.dueAt?.toISOString() ?? null, despues: input.dueAt?.toISOString() ?? null, verAntes: formatDateTime(step.dueAt), verDespues: formatDateTime(input.dueAt) };
     if (reactivate) changes.status = { etiqueta: "Estado", antes: step.status, despues: "PENDIENTE" };
     if (step.source !== "MANUAL") changes.source = { etiqueta: "Origen", antes: step.source, despues: "MANUAL" };
     await tx.productionStep.update({ where: { id: step.id }, data: { assigneeId: person?.id ?? null, dueAt: input.dueAt, source: "MANUAL", ...(reactivate ? { status: "PENDIENTE", doneAt: null } : {}) } });
@@ -1161,16 +1170,19 @@ export async function reassignStep(tx: AppTransaction, actor: SessionUser, stepI
     await syncStepTask(tx, actor, step.id, step.status === "PENDIENTE" || reactivate ? "open" : "closed");
     if (person) await ensureAssignment(tx, actor, video, STEP_RULES[step.step as ChainStep | "DISENO"].assignment, person);
   
-    let calendarMoved = false, calendarNotice: string | null = null;
+    let calendarMoved = false;
+    const calendarNotice: string | null = null;
     const dueKey = dateKey(input.dueAt);
     const open = step.status === "PENDIENTE" || reactivate;
-    if (open && step.step === "GRABACION" && (!video.shootDate || dateKey(video.shootDate) !== dueKey)) {
-      if (allows(actor, "content.plan") || allows(actor, "content.scheduleShoot")) { await writeShootDate(tx, video, dueKey, "manual", `por la reasignación de ${actor.name}`); calendarMoved = true; }
-      else calendarNotice = "El calendario sigue con la fecha de grabación anterior: pide a producción que la cambie.";
+    if (open && step.step === "GRABACION" && (dateKey(video.shootDate) !== dueKey)) {
+      if (!allows(actor, "content.plan") && !allows(actor, "content.scheduleShoot")) throw new ChainError("Necesitas permiso para programar la grabación y cambiar este plazo.");
+      await invalidateRecordingPreparation(tx, actor, video.id);
+      await writeShootDate(tx, video, dueKey || null, "manual", `por la reasignación de ${actor.name}`);
+      calendarMoved = true;
     }
     if (open && step.step === "PUBLICACION" && dateKey(video.scheduledDate) !== dueKey) {
       if (allows(actor, "content.plan")) { await writeScheduledDate(tx, video, dueKey, "sigue el plazo de la publicación", `por la reasignación de ${actor.name}`); calendarMoved = true; }
-      else calendarNotice = "El calendario sigue con la fecha prevista anterior: pide a coordinación que la cambie.";
+      else throw new ChainError("Necesitas permiso para planificar la publicación y cambiar este plazo.");
     }
     return { stepId, reactivated: reactivate, calendarMoved, calendarNotice };
   });
@@ -1335,20 +1347,8 @@ async function handleEvent(tx: AppTransaction, actor: ProductionActor, event: Ex
       });
     case "DATE_CHANGED":
       return videoEvent(tx, event.videoId, async (video) => {
-        const kind = event.field === "shootDate" ? "GRABACION" : "PUBLICACION";
-        const date = event.field === "shootDate" ? video.shootDate : video.scheduledDate;
-        const step = await tx.productionStep.findUnique({ where: { automationKey: automationKey(video.id, kind) }, select: STEP_SELECT });
-        if (!date || !step || step.status !== "PENDIENTE") return { done: false, reason: "no_step" };
-        const dueAt = endOfDayKey(dateKey(date));
-        if (step.dueAt.getTime() === dueAt.getTime()) return { done: false, reason: "exists", stepId: step.id };
-        await tx.productionStep.update({ where: { id: step.id }, data: { dueAt } });
-        await auditInTransaction(tx, {
-          user: actor, action: "EDITAR", entity: "ProductionStep", entityId: step.id, brandId: video.brandId,
-          summary: `Movió la ${lower(kind)} de "${video.title}" al ${formatDateLong(date)} con la nueva ${event.field === "shootDate" ? "fecha de grabación" : "fecha prevista"}`,
-          changes: { dueAt: { etiqueta: "Vence", antes: step.dueAt.toISOString(), despues: dueAt.toISOString(), verAntes: formatDateTime(step.dueAt), verDespues: formatDateTime(dueAt) } },
-        });
-        await syncStepTask(tx, actor, step.id, "open");
-        return { done: true, reason: "ok", stepId: step.id };
+        const result = await syncVideoStepDate(tx, actor, video.id, event.field === "shootDate" ? "GRABACION" : "PUBLICACION");
+        return result.done ? { done: true, reason: "ok", stepId: result.stepId } : { done: false, reason: "no_step" };
       });
     case "ASSIGNMENT_CHANGED":
       return videoEvent(tx, event.videoId, async (video) => {

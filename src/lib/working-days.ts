@@ -117,7 +117,8 @@ export function dueIn24hSkippingSunday(now: Date): Date {
 }
 
 /** "vence en 5 h", "vence en 2 d", "venció hace 3 h": legible y sin inventar precisión. */
-export function dueLabel(dueAt: Date, now: Date = new Date()): string {
+export function dueLabel(dueAt: Date | null, now: Date = new Date()): string {
+  if (!dueAt) return "Sin fecha";
   const diff = dueAt.getTime() - now.getTime();
   const minutes = Math.round(Math.abs(diff) / 60_000);
   const amount = minutes < 60 ? `${Math.max(1, minutes)} min` : minutes < 48 * 60 ? `${Math.round(minutes / 60)} h` : `${Math.round(minutes / 1440)} d`;

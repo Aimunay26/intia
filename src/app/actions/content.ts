@@ -201,6 +201,7 @@ export async function actualizarVideo(formData: FormData) {
     await assertContentAccess(tx, user, field(formData, "id"), "content.plan");
     const id = field(formData, "id");
 
+    await lockVideoLifecycle(tx, id);
     await lockRevision(tx, "ContentItem", id, formData);
     const before = await tx.contentItem.findUniqueOrThrow({ where: { id } });
 
@@ -215,7 +216,7 @@ export async function actualizarVideo(formData: FormData) {
       structureIds: await readStructureIds(tx, formData, before.structureIds),
       priority: enumField(formData, "priority", PRIORITY_MAP, before.priority),
       scheduledDate: dateField(formData, "scheduledDate") ?? before.scheduledDate,
-      shootDate: dateField(formData, "shootDate"),
+      shootDate: formData.has("shootDate") ? dateField(formData, "shootDate") : before.shootDate,
       publishedAt: user.role === "OWNER" ? dateField(formData, "publishedAt") : before.publishedAt,
       publishedUrl: user.role === "OWNER" ? fieldOrNull(formData, "publishedUrl") : before.publishedUrl,
       tags: linesToJson(field(formData, "tags")),
@@ -249,6 +250,7 @@ export async function actualizarGrabacion(formData: FormData) {
     const id = field(formData, "id");
     await assertContentAccess(tx, user, id, "content.scheduleShoot");
     await assertVideoOpen(tx, user, id);
+    await lockVideoLifecycle(tx, id);
     await lockRevision(tx, "ContentItem", id, formData);
     const before = await tx.contentItem.findUniqueOrThrow({ where: { id }, select: { shootDate: true, brandId: true, title: true } });
     const data = { shootDate: dateField(formData, "shootDate") };

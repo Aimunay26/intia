@@ -271,7 +271,7 @@ export default async function VideoPage({ params, searchParams }: { params: Prom
         }
         actions={
           <>
-            <EditForm action={cambiarEstado} className="flex items-center">
+            <EditForm action={cambiarEstado} revision={item.updatedAt.toISOString()} className="flex items-center">
 <RevisionField value={item.updatedAt} />
               <input type="hidden" name="id" value={item.id} />
               <WorkflowStatusFields value={item.status} owner options={CONTENT_STATUSES.map(o => ({ value: o.value, label: o.label }))} />

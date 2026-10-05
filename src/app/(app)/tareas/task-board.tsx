@@ -392,6 +392,7 @@ export function TaskBoard({
                       <div className="flex items-center justify-between gap-2 pt-1 border-t border-[var(--line)]/60 text-[11.5px] text-inkmuted">
                         <div className="flex items-center gap-2">
                           {/* Fecha de vencimiento */}
+                          {!task.dueDate && <span className="text-xs text-inkmuted">Sin fecha</span>}
                           {task.dueDate && (
                             <span
                               className={cn(

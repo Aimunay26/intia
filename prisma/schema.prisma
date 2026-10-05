@@ -43,6 +43,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   assignments    Assignment[]
+  castRoles      CastRole[]
+  unavailability ActorUnavailability[]
   auditLogs      AuditLog[]
   scripts        Script[]        @relation("ScriptAuthor")
   checkedItems   ChecklistItem[] @relation("CheckedBy")
@@ -593,6 +595,10 @@ model ScriptScene {
 // ------------------------------------------------------- CALENDARIO/VIDEOS --
 
 model ContentItem {
+  castRoles CastRole[]
+  shootStartMinute Int?
+  shootEndMinute Int?
+  castingRevision Int @default(0)
   @@unique([id, brandId])
   id      String @id @default(cuid())
   brandId String
@@ -759,6 +765,8 @@ model MetricImportBatch {
 
 /// Quien hizo que en cada video: guionista, actor, camara, editor, voz.
 model Assignment {
+  /// True only for access created by casting; manual assignments are never removed by casting.
+  castingManaged Boolean @default(false)
   id            String      @id @default(cuid())
   contentItemId String
   contentItem   ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
@@ -774,6 +782,38 @@ model Assignment {
   @@unique([contentItemId, userId, role])
   @@index([userId])
   @@index([role])
+}
+
+/// A real actor assigned to one role in one scene. slotKey is scene id + actor index.
+model CastRole {
+  id String @id @default(cuid())
+  contentItemId String
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  slotKey String
+  sceneId String
+  role String
+  archetype String @default("")
+  notes String @default("")
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  response String @default("PENDIENTE")
+  responseNote String @default("")
+  confirmedToken String?
+  respondedAt DateTime?
+  updatedAt DateTime @updatedAt
+  @@unique([contentItemId, slotKey])
+  @@index([userId, contentItemId])
+}
+
+/// Personal unavailable time; other users only see that there is a conflict.
+model ActorUnavailability {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startAt DateTime
+  endAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId, startAt, endAt])
 }
 
 model ChecklistItem {

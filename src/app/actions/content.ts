@@ -1,4 +1,5 @@
 "use server";
+import { assertCastingReady } from "@/lib/casting";
 import { transitionVideo } from "@/lib/domain/lifecycle";
 import { ProductionFlowError, onChecklistCompleted, onScheduledDateChanged, onShootDateChanged } from "@/lib/domain/production-flow";
 import { assertAssignmentRemovable, assertFinalApprovalAllowed, chainEvent } from "@/lib/domain/production-chain";
@@ -385,6 +386,7 @@ export async function alternarCheck(formData: FormData) {
     await lockVideoLifecycle(tx, check.contentItemId);
     const current = await tx.checklistItem.findUniqueOrThrow({ where: { id } });
     if (current.done === done) return;
+    if (done && current.kind === "TASK" && current.stage === "PREPRODUCCION" && /actor asignado/i.test(current.label)) await assertCastingReady(tx, check.contentItemId);
     const approvalKind = current.kind === "SCRIPT_APPROVAL" || current.kind === "FINAL_APPROVAL" ? current.kind : null;
     const reopening = current.done && !done && Boolean(approvalKind);
     const reason = reopening ? reopeningReason(field(formData, "reason")) : "";
@@ -540,7 +542,7 @@ export async function asignarPersona(formData: FormData) {
     const asignacion = await tx.assignment.upsert({
       where: { contentItemId_userId_role: { contentItemId, userId, role } },
       create: { contentItemId, userId, role, notes: fieldOrNull(formData, "notes") },
-      update: { notes: fieldOrNull(formData, "notes") },
+      update: { notes: fieldOrNull(formData, "notes"), castingManaged: false },
     });
 
     await auditInTransaction(tx, {
@@ -576,6 +578,9 @@ export async function quitarAsignacion(formData: FormData) {
     });
     if (!asignacion) return;
     await assertContentAccess(tx, user, asignacion.contentItemId, "content.assign");
+    if (asignacion.role === "ACTOR" && await tx.castRole.count({ where: { contentItemId: asignacion.contentItemId, userId: asignacion.userId } })) {
+      throw new WorkflowError("Reasigna primero sus papeles en el reparto antes de quitar al actor.");
+    }
     // Cadena de entregas: quien tiene el paso pendiente de esa función no se quita sin reasignarlo antes.
     await reglaDeCadena(() => assertAssignmentRemovable(tx, asignacion.contentItemId, asignacion.userId, asignacion.role));
 

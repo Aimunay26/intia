@@ -15,7 +15,7 @@ export function stepTaskDescription(label: string, title: string, videoId: strin
   return notes ? `${header}\n\n${notes}` : header;
 }
 
-/** Solo se llama si cambió el día. Una entrega terminada conserva su fecha histórica. */
+/** Solo se llama si cambió el día o el horario. Una entrega terminada conserva su fecha histórica. */
 export async function invalidateRecordingPreparation(tx: AppTransaction, actor: ProductionActor, videoId: string) {
   const video = await tx.contentItem.findUniqueOrThrow({ where: { id: videoId }, select: { status: true, brandId: true, title: true } });
   const recorded = await tx.productionStep.findUnique({ where: { automationKey: `${videoId}:GRABACION` }, select: { status: true } });
@@ -24,10 +24,11 @@ export async function invalidateRecordingPreparation(tx: AppTransaction, actor: 
   }
   const checks = (await tx.checklistItem.findMany({ where: { contentItemId: videoId, stage: "PREPRODUCCION", kind: "TASK", done: true }, select: { id: true, label: true, stage: true, kind: true } }))
     .filter(c => checklistCapability(c.stage, c.label, c.kind) !== "scripts.write");
+  await tx.contentItem.update({ where: { id: videoId }, data: { castingRevision: { increment: 1 } } });
   for (const check of checks) {
     await tx.checklistItem.update({ where: { id: check.id }, data: { done: false, doneAt: null, doneById: null } });
     await auditInTransaction(tx, { user: actor, action: "REABRIR", entity: "ChecklistItem", entityId: check.id, brandId: video.brandId,
-      summary: `Reabrió "${check.label}" de "${video.title}": cambió la fecha de grabación; hay que confirmar la preparación otra vez.`,
+      summary: `Reabrió "${check.label}" de "${video.title}": cambió la fecha o el horario de grabación; hay que confirmar la preparación otra vez.`,
       changes: { done: { etiqueta: "Completado", antes: true, despues: false } } });
   }
   if (video.status === "GRABACION") {

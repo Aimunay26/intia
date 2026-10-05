@@ -1,0 +1,64 @@
+{
+  "fecha": "2026-10-05",
+  "alcance": "Checklist desplegado, dependencias de seguridad y reparto por papel/escena",
+  "produccion": {
+    "url": "https://intia-lovat.vercel.app",
+    "commitVerificado": "df8c12f3b91523f737c5ee2d127266709cf0b556",
+    "deployment": "dpl_BVCu9V9dQBhzw1smNNBhqwwzmY5Y",
+    "estadoDeployment": "READY",
+    "videoQA": "cmuvntvza0001js04g6391o5p",
+    "tituloQA": "QA-CHECKLIST-PROD-20261005",
+    "resultado": "Actor y props se marcaron desde Chrome. Al cambiar la fecha del 23 al 25 de octubre, ambos checks y el contador se reiniciaron de 2 a 0 sin recargar. Recargar conservó fecha y checks. Lectura independiente de PostgreSQL confirmó el resultado.",
+    "limpieza": { "marcaArchivada": true, "cuentaCamaraInactiva": true, "flagsProduccionModificados": false },
+    "evidencia": ".audit/qa-checklist-prod-20261005.png",
+    "lectura": ".audit/qa-close12-readback-checklist-prod.json"
+  },
+  "dependencias": {
+    "antes": { "total": 23, "high": 21, "moderate": 2 },
+    "despues": { "total": 0 },
+    "versiones": { "undici": "7.30.0", "devalue": "5.9.4", "http-cache-semantics": "4.3.0", "brace-expansion-1": "1.1.21", "brace-expansion-5": "5.0.12" },
+    "globESLint": "Override limitado a @next/eslint-plugin-next: fast-glob se resuelve a tinyglobby 0.2.17. Conserva globSync/onlyDirectories usados por getRootDirs. Prueba de cwd, directorios, exclusión de archivos y patrones con llaves. No se cambió la versión principal de Next ni Workflow.",
+    "motivo": "braces 3.0.3 no tiene versión corregida publicada; se retiró su cadena de dependencias de ESLint, sin silenciar la auditoría.",
+    "fuentes": ["https://github.com/advisories/GHSA-vfj7-8cjw-p6xm", "https://github.com/SuperchupuDev/tinyglobby", "https://github.com/sveltejs/devalue/releases", "https://github.com/nodejs/undici/releases"],
+    "evidencia": ".audit/casting-npm-audit-after.json"
+  },
+  "reparto": {
+    "migracion": "20261005193000_scene_casting",
+    "migracionAplicadaEnProduccion": false,
+    "implementado": [
+      "Papeles persistidos por escena, asignados a usuarios activos con perfil Talento y acceso a la marca; también permite al Dueño actuar.",
+      "Asignación ACTOR sincronizada para que aparezcan vídeo y guion al integrante. Se conservan asignaciones manuales; las creadas por reparto se retiran cuando ya no tiene papeles.",
+      "Recomendaciones explicadas desde perfil de actuación, formato, fortalezas y restricciones. Solo MANO cuenta como valoración humana; SEED/AUTO no se presentan como criterio humano. No hay llamadas adicionales a IA.",
+      "Horario de grabación en Lima e indisponibilidad personal. Conflictos con grabaciones confirmadas, incluso fuera de la marca actual, sin revelar sus títulos ni datos privados.",
+      "Confirmación o rechazo personal por papel, con motivo. Guion aprobado y horario obligatorio para confirmar.",
+      "Huella del guion/sesión, revisión optimista y transacciones serializables. Fecha, horario o cambios de guion invalidan respuestas anteriores. Volver a la fecha anterior no revive confirmaciones.",
+      "El checklist y los avances a Grabación/Edición comprueban el reparto. No se permite firmar por otro actor ni quitar una asignación mientras tenga papeles.",
+      "Paneles de coordinación y del integrante, pendientes en Inicio, historial de auditoría y protección de grabaciones cerradas y marcas archivadas."
+    ],
+    "compatibilidad": "Guiones sin papeles declarados mantienen su checklist existente; para usar el reparto se declaran actores en las escenas. La disponibilidad contempla bloqueos personales y grabaciones confirmadas registradas en ALSOS.",
+    "navegadorLocal": [
+      "Preparar dos papeles desde escenas y guardar 10:00–11:00.",
+      "Asignar ambos papeles a Actor QA y recargar; permanece una sola asignación ACTOR.",
+      "Entrar como actor en una sesión independiente: aparecen pendientes en Inicio, guion y vídeo; no aparecen controles de asignación u horario.",
+      "Confirmar ambos papeles; coordinación ve 2/2 tras recargar.",
+      "Cambiar a 12:00–13:00: 0/2 y ambas respuestas pendientes.",
+      "Crear indisponibilidad 12:30–13:30: confirmar se rechaza y coordinación ve el conflicto, sin ver el bloqueo personal.",
+      "Quitar el bloqueo no reactiva respuestas. Confirmar de nuevo guarda 2/2 y elimina pendientes de Inicio.",
+      "Lectura de PostgreSQL local: dos respuestas confirmadas, una asignación, cero bloqueos y diez entradas de auditoría."
+    ],
+    "evidencia": ".audit/qa-casting-actor-final-20261005.png",
+    "lectura": ".audit/casting-browser-readback.json"
+  },
+  "validacion": {
+    "npmTest": { "passed": 462, "failed": 0, "skipped": 1, "skip": "Caso PostgreSQL de archivo ejecutado por separado en test:postgres archive-scope." },
+    "postgres": { "casting": 12, "humanReviews": 13, "productionChainActions": 7, "workflow": 13, "archiveScope": 21, "failed": 0 },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS",
+    "diffCheck": "PASS",
+    "ensayoMigracion": "Las 16 migraciones se aplicaron en bases efímeras PostgreSQL 18.",
+    "casosBackend": ["Permisos y visibilidad real", "Reasignación y acceso manual", "Confirmación personal", "Conflictos de revisión", "Reprogramación y cambio de guion", "Indisponibilidad", "Concurrencia de reservas", "Rollback por fallo de auditoría", "Reconciliación tras retirar escenas", "Repetir sincronización sin perder firmas", "Bloqueo de checklist y archivo"]
+  },
+  "pendientePublicacion": ["Commit y push selectivos", "Aplicar migración 20261005193000_scene_casting antes del despliegue del código", "Verificar reparto y dependencias ya desplegados en producción"],
+  "limites": ["El reparto nuevo se comprobó en PostgreSQL y navegador locales, no está desplegado.", "No se probó publicación real a redes ni se consumieron servicios de generación de IA.", "Se preservaron .claude/launch.json y los informes previos ajenos a esta implementación."]
+}

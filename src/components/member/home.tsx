@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { CastingPending } from "@/components/casting-pending";
 import { Film, ListChecks, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -131,6 +132,7 @@ export async function MemberHome({ user }: { user: SessionUser }) {
   return (
     <div className="space-y-6">
       {header}
+      <CastingPending user={user} brandId={context.activeId} />
       {chain ? <MyWorkSection user={user} brandId={context.activeId} /> : null}
       {panelCards.length ? (
         <section aria-labelledby="tus-paneles-title">

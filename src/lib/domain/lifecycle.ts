@@ -1,4 +1,5 @@
 import type { AppTransaction } from "@/lib/prisma";
+import { assertCastingReady } from "@/lib/casting";
 import type { SessionUser } from "@/lib/auth";
 import { assertContentAccess, assertScriptAccess, assertPublishable, lockVideoLifecycle } from "@/lib/access-scope";
 import { assertPermission, allows, contentStatusCapability, type AccessUser } from "@/lib/permissions";
@@ -28,6 +29,7 @@ export async function assertAdvanceRequirements(tx: AppTransaction, id: string, 
   }
   if (["GRABACION", "EDICION"].includes(status) && !before.shootDate) throw new WorkflowError("Asigna una fecha de grabación antes de continuar.");
   if (status === "GRABACION") await assertRequiredChecks(tx, id, ["PREPRODUCCION"]);
+  if (["GRABACION", "EDICION"].includes(status)) await assertCastingReady(tx, id);
   if (status === "EDICION") await assertRequiredChecks(tx, id, ["PREPRODUCCION", "GRABACION"]);
   if (["PROGRAMADO", "PUBLICADO"].includes(status)) await assertPublishable(tx, user, id);
   if (status === "PROGRAMADO" && !before.scheduledDate) throw new WorkflowError("Indica la fecha de programación.");
@@ -246,4 +248,3 @@ export async function recordPublication(tx: AppTransaction, user: SessionUser, i
   // Cadena de entregas: la fecha prevista manda sobre el plazo de la publicación pendiente.
   if (before.scheduledDate.getTime() !== data.scheduledDate.getTime()) await onScheduledDateChanged(tx, user, id);
 }
-

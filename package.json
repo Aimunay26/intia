@@ -39,7 +39,9 @@
     "db:migrate": "prisma migrate deploy",
     "db:baseline": "node scripts/baseline-existing.mjs",
     "db:integridad": "node scripts/check-db-integrity.mjs",
-    "test": "npm run test:unidad",
+    "test:dependencies": "node --test tests/eslint-glob.test.mjs",
+    "test:casting": "node --test tests/casting.test.mjs",
+    "test": "npm run test:dependencies && npm run test:casting && npm run test:unidad",
     "test:postgres": "node scripts/test-postgres.mjs",
     "db:ensayo": "node scripts/rehearse-migration.mjs",
     "perf:local": "node scripts/run-benchmark.mjs",
@@ -95,6 +97,13 @@
     "postcss": "8.5.28",
     "deepmerge-ts": "8.0.2",
     "nanoid": "5.1.16",
-    "undici": "7.29.0"
+    "undici": "7.30.0",
+    "devalue": "5.9.4",
+    "http-cache-semantics": "4.3.0",
+    "brace-expansion@^1.0.0": "1.1.21",
+    "brace-expansion@^5.0.0": "5.0.12",
+    "@next/eslint-plugin-next": {
+      "fast-glob": "npm:tinyglobby@0.2.17"
+    }
   }
 }

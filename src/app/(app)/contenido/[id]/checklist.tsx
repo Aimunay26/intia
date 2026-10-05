@@ -159,7 +159,7 @@ function CheckLinea({
       <EditForm action={alternarCheck} className="mt-[3px] shrink-0">
         <input type="hidden" name="id" value={item.id} /><input type="hidden" name="expectedApproval" value={item.approvalToken} />
         {canEdit && !(item.done && item.kind !== "TASK") ? (
-          <AutoSubmitCheckbox name="done" defaultChecked={item.done} />
+          <AutoSubmitCheckbox name="done" checked={item.done} ariaLabel={item.label} />
         ) : (
           <input
             type="checkbox"

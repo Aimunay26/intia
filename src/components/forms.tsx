@@ -263,24 +263,27 @@ export function Collapsible({
 /** Interruptor que envía un formulario al cambiar. */
 export function AutoSubmitCheckbox({
   name,
-  defaultChecked,
+  checked,
+  ariaLabel,
   label,
   className,
 }: {
   name: string;
-  defaultChecked?: boolean;
+  checked: boolean;
+  ariaLabel: string;
   label?: string;
   className?: string;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
   return (
     <label className={cn("flex cursor-pointer items-center gap-2 text-[13px]", className)}>
       <input
-        ref={ref}
         type="checkbox"
         name={name}
-        defaultChecked={defaultChecked}
-        onChange={() => ref.current?.form?.requestSubmit()}
+        checked={checked}
+        aria-label={ariaLabel}
+        // EditForm captura el valor pulsado antes de que React restaure el estado
+        // confirmado. Si se rechaza el cambio, la casilla sigue mostrando lo guardado.
+        onChange={(event) => event.currentTarget.form?.requestSubmit()}
         className="accent-brand h-3.5 w-3.5 cursor-pointer"
       />
       {label ? <span className="text-inksoft">{label}</span> : null}

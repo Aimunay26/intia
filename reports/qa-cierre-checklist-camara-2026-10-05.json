@@ -1,0 +1,191 @@
+{
+  "checkedAt": "2026-10-05T19:20:14.044Z",
+  "scope": "Cierre de checklist visual y verificación de Cámara. Solo datos sintéticos de QA.",
+  "checklist": {
+    "status": "FIXED_AND_BROWSER_VERIFIED_LOCALLY",
+    "published": false,
+    "files": [
+      "src/components/forms.tsx",
+      "src/app/(app)/contenido/[id]/checklist.tsx"
+    ],
+    "behavior": "Checkbox controlado por el estado confirmado del servidor; captura síncrona de FormData, recuperación ante rechazo y etiqueta accesible.",
+    "browser": "Chrome, componentes reales de Checklist/EditForm/AutoSubmitCheckbox; acciones de servidor simuladas en localhost.",
+    "checks": [
+      {
+        "id": "LOCAL-1",
+        "status": "PASS",
+        "description": "Reprogramar actualiza las tres casillas de logística y el contador de 5/5 a 2/5 sin recargar."
+      },
+      {
+        "id": "LOCAL-2",
+        "status": "PASS",
+        "description": "Marcar y desmarcar envía true y false en FormData y refleja el valor confirmado."
+      },
+      {
+        "id": "LOCAL-3",
+        "status": "PASS",
+        "description": "El servidor puede actualizar el requisito de guion en ambos sentidos sin recargar."
+      },
+      {
+        "id": "LOCAL-4",
+        "status": "PASS",
+        "description": "Una respuesta de rechazo mantiene la casilla en el estado guardado y presenta el error."
+      },
+      {
+        "id": "LOCAL-5",
+        "status": "PASS",
+        "description": "Una excepción de red mantiene el estado guardado y presenta el error."
+      },
+      {
+        "id": "LOCAL-6",
+        "status": "PASS",
+        "description": "Tras el error se puede reintentar y confirmar el nuevo estado."
+      },
+      {
+        "id": "LOCAL-7",
+        "status": "PASS",
+        "description": "La aprobación humana permanece marcada y protegida al reprogramar."
+      }
+    ],
+    "validation": {
+      "typecheck": "PASS",
+      "eslint": "PASS",
+      "focusedTests": {
+        "passed": 27,
+        "failed": 0
+      },
+      "diffCheck": "PASS"
+    }
+  },
+  "camera": {
+    "status": "PRODUCTION_VERIFIED",
+    "url": "https://intia-lovat.vercel.app",
+    "sha": "aaf79e44abfac75314354c48bc697dbdb5496857",
+    "brandId": "cmuua26w80000l5048vrtpha8",
+    "userId": "cmuu7awek0001ju04ikhsrgsg",
+    "videoId": "cmuvjbf5d0001jr04qiyyjmeg",
+    "recordingStepId": "cmuvjf6ey000zl204t0sepcgz",
+    "recordingTaskId": "cmuvjf6el000vl204ujke5k59",
+    "writes": "Interfaz del navegador; lectura posterior de PostgreSQL en transacciones READ ONLY.",
+    "checks": [
+      {
+        "id": "PROD-1",
+        "status": "PASS",
+        "description": "Inicio de sesión real con el usuario QA CAMERA realizado por el usuario; acceso exclusivo a sus marcas QA."
+      },
+      {
+        "id": "PROD-2",
+        "status": "PASS",
+        "description": "La grabación asignada aparece en Tareas y ficha; no hay controles para cambiar responsables ni planificación."
+      },
+      {
+        "id": "PROD-3",
+        "status": "PASS",
+        "description": "Listo rechaza la entrega sin preparación: Completa el requisito: Actor asignado y confirmado."
+      },
+      {
+        "id": "PROD-4",
+        "status": "PASS",
+        "description": "Quitar la fecha desde la sesión del dueño vacía video/paso/tarea y conserva sus IDs y responsable."
+      },
+      {
+        "id": "PROD-5",
+        "status": "PASS",
+        "description": "La ficha de Cámara muestra Sin fecha y oculta la entrega; el cambio de estado exige fecha."
+      },
+      {
+        "id": "PROD-6",
+        "status": "PASS",
+        "description": "Mi trabajo conserva la grabación en Sin fecha; el calendario deja de mostrar ese evento de grabación."
+      },
+      {
+        "id": "PROD-7",
+        "status": "PASS",
+        "description": "Reprogramar al 23 de octubre actualiza tarea, ficha y calendario para Cámara."
+      },
+      {
+        "id": "PROD-8",
+        "status": "PASS",
+        "description": "La tarea manual QA se reabre y termina por su responsable, persistiendo tras recargar."
+      },
+      {
+        "id": "PROD-9",
+        "status": "PASS",
+        "description": "Actor, props y locación se confirman desde Cámara y guardan su autoría."
+      },
+      {
+        "id": "PROD-10",
+        "status": "PASS",
+        "description": "La entrega sintética pasa el video a EDICION y termina paso y tarea a nombre de Cámara; persiste el enlace tras recargar."
+      },
+      {
+        "id": "PROD-11",
+        "status": "PASS",
+        "description": "Cámara no ve controles para editar material de pasos cerrados, entregar edición ni aprobar guion/video."
+      },
+      {
+        "id": "PROD-12",
+        "status": "PASS",
+        "description": "Acceder directamente a /cadena y /equipo redirige a /sin-acceso."
+      },
+      {
+        "id": "PROD-13",
+        "status": "PASS",
+        "description": "La grabación terminada aparece en Tareas y deja Mi trabajo sin pasos pendientes; la edición queda sin asignar para coordinación."
+      },
+      {
+        "id": "PROD-14",
+        "status": "PASS",
+        "description": "Marca QA archivada, cuenta desactivada y sesión revocada; automatización apagada y despliegue READY verificado."
+      }
+    ],
+    "videoStatus": "EDICION",
+    "shootDate": "2026-10-23T12:00:00.000Z",
+    "historicalVideoUnchanged": true,
+    "manualTaskId": "cmuua4dce0001i704ig5kq1w6",
+    "nextStep": {
+      "id": "cmuvmqu93000rl804smcsj529",
+      "step": "EDICION",
+      "status": "PENDIENTE",
+      "assigneeId": null,
+      "dueAt": "2026-10-07T04:59:59.999Z",
+      "doneAt": null,
+      "materialUrl": null,
+      "materialVersion": 0,
+      "reviewToken": null,
+      "taskId": "cmuvmqu8q000nl8049ea8yhen"
+    }
+  },
+  "cleanup": {
+    "brand": {
+      "id": "cmuua26w80000l5048vrtpha8",
+      "name": "QA Revisiones 2026-10-04",
+      "archived": true,
+      "active": false
+    },
+    "userActive": false,
+    "flags": {
+      "PRODUCTION_FLOW_ENABLED": "",
+      "PRODUCTION_CHAIN_ENABLED": null,
+      "PRODUCTION_CHAIN_BRANDS": null
+    },
+    "deploymentId": "dpl_FBPJ9jhzKScAF6hdQxPviDdpsh2a",
+    "deploymentState": "READY",
+    "aliasMatches": true
+  },
+  "evidence": [
+    ".audit/qa-close12-checklist-corregido.png",
+    ".audit/qa-close12-camara-sin-fecha.png",
+    ".audit/qa-close12-camara-sin-pendientes.png",
+    ".audit/qa-close12-readback-baseline.json",
+    ".audit/qa-close12-readback-undated.json",
+    ".audit/qa-close12-readback-replanned.json",
+    ".audit/qa-close12-readback-completed.json",
+    ".audit/qa-close12-readback-cleanup.json"
+  ],
+  "remaining": [
+    "Publicar el cambio del checkbox y confirmar esa corrección en producción; esta sesión no hizo commit ni push.",
+    "Este ensayo no cubre todos los perfiles, aislamiento completo entre marcas, generación IA ni publicación externa real. No se ejecutaron esas operaciones."
+  ],
+  "migrationsRequired": false
+}

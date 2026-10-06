@@ -19,6 +19,8 @@ const REDIRECT = Symbol("redirect");
 function fakePrisma(overrides = {}) {
   const calls = { updates: [], updateManys: [], creates: [], audits: [], jobUpdates: [] };
   const prisma = {
+    preparationItem: { findMany: async () => [], updateMany: async () => ({ count: 0 }) },
+    task: { updateMany: async () => ({ count: 0 }) },
     $queryRaw: async () => [],
     structure: {
       findMany: async ({ where }) =>

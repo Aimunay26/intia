@@ -1,3 +1,4 @@
+import { assertPreparationReady, invalidateTeamPreparation } from "@/lib/preparation";
 import { randomUUID } from "node:crypto";
 import { invalidateRecordingPreparation, syncVideoStepDate, stepTaskDescription } from "@/lib/domain/production-dates";
 import type { SessionUser } from "@/lib/auth";
@@ -177,6 +178,7 @@ export async function ensureAssignment(tx: AppTransaction, actor: ProductionActo
   });
   if (existing) return;
   const created = await tx.assignment.create({ data: { contentItemId: video.id, userId: person.id, role, notes: AUTO_NOTE }, select: { id: true } });
+  if (["CAMARA", "PRODUCCION", "ACTOR", "VOZ"].includes(role)) await invalidateTeamPreparation(tx, video.id);
   await auditInTransaction(tx, {
     user: actor,
     action: "ASIGNAR",
@@ -370,6 +372,7 @@ export function assignEditing(tx: AppTransaction, actor: ProductionActor, videoI
     const dueKey = editingDueKey(recordedKey, todayKey);
     const recording = await tx.productionStep.findUnique({ where: { automationKey: automationKey(video.id, "GRABACION") }, select: { materialUrl: true } });
 
+    await assertPreparationReady(tx, video.id);
     if (!assignee.assigned) await ensureAssignment(tx, actor, video, STEP_ROLES.EDICION.assignment, assignee.person);
     const created = await createStep(tx, actor, {
       video, step: "EDICION", person: assignee.person, dueAt: endOfDayKey(dueKey), key,

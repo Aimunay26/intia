@@ -1,3 +1,4 @@
+import { PreparationPanel } from "@/components/preparation-panel";
 import { loadPage } from "@/lib/list-pagination";
 import { Paged } from "@/components/member/shared";
 import { ApprovalHistory } from "@/components/approval-history";
@@ -358,6 +359,7 @@ export default async function VideoPage({ params, searchParams }: { params: Prom
           {/* Flujo de producción (PRODUCTION_FLOW_ENABLED): apagado no se muestra ni consulta nada. */}
           <ProductionPanel user={user} videoId={item.id} />
           <CastingPanel user={user} videoId={item.id} />
+    <PreparationPanel user={user} videoId={item.id} />
 
           {item.script ? (
             <Card>

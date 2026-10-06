@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-06",
+  "environment": "local, PostgreSQL efímero y Next compilado",
+  "baseCommit": "899fc6460b827a01f1d5519052c724b901a139ec",
+  "scope": ["Checklist personal por integrante", "Props y vestuario por elemento con responsable"],
+  "implementation": [
+    "Preparación persistida por vídeo, persona y elemento de escena; sincronización sin duplicados",
+    "Tarea vinculada atómicamente, con confirmación personal o sustitución explícita de coordinación con motivo",
+    "Bloqueos de grabación y edición, y protección contra completar tareas por una ruta alternativa",
+    "Reapertura al cambiar guion, sesión o participantes; retiro sin borrar auditoría",
+    "Devolución de edición a grabación habilita nueva preparación y exige reconfirmar",
+    "Inicio, ficha y Tareas muestran el trabajo autorizado para la persona"
+  ],
+  "validation": {
+    "unit": { "passed": 462, "skipped": 1, "failed": 0 },
+    "postgres": {
+      "preparation": 14,
+      "casting": 12,
+      "humanReviews": 13,
+      "productionChainActions": 7,
+      "workflow": 13,
+      "workAssignees": 7,
+      "productionFlow": 1,
+      "productionChain": 10,
+      "totalPassed": 77,
+      "failed": 0
+    },
+    "typecheck": "passed",
+    "lint": "passed",
+    "nextBuild": "passed, React bundle verified",
+    "diffCheck": "passed",
+    "migration": "Aplicada en bases locales efímeras; el backfill activa solo trabajo abierto de marcas vigentes y preserva grabaciones terminadas y archivos",
+    "schemaDiff": "Sin diferencias en PreparationItem. La única diferencia global es la FK compuesta de CalendarEvent añadida intencionalmente en 20260917180000; se conserva."
+  },
+  "browser": {
+    "url": "http://127.0.0.1:4321",
+    "roles": ["Coordinación (Dueño)", "Cámara (MEMBER/CAMERA)"],
+    "sample": { "videos": 1, "personalRequirements": 1, "props": 2, "linkedTasks": 3 },
+    "checks": [
+      "Coordinación genera tres requisitos y asigna responsable a los dos props",
+      "El checklist global rechaza completar props todavía pendientes con mensaje legible",
+      "Cámara ve el vídeo en Tu preparación pendiente de Inicio",
+      "Cámara solo tiene controles personales, sin reasignación ni sustitución",
+      "Cámara confirma sus tres requisitos; la ficha indica 3 de 3",
+      "Recarga conserva las tres firmas con identidad y fecha",
+      "Tareas muestra las tres terminadas y enlace a preparación, sin editor genérico",
+      "Reabrir un prop reduce a 2 de 3; reconfirmarlo restaura 3 de 3",
+      "Nueva sesión de coordinación conserva las confirmaciones",
+      "Cambiar grabación del 5 al 6 de noviembre reabre las tres confirmaciones",
+      "Sustitución explícita de un prop muestra el nombre de coordinación y el motivo",
+      "Lectura independiente de PostgreSQL confirma estados, responsables y nueva fecha en las tres tareas"
+    ],
+    "evidence": ".audit/preparation-camera-confirmed.png",
+    "readback": ".audit/preparation-browser-readback.json"
+  },
+  "publicationAtValidation": { "committed": false, "pushed": false, "productionMigrated": false, "productionTested": false },
+  "limits": "Validación local controlada previa a la publicación. No prueba todos los perfiles ni producción; la migración y la verificación del despliegue se registran por separado."
+}

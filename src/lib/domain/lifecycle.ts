@@ -1,5 +1,6 @@
 import type { AppTransaction } from "@/lib/prisma";
 import { assertCastingReady } from "@/lib/casting";
+import { assertPreparationReady, invalidateScriptPreparation } from "@/lib/preparation";
 import type { SessionUser } from "@/lib/auth";
 import { assertContentAccess, assertScriptAccess, assertPublishable, lockVideoLifecycle } from "@/lib/access-scope";
 import { assertPermission, allows, contentStatusCapability, type AccessUser } from "@/lib/permissions";
@@ -30,6 +31,7 @@ export async function assertAdvanceRequirements(tx: AppTransaction, id: string, 
   if (["GRABACION", "EDICION"].includes(status) && !before.shootDate) throw new WorkflowError("Asigna una fecha de grabación antes de continuar.");
   if (status === "GRABACION") await assertRequiredChecks(tx, id, ["PREPRODUCCION"]);
   if (["GRABACION", "EDICION"].includes(status)) await assertCastingReady(tx, id);
+  if (["GRABACION", "EDICION"].includes(status)) await assertPreparationReady(tx, id);
   if (status === "EDICION") await assertRequiredChecks(tx, id, ["PREPRODUCCION", "GRABACION"]);
   if (["PROGRAMADO", "PUBLICADO"].includes(status)) await assertPublishable(tx, user, id);
   if (status === "PROGRAMADO" && !before.scheduledDate) throw new WorkflowError("Indica la fecha de programación.");
@@ -209,6 +211,7 @@ export async function transitionScript(tx: AppTransaction, user: SessionUser, in
       approvalId = (await approveVersion(tx, user, "SCRIPT", id)).id;
     }
     if (status === "GRABADO" && !override) await assertApprovedVersion(tx, "SCRIPT", id, approvalId);
+    await invalidateScriptPreparation(tx, id);
     await tx.script.update({ where: { id }, data: { status, approvalId } });
 
     await auditInTransaction(tx, {

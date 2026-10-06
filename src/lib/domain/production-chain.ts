@@ -1043,12 +1043,14 @@ export async function returnStep(tx: AppTransaction, actor: SessionUser, stepId:
   
     const devolucion = { etiqueta: "Motivo de la devolución", antes: null, despues: motivo };
     await closeStep(tx, actor, step, video, "DEVUELTO", now, `Devolvió la ${lower(step.step)} de "${video.title}" a ${lower(target)}. Motivo: ${motivo}`, { devolucion });
+    if (target === "GRABACION") await reopenVideoAsSystem(tx, video.id, "APROBADO", cause);
     const dueKey = target === "GRABACION" ? nextRecordingDayKey(dateKey(now), (await readFlow(tx, video.brandId)).weekdays) : nextWorkingDayKey(dateKey(now));
     const opened = await openChainStep(tx, actor, await reloadVideo(tx, video.id), target, {
       now, cause, dueAt: endOfDayKey(dueKey), dateOrigin: "auto",
       reopenChanges: { devolucion },
       reopenSummary: `Recibió de vuelta la ${lower(target)} de "${video.title}" (devuelta por ${actor.name}): vence el ${dueKey ? formatDateLong(fromDateKey(dueKey)) : "Sin fecha"}. Motivo: ${motivo}`,
     });
+    if (target === "GRABACION") await invalidateRecordingPreparation(tx, actor, video.id, `se devolvió a grabación: ${motivo}`);
     const comment = await tx.comment.create({ data: { contentItemId: video.id, userId: actor.id, body: `Devolución a ${STEP_RULES[target].role.toLowerCase()} (${stepLabel(step.step)} → ${stepLabel(target)}): ${motivo}` }, select: { id: true } });
     await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "Comment", entityId: comment.id, brandId: video.brandId, summary: `Comentó en el video "${video.title}" (devolución)` });
     return { stepId, reopened: target, reopenedStepId: opened.stepId, assigneeId: opened.assigneeId, commentId: comment.id };

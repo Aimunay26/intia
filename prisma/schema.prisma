@@ -44,6 +44,7 @@ model User {
 
   assignments    Assignment[]
   castRoles      CastRole[]
+  preparationItems PreparationItem[] @relation("PreparationAssignee")
   unavailability ActorUnavailability[]
   auditLogs      AuditLog[]
   scripts        Script[]        @relation("ScriptAuthor")
@@ -595,6 +596,8 @@ model ScriptScene {
 // ------------------------------------------------------- CALENDARIO/VIDEOS --
 
 model ContentItem {
+  preparationRequired Boolean @default(false)
+  preparationItems PreparationItem[]
   castRoles CastRole[]
   shootStartMinute Int?
   shootEndMinute Int?
@@ -814,6 +817,31 @@ model ActorUnavailability {
   endAt DateTime
   createdAt DateTime @default(now())
   @@index([userId, startAt, endAt])
+}
+
+/// Preparación personal y utilería; las fuentes retiradas conservan sus registros y auditoría.
+model PreparationItem {
+  id String @id @default(cuid())
+  contentItemId String
+  contentItem ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  sourceKey String
+  kind String // PERSONAL | PROP
+  label String
+  sourceText String @default("")
+  assigneeId String?
+  assignee User? @relation("PreparationAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  required Boolean @default(true)
+  status String @default("PENDIENTE") // PENDIENTE | LISTO | RETIRADO
+  confirmedToken String?
+  confirmedAt DateTime?
+  confirmedById String? // Identidad histórica; coordinación puede sustituir con motivo explícito.
+  overrideReason String @default("")
+  taskId String? @unique
+  task Task? @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  @@unique([contentItemId, sourceKey])
+  @@index([assigneeId, status])
 }
 
 model ChecklistItem {
@@ -1088,6 +1116,7 @@ model Task {
   updatedAt   DateTime   @updatedAt
 
   productionStep ProductionStep?
+  preparationItem PreparationItem?
 
   @@index([columnId])
   @@index([assigneeId])

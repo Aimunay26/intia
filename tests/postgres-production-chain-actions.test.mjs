@@ -45,6 +45,8 @@ const scripts = mod('src/app/actions/scripts.ts');
 const publication = mod('src/app/actions/publication.ts');
 const utils = mod('src/lib/utils.ts');
 const days = mod('src/lib/working-days.ts');
+const prep = mod('src/lib/preparation.ts');
+const prepActions = mod('src/app/actions/preparation.ts');
 
 const quietly = async (fn) => { const { warn, info } = console; console.warn = () => {}; console.info = () => {}; try { return await fn(); } finally { console.warn = warn; console.info = info; } };
 /** La acción con la sesión real de esa persona (cookie firmada en su propio almacén). */
@@ -72,11 +74,27 @@ async function crearGuion(id, brandId, author = 'owner') {
   await prisma.script.create({ data: { id, title: `Guion ${id}`, brandId, cta: 'Escríbenos hoy', authorId: author, scenes: { create: [{ order: 0, beat: 'Gancho', voice: 'Hola', action: 'Mira a cámara' }] } } });
 }
 const vincular = (who, scriptId, contentItemId) => as(who, () => scripts.asignarGuionAVideo(form({ scriptId, contentItemId })));
+async function prepararEquipo(contentItemId) {
+  // Fixture de sesión; los requisitos y sus firmas pasan por las acciones reales.
+  const before = await video(contentItemId);
+  if (before.shootStartMinute === null) await prisma.contentItem.update({ where: { id: contentItemId }, data: { shootStartMinute: 600, shootEndMinute: 660 } });
+  const read = () => prisma.contentItem.findUniqueOrThrow({ where: { id: contentItemId }, include: prep.preparationInclude });
+  let current = await read();
+  assert.equal(await as('owner', () => prepActions.prepararGrabacion(form({ contentItemId, expectedToken: prep.preparationToken(current), expectedUpdatedAt: rev(current) }))), undefined);
+  current = await read();
+  for (const item of current.preparationItems.filter(i => i.status !== 'RETIRADO' && i.required)) {
+    assert.ok(item.assigneeId);
+    assert.equal(await as(item.assigneeId, () => prepActions.confirmarPreparacion(form({ contentItemId, id: item.id, expectedToken: prep.preparationToken(current), expectedUpdatedAt: rev(item), done: '1' }))), undefined);
+  }
+}
 // Preparación de escenarios: entregar y aprobar son dos peticiones con sesiones distintas.
 const revisar = async (video,kind) => {const row=await step(video,kind);return as(row.assigneeId??'owner',()=>production.marcarListo(form({id:row.id,expectedUpdatedAt:rev(row),expectedReviewToken:row.reviewToken})));};
 const entregarYRevisar = async (who,row,extra={}) => {
   // Escenario ya preparado; el bloqueo de preparación se verifica en human-reviews.
-  if(row.step==='GRABACION') await prisma.checklistItem.updateMany({where:{contentItemId:row.contentItemId,stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'owner',doneAt:new Date()}});
+  if(row.step==='GRABACION') {
+    await prepararEquipo(row.contentItemId);
+    await prisma.checklistItem.updateMany({where:{contentItemId:row.contentItemId,stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'owner',doneAt:new Date()}});
+  }
   const result=await as(who,()=>production.marcarListo(form({id:row.id,expectedUpdatedAt:rev(row),...extra})));
   if(!result?.error && row.status==='PENDIENTE' && ['GUION','EDICION'].includes(row.step)) return revisar(row.contentItemId,row.step==='GUION'?'REVISION_GUION':'REVISION_FINAL');
   return result;
@@ -170,6 +188,7 @@ test('recorrido con las acciones: crear, vincular, «Listo», tarea a «Listo»,
   assert.deepEqual([grab.status, grab.task.columnId], ['PENDIENTE', 'initial-task-column-2']);
   assert.equal(await as('carlos', () => production.guardarMaterialPaso(form({ id: grab.id, materialUrl: 'https://drive.example.test/crudo', expectedUpdatedAt: rev(grab) }))), undefined);
   grab = await step(v1, 'GRABACION');
+  await prepararEquipo(v1);
   await prisma.checklistItem.updateMany({where:{contentItemId:v1,stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'carlos',doneAt:new Date()}});
   const moved = await as('carlos', () => tasks.moverTarea(grab.taskId, LAST, undefined, rev(grab.task)));
   assert.equal(moved.task.columnId, LAST);
@@ -223,7 +242,7 @@ test('recorrido con las acciones: crear, vincular, «Listo», tarea a «Listo»,
   const closed = await step(v1, 'PUBLICACION');
   assert.deepEqual([closed.status, closed.task.columnId], ['HECHO', LAST]);
   const statuses = (await prisma.auditLog.findMany({ where: { entity: 'ContentItem', entityId: v1, changes: { contains: '"status"' } }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })).map((a) => JSON.parse(a.changes).status.despues);
-  assert.deepEqual(statuses, ['GUION', 'APROBADO', 'GRABACION', 'EDICION', 'PROGRAMADO', 'PUBLICADO']);
+  assert.deepEqual(statuses, ['GUION', 'APROBADO', 'GRABACION', 'EDICION', 'APROBADO', 'GRABACION', 'EDICION', 'PROGRAMADO', 'PUBLICADO']);
   assert.equal(await prisma.auditLog.count({ where: { summary: { contains: 'Excepción del Dueño' } } }), 0);
   assert.deepEqual(await invariants(), ZERO);
 });
@@ -340,6 +359,7 @@ test('tablero y pasos: editar la tarea reasigna el paso; «Crear paso», «Tomar
   grab = await step(v4, 'GRABACION');
   assert.equal(await as('owner', () => production.guardarMaterialPaso(form({ id: grab.id, materialUrl: 'https://drive.example.test/v4', expectedUpdatedAt: rev(grab) }))), undefined);
   grab = await step(v4, 'GRABACION');
+  await prepararEquipo(v4);
   await prisma.checklistItem.updateMany({where:{contentItemId:v4,stage:'PREPRODUCCION',kind:'TASK',required:true},data:{done:true,doneById:'owner',doneAt:new Date()}});
   const marked = await as('owner', () => production.marcarPaso(form({ id: grab.id, done: '1', expectedUpdatedAt: rev(grab) })));
   assert.match(marked.message, /Ahora le toca a Laudder: edición/);

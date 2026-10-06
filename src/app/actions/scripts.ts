@@ -1,4 +1,5 @@
 "use server";
+import { invalidateScriptPreparation, invalidatePreparation } from "@/lib/preparation";
 import { transitionScript } from "@/lib/domain/lifecycle";
 import { chainEvent } from "@/lib/domain/production-chain";
 import { productionChainConfigured } from "@/lib/production-chain-flag";
@@ -67,6 +68,8 @@ const SCENE_LABELS: Record<string, string> = {
 
 function refrescar(scriptId?: string) {
   invalidateDomain("script");
+  revalidatePath("/tareas");
+  revalidatePath("/", "layout");
   if (scriptId) revalidatePath(`/guiones/${scriptId}`);
 }
 
@@ -412,6 +415,7 @@ export async function actualizarGuion(formData: FormData) {
       changes: diffFields(before, data, { ...FIELD_LABELS, avatar: "Avatar", focus: "Enfoque" }),
     });
 
+    await invalidateScriptPreparation(tx, id);
     afterCommit(() => { refrescar(id); revalidatePath("/contenido", "layout"); revalidatePath("/metricas"); });
   });
 }
@@ -445,6 +449,8 @@ export async function eliminarGuion(formData: FormData) {
     if (!script) return;
 
     // Cadena de entregas: los videos que pierden el guion vuelven al paso Guion (como al desvincular).
+    await tx.$queryRaw`SELECT id FROM "Script" WHERE id = ${id} FOR UPDATE`;
+    await invalidateScriptPreparation(tx, id);
     const linked = productionChainConfigured()
       ? await tx.contentItem.findMany({ where: { scriptId: id }, select: { id: true }, orderBy: { id: "asc" } })
       : [];
@@ -604,6 +610,7 @@ export async function actualizarEscena(formData: FormData) {
       changes: diffFields(before, await tx.scriptScene.findUniqueOrThrow({ where: { id } }), SCENE_LABELS),
     });
 
+    await invalidateScriptPreparation(tx, before.scriptId);
     afterCommit(() => refrescar(before.scriptId));
   });
 }
@@ -655,6 +662,7 @@ export async function anadirEscena(formData: FormData) {
       summary: `Añadió la escena "${scene.beat}" al guion "${script.title}"`,
     });
 
+    await invalidateScriptPreparation(tx, scriptId);
     afterCommit(() => refrescar(scriptId));
   });
 }
@@ -685,6 +693,7 @@ export async function eliminarEscena(formData: FormData) {
       summary: `Eliminó la escena ${scene.order + 1} "${scene.beat}" del guion "${scene.script.title}"`,
     });
 
+    await invalidateScriptPreparation(tx, scene.scriptId);
     afterCommit(() => refrescar(scene.scriptId));
   });
 }
@@ -752,6 +761,7 @@ export async function moverEscena(formData: FormData) {
       },
     });
 
+    await invalidateScriptPreparation(tx, scene.scriptId);
     afterCommit(() => refrescar(scene.scriptId));
   });
 }
@@ -790,6 +800,7 @@ export async function asignarGuionAVideo(formData: FormData) {
     afterCommit(() => revalidatePath(`/contenido/${contentItemId}`));
     afterCommit(() => revalidatePath("/calendario"));
     afterCommit(() => revalidatePath("/"));
+    await invalidatePreparation(tx, contentItemId);
     afterCommit(() => refrescar(scriptId));
   });
 }
@@ -837,6 +848,7 @@ export async function desvincularGuionDeVideo(formData: FormData) {
     afterCommit(() => revalidatePath(`/contenido/${contentItemId}`));
     afterCommit(() => revalidatePath("/calendario"));
     afterCommit(() => revalidatePath("/"));
+    await invalidatePreparation(tx, contentItemId);
     if (video.scriptId) afterCommit(() => refrescar(video.scriptId!));
   });
 }

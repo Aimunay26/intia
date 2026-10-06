@@ -1,4 +1,5 @@
 "use server";
+import { assertPreparationReady, invalidateTeamPreparation } from "@/lib/preparation";
 import { assertCastingReady } from "@/lib/casting";
 import { transitionVideo } from "@/lib/domain/lifecycle";
 import { ProductionFlowError, onChecklistCompleted, onScheduledDateChanged, onShootDateChanged } from "@/lib/domain/production-flow";
@@ -55,6 +56,7 @@ import { saveWeeklyMetric } from "@/lib/weekly-metric-mutations";
 
 function revalidar(id?: string | null) {
   invalidateDomain("content");
+  revalidatePath("/tareas");
   if (id) revalidatePath(`/contenido/${id}`);
   // Cadena de entregas: el paso, su tarea y la vista Cadena cambian con el video.
   if (productionChainConfigured()) {
@@ -152,6 +154,7 @@ export async function crearVideo(formData: FormData) {
 
     const created = await tx.contentItem.create({
       data: {
+        preparationRequired: true,
         brandId,
         title,
         description: fieldOrNull(formData, "description"),
@@ -285,6 +288,7 @@ export async function eliminarVideo(formData: FormData) {
     if (!item) return;
 
     await borrarAssetsDe("content", id, tx);
+    await tx.task.updateMany({ where: { preparationItem: { contentItemId: id }, status: "PENDIENTE" }, data: { status: "CANCELADO", description: `Preparación cancelada: se eliminó el vídeo "${item.title}".` } });
     await tx.contentItem.delete({ where: { id } });
 
     await auditInTransaction(tx, {
@@ -314,6 +318,7 @@ export async function duplicarVideo(formData: FormData) {
 
     const copia = await tx.contentItem.create({
       data: {
+        preparationRequired: true,
         brandId: origen.brandId,
         title: `${origen.title} (copia)`,
         description: origen.description,
@@ -387,6 +392,8 @@ export async function alternarCheck(formData: FormData) {
     const current = await tx.checklistItem.findUniqueOrThrow({ where: { id } });
     if (current.done === done) return;
     if (done && current.kind === "TASK" && current.stage === "PREPRODUCCION" && /actor asignado/i.test(current.label)) await assertCastingReady(tx, check.contentItemId);
+    if (done && current.kind === "TASK" && current.stage === "PREPRODUCCION" && /props|vestuario/i.test(current.label)) await assertPreparationReady(tx, check.contentItemId, "PROP");
+    if (done && current.kind === "TASK" && current.stage === "GRABACION") await assertPreparationReady(tx, check.contentItemId);
     const approvalKind = current.kind === "SCRIPT_APPROVAL" || current.kind === "FINAL_APPROVAL" ? current.kind : null;
     const reopening = current.done && !done && Boolean(approvalKind);
     const reason = reopening ? reopeningReason(field(formData, "reason")) : "";
@@ -538,6 +545,8 @@ export async function asignarPersona(formData: FormData) {
       where: { id: contentItemId },
       select: { title: true, brandId: true },
     });
+    await lockVideoLifecycle(tx, contentItemId);
+    const previousAssignment = await tx.assignment.findUnique({ where: { contentItemId_userId_role: { contentItemId, userId, role } } });
     const persona = await assertWorkAssignee(tx, userId, item.brandId, ["content.view", ...ASSIGNMENT_ROLE_CAPABILITIES[role]]);
     const asignacion = await tx.assignment.upsert({
       where: { contentItemId_userId_role: { contentItemId, userId, role } },
@@ -545,6 +554,7 @@ export async function asignarPersona(formData: FormData) {
       update: { notes: fieldOrNull(formData, "notes"), castingManaged: false },
     });
 
+    if (!previousAssignment) await invalidateTeamPreparation(tx, contentItemId);
     await auditInTransaction(tx, {
       user,
       action: "ASIGNAR",
@@ -584,7 +594,9 @@ export async function quitarAsignacion(formData: FormData) {
     // Cadena de entregas: quien tiene el paso pendiente de esa función no se quita sin reasignarlo antes.
     await reglaDeCadena(() => assertAssignmentRemovable(tx, asignacion.contentItemId, asignacion.userId, asignacion.role));
 
+    await lockVideoLifecycle(tx, asignacion.contentItemId);
     await tx.assignment.delete({ where: { id } });
+    await invalidateTeamPreparation(tx, asignacion.contentItemId);
 
     await auditInTransaction(tx, {
       user,

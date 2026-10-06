@@ -5,6 +5,7 @@ import { WorkflowError } from "@/lib/workflow-policy";
 import { dateKey, fromDateKey, formatDateTime } from "@/lib/utils";
 import { endOfDayKey } from "@/lib/working-days";
 import { checklistCapability } from "@/lib/permissions";
+import { invalidatePreparation, syncPreparationDates } from "@/lib/preparation";
 
 export function stepTaskDescription(label: string, title: string, videoId: string, dueAt: Date | null, previous?: string | null) {
   const header = `${label} del video "${title}". ${dueAt ? `Vence: ${formatDateTime(dueAt)}` : "Sin fecha: pendiente de programación"}. Ficha: /contenido/${videoId}`;
@@ -16,7 +17,7 @@ export function stepTaskDescription(label: string, title: string, videoId: strin
 }
 
 /** Solo se llama si cambió el día o el horario. Una entrega terminada conserva su fecha histórica. */
-export async function invalidateRecordingPreparation(tx: AppTransaction, actor: ProductionActor, videoId: string) {
+export async function invalidateRecordingPreparation(tx: AppTransaction, actor: ProductionActor, videoId: string, reason = "cambió la fecha o el horario de grabación") {
   const video = await tx.contentItem.findUniqueOrThrow({ where: { id: videoId }, select: { status: true, brandId: true, title: true } });
   const recorded = await tx.productionStep.findUnique({ where: { automationKey: `${videoId}:GRABACION` }, select: { status: true } });
   if (recorded?.status === "HECHO" || ["EDICION", "PROGRAMADO", "PUBLICADO"].includes(video.status)) {
@@ -25,10 +26,11 @@ export async function invalidateRecordingPreparation(tx: AppTransaction, actor: 
   const checks = (await tx.checklistItem.findMany({ where: { contentItemId: videoId, stage: "PREPRODUCCION", kind: "TASK", done: true }, select: { id: true, label: true, stage: true, kind: true } }))
     .filter(c => checklistCapability(c.stage, c.label, c.kind) !== "scripts.write");
   await tx.contentItem.update({ where: { id: videoId }, data: { castingRevision: { increment: 1 } } });
+  await invalidatePreparation(tx, videoId);
   for (const check of checks) {
     await tx.checklistItem.update({ where: { id: check.id }, data: { done: false, doneAt: null, doneById: null } });
     await auditInTransaction(tx, { user: actor, action: "REABRIR", entity: "ChecklistItem", entityId: check.id, brandId: video.brandId,
-      summary: `Reabrió "${check.label}" de "${video.title}": cambió la fecha o el horario de grabación; hay que confirmar la preparación otra vez.`,
+      summary: `Reabrió "${check.label}" de "${video.title}": ${reason}; hay que confirmar la preparación otra vez.`,
       changes: { done: { etiqueta: "Completado", antes: true, despues: false } } });
   }
   if (video.status === "GRABACION") {
@@ -40,6 +42,7 @@ export async function invalidateRecordingPreparation(tx: AppTransaction, actor: 
 
 /** La fecha del vídeo manda sobre pasos pendientes, tanto AUTO como MANUAL. */
 export async function syncVideoStepDate(tx: AppTransaction, actor: ProductionActor, videoId: string, kind: "GRABACION" | "PUBLICACION") {
+  if (kind === "GRABACION") await syncPreparationDates(tx, videoId);
   const video = await tx.contentItem.findUniqueOrThrow({ where: { id: videoId }, select: { title: true, brandId: true, shootDate: true, scheduledDate: true } });
   const step = await tx.productionStep.findUnique({ where: { automationKey: `${videoId}:${kind}` }, select: { id: true, status: true, dueAt: true, taskId: true } });
   if (!step || step.status !== "PENDIENTE") return { done: false, reason: "no_step" as const };

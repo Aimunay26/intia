@@ -229,7 +229,7 @@ test('devoluciones: editor → filmmaker y community → editor (revoca la aprob
   assert.equal(regrab.task.columnId, FIRST);
   assert.equal(utils.dateKey(regrab.dueAt), days.nextRecordingDayKey(today(), [2, 4]));
   assert.equal(utils.dateKey((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v2' } })).shootDate), utils.dateKey(regrab.dueAt), 'una sola fecha');
-  assert.equal((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v2' } })).status, 'EDICION', 'el video se queda en Edición');
+  assert.equal((await prisma.contentItem.findUniqueOrThrow({ where: { id: 'v2' } })).status, 'APROBADO', 'la devolución habilita preparar y confirmar la nueva grabación');
   assert.ok(await prisma.comment.count({ where: { contentItemId: 'v2', body: { contains: 'Falta la toma del producto' } } }));
   assert.equal((await openSteps('v2')).length, 1);
   const mine = await scope.readMyWork(as('carlos'));

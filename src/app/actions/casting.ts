@@ -1,5 +1,6 @@
 "use server";
 
+import { invalidateTeamPreparation } from "@/lib/preparation";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { assertContentAccess, lockVideoLifecycle } from "@/lib/access-scope";
@@ -16,7 +17,7 @@ import type { SessionUser } from "@/lib/auth";
 import type { CastingVideo } from "@/lib/casting";
 
 function refresh(id: string) {
-  for (const path of [`/contenido/${id}`, "/contenido", "/guiones", "/calendario", "/"]) revalidatePath(path);
+  for (const path of [`/contenido/${id}`, "/contenido", "/guiones", "/calendario", "/tareas", "/"]) revalidatePath(path);
 }
 async function editable(tx: AppTransaction, user: SessionUser, data: FormData, coordinate: boolean) {
   const id = field(data, "contentItemId");
@@ -59,6 +60,7 @@ export async function prepararReparto(data: FormData) {
     }
     await tx.castRole.deleteMany({ where: { contentItemId: video.id, slotKey: { notIn: slots.map(s => s.slotKey) } } });
     await reconcileAccess(tx, video.id);
+    await invalidateTeamPreparation(tx, video.id);
     await resetActorCheck(tx, video.id);
     await tx.contentItem.update({ where: { id: video.id }, data: { castingRevision: { increment: 1 } } });
     await audit(tx, user, video, "Actualizó los papeles del reparto desde las escenas; requiere nuevas confirmaciones");
@@ -83,6 +85,7 @@ export async function asignarPapel(data: FormData) {
     if (role.userId === userId) return;
     await tx.castRole.update({ where: { id: role.id }, data: { userId, response: "PENDIENTE", confirmedToken: null, respondedAt: null, responseNote: "" } });
     await reconcileAccess(tx, video.id);
+    await invalidateTeamPreparation(tx, video.id);
     await resetActorCheck(tx, video.id);
     await audit(tx, user, video, `Cambió «${role.role}» de ${role.user?.name ?? "Sin asignar"} a ${selectedName}; pendiente de confirmación personal`);
     afterCommit(() => refresh(video.id));

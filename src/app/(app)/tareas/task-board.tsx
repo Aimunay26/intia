@@ -67,6 +67,7 @@ export type BoardTask = {
   updatedAt: Date | string;
   status: string;
   completedAt?: Date | string | null;
+  preparationItem?: { contentItemId: string } | null;
   productionStep?: { contentItemId: string } | null;
 };
 
@@ -636,11 +637,11 @@ export function TaskBoard({
         <Modal
           open={Boolean(editingTask)}
           onClose={() => setEditingTask(null)}
-          title="Editar tarea"
-          description="Actualiza el estado, responsable o detalles de la tarea."
+          title={editingTask.preparationItem ? "Tarea de preparación" : "Editar tarea"}
+          description={editingTask.preparationItem ? "Abre la preparación del vídeo para cambiar responsables o confirmar requisitos." : "Actualiza el estado, responsable o detalles de la tarea."}
           width={540}
         >
-          <EditForm
+          {!editingTask.preparationItem && <EditForm
             action={async (formData) => {
               // Un rechazo de la cadena de entregas vuelve como { ok: false, error }: EditForm lo
               // muestra y conserva el borrador en vez de cerrar el modal.
@@ -803,7 +804,7 @@ export function TaskBoard({
                 <SubmitButton pendingLabel="Guardando...">Guardar cambios</SubmitButton>
               </div>
             </div>
-          </EditForm>
+          </EditForm>}
           <TaskCompletion task={editingTask} onSuccess={() => { setEditingTask(null); }} />
         </Modal>
       )}

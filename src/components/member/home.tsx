@@ -1,3 +1,4 @@
+import { PreparationPending } from "@/components/preparation-pending";
 import type { Prisma } from "@prisma/client";
 import { CastingPending } from "@/components/casting-pending";
 import { Film, ListChecks, Sparkles } from "lucide-react";
@@ -133,6 +134,7 @@ export async function MemberHome({ user }: { user: SessionUser }) {
     <div className="space-y-6">
       {header}
       <CastingPending user={user} brandId={context.activeId} />
+      <PreparationPending user={user} brandId={context.activeId} />
       {chain ? <MyWorkSection user={user} brandId={context.activeId} /> : null}
       {panelCards.length ? (
         <section aria-labelledby="tus-paneles-title">

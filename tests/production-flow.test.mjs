@@ -88,7 +88,7 @@ function fakeDb(overrides = {}) {
   let clock = Date.parse("2026-09-28T12:00:00.000Z");
   const tick = () => new Date((clock += 1000));
   const state = {
-    videos: [{ id: "v1", brandId: "b1", title: "Video uno", status: "GUION", shootDate: null, scheduledDate: new Date("2026-09-28T12:00:00.000Z"), scriptId: "s1", ...overrides.video }],
+    videos: [{ id: "v1", brandId: "b1", title: "Video uno", status: "GUION", shootDate: null, preparationRequired: false, preparationItems: [], scheduledDate: new Date("2026-09-28T12:00:00.000Z"), scriptId: "s1", ...overrides.video }],
     settings: overrides.settings === null ? [] : [{ brandId: "b1", recordingWeekdays: "[2,4]", autoAssign: true, updatedAt: tick(), ...overrides.settings }],
     team: overrides.team ?? [
       { id: "t1", brandId: "b1", role: "ENCARGADO", userId: "edward" },
@@ -137,6 +137,7 @@ function fakeDb(overrides = {}) {
   const stepWhere = (s, where = {}) => Object.entries(where).every(([k, v]) => (v && typeof v === "object" && "in" in v ? v.in.includes(s[k]) : s[k] === v));
 
   const db = {
+    preparationItem: { findMany: async () => [], updateMany: async () => ({ count: 0 }) },
     state,
     $executeRawUnsafe: async (sql) => { state.raw.push(sql); if (overrides.failOn && sql === overrides.failOn) throw Object.assign(new Error("boom"), { code: "P2010" }); return 0; },
     $executeRaw: async (strings) => { state.raw.push(strings.join("?")); return 0; },
@@ -204,7 +205,7 @@ function fakeDb(overrides = {}) {
     },
     task: {
       findUniqueOrThrow: async ({ where }) => state.tasks.find(t=>t.id===where.id),
-      updateMany: async ({ where, data }) => { for (const task of state.tasks) if (state.steps.some(s => s.id === where.productionStep.id && s.taskId === task.id)) Object.assign(task, data); return { count: 1 }; },
+      updateMany: async ({ where, data }) => { for (const task of state.tasks) if (state.steps.some(s => s.id === where.productionStep?.id && s.taskId === task.id) || where.id?.in?.includes(task.id)) Object.assign(task, data); return { count: 1 }; },
       findFirst: async ({ where }) => state.tasks.filter((t) => t.columnId === where.columnId).sort((a, b) => b.order - a.order)[0] ?? null,
       create: async ({ data }) => { const row = { id: `task${++seq}`, ...data }; state.tasks.push(row); return { id: row.id, title: row.title }; },
       findUnique: async ({ where }) => state.tasks.find((t) => t.id === where.id) ?? null,
@@ -424,7 +425,7 @@ test("sin tablero de tareas: siembra las columnas iniciales; con columnas solo d
 test("fecha de grabación cambiada a mano: la grabación y su tarea siguen el vídeo, incluso con origen manual", () => withFlag("true", async () => {
   const db = fakeDb({ video: { shootDate: new Date("2026-10-01T12:00:00.000Z") }, steps: [{ id: "g1", contentItemId: "v1", brandId: "b1", step: "GRABACION", status: "PENDIENTE", source: "AUTO", taskId: "task-g", automationKey: "v1:GRABACION", dueAt: new Date("2026-09-30T04:59:59.999Z") }] });
   db.state.tasks.push({ id: "task-g", dueDate: new Date("2026-09-29T12:00:00.000Z") });
-  db.task.updateMany = async ({ where, data }) => { Object.assign(db.state.tasks.find((t) => t.id === where.id), data); return { count: 1 }; };
+  db.task.updateMany = async ({ where, data }) => { const rows = db.state.tasks.filter(t => t.id === where.id || where.id?.in?.includes(t.id)); rows.forEach(t => Object.assign(t, data)); return { count: rows.length }; };
   const flow = domain();
   await flow.onShootDateChanged(db, PEOPLE.edward, "v1");
   assert.equal(db.state.steps[0].dueAt.toISOString(), "2026-10-02T04:59:59.999Z", "fin del jueves en Lima");

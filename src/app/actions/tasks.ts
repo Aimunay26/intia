@@ -148,6 +148,7 @@ export async function cambiarEstadoTarea(formData: FormData) {
   return withWorkflowMutation(user, false, async (tx, afterCommit) => {
     const id = field(formData, "id");
     await assertTaskAccess(tx, user, id, "tasks.work");
+    if (await tx.preparationItem.count({ where: { taskId: id } })) throw new WorkflowError("Confirma o reabre esta tarea desde Preparación en la ficha del vídeo.");
     // También con la automatización apagada: una tarea vinculada se gobierna por su paso.
     if (await tx.productionStep.findUnique({ where: { taskId: id }, select: { id: true } })) throw new WorkflowError("Completa o devuelve esta tarea desde su paso en la ficha del vídeo o Mi trabajo.");
     await lockRevision(tx, "Task", id, formData);
@@ -190,6 +191,7 @@ export async function actualizarTarea(formData: FormData) {
     return await withMutation(user, false, async (tx, afterCommit) => {
       await assertTaskAccess(tx, user, field(formData, "id"), "tasks.work");
       const id = field(formData, "id");
+      if (await tx.preparationItem.count({ where: { taskId: id } })) throw new WorkflowError("Edita responsable y requisitos desde Preparación en la ficha del vídeo.");
       const linked = await tx.productionStep.findUnique({ where: { taskId: id }, select: { contentItemId: true } });
       if (linked) await lockVideoLifecycle(tx, linked.contentItemId);
       const step = await lockTaskStep(tx, id);
@@ -283,6 +285,7 @@ export async function eliminarTarea(idOrFormData: FormData | string) {
   await prisma.$transaction(async tx => {
     await assertActor(tx, user, true);
     const before = await tx.task.findUniqueOrThrow({ where: { id } });
+    if (await tx.preparationItem.count({ where: { taskId: id } })) throw new WorkflowError("La tarea conserva la preparación del vídeo; no se elimina por separado.");
     await tx.task.delete({ where: { id } });
     await auditInTransaction(tx, { user, action: "ELIMINAR", entity: "Task", entityId: id, brandId: before.brandId, summary: `Eliminó la tarea "${before.title}"` });
   });

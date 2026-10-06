@@ -379,7 +379,7 @@ export function Pagination({
         <button
           className="btn btn-sm"
           disabled={page >= pageCount}
-          onClick={() => setParam({ [param]: String(page + 1) }, { scroll: scrollToTop })}
+          onClick={() => setParam({ [param]: String(page + 1) }, { scroll: scrollToTop, resetPage: false })}
         >
           Siguiente
         </button>

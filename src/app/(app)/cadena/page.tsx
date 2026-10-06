@@ -217,7 +217,7 @@ function StepStrip({ board, active, hrefFor }: { board: ChainBoard; active: Step
               </span>
               {step !== "DISENO" && index < CHAIN_ORDER.length - 1 ? <ArrowRight size={13} className="text-inkmuted max-lg:hidden" aria-hidden="true" /> : null}
             </span>
-            <span className="text-ink text-[22px] leading-none font-bold tabular-nums">{formatNumber(cards.length)}</span>
+            <span className="text-ink text-[22px] leading-none font-bold tabular-nums">{formatNumber(board.stepCounts[step]?.total ?? 0)}</span>
             <span className="text-inkmuted text-[11.5px]">
               {CHAIN_STEP_RULES[step].role}
               {overdue ? <span className="text-danger font-semibold"> · {overdue} {overdue === 1 ? "vencido" : "vencidos"}</span> : null}

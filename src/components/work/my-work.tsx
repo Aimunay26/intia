@@ -1,6 +1,7 @@
 import { AlertTriangle, ArrowRight, Bell, CalendarClock, CalendarDays, ExternalLink, Inbox, Palette, RotateCcw, UserX, Workflow } from "lucide-react";
 import Link from "next/link";
 
+import { Pagination } from "@/components/filters";
 import { Badge, ColorChip } from "@/components/ui";
 import { StepAnnouncement, StepAnnouncerProvider } from "@/components/work/announcer";
 import { AtenderAvisoButton, PedirCambiosDiseno, StepActions, type StepActionModel } from "@/components/work/step-actions";
@@ -9,7 +10,7 @@ import type { SessionUser } from "@/lib/auth";
 import { PRODUCTION_STEP_MAP, PRODUCTION_STEP_STATUS_MAP } from "@/lib/constants";
 import { allows, canAccessSection } from "@/lib/permissions";
 import { productionChainActiveFor } from "@/lib/production-chain-flag";
-import { readMyWork, type MyWork, type StepCard } from "@/lib/production-scope";
+import { readMyWork, type MyWork, type StepCard, type WorkPages } from "@/lib/production-scope";
 import { cn, formatDateTime } from "@/lib/utils";
 
 /**
@@ -24,12 +25,12 @@ import { cn, formatDateTime } from "@/lib/utils";
  * al pedir la página (vencido = dueAt < ahora, en el día de Lima).
  */
 
-export async function MyWorkSection({ user, brandId, className }: { user: SessionUser; brandId: string | null; className?: string }) {
+export async function MyWorkSection({ user, brandId, className, query = {} }: { user: SessionUser; brandId: string | null; className?: string; query?: WorkPages }) {
   if (!productionChainActiveFor(user, brandId)) return null;
   // Sin perfiles no hay trabajo que mostrar: el Inicio ya explica cómo pedirlos.
   if (user.role !== "OWNER" && !user.profiles?.length) return null;
   const now = new Date();
-  const work = await readMyWork(user, now, { brandId });
+  const work = await readMyWork(user, now, { brandId, trabajo: query.trabajo, disenos: query.disenos, coordinacion: query.coordinacion });
   if (!work.enabled) return null;
   return <MyWorkView user={user} work={work} className={className} />;
 }
@@ -37,7 +38,7 @@ export async function MyWorkSection({ user, brandId, className }: { user: Sessio
 /** Vista sin consultas (se prueba con datos de ejemplo). */
 export function MyWorkView({ user, work, className }: { user: SessionUser; work: MyWork; className?: string }) {
   const coordination = work.coordination;
-  const coordinationCount = coordination ? coordination.unassigned.length + coordination.notices.length + coordination.blocked.length : 0;
+  const coordinationCount = work.pages?.coordination.total ?? (coordination ? new Set([...coordination.unassigned, ...coordination.notices, ...coordination.blocked].map(c => c.id)).size : 0);
   const empty = !work.counts.pending && !coordination && !work.designsDelivered.length;
   const canChain = canAccessSection(user, "chain");
   const coordinator = user.role === "OWNER" || allows(user, "content.assign");
@@ -75,6 +76,7 @@ export function MyWorkView({ user, work, className }: { user: SessionUser; work:
           </p>
         ) : null}
 
+        {work.pages && work.pages.mine.pageCount > 1 && <p className="px-4 py-2 text-xs text-inkmuted">Grupos de esta página · {work.counts.pending} pendientes en total</p>}
         <Group title="Vencido" tone="danger" icon={<AlertTriangle size={13} />} cards={work.groups.overdue} user={user} coordinator={coordinator} />
         <Group title="Devuelto a mí" tone="warn" icon={<RotateCcw size={13} />} cards={work.returned} user={user} coordinator={coordinator} />
         <Group title="Hoy" tone="brand" icon={<CalendarClock size={13} />} cards={work.groups.today} user={user} coordinator={coordinator} />
@@ -91,7 +93,8 @@ export function MyWorkView({ user, work, className }: { user: SessionUser; work:
           </details>
         ) : null}
 
-        {coordination ? <Coordination coordination={coordination} /> : null}
+        {work.pages && <Pagination {...work.pages.mine} param="trabajo" className="p-4" />}
+        {coordination ? <><Coordination coordination={coordination} />{work.pages && <Pagination {...work.pages.coordination} param="coordinacion" className="p-4" />}</> : null}
 
         {work.designsDelivered.length ? (
           <div data-group="designs">
@@ -108,6 +111,7 @@ export function MyWorkView({ user, work, className }: { user: SessionUser; work:
             </ul>
           </div>
         ) : null}
+        {work.pages && <Pagination {...work.pages.designs} param="disenos" className="p-4" />}
       </div>
     </section>
     </StepAnnouncerProvider>

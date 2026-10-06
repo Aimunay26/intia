@@ -92,7 +92,7 @@ function AccessLinks({ links }: { links: ReturnType<typeof memberSectionLinks> }
  * orden de flujo) y el conteo de videos sale de un único groupBy por estado (mismas idas a la
  * base; el total usa el mismo predicado de siempre). Apagado, los bloques y consultas de siempre.
  */
-export async function MemberHome({ user }: { user: SessionUser }) {
+export async function MemberHome({ user, query = {} }: { user: SessionUser; query?: Record<string, string | undefined> }) {
   const context = await getPageBrandContext();
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
   const today = formatDateLong(new Date());
@@ -133,9 +133,9 @@ export async function MemberHome({ user }: { user: SessionUser }) {
   return (
     <div className="space-y-6">
       {header}
-      <CastingPending user={user} brandId={context.activeId} />
+      <CastingPending user={user} page={query.reparto} brandId={context.activeId} />
       <PreparationPending user={user} brandId={context.activeId} />
-      {chain ? <MyWorkSection user={user} brandId={context.activeId} /> : null}
+      {chain ? <MyWorkSection user={user} query={query} brandId={context.activeId} /> : null}
       {panelCards.length ? (
         <section aria-labelledby="tus-paneles-title">
           <h2 id="tus-paneles-title" className="text-inkmuted mb-2.5 text-[11px] font-bold tracking-[0.09em] uppercase">Tus paneles</h2>

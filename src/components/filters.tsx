@@ -19,14 +19,14 @@ function useSetParam() {
   const searchParams = useSearchParams();
   const [pending, startTransition] = useTransition();
 
-  const setParam = (updates: Record<string, string | null>, options: { scroll?: boolean } = {}) => {
+  const setParam = (updates: Record<string, string | null>, options: { scroll?: boolean; resetPage?: boolean } = {}) => {
     const params = new URLSearchParams(searchParams.toString());
     for (const [key, value] of Object.entries(updates)) {
       if (value === null || value === "") params.delete(key);
       else params.set(key, value);
     }
     // Al cambiar cualquier filtro volvemos a la primera página.
-    if (!("pagina" in updates)) params.delete("pagina");
+    if (options.resetPage !== false && !("pagina" in updates)) params.delete("pagina");
     const qs = params.toString();
     startTransition(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: options.scroll ?? false }));
   };
@@ -372,7 +372,7 @@ export function Pagination({
         <button
           className="btn btn-sm"
           disabled={page <= 1}
-          onClick={() => setParam({ [param]: String(page - 1) }, { scroll: scrollToTop })}
+          onClick={() => setParam({ [param]: String(page - 1) }, { scroll: scrollToTop, resetPage: false })}
         >
           Anterior
         </button>

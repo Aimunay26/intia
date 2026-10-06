@@ -21,7 +21,7 @@ export async function MemberWorkspace({ user, section, id, query = {} }: MemberP
   if (section === "calendar") return <MemberCalendar user={user} query={query} />;
   if (["brands", "structures", "archetypes"].includes(section)) return <MemberCatalog user={user} id={id} query={query} section={section as "brands" | "structures" | "archetypes"} />;
   // Inicio y ayuda son pantallas distintas: trabajo del día frente a perfiles, flujo y ubicación.
-  if (section === "panel") return <MemberHome user={user} />;
+  if (section === "panel") return <MemberHome user={user} query={query} />;
   if (section === "help") return <MemberHelp user={user} />;
   notFound();
 }

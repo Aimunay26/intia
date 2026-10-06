@@ -1,5 +1,27 @@
 # Validación y plan de corrección del flujo de producción de Intia
 
+**Actualización al 06/10/2026 — ALSOS.** El diagnóstico que sigue conserva la captura original
+del día 4; sus cifras y carencias iniciales no representan el estado después de las entregas.
+
+- Las revisiones humanas, fechas, reparto y preparación individual/props ya tienen implementación
+  y validaciones de producción registradas en los informes `qa-revisiones-navegador-2026-10-04.json`,
+  `qa-fechas-navegador-2026-10-05.json`, `qa-reparto-produccion-2026-10-05.json` y
+  `qa-preparacion-produccion-2026-10-06.json`. El último bloque pasó 24 comprobaciones y dejó la
+  marca QA archivada y su cuenta desactivada. Esto no equivale al recorrido integrado de todos los perfiles.
+- Paginación/totales y conciliación bajo demanda implementados localmente: Mi trabajo, coordinación,
+  cadena, reparto, disponibilidad y agenda de vídeos del miembro. Los cambios de equipo recorren
+  todos los pasos, sin el corte previo de 200. La vista `/cadena/consistencia` detecta diferencias,
+  ofrece reparación de reflejos inequívocos y exige decisión humana para duplicidades, pasos
+  faltantes y conflictos de acceso/historial. No añade un cron ni reconstruye aprobaciones.
+- Evidencia local: [qa-paginacion-consistencia-local-2026-10-06.json](qa-paginacion-consistencia-local-2026-10-06.json).
+  Este bloque no requiere migración nueva. Faltan su publicación y validación en producción.
+- Después: recorrido integrado de todos los perfiles, pruebas de devoluciones/diseño paralelo,
+  configuración de compatibilidades humanas y arranque explícito con una marca nueva. La
+  activación operativa sigue siendo una decisión separada.
+- La restricción adicional de un solo paso secuencial en PostgreSQL y una eventual cola de eventos
+  diferidos del plan original no forman parte de este bloque. Las escrituras actuales continúan
+  siendo atómicas; se detectan duplicados y se resuelven con control de concurrencia e historial.
+
 Validado el 4 de octubre de 2026, con consultas a Vercel y PostgreSQL de producción. La base conserva los registros consultados, pero el flujo automático completo todavía no está funcionando: está desactivado, no tiene equipos configurados y no ha creado pasos de producción. Además hay carencias de permisos, casting y control de preparación que deben resolverse antes de habilitarlo.
 
 El usuario confirmó dos decisiones para la implementación: **arrancar con marcas nuevas** y **exigir revisión humana del guion y del vídeo final**. Las ocho marcas archivadas y sus registros permanecen como historial; no se reactivarán ni se incorporarán automáticamente al nuevo flujo.

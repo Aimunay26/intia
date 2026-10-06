@@ -1,3 +1,4 @@
+import { expectedChainStep } from "@/lib/production-policy";
 import type { SessionUser } from "@/lib/auth";
 import { invalidateRecordingPreparation, syncVideoStepDate, stepTaskDescription } from "@/lib/domain/production-dates";
 import type { AppTransaction } from "@/lib/prisma";
@@ -113,13 +114,7 @@ const stepLabel = (step: string) => PRODUCTION_STEP_MAP[step]?.label ?? step;
 const lower = (step: string) => stepLabel(step).toLowerCase();
 
 /** Paso que le toca al video según su estado (pura; la usan la Cadena y «Crear paso»). */
-export function expectedChainStep(status: string, finalApproved: boolean, delivered: { script?: boolean; master?: boolean } = {}): ChainStep | null {
-  if (status === "IDEA" || status === "GUION") return delivered.script ? "REVISION_GUION" : "GUION";
-  if (status === "APROBADO" || status === "GRABACION") return "GRABACION";
-  if (status === "EDICION") return finalApproved ? "PUBLICACION" : delivered.master ? "REVISION_FINAL" : "EDICION";
-  if (status === "PROGRAMADO") return "PUBLICACION";
-  return null;
-}
+export { expectedChainStep } from "@/lib/production-policy";
 
 async function expectedVideoStep(tx: AppTransaction, video: VideoRow): Promise<ChainStep | null> {
   const deliveries = await tx.productionStep.findMany({ where: { contentItemId: video.id, step: { in: ["GUION", "EDICION"] }, status: "HECHO" }, select: { step: true } });
@@ -448,16 +443,16 @@ export async function syncStepTask(tx: AppTransaction, actor: ProductionActor, s
     await auditInTransaction(tx, { user: actor, action: "CREAR", entity: "Task", entityId: task.id, brandId: step.brandId, summary: `Creó la tarea "${task.title}" (cadena de entregas)` });
     return;
   }
-  const task = await tx.task.findUnique({ where: { id: step.taskId }, select: { id: true, title: true, columnId: true, assigneeId: true, dueDate: true, description: true, status: true } });
+  const task = await tx.task.findUnique({ where: { id: step.taskId }, select: { id: true, title: true, columnId: true, assigneeId: true, dueDate: true, description: true, status: true, completedAt: true, completedById: true, column: { select: { brandId: true } } } });
   if (!task) return;
   const description = stepTaskDescription(stepLabel(step.step), video.title, step.contentItemId, step.dueAt, task.description);
   const listo = await lastColumnFor(tx, actor, step.brandId);
   let columnId = task.columnId;
   if (state === "closed" && task.columnId !== listo.id) columnId = listo.id;
-  if (state === "open" && task.columnId === listo.id) columnId = await taskColumnFor(tx, actor, step.brandId);
+  if (state === "open" && (task.columnId === listo.id || (task.column.brandId !== null && task.column.brandId !== step.brandId))) columnId = await taskColumnFor(tx, actor, step.brandId);
   const changes: Record<string, Cambio> = {};
   const status = step.status === "HECHO" ? "HECHO" : state === "closed" ? "CANCELADO" : "PENDIENTE";
-  if (task.status !== status) changes.status = { etiqueta: "Estado", antes: task.status, despues: status };
+  if (task.status !== status || (state === "open" && (task.completedAt || task.completedById))) changes.status = { etiqueta: "Estado", antes: task.status, despues: status };
   if (columnId !== task.columnId) changes.columnId = { etiqueta: "Etapa", antes: task.columnId, despues: columnId, verDespues: state === "closed" ? listo.name : "Pendiente" };
   if (task.assigneeId !== step.assigneeId) changes.assigneeId = { etiqueta: "Responsable", antes: task.assigneeId, despues: step.assigneeId };
   if (state === "open" && task.dueDate?.getTime() !== dueDate?.getTime()) changes.dueDate = { etiqueta: "Fecha límite", antes: task.dueDate?.toISOString() ?? null, despues: dueDate?.toISOString() ?? null };
@@ -1385,27 +1380,34 @@ async function handleEvent(tx: AppTransaction, actor: ProductionActor, event: Ex
       if (!kind) return { done: false, reason: "no_step" };
       const flow = await readFlow(tx, event.brandId);
       const person = event.userId ? await eligiblePerson(tx, event.userId, event.brandId, stepAssigneeCapabilities(kind)) : null;
-      const steps = await tx.productionStep.findMany({
-        where: {
-          brandId: event.brandId, step: event.role === "ENCARGADO" ? { in: ["REVISION_GUION", "REVISION_FINAL"] } : kind, status: "PENDIENTE", source: "AUTO",
-          OR: [...(event.previousUserId ? [{ assigneeId: event.previousUserId }] : []), ...(person && flow.autoAssign ? [{ assigneeId: null }] : [])],
-        },
-        orderBy: [{ dueAt: "asc" }, { id: "asc" }],
-        take: 200,
-        select: { ...STEP_SELECT, contentItem: { select: { title: true } } },
-      });
-      for (const step of steps) {
-        if (step.assigneeId === (person?.id ?? null)) continue;
-        await tx.productionStep.update({ where: { id: step.id }, data: { assigneeId: person?.id ?? null } });
-        await auditInTransaction(tx, {
-          user: actor, action: "ASIGNAR", entity: "ProductionStep", entityId: step.id, brandId: event.brandId,
-          summary: `Pasó la ${lower(kind)} de "${step.contentItem.title}" a ${person?.name ?? "nadie (sin asignar)"} (cambio en el equipo de la marca)`,
-          changes: { assigneeId: { etiqueta: "Responsable", antes: step.assigneeId, despues: person?.id ?? null, verDespues: person?.name ?? "Sin asignar" } },
+      let after: string | undefined, changed = 0;
+      for (;;) {
+        const steps = await tx.productionStep.findMany({
+          where: {
+            ...(after ? { id: { gt: after } } : {}),
+            brandId: event.brandId, step: event.role === "ENCARGADO" ? { in: ["REVISION_GUION", "REVISION_FINAL"] } : kind, status: "PENDIENTE", source: "AUTO",
+            OR: [...(event.previousUserId ? [{ assigneeId: event.previousUserId }] : []), ...(person && flow.autoAssign ? [{ assigneeId: null }] : [])],
+          },
+          orderBy: { id: "asc" },
+          take: 200,
+          select: { ...STEP_SELECT, contentItem: { select: { title: true } } },
         });
-        await syncStepTask(tx, actor, step.id, "open");
-        if (person) await ensureAssignment(tx, actor, { id: step.contentItemId, title: step.contentItem.title, brandId: event.brandId }, STEP_RULES[kind as ChainStep | "DISENO"].assignment, person);
+        for (const step of steps) {
+          if (step.assigneeId === (person?.id ?? null)) continue;
+          changed++;
+          await tx.productionStep.update({ where: { id: step.id }, data: { assigneeId: person?.id ?? null } });
+          await auditInTransaction(tx, {
+            user: actor, action: "ASIGNAR", entity: "ProductionStep", entityId: step.id, brandId: event.brandId,
+            summary: `Pasó la ${lower(kind)} de "${step.contentItem.title}" a ${person?.name ?? "nadie (sin asignar)"} (cambio en el equipo de la marca)`,
+            changes: { assigneeId: { etiqueta: "Responsable", antes: step.assigneeId, despues: person?.id ?? null, verDespues: person?.name ?? "Sin asignar" } },
+          });
+          await syncStepTask(tx, actor, step.id, "open");
+          if (person) await ensureAssignment(tx, actor, { id: step.contentItemId, title: step.contentItem.title, brandId: event.brandId }, STEP_RULES[kind as ChainStep | "DISENO"].assignment, person);
+        }
+        if (steps.length < 200) break;
+        after = steps[steps.length - 1].id;
       }
-      return { done: steps.length > 0, reason: steps.length ? "ok" : "exists" };
+      return { done: changed > 0, reason: changed ? "ok" : "exists" };
     }
     case "STEP_MARKED":
       return videoEvent(tx, event.videoId, async (video) => {

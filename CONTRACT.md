@@ -1476,3 +1476,33 @@ Mini-spec y evidencia: `reports/paneles-por-rol-2026-10-01.md`.
   versionan los bytes de Drive/Dropbox. Usar enlaces de versión y volver a entregar si cambia
   el archivo. Sobrescribir un archivo externo sin notificar a ALSOS no es detectable.
 - Alcance y pendientes: `reports/plan-correccion-flujo-produccion-2026-10-04.md`.
+
+### Paginación y consistencia — 06/10/2026
+
+- Mi trabajo (`trabajo`, `coordinacion`, `disenos`) y Cadena (`pagina`, `sinPaso`) paginan en
+  servidor. Conteos y filas comparten snapshot `RepeatableRead`, con orden por fecha e ID y
+  ajuste de páginas fuera de rango. Los contadores generales no se calculan desde las tarjetas
+  de una página. El filtro de paso se aplica antes del límite; coordinación cuenta cada paso
+  una vez aunque tenga varios problemas. Los avisos se resuelven por el último evento de cada
+  paso, sin límite global de eventos.
+- Las confirmaciones pendientes de reparto se recorren por lotes con snapshot para comprobar
+  la huella del guion y la sesión. Solo se conservan los enlaces de la página, no todos los
+  guiones. Disponibilidad y agenda de vídeos del miembro también tienen navegación.
+- `TEAM_CHANGED` recorre todos los pasos aplicables en lotes de 200 dentro de la misma
+  transacción: el tamaño del lote no es un límite de resultados. Un fallo revierte el cambio
+  completo, sin respuestas de éxito parcial; conserva el límite temporal de `withMutation`.
+- `/cadena/consistencia` consulta los casos vigentes bajo demanda, solo para coordinación o
+  Dueño, marcas autorizadas y dentro del canario; nunca marcas archivadas. No se consulta con
+  la cadena apagada. No es un nuevo cron ni activa automatizaciones. Conteo, filtros y páginas
+  derivan del mismo conjunto de incidencias.
+- «Reparar desde el paso vigente» restaura tareas pendientes ausentes o desactualizadas y
+  funciones ausentes cuando el paso identifica inequívocamente a una persona que conserva sus
+  permisos. No reasigna a otra persona ni concede perfiles. Una posible tarea desvinculada,
+  una tarea de otra marca o compartida con preparación impiden la reparación automática de ese
+  vínculo. Los estados históricos y aprobaciones se revisan a mano.
+- Resolver duplicidades exige elegir el paso que sigue y registrar un motivo. Los demás se
+  cancelan con sus tareas, nunca se firman como entregados. Crear un paso faltante exige revisión
+  explícita y utiliza las reglas habituales del flujo. Todas las resoluciones revalidan sesión,
+  permisos, canario y huella de los datos en una transacción serializable; mantienen el bloqueo
+  guion → vídeo → pasos → tareas y auditoría en el mismo commit. Repetir una reparación resuelta
+  no crea tareas nuevas.

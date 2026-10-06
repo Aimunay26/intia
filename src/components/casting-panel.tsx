@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { loadPage } from "@/lib/list-pagination";
+import { Pagination } from "@/components/filters";
 import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/lib/auth";
 import { contentScope } from "@/lib/access-scope";
@@ -9,7 +11,7 @@ import { Card, Field } from "@/components/ui";
 import { EditForm, RevisionField } from "@/components/edit-form";
 import { prepararReparto, asignarPapel, guardarHorarioReparto, responderPapel, guardarIndisponibilidad } from "@/app/actions/casting";
 
-export async function CastingPanel({ user, videoId }: { user: SessionUser; videoId: string }) {
+export async function CastingPanel({ user, videoId, page }: { user: SessionUser; videoId: string; page?: string }) {
   const video = await prisma.contentItem.findFirst({ where: { AND: [{ id: videoId }, contentScope(user)] }, include: { ...castingInclude, assignments: true, brand: { select: { archived: true } } } });
   if (!video) return null;
   const coordinate = allowsContentRecord(user, "content.assign", video);
@@ -20,7 +22,8 @@ export async function CastingPanel({ user, videoId }: { user: SessionUser; video
   const people = coordinate ? await prisma.user.findMany({ where: { active: true, OR: [{ role: "OWNER" }, { workProfiles: { some: { profile: "TALENT" } }, brandAccess: { some: { brandId: video.brandId } } }] },
     select: { id: true, name: true, archetype: { select: { id: true, name: true, active: true, archetypePrimary: true, archetypeSecondary: true, strengths: true, avoid: true, fits: { where: { structureId: video.script?.structureId ?? "" }, select: { score: true, source: true, notes: true } } } } }, orderBy: { name: "asc" } }) : [];
   const conflicts = new Map(await Promise.all(people.map(async p => [p.id, await actorConflict(prisma, p.id, video)] as const)));
-  const blocks = own.length ? await prisma.actorUnavailability.findMany({ where: { userId: user.id, endAt: { gt: new Date() } }, orderBy: { startAt: "asc" }, take: 200 }) : [];
+  const blockWhere = { userId: user.id, endAt: { gt: new Date() } };
+  const blocks = own.length ? await prisma.$transaction(db => loadPage(page, 20, () => db.actorUnavailability.count({ where: blockWhere }), range => db.actorUnavailability.findMany({ where: blockWhere, orderBy: [{ startAt: "asc" }, { id: "asc" }], ...range })), { isolationLevel: "RepeatableRead" }) : { items: [], page: 1, pageCount: 1, total: 0 };
   const fields = <><input type="hidden" name="contentItemId" value={video.id} /><input type="hidden" name="expectedToken" value={token} /></>;
   const visible = coordinate ? video.castRoles : own;
   const synchronized = slots.length === video.castRoles.length && video.castRoles.every(r => roleCurrent(r, video));
@@ -64,7 +67,8 @@ export async function CastingPanel({ user, videoId }: { user: SessionUser; video
     })}</div>
     {!!own.length && !video.brand.archived && <details><summary className="cursor-pointer font-medium">Mi disponibilidad</summary><p className="text-sm text-inkmuted my-3">Registra los horarios en los que no puedes grabar. Solo tú ves esta lista; coordinación recibe un aviso de conflicto. Un bloqueo retira tus confirmaciones que coincidan con él.</p>
       <EditForm action={guardarIndisponibilidad} className="flex flex-wrap items-end gap-3"><input type="hidden" name="contentItemId" value={video.id} /><Field label="Día"><input type="date" className="input" name="date" defaultValue={dateKey(video.shootDate)} required /></Field><Field label="Desde (Lima)"><input type="time" className="input" name="start" required /></Field><Field label="Hasta (Lima)"><input type="time" className="input" name="end" required /></Field><button className="btn">Guardar indisponibilidad</button></EditForm>
-      <ul className="mt-3 space-y-2">{blocks.map(block => <li className="flex flex-wrap items-center gap-2 text-sm" key={block.id}><span>{formatDateTime(block.startAt)}–{formatDateTime(block.endAt)}</span><EditForm action={guardarIndisponibilidad}><input type="hidden" name="contentItemId" value={video.id} /><input type="hidden" name="blockId" value={block.id} /><button className="btn btn-sm">Quitar bloqueo</button></EditForm></li>)}</ul>
+      <ul className="mt-3 space-y-2">{blocks.items.map(block => <li className="flex flex-wrap items-center gap-2 text-sm" key={block.id}><span>{formatDateTime(block.startAt)}–{formatDateTime(block.endAt)}</span><EditForm action={guardarIndisponibilidad}><input type="hidden" name="contentItemId" value={video.id} /><input type="hidden" name="blockId" value={block.id} /><button className="btn btn-sm">Quitar bloqueo</button></EditForm></li>)}</ul>
+      <Pagination {...blocks} param="disponibilidad" />
     </details>}
   </Card></section>;
 }

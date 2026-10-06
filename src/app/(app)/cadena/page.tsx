@@ -1,7 +1,7 @@
 import { AlertTriangle, ArrowRight, Bell, CheckCircle2, CircleDashed, Clock, UserX, Workflow } from "lucide-react";
 import Link from "next/link";
 
-import { ActiveFilters, FilterBar, FilterDisclosure, FilterSelect } from "@/components/filters";
+import { ActiveFilters, FilterBar, FilterDisclosure, FilterSelect, Pagination } from "@/components/filters";
 import { Badge, Callout, Card, CardHeader, ColorChip, EmptyState, PageHeader, Stat } from "@/components/ui";
 import { StepAnnouncement, StepAnnouncerProvider } from "@/components/work/announcer";
 import { AtenderAvisoButton, CrearPasoButton } from "@/components/work/step-actions";
@@ -26,7 +26,7 @@ import { cn, formatNumber } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-type Query = { paso?: string; persona?: string; vencidos?: string };
+type Query = { paso?: string; persona?: string; vencidos?: string; pagina?: string; sinPaso?: string };
 const STEP_FILTERS: readonly StepKind[] = [...CHAIN_ORDER, "DISENO"];
 const isStepFilter = (value: string | undefined): value is StepKind => Boolean(value && (STEP_FILTERS as readonly string[]).includes(value));
 
@@ -58,7 +58,7 @@ export default async function CadenaPage({ searchParams }: { searchParams: Promi
     const vencidos = query.vencidos === "1";
     const context = await getPageBrandContext();
     const now = new Date();
-    const board = await readChain(user, { brandId: context.activeId, personId: persona, onlyOverdue: vencidos, now });
+    const board = await readChain(user, { brandId: context.activeId, personId: persona, onlyOverdue: vencidos, step: paso, page: query.pagina, missingPage: query.sinPaso, now });
     if (!board.allowed) {
       return (
         <>
@@ -118,12 +118,13 @@ export default async function CadenaPage({ searchParams }: { searchParams: Promi
           </div>
         </FilterBar>
 
+        <div className="mb-4"><Link className="btn" href="/cadena/consistencia">Revisar inconsistencias</Link></div>
         <Stuck board={board} ownerView={user.role === "OWNER"} />
 
         <Card className="overflow-hidden">
           <CardHeader
             title="Videos en curso"
-            subtitle={`${rows.length} ${rows.length === 1 ? "paso abierto" : "pasos abiertos"}, del plazo más próximo al más lejano`}
+            subtitle={`${board.page.total} ${board.page.total === 1 ? "paso abierto" : "pasos abiertos"}, del plazo más próximo al más lejano`}
             icon={<Clock size={16} />}
           />
           {rows.length ? (
@@ -197,7 +198,7 @@ function StepStrip({ board, active, hrefFor }: { board: ChainBoard; active: Step
     <nav aria-label="Pasos de la cadena" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
       {STEP_FILTERS.map((step, index) => {
         const cards = step === "DISENO" ? board.designs : board.columns[step];
-        const overdue = cards.filter((card) => card.overdue).length;
+        const overdue = board.stepCounts?.[step]?.overdue ?? cards.filter((card) => card.overdue).length;
         const current = active === step;
         return (
           <Link
@@ -255,7 +256,7 @@ function Stuck({ board, ownerView }: { board: ChainBoard; ownerView: boolean }) 
   if (!total) return null;
   return (
     <Card className="mb-5">
-      <CardHeader title={<span id="atascos-titulo" tabIndex={-1} className="focus:outline-none">Atascos</span>} subtitle="Lo que no avanza solo: cada fila dice por qué y qué hacer." icon={<AlertTriangle size={16} />} />
+      <CardHeader title={<span id="atascos-titulo" tabIndex={-1} className="focus:outline-none">Atascos</span>} subtitle="Avisos y bloqueos de los pasos de esta página; videos sin paso en su propia lista." icon={<AlertTriangle size={16} />} />
       <div className="divide-line divide-y">
         {notices.length ? (
           <StuckGroup title="Avisos a coordinación" icon={<Bell size={13} />} count={notices.length}>
@@ -286,7 +287,7 @@ function Stuck({ board, ownerView }: { board: ChainBoard; ownerView: boolean }) 
           </StuckGroup>
         ) : null}
         {withoutStep.length ? (
-          <StuckGroup title="Videos sin paso abierto" icon={<CircleDashed size={13} />} count={withoutStep.length}>
+          <StuckGroup title="Videos sin paso abierto" icon={<CircleDashed size={13} />} count={board.missingPage.total}>
             {withoutStep.map((item) => (
               <li key={item.video.id} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
                 <div className="min-w-0 flex-1 basis-64">
@@ -301,6 +302,7 @@ function Stuck({ board, ownerView }: { board: ChainBoard; ownerView: boolean }) 
             ))}
           </StuckGroup>
         ) : null}
+        <Pagination {...board.missingPage} param="sinPaso" className="p-4" />
         {outOfSync.length ? (
           <StuckGroup title="Estado desfasado" icon={<AlertTriangle size={13} />} count={outOfSync.length}>
             {outOfSync.map(({ card, expected }) => (

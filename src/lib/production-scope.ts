@@ -1,10 +1,14 @@
-import type { Prisma } from "@prisma/client";
+import { expectedChainStep } from "@/lib/production-policy";
+import { Prisma } from "@prisma/client";
 
 import { contentScope } from "@/lib/access-scope";
 import { liveBrand, liveStep, withLive } from "@/lib/archive-scope";
 import { ACTIVE_STATUSES, CHAIN_ORDER, CHAIN_STEP_RULES, CONTENT_STATUS_MAP, DEAD_STATUSES, PRODUCTION_STEP_MAP, chainChecksToMark, type ChainStep } from "@/lib/constants";
 import { allows, type AccessUser, type Capability } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { prisma, type AppTransaction } from "@/lib/prisma";
+import { stepAssigneeCapabilities, TASK_ASSIGNEE_CAPABILITIES } from "@/lib/work-assignees";
+import { loadPage } from "@/lib/list-pagination";
+import { blockedStepSql, emptyPage, openNoticeSql, type PageInfo } from "@/lib/production-queries";
 import { calendarStepsEnabled, productionChainActiveFor, productionChainBrands, productionChainConfigured, productionChainEnabled } from "@/lib/production-chain-flag";
 import { dateKey, instantInZone, timeKey } from "@/lib/utils";
 import { addDaysToKey, dueLabel, weekdayOfKey } from "@/lib/working-days";
@@ -13,7 +17,7 @@ import { addDaysToKey, dueLabel, weekdayOfKey } from "@/lib/working-days";
  * Lecturas de la cadena de entregas para pantallas: «Mi trabajo», la vista «Cadena», los pasos
  * del calendario y el estado «grabado» de la futura Previa de guiones.
  *
- *  - Solo lectura, con `prisma` (sin transacción) y siempre dentro de las marcas autorizadas:
+ *  - Solo lectura, con snapshots RepeatableRead para contar y paginar, siempre dentro de las marcas autorizadas:
  *    el Dueño ve todo; un miembro, sus marcas y, dentro de ellas, sus pasos o los de videos de
  *    su alcance (contentScope). El canario (PRODUCTION_CHAIN_BRANDS) también filtra.
  *  - Archivado total (ARCHIVO_TOTAL_DESDE encendido): nadie, tampoco el Dueño, ve pasos ni
@@ -46,6 +50,7 @@ export type StepCard = {
   linkField: "materialUrl" | "publishedUrl" | null;
   linkLabel: string | null;
   status: string;
+  expectedStep?: ChainStep | null;
   source: string;
   /** Revisión del paso para lockRevision (expectedUpdatedAt del formulario). */
   revision: string;
@@ -79,6 +84,7 @@ export type StepCard = {
 
 export type MyWork = {
   enabled: boolean;
+  pages: { mine: PageInfo; designs: PageInfo; coordination: PageInfo };
   groups: { undated: StepCard[]; overdue: StepCard[]; today: StepCard[]; next7: StepCard[]; later: StepCard[] };
   /** «Te lo devolvieron» (fuera de los grupos por fecha). */
   returned: StepCard[];
@@ -106,6 +112,9 @@ export type StuckVideo = {
 export type ChainBoard = {
   enabled: boolean;
   allowed: boolean;
+  page: PageInfo;
+  missingPage: PageInfo;
+  stepCounts: Record<string, { total: number; overdue: number }>;
   columns: Record<ChainStep, StepCard[]>;
   designs: StepCard[];
   stuck: {
@@ -215,7 +224,7 @@ const CARD_SELECT = {
   assigneeId: true, brandId: true, contentItemId: true,
   assignee: { select: { id: true, name: true, active: true, role: true, brandAccess: { select: { brandId: true } }, workProfiles: { select: { profile: true } } } },
   requestedBy: { select: { name: true } },
-  contentItem: { select: { id: true, title: true, status: true, scriptId: true, publishedUrl: true, brand: { select: { id: true, name: true, colorPrimary: true } } } },
+  contentItem: { select: { id: true, title: true, status: true, scriptId: true, publishedUrl: true, script: { select: { status: true } }, checklist: { where: { kind: "FINAL_APPROVAL", done: true }, select: { id: true } }, productionSteps: { where: { status: "HECHO", step: { in: ["GUION", "EDICION"] } }, select: { step: true } }, brand: { select: { id: true, name: true, colorPrimary: true } } } },
 } satisfies Prisma.ProductionStepSelect;
 type CardRow = Prisma.ProductionStepGetPayload<{ select: typeof CARD_SELECT }>;
 
@@ -244,7 +253,7 @@ function toCard(row: CardRow, now: Date, extras: Extras = {}): StepCard {
   if (step === "PUBLICACION" && video.publishedUrl) links.push({ label: "Enlace público", href: video.publishedUrl });
   if (row.materialUrl && step !== "PUBLICACION") links.push({ label: rule.linkLabel ?? "Enlace", href: row.materialUrl });
   const assignee = row.assignee
-    ? { id: row.assignee.id, name: row.assignee.name, eligible: eligibleFor(row.assignee, row.brandId), capable: profileAllows(row.assignee, rule.capability) }
+    ? { id: row.assignee.id, name: row.assignee.name, eligible: eligibleFor(row.assignee, row.brandId), capable: [...TASK_ASSIGNEE_CAPABILITIES, ...stepAssigneeCapabilities(step)].every(cap => profileAllows(row.assignee!, cap)) }
     : null;
   const note = extras.notes?.get(row.id);
   return {
@@ -257,6 +266,7 @@ function toCard(row: CardRow, now: Date, extras: Extras = {}): StepCard {
     linkField: rule.link,
     linkLabel: rule.linkLabel,
     status: row.status,
+    expectedStep: expectedChainStep(video.status, video.checklist.length > 0, { script: video.script?.status === "REVISION" && video.productionSteps.some(s => s.step === "GUION"), master: video.productionSteps.some(s => s.step === "EDICION") }),
     source: row.source,
     revision: row.updatedAt.toISOString(),
     reviewToken: row.reviewToken,
@@ -295,15 +305,20 @@ function parseChanges(value: string | null): Record<string, { despues?: unknown 
  *    cualquier acción posterior de coordinación: reasignar, reabrir, completar o «atendido»).
  *  - devuelto: la última reapertura del paso llevó el motivo de una devolución.
  */
-export async function stepNotes(ids: string[]): Promise<Map<string, { notice: StepNote | null; returned: StepNote | null }>> {
+export async function stepNotes(ids: string[], db: AppTransaction = prisma): Promise<Map<string, { notice: StepNote | null; returned: StepNote | null }>> {
   const out = new Map<string, { notice: StepNote | null; returned: StepNote | null }>();
   if (!ids.length) return out;
-  const rows = await prisma.auditLog.findMany({
-    where: { entity: "ProductionStep", entityId: { in: ids }, OR: [{ action: { in: ["ASIGNAR", "REABRIR", "COMPLETAR"] } }, { changes: { contains: '"aviso' } }] },
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: Math.min(4000, ids.length * 20),
-    select: { entityId: true, action: true, changes: true, userName: true, createdAt: true },
-  });
+  const rows = await db.$queryRaw<{ entityId: string; action: string; changes: string | null; userName: string | null; createdAt: Date }[]>(Prisma.sql`
+    SELECT * FROM (
+      (SELECT DISTINCT ON ("entityId") id, "entityId", action, changes, "userName", "createdAt" FROM "AuditLog"
+        WHERE entity = 'ProductionStep' AND "entityId" IN (${Prisma.join(ids)})
+          AND (action IN ('ASIGNAR','REABRIR','COMPLETAR') OR changes LIKE '%"aviso%')
+        ORDER BY "entityId", "createdAt" DESC, id DESC)
+      UNION
+      (SELECT DISTINCT ON ("entityId") id, "entityId", action, changes, "userName", "createdAt" FROM "AuditLog"
+        WHERE entity = 'ProductionStep' AND "entityId" IN (${Prisma.join(ids)}) AND action = 'REABRIR'
+        ORDER BY "entityId", "createdAt" DESC, id DESC)
+    ) notes ORDER BY "createdAt" DESC, id DESC`);
   const noticeDone = new Set<string>(), returnDone = new Set<string>();
   for (const row of rows) {
     const id = row.entityId;
@@ -324,11 +339,11 @@ export async function stepNotes(ids: string[]): Promise<Map<string, { notice: St
 }
 
 /** Material grabado (paso GRABACION) y máster (paso EDICION) de cada video. */
-async function stepLinks(videoIds: string[]): Promise<Map<string, { material: string | null; master: string | null }>> {
+async function stepLinks(videoIds: string[], db: AppTransaction): Promise<Map<string, { material: string | null; master: string | null }>> {
   const out = new Map<string, { material: string | null; master: string | null }>();
   if (!videoIds.length) return out;
   const keys = videoIds.flatMap((id) => [`${id}:GRABACION`, `${id}:EDICION`]);
-  const rows = await prisma.productionStep.findMany({ where: { automationKey: { in: keys } }, select: { contentItemId: true, step: true, materialUrl: true } });
+  const rows = await db.productionStep.findMany({ where: { automationKey: { in: keys } }, select: { contentItemId: true, step: true, materialUrl: true } });
   for (const row of rows) {
     const entry = out.get(row.contentItemId) ?? { material: null, master: null };
     if (row.step === "GRABACION") entry.material = row.materialUrl;
@@ -338,10 +353,10 @@ async function stepLinks(videoIds: string[]): Promise<Map<string, { material: st
   return out;
 }
 
-async function pendingChecks(videoIds: string[]): Promise<Map<string, { label: string; stage: string }[]>> {
+async function pendingChecks(videoIds: string[], db: AppTransaction): Promise<Map<string, { label: string; stage: string }[]>> {
   const out = new Map<string, { label: string; stage: string }[]>();
   if (!videoIds.length) return out;
-  const rows = await prisma.checklistItem.findMany({
+  const rows = await db.checklistItem.findMany({
     where: { contentItemId: { in: videoIds }, required: true, kind: "TASK", done: false },
     orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
     select: { contentItemId: true, label: true, stage: true },
@@ -350,12 +365,12 @@ async function pendingChecks(videoIds: string[]): Promise<Map<string, { label: s
   return out;
 }
 
-async function enrich(rows: CardRow[], now: Date, detail: { checks?: boolean; generator?: boolean } = {}): Promise<StepCard[]> {
+async function enrich(rows: CardRow[], now: Date, detail: { checks?: boolean; generator?: boolean } = {}, db: AppTransaction = prisma): Promise<StepCard[]> {
   const videoIds = [...new Set(rows.map((row) => row.contentItemId))];
   const [links, checks, notes] = await Promise.all([
-    stepLinks(videoIds),
-    detail.checks ? pendingChecks(videoIds) : Promise.resolve(undefined),
-    stepNotes(rows.filter((row) => row.status === "PENDIENTE").map((row) => row.id)),
+    stepLinks(videoIds, db),
+    detail.checks ? pendingChecks(videoIds, db) : Promise.resolve(undefined),
+    stepNotes(rows.filter((row) => row.status === "PENDIENTE").map((row) => row.id), db),
   ]);
   return rows.map((row) => toCard(row, now, { links, checks, notes, generator: detail.generator }));
 }
@@ -368,7 +383,7 @@ export function isBlocked(card: StepCard): boolean {
 /* ------------------------------------------------------------- MI TRABAJO -- */
 
 function emptyMyWork(enabled: boolean): MyWork {
-  return { enabled, groups: { undated: [], overdue: [], today: [], next7: [], later: [] }, returned: [], counts: { pending: 0, overdue: 0, today: 0 }, coordination: null, designsDelivered: [] };
+  return { enabled, pages: { mine: emptyPage(), designs: emptyPage(), coordination: emptyPage() }, groups: { undated: [], overdue: [], today: [], next7: [], later: [] }, returned: [], counts: { pending: 0, overdue: 0, today: 0 }, coordination: null, designsDelivered: [] };
 }
 
 /**
@@ -377,9 +392,9 @@ function emptyMyWork(enabled: boolean): MyWork {
  * apto (decisión del Dueño 3). Un ENCARGADO que no puede asignar no recibe la bandeja: le llega
  * al Dueño, para que nada quede trabado sin que nadie lo vea.
  */
-async function coordinationBrands(user: AccessUser, brandId: string | null): Promise<{ id: string; name: string }[]> {
+async function coordinationBrands(user: AccessUser, brandId: string | null, db: AppTransaction): Promise<{ id: string; name: string }[]> {
   const canary = productionChainBrands();
-  const leads = await prisma.brandTeamMember.findMany({
+  const leads = await db.brandTeamMember.findMany({
     where: { role: "ENCARGADO", ...(brandId ? { brandId } : {}) },
     select: { brandId: true, userId: true, user: { select: { id: true, active: true, role: true, brandAccess: { select: { brandId: true } }, workProfiles: { select: { profile: true } } } } },
   });
@@ -389,13 +404,13 @@ async function coordinationBrands(user: AccessUser, brandId: string | null): Pro
   const ids = new Set(leads.filter((lead) => lead.userId === user.id && selfCan && apt(lead) && (user.role === "OWNER" || user.brandIds?.includes(lead.brandId))).map((lead) => lead.brandId));
   if (user.role === "OWNER") {
     const withLead = new Set(leads.filter(apt).map((lead) => lead.brandId));
-    const teams = await prisma.brandTeamMember.findMany({ where: brandId ? { brandId } : {}, distinct: ["brandId"], select: { brandId: true } });
+    const teams = await db.brandTeamMember.findMany({ where: brandId ? { brandId } : {}, distinct: ["brandId"], select: { brandId: true } });
     for (const { brandId: id } of teams) if (!withLead.has(id)) ids.add(id);
   }
   const allowed = [...ids].filter((id) => !canary || canary.includes(id));
   if (!allowed.length) return [];
   // Archivado total: la bandeja de coordinación no nombra marcas archivadas (sus equipos siguen en la base).
-  return prisma.brand.findMany({ where: { id: { in: allowed }, ...liveBrand() }, orderBy: [{ name: "asc" }, { id: "asc" }], select: { id: true, name: true } });
+  return db.brand.findMany({ where: { id: { in: allowed }, ...liveBrand(), archived: false }, orderBy: [{ name: "asc" }, { id: "asc" }], select: { id: true, name: true } });
 }
 
 /**
@@ -403,54 +418,71 @@ async function coordinationBrands(user: AccessUser, brandId: string | null): Pro
  * adelante), los devueltos con su motivo, lo de coordinación (sin asignar, avisos y bloqueos)
  * y los diseños entregados que pidió. `brandId` es la marca activa del selector (opcional).
  */
-export async function readMyWork(user: AccessUser, now: Date = new Date(), opts: { brandId?: string | null } = {}): Promise<MyWork> {
+export type WorkPages = { trabajo?: string; disenos?: string; coordinacion?: string };
+export async function readMyWork(user: AccessUser, now: Date = new Date(), opts: { brandId?: string | null } & WorkPages = {}): Promise<MyWork> {
   // Con el canario, quien solo trabaja en marcas del flujo anterior no tiene «Mi trabajo».
   if (!productionChainActiveFor(user, opts.brandId)) return emptyMyWork(false);
-  const brand: Prisma.ProductionStepWhereInput = opts.brandId ? { brandId: opts.brandId } : {};
-  const base = [productionStepScope(user), canaryWhere(), brand];
-  const liveVideo: Prisma.ProductionStepWhereInput = { contentItem: { status: { notIn: DEAD_STATUSES } } };
-  const [mineRows, deliveredRows, coordination] = await Promise.all([
-    prisma.productionStep.findMany({ where: { AND: [...base, liveVideo, { assigneeId: user.id, status: "PENDIENTE" }] }, orderBy: [{ dueAt: "asc" }, { id: "asc" }], take: 100, select: CARD_SELECT }),
-    prisma.productionStep.findMany({ where: { AND: [...base, { step: "DISENO", status: "HECHO", requestedById: user.id, doneAt: { gte: new Date(now.getTime() - 7 * DAY_MS) } }] }, orderBy: [{ doneAt: "desc" }, { id: "desc" }], take: 20, select: CARD_SELECT }),
-    coordinationBrands(user, opts.brandId ?? null),
-  ]);
-  const mine = await enrich(mineRows, now, { checks: true, generator: allows(user, "scripts.generate") });
-  const work = emptyMyWork(true);
-  const todayKey = dateKey(now), weekKey = addDaysToKey(todayKey, 7);
-  for (const card of mine) {
-    if (card.returned) work.returned.push(card);
-    else if (!card.dueAt) work.groups.undated.push(card);
-    else if (card.overdue) work.groups.overdue.push(card);
-    else if (card.today) work.groups.today.push(card);
-    else if (card.dueKey <= weekKey) work.groups.next7.push(card);
-    else work.groups.later.push(card);
-  }
-  work.counts = { pending: mine.length, overdue: mine.filter((c) => c.overdue).length, today: mine.filter((c) => c.today).length };
-  work.designsDelivered = await enrich(deliveredRows, now);
-  if (coordination.length) {
-    const openRows = await prisma.productionStep.findMany({
-      // productionStepScope: defensa en profundidad (solo pasos de videos que puede ver).
-      where: { AND: [productionStepScope(user), { brandId: { in: coordination.map((b) => b.id) } }, liveVideo, { status: "PENDIENTE" }] },
-      orderBy: [{ dueAt: "asc" }, { id: "asc" }],
-      take: 300,
-      select: CARD_SELECT,
-    });
-    const cards = await enrich(openRows, now);
-    work.coordination = {
-      brands: coordination,
-      unassigned: cards.filter((c) => !c.assignee),
-      notices: cards.filter((c) => c.notice),
-      blocked: cards.filter(isBlocked),
-    };
-  }
-  return work;
+  return prisma.$transaction(async db => {
+    const brand: Prisma.ProductionStepWhereInput = opts.brandId ? { brandId: opts.brandId } : {};
+    const base = [productionStepScope(user), canaryWhere(), brand, { contentItem: { brand: { archived: false } } }];
+    const liveVideo: Prisma.ProductionStepWhereInput = { contentItem: { status: { notIn: DEAD_STATUSES } } };
+    const mineWhere: Prisma.ProductionStepWhereInput = { AND: [...base, liveVideo, { assigneeId: user.id, status: "PENDIENTE" }] };
+    const designsWhere: Prisma.ProductionStepWhereInput = { AND: [...base, { step: "DISENO", status: "HECHO", requestedById: user.id, doneAt: { gte: new Date(now.getTime() - 7 * DAY_MS) } }] };
+    const endToday = instantInZone(addDaysToKey(dateKey(now), 1), "00:00");
+    const [minePage, designsPage, coordination, overdue, today] = await Promise.all([
+      loadPage(opts.trabajo, 25, () => db.productionStep.count({ where: mineWhere }), range => db.productionStep.findMany({ where: mineWhere, orderBy: [{ dueAt: "asc" }, { id: "asc" }], ...range, select: CARD_SELECT })),
+      loadPage(opts.disenos, 20, () => db.productionStep.count({ where: designsWhere }), range => db.productionStep.findMany({ where: designsWhere, orderBy: [{ doneAt: "desc" }, { id: "desc" }], ...range, select: CARD_SELECT })),
+      coordinationBrands(user, opts.brandId ?? null, db),
+      db.productionStep.count({ where: { AND: [mineWhere, { dueAt: { lt: now } }] } }),
+      db.productionStep.count({ where: { AND: [mineWhere, { dueAt: { gte: now, lt: endToday } }] } }),
+    ]);
+    const mine = await enrich(minePage.items, now, { checks: true, generator: allows(user, "scripts.generate") }, db);
+    const work = emptyMyWork(true);
+    work.pages.mine = { page: minePage.page, pageCount: minePage.pageCount, total: minePage.total };
+    work.pages.designs = { page: designsPage.page, pageCount: designsPage.pageCount, total: designsPage.total };
+    const todayKey = dateKey(now), weekKey = addDaysToKey(todayKey, 7);
+    for (const card of mine) {
+      if (card.returned) work.returned.push(card);
+      else if (!card.dueAt) work.groups.undated.push(card);
+      else if (card.overdue) work.groups.overdue.push(card);
+      else if (card.today) work.groups.today.push(card);
+      else if (card.dueKey <= weekKey) work.groups.next7.push(card);
+      else work.groups.later.push(card);
+    }
+    work.counts = { pending: minePage.total, overdue, today };
+    work.designsDelivered = await enrich(designsPage.items, now, {}, db);
+    if (coordination.length) {
+      // Filtrar antes de paginar: los pasos sanos no ocultan avisos ni bloqueos.
+      const condition = Prisma.sql`s."brandId" IN (${Prisma.join(coordination.map(b => b.id))})
+        AND s.status = 'PENDIENTE' AND v.status NOT IN (${Prisma.join(DEAD_STATUSES)})
+        AND (s."assigneeId" IS NULL OR ${openNoticeSql()} OR ${blockedStepSql()})`;
+      const page = await loadPage(opts.coordinacion, 25,
+        async () => Number((await db.$queryRaw<{ n: number }[]>(Prisma.sql`SELECT COUNT(*)::int n FROM "ProductionStep" s JOIN "ContentItem" v ON v.id = s."contentItemId" WHERE ${condition}`))[0].n),
+        range => db.$queryRaw<{ id: string }[]>(Prisma.sql`SELECT s.id FROM "ProductionStep" s JOIN "ContentItem" v ON v.id = s."contentItemId" WHERE ${condition} ORDER BY s."dueAt" ASC NULLS LAST, s.id ASC LIMIT ${range.take} OFFSET ${range.skip}`));
+      const openRows = await db.productionStep.findMany({
+        // productionStepScope: defensa en profundidad (solo pasos de videos que puede ver).
+        where: { AND: [productionStepScope(user), { id: { in: page.items.map(s => s.id) } }] },
+        orderBy: [{ dueAt: "asc" }, { id: "asc" }],
+        select: CARD_SELECT,
+      });
+      const cards = await enrich(openRows, now, {}, db);
+      work.pages.coordination = { page: page.page, pageCount: page.pageCount, total: page.total };
+      work.coordination = {
+        brands: coordination,
+        unassigned: cards.filter((c) => !c.assignee),
+        notices: cards.filter((c) => c.notice),
+        blocked: cards.filter(isBlocked),
+      };
+    }
+    return work;
+  }, { isolationLevel: "RepeatableRead", timeout: 15000 });
 }
 
 /* ----------------------------------------------------------------- CADENA -- */
 
 function emptyBoard(enabled: boolean, allowed: boolean): ChainBoard {
   return {
-    enabled, allowed,
+    enabled, allowed, page: emptyPage(), missingPage: emptyPage(), stepCounts: {},
     columns: { GUION: [], REVISION_GUION: [], GRABACION: [], EDICION: [], REVISION_FINAL: [], PUBLICACION: [] },
     designs: [],
     stuck: { overdue: [], unassigned: [], ineligible: [], notices: [], withoutStep: [], outOfSync: [], leadsWithoutPermission: [] },
@@ -458,14 +490,6 @@ function emptyBoard(enabled: boolean, allowed: boolean): ChainBoard {
     header: { open: 0, overdue: 0, unassigned: 0, publishedThisWeek: 0 },
     people: [],
   };
-}
-
-function expectedFor(status: string, finalApproved: boolean): ChainStep | null {
-  if (status === "IDEA" || status === "GUION") return "GUION";
-  if (status === "APROBADO" || status === "GRABACION") return "GRABACION";
-  if (status === "EDICION") return finalApproved ? "PUBLICACION" : "EDICION";
-  if (status === "PROGRAMADO") return "PUBLICACION";
-  return null;
 }
 
 /** Lunes 00:00 de Lima de la semana de `now`. */
@@ -483,97 +507,99 @@ export const UNASSIGNED_FILTER = "sin-asignar";
  * de diseños, atascos con su motivo y cabecera. Filtros: marca, persona (UNASSIGNED_FILTER =
  * sin responsable) y solo vencidos. La cabecera y la lista de personas no dependen de ellos.
  */
-export async function readChain(user: AccessUser, opts: { brandId?: string | null; personId?: string | null; onlyOverdue?: boolean; now?: Date } = {}): Promise<ChainBoard> {
+export async function readChain(user: AccessUser, opts: { brandId?: string | null; personId?: string | null; onlyOverdue?: boolean; step?: StepKind | null; page?: string; missingPage?: string; now?: Date } = {}): Promise<ChainBoard> {
   if (!productionChainConfigured()) return emptyBoard(false, false);
   if (user.role !== "OWNER" && !allows(user, "content.assign")) return emptyBoard(true, false);
-  const now = opts.now ?? new Date();
-  const canary = productionChainBrands();
-  const scoped = await prisma.brand.findMany({
-    where: { archived: false, AND: [user.role === "OWNER" ? {} : { id: { in: [...user.brandIds ?? []] } }, opts.brandId ? { id: opts.brandId } : {}] },
-    orderBy: [{ name: "asc" }, { id: "asc" }],
-    select: { id: true, name: true },
-  });
-  const brands = scoped.filter((b) => !canary || canary.includes(b.id));
-  const board = emptyBoard(true, true);
-  if (!brands.length) return board;
-  const brandIds = brands.map((b) => b.id);
-
-  // Sin filtros de persona ni de plazo: cabecera y lista de personas de las marcas.
-  const allOpen: Prisma.ProductionStepWhereInput = {
-    brandId: { in: brandIds },
-    status: "PENDIENTE",
-    contentItem: { status: { notIn: DEAD_STATUSES } },
-  };
-  const filtered = Boolean(opts.personId || opts.onlyOverdue);
-  const openWhere: Prisma.ProductionStepWhereInput = {
-    ...allOpen,
-    ...(opts.personId ? { assigneeId: opts.personId === UNASSIGNED_FILTER ? null : opts.personId } : {}),
-    ...(opts.onlyOverdue ? { dueAt: { lt: now } } : {}),
-  };
-  const [rows, teams, published, finals, totals, peopleRows, leads] = await Promise.all([
-    prisma.productionStep.findMany({ where: openWhere, orderBy: [{ dueAt: "asc" }, { id: "asc" }], take: 500, select: CARD_SELECT }),
-    prisma.brandTeamMember.findMany({ where: { brandId: { in: brandIds } }, distinct: ["brandId"], select: { brandId: true } }),
-    prisma.contentItem.count({ where: { brandId: { in: brandIds }, status: "PUBLICADO", publishedAt: { gte: weekStart(now) } } }),
-    prisma.checklistItem.findMany({ where: { kind: "FINAL_APPROVAL", done: true, contentItem: { brandId: { in: brandIds }, status: { in: ["EDICION", "PROGRAMADO"] } } }, select: { contentItemId: true } }),
-    filtered
-      ? Promise.all([
-          prisma.productionStep.count({ where: allOpen }),
-          prisma.productionStep.count({ where: { ...allOpen, dueAt: { lt: now } } }),
-          prisma.productionStep.count({ where: { ...allOpen, assigneeId: null } }),
-        ])
-      : Promise.resolve(null),
-    prisma.productionStep.findMany({ where: { ...allOpen, assigneeId: { not: null } }, distinct: ["assigneeId"], select: { assignee: { select: { id: true, name: true } } }, take: 300 }),
-    prisma.brandTeamMember.findMany({
-      where: { role: "ENCARGADO", brandId: { in: brandIds } },
-      select: { brandId: true, user: { select: { id: true, name: true, active: true, role: true, brandAccess: { select: { brandId: true } }, workProfiles: { select: { profile: true } } } } },
-    }),
-  ]);
-  const cards = await enrich(rows, now);
-  const finalApproved = new Set(finals.map((f) => f.contentItemId));
-  for (const card of cards) {
-    if (card.step === "DISENO") board.designs.push(card);
-    else board.columns[card.step].push(card);
-  }
-  const chainCards = cards.filter((c) => c.step !== "DISENO");
-  board.stuck.overdue = cards.filter((c) => c.overdue);
-  board.stuck.unassigned = cards.filter((c) => !c.assignee);
-  board.stuck.ineligible = cards.filter(isBlocked);
-  board.stuck.notices = cards.filter((c) => c.notice);
-  board.stuck.outOfSync = chainCards
-    .map((card) => ({ card, expected: (card.step === "REVISION_GUION" && card.video.status === "GUION") || (card.step === "REVISION_FINAL" && card.video.status === "EDICION" && !finalApproved.has(card.video.id)) ? card.step : expectedFor(card.video.status, finalApproved.has(card.video.id)) }))
-    .filter(({ card, expected }) => expected !== card.step);
-
-  const withTeam = new Set(teams.map((t) => t.brandId));
-  board.brandsWithoutTeam = brands.filter((b) => !withTeam.has(b.id));
-  if (withTeam.size && !opts.personId && !opts.onlyOverdue) {
-    const videos = await prisma.contentItem.findMany({
-      where: { brandId: { in: [...withTeam] }, status: { in: ACTIVE_STATUSES }, productionSteps: { none: { status: "PENDIENTE", step: { in: CHAIN_KINDS } } } },
-      orderBy: [{ scheduledDate: "asc" }, { id: "asc" }],
-      take: 200,
-      select: {
-        id: true, title: true, status: true, brand: { select: { id: true, name: true } },
-        checklist: { where: { kind: "FINAL_APPROVAL", done: true }, select: { id: true } },
-        productionSteps: { where: { step: { in: CHAIN_KINDS } }, select: { step: true, status: true } },
-      },
+  return prisma.$transaction(async db => {
+    const now = opts.now ?? new Date();
+    const canary = productionChainBrands();
+    const scoped = await db.brand.findMany({
+      where: { archived: false, AND: [user.role === "OWNER" ? {} : { id: { in: [...user.brandIds ?? []] } }, opts.brandId ? { id: opts.brandId } : {}] },
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+      select: { id: true, name: true },
     });
-    board.stuck.withoutStep = videos.map((video) => ({
-      video: { id: video.id, title: video.title, status: video.status, statusLabel: CONTENT_STATUS_MAP[video.status]?.label ?? video.status, href: `/contenido/${video.id}` },
-      brand: video.brand,
-      expected: expectedFor(video.status, video.checklist.length > 0),
-      reason: video.productionSteps.length ? "Sus pasos quedaron cerrados sin abrir el siguiente" : "Video anterior a la cadena: todavía no tiene pasos",
-    }));
-  }
-  board.header = totals
-    ? { open: totals[0], overdue: totals[1], unassigned: totals[2], publishedThisWeek: published }
-    : { open: cards.length, overdue: board.stuck.overdue.length, unassigned: board.stuck.unassigned.length, publishedThisWeek: published };
-  const people = new Map<string, string>();
-  for (const row of peopleRows) if (row.assignee) people.set(row.assignee.id, row.assignee.name);
-  board.people = [...people].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "es"));
-  const brandName = new Map(brands.map((b) => [b.id, b.name]));
-  board.stuck.leadsWithoutPermission = leads
-    .filter((lead) => !canCoordinateBrand(lead.user, lead.brandId))
-    .map((lead) => ({ brand: { id: lead.brandId, name: brandName.get(lead.brandId) ?? lead.brandId }, person: { id: lead.user.id, name: lead.user.name }, reason: leadProblem(lead.user, lead.brandId) }));
-  return board;
+    const brands = scoped.filter((b) => !canary || canary.includes(b.id));
+    const board = emptyBoard(true, true);
+    if (!brands.length) return board;
+    const brandIds = brands.map((b) => b.id);
+
+    // Sin filtros de persona ni de plazo: cabecera y lista de personas de las marcas.
+    const allOpen: Prisma.ProductionStepWhereInput = {
+      brandId: { in: brandIds },
+      status: "PENDIENTE",
+      contentItem: { status: { notIn: DEAD_STATUSES } },
+    };
+    const openWhere: Prisma.ProductionStepWhereInput = {
+      ...allOpen,
+      ...(opts.personId ? { assigneeId: opts.personId === UNASSIGNED_FILTER ? null : opts.personId } : {}),
+      ...(opts.onlyOverdue ? { dueAt: { lt: now } } : {}),
+    };
+    const selectedWhere = { ...openWhere, ...(opts.step ? { step: opts.step } : {}) };
+    const [page, teams, published, totals, peopleRows, leads, stepTotals, stepOverdue] = await Promise.all([
+      loadPage(opts.page, 25, () => db.productionStep.count({ where: selectedWhere }), range => db.productionStep.findMany({ where: selectedWhere, orderBy: [{ dueAt: "asc" }, { id: "asc" }], ...range, select: CARD_SELECT })),
+      db.brandTeamMember.findMany({ where: { brandId: { in: brandIds } }, distinct: ["brandId"], select: { brandId: true } }),
+      db.contentItem.count({ where: { brandId: { in: brandIds }, status: "PUBLICADO", publishedAt: { gte: weekStart(now) } } }),
+      Promise.all([
+            db.productionStep.count({ where: allOpen }),
+            db.productionStep.count({ where: { ...allOpen, dueAt: { lt: now } } }),
+            db.productionStep.count({ where: { ...allOpen, assigneeId: null } }),
+          ]),
+      db.productionStep.findMany({ where: { ...allOpen, assigneeId: { not: null } }, distinct: ["assigneeId"], select: { assignee: { select: { id: true, name: true } } } }),
+      db.brandTeamMember.findMany({
+        where: { role: "ENCARGADO", brandId: { in: brandIds } },
+        select: { brandId: true, user: { select: { id: true, name: true, active: true, role: true, brandAccess: { select: { brandId: true } }, workProfiles: { select: { profile: true } } } } },
+      }),
+      db.productionStep.groupBy({ by: ["step"], where: openWhere, _count: { _all: true } }),
+      db.productionStep.groupBy({ by: ["step"], where: { ...openWhere, dueAt: { lt: now } }, _count: { _all: true } }),
+    ]);
+    board.page = { page: page.page, pageCount: page.pageCount, total: page.total };
+    for (const row of stepTotals) board.stepCounts[row.step] = { total: row._count._all, overdue: stepOverdue.find(s => s.step === row.step)?._count._all ?? 0 };
+    const cards = await enrich(page.items, now, {}, db);
+    for (const card of cards) {
+      if (card.step === "DISENO") board.designs.push(card);
+      else board.columns[card.step].push(card);
+    }
+    const chainCards = cards.filter((c) => c.step !== "DISENO");
+    board.stuck.overdue = cards.filter((c) => c.overdue);
+    board.stuck.unassigned = cards.filter((c) => !c.assignee);
+    board.stuck.ineligible = cards.filter(isBlocked);
+    board.stuck.notices = cards.filter((c) => c.notice);
+    board.stuck.outOfSync = chainCards
+      .map(card => ({ card, expected: card.expectedStep ?? null }))
+      .filter(({ card, expected }) => expected !== card.step);
+
+    const withTeam = new Set(teams.map((t) => t.brandId));
+    board.brandsWithoutTeam = brands.filter((b) => !withTeam.has(b.id));
+    if (withTeam.size && !opts.personId && !opts.onlyOverdue) {
+      const missingWhere = { brandId: { in: [...withTeam] }, status: { in: ACTIVE_STATUSES }, productionSteps: { none: { status: "PENDIENTE", step: { in: CHAIN_KINDS } } } };
+      const missing = await loadPage(opts.missingPage, 20, () => db.contentItem.count({ where: missingWhere }), range => db.contentItem.findMany({
+        where: missingWhere,
+        orderBy: [{ scheduledDate: "asc" }, { id: "asc" }],
+        ...range,
+        select: {
+          id: true, title: true, status: true, script: { select: { status: true } }, brand: { select: { id: true, name: true } },
+          checklist: { where: { kind: "FINAL_APPROVAL", done: true }, select: { id: true } },
+          productionSteps: { where: { step: { in: CHAIN_KINDS } }, select: { step: true, status: true } },
+        },
+      }));
+      board.missingPage = { page: missing.page, pageCount: missing.pageCount, total: missing.total };
+      board.stuck.withoutStep = missing.items.map((video) => ({
+        video: { id: video.id, title: video.title, status: video.status, statusLabel: CONTENT_STATUS_MAP[video.status]?.label ?? video.status, href: `/contenido/${video.id}` },
+        brand: video.brand,
+        expected: expectedChainStep(video.status, video.checklist.length > 0, { script: video.script?.status === "REVISION" && video.productionSteps.some(s => s.step === "GUION" && s.status === "HECHO"), master: video.productionSteps.some(s => s.step === "EDICION" && s.status === "HECHO") }),
+        reason: video.productionSteps.length ? "Sus pasos quedaron cerrados sin abrir el siguiente" : "Video anterior a la cadena: todavía no tiene pasos",
+      }));
+    }
+    board.header = { open: totals[0], overdue: totals[1], unassigned: totals[2], publishedThisWeek: published };
+    const people = new Map<string, string>();
+    for (const row of peopleRows) if (row.assignee) people.set(row.assignee.id, row.assignee.name);
+    board.people = [...people].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "es"));
+    const brandName = new Map(brands.map((b) => [b.id, b.name]));
+    board.stuck.leadsWithoutPermission = leads
+      .filter((lead) => !canCoordinateBrand(lead.user, lead.brandId))
+      .map((lead) => ({ brand: { id: lead.brandId, name: brandName.get(lead.brandId) ?? lead.brandId }, person: { id: lead.user.id, name: lead.user.name }, reason: leadProblem(lead.user, lead.brandId) }));
+    return board;
+  }, { isolationLevel: "RepeatableRead", timeout: 15000 });
 }
 
 /* -------------------------------------------------------------- CALENDARIO -- */

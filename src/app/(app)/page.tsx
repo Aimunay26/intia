@@ -27,6 +27,7 @@ import { cache, Suspense, type ReactNode } from "react";
 import { FunnelBars } from "@/components/charts";
 import { ManualCard } from "@/components/manual/manual-card";
 import { RolePanelCards } from "@/components/role-panel-cards";
+import { singleQueryValues } from "@/lib/query-params";
 import { MyWorkSection } from "@/components/work/my-work";
 import {
 	Avatar,
@@ -138,9 +139,10 @@ const getPanelContext = cache(async () => {
   return { user, brandCtx, soloMarca, epoch, videos, guiones, ahora, inicioMes, finMes, semanasMes, hoy, inicioHoy, limite7, publicadoEsteMes, atrasadosWhere };
 });
 
-export default async function PanelGeneral() {
+export default async function PanelGeneral({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const query = singleQueryValues(await searchParams);
   const member = await requireUser();
-  if (member.role !== "OWNER") return <MemberWorkspace user={member} section="panel" />;
+  if (member.role !== "OWNER") return <MemberWorkspace user={member} section="panel" query={query} />;
   return measurePagePhase("page:/", async () => {
   const { user, ahora, brandCtx } = await getPanelContext();
   const scope = brandCtx.activeId ?? "all";
@@ -165,7 +167,7 @@ export default async function PanelGeneral() {
         PanelFunnel(),
         PanelActivity(),
         PanelBrands(),
-        chain ? MyWorkSection({ user, brandId: brandCtx.activeId, className: "mb-5" }) : null,
+        chain ? MyWorkSection({ user, query, brandId: brandCtx.activeId, className: "mb-5" }) : null,
         roleOrder ? PanelRoles({ chain }) : null,
       ]).then(([stats, pending, objectives, funnel, activity, brands, mywork, roles]) => ({ stats, pending, objectives, funnel, activity, brands, mywork, roles }))
     : null;
@@ -176,7 +178,7 @@ export default async function PanelGeneral() {
     funnel: { label: "producción", node: <PanelFunnel /> },
     activity: { label: "actividad", node: <PanelActivity /> },
     brands: { label: "marcas", node: <PanelBrands /> },
-    mywork: { label: "tu trabajo", node: <MyWorkSection user={user} brandId={brandCtx.activeId} className="mb-5" />, wrap: true },
+    mywork: { label: "tu trabajo", node: <MyWorkSection user={user} query={query} brandId={brandCtx.activeId} className="mb-5" />, wrap: true },
     roles: { label: "paneles por rol", node: <PanelRoles chain={chain} />, wrap: true },
   };
   /** Un bloque por su nombre: ya resuelto (modo de siempre) o en su propio Suspense (streaming). */

@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-10-06T21:35:01.813Z",
+  "environment": "local",
+  "status": "PASS",
+  "scope": "Paginación, totales completos y consistencia de producción",
+  "requiresMigration": false,
+  "published": false,
+  "productionVerified": false,
+  "implementation": {
+    "queues": [
+      "Mi trabajo",
+      "Coordinación",
+      "Diseños entregados",
+      "Cadena",
+      "Vídeos sin paso",
+      "Confirmaciones de reparto",
+      "Indisponibilidad",
+      "Agenda de vídeos del miembro"
+    ],
+    "consistencyPath": "/cadena/consistencia",
+    "repair": "Bajo demanda, por caso; solo reflejos inequívocos de pasos pendientes",
+    "humanDecisions": [
+      "Paso faltante",
+      "Paso secuencial que conservar entre duplicados",
+      "Permisos y reasignación",
+      "Vínculos entre marcas o compartidos",
+      "Tareas desvinculadas e historial"
+    ],
+    "safeguards": [
+      "Alcance y canario",
+      "Marcas archivadas excluidas",
+      "Snapshot de lectura RepeatableRead",
+      "Transacción serializable y bloqueo de ciclo de vídeo",
+      "Huella contra formularios obsoletos",
+      "Auditoría en el mismo commit",
+      "Idempotencia y rollback",
+      "Sin firmas de aprobación automáticas"
+    ]
+  },
+  "validation": {
+    "unit": {
+      "tests": 463,
+      "pass": 462,
+      "fail": 0,
+      "skipped": 1
+    },
+    "postgres": {
+      "tests": 60,
+      "pass": 60,
+      "fail": 0,
+      "skipped": 0
+    },
+    "postgresSuites": [
+      "production-consistency",
+      "production-chain",
+      "production-chain-actions",
+      "human-reviews",
+      "preparation"
+    ],
+    "volume": {
+      "pendingSteps": 551,
+      "missingStepVideos": 206,
+      "castingConfirmedBeforePending": 105,
+      "castingPending": 21,
+      "deliveredDesigns": 27
+    },
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "build": "PASS"
+  },
+  "limits": [
+    "Validación local; falta publicar y comprobar producción",
+    "Sin cron nuevo ni activación de marcas",
+    "Los cambios de equipo conservan el límite temporal de la transacción: fallo revierte todo",
+    "La vigencia del reparto necesita recorrer sus candidatos por lotes en el servidor",
+    "Una restricción adicional de unicidad secuencial en DB y una eventual cola de eventos diferidos quedan fuera de este bloque"
+  ]
+}

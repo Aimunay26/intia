@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { assertLocalDatabase } from "./local-database-only.mjs";
 const url=assertLocalDatabase(), admin=new PrismaClient({datasourceUrl:url.href});
-const suiteNames=process.argv.slice(2).length ? process.argv.slice(2) : ['security','navigation','demo','consistency','scalability','deployment','permissions','priorities','workflow','completion','secrets','organization-ai','production-flow','production-chain','production-chain-actions','work-assignees','human-reviews','casting','preparation','archivo-total','archive-scope'];
+const suiteNames=process.argv.slice(2).length ? process.argv.slice(2) : ['security','navigation','demo','consistency','scalability','deployment','permissions','priorities','workflow','completion','secrets','organization-ai','production-flow','production-chain','production-chain-actions','work-assignees','human-reviews','production-consistency','casting','preparation','archivo-total','archive-scope'];
 const targets={scalability:['tests/postgres-scalability.test.mjs','SCALABILITY_TEST_DATABASE_URL'],security:['tests/postgres-security.test.mjs','SECURITY_TEST_DATABASE_URL'],navigation:['tests/postgres-navigation.test.mjs','NAVIGATION_TEST_DATABASE_URL'],demo:['tests/postgres-demo.test.mjs','SECURITY_TEST_DATABASE_URL'],consistency:['tests/postgres-consistency.test.mjs','CONSISTENCY_TEST_DATABASE_URL']};
 targets.permissions=['tests/postgres-permissions.test.mjs','PERMISSIONS_TEST_DATABASE_URL'];
 targets.workflow=['tests/postgres-workflow.test.mjs','WORKFLOW_TEST_DATABASE_URL'];
@@ -19,6 +19,7 @@ targets['production-chain-actions']=['tests/postgres-production-chain-actions.te
 targets['work-assignees']=['tests/postgres-work-assignees.test.mjs','WORK_ASSIGNEES_TEST_DATABASE_URL'];
 targets['human-reviews']=['tests/postgres-human-reviews.test.mjs','HUMAN_REVIEWS_TEST_DATABASE_URL'];
 targets.casting=['tests/postgres-casting.test.mjs','CASTING_TEST_DATABASE_URL'];
+targets['production-consistency']=['tests/postgres-production-consistency.test.mjs','PRODUCTION_CONSISTENCY_TEST_DATABASE_URL'];
 targets.preparation=['tests/postgres-preparation.test.mjs','PREPARATION_TEST_DATABASE_URL'];
 targets['archivo-total']=['tests/postgres-archivo-total.test.mjs','ARCHIVO_TOTAL_TEST_DATABASE_URL'];
 targets['archive-scope']=['tests/archive-scope.test.mjs','ARCHIVE_SCOPE_TEST_DATABASE_URL'];

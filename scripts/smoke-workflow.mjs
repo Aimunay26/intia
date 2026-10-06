@@ -65,20 +65,28 @@ try {
   await page.getByRole("link", { name: "Recuperado por Workflow →", exact: true }).waitFor();
   await page.screenshot({ path: ".audit/generation-progress.png", fullPage: true });
   await page.goto(base + "/generador/trabajos");
-  await page.getByRole("heading", { name: "Mis generaciones" }).waitFor();
+  await page.getByRole("heading", { name: "Generaciones pendientes", exact: true }).waitFor();
+  await expect(page.getByText("No tienes generaciones pendientes", { exact: true })).toBeVisible();
+  await expect(page.getByRole("main").locator(`a[href="/generador/trabajos/${job.id}"]`)).toHaveCount(0);
+  await page.getByRole("link", { name: "Ver guiones", exact: true }).click();
+  await expect(page.getByRole("main").getByRole("link", { name: "Recuperado por Workflow", exact: true })).toBeVisible();
   await page.goto(base + "/generador");
   await page.getByRole("link", { name: "Mis generaciones →", exact: true }).waitFor();
+  await page.getByRole("main").locator('summary[aria-label="Más opciones de selección"]').click();
   await page.getByRole("button", { name: /Seleccionar visibles/ }).click();
-  const generatorForm=page.getByRole('main').locator('form:visible').filter({has:page.getByRole('button',{name:/Seleccionar visibles/})});
+  const generatorForm=page.getByRole('main').locator('form:visible').filter({has:page.locator('input[name="estructuras"]')});
   await expect(generatorForm.locator('input[name="estructuras"]')).toHaveValue(/^[^,]+,[^,]+,[^,]+$/);
   await page.screenshot({ path: ".audit/generator-jobs.png", fullPage: true });
   await page.goto(`${base}/generador?estructura=${structure.id}&producto=Producto%20ficticio&peticion=Idea%20ficticia%20para%20probar%20el%20selector`);
-  for (const name of ['Continuar: Identidad y Producto', 'Continuar: Ángulo e Idea', 'Continuar: Cierre y CTA', 'Continuar: Motor y Generación']) await page.getByRole('button', { name, exact: true }).click();
-  const modelInput = page.getByRole('main').locator('input[name="modelo"]:visible');
+  for (const title of ['¿Qué vamos a contar y para quién?', '¿Cuál es la idea del video?', '¿Qué quieres que haga el espectador?', 'Revisa y genera tus guiones']) {
+    await page.getByRole('button', { name: 'Continuar', exact: true }).click();
+    await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+  }
+  const modelInput = page.getByRole('main').getByRole('combobox', { name: 'Modelo', exact: true });
   assert.equal(await modelInput.inputValue(), 'claude-opus-5');
   await page.getByRole('button', { name: /Gemini \(Google\)/ }).click();
   assert.equal(await modelInput.inputValue(), 'gemini-3.8-flash');
-  assert.equal(await page.getByRole('main').locator('form:visible #modelos-ia option[value="gemini-3.8-flash"]').count(), 1);
+  await expect(modelInput.locator('option[value="gemini-3.8-flash"]')).toHaveCount(1);
   await page.getByRole('button', { name: /Claude \(Anthropic\)/ }).click();
   assert.equal(await modelInput.inputValue(), 'claude-opus-5');
   await page.getByRole('button', { name: /Gemini \(Google\)/ }).click();

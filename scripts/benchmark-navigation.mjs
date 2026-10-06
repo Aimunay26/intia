@@ -55,7 +55,7 @@ try {
   await videoTitle.fill('Borrador que debe conservarse');
   await db.contentItem.update({where:{id:'bench-video-0'},data:{title:'Cambio desde otra sesión'}});
   await page.locator('main form:visible').filter({has:page.locator('input[name=title]:visible')}).getByRole('button',{name:/Guardar/}).click();
-  await page.getByRole('alert').filter({hasText:'Conservamos lo que escribiste'}).waitFor();
+  await page.getByRole('alert').filter({hasText:'Este registro cambió desde que abriste el formulario.'}).waitFor();
   if(await videoTitle.inputValue()!=='Borrador que debe conservarse')throw new Error('Se perdió el borrador rechazado');
   if((await db.contentItem.findUniqueOrThrow({where:{id:'bench-video-0'}})).title!=='Cambio desde otra sesión')throw new Error('Sobrescritura concurrente');
   await page.screenshot({path:'.audit/edit-conflict.png',fullPage:true});

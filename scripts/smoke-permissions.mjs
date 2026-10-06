@@ -79,8 +79,12 @@ try{
    await page.screenshot({path:'.audit/profiles-owner.png',fullPage:true,animations:'disabled'});
    await dialog.locator('input[name="name"]').fill('Invitado de prueba');
    await dialog.locator('input[name="email"]').fill('invited@ui.fixture.test');
-   await dialog.locator('input[name="profiles"][value="EDITOR"]').check();
-   await dialog.locator('input[name="brandIds"][value="A"]').check();
+   const editorProfile=dialog.locator('input[name="profiles"][value="EDITOR"]');
+   await dialog.locator('label').filter({has:page.locator('input[name="profiles"][value="EDITOR"]')}).click();
+   await expect(editorProfile).toBeChecked();
+   const authorizedBrand=dialog.locator('input[name="brandIds"][value="A"]');
+   await dialog.locator('label').filter({has:page.locator('input[name="brandIds"][value="A"]')}).click();
+   await expect(authorizedBrand).toBeChecked();
    await dialog.locator('input[name="password"]').fill(password);
    await dialog.getByRole('button',{name:'Crear cuenta',exact:true}).click();
    await dialog.getByText('Cuenta creada. Comparte su contraseña inicial por un canal privado.',{exact:true}).waitFor();
@@ -132,7 +136,7 @@ try{
    await expect(main.locator('input[name="orgName"]')).toHaveCount(1);
    await main.locator('input[name="googleKey"]').fill('b22-browser-secret-fixture');
    await page.getByRole('button',{name:'Guardar ajustes',exact:true}).click();
-   await expect(main.getByText('Ajustes guardados.',{exact:true})).toBeVisible();
+   await expect(main.getByText('Ajustes de la organización guardados.',{exact:false})).toBeVisible();
    const encrypted=await db.appSecret.findUniqueOrThrow({where:{key:'ai.google.apiKey'}});
    assert.ok(!encrypted.value.includes('b22-browser-secret-fixture'));
    await page.goto(base+'/ajustes');assert.ok(!(await page.content()).includes('b22-browser-secret-fixture'));

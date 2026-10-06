@@ -8,19 +8,27 @@ del día 4; sus cifras y carencias iniciales no representan el estado después d
   `qa-fechas-navegador-2026-10-05.json`, `qa-reparto-produccion-2026-10-05.json` y
   `qa-preparacion-produccion-2026-10-06.json`. El último bloque pasó 24 comprobaciones y dejó la
   marca QA archivada y su cuenta desactivada. Esto no equivale al recorrido integrado de todos los perfiles.
-- Paginación/totales y conciliación bajo demanda implementados localmente: Mi trabajo, coordinación,
+- Paginación/totales y conciliación bajo demanda publicados en `113e01a` y validados en producción:
+  [qa-paginacion-consistencia-produccion-2026-10-06.json](qa-paginacion-consistencia-produccion-2026-10-06.json).
+  Incluye Mi trabajo, coordinación,
   cadena, reparto, disponibilidad y agenda de vídeos del miembro. Los cambios de equipo recorren
   todos los pasos, sin el corte previo de 200. La vista `/cadena/consistencia` detecta diferencias,
   ofrece reparación de reflejos inequívocos y exige decisión humana para duplicidades, pasos
   faltantes y conflictos de acceso/historial. No añade un cron ni reconstruye aprobaciones.
-- Evidencia local: [qa-paginacion-consistencia-local-2026-10-06.json](qa-paginacion-consistencia-local-2026-10-06.json).
-  Este bloque no requiere migración nueva. Faltan su publicación y validación en producción.
-- Después: recorrido integrado de todos los perfiles, pruebas de devoluciones/diseño paralelo,
-  configuración de compatibilidades humanas y arranque explícito con una marca nueva. La
-  activación operativa sigue siendo una decisión separada.
-- La restricción adicional de un solo paso secuencial en PostgreSQL y una eventual cola de eventos
-  diferidos del plan original no forman parte de este bloque. Las escrituras actuales continúan
-  siendo atómicas; se detectan duplicados y se resuelven con control de concurrencia e historial.
+- El nuevo bloque implementa la restricción de un solo paso secuencial pendiente en PostgreSQL
+  y el recorrido integrado de los ocho perfiles. Se probó localmente con PostgreSQL real,
+  sesiones nuevas, navegador, devoluciones, diseño paralelo, preparación/props y paginación.
+  Se corrigieron la reapertura del checklist y la revisión tras devolver un diseño, la creación
+  de checks obligatorios por miembros de coordinación y la página de disponibilidad del miembro.
+  Evidencia: [qa-integracion-flujo-2026-10-06.json](qa-integracion-flujo-2026-10-06.json).
+- Este nuevo bloque está pendiente de commit/push, despliegue, migración y prueba en producción.
+  Primero debe desplegarse el código compatible y después aplicar
+  `20261006230000_single_pending_production_step`; la migración se detiene sin cambiar filas
+  si hay duplicados, incluidos los archivados. Procedimiento:
+  [single-pending-production-step.md](../prisma/operations/single-pending-production-step.md).
+- Después: configurar las compatibilidades humanas y arrancar explícitamente con una marca nueva.
+  La activación operativa sigue siendo una decisión separada. Una cola de eventos diferidos
+  no forma parte de este bloque; las escrituras actuales continúan siendo atómicas.
 
 Validado el 4 de octubre de 2026, con consultas a Vercel y PostgreSQL de producción. La base conserva los registros consultados, pero el flujo automático completo todavía no está funcionando: está desactivado, no tiene equipos configurados y no ha creado pasos de producción. Además hay carencias de permisos, casting y control de preparación que deben resolverse antes de habilitarlo.
 

@@ -1144,6 +1144,7 @@ model ProductionStep {
   dueAt       DateTime?
   /// PENDIENTE | HECHO | CANCELADO | DEVUELTO (cadena: se devolvió al paso anterior con motivo; doneAt nulo).
   /// Con la cadena, un solo paso de cadena PENDIENTE por video (DISENO no cuenta): invariante Q4.
+  /// Índice único parcial ProductionStep_one_pending_sequential_key en SQL (Prisma no lo representa).
   status      String    @default("PENDIENTE")
   source      String    @default("AUTO") // AUTO | MANUAL
   taskId      String?   @unique

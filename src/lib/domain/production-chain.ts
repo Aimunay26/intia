@@ -651,6 +651,9 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
   const manual = opts.assigneeId !== undefined || (Boolean(opts.dueAt) && opts.dateOrigin === "manual");
   const source = opts.source ?? (manual ? "MANUAL" : (existing?.source === "MANUAL" ? "MANUAL" : "AUTO"));
 
+  // Liberar el único paso secuencial antes de abrir/reactivar el siguiente.
+  // Si cualquier escritura posterior falla, la transacción revierte también estos cierres.
+  await closeOtherOpen(tx, video, kind, opts.now, opts.cause);
   let stepId: string;
   let created = false, reopened = false;
   if (existing) {
@@ -689,7 +692,6 @@ async function openChainStep(tx: AppTransaction, actor: ProductionActor, videoIn
     await tx.productionStep.update({ where: { id: stepId }, data: { reviewToken } });
   }
   if (!person) log("open_step", "unassigned", { step: kind });
-  await closeOtherOpen(tx, video, kind, opts.now, opts.cause);
   return { stepId, assigneeId: person?.id ?? null, created, reopened };
 }
 
@@ -1070,6 +1072,24 @@ export async function requestDesignChanges(tx: AppTransaction, actor: SessionUse
     if (DEAD_STATUSES.includes(video.status) || video.status === "PUBLICADO") throw new ChainError("Este video ya no admite cambios de diseño.");
     const dueAt = dueIn24hSkippingSunday(now);
     await tx.productionStep.update({ where: { id: step.id }, data: { status: "PENDIENTE", doneAt: null, dueAt } });
+    // Una devolución retira también el visto bueno del diseño. Dejar el checklist cerrado
+    // permitiría entregar el máster con el material que acaba de rechazarse.
+    const designChecks = (await tx.checklistItem.findMany({ where: { contentItemId: video.id, kind: "TASK", stage: "POSTPRODUCCION", done: true } }))
+      .filter(check => checklistCapability(check.stage, check.label, check.kind) === "content.design");
+    for (const check of designChecks) {
+      await tx.checklistItem.update({ where: { id: check.id }, data: { done: false, doneAt: null, doneById: null } });
+      await auditInTransaction(tx, { user: actor, action: "REABRIR", entity: "ChecklistItem", entityId: check.id, brandId: video.brandId,
+        summary: `Retiró "${check.label}" del video "${video.title}" por cambios de diseño: ${motivo}` });
+    }
+    await reopenContentApprovals(tx, video.id, actor, `Cambios de diseño: ${motivo}`, false);
+    // Si el máster ya salió de edición, debe incorporar los cambios y entregarse otra vez.
+    // openChainStep cancela el paso posterior y conserva sus tareas y auditoría.
+    const downstream = await tx.productionStep.count({ where: { contentItemId: video.id, step: { in: ["REVISION_FINAL", "PUBLICACION"] }, status: "PENDIENTE" } });
+    if (downstream) {
+      const cause = `por cambios de diseño solicitados por ${actor.name}: ${motivo}`;
+      if (video.status === "PROGRAMADO") await reopenVideoAsSystem(tx, video.id, "EDICION", cause);
+      await openChainStep(tx, actor, await reloadVideo(tx, video.id), "EDICION", { now, cause });
+    }
     await auditInTransaction(tx, {
       user: actor, action: "REABRIR", entity: "ProductionStep", entityId: step.id, brandId: video.brandId,
       summary: `Pidió cambios en el diseño de "${video.title}": entrega máxima el ${formatDateTime(dueAt)}. Motivo: ${motivo}`,

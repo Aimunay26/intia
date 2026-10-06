@@ -162,6 +162,9 @@ test('Tarea desvinculada posible duplicado: se detecta y evita crear otra autom�
 });
 
 test('Duplicidad: requiere selección humana y motivo; cancela sin entregar ni aprobar', async () => {
+  // Compatibilidad con datos anteriores al índice: exclusivamente en esta DB efímera.
+  await prisma.$executeRawUnsafe('DROP INDEX "ProductionStep_one_pending_sequential_key"');
+  try {
   await makeStep('repair','EDICION','owner');
   const duplicate = await issue('DUPLICATE_STEPS:repair');
   const input = { key: duplicate.key, revision: duplicate.revision, mode: 'duplicates', keepStepId: 'repair-GUION' };
@@ -170,6 +173,9 @@ test('Duplicidad: requiere selección humana y motivo; cancela sin entregar ni a
   const editing = await prisma.productionStep.findUnique({ where: { id: 'repair-EDICION' }, include: { task: true } });
   assert.equal(editing.status, 'CANCELADO'); assert.equal(editing.doneAt, null); assert.equal(editing.task.status, 'CANCELADO');
   assert.equal(await issue(duplicate.key), null); assert.equal(await prisma.approval.count(), 0);
+  } finally {
+    await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX "ProductionStep_one_pending_sequential_key" ON "ProductionStep" ("contentItemId") WHERE status = \'PENDIENTE\' AND step <> \'DISENO\'');
+  }
 });
 
 test('Cambio de equipo actualiza más de 200 pasos y sus tareas en el mismo commit', async () => {

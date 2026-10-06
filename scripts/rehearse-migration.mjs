@@ -274,6 +274,19 @@ try {
   assert.deepEqual([currentVideo.shootStartMinute,currentVideo.shootEndMinute],[null,null]);
   await db.castRole.create({data:{id:'restore-cast',contentItemId:'upgrade-video',slotKey:'scene:actor',sceneId:'scene',role:'Actor',userId:'upgrade-owner'}});
   await db.preparationItem.create({data:{id:'restore-preparation',contentItemId:'upgrade-video',sourceKey:'prop:fixture',kind:'PROP',label:'Utilería de prueba',assigneeId:'upgrade-owner'}});
+  const singlePending=fs.readFileSync('prisma/migrations/20261006230000_single_pending_production_step/migration.sql');
+  const beforeSinglePending=await snapshot(db);
+  assert.throws(()=>sql(source,singlePending),/varios pasos secuenciales pendientes/);
+  assert.deepEqual(await snapshot(db),beforeSinglePending,'El preflight rechazado no modifica ni el historial ni las tareas');
+  assert.equal((await db.$queryRaw`SELECT to_regclass('"ProductionStep_one_pending_sequential_key"')::text AS name`)[0].name,null);
+  // Decisión explícita SOLO para los fixtures históricos del ensayo; nunca es un backfill de producción.
+  sql(source,`UPDATE "ProductionStep" SET status='CANCELADO',"doneAt"=NULL WHERE status='PENDIENTE' AND step<>'DISENO' AND id<>'review-final'`);
+  const beforeIndex=await snapshot(db);
+  assert.match(sql(source,fs.readFileSync('prisma/operations/preflight-single-pending-production-step.sql')).toString(),/\(0 rows\)/);
+  sql(source,singlePending);
+  assert.deepEqual(await snapshot(db),beforeIndex,'El índice se instala sin alterar ninguna fila');
+  const assertSinglePending=async client=>assert.equal((await client.$queryRaw`SELECT indisunique AND indisvalid AS valid FROM pg_index WHERE indexrelid='"ProductionStep_one_pending_sequential_key"'::regclass`)[0].valid,true);
+  await assertSinglePending(db);
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);
@@ -281,7 +294,10 @@ try {
   const schemaDiff=sourceDefinitions.flatMap(row=>{const other=targetDefinitions.find(item=>item.key===row.key);return other?.value===row.value?[]:[{key:row.key,source:row.value,restored:other?.value}];});
   fs.writeFileSync('.audit/migration-schema-diff.json',JSON.stringify(schemaDiff,null,2));
   assert.deepEqual(await snapshot(restored),original);assert.deepEqual(await restored.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8')),originalSchema);
+  await assertSinglePending(restored);
+  await assert.rejects(restored.productionStep.create({data:{contentItemId:'upgrade-video',brandId:'upgrade-brand',step:'GUION',dueAt:new Date(),automationKey:'upgrade-video:restored-duplicate'}}),error=>error.code==='P2002');
   const report={checkedAt:new Date().toISOString(),environment:'local-fixture',baselineMatchesNeon:true,invalidPreflightRolledBack:true,decimalPreflightRolledBack:true,exactMoneyPreserved:true,legacyValuesPreserved:true,noImplicitProfileGrants:true,profileGrantsRevokeSessions:true,prioritiesOrphanPreflightRolledBack:true,prioritiesInvalidJsonRolledBack:true,plannedStructureBackfillPreservesData:true,referencedStructuresProtected:true,workflowPreflightRolledBack:true,legacyApprovalsPreservedWithoutInventedVersion:true,completionManualObjectivesPreserved:true,completionLegacyMatchingPreservedReadOnly:true,completionDefaultsSafe:true,completionIndexDriftRolledBack:true,legacyGlobalCalendarRevoked:true,secretMigrationRollbackOnMissingKey:true,secretsMigratedEncrypted:true,masterKeyRotationVerified:true,catalogExistingRowsPreserved:true,catalogSameBrandEnforced:true,productionFlowExistingRowsPreserved:true,productionFlowNoNewColumnsOnExistingTables:true,productionFlowSameBrandEnforced:true,productionChainChecksWidenedOnly:true,productionChainExistingRowsPreserved:true,calendarFeedUserRehearsed:feedRehearsed,restoreRowsAndSchemaMatch:true,tables:Object.keys(original).length,backupBytes:dump.length};
+  Object.assign(report,{singlePendingPreflightRollback:true,singlePendingIndexPreservesRows:true,singlePendingRestoredConstraint:true});
   fs.writeFileSync('.audit/migration-rehearsal.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 } finally {
   for(const db of clients)await db.$disconnect();

@@ -1,0 +1,248 @@
+{
+  "checkedAt": "2026-10-06T23:14:05.338Z",
+  "environment": "local: compiled Next.js + isolated PostgreSQL 18",
+  "baseCommit": "113e01a686377c16b3d5c5c543075be6a5a74f79",
+  "includesUncommittedChanges": true,
+  "productionChanged": false,
+  "deployed": false,
+  "productionMigrationApplied": false,
+  "migration": {
+    "name": "20261006230000_single_pending_production_step",
+    "invariant": "At most one PENDIENTE step other than DISENO per contentItemId, including archived brands and manual keys",
+    "historicalRowsChangedByMigration": false,
+    "duplicatePreflightRollbackVerified": true,
+    "rowsPreserved": true,
+    "constraintWorksAfterRestore": true,
+    "backupRestoreTables": 45,
+    "backupRestoreRowsAndSchemaMatch": true
+  },
+  "automated": {
+    "postgresFullRun": {
+      "tests": 286,
+      "passed": 286,
+      "failed": 0,
+      "skipped": 0,
+      "suites": 24,
+      "note": "Integrated suite contained 9 cases in this full run; the final 10-case suite was rerun separately."
+    },
+    "integratedFinalRun": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "npmTest": {
+      "tests": 465,
+      "passed": 464,
+      "failed": 0,
+      "skipped": 1,
+      "note": "The PostgreSQL-only archive-scope case is skipped here and passes in test:postgres."
+    },
+    "lint": "passed",
+    "typecheck": "passed",
+    "build": "passed after final UI correction",
+    "diffCheck": "passed",
+    "coverage": [
+      "concurrent insert and reactivation",
+      "transaction rollback",
+      "human review returns and stale tokens",
+      "no self approval",
+      "all eight roles denied foreign brand",
+      "reschedule invalidates casting and preparation without losing tasks",
+      "required design blocks master",
+      "design return revokes final approval and cancels downstream step",
+      "audit failure rolls back design return",
+      "105 casting items across 6 pages including stale confirmation",
+      "41 delivered designs across 3 pages"
+    ]
+  },
+  "browser": {
+    "roles": [
+      "STRATEGY",
+      "WRITER",
+      "PRODUCTION",
+      "TALENT",
+      "CAMERA",
+      "EDITOR",
+      "DESIGNER",
+      "PUBLISHER"
+    ],
+    "sessions": "separate authenticated session for each role",
+    "path": [
+      "idea",
+      "persisted script linked by writer",
+      "script submitted",
+      "human script approval",
+      "shoot date and time",
+      "casting assigned and personally confirmed",
+      "personal preparation and props",
+      "raw material delivered",
+      "required parallel design",
+      "design return and redelivery",
+      "master delivered",
+      "human final review returned",
+      "master corrected",
+      "human final approval",
+      "publication recorded"
+    ],
+    "persistence": "reloads, new sessions and final readback through a fresh database connection",
+    "finalReadback": {
+      "id": "cmux9ssnp0003fa9wzpz7bm80",
+      "status": "PUBLICADO",
+      "shootDate": "2026-11-06T12:00:00.000Z",
+      "scheduledDate": "2026-11-10T12:00:00.000Z",
+      "publishedUrl": "https://example.invalid/publicacion-qa",
+      "steps": [
+        {
+          "id": "cmuxa04bc001wfa9wu8p37pzx",
+          "kind": "DISENO",
+          "status": "HECHO",
+          "assigneeId": "DESIGNER",
+          "taskId": "cmuxa04ba001sfa9wng1f088m",
+          "taskStatus": "HECHO",
+          "completedById": "DESIGNER"
+        },
+        {
+          "id": "cmux9yxzq001kfa9w17p1l9wy",
+          "kind": "REVISION_GUION",
+          "status": "HECHO",
+          "assigneeId": "STRATEGY",
+          "taskId": "cmux9yxzo001gfa9wwh740d4e",
+          "taskStatus": "HECHO",
+          "completedById": "STRATEGY"
+        },
+        {
+          "id": "cmuxadcyh001vfamo113u71sb",
+          "kind": "REVISION_FINAL",
+          "status": "HECHO",
+          "assigneeId": "STRATEGY",
+          "taskId": "cmuxadcyf001rfamo3d8mle8p",
+          "taskStatus": "HECHO",
+          "completedById": "STRATEGY"
+        },
+        {
+          "id": "cmuxa6lxo004yfa9wbdp71dty",
+          "kind": "EDICION",
+          "status": "HECHO",
+          "assigneeId": "EDITOR",
+          "taskId": "cmuxa6lxm004ufa9wst4w8igs",
+          "taskStatus": "HECHO",
+          "completedById": "EDITOR"
+        },
+        {
+          "id": "cmux9sson000qfa9w37ou4pdc",
+          "kind": "GUION",
+          "status": "HECHO",
+          "assigneeId": "WRITER",
+          "taskId": "cmux9ssol000mfa9wi2thag4u",
+          "taskStatus": "HECHO",
+          "completedById": "WRITER"
+        },
+        {
+          "id": "cmuxa28xl002mfa9wfpf8hoqm",
+          "kind": "GRABACION",
+          "status": "HECHO",
+          "assigneeId": "CAMERA",
+          "taskId": "cmuxa28xk002ifa9wqj7i63zf",
+          "taskStatus": "HECHO",
+          "completedById": "CAMERA"
+        },
+        {
+          "id": "cmuxaeg1d0038famovu7msazi",
+          "kind": "PUBLICACION",
+          "status": "HECHO",
+          "assigneeId": "PUBLISHER",
+          "taskId": "cmuxaeg1c0034famo9e8g9gc5",
+          "taskStatus": "HECHO",
+          "completedById": "PUBLISHER"
+        }
+      ],
+      "preparation": [
+        {
+          "id": "cmuxa3rfl003efa9w0vza1msk",
+          "status": "LISTO",
+          "assigneeId": "CAMERA",
+          "confirmedById": "CAMERA",
+          "taskStatus": "HECHO"
+        },
+        {
+          "id": "cmuxa3rft003ifa9w8qmfsh7p",
+          "status": "LISTO",
+          "assigneeId": "TALENT",
+          "confirmedById": "TALENT",
+          "taskStatus": "HECHO"
+        },
+        {
+          "id": "cmuxa3rfx003mfa9wlbtz9jsp",
+          "status": "LISTO",
+          "assigneeId": "CAMERA",
+          "confirmedById": "CAMERA",
+          "taskStatus": "HECHO"
+        }
+      ],
+      "casting": [
+        {
+          "id": "cmuxa3ihw0036fa9wjvjnfotm",
+          "userId": "TALENT",
+          "response": "CONFIRMADO"
+        }
+      ]
+    },
+    "foreignVideoAsTalent": "404",
+    "pages": {
+      "pendingCasting": {
+        "total": 23,
+        "pageCounts": [
+          20,
+          3
+        ],
+        "passed": true
+      },
+      "deliveredDesigns": {
+        "total": 25,
+        "pageCounts": [
+          20,
+          5
+        ],
+        "passed": true
+      },
+      "talentUnavailability": {
+        "total": 21,
+        "pageCounts": [
+          20,
+          1
+        ],
+        "previousNextAndReload": "passed after member page parameter fix"
+      }
+    },
+    "screenshots": [
+      ".audit/qa-integracion-publicado-portada.png",
+      ".audit/qa-integracion-publicado.png",
+      ".audit/qa-integracion-disponibilidad-pagina2.png"
+    ]
+  },
+  "defectsFixed": [
+    "Returning a design now reopens its completed design checks, revokes final approval and returns downstream work to editing atomically.",
+    "Members with planning permission can create required checklist tasks.",
+    "The member content view passes the selected availability page to the casting panel."
+  ],
+  "limits": [
+    "Synthetic script and example.invalid media links; no external AI generation or actual social publishing.",
+    "This integrated browser run was local, not production.",
+    "Operational activation, real brand setup and human compatibility configuration are separate."
+  ],
+  "cleanup": {
+    "browserFixtureDatabaseDropped": true,
+    "testRoleTimezoneRestored": true,
+    "applicationServerStopped": true,
+    "postgresServerStopped": true
+  },
+  "remaining": [
+    "commit and push",
+    "deploy compatible code before the new index",
+    "production backup and zero-duplicate preflight",
+    "apply migration",
+    "authorized production browser QA"
+  ],
+  "runbook": "prisma/operations/single-pending-production-step.md"
+}

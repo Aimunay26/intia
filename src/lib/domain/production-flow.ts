@@ -374,13 +374,13 @@ export function assignEditing(tx: AppTransaction, actor: ProductionActor, videoI
 
     await assertPreparationReady(tx, video.id);
     if (!assignee.assigned) await ensureAssignment(tx, actor, video, STEP_ROLES.EDICION.assignment, assignee.person);
+    await closePrevious(tx, actor, video, "GRABACION", now, "la edición ya está asignada");
     const created = await createStep(tx, actor, {
       video, step: "EDICION", person: assignee.person, dueAt: endOfDayKey(dueKey), key,
       // El editor recibe el enlace del material grabado, si el filmmaker ya lo dejó.
       materialUrl: recording?.materialUrl ?? null,
       summary: `Asignó la edición de "${video.title}" a ${assignee.person.name}: entrega el ${formatDateLong(fromDateKey(dueKey))}`,
     });
-    await closePrevious(tx, actor, video, "GRABACION", now, "la edición ya está asignada");
     return { done: true, stepId: created.id };
   });
 }
@@ -421,11 +421,11 @@ export function assignPublishing(tx: AppTransaction, actor: ProductionActor, vid
       });
     }
     if (!assignee.assigned) await ensureAssignment(tx, actor, video, STEP_ROLES.PUBLICACION.assignment, assignee.person);
+    await closePrevious(tx, actor, video, "EDICION", now, "la revisión final quedó aprobada");
     const created = await createStep(tx, actor, {
       video, step: "PUBLICACION", person: assignee.person, dueAt: endOfDayKey(dueKey), key,
       summary: `Asignó la publicación de "${video.title}" a ${assignee.person.name} para el ${formatDateLong(fromDateKey(dueKey))}`,
     });
-    await closePrevious(tx, actor, video, "EDICION", now, "la revisión final quedó aprobada");
     return { done: true, stepId: created.id };
   });
 }

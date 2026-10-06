@@ -141,6 +141,56 @@ function card(step, extra = {}) {
 const emptyWork = () => ({ enabled: true, groups: { overdue: [], today: [], next7: [], later: [] }, returned: [], counts: { pending: 0, overdue: 0, today: 0 }, coordination: null, designsDelivered: [] });
 const render = (user, work) => renderToStaticMarkup(createElement(MyWorkView, { user, work }));
 
+test("Cadena renderiza totales globales y ambos paginadores aunque la tabla solo tenga 25 pasos", async () => {
+  const kinds = ["GUION", "REVISION_GUION", "GRABACION", "EDICION", "REVISION_FINAL", "PUBLICACION"];
+  const columns = Object.fromEntries(kinds.map(kind => [kind, []]));
+  columns.GUION = Array.from({ length: 25 }, () => card("GUION"));
+  const board = {
+    allowed: true, enabled: true, columns, designs: [], people: [], brandsWithoutTeam: [],
+    page: { page: 1, pageCount: 3, total: 56 }, missingPage: { page: 1, pageCount: 2, total: 26 },
+    stepCounts: { GUION: { total: 28, overdue: 0 }, GRABACION: { total: 27, overdue: 0 }, DISENO: { total: 1, overdue: 0 } },
+    header: { open: 56, overdue: 0, unassigned: 0, publishedThisWeek: 0 },
+    stuck: { notices: [], ineligible: [], outOfSync: [], leadsWithoutPermission: [], withoutStep: [{
+      video: { id: "missing", title: "Falta paso", href: "/contenido/missing", statusLabel: "Idea" },
+      brand: { name: "Marca Uno" }, reason: "Sin paso", expected: "GUION",
+    }] },
+  };
+  const { default: Page } = load("src/app/(app)/cadena/page.tsx", {
+    ...mocks,
+    "next/navigation": { useRouter: () => ({ replace() {} }), usePathname: () => "/cadena", useSearchParams: () => new URLSearchParams() },
+    "@/lib/performance-page": { measurePagePhase: (_name, fn) => fn() },
+    "@/lib/render-context": { requirePageSection: async () => owner, getPageBrandContext: async () => ({ activeId: null, brands: [] }) },
+    "@/lib/production-chain-flag": { productionChainConfigured: () => true, productionChainBrands: () => null },
+    "@/lib/production-scope": { readChain: async () => board, UNASSIGNED_FILTER: "sin-asignar" },
+  });
+  const html = renderToStaticMarkup(await Page({ searchParams: Promise.resolve({}) }));
+  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+  assert.match(text, /Guion 28 Guionista/);
+  assert.match(text, /Grabación 27 Filmmaker/);
+  assert.match(text, /Diseño \(paralelo\) 1 Diseñador/);
+  assert.match(text, /Página 1 de 3 · 56 en total/);
+  assert.match(text, /Página 1 de 2 · 26 en total/);
+  assert.equal(html.match(/<tbody>[\s\S]*?<\/tbody>/)[0].match(/<tr\b/g).length, 25);
+});
+
+test("Siguiente y Anterior conservan la página de la tabla al paginar vídeos sin paso", async () => {
+  const react = await import("react");
+  let query, destination;
+  const { Pagination } = load("src/components/filters.tsx", {
+    react: { ...react, useTransition: () => [false, fn => fn()] },
+    "next/navigation": { useRouter: () => ({ replace: url => { destination = url; } }), usePathname: () => "/cadena", useSearchParams: () => new URLSearchParams(query) },
+  });
+  const buttons = node => !node || typeof node !== "object" ? [] : node.type === "button" ? [node] : [node.props?.children].flat(Infinity).flatMap(buttons);
+  for (const [page, index, expected] of [[1, 1, "2"], [2, 0, "1"]]) {
+    query = `pagina=2&sinPaso=${page}&paso=GRABACION`;
+    buttons(Pagination({ page, pageCount: 2, total: 26, param: "sinPaso" }))[index].props.onClick();
+    const actual = new URL(destination, "https://app.test").searchParams;
+    assert.equal(actual.get("pagina"), "2");
+    assert.equal(actual.get("sinPaso"), expected);
+    assert.equal(actual.get("paso"), "GRABACION");
+  }
+});
+
 test("coordinación ve ambas revisiones con enlaces; el editor no recibe botones de aprobación", () => {
   const work = emptyWork();
   work.groups.today = [

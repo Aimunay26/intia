@@ -186,6 +186,7 @@ export default async function CadenaPage({ searchParams }: { searchParams: Promi
               description={Object.keys(labels).length ? "Quita algún filtro para ver el resto de la cadena." : "Cuando se cree un video en una marca con equipo, su primer paso (Guion) aparecerá aquí."}
             />
           )}
+          <Pagination {...board.page} className="p-4" />
         </Card>
       </StepAnnouncerProvider>
     );

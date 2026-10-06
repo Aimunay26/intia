@@ -94,11 +94,12 @@ try {
   assert.throws(()=>sql(source,priorities),/JSON no válido/);
   await noPartialMigration();
   sql(source,`UPDATE "ContentItem" SET "structureIds"='["upgrade-format","upgrade-format"]' WHERE id='upgrade-video';`);
-  const videoBefore=await db.contentItem.findUniqueOrThrow({where:{id:'upgrade-video'}});
+  // El cliente conoce el esquema actual; esta fase todavía usa columnas históricas.
+  const videoBefore=await db.contentItem.findUniqueOrThrow({where:{id:'upgrade-video'},select:{title:true,structureIds:true,updatedAt:true}});
   const preflightOutput=sql(source,fs.readFileSync('prisma/operations/preflight-backend-priorities.sql')).toString();
   assert.equal((preflightOutput.match(/\(0 rows\)/g)||[]).length,4,'Los cuatro controles del preflight deben quedar vacíos antes de migrar');
   sql(source,priorities);
-  const videoAfter=await db.contentItem.findUniqueOrThrow({where:{id:'upgrade-video'}});
+  const videoAfter=await db.contentItem.findUniqueOrThrow({where:{id:'upgrade-video'},select:{title:true,structureIds:true,updatedAt:true}});
   assert.equal(videoAfter.title,videoBefore.title);assert.equal(videoAfter.structureIds,videoBefore.structureIds);
   assert.ok(videoAfter.updatedAt>videoBefore.updatedAt,'El backfill renueva las revisiones de los formularios previos');
   assert.deepEqual(await db.contentPlannedStructure.findMany(),[{contentItemId:'upgrade-video',structureId:'upgrade-format',order:0}]);
@@ -263,6 +264,16 @@ try {
   sql(source,fs.readFileSync('prisma/migrations/20261005090000_recording_without_date/migration.sql'));
   assert.deepEqual(await db.productionStep.findMany({orderBy:{id:'asc'}}),datedBefore,'La migración conserva fechas históricas');
   assert.throws(()=>sql(source,`UPDATE "ProductionStep" SET "dueAt"=NULL WHERE step='REVISION_FINAL'`),/ProductionStep_due_date_required/);
+  // Incluir reparto y preparación en el respaldo y su restauración, sin inventar confirmaciones.
+  sql(source,fs.readFileSync('prisma/migrations/20261005193000_scene_casting/migration.sql'));
+  sql(source,fs.readFileSync('prisma/migrations/20261006140000_individual_preparation/migration.sql'));
+  await db.$disconnect();
+  const currentVideo=await db.contentItem.findUniqueOrThrow({where:{id:'upgrade-video'}});
+  assert.equal(currentVideo.castingRevision,0);
+  assert.equal(currentVideo.preparationRequired,false,'Una grabación histórica terminada conserva su estado');
+  assert.deepEqual([currentVideo.shootStartMinute,currentVideo.shootEndMinute],[null,null]);
+  await db.castRole.create({data:{id:'restore-cast',contentItemId:'upgrade-video',slotKey:'scene:actor',sceneId:'scene',role:'Actor',userId:'upgrade-owner'}});
+  await db.preparationItem.create({data:{id:'restore-preparation',contentItemId:'upgrade-video',sourceKey:'prop:fixture',kind:'PROP',label:'Utilería de prueba',assigneeId:'upgrade-owner'}});
   const original=await snapshot(db), originalSchema=await db.$queryRawUnsafe(fs.readFileSync('prisma/operations/schema-fingerprint.sql','utf8'));
   const dump=pg('pg_dump',['-d',source,'--format=custom','--no-owner','--no-acl']);
   pg('pg_restore',['-d',target,'--no-owner','--no-acl','--exit-on-error'],dump);

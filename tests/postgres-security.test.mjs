@@ -76,7 +76,7 @@ test("seguridad sobre PostgreSQL real y sesiones firmadas", async t => {
     const oldMetric = await prisma.metric.create({ data:{contentItemId:video.id,date:new Date("2026-09-07T12:00:00Z"),platform:"TIKTOK",period:"WEEKLY",views:100,likes:25,spend:100,revenue:500,notes:"Conservar"} });
     await t.test("CSV parcial/vacío conserva columnas; cero explícito actualiza y registra valores anteriores", async () => {
       const result = await run(memberJar, () => metrics.importarMetricasCsv(null,form({csv:`video,fecha,plataforma,vistas,likes\n${video.id},2026-09-07,TIKTOK,200,`})));
-      assert.equal(result.updated,1);
+      assert.equal(result.updated,1,JSON.stringify(result));
       const after = await prisma.metric.findUniqueOrThrow({where:{id:oldMetric.id}});
       assert.equal(after.views,200); assert.equal(after.likes,25); assert.equal(after.spend.toString(),"100"); assert.equal(after.revenue.toString(),"500"); assert.equal(after.notes,"Conservar");
       await run(memberJar, () => metrics.importarMetricasCsv(null,form({csv:`video,fecha,plataforma,likes\n${video.id},2026-09-07,TIKTOK,0`})));
@@ -117,6 +117,15 @@ test("seguridad sobre PostgreSQL real y sesiones firmadas", async t => {
       fresh=await prisma.user.findUniqueOrThrow({where:{id:member.id}}); memberJar=await jarFor(fresh);
       const oldJwt=await new SignJWT({sub:member.id}).setProtectedHeader({alg:"HS256"}).setExpirationTime("1h").sign(new TextEncoder().encode(process.env.AUTH_SECRET));
       assert.equal(await run(new Map([["mos_session",oldJwt]]),()=>auth.getSession()),null);
+    });
+    await t.test("cambiar correo o rol administrativo sigue revocando las sesiones", async () => {
+      const target=await prisma.user.create({data:{name:'Cambio sensible',email:`sensitive-${suffix}@example.test`,passwordHash:'fixture'}});
+      for(const change of [{email:`changed-${suffix}@example.test`},{role:'OWNER'}]) {
+        const fresh=await prisma.user.findUniqueOrThrow({where:{id:target.id}}),jar=await jarFor(fresh);
+        const result=await run(ownerJar,()=>team.actualizarUsuario(null,form({id:fresh.id,name:fresh.name,email:fresh.email,role:fresh.role,expectedUpdatedAt:fresh.updatedAt.toISOString(),...change})));
+        assert.match(result.ok,/cerró las sesiones/);assert.equal(await run(jar,()=>auth.getSession()),null);
+      }
+      await prisma.user.delete({where:{id:target.id}});
     });
     await t.test("contador de acceso compartido: 20 intentos concurrentes admiten como máximo diez", async () => {
       const outcomes=await Promise.all(Array.from({length:20},()=>run(new Map(),()=>rate.consumeAccessAttempt("login",`rate-${suffix}@example.test`),"198.51.100.20")));

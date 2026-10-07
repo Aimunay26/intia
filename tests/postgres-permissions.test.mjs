@@ -24,7 +24,7 @@ test('perfiles: autorizaciones reales con sesiones firmadas y PostgreSQL',async 
  const archetype=await prisma.archetype.create({data:{id:'person',name:'Persona autorizada',slug:'profile-person'}});
  const profiles=['STRATEGY','WRITER','PRODUCTION','CAMERA','TALENT','EDITOR','DESIGNER','PUBLISHER','ANALYST'];
  for(const id of [...profiles,'EMPTY']){
-  await prisma.user.create({data:{id,name:id,email:id+'@permissions.test',passwordHash:'fixture',archetypeId:id==='TALENT'?archetype.id:null}});
+  await prisma.user.create({data:{id,name:id,email:id.toLowerCase()+'@permissions.test',passwordHash:'fixture',archetypeId:id==='TALENT'?archetype.id:null}});
   if(id!=='EMPTY')await prisma.userWorkProfile.create({data:{userId:id,profile:id}});
   await prisma.userBrandAccess.create({data:{userId:id,brandId:'A'}});
  }
@@ -112,11 +112,19 @@ test('perfiles: autorizaciones reales con sesiones firmadas y PostgreSQL',async 
    await prisma.userWorkProfile.create({data:{userId:'EDITOR',profile:'ANALYST'}});
    const a=await actor('EDITOR');assert.equal(await prisma.contentItem.count({where:scopes.contentScope(a)}),3);assert.equal(await prisma.contentItem.count({where:scopes.contentScope(a,'content.editing')}),1);
   });
-  await t.test('el Dueño asigna perfiles y marcas, audita, revoca sesiones y guardar sin cambios es idempotente',async()=>{
-   const jar=await jarFor('EMPTY'), old=await run(jar,()=>auth.requireUser());
-   const values={id:'EMPTY',name:'EMPTY',email:'EMPTY@permissions.test',role:'MEMBER',accessConfigured:'1',profiles:['WRITER','EDITOR'],brandIds:['A'],expectedUpdatedAt:(await prisma.user.findUniqueOrThrow({where:{id:'EMPTY'}})).updatedAt.toISOString()};
+  await t.test('el Dueño cambia perfiles sin cerrar ninguna sesión; permisos y menú se actualizan con la misma cookie',async()=>{
+   const jar=await jarFor('EMPTY'), second=await jarFor('EMPTY'), old=await run(jar,()=>auth.requireUser());
+   const before=await prisma.user.findUniqueOrThrow({where:{id:'EMPTY'}});
+   const values={id:'EMPTY',name:'EMPTY',email:before.email,role:'MEMBER',accessConfigured:'1',profiles:['WRITER','EDITOR'],brandIds:['A'],expectedUpdatedAt:before.updatedAt.toISOString()};
+   const token=jar.get('mos_session');
    const saved=await as('owner',()=>team.actualizarUsuario(null,form(values)));assert.ok(saved.ok);
-   assert.equal(await run(jar,()=>auth.getSession()),null);
+   assert.match(saved.ok,/sin cerrar la sesión/);
+   const current=await run(jar,()=>auth.requireUser());
+   assert.deepEqual(current.profiles,['EDITOR','WRITER']);assert.deepEqual(current.brandIds,['A']);
+   assert.ok(await run(second,()=>auth.getSession()));assert.equal(jar.get('mos_session'),token);
+   assert.equal(current.sessionVersion,before.sessionVersion);
+   const nav=load('src/lib/role-nav.ts').buildRoleNav(current,{chainEnabled:false,manualEnabled:true,permissionFlags:{archiveEpoch:true,designerCalendar:false}});
+   assert.ok(nav.flatMap(b=>b.items).some(i=>i.href==='/generador'));
    await assert.rejects(mutations.withMutation(old,false,async()=>{}),/acceso cambió/);
    const fresh=await prisma.user.findUniqueOrThrow({where:{id:'EMPTY'}});values.email=fresh.email;values.expectedUpdatedAt=fresh.updatedAt.toISOString();
    await as('owner',()=>team.actualizarUsuario(null,form(values)));
@@ -124,11 +132,33 @@ test('perfiles: autorizaciones reales con sesiones firmadas y PostgreSQL',async 
    assert.ok(await prisma.auditLog.count({where:{entity:'User',entityId:'EMPTY'}}));
    const denied=await as('EMPTY',()=>team.actualizarUsuario(null,form({...values,role:'OWNER'})));assert.ok(denied.error);
   });
-  await t.test('SQL directo al retirar una marca revoca sesiones y protege las siguientes escrituras',async()=>{
+  await t.test('retirar una marca conserva la sesión y bloquea consultas, acciones y actores anteriores',async()=>{
    const jar=await jarFor('EMPTY'),old=await run(jar,()=>auth.requireUser());
    await prisma.userBrandAccess.delete({where:{userId_brandId:{userId:'EMPTY',brandId:'A'}}});
-   assert.equal(await run(jar,()=>auth.getSession()),null);
+   const current=await run(jar,()=>auth.requireUser());assert.deepEqual(current.brandIds,[]);
+   assert.equal(current.sessionVersion,old.sessionVersion);
+   assert.equal(await prisma.contentItem.count({where:scopes.contentScope(current)}),0);
+   await assert.rejects(scopes.assertContentAccess(prisma,current,'assigned'),/acceso|permiso/);
    await assert.rejects(mutations.withMutation(old,false,async()=>{}),/acceso cambió/);
+  });
+  await t.test('retirar un perfil bloquea su capacidad con la misma sesión; otros permisos continúan',async()=>{
+   await prisma.userBrandAccess.create({data:{userId:'EMPTY',brandId:'A'}});
+   const jar=await jarFor('EMPTY'),old=await run(jar,()=>auth.requireUser());
+   await prisma.userWorkProfile.delete({where:{userId_profile:{userId:'EMPTY',profile:'WRITER'}}});
+   const current=await run(jar,()=>auth.requireUser());assert.deepEqual(current.profiles,['EDITOR']);
+   await assert.rejects(run(jar,()=>auth.requirePermission('scripts.generate')),/permiso/);
+   assert.ok(await run(jar,()=>auth.requirePermission('content.editing')));
+   await assert.rejects(mutations.withMutation(old,false,async()=>{}),/acceso cambió/);
+   await mutations.withMutation(current,false,async()=>{});
+  });
+  await t.test('SQL directo al mover un acceso invalida las revisiones de ambas personas sin expulsarlas',async()=>{
+   const left=await jarFor('EMPTY'),right=await jarFor('ANALYST');
+   const oldLeft=await run(left,()=>auth.requireUser()),oldRight=await run(right,()=>auth.requireUser());
+   await prisma.userBrandAccess.create({data:{userId:'EMPTY',brandId:'B'}});
+   await prisma.userBrandAccess.update({where:{userId_brandId:{userId:'EMPTY',brandId:'B'}},data:{userId:'ANALYST'}});
+   assert.deepEqual((await run(left,()=>auth.requireUser())).brandIds,['A']);
+   assert.deepEqual((await run(right,()=>auth.requireUser())).brandIds,['A','B']);
+   for(const stale of [oldLeft,oldRight])await assert.rejects(mutations.withMutation(stale,false,async()=>{}),/acceso cambió/);
   });
   await t.test('al retirar una marca se oculta el historial IA y el trabajo se cancela sin consumir proveedor',async()=>{
    process.env.AI_JOBS_ENABLED='true';let calls=0;

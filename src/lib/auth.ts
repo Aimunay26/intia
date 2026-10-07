@@ -80,6 +80,8 @@ export type SessionUser = {
   color: string;
   archetypeId: string | null;
   sessionVersion?: number;
+  /** Revisión del usuario leída con sus permisos; no forma parte del JWT. */
+  accessRevision?: string;
   profiles?: string[];
   brandIds?: string[];
 };
@@ -167,8 +169,8 @@ export async function getSession(): Promise<SessionUser | null> {
     const epoch = archiveEpoch();
     const liveAccess = epoch ? Prisma.sql`AND ${liveBrandSql('b."brandId"', { epoch })}` : Prisma.empty;
     // Una sola consulta para sesión, revocación, versión y permisos frescos.
-    const [user] = await prisma.$queryRaw<(SessionUser & { sessionVersion: number })[]>`
-      SELECT u."id", u."name", u."email", u."role", u."color", u."archetypeId", u."sessionVersion",
+    const [user] = await prisma.$queryRaw<(SessionUser & { sessionVersion: number; updatedAt: Date })[]>`
+      SELECT u."id", u."name", u."email", u."role", u."color", u."archetypeId", u."sessionVersion", u."updatedAt",
         ARRAY(SELECT p.profile FROM "UserWorkProfile" p WHERE p."userId"=u.id ORDER BY p.profile) AS profiles,
         ARRAY(SELECT b."brandId" FROM "UserBrandAccess" b WHERE b."userId"=u.id ${liveAccess} ORDER BY b."brandId") AS "brandIds"
       FROM "AuthSession" s JOIN "User" u ON u."id" = s."userId"
@@ -185,6 +187,7 @@ export async function getSession(): Promise<SessionUser | null> {
       color: user.color,
       archetypeId: user.archetypeId,
       sessionVersion: user.sessionVersion,
+      accessRevision: user.updatedAt.toISOString(),
       profiles: user.profiles ?? [],
       brandIds: user.brandIds ?? [],
     };

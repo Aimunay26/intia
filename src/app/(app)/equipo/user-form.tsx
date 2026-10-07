@@ -317,7 +317,7 @@ function CamposPersona({
         </>}
         {member?.keptBrandIds?.map(id => <input key={id} type="hidden" name="brandIds" value={id} />)}
         {member?.keptBrandIds?.length ? <p className="text-sm text-inkmuted">{member.keptBrandIds.length === 1 ? "Conserva además el acceso a 1 marca archivada." : `Conserva además el acceso a ${member.keptBrandIds.length} marcas archivadas.`}</p> : null}
-        <p className="text-sm text-inkmuted">Cámara, talento, edición y diseño requieren además una asignación al video o tarea. Cambiar accesos cierra las sesiones anteriores.</p>
+        <p className="text-sm text-inkmuted">Cámara, talento, edición y diseño requieren además una asignación al video o tarea. Los perfiles y las marcas se actualizan sin cerrar la sesión; cambiar el correo o el rol sí requiere iniciar sesión nuevamente.</p>
       </fieldset> : null}
       <Field label="Nota interna" hint="Qué hace, en qué es buena, disponibilidad…">
         <textarea

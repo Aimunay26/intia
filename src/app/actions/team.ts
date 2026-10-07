@@ -65,7 +65,7 @@ export async function actualizarUsuario(_prev: TeamState, formData: FormData): P
     if (!admin && ["role", "archetypeId", "profiles", "brandIds", "accessConfigured"].some(key => formData.has(key))) throw new SecurityError("Solo el dueño puede cambiar los permisos.");
     const base = profile(formData), privileged = admin && formData.get("selfProfile") !== "1" ? account(formData) : null;
     const access = privileged ? parseTeamAccess(formData) : null;
-    await withAuthLock(async tx => {
+    const sessionsRevoked = await withAuthLock(async tx => {
       await assertActor(tx, actor, admin);
       await lockRevision(tx, "User", id, formData);
       const before = await tx.user.findUniqueOrThrow({ where: { id } });
@@ -74,7 +74,7 @@ export async function actualizarUsuario(_prev: TeamState, formData: FormData): P
       if (privileged && before.role !== privileged.role) await preserveOwner(tx, id);
       const changes = diffFields(before, data, LABELS);
       const accessChanges = await saveTeamAccess(tx, id, access);
-      if (!changes && !accessChanges) return;
+      if (!changes && !accessChanges) return false;
       const revoke = Boolean(privileged && (before.role !== privileged.role || before.email !== privileged.email));
       await tx.user.update({ where: { id }, data: { ...data, ...(revoke ? { sessionVersion: { increment: 1 } } : {}) } });
       if (revoke) {
@@ -82,8 +82,11 @@ export async function actualizarUsuario(_prev: TeamState, formData: FormData): P
         await revocarCalendarioPersonal(tx, actor, id, before.name, "cambió su correo o su rol y se cerraron sus sesiones");
       }
       await auditInTransaction(tx, { user: actor, action: "EDITAR", entity: "User", entityId: id, summary: self ? "Editó su propio perfil" : `Editó la ficha de ${before.name}`, changes: { ...changes, ...(accessChanges ? { access: { etiqueta: "Perfiles y marcas autorizadas", antes: JSON.stringify(accessChanges.before), despues: JSON.stringify(accessChanges.after) } } : {}) } });
+      return revoke;
     });
-    refresh(self); return { ok: "Datos guardados. Si cambiaste el correo, rol, perfiles o marcas, las sesiones anteriores quedaron cerradas." };
+    refresh(self); return { ok: sessionsRevoked
+      ? "Datos guardados. El cambio de correo o rol cerró las sesiones anteriores."
+      : "Datos guardados. Los perfiles y las marcas se actualizan sin cerrar la sesión." };
   } catch (error) { return errorState(error); }
 }
 

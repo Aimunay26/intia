@@ -1,4 +1,6 @@
 import { Shell } from "@/components/shell";
+import { SessionAccessRefresh } from "@/components/session-access-refresh";
+import { sessionAccessKey } from "@/lib/session-access";
 import { ROLE_LEVEL } from "@/lib/constants";
 import { manualEnabled } from "@/lib/manual";
 import { permissionFlags } from "@/lib/permissions";
@@ -35,6 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         level: ROLE_LEVEL[user.role] ?? 0, profiles: user.profiles, brandIds: user.brandIds,
       }}
     >
+      <SessionAccessRefresh accessKey={sessionAccessKey(user)} />
       {children}
     </Shell>
   );

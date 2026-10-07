@@ -14,9 +14,14 @@ export async function withAuthLock<T>(work: (tx: AppTransaction) => Promise<T>) 
 }
 
 export async function assertActor(tx: AppTransaction, actor: SessionUser, owner = false) {
-  const [current] = await tx.$queryRaw<{ active: boolean; role: string; sessionVersion: number }[]>`SELECT "active", "role", "sessionVersion" FROM "User" WHERE "id" = ${actor.id} FOR SHARE`;
+  const [current] = await tx.$queryRaw<{ active: boolean; role: string; sessionVersion: number; updatedAt: Date }[]>`SELECT "active", "role", "sessionVersion", "updatedAt" FROM "User" WHERE "id" = ${actor.id} FOR SHARE`;
   if (!current?.active || !["OWNER", "MEMBER"].includes(current.role) || current.role !== actor.role || (owner && current.role !== "OWNER") || current.sessionVersion !== (actor.sessionVersion ?? 0)) {
     throw new SecurityError("Tu acceso cambió. Vuelve a iniciar sesión antes de continuar.");
+  }
+  // Los cambios de perfiles/marcas actualizan esta fila bajo el mismo bloqueo.
+  // Una petición iniciada antes del cambio debe releer sus permisos, sin cerrar la sesión.
+  if (actor.accessRevision && current.updatedAt.toISOString() !== actor.accessRevision) {
+    throw new SecurityError("Tu acceso cambió. Recarga la página antes de continuar.");
   }
 }
 

@@ -83,7 +83,7 @@ test('Calendario personal: cada persona gestiona su enlace y el feed sigue sus p
     const owner=await db.user.findUniqueOrThrow({where:{id:'owner'}});
     const ana=await db.user.create({data:{id:'ana-feed',name:'Ana Editora',email:'ana@secrets.test',passwordHash:'fixture',workProfiles:{create:[{profile:'EDITOR'}]},brandAccess:{create:[{brandId:'A'},{brandId:'B'}]}}});
     const luis=await db.user.create({data:{id:'luis-feed',name:'Luis Cámara',email:'luis@secrets.test',passwordHash:'fixture',workProfiles:{create:[{profile:'CAMERA'}]},brandAccess:{create:[{brandId:'A'}]}}});
-    // Cambiar perfiles o marcas sube sessionVersion (revoca sesiones): la sesión se relee de la base.
+    // La sesión conserva su autenticación y relee los permisos vigentes de la base.
     const session=async(user,extra)=>({...await db.user.findUniqueOrThrow({where:{id:user.id}}),profiles:extra.profiles,brandIds:extra.brandIds});
     let current=await session(ana,{profiles:['EDITOR'],brandIds:['A','B']});
     const personal={...mocks,'@/lib/auth':{...mocks['@/lib/auth'],requirePermission:async()=>current,requireLevel:async()=>current}};

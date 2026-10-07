@@ -237,7 +237,7 @@ test("alcances: con la época encendida el Dueño tampoco ve marcas archivadas n
 
 /* -------------------------------------------------------------- SESIÓN -- */
 
-const LEGACY_SESSION_SQL = `SELECT u."id", u."name", u."email", u."role", u."color", u."archetypeId", u."sessionVersion",
+const LEGACY_SESSION_SQL = `SELECT u."id", u."name", u."email", u."role", u."color", u."archetypeId", u."sessionVersion", u."updatedAt",
         ARRAY(SELECT p.profile FROM "UserWorkProfile" p WHERE p."userId"=u.id ORDER BY p.profile) AS profiles,
         ARRAY(SELECT b."brandId" FROM "UserBrandAccess" b WHERE b."userId"=u.id ORDER BY b."brandId") AS "brandIds"
       FROM "AuthSession" s JOIN "User" u ON u."id" = s."userId"
@@ -254,7 +254,7 @@ async function sessionQuery() {
       "next/headers": { cookies: async () => ({ get: (key) => (key === "mos_session" ? { value: token } : undefined) }), headers: async () => new Headers() },
       "next/navigation": NO_REDIRECT,
       "@/lib/auth-transactions": { BOOTSTRAP_COMPLETE: "bootstrap", withAuthLock: async () => assert.fail("no bloquea al leer la sesión") },
-      "@/lib/prisma": { prisma: { $queryRaw: async (strings, ...values) => { seen.push(asSql(strings, values)); return [{ id: "u1", name: "Ana", email: "ana@example.test", role: "MEMBER", color: "#000", archetypeId: null, sessionVersion: 0, profiles: ["WRITER"], brandIds: ["A"] }]; } } },
+      "@/lib/prisma": { prisma: { $queryRaw: async (strings, ...values) => { seen.push(asSql(strings, values)); return [{ id: "u1", name: "Ana", email: "ana@example.test", role: "MEMBER", color: "#000", archetypeId: null, sessionVersion: 0, updatedAt: new Date(EPOCH), profiles: ["WRITER"], brandIds: ["A"] }]; } } },
     });
     const user = await auth.getSession();
     assert.deepEqual(user.brandIds, ["A"]);
@@ -365,7 +365,7 @@ test("cola: con la época encendida, el avance y el reintento de un trabajo ocul
 });
 
 test("cola: el trabajo de un miembro cuya única marca está archivada se cancela solo con la época encendida", async () => {
-  const member = { id: "w", name: "W", email: "w@example.test", role: "MEMBER", color: "#000", archetypeId: null, sessionVersion: 0, active: true, workProfiles: [{ profile: "WRITER" }], brandAccess: [{ brandId: "X" }] };
+  const member = { id: "w", name: "W", email: "w@example.test", role: "MEMBER", color: "#000", archetypeId: null, sessionVersion: 0, updatedAt: new Date(EPOCH), active: true, workProfiles: [{ profile: "WRITER" }], brandAccess: [{ brandId: "X" }] };
   // Un solo formato con los 3 intentos agotados: sin cancelar, el reclamo lo marca FAILED sin llamar a la IA.
   const job = () => ({ id: "job-x", status: "QUEUED", userId: "w", sessionVersion: 0, createdAt: new Date(), payload: { ...PEDIDO, brandId: "X" },
     items: [{ id: "i1", structureId: "est-a", status: "QUEUED", order: 0, attempts: 3, response: null, leaseToken: null, leaseUntil: null, availableAt: new Date(0) }] });

@@ -230,11 +230,11 @@ async function liveBrandIdsForJob(tx: AppTransaction, ids: string[]): Promise<st
 }
 
 async function actorForJob(tx: AppTransaction, job: { userId: string; sessionVersion: number; payload: Prisma.JsonValue }) {
-  const user = await tx.user.findUnique({ where: { id: job.userId }, select: { id: true, name: true, email: true, role: true, color: true, archetypeId: true, sessionVersion: true, active: true, workProfiles: { select: { profile: true } }, brandAccess: { select: { brandId: true } } } });
+  const user = await tx.user.findUnique({ where: { id: job.userId }, select: { id: true, name: true, email: true, role: true, color: true, archetypeId: true, sessionVersion: true, updatedAt: true, active: true, workProfiles: { select: { profile: true } }, brandAccess: { select: { brandId: true } } } });
   if (!user?.active || user.sessionVersion !== job.sessionVersion || !["OWNER", "MEMBER"].includes(user.role)) return null;
   // Archivado total: como la sesión, sus marcas sin las archivadas (un miembro pierde el pedido de una marca archivada).
   const brandIds = await liveBrandIdsForJob(tx, user.brandAccess.map(b => b.brandId));
-  const actor = { ...user, profiles: user.workProfiles.map(p => p.profile), brandIds };
+  const actor = { ...user, accessRevision: user.updatedAt.toISOString(), profiles: user.workProfiles.map(p => p.profile), brandIds };
   const payload = payloadSchema.safeParse(job.payload);
   if (!payload.success || !allows(actor, "scripts.generate") || (actor.role !== "OWNER" && (!payload.data.brandId || !actor.brandIds.includes(payload.data.brandId)))) return null;
   await assertActor(tx, actor);

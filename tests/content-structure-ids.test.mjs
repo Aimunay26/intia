@@ -481,7 +481,7 @@ function jobFixture({ job, video, unido = false, generateScript }) {
     $transaction: async (fn) => fn(prisma),
     $queryRaw: async () => [],
     $executeRaw: async () => 0,
-    user: { findUnique: async () => ({ id: USER.id, name: USER.name, email: USER.email, role: "OWNER", color: USER.color, archetypeId: null, sessionVersion: 0, active: true, workProfiles: [], brandAccess: [] }) },
+    user: { findUnique: async () => ({ id: USER.id, name: USER.name, email: USER.email, role: "OWNER", color: USER.color, archetypeId: null, sessionVersion: 0, updatedAt: new Date("2026-10-07T12:00:00Z"), active: true, workProfiles: [], brandAccess: [] }) },
     usageCounter: { upsert: async () => ({}), updateMany: async () => ({ count: 1 }) },
     generationJob: {
       findUnique: async () => job,
